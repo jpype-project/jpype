@@ -15,6 +15,8 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+from functools import cache
+
 import pytest
 
 import common
@@ -46,11 +48,11 @@ def common_opts(request):
     request.cls._checkjni = request.config.getoption("--checkjni")
 
 
-@pytest.fixture(scope="session", autouse=True)
-def java_version(request):
+#@pytest.fixture(scope="session", autouse=True)
+@cache
+def java_version():
+    print("hi from java_version()")
     import subprocess, sys
-    java_version = subprocess.check_output([sys.executable, "-c",
-                          "import jpype; jpype.startJVM(); print(jpype.java.lang.System.getProperty('java.version'))"])
-    print("java_version", java_version)
-    request._java_version = java_version[0]
-    yield java_version
+    java_version = str(subprocess.check_output([sys.executable, "-c",
+                          "import jpype; jpype.startJVM(); print(jpype.java.lang.System.getProperty('java.version'))"]))
+    return java_version.split(".")

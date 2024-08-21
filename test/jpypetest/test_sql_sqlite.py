@@ -3,11 +3,14 @@
 import datetime
 import decimal
 import threading
+from unittest import SkipTest
+
+import pytest
 
 import common
 import jpype
 import jpype.dbapi2 as dbapi2
-from jpype import java, isJVMStarted
+from jpype import java
 from jpype.types import *
 
 try:
@@ -18,12 +21,17 @@ except ImportError:
 
 db_name = "jdbc:sqlite::memory:"
 
+def setUpModule(module):
+    from conftest import java_version
+    version = java_version()
+    print("setup module: jdk version", version)
+    if version[0] == "8":
+        pytest.skip("jdk8 unsupported", allow_module_level=True)
 
-if isJVMStarted():
-    java_version = str(jpype.java.lang.System.getProperty("java.version")).split(".")
+    #    raise common.unittest.SkipTest("SQLite unsupported for JDK 8.")
 
-    if java_version[0] == "8":# and sys.platform == "win":
-       raise common.unittest.SkipTest("sqlite unsupported on this config.")
+#def setUpModule(java_version):
+#    print("setuppppp", setUpModule.__name__)
 
 
 class ConnectTestCase(common.JPypeTestCase):
@@ -31,8 +39,6 @@ class ConnectTestCase(common.JPypeTestCase):
         common.JPypeTestCase.setUp(self)
         if common.fast:
             raise common.unittest.SkipTest("fast")
-
-
 
     def testConnect(self):
         cx = dbapi2.connect(db_name)
