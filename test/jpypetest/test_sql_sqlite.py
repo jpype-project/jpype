@@ -24,14 +24,8 @@ db_name = "jdbc:sqlite::memory:"
 def setUpModule(module):
     from common import java_version
     version = java_version()
-    print("setup module: jdk version", version)
-    if version[0] == 8:
+    if version[0] == 1 and version[1] == 8:
         pytest.skip("jdk8 unsupported", allow_module_level=True)
-
-    #    raise common.unittest.SkipTest("SQLite unsupported for JDK 8.")
-
-#def setUpModule(java_version):
-#    print("setuppppp", setUpModule.__name__)
 
 
 class ConnectTestCase(common.JPypeTestCase):
