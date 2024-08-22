@@ -15,7 +15,6 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-from functools import cache
 
 import pytest
 
@@ -46,13 +45,3 @@ def common_opts(request):
     request.cls._convertStrings = request.config.getoption("--convertStrings")
     request.cls._jacoco = request.config.getoption("--jacoco")
     request.cls._checkjni = request.config.getoption("--checkjni")
-
-
-#@pytest.fixture(scope="session", autouse=True)
-@cache
-def java_version():
-    print("hi from java_version()")
-    import subprocess, sys
-    java_version = str(subprocess.check_output([sys.executable, "-c",
-                          "import jpype; jpype.startJVM(); print(jpype.java.lang.System.getProperty('java.version'))"]))
-    return java_version.split(".")
