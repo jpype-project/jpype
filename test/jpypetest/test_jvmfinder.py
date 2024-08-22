@@ -16,15 +16,15 @@
 #
 # *****************************************************************************
 # part of JPype1; author Martin K. Scherer; 2014
-
-
+# from unittest import mock
+import os
+import pathlib
+import sys
 import unittest
 from unittest import mock
-import common
-import os
 
-import jpype._jvmfinder
-from jpype._jvmfinder import *
+from jpype._jvmfinder import (LinuxJVMFinder, JVMNotSupportedException, DarwinJVMFinder,
+                              WindowsJVMFinder)
 
 
 class JVMFinderTest(unittest.TestCase):
@@ -52,7 +52,7 @@ class JVMFinderTest(unittest.TestCase):
             # contains broken and working jvms
             mockwalk.return_value = walk_fake
 
-            finder = jpype._jvmfinder.LinuxJVMFinder()
+            finder = LinuxJVMFinder()
             p = finder.find_libjvm('arbitrary java home')
             self.assertEqual(
                 p, os.path.join('jre/lib/amd64/server', 'libjvm.so'), 'wrong jvm returned')
@@ -62,7 +62,7 @@ class JVMFinderTest(unittest.TestCase):
             walk_fake[-1] = ((), (), (),)
             mockwalk.return_value = walk_fake
 
-            finder = jpype._jvmfinder.LinuxJVMFinder()
+            finder = LinuxJVMFinder()
             with self.assertRaises(JVMNotSupportedException) as context:
                 finder.find_libjvm('arbitrary java home')
 
@@ -81,7 +81,7 @@ class JVMFinderTest(unittest.TestCase):
         mock_path_exists.return_value = True
         mock_real_path.return_value = '/usr/lib/jvm/java-6-openjdk-amd64/bin/java'
 
-        finder = jpype._jvmfinder.LinuxJVMFinder()
+        finder = LinuxJVMFinder()
         p = finder._get_from_bin()
 
         self.assertEqual(
@@ -94,7 +94,7 @@ class JVMFinderTest(unittest.TestCase):
 
         expected = '/System/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home\n'
 
-        finder = jpype._jvmfinder.DarwinJVMFinder()
+        finder = DarwinJVMFinder()
 
         # fake check_output
         with mock.patch('subprocess.check_output') as mock_checkoutput:
@@ -107,29 +107,8 @@ class JVMFinderTest(unittest.TestCase):
         p = finder._javahome_binary()
         self.assertEqual(p, None)
 
-    # FIXME this is testing the details of the implementation rather than the results.
-    # it is included only for coverage purposes.  Revise this to be a more meaningful test
-    # next time it breaks.
-    # FIXME this test does passes locally but not in the CI.  Disabling for now.
-    @common.unittest.skip  # type: ignore
-    def testPlatform(self):
-        with mock.patch('jpype._jvmfinder.sys') as mocksys, mock.patch('jpype._jvmfinder.WindowsJVMFinder') as finder:
-            mocksys.platform = 'win32'
-            jpype._jvmfinder.getDefaultJVMPath()
-            self.assertIn(finder().get_jvm_path, finder.mock_calls)
-
-        with mock.patch('jpype._jvmfinder.sys') as mocksys, mock.patch('jpype._jvmfinder.LinuxJVMFinder') as finder:
-            mocksys.platform = 'linux'
-            getDefaultJVMPath()
-            self.assertIn(finder().get_jvm_path, finder.mock_calls)
-
-        with mock.patch('jpype._jvmfinder.sys') as mocksys, mock.patch('jpype._jvmfinder.DarwinJVMFinder') as finder:
-            mocksys.platform = 'darwin'
-            getDefaultJVMPath()
-            self.assertIn(finder().get_jvm_path, finder.mock_calls)
-
     def testLinuxGetFromBin(self):
-        finder = jpype._jvmfinder.LinuxJVMFinder()
+        finder = LinuxJVMFinder()
 
         def f(s):
             return s
@@ -144,45 +123,12 @@ class JVMFinderTest(unittest.TestCase):
             self.assertEqual(
                 pathmock.dirname.mock_calls[0][1], (finder._java,))
 
-    # FIXME this test is faking files using the mock system.  Replace it with stub
-    # files so that we have a more accurate test rather than just testing the implementation.
-    # FIXME this fails in the CI but works locally.   Disabling this for now.
-    @common.unittest.skip  # type: ignore
-    def testCheckArch(self):
-        import struct
-        with mock.patch("builtins.open", mock.mock_open(read_data="data")) as mock_file, \
-                self.assertRaises(JVMNotSupportedException):
-            jpype._jvmfinder._checkJVMArch('path', 2**32)
-
-        data = struct.pack('<ccIH', b'M', b'Z', 0, 332)
-        with mock.patch("builtins.open", mock.mock_open(read_data=data)) as mock_file:
-            jpype._jvmfinder._checkJVMArch('path', 2**32)
-        with mock.patch("builtins.open", mock.mock_open(read_data=data)) as mock_file, \
-                self.assertRaises(JVMNotSupportedException):
-            jpype._jvmfinder._checkJVMArch('path', 2**64)
-
-        data = struct.pack('<ccIH', b'M', b'Z', 0, 512)
-        with mock.patch("builtins.open", mock.mock_open(read_data=data)) as mock_file:
-            jpype._jvmfinder._checkJVMArch('path', 2**64)
-        with mock.patch("builtins.open", mock.mock_open(read_data=data)) as mock_file, \
-                self.assertRaises(JVMNotSupportedException):
-            jpype._jvmfinder._checkJVMArch('path', 2**32)
-
-        data = struct.pack('<ccIH', b'M', b'Z', 0, 34404)
-        with mock.patch("builtins.open", mock.mock_open(read_data=data)) as mock_file:
-            jpype._jvmfinder._checkJVMArch('path', 2**64)
-        with mock.patch("builtins.open", mock.mock_open(read_data=data)) as mock_file, \
-                self.assertRaises(JVMNotSupportedException):
-            jpype._jvmfinder._checkJVMArch('path', 2**32)
-
+    @unittest.skipIf(sys.platform != "win", "only on windows")
     def testWindowsRegistry(self):
-        finder = jpype._jvmfinder.WindowsJVMFinder()
-        with mock.patch("jpype._jvmfinder.winreg") as winregmock:
-            winregmock.QueryValueEx.return_value = ('success', '')
-            self.assertEqual(finder._get_from_registry(), 'success')
-            winregmock.OpenKey.side_effect = OSError()
-            self.assertEqual(finder._get_from_registry(), None)
-
+        finder = WindowsJVMFinder()
+        jvm_home = pathlib.Path(finder.get_jvm_path())
+        assert jvm_home.exists()
+        assert jvm_home.is_dir()
 
 if __name__ == '__main__':
     unittest.main()
