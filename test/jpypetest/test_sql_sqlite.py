@@ -3,7 +3,6 @@
 import datetime
 import decimal
 import threading
-from unittest import SkipTest
 
 import pytest
 
@@ -11,7 +10,7 @@ import common
 import jpype
 import jpype.dbapi2 as dbapi2
 from jpype import java
-from jpype.types import *
+from jpype.types import JArray, JByte
 
 try:
     import zlib
