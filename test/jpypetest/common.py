@@ -153,5 +153,4 @@ def java_version():
                           "import jpype; jpype.startJVM(); "
                           "print(jpype.java.lang.System.getProperty('java.version'))"]),
                        encoding='ascii')
-    print("java_version:", java_version)
     return tuple(map(int, java_version.split(".")))

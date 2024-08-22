@@ -24,6 +24,14 @@ db_name = "jdbc:hsqldb:mem:myDb"
 #first = "jdbc:derby:memory:myDb;create=True"
 
 
+def setUpModule(module):
+    from common import java_version
+    import pytest
+    version = java_version()
+    if version[0] == 1 and version[1] == 8:
+        pytest.skip("jdk8 unsupported", allow_module_level=True)
+
+
 @common.unittest.skipUnless(zlib, "requires zlib")
 class ConnectTestCase(common.JPypeTestCase):
     def setUp(self):

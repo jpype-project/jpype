@@ -1,5 +1,7 @@
 # This file is Public Domain and may be used without restrictions,
 # because nobody should have to waste their lives typing this again.
+import pytest
+
 import jpype
 from jpype.types import *
 from jpype import java
@@ -18,6 +20,13 @@ except ImportError:
 
 
 db_name = "jdbc:h2:mem:testdb"
+
+def setUpModule(module):
+    from common import java_version
+    version = java_version()
+    if version[0] == 1 and version[1] == 8:
+        pytest.skip("jdk8 unsupported", allow_module_level=True)
+
 
 
 class ConnectTestCase(common.JPypeTestCase):
