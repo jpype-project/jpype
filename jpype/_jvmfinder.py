@@ -25,7 +25,7 @@ __all__ = ['getDefaultJVMPath',
            'JVMNotFoundException',
            'JVMNotSupportedException']
 
-from typing import Sequence
+from typing import Sequence, Tuple
 
 
 class JVMNotFoundException(ValueError):
@@ -79,7 +79,7 @@ class JVMFinder:
     _libfile: str = "libjvm.so"
 
     # Predefined locations
-    _locations: Sequence = ("/usr/lib/jvm", "/usr/java")
+    _locations: Tuple[str, ...] = ("/usr/lib/jvm", "/usr/java")
 
     def __init__(self):
         # Search methods
@@ -285,7 +285,7 @@ class DarwinJVMFinder(LinuxJVMFinder):
     # Library file name
     _libfile = "libjli.dylib"
     # Predefined locations
-    _locations = ('/Library/Java/JavaVirtualMachines',)
+    _locations = ('/Library/Java/JavaVirtualMachines',)  # type: ignore
 
     def __init__(self):
         """
