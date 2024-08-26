@@ -42,7 +42,7 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 {
 	JP_PY_TRY("PyJPValue_alloc");
 
-#if PY_VERSION_HEX<0x030c0000
+#if PY_VERSION_HEX<0x030b0000
 	Py_ssize_t refcnt = ((PyObject*) type)->ob_refcnt;
 	// Modification from Python to add size elements
 	const size_t size = _PyObject_VAR_SIZE(type, nitems + 1) + sizeof (JPValue);
