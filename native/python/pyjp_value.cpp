@@ -41,8 +41,32 @@ extern "C"
 PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 {
 	JP_PY_TRY("PyJPValue_alloc");
-	Py_ssize_t refcnt = ((PyObject*) type)->ob_refcnt;
 
+#if PY_VERSION_HEX<0x030c0000
+	Py_ssize_t refcnt = ((PyObject*) type)->ob_refcnt;
+	// Modification from Python to add size elements
+	const size_t size = _PyObject_VAR_SIZE(type, nitems + 1) + sizeof (JPValue);
+	PyObject *obj = (PyType_IS_GC(type)) ? _PyObject_GC_Malloc(size)
+    	: (PyObject *) PyObject_MALLOC(size);
+	if (obj == NULL)
+		return PyErr_NoMemory(); // GCOVR_EXCL_LINE
+	memset(obj, 0, size);
+
+	if (type->tp_itemsize == 0)
+		PyObject_Init(obj, type);
+	else
+		PyObject_InitVar((PyVarObject *) obj, type, nitems);
+
+	// This line is required to deal with Python bug (GH-11661)
+	// Some versions of Python fail to increment the reference counter of
+	// heap types properly.
+	if (refcnt == ((PyObject*) type)->ob_refcnt)
+		Py_INCREF(type);  // GCOVR_EXCL_LINE
+
+	if (PyType_IS_GC(type))
+		PyObject_GC_Track(obj);
+
+#else
 	// 1) allocate memory (+pre +inline)
 	// 2) gc link
 	// 3) init (set type, ref type, set ob_size)
@@ -50,12 +74,7 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 	type->tp_basicsize += sizeof(JPValue);
 	PyObject* obj = PyType_GenericAlloc(type, nitems);
 	type->tp_basicsize -= sizeof(JPValue);
-
-	// This line is required to deal with Python bug (GH-11661)
-	// Some versions of Python fail to increment the reference counter of
-	// heap types properly.
-	if (refcnt == ((PyObject*) type)->ob_refcnt)
-		Py_INCREF(type);  // GCOVR_EXCL_LINE
+#endif
 
 	JP_TRACE("alloc", type->tp_name, obj);
 	return obj;
