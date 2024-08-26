@@ -107,7 +107,7 @@ bench requires JDK to build.
 
 **4. Test JPype with (optional):** ::
 
-    python setup.py test
+    python -m pytest
 
 
 

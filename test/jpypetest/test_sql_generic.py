@@ -1,5 +1,4 @@
 # This file is Public Domain and may be used without restrictions.
-from jpype.types import *
 import jpype.dbapi2 as dbapi2
 import common
 import time
