@@ -16,6 +16,7 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_stringtype.h"
+#include <Python.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -40,42 +41,15 @@ extern "C"
 PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 {
 	JP_PY_TRY("PyJPValue_alloc");
-	// Modification from Python to add size elements
-	const size_t size = _PyObject_VAR_SIZE(type, nitems + 1) + sizeof (JPValue);
-	PyObject *obj = nullptr;
-	if (PyType_IS_GC(type))
-	{
-		// Horrible kludge because python lacks an API for allocating a GC type with extra memory
-		// The private method _PyObject_GC_Alloc is no longer visible, so we are forced to allocate
-		// a different type with the extra memory and then hot swap the type to the real one.
-		PyTypeObject type2;
-		type2.tp_basicsize = size;
-		type2.tp_itemsize = 0;
-		type2.tp_name = nullptr;
-		type2.tp_flags = type->tp_flags;
-		type2.tp_traverse = type->tp_traverse;
-
-		// Allocate the fake type
-		obj = PyObject_GC_New(PyObject, &type2);
-
-		// Note the object will be inited twice which should not leak. (fingers crossed)
-	}
-	else
-	{
-		obj = (PyObject*) PyObject_MALLOC(size);
-	}
-	if (obj == nullptr)
-		return PyErr_NoMemory(); // GCOVR_EXCL_LINE
-	memset(obj, 0, size);
-
-
 	Py_ssize_t refcnt = ((PyObject*) type)->ob_refcnt;
-	obj->ob_type = type;
 
-	if (type->tp_itemsize == 0)
-		PyObject_Init(obj, type);
-	else
-		PyObject_InitVar((PyVarObject *) obj, type, nitems);
+	// 1) allocate memory (+pre +inline)
+	// 2) gc link
+	// 3) init (set type, ref type, set ob_size)
+	// 4) set up inline dict past the length of object (if inline)
+	type->tp_basicsize += sizeof(JPValue);
+	PyObject* obj = PyType_GenericAlloc(type, nitems);
+	type->tp_basicsize -= sizeof(JPValue);
 
 	// This line is required to deal with Python bug (GH-11661)
 	// Some versions of Python fail to increment the reference counter of
@@ -83,10 +57,6 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 	if (refcnt == ((PyObject*) type)->ob_refcnt)
 		Py_INCREF(type);  // GCOVR_EXCL_LINE
 
-	if (PyType_IS_GC(type))
-	{
-		PyObject_GC_Track(obj);
-	}
 	JP_TRACE("alloc", type->tp_name, obj);
 	return obj;
 	JP_PY_CATCH(nullptr);
@@ -107,17 +77,20 @@ Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self)
 	if (type == nullptr
 			|| type->tp_alloc != (allocfunc) PyJPValue_alloc
 			|| type->tp_finalize != (destructor) PyJPValue_finalize)
+    {
 		return 0;
-	Py_ssize_t offset;
-	Py_ssize_t sz = 0;
+    }
 
+	Py_ssize_t offset = 0;
+	Py_ssize_t sz = 0;
+    
 #if PY_VERSION_HEX>=0x030c0000
 	// starting in 3.12 there is no longer ob_size in PyLong
 	if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_LONG_SUBCLASS))
 		sz = (((PyLongObject*)self)->long_value.lv_tag) >> 3;  // Private NON_SIZE_BITS
 	else 
 #endif
-		if (type->tp_itemsize != 0)
+	if (type->tp_itemsize != 0)
 		sz = Py_SIZE(self);
 	// PyLong abuses ob_size with negative values prior to 3.12
 	if (sz < 0)
