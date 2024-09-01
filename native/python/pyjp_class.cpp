@@ -728,8 +728,9 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 
 	if (self->m_Class == NULL)
 	{
-		PyErr_Format(PyExc_TypeError, "Cannot instantiate unspecified array type");
-		return NULL;
+		PyObject *res = PyObject_CallMethod((PyObject *)self, "__class_getitem__", "O", item);
+		Py_DECREF(item);
+		return res;
 	}
 
 	if (PyIndex_Check(item))

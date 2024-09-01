@@ -593,6 +593,7 @@ class ArrayTestCase(common.JPypeTestCase):
         # Check Objects
         self.assertEqual(JString[5].getClass(), JArray(JString)(5).getClass())
         self.assertEqual(JObject[5].getClass(), JArray(JObject)(5).getClass())
+        self.assertEqual(JClass[5].getClass(), JArray(JClass)(5).getClass())
 
         # Test multidimensional
         self.assertEqual(JDouble[5, 5].getClass(), JArray(JDouble, 2)(5).getClass())
@@ -601,3 +602,14 @@ class ArrayTestCase(common.JPypeTestCase):
     def testJArrayIndex(self):
         with self.assertRaises(TypeError):
             jpype.JArray[10]
+
+    def testJArrayGeneric(self):
+        self.assertEqual(type(JObject[0]), JArray(JObject))
+
+    def testJArrayGeneric_Init(self):
+        Arrays = JClass("java.util.Arrays")
+        self.assertTrue(Arrays.equals(JObject[0], JArray(JObject)(0)))
+
+    def testJArrayInvalidGeneric(self):
+        with self.assertRaises(TypeError):
+            jpype.JArray[object]
