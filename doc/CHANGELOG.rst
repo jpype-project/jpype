@@ -6,7 +6,11 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 
 - **1.5.1_dev0 - 2023-12-15**
+
+  - Added support for typing ``JArray``.
+
   - Fixed uncaught exception while setting traceback causing issues in Python 3.11/3.12.
+
   - Use PEP-518 and PEP-660 configuration for the package, allowing editable and
     configurable builds using modern Python packaging tooling.
     Where before ``python setup.py --enable-tracing develop``, now can be done with
