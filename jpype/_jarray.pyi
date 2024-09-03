@@ -15,7 +15,6 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import abc
 import collections.abc
 import typing
 
@@ -26,18 +25,30 @@ __all__ = ['JArray']
 T = typing.TypeVar('T')
 
 
-class _JArrayGeneric(collections.abc.Sequence[T]):
-
-    @abc.abstractmethod
-    def __setitem__(self, index, value):
-        ...
-
-
-class JArray(_JArrayGeneric[T], metaclass=abc.ABCMeta):
+class JArray(collections.abc.Collection[T], collections.abc.Reversible[T]):
 
     def __new__(cls, tp, dims=1):
         ...
 
     @classmethod
     def of(cls, array, dtype=None):
+        ...
+
+    def __len__(self):
+        ...
+
+    def __iter__(self):
+        ...
+
+    def __contains__(self, item):
+        # this is implicitly implemented
+        ...
+
+    def __reversed__(self):
+        ...
+
+    def __getitem__(self, key):
+        ...
+
+    def __setitem__(self, index, value):
         ...

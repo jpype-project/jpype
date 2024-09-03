@@ -102,7 +102,7 @@ class JArray(_jpype._JObject, internal=True):  # type: ignore[call-arg]
             key = _jpype.JClass(key)
         if isinstance(key, _jpype.JClass):
             return type(key[0])
-        raise TypeError("Cannot instantiate unspecified array type")
+        raise TypeError("%s is not a Java class" % key)
 
 
 class _JArrayProto(object):
@@ -116,10 +116,6 @@ class _JArrayProto(object):
     def __reversed__(self):
         for elem in self[::-1]:
             yield elem
-    
-    def __contains__(self, item):
-        # "in" works without this but this should be more efficient
-        return _jpype.JClass("java.util.Arrays").asList(self).contains(item)
 
     def clone(self):
         """ Clone the Java array.

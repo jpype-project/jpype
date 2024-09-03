@@ -604,12 +604,22 @@ class ArrayTestCase(common.JPypeTestCase):
             jpype.JArray[10]
 
     def testJArrayGeneric(self):
-        self.assertEqual(type(JObject[0]), JArray(JObject))
+        self.assertEqual(type(JObject[1]), JArray[JObject])
 
     def testJArrayGeneric_Init(self):
         Arrays = JClass("java.util.Arrays")
-        self.assertTrue(Arrays.equals(JObject[0], JArray(JObject)(0)))
+        self.assertTrue(Arrays.equals(JObject[0], JArray[JObject](0)))
 
     def testJArrayInvalidGeneric(self):
         with self.assertRaises(TypeError):
             jpype.JArray[object]
+    
+    def testJArrayGenericJClass(self):
+        self.assertEqual(type(JClass[0]), JArray[JClass])
+
+    def testJArrayGenericString(self):
+        self.assertEqual(type(JClass[0]), JArray["java.lang.Class"])
+
+    def testJArrayGenericStringInvalid(self):
+        with self.assertRaises(TypeError):
+            JArray["foo.bar"] # type: ignore

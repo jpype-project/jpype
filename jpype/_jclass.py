@@ -98,7 +98,6 @@ class JClass(_jpype._JClass, metaclass=JClassMeta):
         # Pass to class factory to create the type
         return _jpype._getClass(jc)
     
-    @classmethod
     def __class_getitem__(cls, index):
         # enables JClass[1] to get a Class[]
         return JClass("java.lang.Class")[index]
