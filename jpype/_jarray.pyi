@@ -15,7 +15,6 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import collections.abc
 import typing
 
 
@@ -25,30 +24,43 @@ __all__ = ['JArray']
 T = typing.TypeVar('T')
 
 
-class JArray(collections.abc.Collection[T], collections.abc.Reversible[T]):
+class JArray(typing.Collection[T], typing.Reversible[T]):
 
-    def __new__(cls, tp, dims=1):
+    def __new__(cls, tp: typing.Type[T], dims=1) -> JArray[T]:
         ...
 
     @classmethod
     def of(cls, array, dtype=None):
         ...
 
-    def __len__(self):
+    def __len__(self) -> int:
         ...
 
-    def __iter__(self):
+    def __iter__(self) -> typing.Iterator[T]:
         ...
 
-    def __contains__(self, item):
+    def __contains__(self, item: T) -> bool:
         # this is implicitly implemented
         ...
 
-    def __reversed__(self):
+    def __reversed__(self) -> typing.Iterator[T]:
         ...
 
-    def __getitem__(self, key):
+    @typing.overload
+    def __getitem__(self, key: int) -> T:
         ...
 
-    def __setitem__(self, index, value):
+    @typing.overload
+    def __getitem__(self, key: slice) -> JArray[T]:
+        ...
+
+    @typing.overload
+    def __setitem__(self, index: int, value: T):
+        ...
+
+    @typing.overload
+    def __setitem__(self, index: slice, value: typing.Sequence[T]):
+        ...
+
+    def __class_getitem__(cls, key: T) -> typing.Type[JArray[T]]:
         ...
