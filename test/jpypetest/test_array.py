@@ -613,13 +613,6 @@ class ArrayTestCase(common.JPypeTestCase):
     def testJArrayInvalidGeneric(self):
         with self.assertRaises(TypeError):
             jpype.JArray[object]
-    
+
     def testJArrayGenericJClass(self):
         self.assertEqual(type(JClass[0]), JArray[JClass])
-
-    def testJArrayGenericString(self):
-        self.assertEqual(type(JClass[0]), JArray["java.lang.Class"])
-
-    def testJArrayGenericStringInvalid(self):
-        with self.assertRaises(TypeError):
-            JArray["foo.bar"] # type: ignore

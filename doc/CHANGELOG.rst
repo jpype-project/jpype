@@ -7,7 +7,7 @@ Latest Changes:
 
 - **1.5.1_dev0 - 2023-12-15**
 
-  - Added support for typing ``JArray``. ``JArray[java.lang.Object]`` ``JArray["java.lang.Object"]``
+  - Added support for typing ``JArray`` (Java type only), e.g. ``JArray[java.lang.Object]`` ``"JArray[java.lang.Object]"``
 
   - Fixed uncaught exception while setting traceback causing issues in Python 3.11/3.12.
 
@@ -53,10 +53,10 @@ Latest Changes:
 
   - Add additional matching level for derived types to resolve ambiguities when
     a derived type is used in place of base class when determining the method
-    overload.  This will resolve some previous ambiguities between methods.
+    overload.  This will resolve some previous ambiguities between methods.  
 
 - **1.4.1 - 2022-10-26**
-
+  
   - Fixed issue with startJVM changing locale settings.
 
   - Changes to support Python 3.11
@@ -76,7 +76,7 @@ Latest Changes:
     - Support for byte order channels on buffer transfers.
 
     - Byte size for buffers now fixed to Java definitions.
-
+      
     - When directly accessing Java arrays using memory view, Python requires a
       cast from buffers.  Required because Python does not support memory view
       alterations on non-native sizes.
@@ -91,8 +91,8 @@ Latest Changes:
 
   - dbapi2 handles drivers that don't support autocommit.
 
-  - Fixed issue when Java classes with dunder methods such as  ``__del__``
-    caused conflicts in Python type system.   Java method which match dunder
+  - Fixed issue when Java classes with dunder methods such as  ``__del__`` 
+    caused conflicts in Python type system.   Java method which match dunder 
     patterns are longer translated to Python.
 
   - Fix issue with numpy arrays with no dimensions resulting in crash.
@@ -110,7 +110,7 @@ Latest Changes:
 
   - Fixed issue with classes with unsatified dependencies leading to a crash
     on windows.
-
+  
   - Fixed a bug with arrays created using the short cut.  The wrong type
     was being returned.
 
@@ -154,10 +154,10 @@ Latest Changes:
 
 - **1.1.1 - 2020-10-21**
 
-  - Fixed packaging problem on linux.
+  - Fixed packaging problem on linux.  
 
 - **1.1.0 - 2020-10-13**
-
+  
   - Correct bug resulting in reporting ambiguous overloads when resolving
     methods with variadic arguments.
 
@@ -169,7 +169,7 @@ Latest Changes:
 
   - Fixed crash with Ctrl+C when multiple exceptions were generated.
 
-  - Removed extraneous exception when calling Ctrl+C before Java code is
+  - Removed extraneous exception when calling Ctrl+C before Java code is 
     executed for methods and fields.
 
   - Fixed memory leak with string cache.
@@ -203,9 +203,9 @@ Latest Changes:
 
   - Improved speed on transfer of lists, tuples, buffers to arrays of Java
     primitives by a factor of 4 to 100 depending on the data type.  The
-    conversion uses optimized path for memory buffers, rather than the
+    conversion uses optimized path for memory buffers, rather than the 
     Sequence API.  When a Python buffer is encountered only the
-    first element is checked for conversion as Python buffers are homogeneous.
+    first element is checked for conversion as Python buffers are homogeneous. 
 
   - Corrected symbol problem with Python 3.5.3.  PySlice_Unpack was introduced
     in a later patch release and should not have been used.
@@ -225,7 +225,7 @@ Latest Changes:
 
   - A bug was reported with numpy.linalg.inv resulting in crashes.  This was
     traced to an interaction with threading between the JVM and some compilations
-    of numpy.  The workaround appears to be calling numpy.linalg.inv prior to
+    of numpy.  The workaround appears to be calling numpy.linalg.inv prior to 
     starting the JVM.
 
 - **1.0.1 - 2020-07-16**
@@ -233,7 +233,7 @@ Latest Changes:
   - Workarounds for Python 3.8.4 release.  Python altered logic regarding the
     use of ``__setattr__`` for object and type, preventing it from being used
     to alter derived classes.  Also the checking for errors was delegated from
-    the ``__setattr__`` method so exception types on some sanity checks
+    the ``__setattr__`` method so exception types on some sanity checks 
     needed to be updated accordingly.
 
 - **1.0.0 - 2020-07-12**
@@ -248,27 +248,27 @@ Latest Changes:
 
   - Introduced Python operator for Java casting.  In Java to cast
     to a type you would use ``(Type) obj``, but Python does not support
-    anything similar.  Therefore, we are enlisting the rarely used
+    anything similar.  Therefore, we are enlisting the rarely used 
     ``matmul`` operator as to allow an easy way to cast an object
     to a Java type.  When a cast to a Java type is required, use
-    ``Type@obj`` or ``(Type)@obj``.
+    ``Type@obj`` or ``(Type)@obj``.  
 
   - Introduced array notation to create Java arrays.  In earlier versions,
     JArray factory was required to make a new array type.  But this is
     tedious to read.  In Java the notation would be ``Type[]`` to declare
-    a type or ``new Type[sz]`` to make a new array.  Python does not
-    directly support this notation, but it does allow for unspecifed
+    a type or ``new Type[sz]`` to make a new array.  Python does not 
+    directly support this notation, but it does allow for unspecifed 
     array sizes using a slice.  All Java class types support
-    ``Type[sz]`` to create an array of a fixed size and ``Type[:]`` to
+    ``Type[sz]`` to create an array of a fixed size and ``Type[:]`` to 
     create an array type which can be intiated later.   This call be applied
     to multiple dimensions to create fixed sized arrays ``Type[s1][s2][s3]``
-    to declare multidimension array types ``Type[:][:][:]`` or to
+    to declare multidimension array types ``Type[:][:][:]`` or to 
     create a new multi dimensional array with unspecified dimensions
     ``Type[sz][:][:]``.  Applying a slice with limits to a class is
     unsupported.
 
-  - Java classes annotated with ``@FunctionalInterface`` can be
-    converted from any Python object that implements ``__call__``.
+  - Java classes annotated with ``@FunctionalInterface`` can be 
+    converted from any Python object that implements ``__call__``. 
     This allows functions, lambdas, and class constructors to be used
     whereever Java accepts a lambda.
 
@@ -287,7 +287,7 @@ Latest Changes:
     float and integer types will produce a ``TypeError``.
 
   - Use of ``JException`` is discouraged.  To catch all exceptions
-    or test if an object is a Java exception type,
+    or test if an object is a Java exception type, 
     use ``java.lang.Throwable``.
 
   - Chained Java exception causes are now reflected in the Python stackframes.
@@ -301,7 +301,7 @@ Latest Changes:
     and ``collections.abc.MutableSequence``.
 
   - ``java.util.Collection`` completes the contract for ``collections.abc.Collection``.
-
+  
   - Java classes are closed and will raise ``TypeError`` if extended in Python.
 
   - Handles Control-C gracefully.  Previous versions crash whenever
@@ -320,7 +320,7 @@ Latest Changes:
 - **0.7.4 - 4-28-2020**
 
   - Corrected a resource leak in arrays that affects array initialization, and variable
-    argument methods.
+    argument methods.  
 
   - Upgraded diagnostic tracing and JNI checks to prevent future resource leaks.
 
@@ -330,13 +330,13 @@ Latest Changes:
     classes is now completely in Java to allow enhancements for
     buffer support and revised type conversion system.
 
-  - Python module ``jpype.reflect`` will be removed in the next release.
-
+  - Python module ``jpype.reflect`` will be removed in the next release.  
+    
   - ``jpype.startJVM`` option ``convertStrings`` default will become False
     in the next release.
 
-  - Undocumented feature of using a Python type in ``JObject(obj, type=tp)``
-    is deprecated to support casting to Python wrapper types in Java in a
+  - Undocumented feature of using a Python type in ``JObject(obj, type=tp)`` 
+    is deprecated to support casting to Python wrapper types in Java in a 
     future release.
 
   - Dropped support for Cygwin platform.
@@ -370,7 +370,7 @@ Latest Changes:
     are direct.  They can be converted to NumPy arrays with
     ``numpy.asarray(memoryview(obj))``.
 
-  - Proxies created with ``@JImplements`` properly implement ``toString``,
+  - Proxies created with ``@JImplements`` properly implement ``toString``, 
     ``hashCode``, and ``equals``.
 
   - Proxies pass Python exceptions properly rather converting to
@@ -388,16 +388,16 @@ Latest Changes:
     as Java holds on to it.
 
   - jpype.imports and JPackage verify existance of packages and classes.
-    Imports from Java packages support wildcards.
+    Imports from Java packages support wildcards.  
 
   - Bug with JPackage that imported private and protected classes
     inappropriately has been corrected.  Protected classes can still be
     imported using JClass.
 
-  - Undocumented feature of using a Python type in ``JObject(obj, type=tp)``
-    is deprecated to support casting to Python wrapper types in Java in a
+  - Undocumented feature of using a Python type in ``JObject(obj, type=tp)`` 
+    is deprecated to support casting to Python wrapper types in Java in a 
 
-  - ``@JImplements`` with keyword argument ``deferred`` can be started
+  - ``@JImplements`` with keyword argument ``deferred`` can be started 
     prior to starting the JVM.  Methods are checked at first object
     creation.
 
@@ -428,7 +428,7 @@ Latest Changes:
     Converter function must produce a Java class instance.
 
   - ``pathlib.Path`` can be implicitly converted into ``java.lang.File``
-    and ``java.lang.Path``.
+    and ``java.lang.Path``.  
 
   - ``datetime.datatime`` can implicitly convert to ``java.time.Instant``.
 

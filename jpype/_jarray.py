@@ -96,9 +96,9 @@ class JArray(_jpype._JObject, internal=True):  # type: ignore[call-arg]
         if key is _jpype.JClass:
             # explicit check for JClass
             # _toJavaClass cannot be used
-            # passing int, float, etc is not allowed
+            # passing int, float, str, etc is not allowed
             key = _jpype._java_lang_Class
-        if isinstance(key, (str, _jpype._java_lang_Class)):
+        if isinstance(key, _jpype._java_lang_Class):
             key = _jpype.JClass(key)
         if isinstance(key, _jpype.JClass):
             return type(key[0])
