@@ -616,3 +616,6 @@ class ArrayTestCase(common.JPypeTestCase):
 
     def testJArrayGenericJClass(self):
         self.assertEqual(type(JClass[0]), JArray[JClass])
+
+    def testJArrayJavaClass(self):
+        self.assertEqual(type(JObject[0]), JArray[JObject.class_])
