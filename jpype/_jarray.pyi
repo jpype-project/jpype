@@ -30,7 +30,7 @@ class JArray(typing.Generic[T]):
         ...
 
     @classmethod
-    def of(cls, array, dtype=None):
+    def of(cls, array, dtype=None) -> JArray[T]:
         ...
 
     def __len__(self) -> int:
