@@ -22,6 +22,7 @@ __all__ = ['JArray']
 
 
 T = typing.TypeVar('T')
+U = typing.TypeVar('U')
 
 
 class JArray(typing.Generic[T]):
@@ -30,7 +31,7 @@ class JArray(typing.Generic[T]):
         ...
 
     @classmethod
-    def of(cls, array, dtype=None) -> JArray[T]:
+    def of(cls, array, dtype: typing.Optional[typing.Type[U]] = None) -> JArray[U]:
         ...
 
     def __len__(self) -> int:
