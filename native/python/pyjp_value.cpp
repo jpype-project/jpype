@@ -44,10 +44,10 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 
 #if PY_VERSION_HEX<0x030b0000
 	Py_ssize_t refcnt = ((PyObject*) type)->ob_refcnt;
-	// Modification from Python to add size elements
 	const size_t size = _PyObject_VAR_SIZE(type, nitems + 1) + sizeof (JPValue);
+	// Modification from Python to add size elements
 	PyObject *obj = (PyType_IS_GC(type)) ? _PyObject_GC_Malloc(size)
-    	: (PyObject *) PyObject_MALLOC(size);
+		: (PyObject *) PyObject_MALLOC(size);
 	if (obj == NULL)
 		return PyErr_NoMemory(); // GCOVR_EXCL_LINE
 	memset(obj, 0, size);
@@ -67,9 +67,23 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 		PyObject_GC_Track(obj);
 
 #else
-	PyObject* obj = PyUnstable_Object_GC_NewWithExtraData(type, size - _PyObject_SIZE(tp));
-	if (type->tp_itemsize > 0) {
-        Py_SET_SIZE((PyVarObject*) obj, nitems);
+
+	// 1) allocate memory (+pre +inline)
+	// 2) gc link
+	// 3) init (set type, ref type, set ob_size)
+	// 4) set up inline dict past the length of object (if inline)
+	PyObject* obj = nullptr;
+	if (type->tp_itemsize != 0) {
+		Py_ssize_t extra = (sizeof(JPValue))/type->tp_itemsize;
+		if (extra == 0)
+			extra = 1;
+		obj = PyType_GenericAlloc(type, nitems+extra);
+		Py_SET_SIZE(obj, nitems);
+	}
+	else {
+		// why do we need twice the allocation.   Not sure, nothing in our logic says that it should be necessary
+		obj = PyUnstable_Object_GC_NewWithExtraData(type, 2*sizeof(JPValue));
+	}
 #endif
 
 	JP_TRACE("alloc", type->tp_name, obj);
@@ -92,13 +106,13 @@ Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self)
 	if (type == nullptr
 			|| type->tp_alloc != (allocfunc) PyJPValue_alloc
 			|| type->tp_finalize != (destructor) PyJPValue_finalize)
-    {
+	{
 		return 0;
-    }
+	}
 
 	Py_ssize_t offset = 0;
 	Py_ssize_t sz = 0;
-    
+	
 #if PY_VERSION_HEX>=0x030c0000
 	// starting in 3.12 there is no longer ob_size in PyLong
 	if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_LONG_SUBCLASS))
@@ -209,7 +223,7 @@ PyObject* PyJPValue_str(PyObject* self)
 				Py_INCREF(cache);
 				return cache;
 			}
-            auto jstr = (jstring) value->getValue().l;
+			auto jstr = (jstring) value->getValue().l;
 			string str;
 			str = frame.toStringUTF8(jstr);
 			cache = JPPyString::fromStringUTF8(str).keep();
