@@ -67,13 +67,9 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 		PyObject_GC_Track(obj);
 
 #else
-	// 1) allocate memory (+pre +inline)
-	// 2) gc link
-	// 3) init (set type, ref type, set ob_size)
-	// 4) set up inline dict past the length of object (if inline)
-	type->tp_basicsize += sizeof(JPValue);
-	PyObject* obj = PyType_GenericAlloc(type, nitems);
-	type->tp_basicsize -= sizeof(JPValue);
+	PyObject* obj = PyUnstable_Object_GC_NewWithExtraData(type, size - _PyObject_SIZE(tp));
+	if (type->tp_itemsize > 0) {
+        Py_SET_SIZE((PyVarObject*) obj, nitems);
 #endif
 
 	JP_TRACE("alloc", type->tp_name, obj);
