@@ -23,6 +23,9 @@ extern "C"
 {
 #endif
 
+// Create a dummy type which we will use only for allocation
+PyTypeObject* PyJPAlloc_Type = nullptr;
+
 /**
  * Allocate a new Python object with a slot for Java.
  *
@@ -42,58 +45,31 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 {
 	JP_PY_TRY("PyJPValue_alloc");
 
-#if PY_VERSION_HEX<0x030b0000
-	Py_ssize_t refcnt = ((PyObject*) type)->ob_refcnt;
-	const size_t size = _PyObject_VAR_SIZE(type, nitems + 1) + sizeof (JPValue);
-	// Modification from Python to add size elements
-	PyObject *obj = (PyType_IS_GC(type)) ? _PyObject_GC_Malloc(size)
-		: (PyObject *) PyObject_MALLOC(size);
-	if (obj == NULL)
-		return PyErr_NoMemory(); // GCOVR_EXCL_LINE
-	memset(obj, 0, size);
-
-	if (type->tp_itemsize == 0)
-		PyObject_Init(obj, type);
-	else
-		PyObject_InitVar((PyVarObject *) obj, type, nitems);
-
-	// This line is required to deal with Python bug (GH-11661)
-	// Some versions of Python fail to increment the reference counter of
-	// heap types properly.
-	if (refcnt == ((PyObject*) type)->ob_refcnt)
-		Py_INCREF(type);  // GCOVR_EXCL_LINE
-
-	if (PyType_IS_GC(type))
-		PyObject_GC_Track(obj);
-
-#elif PY_VERSION_HEX<0x030c0000
-	// At some point Python 3.11 backported changes corresponding to Python 3.12
-	// without the support for allocation of method, and with bugs.  We have
-	// to mutilate the base size of the object to get the extra memory we need
-	// And the size we must request appears to be larger tha needed.  This
-	// coresponds to the same bug in PyUnstable_Object_GC_NewWithExtraData.
-	//
-	// This is a horrible hack and I can't guarantee anything about the stability 
-	// of it!
-	type->tp_basicsize += 2*sizeof(JPValue);
-	PyObject* obj = PyType_GenericAlloc(type, nitems);
-	type->tp_basicsize -= 2*sizeof(JPValue);
-#else
-	PyObject* obj = nullptr;
-	if (type->tp_itemsize != 0) {
-		// There is no corresponding PyUnstable_VarObject_GC_NewWithExtraData method 
-		// Without one we are just going to aske for our needed memory though backdoor methods.
-		Py_ssize_t extra = (sizeof(JPValue))/type->tp_itemsize;
-		if (extra == 0)
-			extra = 1;
-		obj = PyType_GenericAlloc(type, nitems+extra);
-		Py_SET_SIZE(obj, nitems);
-	}
-	else {
-		// why do we need twice the allocation.   Not sure, nothing in our logic says that it should be necessary
-		obj = PyUnstable_Object_GC_NewWithExtraData(type, 2*sizeof(JPValue));
-	}
+#if PY_VERSION_HEX >= 0x030d0000
+	// This flag will try to place the dictionary are part of the object which 
+	// adds an unknown number of bytes to the end of the object making it impossible
+	// to attach our needed data.  If we kill the flag then we get usable behavior.
+	if (PyType_HasFeature(type, Py_TPFLAGS_INLINE_VALUES)) {
+        PyErr_Format(PyExc_RuntimeError, "Unhandled object layout");
+        return 0;
+    }
 #endif
+   
+    // Mutate the allocator type 
+    PyJPAlloc_Type->tp_flags = type->tp_flags;
+    PyJPAlloc_Type->tp_basicsize = type->tp_basicsize + sizeof (JPValue);
+    PyJPAlloc_Type->tp_itemsize = type->tp_itemsize;
+
+    // Create a new allocation for the dummy type
+	PyObject* obj = PyType_GenericAlloc(PyJPAlloc_Type, nitems);
+
+    // Watch for memory errors
+    if (obj == nullptr)
+        return nullptr;
+
+    // Polymorph the type to match our desired type
+    obj->ob_type = type;
+    Py_INCREF(type);
 
 	JP_TRACE("alloc", type->tp_name, obj);
 	return obj;
@@ -347,4 +323,39 @@ bool PyJPValue_isSetJavaSlot(PyObject* self)
 		return false;  // GCOVR_EXCL_LINE
 	auto* slot = (JPValue*) (((char*) self) + offset);
 	return slot->getClass() != nullptr;
+}
+
+/***************** Create a dummy type for use when allocating. ************************/
+static int PyJPAlloc_traverse(PyObject *self, visitproc visit, void *arg)
+{
+	return 0;
+}
+
+static int PyJPAlloc_clear(PyObject *self)
+{
+	return 0;
+}
+
+
+static PyType_Slot allocSlots[] = {
+	{ Py_tp_traverse, (void*) PyJPAlloc_traverse},
+	{ Py_tp_clear, (void*) PyJPAlloc_clear},
+    {0, NULL}  // Sentinel
+};
+
+static PyType_Spec allocSpec = {
+	"_jpype._JAlloc",
+	sizeof(PyObject),
+	0,
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
+	allocSlots
+};
+
+void PyJPValue_initType(PyObject* module)
+{
+	PyObject *bases = PyTuple_Pack(1, &PyBaseObject_Type);
+	PyJPAlloc_Type = (PyTypeObject*) PyType_FromSpecWithBases(&allocSpec, bases);
+	Py_DECREF(bases);
+    Py_INCREF(PyJPAlloc_Type);
+	JP_PY_CHECK();
 }
