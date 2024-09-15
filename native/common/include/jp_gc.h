@@ -16,6 +16,15 @@
 #ifndef JP_GC_H
 #define JP_GC_H
 
+#pragma once
+
+#include "jni.h"
+#include <Python.h>
+
+
+class JPContext;
+class JPJavaFrame;
+
 struct JPGCStats
 {
 	long long python_rss;

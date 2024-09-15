@@ -15,6 +15,9 @@
  *****************************************************************************/
 #ifndef JP_REFERENCE_QUEUE_H__
 #define JP_REFERENCE_QUEUE_H__
+
+#pragma once
+
 #include <jpype.h>
 
 namespace JPReferenceQueue

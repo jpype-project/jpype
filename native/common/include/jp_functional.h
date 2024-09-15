@@ -16,6 +16,10 @@
 #ifndef JP_FUNCTIONAL_H
 #define JP_FUNCTIONAL_H
 
+#pragma once
+
+#include "jp_class.h"
+
 class JPFunctional : public JPClass
 {
 public:

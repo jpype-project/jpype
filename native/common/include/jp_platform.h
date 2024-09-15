@@ -16,6 +16,8 @@
 #ifndef _JPENV_H_
 #define _JPENV_H_
 
+#pragma once
+
 /**
  *  the platform adapter's implementation is chosen by the JPYPE_??? macros
  */

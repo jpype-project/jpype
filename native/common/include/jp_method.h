@@ -15,8 +15,22 @@
  *****************************************************************************/
 #ifndef _JPMETHOD_H_
 #define _JPMETHOD_H_
+
+#pragma once
+
 #include "jp_modifier.h"
+#include "jp_resource.h"
+#include "jp_javaframe.h"
+
+#include <vector>
+
+using std::vector;
+
 class JPMethod;
+using JPMethodList = vector<JPMethod *>;
+
+#include "jp_class.h"
+
 
 class JPMethod : public JPResource
 {

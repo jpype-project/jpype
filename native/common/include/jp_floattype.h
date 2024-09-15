@@ -16,6 +16,10 @@
 #ifndef _JP_FLOAT_TYPE_H_
 #define _JP_FLOAT_TYPE_H_
 
+#pragma once
+
+#include "jp_primitivetype.h"
+
 class JPFloatType : public JPPrimitiveType
 {
 public:

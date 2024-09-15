@@ -16,9 +16,17 @@
 #ifndef _JPARRAY_H_
 #define _JPARRAY_H_
 
+#pragma once
+
+#include "jp_context.h"
 #include "jp_javaframe.h"
+#include "jp_pythontypes.h"
 
 class JPArray;
+class JPArrayClass;
+class JPValue;
+
+using JPArrayRef = JPRef<jarray>;
 
 class JPArrayView
 {

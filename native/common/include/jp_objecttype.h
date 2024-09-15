@@ -16,6 +16,10 @@
 #ifndef _JPOBJECTTYPE_H_
 #define _JPOBJECTTYPE_H_
 
+#pragma once
+
+#include "jp_class.h"
+
 /**
  * Wrapper for Class<java.lang.Object>
  *

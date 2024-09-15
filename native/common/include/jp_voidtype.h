@@ -16,6 +16,10 @@
 #ifndef _JP_VOID_TYPE_H_
 #define _JP_VOID_TYPE_H_
 
+#pragma once
+
+#include "jp_primitivetype.h"
+
 class JPVoidType : public JPPrimitiveType
 {
 public:

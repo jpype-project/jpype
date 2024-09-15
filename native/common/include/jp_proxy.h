@@ -16,6 +16,10 @@
 #ifndef _JPPROXY_H_
 #define _JPPROXY_H_
 
+#pragma once
+
+#include "jp_class.h"
+
 struct PyJPProxy;
 class JPProxy;
 class JPFunctional;

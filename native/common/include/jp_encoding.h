@@ -16,9 +16,10 @@
 #ifndef _JP_ENCODING_H_
 #define _JP_ENCODING_H_
 
+#pragma once
+
 #include <iostream>
 #include <string>
-#include <sstream>
 
 class JPEncoding
 {

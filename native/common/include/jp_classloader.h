@@ -16,6 +16,8 @@
 #ifndef _JPCLASSLOADER_H_
 #define _JPCLASSLOADER_H_
 
+#pragma once
+
 #include "jp_class.h"
 
 /**

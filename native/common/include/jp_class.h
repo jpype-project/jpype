@@ -16,7 +16,33 @@
 #ifndef _JP_CLASS_H_
 #define _JP_CLASS_H_
 
+#pragma once
+
+#include "jp_pythontypes.h"
+
+#include "jni.h"
+#include "jp_javaframe.h"
+#include "jp_resource.h"
+#include "jp_match.h"
+#include "jp_context.h"
 #include "jp_modifier.h"
+
+#include <string>
+#include <vector>
+
+using std::string;
+using std::vector;
+
+class JPClass;
+using JPClassList = vector<JPClass *>;
+
+class JPField;
+using JPFieldList = vector<JPField *>;
+
+class JPMethodDispatch;
+using JPMethodDispatchList = vector<JPMethodDispatch *>;
+
+struct JPConversionInfo;
 
 class JPClass : public JPResource
 {

@@ -16,6 +16,18 @@
 #ifndef _JP_JAVA_FRAME_H_
 #define _JP_JAVA_FRAME_H_
 
+#pragma once
+
+#include "jni.h"
+
+#include <string>
+#include <pytypedefs.h>
+
+using std::string;
+
+
+extern "C" using JCleanupHook = void (*)(void *) ;
+
 /** A Java Frame represents a memory managed scope in which
  * java objects can be manipulated.
  *
@@ -44,6 +56,7 @@
 static const int LOCAL_FRAME_DEFAULT = 8;
 
 class JPContext;
+class JPClass;
 
 class JPJavaFrame
 {

@@ -16,6 +16,8 @@
 #ifndef _JPYPE_H_
 #define _JPYPE_H_
 
+#pragma once
+
 #ifdef __GNUC__
 // Python requires char* but C++ string constants are const char*
 #pragma GCC diagnostic ignored "-Wwrite-strings"
@@ -150,16 +152,8 @@ class JPPyObject;
 extern "C" using JCleanupHook = void (*)(void *) ;
 extern "C" struct JPConversionInfo;
 
-using JPClassList = vector<JPClass *>;
-using JPFieldList = vector<JPField *>;
-using JPMethodDispatchList = vector<JPMethodDispatch *>;
-using JPMethodList = vector<JPMethod *>;
-
-class JPResource
-{
-public:
-	virtual ~JPResource() = 0;
-} ;
+// IWYU pragma: begin_exports
+#include "jp_resource.h"
 
 // Macros for raising an exception with jpype
 //   These must be macros so that we can update the pattern and
@@ -175,6 +169,8 @@ public:
 struct _object;
 using PyObject = _object;
 #endif
+
+#include "jp_javaframe.h"
 
 // Base utility headers
 #include "jp_javaframe.h"
@@ -195,5 +191,7 @@ using PyObject = _object;
 
 // Primitives classes
 #include "jp_primitivetype.h"
+
+// IWYU pragma: end_exports
 
 #endif // _JPYPE_H_

@@ -21,6 +21,8 @@ extern "C"
 {
 #endif
 
+#include "jni.h"
+
 namespace JPModifier
 {
 

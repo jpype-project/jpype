@@ -15,6 +15,8 @@
  *****************************************************************************/
 #include "jp_encoding.h"
 
+#include <sstream>
+
 // These encoders handle all the codes expected to be passed between
 // Java and Python assuming they both generate compliant codings.  However,
 // this code does not handle miscodings very well.  The current behavior

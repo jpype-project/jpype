@@ -16,6 +16,11 @@
 #ifndef _JP_BOOLEAN_TYPE_H_
 #define _JP_BOOLEAN_TYPE_H_
 
+#pragma once
+
+#include "jp_primitivetype.h"
+
+
 class JPBooleanType : public JPPrimitiveType
 {
 public:

@@ -15,8 +15,15 @@
  *****************************************************************************/
 #ifndef _JP_TRACER_H__
 #define _JP_TRACER_H__
+
+#pragma once
+
 #include <string>
 #include <sstream>
+
+using std::string;
+
+#include "jp_exception.h"
 
 // GCOVR_EXCL_START
 
@@ -48,6 +55,8 @@
 
 // Enable this option to get all the py referencing information
 #define JP_ENABLE_TRACE_PY
+
+class JPStackInfo;
 
 class JPypeTracer
 {

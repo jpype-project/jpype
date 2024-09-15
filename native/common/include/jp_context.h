@@ -15,8 +15,27 @@
  *****************************************************************************/
 #ifndef JP_CONTEXT_H
 #define JP_CONTEXT_H
-#include <jpype.h>
+
+#pragma once
+
 #include <list>
+#include <string>
+#include <vector>
+
+using std::string;
+using std::vector;
+
+#include "jp_javaframe.h"
+
+class JPContext;
+class JPTypeManager;
+class JPClassLoader;
+class JPPrimitiveType;
+class JPBoxedType;
+class JPStringType;
+class JPResource;
+
+using StringVector = vector<string>;
 
 /** JPClass is a bit heavy when we just need to hold a
  * class reference.  It causes issues during bootstrap. Thus we

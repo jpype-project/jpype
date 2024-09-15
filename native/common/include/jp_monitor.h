@@ -16,6 +16,10 @@
 #ifndef _JPMONITOR_H_
 #define _JPMONITOR_H_
 
+#pragma once
+
+#include "jp_context.h"
+
 class JPMonitor
 {
 public:

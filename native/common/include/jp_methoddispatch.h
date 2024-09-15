@@ -16,6 +16,19 @@
 #ifndef _JPMETHODDISPATCH_H_
 #define _JPMETHODDISPATCH_H_
 
+#pragma once
+
+#include <vector>
+
+using std::vector;
+
+class JPMethodDispatch;
+using JPMethodDispatchList = vector<JPMethodDispatch *>;
+
+class JPMethod;
+using JPMethodList = vector<JPMethod *>;
+
+#include "jp_match.h"
 #include "jp_class.h"
 
 class JPMethodDispatch : public JPResource

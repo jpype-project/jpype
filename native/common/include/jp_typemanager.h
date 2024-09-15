@@ -15,6 +15,19 @@
  *****************************************************************************/
 #ifndef _JPTYPE_MANAGER_H_
 #define _JPTYPE_MANAGER_H_
+#pragma once
+
+#include "jni.h"
+#include "jp_context.h"
+
+#include <string>
+
+using std::string;
+
+class JPJavaFrame;
+class JPClass;
+
+using JPObjectRef = JPRef<jobject>;
 
 /**
  * These functions will manage the cache of found type, be it primitive types, class types or the "magic" types.

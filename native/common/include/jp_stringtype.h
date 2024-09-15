@@ -16,6 +16,10 @@
 #ifndef JP_STRINGCLASS_H
 #define JP_STRINGCLASS_H
 
+#pragma once
+
+#include "jp_class.h"
+
 class JPStringType : public JPClass
 {
 public:

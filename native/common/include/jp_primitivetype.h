@@ -15,7 +15,13 @@
  *****************************************************************************/
 #ifndef _JPPRIMITIVETYPE_H_
 #define _JPPRIMITIVETYPE_H_
-#include "jp_boxedtype.h"
+
+#pragma once
+
+#include "jp_class.h"
+#include "jp_boxedtype.h" // IWYU pragma: export
+
+class JPArrayView;
 
 class JPPrimitiveType : public JPClass
 {

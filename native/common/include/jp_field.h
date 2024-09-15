@@ -16,6 +16,18 @@
 #ifndef _JPFIELD_H_
 #define _JPFIELD_H_
 
+#pragma once
+
+#include "jni.h"
+
+#include <vector>
+using std::vector;
+
+class JPField;
+using JPFieldList = vector<JPField *>;
+
+#include "jp_class.h"
+
 /**
  * Field object
  */

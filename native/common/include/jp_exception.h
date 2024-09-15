@@ -16,6 +16,10 @@
 #ifndef _JP_EXCEPTION_H_
 #define _JP_EXCEPTION_H_
 
+#pragma once
+
+#include "jp_context.h"
+
 /* All exception are passed as JPypeException.  The type of the exception
  * is specified at creation.  Exceptions may be of type
  * - _java_error - exception generated from within java.

@@ -16,7 +16,9 @@
 #ifndef _JPVALUE_H_
 #define _JPVALUE_H_
 
-#include "jp_class.h"
+#pragma once
+
+#include "jni.h"
 #include "jp_javaframe.h"
 
 /** Lightweight representative of a jvalue with its corresponding class.

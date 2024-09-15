@@ -115,7 +115,7 @@ Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self)
 	// starting in 3.12 there is no longer ob_size in PyLong
 	if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_LONG_SUBCLASS))
 		sz = (((PyLongObject*)self)->long_value.lv_tag) >> 3;  // Private NON_SIZE_BITS
-	else 
+	else
 #endif
 		if (type->tp_itemsize != 0)
 		sz = Py_SIZE(self);

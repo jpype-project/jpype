@@ -16,7 +16,17 @@
 #ifndef JP_MATCH_H
 #define JP_MATCH_H
 
+#pragma once
+
+#include <pytypedefs.h>
+#include <vector>
+
 class JPConversion;
+class JPMethod;
+class JPPyObjectVector;
+class JPValue;
+
+#include "jp_javaframe.h"
 
 class JPMatch
 {

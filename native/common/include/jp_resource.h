@@ -13,29 +13,15 @@
 
    See NOTICE file for details.
  *****************************************************************************/
-#ifndef _JPNUMBERTYPE_H_
-#define _JPNUMBERTYPE_H_
+#ifndef _JP_RESOURCE_H_
+#define _JP_RESOURCE_H_
 
 #pragma once
 
-#include "jp_class.h"
-
-/**
- * Wrapper for Class<java.lang.Number>
- */
-class JPNumberType : public JPClass
+class JPResource
 {
 public:
-	JPNumberType(JPJavaFrame& frame, jclass clss,
-			const string& name,
-			JPClass* super,
-			JPClassList& interfaces,
-			jint modifiers);
-
-	~ JPNumberType() override;
-
-	JPMatch::Type findJavaConversion(JPMatch& match) override;
-	void getConversionInfo(JPConversionInfo &info) override;
+	virtual ~JPResource() = 0;
 } ;
 
-#endif // _JPNUMBERTYPE_H_
+#endif

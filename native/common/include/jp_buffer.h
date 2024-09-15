@@ -16,9 +16,15 @@
 #ifndef _JPBUFFER_H_
 #define _JPBUFFER_H_
 
-#include "jp_javaframe.h"
+#pragma once
+
+#include "jni.h"
+#include "jp_context.h"
+#include <Python.h>
+
 
 class JPBufferType;
+class JPValue;
 
 /**
  * Class to wrap Java Class and provide low-level behavior

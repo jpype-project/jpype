@@ -16,6 +16,10 @@
 #ifndef _JPBOXEDCLASS_H_
 #define _JPBOXEDCLASS_H_
 
+#pragma once
+
+#include "jp_class.h"
+
 // Boxed types have special conversion rules so that they can convert
 // from python primitives.  This code specializes the class wrappers
 // to make that happen.

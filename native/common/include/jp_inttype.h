@@ -16,6 +16,11 @@
 #ifndef _JP_INT_TYPE_H_
 #define _JP_INT_TYPE_H_
 
+#pragma once
+
+#include "jp_primitivetype.h"
+#include "jpype.h"
+
 class JPIntType : public JPPrimitiveType
 {
 public:

@@ -16,6 +16,10 @@
 #ifndef JP_CLASSHINTS_H
 #define JP_CLASSHINTS_H
 
+#pragma once
+
+#include "jp_class.h"
+
 class JPConversion
 {
 public:

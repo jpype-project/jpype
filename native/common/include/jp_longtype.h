@@ -16,6 +16,10 @@
 #ifndef _JP_LONG_TYPE_H_
 #define _JP_LONG_TYPE_H_
 
+#pragma once
+
+#include "jp_primitivetype.h"
+
 class JPLongType : public JPPrimitiveType
 {
 public:

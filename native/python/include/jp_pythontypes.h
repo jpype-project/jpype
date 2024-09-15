@@ -15,8 +15,20 @@
  *****************************************************************************/
 #ifndef JP_PYTHONTYPES_H_
 #define JP_PYTHONTYPES_H_
+
+#pragma once
+
+extern "C" {
 #include <Python.h>
+}
+
+#include "jni.h"
+
+#include <string>
 #include <vector>
+
+using std::string;
+using std::vector;
 
 /**
  * This set of source are mostly sugar with some light weight

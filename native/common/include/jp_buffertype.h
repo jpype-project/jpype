@@ -16,6 +16,10 @@
 #ifndef _JPBUFFERTYPE_H_
 #define _JPBUFFERTYPE_H_
 
+#pragma once
+
+#include "jp_class.h"
+
 /**
  * Class to wrap Java Class and provide low-level behavior
  */

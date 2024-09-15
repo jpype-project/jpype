@@ -16,6 +16,10 @@
 #ifndef _JPBYTE_TYPE_H_
 #define _JPBYTE_TYPE_H_
 
+#pragma once
+
+#include "jp_primitivetype.h"
+
 class JPByteType : public JPPrimitiveType
 {
 public:

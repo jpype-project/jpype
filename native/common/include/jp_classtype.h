@@ -16,6 +16,10 @@
 #ifndef _JPCLASSTYPE_H_
 #define _JPCLASSTYPE_H_
 
+#pragma once
+
+#include "jp_class.h"
+
 /**
  * Wrapper for Class<java.lang.Class>
  *

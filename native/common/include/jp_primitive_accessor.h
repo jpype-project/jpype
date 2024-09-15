@@ -15,10 +15,12 @@
  *****************************************************************************/
 #ifndef JP_PRIMITIVE_ACCESSOR_H
 #define JP_PRIMITIVE_ACCESSOR_H
-#include <Python.h>
-#include "jp_exception.h"
-#include "jp_javaframe.h"
-#include "jp_match.h"
+
+#pragma once
+
+#include "jpype.h"
+#include "pyjp.h"
+
 
 template <typename array_t, typename ptr_t>
 class JPPrimitiveArrayAccessor
