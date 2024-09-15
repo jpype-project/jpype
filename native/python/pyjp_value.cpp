@@ -17,11 +17,14 @@
 #include "pyjp.h"
 #include "jp_stringtype.h"
 #include <Python.h>
+#include <mutex>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+std::mutex mtx;
 
 // Create a dummy type which we will use only for allocation
 PyTypeObject* PyJPAlloc_Type = nullptr;
@@ -54,14 +57,18 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 		return 0;
 	}
 #endif
-   
-	// Mutate the allocator type 
-	PyJPAlloc_Type->tp_flags = type->tp_flags;
-	PyJPAlloc_Type->tp_basicsize = type->tp_basicsize + sizeof (JPValue);
-	PyJPAlloc_Type->tp_itemsize = type->tp_itemsize;
 
-	// Create a new allocation for the dummy type
-	PyObject* obj = PyType_GenericAlloc(PyJPAlloc_Type, nitems);
+	PyObject* obj = nullptr;
+	{  
+		std::lock_guard<std::mutex> lock(mtx);
+		// Mutate the allocator type 
+		PyJPAlloc_Type->tp_flags = type->tp_flags;
+		PyJPAlloc_Type->tp_basicsize = type->tp_basicsize + sizeof (JPValue);
+		PyJPAlloc_Type->tp_itemsize = type->tp_itemsize;
+	
+		// Create a new allocation for the dummy type
+		obj = PyType_GenericAlloc(PyJPAlloc_Type, nitems);
+	}
 
 	// Watch for memory errors
 	if (obj == nullptr)
