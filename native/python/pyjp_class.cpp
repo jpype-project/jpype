@@ -58,85 +58,14 @@ static int PyJPClass_clear(PyJPClass *self)
 	return 0;
 }
 
-#if PY_VERSION_HEX<0x030c0000
-static PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
-{
-	JP_PY_TRY("PyJPClass_new");
-	if (PyTuple_Size(args) != 3)
-		JP_RAISE(PyExc_TypeError, "Java class meta required 3 arguments");
-
-	JP_BLOCK("PyJPClass_new::verify")
-	{
-		// Watch for final classes
-		PyObject *bases = PyTuple_GetItem(args, 1);
-		Py_ssize_t len = PyTuple_Size(bases);
-		for (Py_ssize_t i = 0; i < len; ++i)
-		{
-			PyObject *item = PyTuple_GetItem(bases, i);
-			JPClass *cls = PyJPClass_getJPClass(item);
-			if (cls != nullptr && cls->isFinal())
-			{
-				PyErr_Format(PyExc_TypeError, "Cannot extend final class '%s'",
-						((PyTypeObject*) item)->tp_name);
-			}
-		}
-	}
-
-	int magic = 0;
-	if (kwargs == PyJPClassMagic || (kwargs != nullptr && PyDict_GetItemString(kwargs, "internal") != nullptr))
-	{
-		magic = 1;
-		kwargs = nullptr;
-	}
-	if (magic == 0)
-	{
-		PyErr_Format(PyExc_TypeError, "Java classes cannot be extended in Python");
-		return nullptr;
-	}
-
-	auto *typenew = (PyTypeObject*) PyType_Type.tp_new(type, args, kwargs);
-
-	// GCOVR_EXCL_START
-	// Sanity checks.  Not testable
-	if (typenew == nullptr)
-		return nullptr;
-	if (typenew->tp_finalize != nullptr && typenew->tp_finalize != (destructor) PyJPValue_finalize)
-	{
-		Py_DECREF(typenew);
-		PyErr_SetString(PyExc_TypeError, "finalizer conflict");
-		return nullptr;
-	}
-
-	// This sanity check is trigger if the user attempts to build their own
-	// type wrapper with a __del__ method defined.	It is hard to trigger.
-	if (typenew->tp_alloc != (allocfunc) PyJPValue_alloc
-			&& typenew->tp_alloc != PyBaseObject_Type.tp_alloc)
-	{
-		Py_DECREF(typenew);
-		PyErr_SetString(PyExc_TypeError, "alloc conflict");
-		return nullptr;
-	}
-	// GCOVR_EXCL_STOP
-
-	typenew->tp_alloc = (allocfunc) PyJPValue_alloc;
-	typenew->tp_finalize = (destructor) PyJPValue_finalize;
-
-	if (PyObject_IsSubclass((PyObject*) typenew, (PyObject*) PyJPException_Type))
-	{
-		typenew->tp_new = PyJPException_Type->tp_new;
-	}
-	((PyJPClass*) typenew)->m_Doc = nullptr;
-	return (PyObject*) typenew;
-	JP_PY_CATCH(nullptr);
-}
-#endif
-
 PyObject* examine(PyObject *module, PyObject *other);
 
 PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 {
 	JP_PY_TRY("PyJPClass_FromSpecWithBases");
 #if PY_VERSION_HEX>=0x030c0000
+	// Starting in Python 3.12 there is a function for creating from a meta class
+	// that replaces this madeness.
 	PyTypeObject *type = (PyTypeObject*) PyType_FromMetaclass((PyTypeObject*) PyJPClass_Type, NULL, spec, bases);
 	if (type == nullptr)
 		return (PyObject*) type;
@@ -304,10 +233,6 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 				// GCOVR_EXCL_STOP
 		}
 	}
-#endif
-
-	type->tp_alloc = (allocfunc) PyJPValue_alloc;
-	type->tp_finalize = (destructor) PyJPValue_finalize;
 
 	// GC objects are required to implement clear and traverse, this is a
 	// safety check to make sure we implemented all properly.	This error should
@@ -319,6 +244,13 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 		PyErr_Format(PyExc_TypeError, "GC requirements failed for %s", spec->name);
 		JP_RAISE_PYTHON();
 	}
+
+#endif
+
+	// Make sure our memory model is used
+	type->tp_alloc = (allocfunc) PyJPValue_alloc;
+	type->tp_finalize = (destructor) PyJPValue_finalize;
+
 	PyType_Ready(type);
 	PyDict_SetItemString(type->tp_dict, "__module__", PyUnicode_FromString("_jpype"));
 	return (PyObject*) type;
@@ -328,11 +260,54 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPClass_init");
-#if PY_VERSION_HEX >= 0x030c0000
-	PyTypeObject *typenew = (PyTypeObject*) self;
 
-	// We must have the correct keyword argument so that we know someone isn't accidentally
-	// extending a Java class from Python.
+    if (!PyObject_IsInstance(self, (PyObject*) PyJPClass_Type))
+    {
+		PyErr_SetString(PyExc_TypeError, "Type incorrect");
+		return -1;
+    }
+
+    PyTypeObject *type = (PyTypeObject*) self;
+
+#if PY_VERSION_HEX >= 0x030d0000
+	// Python 3.13 - This flag will try to place the dictionary are part of the object which 
+	// adds an unknown number of bytes to the end of the object making it impossible
+	// to attach our needed data.  If we kill the flag then we get usable behavior.
+	typenew->tp_flags &= ~Py_TPFLAGS_INLINE_VALUES;
+#endif
+
+//#if PY_VERSION_HEX >= 0x030c0000
+//	PyTypeObject *typenew = (PyTypeObject*) self;
+//
+//	// We must have the correct keyword argument so that we know someone isn't accidentally
+//	// extending a Java class from Python.
+//	int magic = 0;
+//	if (kwargs == PyJPClassMagic || (kwargs != nullptr && PyDict_GetItemString(kwargs, "internal") != nullptr))
+//	{
+//		magic = 1;
+//		kwargs = nullptr;
+//	}
+//	if (magic == 0)
+//	{
+//		PyErr_Format(PyExc_TypeError, "Java classes cannot be extended in Python");
+//		return 0;
+//	}
+//
+//	// We must have the correct allocators
+//	typenew->tp_alloc = (allocfunc) PyJPValue_alloc;
+//	typenew->tp_finalize = (destructor) PyJPValue_finalize;
+
+//#if PY_VERSION_HEX >= 0x030d0000
+//	// This flag will try to place the dictionary are part of the object which 
+//	// adds an unknown number of bytes to the end of the object making it impossible
+//	// to attach our needed data.  If we kill the flag then we get usable behavior.
+//	typenew->tp_flags &= ~Py_TPFLAGS_INLINE_VALUES;
+//#endif
+//#endif
+//	if (PyTuple_Size(args) == 1)
+//		return 0;
+
+    // Verify that we were called internally
 	int magic = 0;
 	if (kwargs == PyJPClassMagic || (kwargs != nullptr && PyDict_GetItemString(kwargs, "internal") != nullptr))
 	{
@@ -342,22 +317,8 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	if (magic == 0)
 	{
 		PyErr_Format(PyExc_TypeError, "Java classes cannot be extended in Python");
-		return 0;
+		return -1;
 	}
-
-	// We must have the correct allocators
-	typenew->tp_alloc = (allocfunc) PyJPValue_alloc;
-	typenew->tp_finalize = (destructor) PyJPValue_finalize;
-
-#if PY_VERSION_HEX >= 0x030d0000
-	// This flag will try to place the dictionary are part of the object which 
-	// adds an unknown number of bytes to the end of the object making it impossible
-	// to attach our needed data.  If we kill the flag then we get usable behavior.
-	typenew->tp_flags &= ~Py_TPFLAGS_INLINE_VALUES;
-#endif
-#endif
-	if (PyTuple_Size(args) == 1)
-		return 0;
 
 	// Set the host object
 	PyObject *name = nullptr;
@@ -372,27 +333,82 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		PyErr_SetString(PyExc_TypeError, "Bases must be a tuple");
 		return -1;
 	}
-	for (int i = 0; i < PyTuple_Size(bases); ++i)
+
+	JP_BLOCK("PyJPClass_new::verify")
 	{
-		if (!PyJPClass_Check(PyTuple_GetItem(bases, i)))
+		// Watch for final classes
+		PyObject *bases = PyTuple_GetItem(args, 1);
+		Py_ssize_t len = PyTuple_Size(bases);
+		for (Py_ssize_t i = 0; i < len; ++i)
 		{
-			PyErr_SetString(PyExc_TypeError, "All bases must be Java types");
-			return -1;
+			PyObject *item = PyTuple_GetItem(bases, i);
+			JPClass *cls = PyJPClass_getJPClass(item);
+			if (cls != nullptr)
+			{
+				PyErr_SetString(PyExc_TypeError, "All bases must be Java types");
+				return -1;
+			}
+			if (cls->isFinal())
+			{
+				PyErr_Format(PyExc_TypeError, "Cannot extend final class '%s'",
+						((PyTypeObject*) item)->tp_name);
+			}
 		}
 	}
 
-#if PY_VERSION_HEX >= 0x030c0000
-	if (PyObject_IsSubclass((PyObject*) typenew, (PyObject*) PyJPException_Type))
-	{
-		typenew->tp_new = PyJPException_Type->tp_new;
-	}
-	((PyJPClass*) typenew)->m_Doc = nullptr;
-#endif
+//	for (int i = 0; i < PyTuple_Size(bases); ++i)
+//	{
+//		if (!PyJPClass_Check(PyTuple_GetItem(bases, i)))
+//		{
+//			PyErr_SetString(PyExc_TypeError, "All bases must be Java types");
+//			return -1;
+//		}
+//	}
+
+//#if PY_VERSION_HEX >= 0x030c0000
+//	if (PyObject_IsSubclass((PyObject*) typenew, (PyObject*) PyJPException_Type))
+//	{
+//		typenew->tp_new = PyJPException_Type->tp_new;
+//	}
+//	((PyJPClass*) typenew)->m_Doc = nullptr;
+//#endif
+
+	type->tp_alloc = (allocfunc) PyJPValue_alloc;
+	type->tp_finalize = (destructor) PyJPValue_finalize;
+	((PyJPClass*) self)->m_Doc = nullptr;
 
 	// Call the type init
 	int rc = PyType_Type.tp_init(self, args, nullptr);
 	if (rc == -1)
 		return rc; // GCOVR_EXCL_LINE no clue how to trigger this one
+
+	// GCOVR_EXCL_START
+	// Sanity checks.  Not testable
+	if (type == nullptr)
+		return -1;
+	if (type->tp_finalize != nullptr && type->tp_finalize != (destructor) PyJPValue_finalize)
+	{
+		PyErr_SetString(PyExc_TypeError, "finalizer conflict");
+		return -1;
+	}
+
+	// This sanity check is trigger if the user attempts to build their own
+	// type wrapper with a __del__ method defined.	It is hard to trigger.
+	if (type->tp_alloc != (allocfunc) PyJPValue_alloc
+			&& type->tp_alloc != PyBaseObject_Type.tp_alloc)
+	{
+		PyErr_SetString(PyExc_TypeError, "alloc conflict");
+		return -1;
+	}
+	// GCOVR_EXCL_STOP
+
+#if PY_VERSION_HEX < 0x03090000
+    // This was required at one point but I don't know what version it applied to.
+	if (PyObject_IsSubclass((PyObject*) typenew, (PyObject*) PyJPException_Type))
+	{
+		typenew->tp_new = PyJPException_Type->tp_new;
+	}
+#endif
 
 	return rc;
 	JP_PY_CATCH(-1);
@@ -1043,9 +1059,6 @@ static PyGetSetDef classGetSets[] = {
 static PyType_Slot classSlots[] = {
 	{ Py_tp_alloc, (void*) PyJPValue_alloc},
 	{ Py_tp_finalize, (void*) PyJPValue_finalize},
-#if PY_VERSION_HEX<0x030c0000
-	{ Py_tp_new, (void*) PyJPClass_new},
-#endif
 	{ Py_tp_init, (void*) PyJPClass_init},
 	{ Py_tp_dealloc, (void*) PyJPClass_dealloc},
 	{ Py_tp_traverse, (void*) PyJPClass_traverse},
@@ -1256,11 +1269,11 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 
 	JP_TRACE("type new");
 	// Create the type using the meta class magic
-#if PY_VERSION_HEX<0x030c0000
-	JPPyObject vself = JPPyObject::call(PyJPClass_Type->tp_new(PyJPClass_Type, rc.get(), PyJPClassMagic));
-#else
+//#if PY_VERSION_HEX<0x030c0000
+//	JPPyObject vself = JPPyObject::call(PyJPClass_Type->tp_new(PyJPClass_Type, rc.get(), PyJPClassMagic));
+//#else
 	JPPyObject vself = JPPyObject::call(PyJPClass_Type->tp_call((PyObject*) PyJPClass_Type, rc.get(), PyJPClassMagic));
-#endif	
+//#endif	
 	auto *self = (PyJPClass*) vself.get();
 
 	// Attach the javaSlot
