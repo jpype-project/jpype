@@ -58,6 +58,7 @@ static int PyJPClass_clear(PyJPClass *self)
 	return 0;
 }
 
+#if 0
 PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPClass_new");
@@ -135,12 +136,17 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	return (PyObject*) typenew;
 	JP_PY_CATCH(nullptr);
 }
+#endif
 
 PyObject* examine(PyObject *module, PyObject *other);
 
 PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 {
 	JP_PY_TRY("PyJPClass_FromSpecWithBases");
+	PyTypeObject *type = (PyTypeObject*) PyType_FromMetaclass((PyTypeObject*) PyJPClass_Type, NULL, spec, bases);
+	if (type == nullptr)
+		return (PyObject*) type;
+#if 0
 	// Python lacks a FromSpecWithMeta so we are going to have to fake it here.
 	auto* type = (PyTypeObject*) PyJPClass_Type->tp_alloc(PyJPClass_Type, 0);
 	auto* heap = (PyHeapTypeObject*) type;
@@ -298,6 +304,10 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 				// GCOVR_EXCL_STOP
 		}
 	}
+#endif
+
+	type->tp_alloc = (allocfunc) PyJPValue_alloc;
+	type->tp_finalize = (destructor) PyJPValue_finalize;
 
 	// GC objects are required to implement clear and traverse, this is a
 	// safety check to make sure we implemented all properly.   This error should
@@ -318,6 +328,33 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPClass_init");
+	PyTypeObject *typenew = (PyTypeObject*) self;
+
+	// We must have the correct keyword argument so that we know someone isn't accidentally
+	// extending a Java class from Python.
+	int magic = 0;
+	if (kwargs == PyJPClassMagic || (kwargs != nullptr && PyDict_GetItemString(kwargs, "internal") != nullptr))
+	{
+		magic = 1;
+		kwargs = nullptr;
+	}
+	if (magic == 0)
+	{
+		PyErr_Format(PyExc_TypeError, "Java classes cannot be extended in Python");
+		return 0;
+	}
+
+    // We must have the correct allocators
+	typenew->tp_alloc = (allocfunc) PyJPValue_alloc;
+	typenew->tp_finalize = (destructor) PyJPValue_finalize;
+
+#if PY_VERSION_HEX >= 0x030d0000
+	// This flag will try to place the dictionary are part of the object which 
+	// adds an unknown number of bytes to the end of the object making it impossible
+	// to attach our needed data.  If we kill the flag then we get usable behavior.
+	typenew->tp_flags &= ~Py_TPFLAGS_INLINE_VALUES;
+#endif
+
 	if (PyTuple_Size(args) == 1)
 		return 0;
 
@@ -994,10 +1031,10 @@ static PyGetSetDef classGetSets[] = {
 	{nullptr}
 };
 
+
 static PyType_Slot classSlots[] = {
 	{ Py_tp_alloc, (void*) PyJPValue_alloc},
 	{ Py_tp_finalize, (void*) PyJPValue_finalize},
-	{ Py_tp_new, (void*) PyJPClass_new},
 	{ Py_tp_init, (void*) PyJPClass_init},
 	{ Py_tp_dealloc, (void*) PyJPClass_dealloc},
 	{ Py_tp_traverse, (void*) PyJPClass_traverse},
@@ -1208,7 +1245,7 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 
 	JP_TRACE("type new");
 	// Create the type using the meta class magic
-	JPPyObject vself = JPPyObject::call(PyJPClass_Type->tp_new(PyJPClass_Type, rc.get(), PyJPClassMagic));
+	JPPyObject vself = JPPyObject::call(PyJPClass_Type->tp_call((PyObject*) PyJPClass_Type, rc.get(), PyJPClassMagic));
 	auto *self = (PyJPClass*) vself.get();
 
 	// Attach the javaSlot

@@ -299,6 +299,17 @@ static PyObject* PyJPBoolean_str(PyObject* self)
 	JP_PY_CATCH(nullptr);
 }
 
+static PyObject *PyJPNumber_initSubclass(PyObject *cls, PyObject* args, PyObject *kwargs)
+{
+        Py_RETURN_NONE;
+}
+
+static PyMethodDef numberMethods[] = {
+    {"__init_subclass__", (PyCFunction) PyJPNumber_initSubclass, METH_CLASS | METH_VARARGS | METH_KEYWORDS, ""},
+    {0}
+};
+
+
 static PyType_Slot numberLongSlots[] = {
 	{Py_tp_new,      (void*) &PyJPNumber_new},
 	{Py_tp_getattro, (void*) &PyJPValue_getattro},
@@ -309,6 +320,7 @@ static PyType_Slot numberLongSlots[] = {
 	{Py_tp_repr,     (void*) &PyJPNumberLong_repr},
 	{Py_tp_hash,     (void*) &PyJPNumberLong_hash},
 	{Py_tp_richcompare, (void*) &PyJPNumberLong_compare},
+	{Py_tp_methods,  (void*) numberMethods},
 	{0}
 };
 
@@ -331,6 +343,7 @@ static PyType_Slot numberFloatSlots[] = {
 	{Py_tp_repr,     (void*) &PyJPNumberFloat_repr},
 	{Py_tp_hash,     (void*) &PyJPNumberFloat_hash},
 	{Py_tp_richcompare, (void*) &PyJPNumberFloat_compare},
+	{Py_tp_methods,  (void*) numberMethods},
 	{0}
 };
 
@@ -353,6 +366,7 @@ static PyType_Slot numberBooleanSlots[] = {
 	{Py_nb_float,    (void*) PyJPNumberLong_float},
 	{Py_tp_hash,     (void*) PyJPNumberLong_hash},
 	{Py_tp_richcompare, (void*) PyJPNumberLong_compare},
+	{Py_tp_methods,  (void*) numberMethods},
 	{0}
 };
 
