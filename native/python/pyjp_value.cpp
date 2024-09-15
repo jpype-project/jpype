@@ -50,26 +50,26 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 	// adds an unknown number of bytes to the end of the object making it impossible
 	// to attach our needed data.  If we kill the flag then we get usable behavior.
 	if (PyType_HasFeature(type, Py_TPFLAGS_INLINE_VALUES)) {
-        PyErr_Format(PyExc_RuntimeError, "Unhandled object layout");
-        return 0;
-    }
+		PyErr_Format(PyExc_RuntimeError, "Unhandled object layout");
+		return 0;
+	}
 #endif
    
-    // Mutate the allocator type 
-    PyJPAlloc_Type->tp_flags = type->tp_flags;
-    PyJPAlloc_Type->tp_basicsize = type->tp_basicsize + sizeof (JPValue);
-    PyJPAlloc_Type->tp_itemsize = type->tp_itemsize;
+	// Mutate the allocator type 
+	PyJPAlloc_Type->tp_flags = type->tp_flags;
+	PyJPAlloc_Type->tp_basicsize = type->tp_basicsize + sizeof (JPValue);
+	PyJPAlloc_Type->tp_itemsize = type->tp_itemsize;
 
-    // Create a new allocation for the dummy type
+	// Create a new allocation for the dummy type
 	PyObject* obj = PyType_GenericAlloc(PyJPAlloc_Type, nitems);
 
-    // Watch for memory errors
-    if (obj == nullptr)
-        return nullptr;
+	// Watch for memory errors
+	if (obj == nullptr)
+		return nullptr;
 
-    // Polymorph the type to match our desired type
-    obj->ob_type = type;
-    Py_INCREF(type);
+	// Polymorph the type to match our desired type
+	obj->ob_type = type;
+	Py_INCREF(type);
 
 	JP_TRACE("alloc", type->tp_name, obj);
 	return obj;
@@ -340,7 +340,7 @@ static int PyJPAlloc_clear(PyObject *self)
 static PyType_Slot allocSlots[] = {
 	{ Py_tp_traverse, (void*) PyJPAlloc_traverse},
 	{ Py_tp_clear, (void*) PyJPAlloc_clear},
-    {0, NULL}  // Sentinel
+	{0, NULL}  // Sentinel
 };
 
 static PyType_Spec allocSpec = {
@@ -356,6 +356,6 @@ void PyJPValue_initType(PyObject* module)
 	PyObject *bases = PyTuple_Pack(1, &PyBaseObject_Type);
 	PyJPAlloc_Type = (PyTypeObject*) PyType_FromSpecWithBases(&allocSpec, bases);
 	Py_DECREF(bases);
-    Py_INCREF(PyJPAlloc_Type);
+	Py_INCREF(PyJPAlloc_Type);
 	JP_PY_CHECK();
 }
