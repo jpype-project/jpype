@@ -58,8 +58,8 @@ static int PyJPClass_clear(PyJPClass *self)
 	return 0;
 }
 
-#if 0
-PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+#if PY_VERSION_HEX<0x030c0000
+static PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPClass_new");
 	if (PyTuple_Size(args) != 3)
@@ -126,12 +126,6 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	}
 	((PyJPClass*) typenew)->m_Doc = nullptr;
 
-#if PY_VERSION_HEX >= 0x030d0000
-	// This flag will try to place the dictionary are part of the object which 
-	// adds an unknown number of bytes to the end of the object making it impossible
-	// to attach our needed data.  If we kill the flag then we get usable behavior.
-	typenew->tp_flags &= ~Py_TPFLAGS_INLINE_VALUES;
-#endif
 	return (PyObject*) typenew;
 	JP_PY_CATCH(nullptr);
 }
@@ -142,10 +136,11 @@ PyObject* examine(PyObject *module, PyObject *other);
 PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 {
 	JP_PY_TRY("PyJPClass_FromSpecWithBases");
+#if PY_VERSION_HEX>=0x030c0000
 	PyTypeObject *type = (PyTypeObject*) PyType_FromMetaclass((PyTypeObject*) PyJPClass_Type, NULL, spec, bases);
 	if (type == nullptr)
 		return (PyObject*) type;
-#if 0
+#else
 	// Python lacks a FromSpecWithMeta so we are going to have to fake it here.
 	auto* type = (PyTypeObject*) PyJPClass_Type->tp_alloc(PyJPClass_Type, 0);
 	auto* heap = (PyHeapTypeObject*) type;
@@ -1039,6 +1034,9 @@ static PyGetSetDef classGetSets[] = {
 
 
 static PyType_Slot classSlots[] = {
+#if PY_VERSION_HEX<0x030c0000
+	{ Py_tp_new, (void*) PyJPClass_new},
+#endif
 	{ Py_tp_alloc, (void*) PyJPValue_alloc},
 	{ Py_tp_finalize, (void*) PyJPValue_finalize},
 	{ Py_tp_init, (void*) PyJPClass_init},
