@@ -120,7 +120,6 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 
 	typenew->tp_alloc = (allocfunc) PyJPValue_alloc;
 	typenew->tp_finalize = (destructor) PyJPValue_finalize;
-
 	if (PyObject_IsSubclass((PyObject*) typenew, (PyObject*) PyJPException_Type))
 	{
 		typenew->tp_new = PyJPException_Type->tp_new;
@@ -379,6 +378,13 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 			return -1;
 		}
 	}
+
+    if (PyObject_IsSubclass((PyObject*) typenew, (PyObject*) PyJPException_Type))
+	{
+		typenew->tp_new = PyJPException_Type->tp_new;
+	}
+	((PyJPClass*) typenew)->m_Doc = nullptr;
+
 
 	// Call the type init
 	int rc = PyType_Type.tp_init(self, args, nullptr);

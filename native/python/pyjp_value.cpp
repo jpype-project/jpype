@@ -66,7 +66,7 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 	if (PyType_IS_GC(type))
 		PyObject_GC_Track(obj);
 
-#elif PY_VERSION_HEX<0x030c0000
+#elif PY_VERSION_HEX<0x030d0000
 	// At some point Python 3.11 backported changes corresponding to Python 3.12
 	// without the support for allocation of method, and with bugs.  We have
 	// to mutilate the base size of the object to get the extra memory we need
@@ -83,7 +83,7 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 	if (type->tp_itemsize != 0) {
 		// There is no corresponding PyUnstable_VarObject_GC_NewWithExtraData method 
 		// Without one we are just going to aske for our needed memory though backdoor methods.
-		Py_ssize_t extra = (sizeof(JPValue))/type->tp_itemsize;
+		Py_ssize_t extra = (2*sizeof(JPValue))/type->tp_itemsize;
 		if (extra == 0)
 			extra = 1;
 		obj = PyType_GenericAlloc(type, nitems+extra);
