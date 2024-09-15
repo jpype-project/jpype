@@ -108,7 +108,7 @@ static PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	}
 
 	// This sanity check is trigger if the user attempts to build their own
-	// type wrapper with a __del__ method defined.  It is hard to trigger.
+	// type wrapper with a __del__ method defined.	It is hard to trigger.
 	if (typenew->tp_alloc != (allocfunc) PyJPValue_alloc
 			&& typenew->tp_alloc != PyBaseObject_Type.tp_alloc)
 	{
@@ -120,12 +120,12 @@ static PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 
 	typenew->tp_alloc = (allocfunc) PyJPValue_alloc;
 	typenew->tp_finalize = (destructor) PyJPValue_finalize;
+
 	if (PyObject_IsSubclass((PyObject*) typenew, (PyObject*) PyJPException_Type))
 	{
 		typenew->tp_new = PyJPException_Type->tp_new;
 	}
 	((PyJPClass*) typenew)->m_Doc = nullptr;
-
 	return (PyObject*) typenew;
 	JP_PY_CATCH(nullptr);
 }
@@ -181,6 +181,12 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 	{
 		switch (slot->slot)
 		{
+			case Py_tp_finalize:
+				type->tp_finalize = (destructor) slot->pfunc;
+				break;
+			case Py_tp_alloc:
+				type->tp_alloc = (allocfunc) slot->pfunc;
+				break;
 			case Py_tp_free:
 				type->tp_free = (freefunc) slot->pfunc;
 				break;
@@ -304,7 +310,7 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 	type->tp_finalize = (destructor) PyJPValue_finalize;
 
 	// GC objects are required to implement clear and traverse, this is a
-	// safety check to make sure we implemented all properly.   This error should
+	// safety check to make sure we implemented all properly.	This error should
 	// never happen in production code.
 	if (PyType_IS_GC(type) && (
 			type->tp_traverse==nullptr ||
@@ -322,6 +328,7 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPClass_init");
+#if PY_VERSION_HEX >= 0x030c0000
 	PyTypeObject *typenew = (PyTypeObject*) self;
 
 	// We must have the correct keyword argument so that we know someone isn't accidentally
@@ -338,7 +345,7 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		return 0;
 	}
 
-    // We must have the correct allocators
+	// We must have the correct allocators
 	typenew->tp_alloc = (allocfunc) PyJPValue_alloc;
 	typenew->tp_finalize = (destructor) PyJPValue_finalize;
 
@@ -348,7 +355,7 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	// to attach our needed data.  If we kill the flag then we get usable behavior.
 	typenew->tp_flags &= ~Py_TPFLAGS_INLINE_VALUES;
 #endif
-
+#endif
 	if (PyTuple_Size(args) == 1)
 		return 0;
 
@@ -374,12 +381,13 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		}
 	}
 
-    if (PyObject_IsSubclass((PyObject*) typenew, (PyObject*) PyJPException_Type))
+#if PY_VERSION_HEX >= 0x030c0000
+	if (PyObject_IsSubclass((PyObject*) typenew, (PyObject*) PyJPException_Type))
 	{
 		typenew->tp_new = PyJPException_Type->tp_new;
 	}
 	((PyJPClass*) typenew)->m_Doc = nullptr;
-
+#endif
 
 	// Call the type init
 	int rc = PyType_Type.tp_init(self, args, nullptr);
@@ -1032,13 +1040,12 @@ static PyGetSetDef classGetSets[] = {
 	{nullptr}
 };
 
-
 static PyType_Slot classSlots[] = {
+	{ Py_tp_alloc, (void*) PyJPValue_alloc},
+	{ Py_tp_finalize, (void*) PyJPValue_finalize},
 #if PY_VERSION_HEX<0x030c0000
 	{ Py_tp_new, (void*) PyJPClass_new},
 #endif
-	{ Py_tp_alloc, (void*) PyJPValue_alloc},
-	{ Py_tp_finalize, (void*) PyJPValue_finalize},
 	{ Py_tp_init, (void*) PyJPClass_init},
 	{ Py_tp_dealloc, (void*) PyJPClass_dealloc},
 	{ Py_tp_traverse, (void*) PyJPClass_traverse},
@@ -1178,7 +1185,7 @@ JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
  * Internal method for wrapping a returned Java class instance.
  *
  * This checks the cache for existing wrappers and then
- * transfers control to JClassFactory.  This is required because all of
+ * transfers control to JClassFactory.	This is required because all of
  * the post load stuff needs to be in Python.
  *
  * @param cls
@@ -1249,7 +1256,11 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 
 	JP_TRACE("type new");
 	// Create the type using the meta class magic
+#if PY_VERSION_HEX<0x030c0000
+	JPPyObject vself = JPPyObject::call(PyJPClass_Type->tp_new(PyJPClass_Type, rc.get(), PyJPClassMagic));
+#else
 	JPPyObject vself = JPPyObject::call(PyJPClass_Type->tp_call((PyObject*) PyJPClass_Type, rc.get(), PyJPClassMagic));
+#endif	
 	auto *self = (PyJPClass*) vself.get();
 
 	// Attach the javaSlot
