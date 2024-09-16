@@ -261,13 +261,13 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPClass_init");
 
-    if (!PyObject_IsInstance(self, (PyObject*) PyJPClass_Type))
-    {
+	if (!PyObject_IsInstance(self, (PyObject*) PyJPClass_Type))
+	{
 		PyErr_SetString(PyExc_TypeError, "Type incorrect");
 		return -1;
-    }
+	}
 
-    PyTypeObject *type = (PyTypeObject*) self;
+	PyTypeObject *type = (PyTypeObject*) self;
 
 #if PY_VERSION_HEX >= 0x030d0000
 	// Python 3.13 - This flag will try to place the dictionary are part of the object which 
@@ -276,38 +276,7 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	typenew->tp_flags &= ~Py_TPFLAGS_INLINE_VALUES;
 #endif
 
-//#if PY_VERSION_HEX >= 0x030c0000
-//	PyTypeObject *typenew = (PyTypeObject*) self;
-//
-//	// We must have the correct keyword argument so that we know someone isn't accidentally
-//	// extending a Java class from Python.
-//	int magic = 0;
-//	if (kwargs == PyJPClassMagic || (kwargs != nullptr && PyDict_GetItemString(kwargs, "internal") != nullptr))
-//	{
-//		magic = 1;
-//		kwargs = nullptr;
-//	}
-//	if (magic == 0)
-//	{
-//		PyErr_Format(PyExc_TypeError, "Java classes cannot be extended in Python");
-//		return 0;
-//	}
-//
-//	// We must have the correct allocators
-//	typenew->tp_alloc = (allocfunc) PyJPValue_alloc;
-//	typenew->tp_finalize = (destructor) PyJPValue_finalize;
-
-//#if PY_VERSION_HEX >= 0x030d0000
-//	// This flag will try to place the dictionary are part of the object which 
-//	// adds an unknown number of bytes to the end of the object making it impossible
-//	// to attach our needed data.  If we kill the flag then we get usable behavior.
-//	typenew->tp_flags &= ~Py_TPFLAGS_INLINE_VALUES;
-//#endif
-//#endif
-//	if (PyTuple_Size(args) == 1)
-//		return 0;
-
-    // Verify that we were called internally
+	// Verify that we were called internally
 	int magic = 0;
 	if (kwargs == PyJPClassMagic || (kwargs != nullptr && PyDict_GetItemString(kwargs, "internal") != nullptr))
 	{
@@ -337,7 +306,6 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	JP_BLOCK("PyJPClass_new::verify")
 	{
 		// Watch for final classes
-		PyObject *bases = PyTuple_GetItem(args, 1);
 		Py_ssize_t len = PyTuple_Size(bases);
 		for (Py_ssize_t i = 0; i < len; ++i)
 		{
@@ -356,23 +324,7 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		}
 	}
 
-//	for (int i = 0; i < PyTuple_Size(bases); ++i)
-//	{
-//		if (!PyJPClass_Check(PyTuple_GetItem(bases, i)))
-//		{
-//			PyErr_SetString(PyExc_TypeError, "All bases must be Java types");
-//			return -1;
-//		}
-//	}
-
-//#if PY_VERSION_HEX >= 0x030c0000
-//	if (PyObject_IsSubclass((PyObject*) typenew, (PyObject*) PyJPException_Type))
-//	{
-//		typenew->tp_new = PyJPException_Type->tp_new;
-//	}
-//	((PyJPClass*) typenew)->m_Doc = nullptr;
-//#endif
-
+	// We must make sure that all classes have our allocator
 	type->tp_alloc = (allocfunc) PyJPValue_alloc;
 	type->tp_finalize = (destructor) PyJPValue_finalize;
 	((PyJPClass*) self)->m_Doc = nullptr;
@@ -403,10 +355,10 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	// GCOVR_EXCL_STOP
 
 #if PY_VERSION_HEX < 0x03090000
-    // This was required at one point but I don't know what version it applied to.
-	if (PyObject_IsSubclass((PyObject*) typenew, (PyObject*) PyJPException_Type))
+	// This was required at one point but I don't know what version it applied to.
+	if (PyObject_IsSubclass((PyObject*) type, (PyObject*) PyJPException_Type))
 	{
-		typenew->tp_new = PyJPException_Type->tp_new;
+		type->tp_new = PyJPException_Type->tp_new;
 	}
 #endif
 
@@ -1269,11 +1221,7 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 
 	JP_TRACE("type new");
 	// Create the type using the meta class magic
-//#if PY_VERSION_HEX<0x030c0000
-//	JPPyObject vself = JPPyObject::call(PyJPClass_Type->tp_new(PyJPClass_Type, rc.get(), PyJPClassMagic));
-//#else
 	JPPyObject vself = JPPyObject::call(PyJPClass_Type->tp_call((PyObject*) PyJPClass_Type, rc.get(), PyJPClassMagic));
-//#endif	
 	auto *self = (PyJPClass*) vself.get();
 
 	// Attach the javaSlot
