@@ -270,9 +270,8 @@ static PyObject *PyJPBoolean_new(PyTypeObject *type, PyObject *args, PyObject *k
 		return nullptr;
 	}
 	int i = PyObject_IsTrue(PyTuple_GetItem(args, 0));
-	PyObject *args2 = JPPyTuple_Pack(PyLong_FromLong(i));
-	self = JPPyObject::call(PyLong_Type.tp_new(type, args2, kwargs));
-	Py_DECREF(args2);
+	JPPyObject args2 = JPPyTuple_Pack(PyLong_FromLong(i));
+	self = JPPyObject::call(PyLong_Type.tp_new(type, args2.get(), kwargs));
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
 	if (cls == nullptr)
 	{
@@ -371,25 +370,21 @@ PyType_Spec numberBooleanSpec = {
 
 void PyJPNumber_initType(PyObject* module)
 {
-	PyObject *bases;
 
-	bases = JPPyTuple_Pack(&PyLong_Type, PyJPObject_Type);
-	PyJPNumberLong_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberLongSpec, bases);
-	Py_DECREF(bases);
+	JPPyObject bases = JPPyTuple_Pack(&PyLong_Type, PyJPObject_Type);
+	PyJPNumberLong_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberLongSpec, bases.get());
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JNumberLong", (PyObject*) PyJPNumberLong_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
 	bases = JPPyTuple_Pack(&PyFloat_Type, PyJPObject_Type);
-	PyJPNumberFloat_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberFloatSpec, bases);
-	Py_DECREF(bases);
+	PyJPNumberFloat_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberFloatSpec, bases.get());
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JNumberFloat", (PyObject*) PyJPNumberFloat_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
 	bases = JPPyTuple_Pack(&PyLong_Type, PyJPObject_Type);
-	PyJPNumberBool_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberBooleanSpec, bases);
-	Py_DECREF(bases);
+	PyJPNumberBool_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberBooleanSpec, bases.get());
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JBoolean", (PyObject*) PyJPNumberBool_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
@@ -404,8 +399,8 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 		jlong l = 0;
 		if (value.getValue().l != nullptr)
 			l = frame.CallBooleanMethodA(value.getJavaObject(), context->_java_lang_Boolean->m_BooleanValueID, nullptr);
-		PyObject *args = JPPyTuple_Pack(PyLong_FromLongLong(l));
-		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args, nullptr));
+		JPPyObject args = JPPyTuple_Pack(PyLong_FromLongLong(l));
+		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args.get(), nullptr));
 	}
 	if (PyObject_IsSubclass(wrapper.get(), (PyObject*) & PyLong_Type))
 	{
@@ -415,8 +410,8 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 			auto* jb = dynamic_cast<JPBoxedType*>( value.getClass());
 			l = frame.CallLongMethodA(value.getJavaObject(), jb->m_LongValueID, nullptr);
 		}
-		PyObject *args = JPPyTuple_Pack(PyLong_FromLongLong(l));
-		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args, nullptr));
+		JPPyObject args = JPPyTuple_Pack(PyLong_FromLongLong(l));
+		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args.get(), nullptr));
 	}
 	if (PyObject_IsSubclass(wrapper.get(), (PyObject*) & PyFloat_Type))
 	{
@@ -426,8 +421,8 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 			auto* jb = dynamic_cast<JPBoxedType*>( value.getClass());
 			l = frame.CallDoubleMethodA(value.getJavaObject(), jb->m_DoubleValueID, nullptr);
 		}
-		PyObject *args = JPPyTuple_Pack(PyFloat_FromDouble(l));
-		return JPPyObject::call(PyFloat_Type.tp_new((PyTypeObject*) wrapper.get(), args, nullptr));
+		JPPyObject args = JPPyTuple_Pack(PyFloat_FromDouble(l));
+		return JPPyObject::call(PyFloat_Type.tp_new((PyTypeObject*) wrapper.get(), args.get(), nullptr));
 	}
 	JP_RAISE(PyExc_TypeError, "unable to convert");  //GCOVR_EXCL_LINE
 }

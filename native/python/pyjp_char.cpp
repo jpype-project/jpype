@@ -212,7 +212,7 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	if (cv != (Py_UCS4) - 1)
 	{
 		JPPyObject v = JPPyObject::call(PyLong_FromLong(cv));
-		JPPyObject args0 = JPPyObject::call(JPPyTuple_Pack(v.get()));
+		JPPyObject args0 = JPPyTuple_Pack(v.get());
 		JPPyObjectVector args(args0.get());
 		jv = cls->newInstance(frame, args);
 	} else if (PyIndex_Check(in))
@@ -222,7 +222,7 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	} else if (PyFloat_Check(in))
 	{
 		JPPyObject v = JPPyObject::call(PyNumber_Long(in));
-		JPPyObject args0 = JPPyObject::call(JPPyTuple_Pack(v.get()));
+		JPPyObject args0 = JPPyTuple_Pack(v.get());
 		JPPyObjectVector args(args0.get());
 		jv = cls->newInstance(frame, args);
 	} else
@@ -655,9 +655,8 @@ static PyType_Spec charSpec = {
 void PyJPChar_initType(PyObject* module)
 {
 	// We will inherit from str and JObject
-	PyObject *bases = JPPyTuple_Pack(&PyUnicode_Type, PyJPObject_Type);
-	PyJPChar_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&charSpec, bases);
-	Py_DECREF(bases);
+	JPPyObject bases = JPPyTuple_Pack(&PyUnicode_Type, PyJPObject_Type);
+	PyJPChar_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&charSpec, bases.get());
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JChar", (PyObject*) PyJPChar_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
