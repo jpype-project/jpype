@@ -163,7 +163,7 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 			JPPyErrFrame err;
 			err.normalize();
 			err.clear();
-			JPPyObject tuple0 = JPPyObject::call(PyTuple_Pack(3, self, attr, err.m_ExceptionValue.get()));
+			JPPyObject tuple0 = JPPyObject::call(JPPyTuple_Pack(self, attr, err.m_ExceptionValue.get()));
 			PyObject *rc = PyObject_Call(h.get(), tuple0.get(), nullptr);
 			if (rc == nullptr)
 				return nullptr;
@@ -182,7 +182,7 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 	{
 		JPPyObject u = JPPyObject::call(PyUnicode_FromFormat("%s.%U",
 				PyModule_GetName(self), attr));
-		JPPyObject args = JPPyObject::call(PyTuple_Pack(1, u.get()));
+		JPPyObject args = JPPyObject::call(JPPyTuple_Pack(u.get()));
 		out = JPPyObject::call(PyObject_Call((PyObject*) PyJPPackage_Type, args.get(), nullptr));
 	} else
 	{
@@ -284,7 +284,7 @@ static PyObject *PyJPPackage_cast(PyObject *self, PyObject *other)
 	PyObject* matmul = PyDict_GetItemString(dict, "__matmul__");
 	if (matmul == nullptr)
 		Py_RETURN_NOTIMPLEMENTED;
-	JPPyObject args = JPPyObject::call(PyTuple_Pack(2, self, other));
+	JPPyObject args = JPPyObject::call(JPPyTuple_Pack(self, other));
 	return PyObject_Call(matmul, args.get(), nullptr);
 	JP_PY_CATCH(nullptr);
 }
@@ -338,7 +338,7 @@ static PyType_Spec packageSpec = {
 void PyJPPackage_initType(PyObject* module)
 {
 	// Inherit from module.
-	JPPyObject bases = JPPyObject::call(PyTuple_Pack(1, &PyModule_Type));
+	JPPyObject bases = JPPyObject::call(JPPyTuple_Pack(&PyModule_Type));
 	packageSpec.basicsize = PyModule_Type.tp_basicsize;
 	PyJPPackage_Type = (PyTypeObject*) PyType_FromSpecWithBases(&packageSpec, bases.get());
 	JP_PY_CHECK();

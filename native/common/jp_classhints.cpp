@@ -146,7 +146,7 @@ public:
 	{
 		JP_TRACE_IN("JPPythonConversion::convert");
 		JPClass *cls = ((JPClass*) match.closure);
-		JPPyObject args = JPPyObject::call(PyTuple_Pack(2,
+		JPPyObject args = JPPyObject::call(JPPyTuple_Pack(
 				cls->getHost(), match.object));
 		JPPyObject ret = JPPyObject::call(PyObject_Call(method_.get(), args.get(), nullptr));
 		JPValue *value = PyJPValue_getJavaSlot(ret.get());

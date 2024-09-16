@@ -483,7 +483,7 @@ void JPPyErrFrame::normalize()
 	// we have forced it to realize the exception.
 	if (!PyExceptionInstance_Check(m_ExceptionValue.get()))
 	{
-		JPPyObject args = JPPyObject::call(PyTuple_Pack(1, m_ExceptionValue.get()));
+		JPPyObject args = JPPyObject::call(JPPyTuple_Pack(m_ExceptionValue.get()));
 		m_ExceptionValue = JPPyObject::call(PyObject_Call(m_ExceptionClass.get(), args.get(), nullptr));
 		PyException_SetTraceback(m_ExceptionValue.get(), m_ExceptionTrace.get());
 		JPPyErr::restore(m_ExceptionClass, m_ExceptionValue, m_ExceptionTrace);

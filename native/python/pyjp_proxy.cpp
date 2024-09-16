@@ -173,7 +173,7 @@ PyType_Spec PyJPProxySpec = {
 
 void PyJPProxy_initType(PyObject* module)
 {
-	JPPyObject bases = JPPyObject::call(PyTuple_Pack(1, &PyBaseObject_Type));
+	JPPyObject bases = JPPyObject::call(JPPyTuple_Pack(&PyBaseObject_Type));
 	PyJPProxy_Type = (PyTypeObject*) PyType_FromSpecWithBases(&PyJPProxySpec, bases.get());
 	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JProxy", (PyObject*) PyJPProxy_Type);

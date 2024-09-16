@@ -143,7 +143,7 @@ static PyType_Spec bufferSpec = {
 
 void PyJPBuffer_initType(PyObject * module)
 {
-	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(1, PyJPObject_Type));
+	JPPyObject tuple = JPPyObject::call(JPPyTuple_Pack(PyJPObject_Type));
 	PyJPBuffer_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&bufferSpec, tuple.get());
 #if PY_VERSION_HEX < 0x03090000
 	PyJPBuffer_Type->tp_as_buffer = &directBuffer;

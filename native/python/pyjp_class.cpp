@@ -148,7 +148,7 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 	heap->ht_name = heap->ht_qualname;
 	Py_INCREF(heap->ht_name);
 	if (bases == nullptr)
-		type->tp_bases = PyTuple_Pack(1, (PyObject*) & PyBaseObject_Type);
+		type->tp_bases = JPPyTuple_Pack((PyObject*) & PyBaseObject_Type);
 	else
 	{
 		type->tp_bases = bases;
@@ -935,7 +935,7 @@ static PyObject *PyJPClass_getDoc(PyJPClass *self, void *ctxt)
 	// Pack the arguments
 	{
 		JP_TRACE("Pack arguments");
-		JPPyObject args = JPPyObject::call(PyTuple_Pack(1, self));
+		JPPyObject args = JPPyObject::call(JPPyTuple_Pack(self));
 		JP_TRACE("Call Python");
 		self->m_Doc = PyObject_Call(_JClassDoc, args.get(), nullptr);
 		Py_XINCREF(self->m_Doc);
@@ -1021,7 +1021,7 @@ static PyType_Spec classSpec = {
 
 void PyJPClass_initType(PyObject* module)
 {
-	PyObject *bases = PyTuple_Pack(1, &PyType_Type);
+	PyObject *bases = JPPyTuple_Pack(&PyType_Type);
 	PyJPClass_Type = (PyTypeObject*) PyType_FromSpecWithBases(&classSpec, bases);
 	Py_DECREF(bases);
 	JP_PY_CHECK();
@@ -1160,7 +1160,7 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 
 
 	JPPyObject members = JPPyObject::call(PyDict_New());
-	JPPyObject args = JPPyObject::call(PyTuple_Pack(3,
+	JPPyObject args = JPPyObject::call(JPPyTuple_Pack(
 			JPPyString::fromStringUTF8(cls->getCanonicalName()).get(),
 			PyJPClass_getBases(frame, cls).get(),
 			members.get()));
@@ -1216,6 +1216,6 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 
 	// Call the post load routine to attach inner classes
 	JP_TRACE("call post");
-	args = JPPyObject::call(PyTuple_Pack(1, self));
+	args = JPPyObject::call(JPPyTuple_Pack(self));
 	JPPyObject rc2 = JPPyObject::call(PyObject_Call(_JClassPost, args.get(), nullptr));
 }

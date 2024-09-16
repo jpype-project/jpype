@@ -366,13 +366,13 @@ void PyJPObject_initType(PyObject* module)
 	PyModule_AddObject(module, "_JObject", (PyObject*) PyJPObject_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
-	JPPyObject bases = JPPyObject::call(PyTuple_Pack(2, PyExc_Exception, PyJPObject_Type));
+	JPPyObject bases = JPPyObject::call(JPPyTuple_Pack(PyExc_Exception, PyJPObject_Type));
 	PyJPException_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&excSpec, bases.get());
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JException", (PyObject*) PyJPException_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
-	bases = JPPyObject::call(PyTuple_Pack(1, PyJPObject_Type));
+	bases = JPPyObject::call(JPPyTuple_Pack(PyJPObject_Type));
 	PyJPComparable_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&comparableSpec, bases.get());
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JComparable", (PyObject*) PyJPComparable_Type);

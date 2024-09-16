@@ -176,6 +176,11 @@ struct _object;
 using PyObject = _object;
 #endif
 
+template <typename... T>
+static inline constexpr PyObject *JPPyTuple_Pack(T... args) {
+	return PyTuple_Pack(sizeof...(T), args...);
+}
+
 // Base utility headers
 #include "jp_javaframe.h"
 #include "jp_context.h"

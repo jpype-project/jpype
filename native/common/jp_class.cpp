@@ -372,15 +372,15 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 			jstring m = frame.getMessage((jthrowable) value.l);
 			if (m != nullptr)
 			{
-				tuple0 = JPPyObject::call(PyTuple_Pack(1,
+				tuple0 = JPPyObject::call(JPPyTuple_Pack(
 						JPPyString::fromStringUTF8(frame.toStringUTF8(m)).get()));
 			} else
 			{
-				tuple0 = JPPyObject::call(PyTuple_Pack(1,
+				tuple0 = JPPyObject::call(JPPyTuple_Pack(
 						JPPyString::fromStringUTF8(frame.toString(value.l)).get()));
 			}
 		}
-		JPPyObject tuple1 = JPPyObject::call(PyTuple_Pack(2,
+		JPPyObject tuple1 = JPPyObject::call(JPPyTuple_Pack(
 				_JObjectKey, tuple0.get()));
 		// Exceptions need new and init
 		obj = JPPyObject::call(PyObject_Call(wrapper.get(), tuple1.get(), nullptr));
