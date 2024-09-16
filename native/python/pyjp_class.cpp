@@ -273,7 +273,7 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	// Python 3.13 - This flag will try to place the dictionary are part of the object which 
 	// adds an unknown number of bytes to the end of the object making it impossible
 	// to attach our needed data.  If we kill the flag then we get usable behavior.
-	typenew->tp_flags &= ~Py_TPFLAGS_INLINE_VALUES;
+	type->tp_flags &= ~Py_TPFLAGS_INLINE_VALUES;
 #endif
 
 	// Verify that we were called internally
@@ -311,12 +311,7 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		{
 			PyObject *item = PyTuple_GetItem(bases, i);
 			JPClass *cls = PyJPClass_getJPClass(item);
-			if (cls != nullptr)
-			{
-				PyErr_SetString(PyExc_TypeError, "All bases must be Java types");
-				return -1;
-			}
-			if (cls->isFinal())
+			if (cls != nullptr && cls->isFinal())
 			{
 				PyErr_Format(PyExc_TypeError, "Cannot extend final class '%s'",
 						((PyTypeObject*) item)->tp_name);
