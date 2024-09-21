@@ -24,7 +24,7 @@ import org.jpype.JPypeContext;
  */
 class ExtensionClassLoader extends ClassLoader
 {
-  ClassLoader instance = new ExtensionClassLoader(JPypeContext.getInstance().getClassLoader());
+  static final ExtensionClassLoader instance = new ExtensionClassLoader(JPypeContext.getInstance().getClassLoader());
 
   private ExtensionClassLoader(ClassLoader classLoader)
   {

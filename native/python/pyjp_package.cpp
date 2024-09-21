@@ -339,7 +339,7 @@ void PyJPPackage_initType(PyObject* module)
 {
 	// Inherit from module.
 	JPPyObject bases = JPPyTuple_Pack(&PyModule_Type);
-	packageSpec.basicsize = PyModule_Type.tp_basicsize;
+	packageSpec.basicsize = (int)PyModule_Type.tp_basicsize;
 	PyJPPackage_Type = (PyTypeObject*) PyType_FromSpecWithBases(&packageSpec, bases.get());
 	JP_PY_CHECK();
 	PyModule_AddObject(module, "_JPackage", (PyObject*) PyJPPackage_Type);

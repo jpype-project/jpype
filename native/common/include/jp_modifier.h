@@ -16,11 +16,6 @@
 #ifndef JP_MODIFIER_H
 #define JP_MODIFIER_H
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 #include "jni.h"
 
 namespace JPModifier
@@ -182,9 +177,10 @@ inline bool isBeanMutator(jlong modifier)
 {
 	return (modifier & 0x40000000) == 0x40000000;
 }
-}
 
-#ifdef __cplusplus
+inline bool isExtension(jlong modifier)
+{
+	return (modifier & 0x80000000) == 0x80000000;
 }
-#endif
+}
 #endif /* JP_MODIFIER_H */

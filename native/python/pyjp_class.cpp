@@ -801,7 +801,7 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 		// Get the type
 		JPClass *cls;
 		if (undefined > 0)
-			cls = self->m_Class->newArrayType(frame, undefined);
+			cls = self->m_Class->newArrayType(frame, (long)undefined);
 		else
 			cls = self->m_Class;
 
@@ -810,7 +810,7 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 			return PyJPClass_create(frame, cls).keep();
 
 		// Otherwise create an array
-		jintArray u = frame.NewIntArray(defined);
+		jintArray u = frame.NewIntArray((jsize)defined);
 		JPPrimitiveArrayAccessor<jintArray, jint*> accessor(frame, u,
 				&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
 		for (size_t j = 0; j < sz.size(); ++j)

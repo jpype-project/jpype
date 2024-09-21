@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype.manager;
@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.TreeSet;
 import org.jpype.JPypeContext;
 import org.jpype.JPypeUtilities;
+import org.jpype.extension.Factory;
 import org.jpype.proxy.JPypeProxy;
 
 /**
@@ -447,6 +448,11 @@ public class TypeManager
       modifiers |= ModifierCode.COMPARABLE.value;
     if (Buffer.class.isAssignableFrom(cls))
       modifiers |= ModifierCode.BUFFER.value | ModifierCode.SPECIAL.value;
+
+	try {
+		cls.getDeclaredField(Factory.JCLASS_FIELD);
+		modifiers |= ModifierCode.EXTENSION.value;
+	} catch (Throwable t) {}
 
     // Check if is Functional class
     Method method = JPypeUtilities.getFunctionalInterfaceMethod(cls);

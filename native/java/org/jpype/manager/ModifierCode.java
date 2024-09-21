@@ -51,7 +51,8 @@ public enum ModifierCode
   BUFFER(0x01000000),
   CTOR(0x10000000),
   BEAN_ACCESSOR(0x20000000),
-  BEAN_MUTATOR(0x40000000);
+  BEAN_MUTATOR(0x40000000),
+  EXTENSION(0x80000000);
   final public int value;
 
   ModifierCode(int value)

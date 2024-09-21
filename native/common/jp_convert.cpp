@@ -41,7 +41,7 @@ public:
 				frac = frac | (frac >> 2);
 				frac = frac | (frac >> 4);
 				frac = frac | (frac >> 8);
-				int zeros = std::bitset<32>(~frac).count();
+				int zeros = (int)std::bitset<32>((size_t)((uint32_t)~frac)).count();
 				man = 127-zeros+7;
 				man <<= 23;
 				frac <<= zeros-8;

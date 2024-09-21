@@ -42,6 +42,8 @@ using JPFieldList = vector<JPField *>;
 class JPMethodDispatch;
 using JPMethodDispatchList = vector<JPMethodDispatch *>;
 
+struct JPMethodOverrideList;
+
 struct JPConversionInfo;
 
 class JPClass : public JPResource
@@ -228,6 +230,16 @@ public:
 	}
 
 	JPContext* getContext() const;
+
+	// these are for extending Java classes
+	// adding virtual methods to JPClass to avoid dynamic cast
+
+	virtual const JPMethodOverrideList *getOverrides() const {
+		return nullptr;
+	}
+
+	virtual void addOverrides(JPMethodOverrideList &&overrides) {
+	}
 
 protected:
 	JPContext*           m_Context;

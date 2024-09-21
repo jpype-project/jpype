@@ -56,9 +56,9 @@ PyObject *JPPrimitiveType::convertLong(PyTypeObject* wrapper, PyLongObject* tmp)
 
 #else
 	// 3.12 completely does away with ob_size field and repurposes it
-	
+
 	// Determine the number of digits to copy
-	int n = (tmp->long_value.lv_tag >> 3);
+	int n = (int)(tmp->long_value.lv_tag >> 3);
 
 	PyLongObject *newobj = (PyLongObject *) wrapper->tp_alloc(wrapper, n);
 	if (newobj == NULL)

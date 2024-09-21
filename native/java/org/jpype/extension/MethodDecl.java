@@ -16,6 +16,8 @@
 package org.jpype.extension;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+
 import org.jpype.JPypeContext;
 import org.jpype.asm.Type;
 import org.jpype.manager.TypeManager;
@@ -24,80 +26,85 @@ import org.jpype.manager.TypeManager;
  *
  * @author nelson85
  */
-public class MethodDecl
-{
+public class MethodDecl {
 
-  public final String name;
-  public final Class<?> ret;
-  public final Class<?>[] parameters;
-  public final Class<?>[] exceptions;
-  public final int modifiers;
-  public Method method;
-  public long retId;
-  public long[] parametersId;
-  public String parametersName;
-  public long functionId;
+	public final String name;
+	public final Parameter ret;
+	public final Parameter[] parameters;
+	public final Class<?>[] exceptions;
+	public final int modifiers;
+	public Method method;
+	public long retId;
+	public long[] parametersId;
+	public String parametersName;
+	public long functionId;
 
-  public MethodDecl(String name, Class<?> ret, Class<?>[] parameters, Class<?>[] exceptions, int modifiers)
-  {
-    this.name = name;
-    if (ret == null)
-      ret = Void.TYPE;
-    this.ret = ret;
-    this.parameters = parameters;
-    this.exceptions = exceptions;
-    this.modifiers = modifiers;
-  }
+	public MethodDecl(String name, Class<?> ret, Class<?>[] params, Class<?>[] exc, int mods) {
+		this.name = name;
+		if (ret == null) {
+			ret = Void.TYPE;
+		}
+		this.ret = new Parameter(ret, -1);
+		int slot = Modifier.isStatic(mods) ? 0 : 1;
+		this.parameters = new Parameter[params.length];
+		for (int i = 0; i < params.length; i++) {
+			Parameter param = new Parameter(params[i], slot);
+			this.parameters[i] = param;
+			slot = param.getNextSlot();
+		}
+		this.exceptions = exc;
+		this.modifiers = mods;
+	}
 
-  boolean matches(Method m)
-  {
-    if (!m.getName().equals(name))
-      return false;
-    Class<?>[] param2 = m.getParameterTypes();
-    if (param2.length != parameters.length)
-      return false;
-    for (int i = 0; i < param2.length; ++i)
-    {
-      if (param2[i] != parameters[i])
-        return false;
-    }
+	boolean matches(Method m) {
+		if (!m.getName().equals(name)) {
+			return false;
+		}
 
-    // FIXME match Exceptions (this can throw less than the full list or
-    // be covariant.   So long as everything specified is a child of something
-    // in the original specification we are okay.
+		Class<?>[] param2 = m.getParameterTypes();
+		if (param2.length != parameters.length) {
+			return false;
+		}
 
-	// ^ NO! The JVM does not care and neither should we!
-	// they still need to be added to the method declaration in case the user
-	// has a situation where it's needed for some framework
+		for (int i = 0; i < param2.length; i++) {
+			if (param2[i] != parameters[i].type) {
+				return false;
+			}
+		}
 
-    if (ret.isPrimitive())
-      return ret == m.getReturnType();
-    return m.getReturnType().isAssignableFrom(ret);
-  }
+		// The JVM does not care about exceptions at runtime.
+		// They still need to be added to the method declaration in case the user
+		// has a situation where it's needed for some framework.
 
-  void bind(Method m)
-  {
-    this.method = m;
-  }
+		if (ret.kind == TypeKind.OBJECT) {
+			return m.getReturnType().isAssignableFrom(ret.type);
+		}
 
-  void resolve()
-  {
-    TypeManager typemanager = JPypeContext.getInstance().getTypeManager();
-    retId = typemanager.findClass(ret);
-    this.parametersId = new long[this.parameters.length];
-    for (int i = 0; i < this.parameters.length; ++i)
-      this.parametersId[i] = typemanager.findClass(parameters[i]);
-  }
+		return ret.type == m.getReturnType();
+	}
 
-  String descriptor()
-  {
-    StringBuilder sb = new StringBuilder();
-    sb.append('(');
-    for (Class<?> i : this.parameters)
-      sb.append(Type.getDescriptor(i));
-    sb.append(')');
-    sb.append(Type.getDescriptor(ret));
-    return sb.toString();
-  }
+	void bind(Method m) {
+		this.method = m;
+	}
+
+	void resolve() {
+		TypeManager typemanager = JPypeContext.getInstance().getTypeManager();
+		retId = typemanager.findClass(ret.type);
+		this.parametersId = new long[this.parameters.length];
+		for (int i = 0; i < this.parameters.length; ++i) {
+			this.parametersId[i] = typemanager.findClass(parameters[i].type);
+		}
+	}
+
+	String descriptor() {
+		StringBuilder sb = new StringBuilder();
+		sb.append('(');
+		for (Parameter param : this.parameters) {
+			sb.append(Type.getDescriptor(param.type));
+		}
+		sb.append(')');
+		sb.append(Type.getDescriptor(ret.type));
+		return sb.toString();
+	}
 
 }

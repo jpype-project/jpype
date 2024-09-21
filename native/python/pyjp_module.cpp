@@ -596,7 +596,7 @@ PyObject* examine(PyObject *module, PyObject *other)
 	int offset = 0;
 	if (!PyType_Check(other))
 	{
-		offset = PyJPValue_getJavaSlotOffset(other);
+		offset = (int)PyJPValue_getJavaSlotOffset(other);
 		printf("  Object:\n");
 		printf("    size: %d\n", (int) Py_SIZE(other));
 		printf("    dictoffset: %d\n", (int) ((long long) _PyObject_GetDictPtr(other)-(long long) other));
@@ -618,7 +618,7 @@ PyObject* examine(PyObject *module, PyObject *other)
 	printf("    alloc: %p\n", type->tp_alloc);
 	printf("    free: %p\n", type->tp_free);
 	printf("    finalize: %p\n", type->tp_finalize);
-	long v = _PyObject_VAR_SIZE(type, 1)+(PyJPValue_hasJavaSlot(type)?sizeof (JPValue):0);
+	long v = (long)_PyObject_VAR_SIZE(type, 1)+(PyJPValue_hasJavaSlot(type)?sizeof (JPValue):0);
 	printf("    size?: %ld\n",v);
 	printf("======\n");
 
@@ -706,6 +706,7 @@ static PyMethodDef moduleMethods[] = {
 	{"fault", (PyCFunction) PyJPModule_fault, METH_O, ""},
 #endif
 	{"examine", (PyCFunction) examine, METH_O, ""},
+	{"_putOverrides", (PyCFunction) PyJPExtension_putOverrides, METH_VARARGS, ""},
 
 	// sentinel
 	{nullptr}
@@ -811,12 +812,12 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 	Py_ssize_t itemsize = view.itemsize;
 	char *format = view.format;
 	if (format == nullptr)
-		format = "B";
+		format = const_cast<char*>("B");
 	// Standard size for 'l' is 4 in docs, but numpy uses format 'l' for long long
 	if (itemsize == 8 && format[0] == 'l')
-		format = "q";
+		format = const_cast<char*>("q");
 	if (itemsize == 8 && format[0] == 'L')
-		format = "Q";
+		format = const_cast<char*>("Q");
 
 	if (dtype != nullptr && dtype != Py_None )
 	{
@@ -877,7 +878,7 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 		jint *a = accessor.get();
 		for (int i = 0; i < view.ndim; ++i)
 		{
-			a[i] = view.shape[i];
+			a[i] = (jint)view.shape[i];
 		}
 		accessor.commit();
 		for (int i = 0; i < view.ndim - 1; ++i)
@@ -894,7 +895,7 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 		}
 		base = view.len / view.itemsize;
 	}
-	return pcls->newMultiArray(frame, buffer, subs, base, (jobject) jdims);
+	return pcls->newMultiArray(frame, buffer, (int)subs, (int)base, (jobject) jdims);
 }
 
 #ifdef JP_INSTRUMENTATION

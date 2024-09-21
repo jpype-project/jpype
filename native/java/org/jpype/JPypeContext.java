@@ -19,11 +19,8 @@ import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteOrder;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -351,7 +348,7 @@ public class JPypeContext
   /**
    * Helper function for collect rectangular,
    */
-  private static boolean collect(List l, Object o, int q, int[] shape, int d)
+  private static boolean collect(List<Object> l, Object o, int q, int[] shape, int d)
   {
     if (Array.getLength(o) != shape[q])
       return false;
@@ -390,7 +387,7 @@ public class JPypeContext
     int d = 0;
     ArrayList<Object> out = new ArrayList<>();
     Object o1 = o;
-    Class c1 = o1.getClass();
+    Class<?> c1 = o1.getClass();
     for (int i = 0; i < 5; ++i)
     {
       int l = Array.getLength(o1);
@@ -423,7 +420,7 @@ public class JPypeContext
   private Object unpack(int size, Object parts)
   {
     Object e0 = Array.get(parts, 0);
-    Class c = e0.getClass();
+    Class<?> c = e0.getClass();
     int segments = Array.getLength(parts) / size;
     Object a2 = Array.newInstance(c, size);
     Object a1 = Array.newInstance(a2.getClass(), segments);
@@ -486,8 +483,8 @@ public class JPypeContext
       if (th != JPypeSignal.main)
         return;
 
-      // Unconditionally clear the interrupt flag if we are called from 
-      // C++.  This happens when a field get() or method call() is 
+      // Unconditionally clear the interrupt flag if we are called from
+      // C++.  This happens when a field get() or method call() is
       // invoked.
       if (!x)
         JPypeSignal.acknowledgePy();
@@ -566,7 +563,7 @@ public class JPypeContext
    * @param cls
    * @return
    */
-  public static String getFunctional(Class cls)
+  public static String getFunctional(Class<?> cls)
   {
     Method m = JPypeUtilities.getFunctionalInterfaceMethod(cls);
     return m != null ? m.getName() : null;

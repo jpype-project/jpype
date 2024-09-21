@@ -13,27 +13,25 @@
 
   See NOTICE file for details.
  **************************************************************************** */
+#include "include/jp_class.h"
 #include "jpype.h"
-#include "jp_primitive_accessor.h"
-#include "jp_boxedtype.h"
+#include "jp_extension.hpp" // IWYU pragma: keep
 
-static JPPyObject packArgs(JPContext* context, jlongArray parameterTypePtrs,
-		jobjectArray args)
+static JPPyObject packArgs(JPContext* context, const JPMethodOverride &method, jobjectArray args)
 {
 	JP_TRACE_IN("JProxy::getArgs");
 	JPJavaFrame frame = JPJavaFrame::outer(context);
-	jsize argLen = frame.GetArrayLength(parameterTypePtrs);
+	const size_t argLen = method.paramTypes.size();
 	JPPyObject pyargs = JPPyObject::call(PyTuple_New(argLen));
-	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, parameterTypePtrs,
-			&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
 
-	jlong* types = accessor.get();
 	for (jsize i = 0; i < argLen; i++)
 	{
 		jobject obj = frame.GetObjectArrayElement(args, i);
 		JPClass* type = frame.findClassForObject(obj);
-		if (type == NULL)
-			type = reinterpret_cast<JPClass*> (types[i]);
+		if (type == NULL) {
+			// this should be immutable once built...
+			type = const_cast<JPClass*>(method.paramTypes[i]);
+		}
 		JPValue val = type->getValueFromObject(JPValue(type, obj));
 		PyTuple_SetItem(pyargs.get(), i, type->convertToPythonObject(frame, val, false).keep());
 	}
@@ -46,13 +44,11 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__call(
 		jclass clazz,
 		jlong contextPtr,
 		jlong functionId,
-		jlong returnTypePtr,
-		jlongArray parameterTypePtrs,
-		jobjectArray args,
-		jlong flags
-		)
+		jobjectArray args
+	)
 {
-	JPContext* context = (JPContext*) contextPtr;
+	JPClass *cls = (JPClass *) contextPtr;
+	JPContext* context = cls->getContext();
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 
 	// We need the resources to be held for the full duration of the proxy.
@@ -60,16 +56,18 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__call(
 	try {
 		JP_TRACE_IN("JPype_InvocationHandler_hostInvoke");
 		JP_TRACE("context", context);
-		JP_TRACE("hostObj", (void*) hostObj);
 		try
 		{
+			const JPMethodOverride &method = cls->getOverrides()->at(functionId);
 			// Find the return type
-			JPClass* returnClass = (JPClass*) returnTypePtr;
+
+			// why are these functions mutating it??????????
+			JPClass* returnClass = const_cast<JPClass*>(method.returnType);
 			JP_TRACE("Get return type", returnClass->getCanonicalName());
 
 			// convert the arguments into a python list
 			JP_TRACE("Convert arguments");
-			JPPyObject pyargs = packArgs(context, parameterTypePtrs, args);
+			JPPyObject pyargs = packArgs(context, method, args);
 
 			// Copy the privilege flags into the first argument
 			// FIXME how should this be stored.

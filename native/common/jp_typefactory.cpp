@@ -13,6 +13,7 @@
 
    See NOTICE file for details.
  *****************************************************************************/
+#include "include/jp_modifier.h"
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_primitive_accessor.h"
@@ -39,6 +40,7 @@
 #include "jp_doubletype.h"
 #include "jp_functional.h"
 #include "jp_proxy.h"
+#include "jp_extension.hpp"
 
 void JPTypeFactory_rethrow(JPJavaFrame& frame)
 {
@@ -178,16 +180,29 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	if (interfacePtrs != nullptr)
 		convert(frame, interfacePtrs, interfaces);
 	JPClass* result = nullptr;
+	const bool extension = JPModifier::isExtension(modifiers);
+
 	if (!JPModifier::isSpecial(modifiers))
 	{
 		// Create a normal class
+		if (extension) {
+			return (jlong) new JPExtensionType<JPClass>(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+		}
 		return (jlong) new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
 	}
 
-	if (JPModifier::isFunctional(modifiers))
+	if (JPModifier::isFunctional(modifiers)) {
+		if (extension) {
+			return (jlong) new JPExtensionType<JPFunctional>(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+		}
 		return (jlong) new JPFunctional(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
-	if (JPModifier::isBuffer(modifiers))
+	}
+	if (JPModifier::isBuffer(modifiers)) {
+		if (extension) {
+			return (jlong) new JPExtensionType<JPBufferType>(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+		}
 		return (jlong) new JPBufferType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+	}
 	// Certain classes require special implementations
 	if (className == "java.lang.Object")
 		return (jlong) (context->_java_lang_Object

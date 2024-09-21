@@ -152,7 +152,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 		return nullptr;
 		JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 	}
-	catch (...) // JP_TRACE_OUT implies a throw but that is not allowed. 
+	catch (...) // JP_TRACE_OUT implies a throw but that is not allowed.
 	{}
 	return NULL;
 }
@@ -193,7 +193,7 @@ JPProxy::~JPProxy()
 		{
 			m_Context->getEnv()->DeleteWeakGlobalRef(m_Ref);
 		}
-	} catch (JPypeException &ex)  // GCOVR_EXCL_LINE
+	} catch (JPypeException &)  // GCOVR_EXCL_LINE
 	{
 		// Cannot throw
 	}

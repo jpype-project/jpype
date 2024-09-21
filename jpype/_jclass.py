@@ -351,6 +351,8 @@ def _JExtension(name, bases, members):
     jspec = members['__jspec__']
     Factory = _jpype.JClass('org.jpype.extension.Factory')
     cls = Factory.newClass(name, bases)
+    overrides = []
+    functions = []
     for i in jspec:
         if isinstance(i, _JFieldDecl):
             cls.addField(i.cls, i.name, i.value, i.modifiers)
@@ -364,11 +366,15 @@ def _JExtension(name, bases, members):
                 args = [mspec.annotations[j] for j in mspec.args[1:]]
                 ret = mspec.annotations["return"]
                 cls.addMethod(i.__name__, ret, args, exceptions, i.__jmodifiers__)
+                functions.append(i)
         else:
             raise TypeError("Unknown member %s" % type(i))
-    Factory.loadClass(cls)
 
-    raise TypeError("Not implemented")
+    res = Factory.loadClass(cls)
+    for i, method in enumerate(cls.getMethods()):
+        overrides.append((method.retId, method.parametersId, functions[i]))
+
+    return res
 
 
 # Install module hooks

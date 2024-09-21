@@ -30,6 +30,7 @@ import org.jpype.asm.ClassWriter;
 import org.jpype.asm.MethodVisitor;
 import org.jpype.asm.Opcodes;
 import org.jpype.asm.Type;
+import org.jpype.manager.TypeManager;
 
 /**
  * This is used to create an extension class.
@@ -41,387 +42,339 @@ import org.jpype.asm.Type;
  *
  * @author nelson85
  */
-public class Factory
-{
+public class Factory {
 
-  /**
-   * Start a new class declaration.
-   *
-   * @param name is the name of the nee class.
-   * @param bases is a list of the bases for this class containing no more than
-   * one base class.
-   * @return a new class declaration.
-   */
-  public static ClassDecl newClass(String name, Class<?>[] bases)
-  {
-    return new ClassDecl(name, bases);
-  }
+	private static final Type CONTEXT_TYPE = Type.getType(JPypeContext.class);
+	private static final Type TYPE_MANAGER_TYPE = Type.getType(TypeManager.class);
+	private static final Type FACTORY_TYPE = Type.getType(Factory.class);
+	private static final String CALL_DESCRIPTOR = "(JJ[Ljava/lang/Object;)Ljava/lang/Object;";
+	private static final String FIND_CLASS_DESCRIPTOR = "(Ljava/lang/Class;)J";
+	public static final String JCLASS_FIELD = "$jclass";
 
-  public static Class<?> loadClass(ClassDecl decl)
-  {
-    Class<?> base = null;
-    List<Class<?>> interfaces = new ArrayList<>();
+	//<editor-fold desc="hooks" defaultstate="collapsed">
+	/**
+	 * Hook to call a Python implemented method
+	 */
+	static native Object _call(long ctx, long id, Object[] args);
 
-    for (Class<?> cls : decl.bases)
-    {
-      if (cls.isInterface())
-      {
-        interfaces.add(cls);
-        continue;
-      }
+	//</editor_fold>
 
-      // There can only be one base
-      if (base != null)
-        throw new RuntimeException("Multiple bases not allowed");
+	/**
+	 * Start a new class declaration.
+	 *
+	 * @param name is the name of the nee class.
+	 * @param bases is a list of the bases for this class containing no more than
+	 * one base class.
+	 * @return a new class declaration.
+	 */
+	public static ClassDecl newClass(String name, Class<?>[] bases) {
+		return new ClassDecl(name, bases);
+	}
 
-      // Base must not be final
-      if (Modifier.isFinal(cls.getModifiers()))
-        throw new RuntimeException("Cannot extend final class");
+	public static Class<?> loadClass(ClassDecl decl) {
+		Class<?> base = null;
+		List<Class<?>> interfaces = new ArrayList<>();
 
-      // Select this as the base
-      base = cls;
-    }
+		for (Class<?> cls : decl.bases) {
+			if (cls.isInterface()) {
+				interfaces.add(cls);
+				continue;
+			}
 
-    if (base == null)
-    {
-      base = Object.class;
-    }
+			// There can only be one base
+			if (base != null) {
+				throw new RuntimeException("Multiple bases not allowed");
+			}
 
-    // Write back to the decl for auditing.
-    decl.setBase(base);
-    decl.setInterfaces(interfaces);
+			// Base must not be final
+			if (Modifier.isFinal(cls.getModifiers())) {
+				throw new RuntimeException("Cannot extend final class");
+			}
 
-    // Traverse all the bases to see what methods we are covering
-    for (Class<?> i : decl.bases)
-    {
-      // FIXME watch for methods that have already been implemented.
-      for (Method m : i.getMethods())
-      {
-        MethodDecl m3 = null;
-        for (MethodDecl m2 : decl.methods)
-          if (m2.matches(m))
-          {
-            m3 = m2;
-            break;
-          }
+			// Select this as the base
+			base = cls;
+		}
 
-        if (m3 == null && Modifier.isAbstract(m.getModifiers()))
-          throw new RuntimeException("Method " + m + " must be overriden");
+		if (base == null) {
+			base = Object.class;
+		}
 
-        if (m3 != null)
-          m3.bind(m);
-      }
-    }
+		// Write back to the decl for auditing.
+		decl.setBase(base);
+		decl.setInterfaces(interfaces);
 
-    byte[] out = buildClass(decl);
-    try
-    {
-      OutputStream fs = Files.newOutputStream(Paths.get("test.class"));
-      fs.write(out);
-      fs.close();
-    } catch (IOException ex)
-    {
-      Logger.getLogger(Factory.class.getName()).log(Level.SEVERE, null, ex);
-    }
+		// Traverse all the bases to see what methods we are covering
+		for (Class<?> i : decl.bases) {
+			// FIXME watch for methods that have already been implemented.
+			for (Method m : i.getMethods()) {
+				MethodDecl m3 = null;
+				for (MethodDecl m2 : decl.methods) {
+					if (m2.matches(m)) {
+						m3 = m2;
+						break;
+					}
+				}
 
-    return null;
-  }
+				if (m3 == null && Modifier.isAbstract(m.getModifiers())) {
+					throw new RuntimeException("Method " + m + " must be overriden");
+				}
 
-  static byte[] buildClass(ClassDecl cdecl)
-  {
-    // Create the class
-    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-    cdecl.internalName = "dynamic/" + cdecl.name;
-    cw.visit(Opcodes.V1_7, Opcodes.ACC_PUBLIC, cdecl.internalName,
-            null,
-            Type.getInternalName(cdecl.base),
-            cdecl.interfaces.stream()
-				.map(Type::getInternalName)
-                .toArray(String[]::new));
+				if (m3 != null) {
+					m3.bind(m);
+				}
+			}
+		}
 
-    // Reserve space for parameter fields
-    implementFields(cw, cdecl);
+		byte[] out = buildClass(decl);
+		try {
+			OutputStream fs = Files.newOutputStream(Paths.get("test.class"));
+			fs.write(out);
+			fs.close();
+		} catch (IOException ex) {
+			Logger.getLogger(Factory.class.getName()).log(Level.SEVERE, null, ex);
+		}
 
-    for (MethodDecl mdecl : cdecl.methods)
-    {
-      implementMethod(cw, cdecl, mdecl);
-    }
+		try {
+			Class<?> res = ExtensionClassLoader.instance.loadClass(decl.internalName, out);
+			for (MethodDecl method : decl.methods) {
+				// resolve must occur AFTER class creation
+				method.resolve();
+			}
+			return res;
+		} catch (Exception ex) {
+			Logger.getLogger(Factory.class.getName()).log(Level.SEVERE, null, ex);
+		}
 
-    cw.visitEnd();
-    return cw.toByteArray();
-  }
+		return null;
+	}
 
-//<editor-fold desc="hooks" defaultstate="collapsed">
-  /**
-   * Hook to create a new instance of the object.
-   *
-   * This is called by the ctor of object to invoke __init__(self)
-   */
-  static native Object _call(long context, long functionID,
-          long returnType, long[] argsTypes, Object[] args, long flags);
+	static byte[] buildClass(ClassDecl cdecl) {
+		// Create the class
+		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+		cdecl.internalName = "dynamic/" + cdecl.name;
+		cw.visit(Opcodes.V1_7, Opcodes.ACC_PUBLIC, cdecl.internalName,
+			null,
+			Type.getInternalName(cdecl.base),
+			cdecl.interfaces.stream()
+					.map(Type::getInternalName)
+					.toArray(String[]::new));
 
-//</editor_fold>
-//<editor-fold desc="code generators" defaultstate="collapsed">
-  private static void handleReturn(MethodVisitor mv, Class<?> ret)
-  {
-    if (!ret.isPrimitive())
-    {
-      mv.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(ret));
-      mv.visitInsn(Opcodes.ARETURN);
-      return;
-    }
+		// Reserve space for parameter fields
+		implementFields(cw, cdecl);
 
-    // Handle return
-    if (ret == Void.TYPE)
-    {
-      mv.visitInsn(Opcodes.POP);
-      mv.visitInsn(Opcodes.RETURN);
-      return;
-    }
+		// TODO implement constructors
+		// just delegate to super constructors
+		// make all protected ones public
 
-    if (ret == Boolean.TYPE)
-    {
-      mv.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Boolean");
-      mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-              "java/lang/Boolean",
-              "booleanValue",
-              "()Z",
-              false);
-      mv.visitInsn(Opcodes.IRETURN);
-      return;
-    }
+		for (MethodDecl mdecl : cdecl.methods) {
+			implementMethod(cw, cdecl, mdecl);
+		}
 
-    if (ret == Character.TYPE)
-    {
-      mv.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Character");
-      mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-              "java/lang/Character",
-              "charValue",
-              "()C",
-              false);
-      mv.visitInsn(Opcodes.IRETURN);
-      return;
-    }
+		cw.visitEnd();
+		return cw.toByteArray();
+	}
 
-    mv.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Number");
-    if (ret == Byte.TYPE)
-    {
-      mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-              "java/lang/Number",
-              "byteValue",
-              "()B",
-              false);
-      mv.visitInsn(Opcodes.IRETURN);
-      return;
-    }
 
-    if (ret == Short.TYPE)
-    {
-      mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-              "java/lang/Number",
-              "shortValue",
-              "()S",
-              false);
-      mv.visitInsn(Opcodes.IRETURN);
-      return;
-    }
+	//<editor-fold desc="code generators" defaultstate="collapsed">
+	private static void handleReturn(MethodVisitor mv, Parameter ret) {
+		String name;
+		String desc;
+		int op;
 
-    if (ret == Integer.TYPE)
-    {
-      mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-              "java/lang/Number",
-              "intValue",
-              "()I",
-              false);
-      mv.visitInsn(Opcodes.IRETURN);
-      return;
-    }
+		switch (ret.kind) {
+			case OBJECT:
+				mv.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(ret.type));
+				mv.visitInsn(Opcodes.ARETURN);
+				return;
+			case VOID:
+				mv.visitInsn(Opcodes.POP);
+				mv.visitInsn(Opcodes.RETURN);
+				return;
+			case BOOL:
+				name = "booleanValue";
+				desc = "()Z";
+				op = Opcodes.IRETURN;
+				break;
+			case BYTE:
+				name = "byteValue";
+				desc = "()B";
+				op = Opcodes.IRETURN;
+				break;
+			case CHAR:
+				name = "charValue";
+				desc = "()C";
+				op = Opcodes.IRETURN;
+				break;
+			case SHORT:
+				name = "shortValue";
+				desc = "()S";
+				op = Opcodes.IRETURN;
+				break;
+			case INT:
+				name = "intValue";
+				desc = "()I";
+				op = Opcodes.IRETURN;
+				break;
+			case LONG:
+				name = "longValue";
+				desc = "()L";
+				op = Opcodes.LRETURN;
+				break;
+			case FLOAT:
+				name = "floatValue";
+				desc = "()F";
+				op = Opcodes.FRETURN;
+				break;
+			case DOUBLE:
+				name = "doubleValue";
+				desc = "()D";
+				op = Opcodes.DRETURN;
+				break;
+			default:
+				// without the default the compiler thinks some locals are uninitialized
+				throw new RuntimeException();
+		}
 
-    if (ret == Long.TYPE)
-    {
-      mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-              "java/lang/Number",
-              "longValue",
-              "()L",
-              false);
-      mv.visitInsn(Opcodes.LRETURN);
-      return;
-    }
+		mv.visitTypeInsn(Opcodes.CHECKCAST, ret.kind.boxedClass);
+		mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, ret.kind.boxedClass, name, desc, false);
+		mv.visitInsn(op);
+	}
 
-    if (ret == Float.TYPE)
-    {
-      mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-              "java/lang/Number",
-              "floatValue",
-              "()F",
-              false);
-      mv.visitInsn(Opcodes.FRETURN);
-      return;
-    }
+	private static void implementFields(ClassWriter cw, ClassDecl decl) {
+		// create a static private field to hold the pointer to our JPClass
+		cw.visitField(
+			Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL,
+			JCLASS_FIELD,
+			"J",
+			null,
+			null
+		);
 
-    if (ret == Double.TYPE)
-    {
-      mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-              "java/lang/Number",
-              "doubleValue",
-              "()D",
-              false);
-      mv.visitInsn(Opcodes.DRETURN);
-      return;
-    }
+		// Implement fields
+		for (FieldDecl fdecl : decl.fields) {
+			// FIXME initialize values
+			cw.visitField(fdecl.modifiers, fdecl.name, Type.getDescriptor(fdecl.type), null, null);
+		}
 
-    // Unexpected failure
-    throw new RuntimeException();
-  }
+		// Initialize the parameter lists
+		MethodVisitor mv = cw.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
+		mv.visitCode();
+		String context = CONTEXT_TYPE.getInternalName();
+		Type type = Type.getType("L"+decl.internalName+";");
+		mv.visitMethodInsn(Opcodes.INVOKESTATIC, context, "getInstance", "()Lorg/jpype/JPypeContext;", false);
+		mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, context, "getTypeManager", "()Lorg/jpype/manager/TypeManager;", false);
+		mv.visitLdcInsn(type);
+		mv.visitMethodInsn(
+			Opcodes.INVOKEVIRTUAL,
+			TYPE_MANAGER_TYPE.getInternalName(),
+			"findClass",
+			"(Ljava/lang/Class;)J",
+			false
+		);
+		mv.visitFieldInsn(Opcodes.PUTSTATIC, type.getInternalName(), JCLASS_FIELD, "J");
+		mv.visitInsn(Opcodes.RET);
+		mv.visitEnd();
+	}
 
-  private static void implementFields(ClassWriter cw, ClassDecl decl)
-  {
-    int i = 0;
-    for (MethodDecl mdecl : decl.methods)
-    {
-      mdecl.resolve();
-      mdecl.parametersName = mdecl.name + "$" + i;
-      i++;
-      cw.visitField(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC, mdecl.parametersName, "[J", null, null);
-    }
+	private static void implementMethod(ClassWriter cw, ClassDecl cdecl, MethodDecl mdecl) {
+		// Copy over exceptions
+		String[] exceptions;
+		if (mdecl.exceptions != null) {
+			exceptions = new String[mdecl.exceptions.length];
+			for (int i = 0; i < mdecl.exceptions.length; ++i) {
+				exceptions[i] = Type.getInternalName(mdecl.exceptions[i]);
+			}
+		}
 
-    // Implement fields
-    for (FieldDecl fdecl : decl.fields)
-    {
-      // FIXME initialize values
-      cw.visitField(fdecl.modifiers, fdecl.name, Type.getDescriptor(fdecl.type), null, null);
-    }
+		// Start a new method
+		MethodVisitor mv =
+			cw.visitMethod(mdecl.modifiers, mdecl.name, mdecl.descriptor(), null, null);
 
-    {
-      // Initialize the parameter lists
-      MethodVisitor mv = cw.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
-      mv.visitCode();
-      for (MethodDecl mdecl : decl.methods)
-      {
-        // Reserve space for parameters plus this
-        mv.visitIntInsn(Opcodes.BIPUSH, mdecl.parametersId.length + 1);
-        mv.visitIntInsn(Opcodes.NEWARRAY, Opcodes.T_LONG);
+		// Start the implementation
+		mv.visitCode();
 
-        // Push 0 for this slot.
-        mv.visitInsn(Opcodes.DUP); // two copies of array on stack
-        mv.visitInsn(Opcodes.ICONST_0);
-        mv.visitInsn(Opcodes.ICONST_0);
-        mv.visitInsn(Opcodes.LASTORE);
+		// Object _call(long ctx, long id, long resType, long[] argsTypes, Object[] args);
+		// Place the interpretation information on the stack
+		long context = JPypeContext.getInstance().getContext();
+		mv.visitLdcInsn(context);
+		mv.visitLdcInsn(mdecl.functionId);
+		/*mv.visitLdcInsn(mdecl.retId);
+		mv.visitFieldInsn(Opcodes.GETSTATIC, cdecl.internalName,
+			mdecl.parametersName, "[J");*/
 
-        // Push the rest of the paramters
-        for (int j = 0; j < mdecl.parametersId.length; ++j)
-        {
-          mv.visitInsn(Opcodes.DUP); // two copies of array on stack
-          mv.visitIntInsn(Opcodes.BIPUSH, j + 1);
-          mv.visitLdcInsn(mdecl.parametersId[j]);
-          mv.visitInsn(Opcodes.LASTORE);
-        }
+		// Create the parameter array
+		mv.visitIntInsn(Opcodes.BIPUSH, mdecl.parameters.length + 1);
+		mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+		mv.visitInsn(Opcodes.DUP); // two copies of thearray
+		mv.visitInsn(Opcodes.ICONST_0);
+		mv.visitIntInsn(Opcodes.ALOAD, 0);
+		mv.visitInsn(Opcodes.AASTORE);
 
-        // Store in the parameter list
-        mv.visitFieldInsn(Opcodes.PUTSTATIC, decl.internalName, mdecl.parametersName, "[J");
-      }
-      mv.visitEnd();
-    }
-  }
+		// Marshal the parameters
+		int k = 1;
+		for (int j = 0; j < mdecl.parameters.length; ++j) {
+			Parameter param = mdecl.parameters[j];
+			mv.visitInsn(Opcodes.DUP); // two copies of thearray
+			mv.visitIntInsn(Opcodes.BIPUSH, j + 1);
+			if (param.kind == TypeKind.OBJECT) {
+				mv.visitIntInsn(Opcodes.ALOAD, k++);
+			} else {
+				box(mv, param);
+			}
+			mv.visitInsn(Opcodes.AASTORE);
+		}
+		mv.visitInsn(Opcodes.ICONST_0);
 
-  private static void implementMethod(ClassWriter cw, ClassDecl cdecl, MethodDecl mdecl)
-  {
-    // Copy over exceptions
-    String[] exceptions;
-    if (mdecl.exceptions != null)
-    {
-      exceptions = new String[mdecl.exceptions.length];
-      for (int i = 0; i < mdecl.exceptions.length; ++i)
-      {
-        exceptions[i] = Type.getInternalName(mdecl.exceptions[i]);
-      }
-    }
+		// Call the hook in native
+		mv.visitMethodInsn(
+			Opcodes.INVOKESTATIC,
+			FACTORY_TYPE.getInternalName(),
+			"_call",
+			CALL_DESCRIPTOR,
+			false
+		);
 
-    // Start a new method
-    MethodVisitor mv = cw.visitMethod(mdecl.modifiers, mdecl.name, mdecl.descriptor(), null, null);
+		// Process the return
+		handleReturn(mv, mdecl.ret);
 
-    // Start the implementation
-    mv.visitCode();
+		// Close the method
+		mv.visitEnd();
+	}
+	//</editor-fold>
 
-    //  static native Object _call(long context, long functionID, Object self,
-    // long returnType, long[] argsTypes, Object[] args);
-    // Place the interpretation information on the stack
-    long context = JPypeContext.getInstance().getContext();
-    mv.visitLdcInsn(context);
-    mv.visitLdcInsn(mdecl.functionId);
-    mv.visitLdcInsn(mdecl.retId);
-    mv.visitFieldInsn(Opcodes.GETSTATIC, cdecl.internalName,
-            mdecl.parametersName, "[J");
-
-    // Create the parameter array
-    mv.visitIntInsn(Opcodes.BIPUSH, mdecl.parameters.length + 1);
-    mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
-    mv.visitInsn(Opcodes.DUP); // two copies of thearray
-    mv.visitInsn(Opcodes.ICONST_0);
-    mv.visitIntInsn(Opcodes.ALOAD, 0);
-    mv.visitInsn(Opcodes.AASTORE);
-
-    // Marshal the parameters
-    int k = 1;
-    for (int j = 0; j < mdecl.parameters.length; ++j)
-    {
-      Class<?> param = mdecl.parameters[j];
-      mv.visitInsn(Opcodes.DUP); // two copies of thearray
-      mv.visitIntInsn(Opcodes.BIPUSH, j + 1);
-      if (!param.isPrimitive())
-      {
-        mv.visitIntInsn(Opcodes.ALOAD, k++);
-      } else if (param == Boolean.TYPE)
-      {
-        mv.visitIntInsn(Opcodes.ILOAD, k++);
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
-      } else if (param == Byte.TYPE)
-      {
-        mv.visitIntInsn(Opcodes.ILOAD, k++);
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Byte", "valueOf", "(B)Ljava/lang/Byte;", false);
-      } else if (param == Character.TYPE)
-      {
-        mv.visitIntInsn(Opcodes.ILOAD, k++);
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
-      } else if (param == Short.TYPE)
-      {
-        mv.visitIntInsn(Opcodes.ILOAD, k++);
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Short", "valueOf", "(S)Ljava/lang/Short;", false);
-      } else if (param == Integer.TYPE)
-      {
-        mv.visitIntInsn(Opcodes.ILOAD, k++);
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-      } else if (param == Long.TYPE)
-      {
-        mv.visitIntInsn(Opcodes.LLOAD, k++);
-        k++;  // bad design by Java.
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Long", "valueOf", "(L)Ljava/lang/Long;", false);
-      } else if (param == Float.TYPE)
-      {
-        mv.visitIntInsn(Opcodes.FLOAD, k++);
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Float", "valueOf", "(L)Ljava/lang/Float;", false);
-      } else if (param == Double.TYPE)
-      {
-        mv.visitIntInsn(Opcodes.DLOAD, k++);
-        k++; // bad design by Java.
-        mv.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Double", "valueOf", "(L)Ljava/lang/Double;", false);
-      }
-      mv.visitInsn(Opcodes.AASTORE);
-    }
-    mv.visitInsn(Opcodes.ICONST_0);
-
-    // Call the hook in native
-    mv.visitMethodInsn(Opcodes.INVOKESTATIC, "org/jpype/extension/Factory",
-            "_call",
-            "(JJJ[J[Ljava/lang/Object;J)Ljava/lang/Object;", false);
-
-    // Process the return
-    handleReturn(mv, mdecl.ret);
-
-    // Close the method
-    mv.visitEnd();
-  }
-  //</editor-fold>
+	private static void box(MethodVisitor mv, Parameter param) {
+		String desc;
+		switch (param.kind) {
+			case BOOL:
+				desc = "(Z)Ljava/lang/Boolean;";
+				break;
+			case BYTE:
+				desc ="(B)Ljava/lang/Byte;";
+				break;
+			case CHAR:
+				desc = "(C)Ljava/lang/Character;";
+				break;
+			case SHORT:
+				desc = "(S)Ljava/lang/Short;";
+				break;
+			case INT:
+				desc = "(I)Ljava/lang/Integer;";
+				break;
+			case LONG:
+				desc = "(L)Ljava/lang/Long;";
+				break;
+			case FLOAT:
+				desc = "(L)Ljava/lang/Float;";
+				break;
+			case DOUBLE:
+				desc = "(L)Ljava/lang/Double;";
+				break;
+			default:
+				throw new IllegalArgumentException(param.type.toString() + " is not a primitive type");
+		}
+		mv.visitIntInsn(param.kind.load, param.slot);
+		mv.visitMethodInsn(Opcodes.INVOKESTATIC, param.kind.boxedClass, "valueOf", desc, false);
+	}
 }
 
 // FIXME how do we define what arguments are passed to the ctor?

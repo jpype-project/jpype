@@ -16,6 +16,7 @@
 package org.jpype.extension;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -69,5 +70,9 @@ public class ClassDecl
   void setInterfaces(List<Class<?>> interfaces)
   {
     this.interfaces = interfaces;
+  }
+
+  public List<MethodDecl> getMethods() {
+	return Collections.unmodifiableList(methods);
   }
 }
