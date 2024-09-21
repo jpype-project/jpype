@@ -60,19 +60,20 @@ public:
 } ;
 
 
-PyObject* _JArray = nullptr;
-PyObject* _JChar = nullptr;
-PyObject* _JObject = nullptr;
-PyObject* _JInterface = nullptr;
-PyObject* _JException = nullptr;
-PyObject* _JClassPre = nullptr;
-PyObject* _JClassPost = nullptr;
-PyObject* _JClassDoc = nullptr;
-PyObject* _JMethodDoc = nullptr;
-PyObject* _JMethodAnnotations = nullptr;
-PyObject* _JMethodCode = nullptr;
-PyObject* _JObjectKey = nullptr;
-PyObject* _JVMNotRunning = nullptr;
+PyObject* _JArray = NULL;
+PyObject* _JChar = NULL;
+PyObject* _JObject = NULL;
+PyObject* _JInterface = NULL;
+PyObject* _JException = NULL;
+PyObject* _JClassPre = NULL;
+PyObject* _JClassPost = NULL;
+PyObject* _JClassDoc = NULL;
+PyObject* _JMethodDoc = NULL;
+PyObject* _JMethodAnnotations = NULL;
+PyObject* _JMethodCode = NULL;
+PyObject* _JObjectKey = NULL;
+PyObject* _JVMNotRunning = NULL;
+PyObject* _JExtension = NULL;
 
 void PyJPModule_loadResources(PyObject* module)
 {
@@ -121,8 +122,10 @@ void PyJPModule_loadResources(PyObject* module)
 		_JMethodCode = PyObject_GetAttrString(module, "getMethodCode");
 		JP_PY_CHECK();
 		Py_INCREF(_JMethodCode);
-
-		_JObjectKey = PyCapsule_New(module, "constructor key", nullptr);
+		_JExtension = PyObject_GetAttrString(module, "_JExtension");
+		JP_PY_CHECK();
+		Py_INCREF(_JExtension);
+		_JObjectKey = PyCapsule_New(module, "constructor key", NULL);
 
 	}	catch (JPypeException&)  // GCOVR_EXCL_LINE
 	{
@@ -134,8 +137,7 @@ void PyJPModule_loadResources(PyObject* module)
 }
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 
@@ -180,7 +182,7 @@ PyObject* PyJP_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
 	for (Py_ssize_t i = 0; i < n; ++i)
 	{
 		auto *type2 = (PyTypeObject*) PyTuple_GetItem(mro, i);
-		
+
 		// Skip objects without a functioning dictionary
 		if (type2->tp_dict == NULL)
 			continue;
@@ -731,7 +733,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	Py_INCREF(module);
 	PyJPModule = module;
 	PyModule_AddStringConstant(module, "__version__", "1.5.1_dev0");
-	
+
 	// Our module will be used for PyFrame object and it is a requirement that
 	// we have a builtins in our dictionary.
 	PyObject *builtins = PyEval_GetBuiltins();

@@ -32,13 +32,12 @@ struct PyJPClass
 	PyHeapTypeObject ht_type;
 	JPClass *m_Class;
 	PyObject *m_Doc;
-} ;
+};
 
 PyObject* PyJPClassMagic = nullptr;
 
 #ifdef __cplusplus
-extern "C"
-{
+extern "C" {
 #endif
 
 int PyJPClass_Check(PyObject* obj)
@@ -270,7 +269,7 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	PyTypeObject *type = (PyTypeObject*) self;
 
 #if PY_VERSION_HEX >= 0x030d0000
-	// Python 3.13 - This flag will try to place the dictionary are part of the object which 
+	// Python 3.13 - This flag will try to place the dictionary are part of the object which
 	// adds an unknown number of bytes to the end of the object making it impossible
 	// to attach our needed data.  If we kill the flag then we get usable behavior.
 	type->tp_flags &= ~Py_TPFLAGS_INLINE_VALUES;
