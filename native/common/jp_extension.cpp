@@ -14,13 +14,8 @@
   See NOTICE file for details.
  **************************************************************************** */
 #include "jpype.h"
-#include "pyjp.h"
-#include "jp_proxy.h"
-#include "jp_classloader.h"
-#include "jp_reference_queue.h"
 #include "jp_primitive_accessor.h"
 #include "jp_boxedtype.h"
-#include "jp_functional.h"
 
 static JPPyObject packArgs(JPContext* context, jlongArray parameterTypePtrs,
 		jobjectArray args)
@@ -62,7 +57,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__call(
 
 	// We need the resources to be held for the full duration of the proxy.
 	JPPyCallAcquire callback;
-	{
+	try {
 		JP_TRACE_IN("JPype_InvocationHandler_hostInvoke");
 		JP_TRACE("context", context);
 		JP_TRACE("hostObj", (void*) hostObj);
@@ -75,7 +70,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__call(
 			// convert the arguments into a python list
 			JP_TRACE("Convert arguments");
 			JPPyObject pyargs = packArgs(context, parameterTypePtrs, args);
-			
+
 			// Copy the privilege flags into the first argument
 			// FIXME how should this be stored.
 
@@ -135,5 +130,8 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__call(
 		return NULL;
 		JP_TRACE_OUT; // GCOVR_EXCL_LINE
 	}
+	catch (...) // JP_TRACE_OUT implies a throw but that is not allowed.
+	{}
+	return NULL;
 }
 

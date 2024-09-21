@@ -28,9 +28,9 @@ public class MethodDecl
 {
 
   public final String name;
-  public final Class ret;
-  public final Class[] parameters;
-  public final Class[] exceptions;
+  public final Class<?> ret;
+  public final Class<?>[] parameters;
+  public final Class<?>[] exceptions;
   public final int modifiers;
   public Method method;
   public long retId;
@@ -38,7 +38,7 @@ public class MethodDecl
   public String parametersName;
   public long functionId;
 
-  public MethodDecl(String name, Class ret, Class[] parameters, Class[] exceptions, int modifiers)
+  public MethodDecl(String name, Class<?> ret, Class<?>[] parameters, Class<?>[] exceptions, int modifiers)
   {
     this.name = name;
     if (ret == null)
@@ -65,7 +65,11 @@ public class MethodDecl
     // FIXME match Exceptions (this can throw less than the full list or
     // be covariant.   So long as everything specified is a child of something
     // in the original specification we are okay.
-    // FIXME need to use 
+
+	// ^ NO! The JVM does not care and neither should we!
+	// they still need to be added to the method declaration in case the user
+	// has a situation where it's needed for some framework
+
     if (ret.isPrimitive())
       return ret == m.getReturnType();
     return m.getReturnType().isAssignableFrom(ret);
@@ -89,7 +93,7 @@ public class MethodDecl
   {
     StringBuilder sb = new StringBuilder();
     sb.append('(');
-    for (Class i : this.parameters)
+    for (Class<?> i : this.parameters)
       sb.append(Type.getDescriptor(i));
     sb.append(')');
     sb.append(Type.getDescriptor(ret));

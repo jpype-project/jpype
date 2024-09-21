@@ -22,12 +22,12 @@ package org.jpype.extension;
 public class FieldDecl
 {
 
-  final Class type;
+  final Class<?> type;
   final String name;
   final Object value;
   final int modifiers;
-  
-  public FieldDecl(Class type, String name, Object value, int modifiers)
+
+  public FieldDecl(Class<?> type, String name, Object value, int modifiers)
   {
     this.type = type;
     this.name = name;

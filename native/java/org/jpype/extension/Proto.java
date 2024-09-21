@@ -15,7 +15,7 @@
  **************************************************************************** */
 package org.jpype.extension;
 
-import org.jpype.JPypeContext;
+//import org.jpype.JPypeContext;
 
 /**
  *
@@ -23,7 +23,16 @@ import org.jpype.JPypeContext;
  */
 public class Proto extends Base
 {
+	public Proto(String name) {
+		super(name);
+	}
 
+	@Override
+	public String call(String s) {
+		return "";
+	}
+
+	/*
   static final long[] _c1 = new long[]
   {
     45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55
@@ -141,5 +150,6 @@ public class Proto extends Base
     Object ret = Factory._call(context, 123512, this, 423512, _c1, o);
     return ((Number) ret).doubleValue();
   }
+	*/
 
 }

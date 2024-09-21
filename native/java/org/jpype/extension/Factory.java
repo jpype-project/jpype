@@ -52,17 +52,17 @@ public class Factory
    * one base class.
    * @return a new class declaration.
    */
-  public static ClassDecl newClass(String name, Class[] bases)
+  public static ClassDecl newClass(String name, Class<?>[] bases)
   {
     return new ClassDecl(name, bases);
   }
 
-  public static Class loadClass(ClassDecl decl)
+  public static Class<?> loadClass(ClassDecl decl)
   {
-    Class base = null;
-    List<Class> interfaces = new ArrayList<>();
+    Class<?> base = null;
+    List<Class<?>> interfaces = new ArrayList<>();
 
-    for (Class cls : decl.bases)
+    for (Class<?> cls : decl.bases)
     {
       if (cls.isInterface())
       {
@@ -92,9 +92,9 @@ public class Factory
     decl.setInterfaces(interfaces);
 
     // Traverse all the bases to see what methods we are covering
-    for (Class i : decl.bases)
+    for (Class<?> i : decl.bases)
     {
-      // FIXME watch for methods that have already been implemented.    
+      // FIXME watch for methods that have already been implemented.
       for (Method m : i.getMethods())
       {
         MethodDecl m3 = null;
@@ -135,8 +135,9 @@ public class Factory
     cw.visit(Opcodes.V1_7, Opcodes.ACC_PUBLIC, cdecl.internalName,
             null,
             Type.getInternalName(cdecl.base),
-            cdecl.interfaces.stream().map(p -> Type.getInternalName(p))
-                    .toArray(String[]::new));
+            cdecl.interfaces.stream()
+				.map(Type::getInternalName)
+                .toArray(String[]::new));
 
     // Reserve space for parameter fields
     implementFields(cw, cdecl);
@@ -161,7 +162,7 @@ public class Factory
 
 //</editor_fold>
 //<editor-fold desc="code generators" defaultstate="collapsed">
-  private static void handleReturn(MethodVisitor mv, Class ret)
+  private static void handleReturn(MethodVisitor mv, Class<?> ret)
   {
     if (!ret.isPrimitive())
     {
@@ -300,13 +301,13 @@ public class Factory
         // Reserve space for parameters plus this
         mv.visitIntInsn(Opcodes.BIPUSH, mdecl.parametersId.length + 1);
         mv.visitIntInsn(Opcodes.NEWARRAY, Opcodes.T_LONG);
-  
+
         // Push 0 for this slot.
         mv.visitInsn(Opcodes.DUP); // two copies of array on stack
         mv.visitInsn(Opcodes.ICONST_0);
         mv.visitInsn(Opcodes.ICONST_0);
-        mv.visitInsn(Opcodes.LASTORE); 
-  
+        mv.visitInsn(Opcodes.LASTORE);
+
         // Push the rest of the paramters
         for (int j = 0; j < mdecl.parametersId.length; ++j)
         {
@@ -364,7 +365,7 @@ public class Factory
     int k = 1;
     for (int j = 0; j < mdecl.parameters.length; ++j)
     {
-      Class param = mdecl.parameters[j];
+      Class<?> param = mdecl.parameters[j];
       mv.visitInsn(Opcodes.DUP); // two copies of thearray
       mv.visitIntInsn(Opcodes.BIPUSH, j + 1);
       if (!param.isPrimitive())

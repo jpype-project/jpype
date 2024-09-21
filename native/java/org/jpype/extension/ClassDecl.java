@@ -29,44 +29,44 @@ public class ClassDecl
   ArrayList<MethodDecl> ctors = new ArrayList<>();
   ArrayList<MethodDecl> methods = new ArrayList<>();
   ArrayList<FieldDecl> fields = new ArrayList<>();
-  Class[] bases;
-  Class base;
-  List<Class> interfaces;
+  Class<?>[] bases;
+  Class<?> base;
+  List<Class<?>> interfaces;
   String internalName;
 
-  public ClassDecl(String name, Class[] bases)
+  public ClassDecl(String name, Class<?>[] bases)
   {
     this.name = name;
     this.bases = bases;
   }
 
-  public FieldDecl addField(Class cls, String name, Object value, int modifiers)
+  public FieldDecl addField(Class<?> cls, String name, Object value, int modifiers)
   {
     FieldDecl field = new FieldDecl(cls, name, value, modifiers);
     this.fields.add(field);
     return field;
   }
-  
-  public MethodDecl addCtor(Class[] arguments, Class[] exceptions, int modifiers)
+
+  public MethodDecl addCtor(Class<?>[] arguments, Class<?>[] exceptions, int modifiers)
   {
     MethodDecl method = new MethodDecl("<init>", null, arguments, exceptions, modifiers);
     this.ctors.add(method);
     return method;
   }
-  
-    public MethodDecl addMethod(String name, Class ret, Class[] arguments, Class[] exceptions, int modifiers)
+
+    public MethodDecl addMethod(String name, Class<?> ret, Class<?>[] arguments, Class<?>[] exceptions, int modifiers)
   {
     MethodDecl method = new MethodDecl(name, ret, arguments, exceptions, modifiers);
     this.methods.add(method);
     return method;
   }
 
-  void setBase(Class base)
+  void setBase(Class<?> base)
   {
     this.base = base;
   }
 
-  void setInterfaces(List<Class> interfaces)
+  void setInterfaces(List<Class<?>> interfaces)
   {
     this.interfaces = interfaces;
   }

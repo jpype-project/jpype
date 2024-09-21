@@ -16,11 +16,10 @@
 package org.jpype.extension;
 
 import org.jpype.JPypeContext;
-import org.jpype.classloader.DynamicClassLoader;
 
 /**
  * Internal class for loading extension classes.
- * 
+ *
  * @author nelson85
  */
 class ExtensionClassLoader extends ClassLoader
@@ -31,8 +30,8 @@ class ExtensionClassLoader extends ClassLoader
   {
     super(classLoader);
   }
-  
-  Class loadClass(String name, byte[] b)
+
+  Class<?> loadClass(String name, byte[] b)
   {
     return this.defineClass(name, b, 0, b.length);
   }
