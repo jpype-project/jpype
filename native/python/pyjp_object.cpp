@@ -222,7 +222,19 @@ static PyObject *PyJPObject_repr(PyObject *self)
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
+static PyObject *PyJPObject_initSubclass(PyObject *cls, PyObject* args, PyObject *kwargs)
+{
+    Py_RETURN_NONE;
+}
+
+static PyMethodDef objectMethods[] = {
+	{"__init_subclass__", (PyCFunction) PyJPObject_initSubclass, METH_CLASS | METH_VARARGS | METH_KEYWORDS, ""},
+    {0}
+};
+
 static PyType_Slot objectSlots[] = {
+	{Py_tp_alloc,    (void*) &PyJPValue_alloc},
+	{Py_tp_finalize,    (void*) &PyJPValue_finalize},
 	{Py_tp_new,      (void*) &PyJPObject_new},
 	{Py_tp_free,     (void*) &PyJPValue_free},
 	{Py_tp_getattro, (void*) &PyJPValue_getattro},
@@ -231,6 +243,7 @@ static PyType_Slot objectSlots[] = {
 	{Py_tp_repr,     (void*) &PyJPObject_repr},
 	{Py_tp_richcompare, (void*) &PyJPObject_compare},
 	{Py_tp_hash,     (void*) &PyJPObject_hash},
+	{Py_tp_methods,  (void*) objectMethods},
 	{0}
 };
 
@@ -361,12 +374,13 @@ static PyType_Spec comparableSpec = {
 
 void PyJPObject_initType(PyObject* module)
 {
-	PyJPObject_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&objectSpec, nullptr);
+	JPPyObject bases = JPPyObject::call(PyTuple_Pack(1, &PyBaseObject_Type));
+	PyJPObject_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&objectSpec, bases.get());
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JObject", (PyObject*) PyJPObject_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
-	JPPyObject bases = JPPyObject::call(PyTuple_Pack(2, PyExc_Exception, PyJPObject_Type));
+	bases = JPPyObject::call(PyTuple_Pack(2, PyExc_Exception, PyJPObject_Type));
 	PyJPException_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&excSpec, bases.get());
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JException", (PyObject*) PyJPException_Type);
