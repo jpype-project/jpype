@@ -125,6 +125,13 @@ PyObject *PyJPClass_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 		typenew->tp_new = PyJPException_Type->tp_new;
 	}
 	((PyJPClass*) typenew)->m_Doc = nullptr;
+
+#if PY_VERSION_HEX >= 0x030d0000
+	// This flag will try to place the dictionary are part of the object which 
+	// adds an unknown number of bytes to the end of the object making it impossible
+	// to attach our needed data.  If we kill the flag then we get usable behavior.
+	typenew->tp_flags &= ~Py_TPFLAGS_INLINE_VALUES;
+#endif
 	return (PyObject*) typenew;
 	JP_PY_CATCH(nullptr);
 }
