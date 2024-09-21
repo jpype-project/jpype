@@ -170,14 +170,18 @@ struct _object;
 using PyObject = _object;
 #endif
 
-#include "jp_javaframe.h"
+#include "jp_pythontypes.h"
+
+template <typename... T>
+static inline JPPyObject JPPyTuple_Pack(T... args) {
+	return JPPyObject::call(PyTuple_Pack(sizeof...(T), args...));
+}
 
 // Base utility headers
 #include "jp_javaframe.h"
 #include "jp_context.h"
 #include "jp_exception.h"
 #include "jp_tracer.h"
-#include "jp_pythontypes.h"
 #include "jp_typemanager.h"
 #include "jp_encoding.h"
 #include "jp_modifier.h"

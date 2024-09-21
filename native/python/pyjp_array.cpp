@@ -484,7 +484,7 @@ static PyType_Spec arrayPrimSpec = {
 
 void PyJPArray_initType(PyObject * module)
 {
-	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(1, PyJPObject_Type));
+	JPPyObject tuple = JPPyTuple_Pack(PyJPObject_Type);
 	PyJPArray_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&arraySpec, tuple.get());
 	JP_PY_CHECK();
 #if PY_VERSION_HEX < 0x03090000
@@ -493,7 +493,7 @@ void PyJPArray_initType(PyObject * module)
 	PyModule_AddObject(module, "_JArray", (PyObject*) PyJPArray_Type);
 	JP_PY_CHECK();
 
-	tuple = JPPyObject::call(PyTuple_Pack(1, PyJPArray_Type));
+	tuple = JPPyTuple_Pack(PyJPArray_Type);
 	PyJPArrayPrimitive_Type = (PyTypeObject*)
 			PyJPClass_FromSpecWithBases(&arrayPrimSpec, tuple.get());
 #if PY_VERSION_HEX < 0x03090000
