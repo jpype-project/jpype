@@ -62,7 +62,7 @@ public:
 			// to infinity and beyond!
 			if (frac == 0)
 				k |= 0x7f800000;
-			else 
+			else
 				k |= 0x7f800001 | ((frac&0x200)<<12);
 		}
 		return func(&k);

@@ -20,7 +20,7 @@
 #include "jp_arrayclass.h"
 #include "jp_classhints.h"
 #include "jp_proxy.h"
-#include "jp_stringtype.h"
+#include "jp_stringtype.h" // IWYU pragma: keep
 
 #include "pyjp.h"
 
@@ -80,7 +80,7 @@ JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool ca
 		// is only a speed cost if there is a collision, so we don't need to
 		// prove this is a perfect hash function.
 		m_Hash *= 0x10523C01;
-		m_Hash += (long) (Py_TYPE(arg));
+		m_Hash += (long) ((intptr_t)Py_TYPE(arg));
 	}
 }
 

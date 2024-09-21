@@ -37,7 +37,7 @@ JPValue JPCharType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 
 	// This is a cast so we must not fail
 	int overflow;
-	jv.c = PyLong_AsLongAndOverflow(args[0], &overflow);
+	jv.c = (jchar) PyLong_AsLongAndOverflow(args[0], &overflow);
 	return JPValue(this, jv);
 }
 
@@ -250,7 +250,7 @@ void JPCharType::getView(JPArrayView& view)
 	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 	view.m_Memory = (void*) frame.GetCharArrayElements(
 			(jcharArray) view.m_Array->getJava(), &view.m_IsCopy);
-	view.m_Buffer.format = "H";
+	view.m_Buffer.format = const_cast<char*>("H");
 	view.m_Buffer.itemsize = sizeof (jchar);
 }
 
