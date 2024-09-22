@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype.pkg;
@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
@@ -53,7 +54,7 @@ import org.jpype.JPypeKeywords;
 public class JPypePackageManager
 {
 
-  final static List<FileSystem> bases = new ArrayList();
+  final static List<FileSystem> bases = new ArrayList<>();
   final static List<ModuleDirectory> modules = getModules();
   final static FileSystemProvider jfsp = getFileSystemProvider("jar");
   final static Map<String, String> env = new HashMap<>();
@@ -225,10 +226,13 @@ public class JPypePackageManager
     {
       FileSystem fs = FileSystems.getFileSystem(URI.create("jrt:/"));
       Path modulePath = fs.getPath("modules");
-      for (Path module : Files.newDirectoryStream(modulePath))
-      {
-        out.add(new ModuleDirectory(module));
-      }
+	  try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(modulePath))
+	  {
+	      for (Path module : dirStream)
+	      {
+	        out.add(new ModuleDirectory(module));
+	      }
+		}
     } catch (ProviderNotFoundException | IOException ex)
     {
     }
@@ -402,7 +406,7 @@ public class JPypePackageManager
             collectContents(out, path3);
           }
         }
-        
+
         Path path2 = getPath(resource);
         collectContents(out, path2);
       }

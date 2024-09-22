@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype.javadoc;
@@ -41,7 +41,7 @@ public class JavadocTransformer
 
   final static Pattern ARGS_PATTERN = Pattern.compile(".*\\((.*)\\).*");
 
-  public Node transformDescription(Class cls, Node node)
+  public Node transformDescription(Class<?> cls, Node node)
   {
     try
     {
@@ -64,7 +64,7 @@ public class JavadocTransformer
    *
    * @param node
    */
-  public Node transformMember(Class cls, Node node)
+  public Node transformMember(Class<?> cls, Node node)
   {
     try
     {
@@ -250,13 +250,13 @@ public class JavadocTransformer
   static class Workspace
   {
 
-    private final Class cls;
+    private final Class<?> cls;
     boolean hr = false;
     String key;
     Node section;
     private LinkedList<String> types;
 
-    Workspace(Class cls)
+    Workspace(Class<?> cls)
     {
       this.cls = cls;
     }

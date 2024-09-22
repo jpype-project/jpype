@@ -21,7 +21,7 @@ import java.lang.ref.ReferenceQueue;
 /**
  * (internal) Reference to a PyObject*.
  */
-class JPypeReference extends PhantomReference
+class JPypeReference extends PhantomReference<Object>
 {
 
   long hostReference;
@@ -29,7 +29,7 @@ class JPypeReference extends PhantomReference
   int pool;
   int index;
 
-  public JPypeReference(ReferenceQueue arg1, Object javaObject, long host, long cleanup)
+  public JPypeReference(ReferenceQueue<Object> arg1, Object javaObject, long host, long cleanup)
   {
     super(javaObject, arg1);
     this.hostReference = host;

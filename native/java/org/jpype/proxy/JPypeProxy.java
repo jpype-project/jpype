@@ -49,7 +49,7 @@ public class JPypeProxy implements InvocationHandler
     // Proxies must point to the correct class loader.  For most cases the
     // system classloader is find.  But if the class is in a custom classloader
     // we need to use that one instead
-    for (Class cls : interfaces)
+    for (Class<?> cls : interfaces)
     {
       ClassLoader icl = cls.getClassLoader();
       if (icl != null && icl != proxy.cl)

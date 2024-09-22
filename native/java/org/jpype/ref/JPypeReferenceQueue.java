@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype.ref;
@@ -29,7 +29,7 @@ import java.lang.ref.ReferenceQueue;
  * @author smenard
  *
  */
-final public class JPypeReferenceQueue extends ReferenceQueue
+final public class JPypeReferenceQueue extends ReferenceQueue<Object>
 {
 
   private final static JPypeReferenceQueue INSTANCE = new JPypeReferenceQueue();
@@ -37,7 +37,7 @@ final public class JPypeReferenceQueue extends ReferenceQueue
   private boolean isStopped = false;
   private Thread queueThread;
   private Object queueStopMutex = new Object();
-  private PhantomReference sentinel = null;
+  private PhantomReference<Object> sentinel = null;
 
   public static JPypeReferenceQueue getInstance()
   {

@@ -46,7 +46,7 @@ public class TypeManager
   public long context = 0;
   public boolean isStarted = false;
   public boolean isShutdown = false;
-  public HashMap<Class, ClassDescriptor> classMap = new HashMap<>();
+  public HashMap<Class<?>, ClassDescriptor> classMap = new HashMap<>();
   public TypeFactory typeFactory = null;
   public TypeAudit audit = null;
   private ClassDescriptor java_lang_Object;
@@ -81,7 +81,7 @@ public class TypeManager
       // types. If something inherits from another type then the super class
       // will be created without the special flag and the type system won't
       // be able to handle the duplicate type properly.
-      Class[] cls =
+      Class<?>[] cls =
       {
         Class.class, Number.class, CharSequence.class, Throwable.class,
         Void.class, Boolean.class, Byte.class, Character.class,
@@ -89,7 +89,7 @@ public class TypeManager
         String.class, JPypeProxy.class,
         Method.class, Field.class
       };
-      for (Class c : cls)
+      for (Class<?> c : cls)
       {
         createClass(c, true);
       }
@@ -238,7 +238,7 @@ public class TypeManager
       {
         sb.append(".");
         sb.append(parts[i]);
-        Class<?> cls = Class.forName(sb.toString());
+        //Class<?> cls = Class.forName(sb.toString());
         for (int j = i + 1; j < parts.length; ++j)
         {
           sb.append("$");
@@ -317,7 +317,7 @@ public class TypeManager
     if (object == null)
       return 0;
 
-    Class cls = object.getClass();
+    Class<?> cls = object.getClass();
     if (Proxy.isProxyClass(cls)
             && (Proxy.getInvocationHandler(object) instanceof JPypeProxy))
     {
@@ -368,7 +368,7 @@ public class TypeManager
 //</editor-fold>
 //<editor-fold desc="classes" defaultstate="defaultstate">
 
-  private ClassDescriptor getClass(Class cls)
+  private ClassDescriptor getClass(Class<?> cls)
   {
     if (cls == null)
       return null;
@@ -489,10 +489,10 @@ public class TypeManager
     return parent.anonymous;
   }
 
-  ClassDescriptor createArrayClass(Class cls)
+  ClassDescriptor createArrayClass(Class<?> cls)
   {
     // Array classes are simple, we just need the component type
-    Class componentType = cls.getComponentType();
+    Class<?> componentType = cls.getComponentType();
     long componentTypePtr = this.getClass(componentType).classPtr;
 
     int modifiers = cls.getModifiers() & 0xffff;
@@ -513,13 +513,13 @@ public class TypeManager
   }
 
   /**
-   * Tell JPype to make a primitive Class.
+   * Tell JPype to make a primitive Class<?>.
    *
    * @param name
    * @param cls
    * @param boxed
    */
-  private void createPrimitive(String name, Class cls, Class boxed)
+  private void createPrimitive(String name, Class<?> cls, Class<?> boxed)
   {
     long classPtr = typeFactory.definePrimitive(context,
             name,
@@ -531,11 +531,11 @@ public class TypeManager
 
 //</editor-fold>
 //<editor-fold desc="members" defaultstate="collapsed">
-  public synchronized void populateMembers(Class cls)
+  public synchronized void populateMembers(Class<?> cls)
   {
     ClassDescriptor desc = this.classMap.get(cls);
     if (desc == null)
-      throw new RuntimeException("Class not loaded");
+      throw new RuntimeException("Class<?> not loaded");
     if (desc.fields != null)
       return;
     try
@@ -596,10 +596,10 @@ public class TypeManager
    */
   public void createConstructorDispatch(ClassDescriptor desc)
   {
-    Class cls = desc.cls;
+    Class<?> cls = desc.cls;
 
     // Get the list of declared constructors
-    LinkedList<Constructor> constructors
+    LinkedList<Constructor<?>> constructors
             = filterPublic(cls.getDeclaredConstructors());
 
     if (constructors.isEmpty())
@@ -636,7 +636,7 @@ public class TypeManager
     long[] overloadPtrs = new long[overloads.size()];
     for (MethodResolution ov : overloads)
     {
-      Constructor constructor = (Constructor) ov.executable;
+      Executable constructor = ov.executable;
 
       int i = 0;
       long[] precedencePtrs = new long[ov.children.size()];
@@ -804,7 +804,7 @@ public class TypeManager
   {
     try
     {
-      java.lang.reflect.Method method = java.lang.Class.class.getDeclaredMethod("forName", String.class);
+      Method method = Class.class.getDeclaredMethod("forName", String.class);
       for (Annotation annotation : method.getAnnotations())
       {
         if ("@jdk.internal.reflect.CallerSensitive()".equals(annotation.toString()))
@@ -842,7 +842,7 @@ public class TypeManager
       // require special handling, thus we will just blanket those
       // classes known to have issues.
       Class<?> cls = method.getDeclaringClass();
-      if (cls.equals(java.lang.Class.class)
+      if (cls.equals(Class.class)
               || cls.equals(java.lang.ClassLoader.class)
               || cls.equals(java.sql.DriverManager.class))
       {

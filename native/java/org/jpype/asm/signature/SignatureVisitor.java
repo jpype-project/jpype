@@ -48,6 +48,7 @@ import org.jpype.asm.Opcodes;
  * @author Thomas Hallgren
  * @author Eric Bruneton
  */
+@SuppressWarnings("all")
 public abstract class SignatureVisitor {
 
   /** Wildcard for an "extends" type argument. */

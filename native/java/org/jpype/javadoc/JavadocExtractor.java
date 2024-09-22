@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype.javadoc;
@@ -46,7 +46,7 @@ public class JavadocExtractor
    * @param cls
    * @return
    */
-  public static Javadoc getDocumentation(Class cls)
+  public static Javadoc getDocumentation(Class<?> cls)
   {
     try
     {
@@ -67,7 +67,7 @@ public class JavadocExtractor
     return null;
   }
 
-  public static InputStream getDocumentationAsStream(Class cls)
+  public static InputStream getDocumentationAsStream(Class<?> cls)
   {
     InputStream is = null;
     String name = cls.getName().replace('.', '/') + ".html";
@@ -108,7 +108,7 @@ public class JavadocExtractor
    * @param doc is the DOM holding the javadoc.
    * @return
    */
-  public static Javadoc extractDocument(Class cls, Document doc)
+  public static Javadoc extractDocument(Class<?> cls, Document doc)
   {
     JavadocRenderer renderer = new JavadocRenderer();
     try

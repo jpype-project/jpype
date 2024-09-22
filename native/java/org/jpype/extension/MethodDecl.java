@@ -37,9 +37,9 @@ public class MethodDecl {
 	public long retId;
 	public long[] parametersId;
 	public String parametersName;
-	public long functionId;
+	public final long id;
 
-	public MethodDecl(String name, Class<?> ret, Class<?>[] params, Class<?>[] exc, int mods) {
+	public MethodDecl(String name, Class<?> ret, Class<?>[] params, Class<?>[] exc, int mods, int id) {
 		this.name = name;
 		if (ret == null) {
 			ret = Void.TYPE;
@@ -54,6 +54,7 @@ public class MethodDecl {
 		}
 		this.exceptions = exc;
 		this.modifiers = mods;
+		this.id = id;
 	}
 
 	boolean matches(Method m) {

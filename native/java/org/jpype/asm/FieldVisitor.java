@@ -34,6 +34,7 @@ package org.jpype.asm;
  *
  * @author Eric Bruneton
  */
+@SuppressWarnings("all")
 public abstract class FieldVisitor {
 
   /**

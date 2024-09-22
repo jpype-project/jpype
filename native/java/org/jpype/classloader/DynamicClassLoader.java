@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -110,7 +111,7 @@ public class DynamicClassLoader extends ClassLoader
    * @throws ClassFormatError if the class byte code was invalid.
    */
   @Override
-  public Class findClass(String name) throws ClassNotFoundException, ClassFormatError
+  public Class<?> findClass(String name) throws ClassNotFoundException, ClassFormatError
   {
     String aname = name.replace('.', '/') + ".class";
     URL url = this.getResource(aname);
@@ -195,6 +196,7 @@ public class DynamicClassLoader extends ClassLoader
    *
    * @param p1
    */
+  @SuppressWarnings("deprecation")
   public void scanJar(Path p1)
   {
     if (!Files.exists(p1))
@@ -205,7 +207,7 @@ public class DynamicClassLoader extends ClassLoader
     {
       Enumeration<JarEntry> entries = jf.entries();
       URI abs = p1.toAbsolutePath().toUri();
-      Set urls = new java.util.HashSet();
+      Set<String> urls = new HashSet<>();
       while (entries.hasMoreElements())
       {
         JarEntry next = entries.nextElement();

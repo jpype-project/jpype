@@ -35,6 +35,7 @@ package org.jpype.asm;
  * @author Remi Forax
  * @author Eric Bruneton
  */
+@SuppressWarnings("all")
 public abstract class ModuleVisitor {
   /**
    * The ASM API version implemented by this visitor. The value of this field must be one of {@link

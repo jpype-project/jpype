@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype.html;
@@ -28,6 +28,7 @@ import java.util.ListIterator;
  *
  * @param <T>
  */
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class Parser<T>
 {
 
@@ -57,7 +58,6 @@ public class Parser<T>
         int rc = channel.read(incoming);
         if (rc < 0)
           break;
-        int p = incoming.position();
         incoming.rewind();
         process(incoming, outgoing, rc);
       }

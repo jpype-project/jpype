@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype.classloader;
@@ -115,7 +115,7 @@ public class JPypeClassLoader extends ClassLoader
    * @throws ClassFormatError if the class byte code was invalid.
    */
   @Override
-  public Class findClass(String name) throws ClassNotFoundException, ClassFormatError
+  public Class<?> findClass(String name) throws ClassNotFoundException, ClassFormatError
   {
     String mname = name.replace('.', '/') + ".class";
     byte[] data = map.get(mname);
@@ -125,7 +125,7 @@ public class JPypeClassLoader extends ClassLoader
       return super.findClass(name);
     }
 
-    Class cls = defineClass(name, data, 0, data.length);
+    Class<?> cls = defineClass(name, data, 0, data.length);
     if (cls == null)
       throw new ClassFormatError("Class load was null");
     return cls;

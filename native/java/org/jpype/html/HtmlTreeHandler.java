@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype.html;
@@ -63,7 +63,6 @@ public class HtmlTreeHandler implements HtmlHandler
   public void startElement(String name, String attr)
   {
     name = name.toLowerCase().trim();
-    String attr0 = attr;
 
     // Html has irregular end rules.
     while (Html.OPTIONAL_ELEMENTS.contains(name))

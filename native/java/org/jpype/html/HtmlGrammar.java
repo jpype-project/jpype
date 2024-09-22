@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype.html;
@@ -19,6 +19,7 @@ import java.util.LinkedList;
 import org.jpype.html.Parser.Entity;
 import org.jpype.html.Parser.Rule;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class HtmlGrammar implements Parser.Grammar
 {
 
@@ -413,9 +414,9 @@ public class HtmlGrammar implements Parser.Grammar
     public void execute(Parser parser)
     {
       LinkedList<Entity> stack = parser.stack;
-      Entity e2 = stack.removeLast();
+      stack.removeLast();
       Entity e1 = stack.removeLast();
-      Entity e0 = stack.removeLast();
+      stack.removeLast();
       String content = e1.value.toString();
       getGrammar(parser).flushText(parser);
       getHandler(parser).endElement(content);
@@ -435,9 +436,9 @@ public class HtmlGrammar implements Parser.Grammar
     public void execute(Parser parser)
     {
       LinkedList<Entity> stack = parser.stack;
-      Entity e2 = stack.removeLast();
+      stack.removeLast();
       Entity e1 = stack.removeLast();
-      Entity e0 = stack.removeLast();
+      stack.removeLast();
       String content = e1.value.toString();
       getGrammar(parser).flushText(parser);
       getHandler(parser).directive(content);

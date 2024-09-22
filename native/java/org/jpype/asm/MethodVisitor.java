@@ -46,6 +46,7 @@ package org.jpype.asm;
  *
  * @author Eric Bruneton
  */
+@SuppressWarnings("all")
 public abstract class MethodVisitor {
 
   private static final String REQUIRES_ASM5 = "This feature requires ASM5";

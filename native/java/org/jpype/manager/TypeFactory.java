@@ -10,7 +10,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
-  
+
   See NOTICE file for details.
 **************************************************************************** */
 package org.jpype.manager;
@@ -54,7 +54,7 @@ public interface TypeFactory
    */
   long defineArrayClass(
           long context,
-          Class cls,
+          Class<?> cls,
           String name,
           long superClass,
           long componentPtr,
@@ -73,7 +73,7 @@ public interface TypeFactory
    */
   long defineObjectClass(
           long context,
-          Class cls,
+          Class<?> cls,
           String name,
           long superClass,
           long[] interfaces,
@@ -91,7 +91,7 @@ public interface TypeFactory
   long definePrimitive(
           long context,
           String name,
-          Class cls,
+          Class<?> cls,
           long boxedPtr,
           int modifiers);
 

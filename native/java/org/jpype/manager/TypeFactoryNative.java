@@ -29,12 +29,13 @@ public class TypeFactoryNative implements TypeFactory
 
   public long context;
 
-  public native void newWrapper(long context, long cls);
+  @Override
+public native void newWrapper(long context, long cls);
 
   @Override
   public native long defineArrayClass(
           long context,
-          Class cls,
+          Class<?> cls,
           String name,
           long superClass,
           long componentPtr,
@@ -43,7 +44,7 @@ public class TypeFactoryNative implements TypeFactory
   @Override
   public native long defineObjectClass(
           long context,
-          Class cls,
+          Class<?> cls,
           String name,
           long superClass,
           long[] interfaces,
@@ -53,7 +54,7 @@ public class TypeFactoryNative implements TypeFactory
   public native long definePrimitive(
           long context,
           String name,
-          Class cls,
+          Class<?> cls,
           long boxedPtr,
           int modifiers);
 

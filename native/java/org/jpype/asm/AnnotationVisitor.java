@@ -35,6 +35,7 @@ package org.jpype.asm;
  * @author Eric Bruneton
  * @author Eugene Kuleshov
  */
+@SuppressWarnings("all")
 public abstract class AnnotationVisitor {
 
   /**

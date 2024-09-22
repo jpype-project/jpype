@@ -162,12 +162,12 @@ public class Factory {
 		// Reserve space for parameter fields
 		implementFields(cw, cdecl);
 
-		// TODO implement constructors
-		// just delegate to super constructors
-		// make all protected ones public
-
 		for (MethodDecl mdecl : cdecl.methods) {
-			implementMethod(cw, cdecl, mdecl);
+			if (mdecl.name.equals("<init>")) {
+				implementCtor(cw, cdecl, mdecl);
+			} else {
+				implementMethod(cw, cdecl, mdecl);
+			}
 		}
 
 		cw.visitEnd();
@@ -176,70 +176,6 @@ public class Factory {
 
 
 	//<editor-fold desc="code generators" defaultstate="collapsed">
-	private static void handleReturn(MethodVisitor mv, Parameter ret) {
-		String name;
-		String desc;
-		int op;
-
-		switch (ret.kind) {
-			case OBJECT:
-				mv.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(ret.type));
-				mv.visitInsn(Opcodes.ARETURN);
-				return;
-			case VOID:
-				mv.visitInsn(Opcodes.POP);
-				mv.visitInsn(Opcodes.RETURN);
-				return;
-			case BOOL:
-				name = "booleanValue";
-				desc = "()Z";
-				op = Opcodes.IRETURN;
-				break;
-			case BYTE:
-				name = "byteValue";
-				desc = "()B";
-				op = Opcodes.IRETURN;
-				break;
-			case CHAR:
-				name = "charValue";
-				desc = "()C";
-				op = Opcodes.IRETURN;
-				break;
-			case SHORT:
-				name = "shortValue";
-				desc = "()S";
-				op = Opcodes.IRETURN;
-				break;
-			case INT:
-				name = "intValue";
-				desc = "()I";
-				op = Opcodes.IRETURN;
-				break;
-			case LONG:
-				name = "longValue";
-				desc = "()L";
-				op = Opcodes.LRETURN;
-				break;
-			case FLOAT:
-				name = "floatValue";
-				desc = "()F";
-				op = Opcodes.FRETURN;
-				break;
-			case DOUBLE:
-				name = "doubleValue";
-				desc = "()D";
-				op = Opcodes.DRETURN;
-				break;
-			default:
-				// without the default the compiler thinks some locals are uninitialized
-				throw new RuntimeException();
-		}
-
-		mv.visitTypeInsn(Opcodes.CHECKCAST, ret.kind.boxedClass);
-		mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, ret.kind.boxedClass, name, desc, false);
-		mv.visitInsn(op);
-	}
-
 	private static void implementFields(ClassWriter cw, ClassDecl decl) {
 		// create a static private field to hold the pointer to our JPClass
 		cw.visitField(
@@ -272,13 +208,13 @@ public class Factory {
 			false
 		);
 		mv.visitFieldInsn(Opcodes.PUTSTATIC, type.getInternalName(), JCLASS_FIELD, "J");
-		mv.visitInsn(Opcodes.RET);
+		mv.visitInsn(Opcodes.RETURN);
 		mv.visitEnd();
 	}
 
-	private static void implementMethod(ClassWriter cw, ClassDecl cdecl, MethodDecl mdecl) {
+	private static void implementCtor(ClassWriter cw, ClassDecl cdecl, MethodDecl mdecl) {
 		// Copy over exceptions
-		String[] exceptions;
+		String[] exceptions = null;
 		if (mdecl.exceptions != null) {
 			exceptions = new String[mdecl.exceptions.length];
 			for (int i = 0; i < mdecl.exceptions.length; ++i) {
@@ -288,42 +224,69 @@ public class Factory {
 
 		// Start a new method
 		MethodVisitor mv =
-			cw.visitMethod(mdecl.modifiers, mdecl.name, mdecl.descriptor(), null, null);
+			cw.visitMethod(mdecl.modifiers, mdecl.name, mdecl.descriptor(), null, exceptions);
+
+		// forward parameters
+		mv.visitIntInsn(Opcodes.ALOAD, 0);
+		for (Parameter param : mdecl.parameters) {
+			mv.visitIntInsn(param.kind.load, param.slot);
+		}
+
+		// call super
+		mv.visitMethodInsn(
+			Opcodes.INVOKESPECIAL,
+			Type.getInternalName(cdecl.base),
+			"<init>",
+			mdecl.descriptor(),
+			false
+		);
+
+		mv.visitInsn(Opcodes.RETURN);
+		mv.visitEnd();
+	}
+
+	private static void implementMethod(ClassWriter cw, ClassDecl cdecl, MethodDecl mdecl) {
+		// Copy over exceptions
+		String[] exceptions = null;
+		if (mdecl.exceptions != null) {
+			exceptions = new String[mdecl.exceptions.length];
+			for (int i = 0; i < mdecl.exceptions.length; ++i) {
+				exceptions[i] = Type.getInternalName(mdecl.exceptions[i]);
+			}
+		}
+
+		// Start a new method
+		MethodVisitor mv =
+			cw.visitMethod(mdecl.modifiers, mdecl.name, mdecl.descriptor(), null, exceptions);
 
 		// Start the implementation
 		mv.visitCode();
 
-		// Object _call(long ctx, long id, long resType, long[] argsTypes, Object[] args);
+		// Object _call(long ctx, long id, Object[] args);
 		// Place the interpretation information on the stack
 		long context = JPypeContext.getInstance().getContext();
 		mv.visitLdcInsn(context);
-		mv.visitLdcInsn(mdecl.functionId);
-		/*mv.visitLdcInsn(mdecl.retId);
-		mv.visitFieldInsn(Opcodes.GETSTATIC, cdecl.internalName,
-			mdecl.parametersName, "[J");*/
+		mv.visitLdcInsn(mdecl.id);
 
 		// Create the parameter array
-		mv.visitIntInsn(Opcodes.BIPUSH, mdecl.parameters.length + 1);
+		mv.visitLdcInsn(mdecl.parameters.length + 1);
 		mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
-		mv.visitInsn(Opcodes.DUP); // two copies of thearray
+		mv.visitInsn(Opcodes.DUP); // two copies of the array reference
 		mv.visitInsn(Opcodes.ICONST_0);
 		mv.visitIntInsn(Opcodes.ALOAD, 0);
 		mv.visitInsn(Opcodes.AASTORE);
 
 		// Marshal the parameters
-		int k = 1;
-		for (int j = 0; j < mdecl.parameters.length; ++j) {
-			Parameter param = mdecl.parameters[j];
-			mv.visitInsn(Opcodes.DUP); // two copies of thearray
-			mv.visitIntInsn(Opcodes.BIPUSH, j + 1);
+		for (int i = 0; i < mdecl.parameters.length; i++) {
+			mv.visitLdcInsn(i);
+			Parameter param = mdecl.parameters[i];
 			if (param.kind == TypeKind.OBJECT) {
-				mv.visitIntInsn(Opcodes.ALOAD, k++);
+				mv.visitIntInsn(Opcodes.ALOAD, param.slot);
 			} else {
 				box(mv, param);
 			}
 			mv.visitInsn(Opcodes.AASTORE);
 		}
-		mv.visitInsn(Opcodes.ICONST_0);
 
 		// Call the hook in native
 		mv.visitMethodInsn(
@@ -374,6 +337,69 @@ public class Factory {
 		}
 		mv.visitIntInsn(param.kind.load, param.slot);
 		mv.visitMethodInsn(Opcodes.INVOKESTATIC, param.kind.boxedClass, "valueOf", desc, false);
+	}
+
+	private static void handleReturn(MethodVisitor mv, Parameter ret) {
+		String name;
+		String desc;
+		int op;
+
+		switch (ret.kind) {
+			case OBJECT:
+				mv.visitTypeInsn(Opcodes.CHECKCAST, Type.getInternalName(ret.type));
+				mv.visitInsn(Opcodes.ARETURN);
+				return;
+			case VOID:
+				mv.visitInsn(Opcodes.RETURN);
+				return;
+			case BOOL:
+				name = "booleanValue";
+				desc = "()Z";
+				op = Opcodes.IRETURN;
+				break;
+			case BYTE:
+				name = "byteValue";
+				desc = "()B";
+				op = Opcodes.IRETURN;
+				break;
+			case CHAR:
+				name = "charValue";
+				desc = "()C";
+				op = Opcodes.IRETURN;
+				break;
+			case SHORT:
+				name = "shortValue";
+				desc = "()S";
+				op = Opcodes.IRETURN;
+				break;
+			case INT:
+				name = "intValue";
+				desc = "()I";
+				op = Opcodes.IRETURN;
+				break;
+			case LONG:
+				name = "longValue";
+				desc = "()L";
+				op = Opcodes.LRETURN;
+				break;
+			case FLOAT:
+				name = "floatValue";
+				desc = "()F";
+				op = Opcodes.FRETURN;
+				break;
+			case DOUBLE:
+				name = "doubleValue";
+				desc = "()D";
+				op = Opcodes.DRETURN;
+				break;
+			default:
+				// without the default the compiler thinks some locals are uninitialized
+				throw new RuntimeException();
+		}
+
+		mv.visitTypeInsn(Opcodes.CHECKCAST, ret.kind.boxedClass);
+		mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, ret.kind.boxedClass, name, desc, false);
+		mv.visitInsn(op);
 	}
 }
 

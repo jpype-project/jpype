@@ -19,6 +19,7 @@ import org.jpype.html.Parser.Entity;
 import org.jpype.html.Parser.Rule;
 import org.w3c.dom.Attr;
 
+@SuppressWarnings({"rawtypes", "unchecked"})
 public class AttrGrammar implements Parser.Grammar
 {
 
@@ -216,7 +217,7 @@ public class AttrGrammar implements Parser.Grammar
     public void execute(Parser parser)
     {
       Entity e2 = (Entity) parser.stack.removeLast();
-      Entity e1 = (Entity) parser.stack.removeLast();
+      parser.stack.removeLast();
       Entity e0 = (Entity) parser.stack.removeLast();
       AttrParser aparser = (AttrParser) parser;
       Attr attr = aparser.doc.createAttribute((String) e0.value);
