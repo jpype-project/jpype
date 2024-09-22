@@ -149,7 +149,6 @@ public class Factory {
 
 		try {
 			String name = decl.internalName.replace('/', '.');
-			System.out.println("name: "+name);
 			Class<?> res = ExtensionClassLoader.instance.loadClass(name, out);
 			for (MethodDecl method : decl.methods) {
 				// resolve must occur AFTER class creation
