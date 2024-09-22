@@ -66,7 +66,7 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, **kwargs):
         if strict:
             if len(args) < 1:
                 raise TypeError("Methods require this argument")
-            if args[0] != "this":
+            if args[0] not in ("self", "this"):
                 raise TypeError("Methods first argument must be this")
 
             # All other arguments must be annotated as JClass types
@@ -200,6 +200,9 @@ class JClass(_jpype._JClass, metaclass=JClassMeta):
 
         # Pass to class factory to create the type
         return _jpype._getClass(jc)
+
+    def __call__(*args):
+        pass
 
 
 class JInterface(_jpype._JObject, internal=True):  # type: ignore[call-arg]
@@ -350,7 +353,7 @@ def _JExtension(name, bases, members):
         raise TypeError("Java classes cannot be extended in Python")
     jspec = members['__jspec__']
     Factory = _jpype.JClass('org.jpype.extension.Factory')
-    cls = Factory.newClass(name, bases)
+    cls = Factory.newClass(members["__module__"]+'.'+name, bases)
     overrides = []
     functions = []
     for i in jspec:
@@ -362,6 +365,7 @@ def _JExtension(name, bases, members):
             if i.__name__ == '__init__':
                 args = [mspec.annotations[j] for j in mspec.args[1:]]
                 cls.addCtor(args, exceptions, i.__jmodifiers__)
+                functions.append(i)
             else:
                 args = [mspec.annotations[j] for j in mspec.args[1:]]
                 ret = mspec.annotations["return"]
@@ -373,8 +377,8 @@ def _JExtension(name, bases, members):
     res = Factory.loadClass(cls)
     for i, method in enumerate(cls.getMethods()):
         overrides.append((method.retId, method.parametersId, functions[i]))
-
-    return res
+    #_jpype._putOverrides(res, overrides)
+    return (res, overrides)
 
 
 # Install module hooks

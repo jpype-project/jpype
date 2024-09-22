@@ -17,6 +17,7 @@ package org.jpype.extension;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
@@ -51,6 +52,18 @@ public class Factory {
 	private static final String FIND_CLASS_DESCRIPTOR = "(Ljava/lang/Class;)J";
 	public static final String JCLASS_FIELD = "$jclass";
 
+	public static boolean isExtension(Class<?> cls) {
+		try {
+			Field[] fields = cls.getDeclaredFields();
+			if (fields.length < 1) {
+				return false;
+			}
+			// this will always be the first field
+			return fields[0].getName().equals(JCLASS_FIELD);
+		} catch (Throwable t) {}
+		return false;
+	}
+
 	//<editor-fold desc="hooks" defaultstate="collapsed">
 	/**
 	 * Hook to call a Python implemented method
@@ -71,7 +84,7 @@ public class Factory {
 		return new ClassDecl(name, bases);
 	}
 
-	public static Class<?> loadClass(ClassDecl decl) {
+	public static long loadClass(ClassDecl decl) {
 		Class<?> base = null;
 		List<Class<?>> interfaces = new ArrayList<>();
 
@@ -135,23 +148,25 @@ public class Factory {
 		}
 
 		try {
-			Class<?> res = ExtensionClassLoader.instance.loadClass(decl.internalName, out);
+			String name = decl.internalName.replace('/', '.');
+			System.out.println("name: "+name);
+			Class<?> res = ExtensionClassLoader.instance.loadClass(name, out);
 			for (MethodDecl method : decl.methods) {
 				// resolve must occur AFTER class creation
 				method.resolve();
 			}
-			return res;
+			return JPypeContext.getInstance().getTypeManager().findClass(res);
 		} catch (Exception ex) {
 			Logger.getLogger(Factory.class.getName()).log(Level.SEVERE, null, ex);
 		}
 
-		return null;
+		return 0;
 	}
 
 	static byte[] buildClass(ClassDecl cdecl) {
 		// Create the class
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		cdecl.internalName = "dynamic/" + cdecl.name;
+		cdecl.internalName = "dynamic/" + cdecl.name.replace('.', '/');
 		cw.visit(Opcodes.V1_7, Opcodes.ACC_PUBLIC, cdecl.internalName,
 			null,
 			Type.getInternalName(cdecl.base),
@@ -209,6 +224,7 @@ public class Factory {
 		);
 		mv.visitFieldInsn(Opcodes.PUTSTATIC, type.getInternalName(), JCLASS_FIELD, "J");
 		mv.visitInsn(Opcodes.RETURN);
+		mv.visitMaxs(1, 1);
 		mv.visitEnd();
 	}
 
@@ -226,10 +242,12 @@ public class Factory {
 		MethodVisitor mv =
 			cw.visitMethod(mdecl.modifiers, mdecl.name, mdecl.descriptor(), null, exceptions);
 
+		mv.visitCode();
+
 		// forward parameters
-		mv.visitIntInsn(Opcodes.ALOAD, 0);
+		mv.visitVarInsn(Opcodes.ALOAD, 0);
 		for (Parameter param : mdecl.parameters) {
-			mv.visitIntInsn(param.kind.load, param.slot);
+			mv.visitVarInsn(param.kind.load, param.slot);
 		}
 
 		// call super
@@ -242,6 +260,7 @@ public class Factory {
 		);
 
 		mv.visitInsn(Opcodes.RETURN);
+		mv.visitMaxs(1, 1);
 		mv.visitEnd();
 	}
 
@@ -299,6 +318,9 @@ public class Factory {
 
 		// Process the return
 		handleReturn(mv, mdecl.ret);
+
+		// fix the stack
+		mv.visitMaxs(1, 1);
 
 		// Close the method
 		mv.visitEnd();

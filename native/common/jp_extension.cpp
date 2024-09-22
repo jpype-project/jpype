@@ -14,6 +14,7 @@
   See NOTICE file for details.
  **************************************************************************** */
 #include "include/jp_class.h"
+#include "jni.h"
 #include "jpype.h"
 #include "jp_extension.hpp" // IWYU pragma: keep
 
@@ -44,10 +45,11 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__call(
 		jclass clazz,
 		jlong contextPtr,
 		jlong functionId,
+		jobject self,
 		jobjectArray args
 	)
 {
-	JPClass *cls = (JPClass *) contextPtr;
+	JPExtensionType *cls = (JPExtensionType *) contextPtr;
 	JPContext* context = cls->getContext();
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 

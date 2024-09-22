@@ -449,10 +449,9 @@ public class TypeManager
     if (Buffer.class.isAssignableFrom(cls))
       modifiers |= ModifierCode.BUFFER.value | ModifierCode.SPECIAL.value;
 
-	try {
-		cls.getDeclaredField(Factory.JCLASS_FIELD);
+	if (Factory.isExtension(cls)) {
 		modifiers |= ModifierCode.EXTENSION.value;
-	} catch (Throwable t) {}
+	}
 
     // Check if is Functional class
     Method method = JPypeUtilities.getFunctionalInterfaceMethod(cls);

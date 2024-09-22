@@ -15,11 +15,8 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
-#include "jp_arrayclass.h"
 #include "jp_primitive_accessor.h"
 #include "jp_gc.h"
-#include "jp_stringtype.h"
-#include "jp_classloader.h"
 
 void PyJPModule_installGC(PyObject* module);
 
@@ -706,7 +703,6 @@ static PyMethodDef moduleMethods[] = {
 	{"fault", (PyCFunction) PyJPModule_fault, METH_O, ""},
 #endif
 	{"examine", (PyCFunction) examine, METH_O, ""},
-	{"_putOverrides", (PyCFunction) PyJPExtension_putOverrides, METH_VARARGS, ""},
 
 	// sentinel
 	{nullptr}

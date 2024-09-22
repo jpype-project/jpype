@@ -16,7 +16,6 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_buffer.h"
-#include "jp_buffertype.h"
 
 #ifdef __cplusplus
 extern "C"

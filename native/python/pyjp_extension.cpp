@@ -1,12 +1,14 @@
 #include "jp_class.h"
-#include "pyjp.h"
+#include "jpype.h"
 #include "jp_extension.hpp"
+#include <abstract.h>
 #include <pyconfig.h>
 
 static JPClass *getClass(PyObject *ptr) {
 	unsigned long long value = PyLong_AsUnsignedLongLong(ptr);
 	if (static_cast<long long>(value) <= 0) {
-		JP_RAISE(PyExc_TypeError, "Java class required");
+		PyErr_Format(PyExc_TypeError, "Java class required: %s", Py_TYPE(ptr)->tp_name);
+		JP_RAISE_PYTHON();
 	}
 	return reinterpret_cast<JPClass *>(static_cast<uintptr_t>(value));
 }
@@ -33,31 +35,16 @@ static JPMethodOverride createOverride(PyObject *def) {
 	};
 }
 
-extern "C" PyObject  *PyJPExtension_putOverrides(PyObject *type, PyObject *args) {
-	JP_PY_TRY("PyJPExtension_putOverrides");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
-
+void JPExtensionType::setOverrides(PyObject *args) {
 	Py_ssize_t len = PySequence_Length(args);
 	if (len <= 0) {
-		return nullptr;
+		return;
 	}
 
-	JPClass* cls = PyJPClass_getJPClass(type);
-	if (cls == nullptr) {
-		PyErr_SetString(PyExc_TypeError, "Java class required");
-		return nullptr;
-	}
-
-	JPMethodOverrideList overrides{};
-	overrides.reserve(len);
+	m_Overrides.reserve(len);
 
 	for (Py_ssize_t i = 0; i < len; i++) {
 		JPPyObject def = JPPyObject::call(PySequence_GetItem(args, i));
-		overrides.emplace_back(createOverride(def.get()));
+		m_Overrides.emplace_back(createOverride(def.get()));
 	}
-
-	cls->addOverrides(std::move(overrides));
-	return nullptr;
-	JP_PY_CATCH(nullptr);
 }

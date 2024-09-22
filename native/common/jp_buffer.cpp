@@ -14,9 +14,7 @@
    See NOTICE file for details.
  *****************************************************************************/
 #include "jpype.h"
-#include "pyjp.h"
 #include "jp_buffer.h"
-#include "jp_primitive_accessor.h"
 #include "jp_buffertype.h"
 
 JPBuffer::JPBuffer(const JPValue &value)

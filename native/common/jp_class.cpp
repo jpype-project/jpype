@@ -17,7 +17,6 @@
 #include "pyjp.h"
 #include "jp_field.h"
 #include "jp_methoddispatch.h"
-#include "jp_method.h"
 
 JPClass::JPClass(
 		const string& name,

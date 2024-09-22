@@ -17,7 +17,6 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_primitive_accessor.h"
-#include "jp_classloader.h"
 #include "jp_boxedtype.h"
 #include "jp_field.h"
 #include "jp_objecttype.h"
@@ -180,27 +179,21 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	if (interfacePtrs != nullptr)
 		convert(frame, interfacePtrs, interfaces);
 	JPClass* result = nullptr;
-	const bool extension = JPModifier::isExtension(modifiers);
+
+	if (JPModifier::isExtension(modifiers)) {
+		return (jlong) new JPExtensionType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+	}
 
 	if (!JPModifier::isSpecial(modifiers))
 	{
 		// Create a normal class
-		if (extension) {
-			return (jlong) new JPExtensionType<JPClass>(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
-		}
 		return (jlong) new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
 	}
 
 	if (JPModifier::isFunctional(modifiers)) {
-		if (extension) {
-			return (jlong) new JPExtensionType<JPFunctional>(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
-		}
 		return (jlong) new JPFunctional(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
 	}
 	if (JPModifier::isBuffer(modifiers)) {
-		if (extension) {
-			return (jlong) new JPExtensionType<JPBufferType>(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
-		}
 		return (jlong) new JPBufferType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
 	}
 	// Certain classes require special implementations

@@ -13,9 +13,11 @@
 
    See NOTICE file for details.
  *****************************************************************************/
+#include "jp_class.h"
+#include "jp_extension.hpp"
 #include "jpype.h"
 #include "pyjp.h"
-#include "jp_stringtype.h"
+#include "jp_stringtype.h" // IWYU pragma: keep
 #include <Python.h>
 #include <mutex>
 
@@ -49,7 +51,7 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 	JP_PY_TRY("PyJPValue_alloc");
 
 #if PY_VERSION_HEX >= 0x030d0000
-	// This flag will try to place the dictionary are part of the object which 
+	// This flag will try to place the dictionary are part of the object which
 	// adds an unknown number of bytes to the end of the object making it impossible
 	// to attach our needed data.  If we kill the flag then we get usable behavior.
 	if (PyType_HasFeature(type, Py_TPFLAGS_INLINE_VALUES)) {
@@ -59,13 +61,13 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 #endif
 
 	PyObject* obj = nullptr;
-	{  
+	{
 		std::lock_guard<std::mutex> lock(mtx);
-		// Mutate the allocator type 
+		// Mutate the allocator type
 		PyJPAlloc_Type->tp_flags = type->tp_flags;
 		PyJPAlloc_Type->tp_basicsize = type->tp_basicsize + sizeof (JPValue);
 		PyJPAlloc_Type->tp_itemsize = type->tp_itemsize;
-	
+
 		// Create a new allocation for the dummy type
 		obj = PyType_GenericAlloc(PyJPAlloc_Type, nitems);
 	}
@@ -104,7 +106,7 @@ Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self)
 
 	Py_ssize_t offset = 0;
 	Py_ssize_t sz = 0;
-	
+
 #if PY_VERSION_HEX>=0x030c0000
 	// starting in 3.12 there is no longer ob_size in PyLong
 	if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_LONG_SUBCLASS))
@@ -114,7 +116,7 @@ Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self)
 	if (type->tp_itemsize != 0)
 		sz = Py_SIZE(self);
 	// PyLong abuses ob_size with negative values prior to 3.12
-	if (sz < 0)
+	if (sz < 0) // NOLINT
 		sz = -sz;
 	if (type->tp_itemsize == 0)
 		offset = _PyObject_VAR_SIZE(type, 1);
@@ -273,6 +275,15 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 	JPPyObject f = JPPyObject::accept(PyJP_GetAttrDescriptor(Py_TYPE(self), name));
 	if (f.isNull())
 	{
+		JPClass *cls = PyJPClass_getJPClass((PyObject*) Py_TYPE(self));
+		if (cls != nullptr) {
+			JPExtensionType *ext = dynamic_cast<JPExtensionType *>(cls);
+			if (ext != nullptr) {
+				// allow it for extension classes
+				// we only need to do setattr and it will be found later via getattr
+				return PyObject_GenericSetAttr(self, name, value);
+			}
+		}
 		PyErr_Format(PyExc_AttributeError, "Field '%U' is not found", name);
 		return -1;
 	}

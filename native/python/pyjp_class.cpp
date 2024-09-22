@@ -16,14 +16,17 @@
 #include <algorithm>
 #include <Python.h>
 #include <frameobject.h>
+#include <object.h>
+#include <pytypedefs.h>
 #include <structmember.h>
+#include <tupleobject.h>
+#include "jp_extension.hpp"
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_array.h"
 #include "jp_arrayclass.h"
 #include "jp_boxedtype.h"
 #include "jp_field.h"
-#include "jp_method.h"
 #include "jp_methoddispatch.h"
 #include "jp_primitive_accessor.h"
 
@@ -287,8 +290,16 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	}
 	if (magic == 0)
 	{
-		PyErr_Format(PyExc_TypeError, "Java classes cannot be extended in Python");
-		return -1;
+		// returns a tuple of the Class pointer and the overrides
+		JPPyObject tmp = JPPyObject::call(PyObject_Call(_JExtension, args, kwargs));
+		unsigned long long value = PyLong_AsUnsignedLongLong(PyTuple_GetItem(tmp.get(), 0));
+		JPExtensionType *cls = reinterpret_cast<JPExtensionType *>(static_cast<uintptr_t>(value));
+		((PyJPClass*) self)->m_Class = cls;
+		cls->setOverrides(PyTuple_GetItem(tmp.get(), 1));
+		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
+		cls->ensureMembers(frame);
+		//PyErr_Format(PyExc_TypeError, "Java classes cannot be extended in Python");
+		//return -1;
 	}
 
 	// Set the host object
@@ -361,6 +372,10 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 	return rc;
 	JP_PY_CATCH(-1);
+}
+
+static PyObject *PyJPClass_subclass(PyObject *self, PyObject *args, PyObject *kwargs) {
+	return PyType_Type.tp_call(self, args, kwargs);
 }
 
 static void PyJPClass_dealloc(PyJPClass *self)
@@ -1020,6 +1035,7 @@ static PyType_Slot classSlots[] = {
 	{ Py_mp_subscript, (void*) PyJPClass_array},
 	{ Py_nb_matrix_multiply, (void*) PyJPClass_cast},
 	{ Py_nb_inplace_matrix_multiply, (void*) PyJPClass_castEq},
+	{ Py_tp_call, (void*) PyJPClass_subclass},
 	{0}
 };
 
@@ -1233,5 +1249,5 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 	// Call the post load routine to attach inner classes
 	JP_TRACE("call post");
 	args = JPPyTuple_Pack(self);
-	JPPyObject rc2 = JPPyObject::call(PyObject_Call(_JClassPost, args.get(), nullptr));
+	JPPyObject::call(PyObject_Call(_JClassPost, args.get(), nullptr));
 }

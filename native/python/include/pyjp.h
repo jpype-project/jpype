@@ -181,7 +181,6 @@ PyObject  *PyJPModule_getClass(PyObject* module, PyObject *obj);
 PyObject  *PyJPValue_getattro(PyObject *obj, PyObject *name);
 int        PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value);
 PyObject  *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p);
-PyObject  *PyJPExtension_putOverrides(PyObject *cls, PyObject *args);
 
 #ifdef __cplusplus
 }
