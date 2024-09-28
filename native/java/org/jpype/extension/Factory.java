@@ -68,7 +68,7 @@ public class Factory {
 	/**
 	 * Hook to call a Python implemented method
 	 */
-	public static native Object _call(long ctx, long id, Object[] args);
+	public static native Object _call(long ctx, long id, Object... args);
 
 	//</editor_fold>
 
@@ -175,12 +175,12 @@ public class Factory {
 		// Reserve space for parameter fields
 		implementFields(cw, cdecl);
 
+		for (MethodDecl mdecl : cdecl.constructors) {
+			implementCtor(cw, cdecl, mdecl);
+		}
+
 		for (MethodDecl mdecl : cdecl.methods) {
-			if (mdecl.name.equals("<init>")) {
-				implementCtor(cw, cdecl, mdecl);
-			} else {
-				implementMethod(cw, cdecl, mdecl);
-			}
+			implementMethod(cw, cdecl, mdecl);
 		}
 
 		cw.visitEnd();
@@ -293,13 +293,9 @@ public class Factory {
 
 		// Marshal the parameters
 		for (int i = 0; i < mdecl.parameters.length; i++) {
-			mv.visitLdcInsn(i);
-			Parameter param = mdecl.parameters[i];
-			if (param.kind == TypeKind.OBJECT) {
-				mv.visitIntInsn(Opcodes.ALOAD, param.slot);
-			} else {
-				box(mv, param);
-			}
+			mv.visitInsn(Opcodes.DUP);
+			loadConst(mv, i+1);
+			load(mv, mdecl.parameters[i]);
 			mv.visitInsn(Opcodes.AASTORE);
 		}
 
@@ -323,38 +319,45 @@ public class Factory {
 	}
 	//</editor-fold>
 
-	private static void box(MethodVisitor mv, Parameter param) {
-		String desc;
-		switch (param.kind) {
-			case BOOL:
-				desc = "(Z)Ljava/lang/Boolean;";
+	private static void loadConst(MethodVisitor mv, int value) {
+		switch (value) {
+			case 0:
+				mv.visitInsn(Opcodes.ICONST_0);
 				break;
-			case BYTE:
-				desc ="(B)Ljava/lang/Byte;";
+			case 1:
+				mv.visitInsn(Opcodes.ICONST_1);
 				break;
-			case CHAR:
-				desc = "(C)Ljava/lang/Character;";
+			case 2:
+				mv.visitInsn(Opcodes.ICONST_2);
 				break;
-			case SHORT:
-				desc = "(S)Ljava/lang/Short;";
+			case 3:
+				mv.visitInsn(Opcodes.ICONST_3);
 				break;
-			case INT:
-				desc = "(I)Ljava/lang/Integer;";
+			case 4:
+				mv.visitInsn(Opcodes.ICONST_4);
 				break;
-			case LONG:
-				desc = "(L)Ljava/lang/Long;";
-				break;
-			case FLOAT:
-				desc = "(L)Ljava/lang/Float;";
-				break;
-			case DOUBLE:
-				desc = "(L)Ljava/lang/Double;";
+			case 5:
+				mv.visitInsn(Opcodes.ICONST_5);
 				break;
 			default:
-				throw new IllegalArgumentException(param.type.toString() + " is not a primitive type");
+				mv.visitLdcInsn(value);
+				break;
 		}
-		mv.visitIntInsn(param.kind.load, param.slot);
-		mv.visitMethodInsn(Opcodes.INVOKESTATIC, param.kind.boxedClass, "valueOf", desc, false);
+	}
+
+	private static void load(MethodVisitor mv, Parameter param) {
+		if (param.kind == TypeKind.OBJECT) {
+			mv.visitIntInsn(Opcodes.ALOAD, param.slot);
+		} else {
+			mv.visitIntInsn(param.kind.load, param.slot);
+			mv.visitMethodInsn(
+				Opcodes.INVOKESTATIC,
+				param.kind.boxedClass,
+				"valueOf",
+				param.kind.boxDescriptor,
+				false
+			);
+		}
 	}
 
 	private static void handleReturn(MethodVisitor mv, Parameter ret) {

@@ -19,6 +19,7 @@ import _jpype
 from ._pykeywords import pysafe
 from . import _jcustomizer
 import inspect
+import typing
 
 __all__ = ['JClass', 'JInterface', 'JOverride', 'JPublic', 'JProtected',
         'JPrivate', 'JThrows']
@@ -39,8 +40,8 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, **kwargs):
     """Generic annotation to pass to the code generator.
     """
     if not "__jspec__" in nonlocals:
-        nonlocals["__jspec__"] = []
-    jspec = nonlocals["__jspec__"]
+        nonlocals["__jspec__"] = set()
+    jspec: set = nonlocals["__jspec__"]
 
     if isinstance(target, type):
         if not isinstance(target, _jpype.JClass):
@@ -53,7 +54,7 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, **kwargs):
             if prim:
                 v = _jpype.JObject(v, target)  # box it
             var = _JFieldDecl(target, p, v, modifiers)
-            jspec.append(var)
+            jspec.add(var)
             out.append(var)
         return out
 
@@ -76,7 +77,11 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, **kwargs):
                 if not isinstance(spec.annotations[args[i]], _jpype.JClass):
                     raise TypeError("Method arguments must be Java classes")
 
-            if target.__name__ != "__init__":
+            if target.__name__ in ("__init__", "__new__"):
+                raise TypeError("Method may not be '%s'" % target.__name__)
+
+            _, _, clsname = nonlocals["__qualname__"].rpartition('.')
+            if target.__name__ != clsname:
                 if "return" not in spec.annotations:
                     raise TypeError("Return specification required")
                 if not isinstance(spec.annotations["return"], (_jpype.JClass, type(None))):
@@ -86,7 +91,7 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, **kwargs):
         for p, v in kwargs.items():
             object.__setattr__(target, p, v)
         if modifiers is not None:
-            jspec.append(target)
+            jspec.add(target)
             object.__setattr__(target, '__jmodifiers__', modifiers)
         return target
 
@@ -94,7 +99,8 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, **kwargs):
 
 
 def JPublic(target, **kwargs):
-    nonlocals = inspect.stack()[1][0].f_locals
+    stack = inspect.stack()[1][0]
+    nonlocals = stack.f_locals
     return _JMemberDecl(nonlocals, target, True, 1, **kwargs)
 
 
@@ -348,6 +354,21 @@ def _jclassDoc(cls):
     return "\n".join(out)
 
 
+class _JClassTable(dict):
+    def __init__(self):
+        self.jspec: typing.Optional[set] = None
+
+    def __setitem__(self, key, value):
+        if self.jspec is not None and value in self.jspec:
+            # filter java fields and methods
+            # this prevents "clobbering"
+            return
+        if key == "__jspec__":
+            self.jspec = value
+
+        dict.__setitem__(self, key, value)
+
+
 def _JExtension(name, bases, members):
     if "__jspec__" not in members:
         raise TypeError("Java classes cannot be extended in Python")
@@ -362,15 +383,18 @@ def _JExtension(name, bases, members):
         elif isinstance(i, type(_JExtension)):
             exceptions = getattr(i, '__jthrows__', None)
             mspec = inspect.getfullargspec(i)
-            if i.__name__ == '__init__':
+            if i.__name__ == name:
                 args = [mspec.annotations[j] for j in mspec.args[1:]]
                 cls.addCtor(args, exceptions, i.__jmodifiers__)
-                functions.append(i)
             else:
                 args = [mspec.annotations[j] for j in mspec.args[1:]]
                 ret = mspec.annotations["return"]
                 cls.addMethod(i.__name__, ret, args, exceptions, i.__jmodifiers__)
                 functions.append(i)
+            try:
+                members.pop(i.__name__)
+            except KeyError:
+                pass
         else:
             raise TypeError("Unknown member %s" % type(i))
 
@@ -388,3 +412,4 @@ _jpype._jclassDoc = _jclassDoc
 _jpype._jclassPre = _jclassPre
 _jpype._jclassPost = _jclassPost
 _jpype._JExtension = _JExtension
+_jpype._JClassTable = _JClassTable

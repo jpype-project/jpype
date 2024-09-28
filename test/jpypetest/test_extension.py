@@ -32,8 +32,8 @@ class JExtensionTestCase(common.JPypeTestCase):
         class MyObject(Object):
 
             @JPublic
-            def __init__(self):
-                pass
+            def MyObject(self):
+                ...
 
         self.assertIsInstance(MyObject(), MyObject)
 
@@ -44,6 +44,9 @@ class JExtensionTestCase(common.JPypeTestCase):
         class MyObject(Object):
 
             @JPublic
+            def MyObject(self):
+                ...
+
             def __init__(self):
                 nonlocal count
                 count += 1
@@ -56,8 +59,8 @@ class JExtensionTestCase(common.JPypeTestCase):
         class MyObject(Object):
 
             @JPublic
-            def __init__(self):
-                pass
+            def MyObject(self):
+                ...
 
             @JPublic
             @JOverride
@@ -69,18 +72,21 @@ class JExtensionTestCase(common.JPypeTestCase):
     def testOverloadConstructor(self):
         class MyObject(JClass("jpype.extension.TestBase")):
 
-            @JPublic
             def __init__(self):
                 pass
 
             @JPublic
+            def MyObject(self):
+                ...
+
+            @JPublic
             @JOverride
-            def __init__(self, i: JInt):
+            def MyObject(self, i: JInt):
                 pass
 
             @JPublic
             @JOverride
-            def __init__(self, o: JObject):
+            def MyObject(self, o: JObject):
                 pass
 
             @JPublic
@@ -94,6 +100,6 @@ class JExtensionTestCase(common.JPypeTestCase):
                 return None
 
         o = MyObject()
-        self.assertEqual(o.identity(1), 0)
+        self.assertEqual(o.identity(JInt(1)), 0)
         self.assertEqual(o.identity(JObject()), None)
 

@@ -15,12 +15,14 @@
  *****************************************************************************/
 #include <algorithm>
 #include <Python.h>
+#include <dictobject.h>
 #include <frameobject.h>
 #include <object.h>
 #include <pytypedefs.h>
 #include <string_view>
 #include <structmember.h>
 #include <tupleobject.h>
+#include "jp_class.h"
 #include "jp_extension.hpp"
 #include "jpype.h"
 #include "pyjp.h"
@@ -378,10 +380,6 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	JP_PY_CATCH(-1);
 }
 
-static PyObject *PyJPClass_subclass(PyObject *self, PyObject *args, PyObject *kwargs) {
-	return PyType_Type.tp_call(self, args, kwargs);
-}
-
 static void PyJPClass_dealloc(PyJPClass *self)
 {
 	JP_PY_TRY("PyJPClass_dealloc");
@@ -462,6 +460,9 @@ PyObject *PyJPClass_getattro(PyObject *obj, PyObject *name)
 				Py_TYPE(name)->tp_name);
 		return nullptr;
 	}
+
+	const char *name_tmp = PyUnicode_AsUTF8(name);
+	(void) name_tmp;
 
 	// Private members are accessed directly
 	PyObject* pyattr = PyType_Type.tp_getattro(obj, name);
@@ -578,6 +579,22 @@ PyObject* PyJPClass_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 	}
 	Py_RETURN_FALSE;
 	JP_PY_CATCH(nullptr);
+}
+
+static PyObject *PyJPClass_prepare(PyObject *self, PyObject *const *args, Py_ssize_t nargs, PyObject *kwnames) {
+	if (nargs < 2 || (kwnames != nullptr && PyDict_GET_SIZE(kwnames) > 0)) {
+		return PyDict_New();
+	}
+	PyObject *bases = args[1];
+	if (PyTuple_Size(bases) < 1) {
+		return PyDict_New();
+	}
+	JPClass *cls = PyJPClass_getJPClass(PyTuple_GetItem(bases, 0));
+	if (cls == nullptr) {
+		return PyDict_New();
+	}
+	// extension
+	return PyObject_CallNoArgs(_JClassTable);
 }
 
 static PyObject *PyJPClass_class(PyObject *self, PyObject *closure)
@@ -1007,6 +1024,7 @@ PyObject* PyJPClass_customize(PyJPClass *self, PyObject *args, PyObject *kwargs)
 static PyMethodDef classMethods[] = {
 	{"__instancecheck__", (PyCFunction) PyJPClass_instancecheck, METH_O, ""},
 	{"__subclasscheck__", (PyCFunction) PyJPClass_subclasscheck, METH_O, ""},
+	{"__prepare__", (PyCFunction) PyJPClass_prepare, METH_FASTCALL | METH_KEYWORDS | METH_CLASS, ""},
 	{"mro", (PyCFunction) PyJPClass_mro, METH_NOARGS, ""},
 	{"_canConvertToJava", (PyCFunction) PyJPClass_canConvertToJava, METH_O, ""},
 	{"_convertToJava", (PyCFunction) PyJPClass_convertToJava, METH_O, ""},
@@ -1039,7 +1057,6 @@ static PyType_Slot classSlots[] = {
 	{ Py_mp_subscript, (void*) PyJPClass_array},
 	{ Py_nb_matrix_multiply, (void*) PyJPClass_cast},
 	{ Py_nb_inplace_matrix_multiply, (void*) PyJPClass_castEq},
-	{ Py_tp_call, (void*) PyJPClass_subclass},
 	{0}
 };
 
