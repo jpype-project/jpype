@@ -18,6 +18,7 @@
 #include <frameobject.h>
 #include <object.h>
 #include <pytypedefs.h>
+#include <string_view>
 #include <structmember.h>
 #include <tupleobject.h>
 #include "jp_extension.hpp"
@@ -29,6 +30,9 @@
 #include "jp_field.h"
 #include "jp_methoddispatch.h"
 #include "jp_primitive_accessor.h"
+
+
+using namespace std::literals;
 
 struct PyJPClass
 {
@@ -723,15 +727,15 @@ static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
 
 	// Report to user
 	if (match.type == JPMatch::_none)
-		return JPPyString::fromStringUTF8("none").keep();
+		return JPPyString::fromStringUTF8("none"sv).keep();
 	if (match.type == JPMatch::_explicit)
-		return JPPyString::fromStringUTF8("explicit").keep();
+		return JPPyString::fromStringUTF8("explicit"sv).keep();
 	if (match.type == JPMatch::_implicit)
-		return JPPyString::fromStringUTF8("implicit").keep();
+		return JPPyString::fromStringUTF8("implicit"sv).keep();
 	if (match.type == JPMatch::_derived)
-		return JPPyString::fromStringUTF8("derived").keep();
+		return JPPyString::fromStringUTF8("derived"sv).keep();
 	if (match.type == JPMatch::_exact)
-		return JPPyString::fromStringUTF8("exact").keep();
+		return JPPyString::fromStringUTF8("exact"sv).keep();
 
 	// Not sure how this could happen
 	Py_RETURN_NONE; // GCOVR_EXCL_LINE
@@ -860,7 +864,7 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 			PyErr_Format(PyExc_TypeError,
 					"Unable to cast '%s' to java type '%s'",
 					Py_TYPE(other)->tp_name,
-					type->getCanonicalName().c_str()
+					type->getCanonicalName().data()
 					);
 			return nullptr;
 		}
@@ -887,8 +891,8 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 	{
 		PyErr_Format(PyExc_TypeError,
 				"Unable to cast '%s' to java type '%s'",
-				otherClass->getCanonicalName().c_str(),
-				type->getCanonicalName().c_str()
+				otherClass->getCanonicalName().data(),
+				type->getCanonicalName().data()
 				);
 		return nullptr;
 	}

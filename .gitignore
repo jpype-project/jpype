@@ -85,3 +85,4 @@ jacoco/
 wheelhouse/
 vc*.pdb
 *.class
+CMakeFiles/

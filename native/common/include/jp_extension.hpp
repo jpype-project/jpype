@@ -20,8 +20,8 @@ class JPExtensionType final : public JPClass {
 public:
 	using JPClass::JPClass;
 	virtual ~JPExtensionType() = default;
-	const JPMethodOverrideList *getOverrides() const {
-		return &m_Overrides;
+	const JPMethodOverrideList &getOverrides() const {
+		return m_Overrides;
 	}
 	void setOverrides(PyObject *args);
 private:

@@ -134,8 +134,8 @@ static PyObject *PyJPMethod_str(PyJPMethod *self)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	return PyUnicode_FromFormat("%s.%s",
-			self->m_Method->getClass()->getCanonicalName().c_str(),
-			self->m_Method->getName().c_str());
+			self->m_Method->getClass()->getCanonicalName().data(),
+			self->m_Method->getName().data());
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
@@ -145,8 +145,8 @@ static PyObject *PyJPMethod_repr(PyJPMethod *self)
 	PyJPModule_getContext();
 	return PyUnicode_FromFormat("<java %smethod '%s' of '%s'>",
 			(self->m_Instance != nullptr) ? "bound " : "",
-			self->m_Method->getName().c_str(),
-			self->m_Method->getClass()->getCanonicalName().c_str());
+			self->m_Method->getName().data(),
+			self->m_Method->getClass()->getCanonicalName().data());
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
@@ -179,8 +179,8 @@ static PyObject *PyJPMethod_getQualName(PyJPMethod *self, void *ctxt)
 	JP_PY_TRY("PyJPMethod_getQualName");
 	PyJPModule_getContext();
 	return PyUnicode_FromFormat("%s.%s",
-			self->m_Method->getClass()->getCanonicalName().c_str(),
-			self->m_Method->getName().c_str());
+			self->m_Method->getClass()->getCanonicalName().data(),
+			self->m_Method->getName().data());
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 

@@ -16,8 +16,6 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_proxy.h"
-#include "jp_classloader.h"
-#include "jp_reference_queue.h"
 #include "jp_primitive_accessor.h"
 #include "jp_boxedtype.h"
 #include "jp_functional.h"

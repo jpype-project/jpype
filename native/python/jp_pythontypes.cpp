@@ -289,12 +289,12 @@ bool JPPyString::check(PyObject* obj)
 /** Create a new string from utf8 encoded string.
  * Note: java utf8 is not utf8.
  */
-JPPyObject JPPyString::fromStringUTF8(const string& str)
+JPPyObject JPPyString::fromStringUTF8(const std::string_view& str)
 {
 	auto len = static_cast<Py_ssize_t>(str.size());
 
 	// Python 3 is always unicode
-	JPPyObject bytes = JPPyObject::call(PyBytes_FromStringAndSize(str.c_str(), len));
+	JPPyObject bytes = JPPyObject::call(PyBytes_FromStringAndSize(str.data(), len));
 	return JPPyObject::call(PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict"));
 }
 

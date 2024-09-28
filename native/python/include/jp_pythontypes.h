@@ -25,10 +25,12 @@ extern "C" {
 #include "jni.h"
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 using std::string;
 using std::vector;
+using namespace std::literals;
 
 /**
  * This set of source are mostly sugar with some light weight
@@ -160,7 +162,7 @@ public:
 	/** Access the object.  This should never appear in
 	 * a return statement.
 	 */
-	PyObject* get()
+	PyObject* get() const
 	{
 		return m_PyObject;
 	}
@@ -214,7 +216,7 @@ public:
 	 *
 	 * @param str is the string to convert
 	 */
-	static JPPyObject fromStringUTF8(const string& str);
+	static JPPyObject fromStringUTF8(const std::string_view &str);
 
 	/** Get a UTF-8 encoded string from Python
 	 */

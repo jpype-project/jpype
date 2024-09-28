@@ -20,6 +20,7 @@
 
 #include "jni.h"
 
+#include <string_view>
 #include <vector>
 using std::vector;
 
@@ -64,7 +65,7 @@ public:
 		return m_Class->getContext();
 	}
 
-	const string& getName() const
+	std::string_view getName() const
 	{
 		return m_Name;
 	}

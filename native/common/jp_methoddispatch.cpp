@@ -13,8 +13,6 @@
 
    See NOTICE file for details.
  *****************************************************************************/
-#include <algorithm>
-#include <utility>
 #include "jpype.h"
 #include "jp_method.h"
 #include "jp_methoddispatch.h"
@@ -29,14 +27,6 @@ JPMethodDispatch::JPMethodDispatch(JPClass* clazz,
 	m_Overloads = overloads;
 	m_Modifiers = modifiers;
 	m_LastCache.m_Hash = -1;
-}
-
-JPMethodDispatch::~JPMethodDispatch()
-= default;
-
-const string& JPMethodDispatch::getName() const
-{
-	return m_Name;
 }
 
 bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch, JPPyObjectVector& arg,

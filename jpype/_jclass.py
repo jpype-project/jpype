@@ -353,7 +353,7 @@ def _JExtension(name, bases, members):
         raise TypeError("Java classes cannot be extended in Python")
     jspec = members['__jspec__']
     Factory = _jpype.JClass('org.jpype.extension.Factory')
-    cls = Factory.newClass(members["__module__"]+'.'+name, bases)
+    cls = Factory.newClass(members["__qualname__"], bases)
     overrides = []
     functions = []
     for i in jspec:

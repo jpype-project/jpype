@@ -68,7 +68,7 @@ public class Factory {
 	/**
 	 * Hook to call a Python implemented method
 	 */
-	static native Object _call(long ctx, long id, Object[] args);
+	public static native Object _call(long ctx, long id, Object[] args);
 
 	//</editor_fold>
 
@@ -118,7 +118,6 @@ public class Factory {
 
 		// Traverse all the bases to see what methods we are covering
 		for (Class<?> i : decl.bases) {
-			// FIXME watch for methods that have already been implemented.
 			for (Method m : i.getMethods()) {
 				MethodDecl m3 = null;
 				for (MethodDecl m2 : decl.methods) {
@@ -202,7 +201,6 @@ public class Factory {
 
 		// Implement fields
 		for (FieldDecl fdecl : decl.fields) {
-			// FIXME initialize values
 			cw.visitField(fdecl.modifiers, fdecl.name, Type.getDescriptor(fdecl.type), null, null);
 		}
 
@@ -282,8 +280,7 @@ public class Factory {
 
 		// Object _call(long ctx, long id, Object[] args);
 		// Place the interpretation information on the stack
-		long context = JPypeContext.getInstance().getContext();
-		mv.visitLdcInsn(context);
+		mv.visitFieldInsn(Opcodes.GETSTATIC, cdecl.internalName, JCLASS_FIELD, "J");
 		mv.visitLdcInsn(mdecl.id);
 
 		// Create the parameter array
@@ -424,8 +421,8 @@ public class Factory {
 	}
 }
 
-// FIXME how do we define what arguments are passed to the ctor?
-// FIXME how do we define ctors
-// FIXME how do we get to TypeError rather that RuntimeException?
-// FIXME how do we keep from clobbering.
-// FIXME how does the type system know that this is an extension class?
+// how do we define what arguments are passed to the ctor?
+// how do we define ctors
+// how do we get to TypeError rather that RuntimeException?
+// how do we keep from clobbering.
+// how does the type system know that this is an extension class?

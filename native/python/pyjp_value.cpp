@@ -21,6 +21,8 @@
 #include <Python.h>
 #include <mutex>
 
+using namespace std::literals;
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -203,7 +205,7 @@ PyObject* PyJPValue_str(PyObject* self)
 	}
 
 	if (value->getValue().l == nullptr)
-		return JPPyString::fromStringUTF8("null").keep();
+		return JPPyString::fromStringUTF8("null"sv).keep();
 
 	if (cls == context->_java_lang_String)
 	{

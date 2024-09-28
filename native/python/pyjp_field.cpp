@@ -91,8 +91,8 @@ static PyObject *PyJPField_repr(PyJPField *self)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	return PyUnicode_FromFormat("<java field '%s' of '%s'>",
-			self->m_Field->getName().c_str(),
-			self->m_Field->getClass()->getCanonicalName().c_str()
+			self->m_Field->getName().data(),
+			self->m_Field->getClass()->getCanonicalName().data()
 			);
 	JP_PY_CATCH(nullptr);
 }

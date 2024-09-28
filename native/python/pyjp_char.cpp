@@ -251,7 +251,7 @@ static PyObject *PyJPChar_str(PyJPChar *self)
 		return nullptr;
 	}  // GCOVR_EXCL_STOP
 	if (isNull(javaSlot))
-		return JPPyString::fromStringUTF8("None").keep();
+		return JPPyString::fromStringUTF8("None"sv).keep();
 	return PyUnicode_FromOrdinal(fromJPChar(self));
 	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }
@@ -268,7 +268,7 @@ static PyObject *PyJPChar_repr(PyJPChar *self)
 		return nullptr;
 	}  // GCOVR_EXCL_STOP
 	if (isNull(javaSlot))
-		return JPPyString::fromStringUTF8("None").keep();
+		return JPPyString::fromStringUTF8("None"sv).keep();
 	return PyUnicode_Type.tp_repr((PyObject*) self);
 	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
 }

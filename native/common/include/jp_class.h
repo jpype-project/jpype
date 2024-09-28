@@ -28,6 +28,7 @@
 #include "jp_modifier.h"
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 using std::string;
@@ -82,7 +83,7 @@ public:
 
 	string toString() const;
 
-	string getCanonicalName() const
+	std::string_view getCanonicalName() const
 	{
 		return m_CanonicalName;
 	}

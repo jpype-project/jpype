@@ -18,17 +18,17 @@
 #include "jpype.h"
 #include "jp_extension.hpp" // IWYU pragma: keep
 
-static JPPyObject packArgs(JPContext* context, const JPMethodOverride &method, jobjectArray args)
+static JPPyObject packArgs(JPExtensionType *cls, const JPMethodOverride &method, jobjectArray args)
 {
 	JP_TRACE_IN("JProxy::getArgs");
-	JPJavaFrame frame = JPJavaFrame::outer(context);
-	const size_t argLen = method.paramTypes.size();
+	JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
+	const size_t argLen = method.paramTypes.size() + 1;
 	JPPyObject pyargs = JPPyObject::call(PyTuple_New(argLen));
 
 	for (jsize i = 0; i < argLen; i++)
 	{
 		jobject obj = frame.GetObjectArrayElement(args, i);
-		JPClass* type = frame.findClassForObject(obj);
+		JPClass* type = i > 0 ? frame.findClassForObject(obj) : cls;
 		if (type == NULL) {
 			// this should be immutable once built...
 			type = const_cast<JPClass*>(method.paramTypes[i]);
@@ -40,12 +40,11 @@ static JPPyObject packArgs(JPContext* context, const JPMethodOverride &method, j
 	JP_TRACE_OUT;
 }
 
-extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__call(
+extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__1call(
 		JNIEnv *env,
 		jclass clazz,
 		jlong contextPtr,
 		jlong functionId,
-		jobject self,
 		jobjectArray args
 	)
 {
@@ -60,7 +59,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__call(
 		JP_TRACE("context", context);
 		try
 		{
-			const JPMethodOverride &method = cls->getOverrides()->at(functionId);
+			const JPMethodOverride &method = cls->getOverrides()[functionId];
 			// Find the return type
 
 			// why are these functions mutating it??????????
@@ -69,14 +68,14 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__call(
 
 			// convert the arguments into a python list
 			JP_TRACE("Convert arguments");
-			JPPyObject pyargs = packArgs(context, method, args);
+			JPPyObject pyargs = packArgs(cls, method, args);
 
 			// Copy the privilege flags into the first argument
 			// FIXME how should this be stored.
 
 			JP_TRACE("Call Python");
 			JPPyObject returnValue = JPPyObject::call(PyObject_Call(
-					reinterpret_cast<PyObject*> (functionId),
+					method.function.get(),
 					pyargs.get(), NULL));
 
 			JP_TRACE("Handle return", Py_TYPE(returnValue.get())->tp_name);

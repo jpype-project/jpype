@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include <string_view>
 #include <vector>
 
 using std::vector;
@@ -43,7 +44,7 @@ public:
 			JPMethodList& overloads,
 			jint modifiers);
 
-	~JPMethodDispatch() override;
+	~JPMethodDispatch() override = default;
     JPMethodDispatch(const JPMethodDispatch& method) = delete;
 	JPMethodDispatch& operator=(const JPMethodDispatch& method) = delete;
 
@@ -59,7 +60,10 @@ public:
 		return m_Class->getContext();
 	}
 
-	const string& getName() const;
+	std::string_view getName() const
+	{
+		return m_Name;
+	}
 
 	bool hasStatic() const
 	{
