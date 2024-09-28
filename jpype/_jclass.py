@@ -77,11 +77,7 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, **kwargs):
                 if not isinstance(spec.annotations[args[i]], _jpype.JClass):
                     raise TypeError("Method arguments must be Java classes")
 
-            if target.__name__ in ("__init__", "__new__"):
-                raise TypeError("Method may not be '%s'" % target.__name__)
-
-            _, _, clsname = nonlocals["__qualname__"].rpartition('.')
-            if target.__name__ != clsname:
+            if target.__name__ != "__init__":
                 if "return" not in spec.annotations:
                     raise TypeError("Return specification required")
                 if not isinstance(spec.annotations["return"], (_jpype.JClass, type(None))):
@@ -359,10 +355,15 @@ class _JClassTable(dict):
         self.jspec: typing.Optional[set] = None
 
     def __setitem__(self, key, value):
-        if self.jspec is not None and value in self.jspec:
-            # filter java fields and methods
-            # this prevents "clobbering"
-            return
+        try:
+            if self.jspec is not None and value in self.jspec:
+                # filter java fields and methods
+                # this prevents "clobbering"
+                return
+        except TypeError:
+            # not hashable, can't check jspec
+            return dict.__setitem__(self, key, value)
+
         if key == "__jspec__":
             self.jspec = value
 
@@ -383,9 +384,10 @@ def _JExtension(name, bases, members):
         elif isinstance(i, type(_JExtension)):
             exceptions = getattr(i, '__jthrows__', None)
             mspec = inspect.getfullargspec(i)
-            if i.__name__ == name:
+            if i.__name__ == "__init__":
                 args = [mspec.annotations[j] for j in mspec.args[1:]]
                 cls.addCtor(args, exceptions, i.__jmodifiers__)
+                functions.append(i)
             else:
                 args = [mspec.annotations[j] for j in mspec.args[1:]]
                 ret = mspec.annotations["return"]

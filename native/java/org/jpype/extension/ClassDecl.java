@@ -27,7 +27,6 @@ public class ClassDecl {
 
 	final String name;
 	ArrayList<MethodDecl> methods = new ArrayList<>();
-	ArrayList<MethodDecl> constructors = new ArrayList<>();
 	ArrayList<FieldDecl> fields = new ArrayList<>();
 	Class<?>[] bases;
 	Class<?> base;
@@ -46,10 +45,7 @@ public class ClassDecl {
 	}
 
 	public MethodDecl addCtor(Class<?>[] arguments, Class<?>[] exceptions, int modifiers) {
-		MethodDecl method =
-			new MethodDecl("<init>", null, arguments, exceptions, modifiers, methods.size());
-		constructors.add(method);
-		return method;
+		return addMethod("<init>", null, arguments, exceptions, modifiers);
 	}
 
 	public MethodDecl addMethod(String name, Class<?> ret, Class<?>[] arguments,

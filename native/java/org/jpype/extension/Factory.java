@@ -175,12 +175,12 @@ public class Factory {
 		// Reserve space for parameter fields
 		implementFields(cw, cdecl);
 
-		for (MethodDecl mdecl : cdecl.constructors) {
-			implementCtor(cw, cdecl, mdecl);
-		}
-
 		for (MethodDecl mdecl : cdecl.methods) {
-			implementMethod(cw, cdecl, mdecl);
+			if (mdecl.name.equals("<init>")) {
+				implementCtor(cw, cdecl, mdecl);
+			} else {
+				implementMethod(cw, cdecl, mdecl);
+			}
 		}
 
 		cw.visitEnd();
@@ -256,9 +256,7 @@ public class Factory {
 			false
 		);
 
-		mv.visitInsn(Opcodes.RETURN);
-		mv.visitMaxs(1, 1);
-		mv.visitEnd();
+		callPython(mv, cdecl, mdecl);
 	}
 
 	private static void implementMethod(ClassWriter cw, ClassDecl cdecl, MethodDecl mdecl) {
@@ -278,6 +276,11 @@ public class Factory {
 		// Start the implementation
 		mv.visitCode();
 
+		callPython(mv, cdecl, mdecl);
+	}
+	//</editor-fold>
+
+	private static void callPython(MethodVisitor mv, ClassDecl cdecl, MethodDecl mdecl) {
 		// Object _call(long ctx, long id, Object[] args);
 		// Place the interpretation information on the stack
 		mv.visitFieldInsn(Opcodes.GETSTATIC, cdecl.internalName, JCLASS_FIELD, "J");
@@ -317,7 +320,6 @@ public class Factory {
 		// Close the method
 		mv.visitEnd();
 	}
-	//</editor-fold>
 
 	private static void loadConst(MethodVisitor mv, int value) {
 		switch (value) {

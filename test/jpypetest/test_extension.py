@@ -20,6 +20,7 @@ import jpype
 from jpype._jclass import *
 from jpype.types import *
 from jpype.imports import *
+import inspect
 
 
 class JExtensionTestCase(common.JPypeTestCase):
@@ -32,34 +33,38 @@ class JExtensionTestCase(common.JPypeTestCase):
         class MyObject(Object):
 
             @JPublic
-            def MyObject(self):
+            def __init__(self):
                 ...
 
         self.assertIsInstance(MyObject(), MyObject)
 
 
     def testInitOnce(self):
-        from java.lang import Object
-        count = 0
-        class MyObject(Object):
-
-            @JPublic
-            def MyObject(self):
-                ...
+        TestBase = JClass("jpype.extension.TestBase")
+        class MyObject(TestBase):
 
             def __init__(self):
-                nonlocal count
-                count += 1
+                super().__init__()
+                self.initCount += 1
 
-        MyObject()
-        self.assertEqual(count, 1)
+            @JPublic
+            def __init__(self):
+                # FIXME damn super() is broke in the callbacks
+                # even when it is a bound method it is broken
+                super(TestBase, self).__init__()
+                self.initCount += 1
+
+        o = MyObject()
+        # once in TestBase constructor, then in the __init__ callback from constructor
+        # then again when the Python __init__ is called
+        self.assertEqual(o.initCount, 3)
 
     def testOverrideSimple(self):
         from java.lang import Object, String
         class MyObject(Object):
 
             @JPublic
-            def MyObject(self):
+            def __init__(self):
                 ...
 
             @JPublic
@@ -70,24 +75,26 @@ class JExtensionTestCase(common.JPypeTestCase):
         self.assertEqual(str(MyObject()), "test")
 
     def testOverloadConstructor(self):
+        mode = -1
         class MyObject(JClass("jpype.extension.TestBase")):
 
+            def __init__(self, *args, **kwargs):
+                pass
+
+            @JPublic
             def __init__(self):
-                pass
+                nonlocal mode
+                mode = 0
 
             @JPublic
-            def MyObject(self):
-                ...
+            def __init__(self, i: JInt):
+                nonlocal mode
+                mode = 1
 
             @JPublic
-            @JOverride
-            def MyObject(self, i: JInt):
-                pass
-
-            @JPublic
-            @JOverride
-            def MyObject(self, o: JObject):
-                pass
+            def __init__(self, o: JObject):
+                nonlocal mode
+                mode = 2
 
             @JPublic
             @JOverride
@@ -100,6 +107,25 @@ class JExtensionTestCase(common.JPypeTestCase):
                 return None
 
         o = MyObject()
+        self.assertEqual(mode, 0)
+        MyObject(JInt(1))
+        self.assertEqual(mode, 1)
+        MyObject(JObject())
+        self.assertEqual(mode, 2)
         self.assertEqual(o.identity(JInt(1)), 0)
         self.assertEqual(o.identity(JObject()), None)
 
+    def testProtectedField(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            def inc(self):
+                # FIXME test results don't show if it throws
+                #self.index += 1
+                pass
+
+        o = MyObject()
+        o.inc()
