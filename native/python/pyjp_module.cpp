@@ -71,6 +71,7 @@ PyObject* _JMethodCode = NULL;
 PyObject* _JObjectKey = NULL;
 PyObject* _JVMNotRunning = NULL;
 PyObject* _JExtension = NULL;
+PyObject* JClass = NULL;
 PyObject* _JClassTable = NULL;
 
 void PyJPModule_loadResources(PyObject* module)
@@ -126,6 +127,9 @@ void PyJPModule_loadResources(PyObject* module)
 		_JExtension = PyObject_GetAttrString(module, "_JExtension");
 		JP_PY_CHECK();
 		Py_INCREF(_JExtension);
+		JClass = PyObject_GetAttrString(module, "JClass");
+		JP_PY_CHECK();
+		Py_INCREF(JClass);
 		_JObjectKey = PyCapsule_New(module, "constructor key", NULL);
 
 	}	catch (JPypeException&)  // GCOVR_EXCL_LINE

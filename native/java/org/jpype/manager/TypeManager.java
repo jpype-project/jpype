@@ -669,10 +669,10 @@ public class TypeManager
     Class<?> cls = desc.cls;
 
     // Get the list of all public, non-overrided methods we will process
-    LinkedList<Method> methods = filterOverridden(cls, cls.getMethods());
+    //LinkedList<Method> methods = filterPublic(cls.getMethods());
 
     // Get the list of public declared methods
-    LinkedList<Method> declaredMethods = filterOverridden(cls, cls.getDeclaredMethods());
+    LinkedList<Method> declaredMethods = filterPublic(cls.getDeclaredMethods());
 
     // We only need one dispatch per name
     TreeSet<String> resolve = new TreeSet<>();
@@ -689,7 +689,7 @@ public class TypeManager
     int i = 0;
     for (String name : resolve)
     {
-      desc.methodDispatch[i++] = this.createMethodDispatch(desc, name, methods);
+      desc.methodDispatch[i++] = this.createMethodDispatch(desc, name, declaredMethods);
     }
   }
 

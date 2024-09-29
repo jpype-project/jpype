@@ -236,7 +236,7 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 			c = selfObj->getJavaObject();
 		}
 		jclass clazz = nullptr;
-		if (!isAbstract() && !instance)
+		if (!isAbstract())
 		{
 			clazz = m_Class->getJavaClass();
 			JP_TRACE("invoke nonvirtual", m_Name);

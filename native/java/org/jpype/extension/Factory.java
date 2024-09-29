@@ -50,7 +50,7 @@ public class Factory {
 	private static final Type FACTORY_TYPE = Type.getType(Factory.class);
 	private static final String CALL_DESCRIPTOR = "(JJ[Ljava/lang/Object;)Ljava/lang/Object;";
 	private static final String FIND_CLASS_DESCRIPTOR = "(Ljava/lang/Class;)J";
-	public static final String JCLASS_FIELD = "$jclass";
+	private static final String JCLASS_FIELD = "$jclass";
 
 	public static boolean isExtension(Class<?> cls) {
 		try {

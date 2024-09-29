@@ -396,7 +396,7 @@ PyObject* PyJPClass_mro(PyTypeObject *self)
 	bases.push_back((PyObject*) self);
 
 	// Merge together all bases
-	std::list<PyObject*> out;
+	std::list<PyTypeObject*> out;
 	for (auto iter = bases.begin();
 			iter != bases.end(); ++iter)
 	{
@@ -429,7 +429,7 @@ PyObject* PyJPClass_mro(PyTypeObject *self)
 		}
 		if (front != nullptr)
 		{
-			out.push_back(front);
+			out.push_back((PyTypeObject*)front);
 			auto* next = (PyObject*) ((PyTypeObject*) front)->tp_base;
 			if (next)
 			{
@@ -445,7 +445,7 @@ PyObject* PyJPClass_mro(PyTypeObject *self)
 			iter != out.end(); ++iter)
 	{
 		Py_INCREF(*iter);
-		PyTuple_SetItem(obj, j++, *iter);
+		PyTuple_SetItem(obj, j++, (PyObject*)*iter);
 	}
 	return obj;
 }
@@ -1042,6 +1042,10 @@ static PyGetSetDef classGetSets[] = {
 	{nullptr}
 };
 
+static PyObject *PyJPClass_call(PyTypeObject *type, PyObject *args, PyObject *kwds) {
+	return PyType_Type.tp_call((PyObject*)type, args, kwds);
+}
+
 static PyType_Slot classSlots[] = {
 	{ Py_tp_alloc, (void*) PyJPValue_alloc},
 	{ Py_tp_finalize, (void*) PyJPValue_finalize},
@@ -1057,6 +1061,7 @@ static PyType_Slot classSlots[] = {
 	{ Py_mp_subscript, (void*) PyJPClass_array},
 	{ Py_nb_matrix_multiply, (void*) PyJPClass_cast},
 	{ Py_nb_inplace_matrix_multiply, (void*) PyJPClass_castEq},
+	{ Py_tp_call, (void*) PyJPClass_call},
 	{0}
 };
 

@@ -122,6 +122,7 @@ class JPypeTestCase(unittest.TestCase):
             jpype.addClassPath(pathlib.Path("test/jar/*").absolute())
             classpath_arg %= jpype.getClassPath()
             args.append(classpath_arg)
+            args.append("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005")
             _jpype.enableStacktraces(True)
             #JPypeTestCase.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))
             jpype.startJVM(jvm_path, *args,

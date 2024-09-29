@@ -74,8 +74,9 @@ class JExtensionTestCase(common.JPypeTestCase):
 
         self.assertEqual(str(MyObject()), "test")
 
-    def testOverloadConstructor(self):
+    def testOverloads(self):
         mode = -1
+
         class MyObject(JClass("jpype.extension.TestBase")):
 
             def __init__(self, *args, **kwargs):
@@ -114,6 +115,47 @@ class JExtensionTestCase(common.JPypeTestCase):
         self.assertEqual(mode, 2)
         self.assertEqual(o.identity(JInt(1)), 0)
         self.assertEqual(o.identity(JObject()), None)
+
+    def testSupercall(self):
+        TestBase = JClass("jpype.extension.TestBase")
+        class MyObject(TestBase):
+
+            @JPublic
+            def __init__(self):
+                pass
+
+            @JPublic
+            @JOverride
+            def identity(self, o: JObject) -> JObject:
+                return None
+
+            @JPublic
+            def super_identity(self, o: JObject) -> JObject:
+                return super().identity(o)
+
+            def test_identity(self, o: JObject) -> JObject:
+                return super().identity(o)
+
+            def test_identity_explicit(self, o: JObject) -> JObject:
+                return super(TestBase, self).identity(o)
+
+            def get_super(self):
+                return super()
+
+            def get_explicit_super(self):
+                return super(TestBase, self)
+
+        o = MyObject()
+        value = o.get_super()
+        explicit = o.get_explicit_super()
+        print(value)
+        print(explicit)
+        sentinel = JObject()
+        # NOTE: when the java object comes back it gets a new python object
+        # this will cause 'is' to fail so assertEqual is used instead
+        self.assertEqual(o.test_identity(sentinel), sentinel)
+        self.assertEqual(o.super_identity(sentinel), sentinel)
+
 
     def testProtectedField(self):
         class MyObject(JClass("jpype.extension.TestBase")):

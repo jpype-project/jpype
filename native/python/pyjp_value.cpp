@@ -14,7 +14,6 @@
    See NOTICE file for details.
  *****************************************************************************/
 #include "jp_class.h"
-#include "jp_extension.hpp"
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_stringtype.h" // IWYU pragma: keep
@@ -281,13 +280,10 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 	if (f.isNull())
 	{
 		JPClass *cls = PyJPClass_getJPClass((PyObject*) Py_TYPE(self));
-		if (cls != nullptr) {
-			JPExtensionType *ext = dynamic_cast<JPExtensionType *>(cls);
-			if (ext != nullptr) {
-				// allow it for extension classes
-				// we only need to do setattr and it will be found later via getattr
-				return PyObject_GenericSetAttr(self, name, value);
-			}
+		if (cls != nullptr && JPModifier::isExtension(cls->getModifiers())) {
+			// allow it for extension classes
+			// we only need to do setattr and it will be found later via getattr
+			return PyObject_GenericSetAttr(self, name, value);
 		}
 		PyErr_Format(PyExc_AttributeError, "Field '%U' is not found", name);
 		return -1;

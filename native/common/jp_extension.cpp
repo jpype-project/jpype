@@ -16,43 +16,23 @@
 #include "include/jp_class.h"
 #include "jni.h"
 #include "jpype.h"
-#include <abstract.h>
-#include <pytypedefs.h>
-#include <tupleobject.h>
 #include "jp_extension.hpp" // IWYU pragma: keep
 
 static JPPyObject packArgs(JPExtensionType *cls, const JPMethodOverride &method, jobjectArray args)
 {
 	JP_TRACE_IN("JProxy::getArgs");
 	JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
-	const size_t argLen = method.paramTypes.size();
-	if (argLen == 0) {
-		return {};
-	}
-
+	const size_t argLen = method.paramTypes.size() + 1;
 	JPPyObject pyargs = JPPyObject::call(PyTuple_New(argLen));
 
-	for (jsize i = 1; i < argLen; i++)
+	for (jsize i = 0; i < argLen; i++)
 	{
 		jobject obj = frame.GetObjectArrayElement(args, i);
-		// this should be immutable once built...
-		JPClass* type = const_cast<JPClass*>(method.paramTypes[i-1]);
+		JPClass *type = i > 0 ? const_cast<JPClass*>(method.paramTypes[i-1]) : cls;
 		JPValue val = type->getValueFromObject(JPValue(type, obj));
 		PyTuple_SetItem(pyargs.get(), i, type->convertToPythonObject(frame, val, false).keep());
 	}
 	return pyargs;
-	JP_TRACE_OUT;
-}
-
-static JPPyObject getSelf(JPExtensionType *cls, jobjectArray args)
-{
-	JP_TRACE_IN("JProxy::getArgs");
-	JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
-
-	jobject obj = frame.GetObjectArrayElement(args, 0);
-	// this should be immutable once built...
-	JPValue val = JPValue(cls, obj);
-	return cls->convertToPythonObject(frame, val, false);
 	JP_TRACE_OUT;
 }
 
@@ -89,21 +69,10 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__1call(
 			// Copy the privilege flags into the first argument
 			// FIXME how should this be stored.
 
-			JPPyObject self = getSelf(cls, args);
-
-			// we need a bound instance for super to work correctly
-			// FIXME: super STILL doesn't work
-			JPPyObject wrapper = JPPyObject::call(PyMethod_New(method.function.get(), self.get()));
-
 			JP_TRACE("Call Python");
-			JPPyObject returnValue;
-			if (pyargs.get() ==  nullptr) {
-				returnValue= JPPyObject::call(PyObject_CallNoArgs(wrapper.get()));
-			} else {
-				returnValue= JPPyObject::call(PyObject_Call(
-					wrapper.get(),
+			JPPyObject returnValue = JPPyObject::call(PyObject_Call(
+					method.function.get(),
 					pyargs.get(), NULL));
-			}
 
 			JP_TRACE("Handle return", Py_TYPE(returnValue.get())->tp_name);
 			if (returnClass == context->_void)
@@ -160,4 +129,3 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__1call(
 	{}
 	return NULL;
 }
-
