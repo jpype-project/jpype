@@ -91,7 +91,7 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 	self->m_Data[3] = 0;
 
 	// Values taken from internal/cpython/unicode.h
-	
+
 	// Mark the type in unicode
 	_PyUnicode_LENGTH(self) = 1;
 	_PyUnicode_HASH(self) = -1;
@@ -120,7 +120,7 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 		char *data = (char*) ( ((PyCompactUnicodeObject*) self) + 1);
 		data[0] = (char) p;
 		data[1] = 0;
-	
+
 #if PY_VERSION_HEX < 0x030c0000
 		_PyUnicode_WSTR_LENGTH(self) = 0;
 		_PyUnicode_WSTR(self) = nullptr;
@@ -212,7 +212,7 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	if (cv != (Py_UCS4) - 1)
 	{
 		JPPyObject v = JPPyObject::call(PyLong_FromLong(cv));
-		JPPyObject args0 = JPPyObject::call(PyTuple_Pack(1, v.get()));
+		JPPyObject args0 = JPPyTuple_Pack(v.get());
 		JPPyObjectVector args(args0.get());
 		jv = cls->newInstance(frame, args);
 	} else if (PyIndex_Check(in))
@@ -222,7 +222,7 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	} else if (PyFloat_Check(in))
 	{
 		JPPyObject v = JPPyObject::call(PyNumber_Long(in));
-		JPPyObject args0 = JPPyObject::call(PyTuple_Pack(1, v.get()));
+		JPPyObject args0 = JPPyTuple_Pack(v.get());
 		JPPyObjectVector args(args0.get());
 		jv = cls->newInstance(frame, args);
 	} else
@@ -325,7 +325,7 @@ static PyObject *apply(PyObject *first, PyObject *second, PyObject* (*func)(PyOb
 	JPValue *slot0 = PyJPValue_getJavaSlot(first);
 	JPValue *slot1 = PyJPValue_getJavaSlot(second);
 	if (slot0 != nullptr && slot1 != nullptr)
-	{	
+	{
 		if (assertNotNull(slot0))
 			return nullptr;
 		if (assertNotNull(slot1))
@@ -385,7 +385,7 @@ static  PyObject *PyJPChar_add(PyObject *first, PyObject *second)
 	JPValue *slot0 = PyJPValue_getJavaSlot(first);
 	JPValue *slot1 = PyJPValue_getJavaSlot(second);
 	if (slot1 != nullptr && slot0 != nullptr)
-	{	
+	{
 		if (assertNotNull(slot0))
 			return nullptr;
 		if (assertNotNull(slot1))
@@ -655,9 +655,8 @@ static PyType_Spec charSpec = {
 void PyJPChar_initType(PyObject* module)
 {
 	// We will inherit from str and JObject
-	PyObject *bases = PyTuple_Pack(2, &PyUnicode_Type, PyJPObject_Type);
-	PyJPChar_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&charSpec, bases);
-	Py_DECREF(bases);
+	JPPyObject bases = JPPyTuple_Pack(&PyUnicode_Type, PyJPObject_Type);
+	PyJPChar_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&charSpec, bases.get());
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JChar", (PyObject*) PyJPChar_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
