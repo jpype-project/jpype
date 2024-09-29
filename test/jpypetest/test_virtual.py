@@ -51,6 +51,7 @@ class VirtualsTestCase(common.JPypeTestCase):
             self.assertEqual(self.vt.ClassBooleanSupplier.get(v1), True)
 
     def testCallBooleanAnonExtends(self):
+        # FIXME: figure out why the anonymous class didn't get it's methods applied
         v1 = self.vt.getBooleanAnonExtends()
         self.assertEqual(v1.get(), False)
         self.assertEqual(self.vt.BooleanSupplier.get(v1), False)
