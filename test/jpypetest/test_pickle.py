@@ -15,6 +15,9 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+import os
+from tempfile import NamedTemporaryFile
+
 import jpype
 from jpype import java
 from jpype.pickle import JPickler, JUnpickler
@@ -35,8 +38,12 @@ class _MyPythonObject:
         self.b = b
 
 class PickleTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
+
+    def tearDownClass(self):
+        try:
+            os.unlink("test.pic")
+        except OSError:
+            pass
 
     def testString(self):
         try:
@@ -48,6 +55,23 @@ class PickleTestCase(common.JPypeTestCase):
         except pickle.UnpicklingError:
             dump("test.pic")
         self.assertEqual(s, s2)
+
+    def testString2(self):
+        try:
+            s1 = java.lang.String("test1")
+            s2 = java.lang.String("test2")
+            with open("test.pic", "wb") as fd:
+                pickler = JPickler(fd)
+                pickler.dump(s1)
+                pickler.dump(s2)
+            with open("test.pic", "rb") as fd:
+                unpickler = JUnpickler(fd)
+                s1_ = unpickler.load()
+                s2_ = unpickler.load()
+        except pickle.UnpicklingError:
+            dump("test.pic")
+        self.assertEqual(s1, s1_)
+        self.assertEqual(s2, s2_)
 
     def testList(self):
         s = java.util.ArrayList()

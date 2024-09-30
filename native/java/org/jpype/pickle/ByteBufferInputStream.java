@@ -27,15 +27,15 @@ import java.util.LinkedList;
 public class ByteBufferInputStream extends InputStream
 {
   private LinkedList<ByteBuffer> buffers = new LinkedList<>();
-  private int read_position = 0;
   private byte[] one_byte = new byte[1];
 
   public void put(byte[] bytes)
   {
-    ByteBuffer buffer = ByteBuffer.allocate(bytes.length);
+    ByteBuffer buffer = ByteBuffer.wrap(bytes); // TODO: check if we can just wrap the buffer instead of copying it.
     buffer.put(bytes);
     buffer.flip();
     buffers.add(buffer);
+    System.out.println("buffers length: " + buffer.capacity());
   }
 
   @Override
@@ -53,12 +53,22 @@ public class ByteBufferInputStream extends InputStream
   @Override
   public int read(byte[] buffer, int offset, int len) throws IOException
   {
-    int total = 0;
-    while (len > 0)
+    if (buffer == null)
     {
-      if (buffers.isEmpty())
-        return total;
+        throw new NullPointerException("Buffer cannot be null");
+    }
+    if (offset < 0 || len < 0 || len > buffer.length - offset)
+    {
+        throw new IndexOutOfBoundsException("Invalid offset/length parameters");
+    }
+    if (len == 0)
+    {
+        return 0;
+    }
 
+    int total = 0;
+    while (len > 0 && !buffers.isEmpty())
+    {
       ByteBuffer b = buffers.getFirst();
       int remaining = b.remaining();
       if (remaining == 0)
@@ -73,6 +83,13 @@ public class ByteBufferInputStream extends InputStream
       len -= toRead;
       offset += toRead;
     }
-    return total;
-  }
+    return (total == 0) ? -1 : total;
+    }
+
+    @Override
+    public void close() throws IOException
+    {
+        buffers.clear();
+        one_byte = null;
+    }
 }
