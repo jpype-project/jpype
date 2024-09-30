@@ -23,15 +23,16 @@ import sys
 import common
 
 
-import unittest
-
-
 def dump(fname):
     with open(fname, "rb") as fd:
         data = fd.read()
     out = ["%02x" % i for i in data]
     print("Pickle fail", " ".join(out), file=sys.stderr)
 
+class _MyPythonObject:
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
 
 class PickleTestCase(common.JPypeTestCase):
     def setUp(self):
@@ -75,6 +76,35 @@ class PickleTestCase(common.JPypeTestCase):
             dump("test.pic")
         self.assertEqual(d2['string'], "food")
         self.assertIsInstance(d2['array'], java.util.ArrayList)
+
+    def testMultiObject(self):
+        """Regression test for https://github.com/jpype-project/jpype/issues/1201
+        
+        Issue occurs when a python object contains multiple java objects above
+        a certain size. The issue occurs because of a buffer overflow in
+        ``native/java/org/jpype/pickle/ByteBufferInputStream.java``.
+        """
+        JString = jpype.JClass("java.lang.String")
+        filename = "test.pic"
+        composite_object = {"a": JString('A' * 512), "b": JString('B' * 512)}
+
+        with open(filename, "wb") as fd:
+            JPickler(fd).dump(composite_object)
+
+        with open(filename, "rb") as fd:
+            JUnpickler(fd).load()
+
+
+    def testByteBufferInputStream(self):
+        JByteBufferInputStream = jpype.JClass("org.jpype.pickle.ByteBufferInputStream")
+        stream = JByteBufferInputStream()
+        bb = jpype.JClass("java.nio.ByteBuffer").allocate(10)
+        stream.put(b"abc")
+        stream.put(b"def")
+
+        assert stream.read() == ord('a')
+        assert stream.read(bb.array()) == 5
+        assert bytes(bb.array()) == b'bcdef\x00\x00\x00\x00\x00'
 
     def testFail(self):
         s = java.lang.Object()

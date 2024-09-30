@@ -18,6 +18,7 @@ package org.jpype.pickle;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.LinkedList;
 
 /**
  *
@@ -25,88 +26,53 @@ import java.nio.ByteBuffer;
  */
 public class ByteBufferInputStream extends InputStream
 {
-
-  ByteBuffer bb = ByteBuffer.allocate(1024);
-  int loaded = 0;
+  private LinkedList<ByteBuffer> buffers = new LinkedList<>();
+  private int read_position = 0;
+  private byte[] one_byte = new byte[1];
 
   public void put(byte[] bytes)
   {
-    // If we have additional capacity, use it
-    if (bytes.length < bb.remaining())
-    {
-      int p = bb.position();
-      bb.position(loaded);
-      bb.put(bytes);
-      loaded = bb.position();
-      bb.position(p);
-      return;
-    }
-
-    // Okay we may need to allocate more
-    ByteBuffer bb2 = bb;
-    int r = loaded - bb.position();
-
-    // If we don't have space, make a new buffer.
-    if (r + bytes.length > bb.capacity())
-      bb = ByteBuffer.allocate(r + bytes.length);
-
-    // If we have remaining bytes, then keep them
-    if (r > 0)
-    {
-      bb.put(bb2.array(), bb2.position(), r);
-    }
-
-    // Add the new data
-    bb.put(bytes);
-    loaded = bb.position();
-    bb.position(0);
-  }
-
-  public int available()
-  {
-    int out = loaded - bb.position();
-    return out;
+    ByteBuffer buffer = ByteBuffer.allocate(bytes.length);
+    buffer.put(bytes);
+    buffer.flip();
+    buffers.add(buffer);
   }
 
   @Override
   public int read() throws IOException
   {
-    int r = loaded - bb.position();
-    if (r > 0)
-    {
-      int p = bb.get();
-      return p;
-    }
-    return -1;
+    return read(one_byte) == 1 ? one_byte[0] : -1;
   }
 
   @Override
   public int read(byte[] arg0) throws IOException
   {
-    int r = loaded - bb.position();
-    if (arg0.length <= r)
-    {
-      bb.get(arg0);
-      return arg0.length;
-    }
-
-    bb.get(arg0, 0, r);
-    return r;
+    return read(arg0, 0, arg0.length);
   }
 
   @Override
   public int read(byte[] buffer, int offset, int len) throws IOException
   {
-    int r = loaded - bb.position();
-    if (r == 0)
-      return -1;
-
-    if (len > r)
+    int total = 0;
+    while (len > 0)
     {
-      len = r;
-    }
+      if (buffers.isEmpty())
+        return total;
 
-    bb.get(buffer, offset, len);
-    return len;
+      ByteBuffer b = buffers.getFirst();
+      int remaining = b.remaining();
+      if (remaining == 0)
+      {
+        buffers.removeFirst();
+        continue;
+      }
+
+      int toRead = Math.min(len, remaining);
+      b.get(buffer, offset, toRead);
+      total += toRead;
+      len -= toRead;
+      offset += toRead;
+    }
+    return total;
   }
 }
