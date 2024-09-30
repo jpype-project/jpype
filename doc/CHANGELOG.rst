@@ -23,6 +23,8 @@ Latest Changes:
 
   - Support of np.float16 conversion with arrays.
 
+  - Fixed a problem that caused ``dir(jpype.JPackage("mypackage"))`` to fail if
+    the class path contained non-ascii characters. See issue #1194.
 
 - **1.5.0 - 2023-04-03**
 

@@ -1,0 +1,2 @@
+Test to verify that JAR's with unicode characters in the path are loaded correctly.
+The built jar should be placed in ``test/jar/unicode_à😎/sample_package.jar``.
