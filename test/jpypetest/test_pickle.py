@@ -32,12 +32,6 @@ def dump(fname):
     print("Pickle fail", " ".join(out), file=sys.stderr)
 
 
-class _MyPythonObject:
-    def __init__(self, a, b):
-        self.a = a
-        self.b = b
-
-
 class PickleTestCase(common.JPypeTestCase):
     def setUp(self):
         super(PickleTestCase, self).setUp()
@@ -119,7 +113,10 @@ class PickleTestCase(common.JPypeTestCase):
             JPickler(fd).dump(composite_object)
 
         with open(self.filename, "rb") as fd:
-            JUnpickler(fd).load()
+            loaded_object = JUnpickler(fd).load()
+        
+        assert loaded_object['a'] == str(composite_object['a'])
+        assert loaded_object['b'] == str(composite_object['b'])
 
     def testByteBufferInputStream(self):
         JByteBufferInputStream = jpype.JClass("org.jpype.pickle.ByteBufferInputStream")

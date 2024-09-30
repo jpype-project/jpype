@@ -20,68 +20,51 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 
-/**
- *
- * @author Karl Einar Nelson
- */
-public class ByteBufferInputStream extends InputStream
-{
+public class ByteBufferInputStream extends InputStream {
   private LinkedList<ByteBuffer> buffers = new LinkedList<>();
 
-  public void put(byte[] bytes)
-  {
-    ByteBuffer buffer = ByteBuffer.wrap(bytes); // we can just wrap the buffer instead of copying it.
-    buffer.put(bytes);
-    buffer.flip();
+  public void put(byte[] bytes) {
+    // We can just wrap the buffer instead of copying it, since the buffer is
+    // wrapped we don't need to write the bytes to it. Wrapping the bytes relies
+    // on the array not being changed before being read.
+    ByteBuffer buffer = ByteBuffer.wrap(bytes);
     buffers.add(buffer);
   }
 
   @Override
-  public int read() throws IOException
-  {
-        if (buffers.isEmpty())
-            return -1;
+  public int read() throws IOException {
+    if (buffers.isEmpty())
+      return -1;
 
-        ByteBuffer b = buffers.getFirst();
-        while (b.remaining() == 0)
-        {
-            buffers.removeFirst();
-            if (buffers.isEmpty())
-                return -1; // EOF
-            b = buffers.getFirst();
-        }
-        return b.get() & 0xFF; // Mask with 0xFF to convert signed byte to int (range 0-255)
+    ByteBuffer b = buffers.getFirst();
+    while (b.remaining() == 0) {
+      buffers.removeFirst();
+      if (buffers.isEmpty())
+        return -1; // EOF
+      b = buffers.getFirst();
+    }
+    return b.get() & 0xFF; // Mask with 0xFF to convert signed byte to int (range 0-255)
   }
 
   @Override
-  public int read(byte[] arg0) throws IOException
-  {
+  public int read(byte[] arg0) throws IOException {
     return read(arg0, 0, arg0.length);
   }
 
   @Override
-  public int read(byte[] buffer, int offset, int len) throws IOException
-  {
+  public int read(byte[] buffer, int offset, int len) throws IOException {
     if (buffer == null)
-    {
-        throw new NullPointerException("Buffer cannot be null");
-    }
+      throw new NullPointerException("Buffer cannot be null");
     if (offset < 0 || len < 0 || len > buffer.length - offset)
-    {
-        throw new IndexOutOfBoundsException("Invalid offset/length parameters");
-    }
+      throw new IndexOutOfBoundsException("Invalid offset/length parameters");
     if (len == 0)
-    {
-        return 0;
-    }
+      return 0;
 
     int total = 0;
-    while (len > 0 && !buffers.isEmpty())
-    {
+    while (len > 0 && !buffers.isEmpty()) {
       ByteBuffer b = buffers.getFirst();
       int remaining = b.remaining();
-      if (remaining == 0)
-      {
+      if (remaining == 0) {
         buffers.removeFirst();
         continue;
       }
@@ -93,11 +76,10 @@ public class ByteBufferInputStream extends InputStream
       offset += toRead;
     }
     return (total == 0) ? -1 : total;
-    }
+  }
 
-    @Override
-    public void close() throws IOException
-    {
-        buffers.clear();
-    }
+  @Override
+  public void close() throws IOException {
+    buffers.clear();
+  }
 }
