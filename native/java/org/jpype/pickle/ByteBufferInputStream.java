@@ -27,21 +27,30 @@ import java.util.LinkedList;
 public class ByteBufferInputStream extends InputStream
 {
   private LinkedList<ByteBuffer> buffers = new LinkedList<>();
-  private byte[] one_byte = new byte[1];
 
   public void put(byte[] bytes)
   {
-    ByteBuffer buffer = ByteBuffer.wrap(bytes); // TODO: check if we can just wrap the buffer instead of copying it.
+    ByteBuffer buffer = ByteBuffer.wrap(bytes); // we can just wrap the buffer instead of copying it.
     buffer.put(bytes);
     buffer.flip();
     buffers.add(buffer);
-    System.out.println("buffers length: " + buffer.capacity());
   }
 
   @Override
   public int read() throws IOException
   {
-    return read(one_byte) == 1 ? one_byte[0] : -1;
+        if (buffers.isEmpty())
+            return -1;
+
+        ByteBuffer b = buffers.getFirst();
+        while (b.remaining() == 0)
+        {
+            buffers.removeFirst();
+            if (buffers.isEmpty())
+                return -1; // EOF
+            b = buffers.getFirst();
+        }
+        return b.get() & 0xFF; // Mask with 0xFF to convert signed byte to int (range 0-255)
   }
 
   @Override
@@ -90,6 +99,5 @@ public class ByteBufferInputStream extends InputStream
     public void close() throws IOException
     {
         buffers.clear();
-        one_byte = null;
     }
 }
