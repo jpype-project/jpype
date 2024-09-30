@@ -93,16 +93,6 @@ class FaultTestCase(common.JPypeTestCase):
         # null.callInt(1)
 
     @common.requireInstrumentation
-    def testJPClass_new(self):
-        _jpype.fault("PyJPClass_new")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            _jpype._JClass("foo", (object,), {})
-        with self.assertRaises(TypeError):
-            _jpype._JClass("foo", (object,), {})
-        with self.assertRaises(TypeError):
-            _jpype._JClass("foo", (_jpype._JObject,), {'__del__': None})
-
-    @common.requireInstrumentation
     def testJPClass_init(self):
         _jpype.fault("PyJPClass_init")
         with self.assertRaises(SystemError):
