@@ -23,6 +23,8 @@ Latest Changes:
 
   - Support of np.float16 conversion with arrays.
 
+  - Fixed ``BufferOverflowException`` in ``JUnpickler`` when decoding
+    multiple Java objects.
 
 - **1.5.0 - 2023-04-03**
 
