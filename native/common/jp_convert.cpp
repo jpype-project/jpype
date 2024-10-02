@@ -14,9 +14,60 @@
    See NOTICE file for details.
  *****************************************************************************/
 #include "jpype.h"
+#include <math.h>
+#include <bitset>
 
 namespace
 {
+
+template <jvalue func(void *c) >
+class Half
+{
+public:
+	static jvalue convert(void* c)
+    {
+        uint16_t i = *(uint16_t*) c;
+		uint32_t sign = (i&0x8000)>>15;
+		uint32_t man  = (i&0x7C00)>>10;
+		uint32_t frac = (i&0x03ff);
+		uint32_t k = sign<<31;
+
+		if (man == 0)
+		{
+			// subnormal numbers
+			if (frac != 0)
+			{
+				frac = frac | (frac >> 1);
+				frac = frac | (frac >> 2);
+				frac = frac | (frac >> 4);
+				frac = frac | (frac >> 8);
+				int zeros = std::bitset<32>(~frac).count();
+				man = 127-zeros+7;
+				man <<= 23;
+				frac <<= zeros-8;
+				frac &= 0x7fffff;
+				k |= man | frac;
+			}
+		}
+		else if (man < 31)
+		{
+			// normal numbers
+			man = man-15+127;
+			man <<= 23;
+			frac <<= 13;
+			k |= man | frac;
+		}
+		else
+		{
+			// to infinity and beyond!
+			if (frac == 0)
+				k |= 0x7f800000;
+			else 
+				k |= 0x7f800001 | ((frac&0x200)<<12);
+		}
+		return func(&k);
+	}
+};
 
 template <class T>
 class Convert
@@ -385,6 +436,31 @@ jconverter getConverter(const char* from, int itemsize, const char* to)
 				case 'd': return &Convert<double>::toD;
 			}
 			break;
+		case 'e':
+			if (reverse) switch (to[0])
+			{
+				case 'z': return &Reverse<Half<Convert<float>::toZ>::convert>::call4;
+				case 'b': return &Reverse<Half<Convert<float>::toB>::convert>::call4;
+				case 'c': return &Reverse<Half<Convert<float>::toC>::convert>::call4;
+				case 's': return &Reverse<Half<Convert<float>::toS>::convert>::call4;
+				case 'i': return &Reverse<Half<Convert<float>::toI>::convert>::call4;
+				case 'j': return &Reverse<Half<Convert<float>::toJ>::convert>::call4;
+				case 'f': return &Reverse<Half<Convert<float>::toF>::convert>::call4;
+				case 'd': return &Reverse<Half<Convert<float>::toD>::convert>::call4;
+			}
+			else switch (to[0])
+			{
+				case 'z': return &Half<Convert<float>::toZ>::convert;
+				case 'b': return &Half<Convert<float>::toB>::convert;
+				case 'c': return &Half<Convert<float>::toC>::convert;
+				case 's': return &Half<Convert<float>::toS>::convert;
+				case 'i': return &Half<Convert<float>::toI>::convert;
+				case 'j': return &Half<Convert<float>::toJ>::convert;
+				case 'f': return &Half<Convert<float>::toF>::convert;
+				case 'd': return &Half<Convert<float>::toD>::convert;
+			}
+			break;
+
 		case 'n':
 			if (reverse) switch (to[0])
 			{

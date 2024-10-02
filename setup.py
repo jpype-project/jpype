@@ -70,7 +70,6 @@ setup(
         'develop': setupext.develop.Develop,
         'test_java': setupext.test_java.TestJavaCommand,
         'sdist': setupext.sdist.BuildSourceDistribution,
-        'test': setupext.pytester.PyTest,
     },
     zip_safe=False,
     ext_modules=[jpypeJar, jpypeLib, ],

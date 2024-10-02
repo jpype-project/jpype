@@ -500,7 +500,7 @@ PyObject *tb_create(
 	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(PyFrame_GetLasti(pframe)));
 #endif
 	JPPyObject linenuma = JPPyObject::claim(PyLong_FromLong(linenum));
-	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(4, Py_None, frame.get(), lasti.get(), linenuma.get()));
+	JPPyObject tuple = JPPyTuple_Pack(Py_None, frame.get(), lasti.get(), linenuma.get());
 	JPPyObject traceback = JPPyObject::accept(PyObject_Call((PyObject*) &PyTraceBack_Type, tuple.get(), NULL));
 
 	// We could fail in process

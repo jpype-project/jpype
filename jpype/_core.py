@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import atexit
 import os
+from pathlib import Path
 import sys
 import typing
 
@@ -30,6 +31,8 @@ from . import _jinit
 from . import _pykeywords
 
 from ._jvmfinder import *
+
+from jpype._classpath import addClassPath
 
 # This import is required to bootstrap importlib, _jpype uses importlib.util
 # but on some systems it may not load properly from C.  To make sure it gets
@@ -115,12 +118,15 @@ def _hasClassPath(args) -> bool:
     return False
 
 
-def _handleClassPath(classpath) -> str:
+def _handleClassPath(
+    classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
+) -> typing.Sequence[str]:
     """
     Return a classpath which represents the given tuple of classpath specifications
     """
     out = []
-
+    if classpath is None:
+        return out
     if isinstance(classpath, (str, os.PathLike)):
         classpath = (classpath,)
     try:
@@ -145,7 +151,7 @@ def _handleClassPath(classpath) -> str:
             out.extend(glob.glob(pth + '.jar'))
         else:
             out.append(pth)
-    return _classpath._SEP.join(out)
+    return out
 
 
 _JVM_started = False
@@ -221,8 +227,6 @@ def startJVM(
         # Allow the path to be a PathLike.
         jvmpath = os.fspath(jvmpath)
 
-    extra_jvm_args: typing.Tuple[str, ...] = tuple()
-
     # Classpath handling
     if _hasClassPath(jvmargs):
         # Old style, specified in the arguments
@@ -237,10 +241,10 @@ def startJVM(
     if classpath:
         extra_jvm_args += (f'-Djava.class.path={_handleClassPath(classpath)}', )
 
-    supportLib = os.path.join(os.path.dirname(os.path.dirname(__file__)),"org.jpype.jar")
+    supportLib = os.path.join(os.path.dirname(os.path.dirname(__file__)), "org.jpype.jar")
     if not os.path.exists(supportLib):
-        raise RuntimeError("Unable to find org.jpype.jar support library at "+supportLib)
-    extra_jvm_args += ('-javaagent:'+supportLib,)
+        raise RuntimeError("Unable to find org.jpype.jar support library at " + supportLib)
+    extra_jvm_args += ('-javaagent:' + supportLib,)
 
     try:
         import locale
@@ -249,7 +253,7 @@ def startJVM(
         # Keep the current locale settings, else Java will replace them.
         prior = [locale.getlocale(i) for i in categories]
         # Start the JVM
-        _jpype.startup(jvmpath, jvmargs + extra_jvm_args,
+        _jpype.startup(jvmpath, jvmargs,
                        ignoreUnrecognized, convertStrings, interrupt)
         # Collect required resources for operation
         initializeResources()
@@ -268,6 +272,21 @@ def startJVM(
                 version = int(match.group(1)) - 44
                 raise RuntimeError(f"{jvmpath} is older than required Java version{version}") from ex
         raise
+
+    """Prior versions of JPype used the jvmargs to setup the class paths via 
+    JNI (Java Native Interface) option strings:
+    i.e -Djava.class.path=... 
+    See: https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/invocation.html
+    
+    Unfortunately, unicode is unsupported by this interface on windows, since
+    windows uses wide-byte (16bit) character encoding.
+    See: https://stackoverflow.com/questions/20052455/jni-start-jvm-with-unicode-support
+
+    To resolve this issue we add the classpath after initialization since jpype
+    itself supports unicode class paths.
+    """
+    for cp in _handleClassPath(classpath):
+        addClassPath(Path.cwd() / Path(cp).resolve())
 
 
 def initializeResources():
@@ -344,6 +363,7 @@ def initializeResources():
     _jpype._type_classes[object] = _jpype._java_lang_Object
     _jpype._type_classes[_jpype.JString] = _jpype._java_lang_String
     _jpype._type_classes[_jpype.JObject] = _jpype._java_lang_Object
+    _jpype._type_classes[_jpype.JClass] = _jpype._java_lang_Class
     _jinit.runJVMInitializers()
 
     _jpype.JClass('org.jpype.JPypeKeywords').setKeywords(
@@ -352,7 +372,7 @@ def initializeResources():
     _jpype.JPypeContext = _jpype.JClass('org.jpype.JPypeContext').getInstance()
     _jpype.JPypeClassLoader = _jpype.JPypeContext.getClassLoader()
 
-    # Everything successed so started is now true.
+    # Everything succeeded so started is now true.
     _JVM_started = True
 
 
