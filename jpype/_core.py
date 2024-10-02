@@ -354,6 +354,7 @@ def initializeResources():
     _jpype._type_classes[object] = _jpype._java_lang_Object
     _jpype._type_classes[_jpype.JString] = _jpype._java_lang_String
     _jpype._type_classes[_jpype.JObject] = _jpype._java_lang_Object
+    _jpype._type_classes[_jpype.JClass] = _jpype._java_lang_Class
     _jinit.runJVMInitializers()
 
     _jpype.JClass('org.jpype.JPypeKeywords').setKeywords(
