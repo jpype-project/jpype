@@ -315,8 +315,12 @@ class BuildExtCommand(build_ext):
             os.makedirs("build/classes", exist_ok=True)
             self.announce("  %s" % " ".join(cmd1), level=distutils.log.INFO)
             subprocess.check_call(cmd1)
+            manifest = None
             try:
                 for file in glob.iglob("native/java/**/*.*", recursive=True):
+                    if file.endswith("manifest.txt"):
+                        manifest = file
+                        continue
                     if file.endswith(".java") or os.path.isdir(file):
                         continue
                     p = os.path.join(build_dir, os.path.relpath(file, "native/java"))
@@ -326,7 +330,7 @@ class BuildExtCommand(build_ext):
                 print("FAIL", ex)
                 pass
             cmd3 = shlex.split(
-                '%s cvf "%s" -C "%s" .' % (jar, jarFile, build_dir))
+                    '%s cvfm "%s" "%s" -C "%s" .' % (jar, jarFile, manifest, build_dir))
             self.announce("  %s" % " ".join(cmd3), level=distutils.log.INFO)
             subprocess.check_call(cmd3)
 
