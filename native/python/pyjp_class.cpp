@@ -278,12 +278,6 @@ static void PyJPClass_hook_extends(JPJavaFrame &frame, JPClass &cls, PyObject *m
 	const JPMethodDispatchList& m_Methods = cls.getMethods();
 	for (auto m_Method : m_Methods) {
 		// TODO: it would be great to not have to go through java to call our python methods
-		// __init__ is skipped because the Java constructor is always called instead
-		// we don't want to overwrite the python __init__ if the user created one
-		// construction and the non java exposed __init__ will still be called correctly
-		if (m_Method->getName() == "__init__"sv) {
-			continue;
-		}
 		JPPyObject methodName(JPPyString::fromStringUTF8(m_Method->getName()));
 		PyDict_SetItem(members, methodName.get(), PyJPMethod_create(m_Method, nullptr).get());
 	}
