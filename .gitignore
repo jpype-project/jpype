@@ -86,3 +86,14 @@ wheelhouse/
 vc*.pdb
 *.class
 CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+*.project
+*.ninja*
+_jpype.*
+.clangd
+.classpath
+compile_commands.json
+*.gradle
+*.settings
+*.vscode
