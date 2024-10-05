@@ -95,6 +95,11 @@ public:
 		return JPModifier::isAbstract(m_Modifiers);
 	}
 
+	bool isAnonymous() const
+	{
+		return JPModifier::isAnonymous(m_Modifiers);
+	}
+
 	bool isFinal() const
 	{
 		return JPModifier::isFinal(m_Modifiers);

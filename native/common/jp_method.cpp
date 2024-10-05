@@ -13,6 +13,7 @@
 
    See NOTICE file for details.
  *****************************************************************************/
+#include "jp_modifier.h"
 #include "jpype.h"
 #include "jp_arrayclass.h"
 #include "jp_method.h"
@@ -236,7 +237,9 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 			c = selfObj->getJavaObject();
 		}
 		jclass clazz = nullptr;
-		if (!isAbstract())
+		// anonymous classes can't be extended from python and should always use the virtual call
+		// unless explicitly called as a static method through a base class (is this for a cast?)
+		if (!isAbstract() && selfObj != nullptr && (!selfObj->getClass()->isAnonymous() || !instance))
 		{
 			clazz = m_Class->getJavaClass();
 			JP_TRACE("invoke nonvirtual", m_Name);
