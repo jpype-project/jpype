@@ -21,7 +21,7 @@ from . import _jcustomizer
 import inspect
 
 __all__ = ['JClass', 'JInterface', 'JOverride', 'JPublic', 'JProtected',
-        'JPrivate', 'JThrows']
+        'JPrivate', 'JStatic', 'JThrows']
 
 
 class _JFieldDecl(object):
@@ -99,37 +99,40 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, **kwargs):
     raise TypeError("Unknown Java specification '%s'" % type(target))
 
 
-class JPublic:
+class _JModifier:
+
+    modifier: int
 
     def __new__(cls, target, **kwargs):
+        if hasattr(target, '__jmodifiers__'):
+            target.__jmodifiers__ |= cls.modifier
+            return target
+
         stack = inspect.stack()[1][0]
         nonlocals = stack.f_locals
-        return _JMemberDecl(nonlocals, target, True, 1, **kwargs)
+        return _JMemberDecl(nonlocals, target, True, cls.modifier, **kwargs)
 
     def __class_getitem__(cls, key):
-        return _JFieldDecl(key, 1)
+        if isinstance(key, _JFieldDecl):
+            key.modifiers |= cls.modifier
+            return key
+        return _JFieldDecl(key, cls.modifier)
 
 
-class JProtected:
-
-    def __new__(cls, target, **kwargs):
-        stack = inspect.stack()[1][0]
-        nonlocals = stack.f_locals
-        return _JMemberDecl(nonlocals, target, True, 4, **kwargs)
-
-    def __class_getitem__(cls, key):
-        return _JFieldDecl(key, 4)
+class JPublic(_JModifier):
+    modifier = 1
 
 
-class JPrivate:
+class JProtected(_JModifier):
+    modifier = 4
 
-    def __new__(cls, target, **kwargs):
-        stack = inspect.stack()[1][0]
-        nonlocals = stack.f_locals
-        return _JMemberDecl(nonlocals, target, True, 2, **kwargs)
 
-    def __class_getitem__(cls, key):
-        return _JFieldDecl(key, 2)
+class JPrivate(_JModifier):
+    modifier = 2
+
+
+class JStatic(_JModifier):
+    modifier = 8
 
 
 def JThrows(*args):
@@ -411,6 +414,7 @@ def _JExtension(name, bases, members):
             raise TypeError("Unknown member %s" % type(i))
 
     for k, v in members.get("__annotations__", {}).items():
+        # TODO: check for typing.ClassVar for static fields
         if isinstance(v, _JFieldDecl):
             cls.addField(v.cls, k, members.pop(k, None), v.modifiers)
 

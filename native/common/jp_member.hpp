@@ -43,20 +43,18 @@ bool canAccess(JPJavaFrame &jframe, const T &member) {
 	JPPyObject frame = JPPyObject::accept((PyObject*)PyThreadState_GetFrame(state));
 	JPPyObject locals = JPPyObject::accept(PyFrame_GetLocals((PyFrameObject*)frame.get()));
 
-	const bool isStatic = member.isStatic();
-
-	PyObject *obj;
-	if (isStatic) {
-		obj = PyDict_GetItemString(locals.get(), "cls");
+	PyObject *obj = PyDict_GetItemString(locals.get(), "self");
+	if (obj != nullptr) {
+		obj = (PyObject *) Py_TYPE(obj);
 	} else {
-		obj = PyDict_GetItemString(locals.get(), "self");
+		obj = PyDict_GetItemString(locals.get(), "cls");
 	}
 
 	if (obj == nullptr) {
 		return false;
 	}
 
-	JPClass *cls = PyJPClass_getJPClass(isStatic ? obj : (PyObject *)Py_TYPE(obj));
+	JPClass *cls = PyJPClass_getJPClass(obj);
 	if (cls == nullptr) {
 		return false;
 	}
@@ -69,7 +67,7 @@ bool canAccess(JPJavaFrame &jframe, const T &member) {
 		return cls->isAssignableFrom(jframe, member.getClass());
 	}
 
-	// package not supported
+	// package visibility not supported
 	return false;
 }
 

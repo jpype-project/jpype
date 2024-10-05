@@ -21,6 +21,7 @@ from jpype._jclass import *
 from jpype.types import *
 from jpype.imports import *
 import inspect
+import typing
 
 
 class JExtensionTestCase(common.JPypeTestCase):
@@ -273,6 +274,37 @@ class JExtensionTestCase(common.JPypeTestCase):
         with self.assertRaises(AttributeError):
             o.test
 
+    def testPrivateStaticField(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            test: JStatic[JPrivate[JInt]]
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            def get_private_field(self):
+                return self.test
+
+        o = MyObject()
+        o.get_private_field()
+
+    def testPrivateStaticFieldExternalAccess(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            test: JStatic[JPrivate[JInt]]
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            def get_private_field(self):
+                return self.test
+
+        o = MyObject()
+        with self.assertRaises(AttributeError):
+            o.test
+
     def testPrivateMethod(self):
         class MyObject(JClass("jpype.extension.TestBase")):
 
@@ -281,6 +313,26 @@ class JExtensionTestCase(common.JPypeTestCase):
                 ...
 
             @JPrivate
+            def private_method(self) -> JObject:
+                return self
+
+            def call_private_method(self):
+                return self.private_method()
+
+        o = MyObject()
+        o.call_private_method()
+
+    def testPrivateStaticMethod(self):
+        # FIXME: bytecode verification error
+        # forgot to handle static methods in class generation
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPrivate
+            @JStatic
             def private_method(self) -> JObject:
                 return self
 
