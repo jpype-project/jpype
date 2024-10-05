@@ -1,0 +1,18 @@
+apply plugin: 'java-library'
+apply plugin: 'eclipse'
+
+sourceCompatibility = 8
+targetCompatibility = 8
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['native/java']
+        }
+    }
+}
+
+jar {
+    destinationDirectory.set(file(project.rootDir))
+	archiveFileName.set('org.jpype.jar')
+}
