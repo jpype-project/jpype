@@ -152,12 +152,14 @@ class JClassTestCase(common.JPypeTestCase):
     def testPrivateMethod(self):
         cls = JClass('jpype.common.Fixture')
         with self.assertRaises(AttributeError):
-            cls.callPrivateObject(JObject())
+            cls().callPrivateObject(JObject())
 
     def testProtectedMethod(self):
         cls = JClass('jpype.common.Fixture')
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(TypeError):
             cls.callProtectedObject(JObject())
+        with self.assertRaises(AttributeError):
+            cls().callProtectedObject(JObject())
 
     def testJClassFail(self):
         with self.assertRaises(TypeError):

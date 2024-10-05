@@ -19,17 +19,22 @@ import _jpype
 from ._pykeywords import pysafe
 from . import _jcustomizer
 import inspect
-import typing
 
 __all__ = ['JClass', 'JInterface', 'JOverride', 'JPublic', 'JProtected',
         'JPrivate', 'JThrows']
 
 
 class _JFieldDecl(object):
+    '''
     def __init__(self, cls, name, value, modifiers):
         self.cls = cls
         self.name = name
         self.value = value
+        self.modifiers = modifiers
+    '''
+
+    def __init__(self, cls, modifiers):
+        self.cls = cls
         self.modifiers = modifiers
 
     def __repr__(self):
@@ -94,20 +99,37 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, **kwargs):
     raise TypeError("Unknown Java specification '%s'" % type(target))
 
 
-def JPublic(target, **kwargs):
-    stack = inspect.stack()[1][0]
-    nonlocals = stack.f_locals
-    return _JMemberDecl(nonlocals, target, True, 1, **kwargs)
+class JPublic:
+
+    def __new__(cls, target, **kwargs):
+        stack = inspect.stack()[1][0]
+        nonlocals = stack.f_locals
+        return _JMemberDecl(nonlocals, target, True, 1, **kwargs)
+
+    def __class_getitem__(cls, key):
+        return _JFieldDecl(key, 1)
 
 
-def JProtected(target, **kwargs):
-    nonlocals = inspect.stack()[1][0].f_locals
-    return _JMemberDecl(nonlocals, target, True, 4, **kwargs)
+class JProtected:
+
+    def __new__(cls, target, **kwargs):
+        stack = inspect.stack()[1][0]
+        nonlocals = stack.f_locals
+        return _JMemberDecl(nonlocals, target, True, 4, **kwargs)
+
+    def __class_getitem__(cls, key):
+        return _JFieldDecl(key, 4)
 
 
-def JPrivate(target, **kwargs):
-    nonlocals = inspect.stack()[1][0].f_locals
-    return _JMemberDecl(nonlocals, target, True, 2, **kwargs)
+class JPrivate:
+
+    def __new__(cls, target, **kwargs):
+        stack = inspect.stack()[1][0]
+        nonlocals = stack.f_locals
+        return _JMemberDecl(nonlocals, target, True, 2, **kwargs)
+
+    def __class_getitem__(cls, key):
+        return _JFieldDecl(key, 2)
 
 
 def JThrows(*args):
@@ -369,9 +391,7 @@ def _JExtension(name, bases, members):
     overrides = []
     functions = []
     for i in jspec:
-        if isinstance(i, _JFieldDecl):
-            cls.addField(i.cls, i.name, i.value, i.modifiers)
-        elif isinstance(i, type(_JExtension)):
+        if isinstance(i, type(_JExtension)):
             exceptions = getattr(i, '__jthrows__', None)
             mspec = inspect.getfullargspec(i)
             if i.__name__ == "__init__":
@@ -389,6 +409,10 @@ def _JExtension(name, bases, members):
                 pass
         else:
             raise TypeError("Unknown member %s" % type(i))
+
+    for k, v in members.get("__annotations__", {}).items():
+        if isinstance(v, _JFieldDecl):
+            cls.addField(v.cls, k, members.pop(k, None), v.modifiers)
 
     res = Factory.loadClass(cls)
     for i, method in enumerate(cls.getMethods()):

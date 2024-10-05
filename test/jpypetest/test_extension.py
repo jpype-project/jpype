@@ -63,9 +63,6 @@ class JExtensionTestCase(common.JPypeTestCase):
 
             @JPublic
             def __init__(self):
-                # FIXME damn super() is broke in the callbacks
-                # even when it is a bound method it is broken
-                super(TestBase, self).__init__()
                 self.initCount += 1
 
         o = MyObject()
@@ -186,10 +183,6 @@ class JExtensionTestCase(common.JPypeTestCase):
             def __init__(self):
                 ...
 
-            def inc(self):
-                # FIXME test results don't show if it throws
-                #self.index += 1
-                pass
         o = MyObject()
         self.assertEqual(o.a, 0)
         self.assertEqual(o.b, 1)
@@ -231,6 +224,54 @@ class JExtensionTestCase(common.JPypeTestCase):
         o = MyObject()
         with self.assertRaises(AttributeError):
             o.get_private_field()
+
+    def testPublicField(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            myField: JPublic[JInt]
+
+            def __init__(self):
+                self.pythonMember = None
+
+            @JPublic
+            def __init__(self):
+                # java exposed constructor, called before python __init__
+                ...
+
+        o = MyObject()
+        o.myField
+
+
+    def testPrivateField(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            test: JPrivate[JInt]
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            def get_private_field(self):
+                return self.test
+
+        o = MyObject()
+        o.get_private_field()
+
+    def testPrivateFieldExternalAccess(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            test: JPrivate[JInt]
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            def get_private_field(self):
+                return self.test
+
+        o = MyObject()
+        with self.assertRaises(AttributeError):
+            o.test
 
     def testPrivateMethod(self):
         class MyObject(JClass("jpype.extension.TestBase")):

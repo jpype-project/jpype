@@ -261,6 +261,7 @@ class AttributeTestCase(common.JPypeTestCase):
 #                       jpype.ConversionConfig.string = True
 
     def testComplexMethodOvlerloading(self):
+        # FIXME
         c = JClass('jpype.attr.TestOverloadC')()
         self.assertEqual(c.foo(1), "foo(int) in C: 1")
         self.assertEqual(c.foo(), "foo() in A")

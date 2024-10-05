@@ -723,6 +723,8 @@ public class TypeManager
     Iterator<Method> iter = candidates.iterator();
 
     int modifiers = 0;
+	// TODO: we need to get overloads from base class too
+	// only public methods with the ame name from base classes need to be collected
     while (iter.hasNext())
     {
       Method next = iter.next();
