@@ -32,6 +32,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
 import org.jpype.JPypeContext;
 import org.jpype.JPypeUtilities;
 import org.jpype.extension.Factory;
@@ -565,12 +568,26 @@ public class TypeManager
             desc.fields);
   }
 
+  private static Predicate<? super Member> getFilter(Class<?> cls) {
+	if (Factory.isExtension(cls)) {
+		return (a) -> true;
+	}
+	if (Modifier.isFinal(cls.getModifiers())) {
+		return (a) -> Modifier.isPublic(a.getModifiers());
+	}
+	return (a) -> Modifier.isPublic(a.getModifiers()) || Modifier.isProtected(a.getModifiers());
+  }
+
 //<editor-fold desc="fields" defaultstate="collapsed">
   private void createFields(ClassDescriptor desc)
   {
     // We only need declared fields as the wrappers for previous classes hold
     // members declared earlier
-    LinkedList<Field> fields = filterPublic(desc.cls.getDeclaredFields());
+	Class<?> cls = desc.cls;
+	List<Field> fields = Arrays.stream(cls.getDeclaredFields())
+		.filter(getFilter(cls))
+		.collect(Collectors.toList());
+    //LinkedList<Field> fields = filterPublic(cls.getDeclaredFields());
 
     long[] fieldPtr = new long[fields.size()];
     int i = 0;
@@ -672,7 +689,10 @@ public class TypeManager
     //LinkedList<Method> methods = filterPublic(cls.getMethods());
 
     // Get the list of public declared methods
-    LinkedList<Method> declaredMethods = filterPublic(cls.getDeclaredMethods());
+    //LinkedList<Method> declaredMethods = filterPublic(cls.getDeclaredMethods());
+	LinkedList<Method> declaredMethods = Arrays.stream(cls.getDeclaredMethods())
+		.filter(getFilter(cls))
+		.collect(Collectors.toCollection(LinkedList::new));
 
     // We only need one dispatch per name
     TreeSet<String> resolve = new TreeSet<>();

@@ -13,6 +13,7 @@
 
    See NOTICE file for details.
  *****************************************************************************/
+#include "jp_member.hpp"
 #include "jp_modifier.h"
 #include "jpype.h"
 #include "jp_arrayclass.h"
@@ -205,6 +206,8 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
 {
 	JP_TRACE_IN("JPMethod::invoke");
+	checkAccess(frame, *this);
+
 	// Check if it is caller sensitive
 	if (isCallerSensitive())
 		return invokeCallerSensitive(match, arg, instance);

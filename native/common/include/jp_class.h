@@ -217,7 +217,9 @@ public:
 	/**
 	 * Expose IsAssignableFrom to python.
 	 */
-	virtual bool isAssignableFrom(JPJavaFrame& frame, JPClass* o);
+	bool isAssignableFrom(JPJavaFrame& frame, const JPClass* o) const {
+		return frame.IsAssignableFrom(m_Class.get(), o->getJavaClass()) != 0;
+	}
 
 	// Object properties
 

@@ -101,6 +101,22 @@ public:
 		return JPModifier::isCallerSensitive(m_Modifiers);
 	}
 
+	bool isPublic() const {
+		return JPModifier::isPublic(m_Modifiers);
+	}
+
+	bool isProtected() const {
+		return JPModifier::isProtected(m_Modifiers);
+	}
+
+	bool isPrivate() const {
+		return JPModifier::isPrivate(m_Modifiers);
+	}
+
+	JPClass *getClass() const {
+		return m_Class;
+	}
+
 	string toString() const;
 
 	string matchReport(JPPyObjectVector& args);

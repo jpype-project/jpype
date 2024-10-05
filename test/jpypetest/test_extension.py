@@ -201,10 +201,65 @@ class JExtensionTestCase(common.JPypeTestCase):
             def __init__(self):
                 ...
 
-            def inc(self):
-                # FIXME test results don't show if it throws
-                #self.index += 1
-                pass
+            def get_protected_field(self):
+                return self.protectedField
 
         o = MyObject()
-        o.inc()
+        o.get_protected_field()
+
+    def testProtectedFieldExternalAccess(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+        o = MyObject()
+        with self.assertRaises(AttributeError):
+            o.protectedField
+
+    def testPrivateBaseField(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            def get_private_field(self):
+                return self.privateBaseField
+
+        o = MyObject()
+        with self.assertRaises(AttributeError):
+            o.get_private_field()
+
+    def testPrivateMethod(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPrivate
+            def private_method(self) -> JObject:
+                return self
+
+            def call_private_method(self):
+                return self.private_method()
+
+        o = MyObject()
+        o.call_private_method()
+
+    def testPrivateMethodExternalAccess(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPrivate
+            def private_method(self) -> JObject:
+                return self
+
+        o = MyObject()
+        with self.assertRaises(AttributeError):
+            o.private_method()

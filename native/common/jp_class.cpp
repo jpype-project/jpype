@@ -421,11 +421,3 @@ void JPClass::getConversionInfo(JPConversionInfo &info)
 }
 
 //</editor-fold>
-//<editor-fold desc="hierarchy" defaultstate="collapsed">
-
-bool JPClass::isAssignableFrom(JPJavaFrame& frame, JPClass* o)
-{
-	return frame.IsAssignableFrom(m_Class.get(), o->getJavaClass()) != 0;
-}
-
-//</editor-fold>

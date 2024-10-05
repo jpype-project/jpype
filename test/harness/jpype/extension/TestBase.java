@@ -3,7 +3,8 @@ package jpype.extension;
 public abstract class TestBase {
 
 	public int initCount = 0;
-	protected int index = 0;
+	protected int protectedField = 0;
+	private int privateBaseField = 0;
 
 	public TestBase() {
 		initCount++;
@@ -23,5 +24,9 @@ public abstract class TestBase {
 
 	public Object identity(Object o) {
 		return o;
+	}
+
+	public int getPrivateBaseField() {
+		return privateBaseField;
 	}
 }
