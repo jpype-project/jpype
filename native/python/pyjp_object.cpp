@@ -15,7 +15,6 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
-#include <structmember.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -374,13 +373,11 @@ static PyType_Spec comparableSpec = {
 
 void PyJPObject_initType(PyObject* module)
 {
-	JPPyObject bases = JPPyTuple_Pack(&PyBaseObject_Type);
-	PyJPObject_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&objectSpec, bases.get());
-	JP_PY_CHECK(); // GCOVR_EXCL_LINE
+    PyJPObject_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&objectSpec, nullptr);
+    JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JObject", (PyObject*) PyJPObject_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
-
-	bases = JPPyTuple_Pack(PyExc_Exception, PyJPObject_Type);
+    JPPyObject bases = JPPyTuple_Pack(PyExc_Exception, PyJPObject_Type);
 	PyJPException_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&excSpec, bases.get());
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JException", (PyObject*) PyJPException_Type);

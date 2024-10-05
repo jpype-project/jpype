@@ -18,95 +18,68 @@ package org.jpype.pickle;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.LinkedList;
 
-/**
- *
- * @author Karl Einar Nelson
- */
-public class ByteBufferInputStream extends InputStream
-{
+public class ByteBufferInputStream extends InputStream {
+  private LinkedList<ByteBuffer> buffers = new LinkedList<>();
 
-  ByteBuffer bb = ByteBuffer.allocate(1024);
-  int loaded = 0;
-
-  public void put(byte[] bytes)
-  {
-    // If we have additional capacity, use it
-    if (bytes.length < bb.remaining())
-    {
-      int p = bb.position();
-      bb.position(loaded);
-      bb.put(bytes);
-      loaded = bb.position();
-      bb.position(p);
-      return;
-    }
-
-    // Okay we may need to allocate more
-    ByteBuffer bb2 = bb;
-    int r = loaded - bb.position();
-
-    // If we don't have space, make a new buffer.
-    if (r + bytes.length > bb.capacity())
-      bb = ByteBuffer.allocate(r + bytes.length);
-
-    // If we have remaining bytes, then keep them
-    if (r > 0)
-    {
-      bb.put(bb2.array(), bb2.position(), r);
-    }
-
-    // Add the new data
-    bb.put(bytes);
-    loaded = bb.position();
-    bb.position(0);
-  }
-
-  public int available()
-  {
-    int out = loaded - bb.position();
-    return out;
+  public void put(byte[] bytes) {
+    // We can just wrap the buffer instead of copying it, since the buffer is
+    // wrapped we don't need to write the bytes to it. Wrapping the bytes relies
+    // on the array not being changed before being read.
+    ByteBuffer buffer = ByteBuffer.wrap(bytes);
+    buffers.add(buffer);
   }
 
   @Override
-  public int read() throws IOException
-  {
-    int r = loaded - bb.position();
-    if (r > 0)
-    {
-      int p = bb.get();
-      return p;
-    }
-    return -1;
-  }
-
-  @Override
-  public int read(byte[] arg0) throws IOException
-  {
-    int r = loaded - bb.position();
-    if (arg0.length <= r)
-    {
-      bb.get(arg0);
-      return arg0.length;
-    }
-
-    bb.get(arg0, 0, r);
-    return r;
-  }
-
-  @Override
-  public int read(byte[] buffer, int offset, int len) throws IOException
-  {
-    int r = loaded - bb.position();
-    if (r == 0)
+  public int read() throws IOException {
+    if (buffers.isEmpty())
       return -1;
 
-    if (len > r)
-    {
-      len = r;
+    ByteBuffer b = buffers.getFirst();
+    while (b.remaining() == 0) {
+      buffers.removeFirst();
+      if (buffers.isEmpty())
+        return -1; // EOF
+      b = buffers.getFirst();
     }
+    return b.get() & 0xFF; // Mask with 0xFF to convert signed byte to int (range 0-255)
+  }
 
-    bb.get(buffer, offset, len);
-    return len;
+  @Override
+  public int read(byte[] arg0) throws IOException {
+    return read(arg0, 0, arg0.length);
+  }
+
+  @Override
+  public int read(byte[] buffer, int offset, int len) throws IOException {
+    if (buffer == null)
+      throw new NullPointerException("Buffer cannot be null");
+    if (offset < 0 || len < 0 || len > buffer.length - offset)
+      throw new IndexOutOfBoundsException("Invalid offset/length parameters");
+    if (len == 0)
+      return 0;
+
+    int total = 0;
+    while (len > 0 && !buffers.isEmpty()) {
+      ByteBuffer b = buffers.getFirst();
+      int remaining = b.remaining();
+      if (remaining == 0) {
+        buffers.removeFirst();
+        continue;
+      }
+
+      int toRead = Math.min(len, remaining);
+      b.get(buffer, offset, toRead);
+      total += toRead;
+      len -= toRead;
+      offset += toRead;
+    }
+    return (total == 0) ? -1 : total;
+  }
+
+  @Override
+  public void close() throws IOException {
+    buffers.clear();
   }
 }

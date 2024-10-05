@@ -60,7 +60,7 @@ public class JavadocExtractor
       }
     } catch (Exception ex)
     {
-      System.err.println("Failed to extract javadoc for " + cls);
+      System.err.println("Failed to extract javadoc for " + cls + ", caught " + ex);
       if (failures)
         throw new RuntimeException(ex);
     }
@@ -117,8 +117,12 @@ public class JavadocExtractor
       XPath xPath = XPathFactory.newInstance().newXPath();
       // Javadoc 8-13
       Node n = (Node) xPath.compile("//div[@class='description']/ul/li").evaluate(doc, XPathConstants.NODE);
-      if (n == null)  // Javadoc 14+
+      if (n == null) { // Javadoc 14+
         n = (Node) xPath.compile("//section[@class='description']").evaluate(doc, XPathConstants.NODE);
+      }
+      if (n == null) { // Javadoc 17+
+        n = (Node) xPath.compile("//section[@class='class-description']").evaluate(doc, XPathConstants.NODE);
+      }
       Node description = toFragment(n);
       if (description != null)
       {
@@ -129,12 +133,20 @@ public class JavadocExtractor
           documentation.description = renderer.render(description);
       }
 
-      Node ctorRoot = ((Node) xPath.compile("//li/a[@name='constructor.detail' or @id='constructor.detail']")
+      Node ctorRoot = ((Node) xPath.compile("//li/a[@name='constructor.detail' or @id='constructor.detail']") // Javadoc before 17
               .evaluate(doc, XPathConstants.NODE));
+      if (ctorRoot == null) { // Javadoc 17+
+        ctorRoot = ((Node) xPath.compile("//section[@class='constructor-details']/ul")
+                .evaluate(doc, XPathConstants.NODE));
+      }
       if (ctorRoot != null)
       {
-        List<Node> set = convertNodes((NodeList) xPath.compile("./ul/li")
+        List<Node> set = convertNodes((NodeList) xPath.compile("./li/section") // Javadoc 17+
+                .evaluate(ctorRoot, XPathConstants.NODESET));
+        if (set.isEmpty()) {  // Javadoc before 17
+          set = convertNodes((NodeList) xPath.compile("./ul/li")
                 .evaluate(ctorRoot.getParentNode(), XPathConstants.NODESET));
+        }
         documentation.ctorsNode = set;
         StringBuilder sb = new StringBuilder();
         for (Node ctor : set)
@@ -147,12 +159,20 @@ public class JavadocExtractor
         documentation.ctors = sb.toString();
       }
 
-      Node methodRoot = ((Node) xPath.compile("//li/a[@name='method.detail' or  @id='method.detail']")
+      Node methodRoot = ((Node) xPath.compile("//li/a[@name='method.detail' or  @id='method.detail']") // Javadoc before 17
               .evaluate(doc, XPathConstants.NODE));
+      if (methodRoot == null) { // Javadoc 17+
+        methodRoot = ((Node) xPath.compile("//section[@class='method-details']/ul")
+                .evaluate(doc, XPathConstants.NODE));
+      }
       if (methodRoot != null)
       {
-        List<Node> set = convertNodes((NodeList) xPath.compile("./ul/li")
-                .evaluate(methodRoot.getParentNode(), XPathConstants.NODESET));
+        List<Node> set = convertNodes((NodeList) xPath.compile("./li/section") // Javadoc 17+
+                .evaluate(methodRoot, XPathConstants.NODESET));
+        if (set.isEmpty()) {  // Javadoc before 17
+          set = convertNodes((NodeList) xPath.compile("./ul/li")
+                  .evaluate(methodRoot.getParentNode(), XPathConstants.NODESET));
+        }
         documentation.methodNodes = set;
         for (Node method : set)
         {
@@ -178,12 +198,20 @@ public class JavadocExtractor
 //        NodeList set = (NodeList) xPath.compile("./ul/li").evaluate(inner.getParentNode(), XPathConstants.NODESET);
 //        documentation.innerNode = convertNodes(set);
 //      }
-      Node fieldRoot = ((Node) xPath.compile("//li/a[@name='field.detail' or @id='field.detail']")
+      Node fieldRoot = ((Node) xPath.compile("//li/a[@name='field.detail' or @id='field.detail']") // Javadoc before 17
               .evaluate(doc, XPathConstants.NODE));
+      if (fieldRoot == null) { // Javadoc 17+
+        fieldRoot = ((Node) xPath.compile("//section[@class='field-details']/ul")
+                .evaluate(doc, XPathConstants.NODE));
+      }
       if (fieldRoot != null)
       {
-        List<Node> set = convertNodes((NodeList) xPath.compile("./ul/li")
-                .evaluate(fieldRoot.getParentNode(), XPathConstants.NODESET));
+        List<Node> set = convertNodes((NodeList) xPath.compile("./li/section") // Javadoc 17+
+                .evaluate(fieldRoot, XPathConstants.NODESET));
+        if (set.isEmpty()) {  // Javadoc before 17
+          set = convertNodes((NodeList) xPath.compile("./ul/li")
+                  .evaluate(fieldRoot.getParentNode(), XPathConstants.NODESET));
+        }
         documentation.fieldNodes = set;
         for (Node field : set)
         {

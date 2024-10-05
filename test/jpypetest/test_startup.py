@@ -17,7 +17,6 @@
 # *****************************************************************************
 import jpype
 import subrun
-import functools
 import os
 from pathlib import Path
 import unittest
@@ -146,3 +145,10 @@ class StartJVMCase(unittest.TestCase):
     def testBadKeyword(self):
         with self.assertRaises(TypeError):
             jpype.startJVM(invalid=True)  # type: ignore
+
+    def testNonASCIIPath(self):
+        """Test that paths with non-ASCII characters are handled correctly.
+        Regression test for https://github.com/jpype-project/jpype/issues/1194
+        """
+        jpype.startJVM(jvmpath=Path(self.jvmpath), classpath="test/jar/unicode_à😎/sample_package.jar")
+        assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']

@@ -92,6 +92,18 @@ class JArray(_jpype._JObject, internal=True):  # type: ignore[call-arg]
     def of(cls, array, dtype=None):
         return _jpype.arrayFromBuffer(array, dtype)
 
+    def __class_getitem__(cls, key):
+        if key is _jpype.JClass:
+            # explicit check for JClass
+            # _toJavaClass cannot be used
+            # passing int, float, str, etc is not allowed
+            key = _jpype._java_lang_Class
+        if isinstance(key, _jpype._java_lang_Class):
+            key = _jpype.JClass(key)
+        if isinstance(key, _jpype.JClass):
+            return type(key[0])
+        raise TypeError("%s is not a Java class" % key)
+
 
 class _JArrayProto(object):
 
