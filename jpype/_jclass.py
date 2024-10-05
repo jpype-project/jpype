@@ -202,7 +202,7 @@ class JClass(_jpype._JClass, metaclass=JClassMeta):
 
         # Pass to class factory to create the type
         return _jpype._getClass(jc)
-    
+
     def __class_getitem__(cls, index):
         # enables JClass[1] to get a Class[]
         return JClass("java.lang.Class")[index]
@@ -355,19 +355,9 @@ class _JClassTable(dict):
 
     def __setitem__(self, key, value):
         # FIXME need to create a method dispatch for calling from python
-        old = self.get(key, None)
-        if old is not None:
-            mods = "__jmodifiers__"
-            if hasattr(old, mods) == hasattr(value, mods):
-                return
-            if key == "__init__":
-                # only __init__ is allowed because the Java constructor is always called instead
-                if hasattr(value, mods):
-                    return
-                return dict.__setitem__(self, key, value)
-            raise TypeError("Cannot create a Python method with the same name as a Java method")
-
-        dict.__setitem__(self, key, value)
+        mods = "__jmodifiers__"
+        if not hasattr(value, mods):
+            dict.__setitem__(self, key, value)
 
 
 def _JExtension(name, bases, members):

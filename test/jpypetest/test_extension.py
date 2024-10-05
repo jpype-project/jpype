@@ -38,6 +38,20 @@ class JExtensionTestCase(common.JPypeTestCase):
 
         self.assertIsInstance(MyObject(), MyObject)
 
+    def testAddedMethod(self):
+        from java.lang import Object
+        class MyObject(Object):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPublic
+            def func(self) -> JObject:
+                return self
+
+        o = MyObject()
+        self.assertEqual(o.func(), o)
 
     def testInitOnce(self):
         TestBase = JClass("jpype.extension.TestBase")
@@ -107,6 +121,10 @@ class JExtensionTestCase(common.JPypeTestCase):
             def identity(self, o: JObject) -> JObject:
                 return None
 
+            @JPublic
+            def func(self) -> JObject:
+                return self
+
         o = MyObject()
         self.assertEqual(mode, 0)
         MyObject(JInt(1))
@@ -156,6 +174,25 @@ class JExtensionTestCase(common.JPypeTestCase):
         self.assertEqual(o.test_identity(sentinel), sentinel)
         self.assertEqual(o.super_identity(sentinel), sentinel)
 
+
+    def testPythonMembers(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            def __init__(self):
+                self.a = 0
+                self.b = 1
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            def inc(self):
+                # FIXME test results don't show if it throws
+                #self.index += 1
+                pass
+        o = MyObject()
+        self.assertEqual(o.a, 0)
+        self.assertEqual(o.b, 1)
 
     def testProtectedField(self):
         class MyObject(JClass("jpype.extension.TestBase")):

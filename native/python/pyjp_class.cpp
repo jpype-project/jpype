@@ -268,7 +268,28 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
-int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
+static void PyJPClass_hook_extends(JPJavaFrame &frame, JPClass &cls, PyObject *members) {
+	const JPFieldList &instFields = cls.getFields();
+	for (auto instField : instFields) {
+		JPPyObject fieldName(JPPyString::fromStringUTF8(instField->getName()));
+		PyDict_SetItem(members, fieldName.get(), PyJPField_create(instField).get());
+	}
+
+	const JPMethodDispatchList& m_Methods = cls.getMethods();
+	for (auto m_Method : m_Methods) {
+		// TODO: it would be great to not have to go through java to call our python methods
+		// __init__ is skipped because the Java constructor is always called instead
+		// we don't want to overwrite the python __init__ if the user created one
+		// construction and the non java exposed __init__ will still be called correctly
+		if (m_Method->getName() == "__init__"sv) {
+			continue;
+		}
+		JPPyObject methodName(JPPyString::fromStringUTF8(m_Method->getName()));
+		PyDict_SetItem(members, methodName.get(), PyJPMethod_create(m_Method, nullptr).get());
+	}
+}
+
+static int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPClass_init");
 
@@ -301,14 +322,19 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		unsigned long long value = PyLong_AsUnsignedLongLong(PyTuple_GetItem(tmp.get(), 0));
 		JPExtensionType *cls = reinterpret_cast<JPExtensionType *>(static_cast<uintptr_t>(value));
 		((PyJPClass*) self)->m_Class = cls;
+
+		// set host early to prevent double creation
+		cls->setHost(self);
 		cls->setOverrides(PyTuple_GetItem(tmp.get(), 1));
 		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
+
+		// fill out the Java class members
 		cls->ensureMembers(frame);
-		//PyErr_Format(PyExc_TypeError, "Java classes cannot be extended in Python");
-		//return -1;
+
+		// finish setting members in our Python class that got skipped due to the host being set
+		PyJPClass_hook_extends(frame, *cls, ((PyTypeObject *)self)->tp_dict);
 	}
 
-	// Set the host object
 	PyObject *name = nullptr;
 	PyObject *bases = nullptr;
 	PyObject *members = nullptr;
