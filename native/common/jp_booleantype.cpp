@@ -309,7 +309,7 @@ void JPBooleanType::getView(JPArrayView& view)
 	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
 	view.m_Memory = (void*) frame.GetBooleanArrayElements(
 			(jbooleanArray) view.m_Array->getJava(), &view.m_IsCopy);
-	view.m_Buffer.format = "?";
+	view.m_Buffer.format = const_cast<char*>("?");
 	view.m_Buffer.itemsize = sizeof (jboolean);
 }
 

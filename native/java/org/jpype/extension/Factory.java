@@ -64,6 +64,10 @@ public class Factory {
 		return false;
 	}
 
+	public static boolean isExtensionField(Field field) {
+		return field != null && field.getName().equals(JCLASS_FIELD);
+	}
+
 	//<editor-fold desc="hooks" defaultstate="collapsed">
 	/**
 	 * Hook to call a Python implemented method
@@ -201,7 +205,7 @@ public class Factory {
 
 		// Implement fields
 		for (FieldDecl fdecl : decl.fields) {
-			cw.visitField(fdecl.modifiers, fdecl.name, Type.getDescriptor(fdecl.type), null, null);
+			cw.visitField(fdecl.modifiers, fdecl.name, Type.getDescriptor(fdecl.type), null, fdecl.value);
 		}
 
 		// Initialize the parameter lists

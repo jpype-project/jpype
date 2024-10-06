@@ -20,7 +20,7 @@ from ._pykeywords import pysafe
 from . import _jcustomizer
 import inspect
 
-__all__ = ['JClass', 'JInterface', 'JOverride', 'JPublic', 'JProtected',
+__all__ = ['JClass', 'JFinal', 'JInterface', 'JOverride', 'JPublic', 'JProtected',
         'JPrivate', 'JStatic', 'JThrows']
 
 
@@ -154,6 +154,9 @@ class JPrivate(_JModifier):
 
 class JStatic(_JModifier):
     modifier = 8
+
+class JFinal(_JModifier):
+    modifier = 16
 
 
 def JThrows(*args):

@@ -233,7 +233,6 @@ class JExtensionTestCase(common.JPypeTestCase):
 
     def testPublicField(self):
         class MyObject(JClass("jpype.extension.TestBase")):
-
             myField: JPublic[JInt]
 
             def __init__(self):
@@ -247,10 +246,35 @@ class JExtensionTestCase(common.JPypeTestCase):
         o = MyObject()
         o.myField
 
+    def testPublicFieldWithValue(self):
+        from java.lang import IllegalArgumentException
+        with self.assertRaises(IllegalArgumentException):
+            class MyObject(JClass("jpype.extension.TestBase")):
+                test: JPublic[JInt] = JInt(1)
+
+                @JPublic
+                def __init__(self):
+                    ...
+
+    def testPublicFinalField(self):
+        unittest = self
+        class MyObject(JClass("jpype.extension.TestBase")):
+            test: JFinal[JPublic[JInt]]
+
+            @JPublic
+            def __init__(self):
+                self.test = 1
+                unittest.assertEqual(self.test, 1)
+                self.test = 2
+                unittest.assertEqual(self.test, 2)
+
+        o = MyObject()
+        with self.assertRaises(AttributeError):
+            o.test = 3
+
 
     def testPrivateField(self):
         class MyObject(JClass("jpype.extension.TestBase")):
-
             test: JPrivate[JInt]
 
             @JPublic
@@ -265,7 +289,6 @@ class JExtensionTestCase(common.JPypeTestCase):
 
     def testPrivateFieldExternalAccess(self):
         class MyObject(JClass("jpype.extension.TestBase")):
-
             test: JPrivate[JInt]
 
             @JPublic
@@ -279,9 +302,45 @@ class JExtensionTestCase(common.JPypeTestCase):
         with self.assertRaises(AttributeError):
             o.test
 
+    def testPublicStaticField(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+            test: JStatic[JPublic[JInt]]
+
+            @JPublic
+            def __init__(self):
+                ...
+
+        o = MyObject()
+        o.test
+
+    def testPublicStaticFieldWithValue(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+            test: JStatic[JPublic[JInt]] = JInt(1)
+
+            @JPublic
+            def __init__(self):
+                ...
+
+        o = MyObject()
+        self.assertEqual(o.test, 1)
+        o.test = 2
+        self.assertEqual(o.test, 2)
+
+    def testPublicStaticFinalFieldWithValue(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+            test: JFinal[JStatic[JPublic[JInt]]] = JInt(1)
+
+            @JPublic
+            def __init__(self):
+                ...
+
+        o = MyObject()
+        self.assertEqual(o.test, 1)
+        with self.assertRaises(AttributeError):
+            o.test = 2
+
     def testPrivateStaticField(self):
         class MyObject(JClass("jpype.extension.TestBase")):
-
             test: JStatic[JPrivate[JInt]]
 
             @JPublic
@@ -296,7 +355,6 @@ class JExtensionTestCase(common.JPypeTestCase):
 
     def testPrivateStaticFieldExternalAccess(self):
         class MyObject(JClass("jpype.extension.TestBase")):
-
             test: JStatic[JPrivate[JInt]]
 
             @JPublic
@@ -381,3 +439,25 @@ class JExtensionTestCase(common.JPypeTestCase):
 
         o = MyObject()
         o.call_private_method()
+
+    def testFinalMethod(self):
+        from java.lang import IncompatibleClassChangeError, Object, String
+        class MyBaseObject(Object):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPublic
+            @JFinal
+            def toString(self) -> String:
+                return "test"
+
+        # if this is raised then it means the method was marked as final
+        with self.assertRaises(IncompatibleClassChangeError):
+            class MyObject(MyBaseObject):
+
+                @JPublic
+                @JOverride
+                def toString(self) -> String:
+                    return "fail"

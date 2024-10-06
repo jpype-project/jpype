@@ -36,7 +36,7 @@ static JPPyObject packArgs(JPExtensionType &cls, const JPMethodOverride &method,
 	}
 
 	for (size_t i = 1; i < argLen; i++) {
-		jobject obj = frame.GetObjectArrayElement(args, i);
+		jobject obj = frame.GetObjectArrayElement(args, (jsize)i);
 		JPClass *type = const_cast<JPClass*>(method.paramTypes[i-1]);
 		JPValue val = type->getValueFromObject(JPValue(type, obj));
 		PyTuple_SetItem(pyargs.get(), i, type->convertToPythonObject(frame, val, false).keep());

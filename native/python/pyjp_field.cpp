@@ -13,14 +13,11 @@
 
    See NOTICE file for details.
  *****************************************************************************/
+#include "jp_class.h"
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_field.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+#include <string_view>
 
 struct PyJPField
 {
@@ -54,6 +51,52 @@ static PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 	JP_PY_CATCH(nullptr);
 }
 
+static bool isInitializingFinalField(JPField &field) {
+	if (field.isStatic()) {
+		// not applicable
+		// static final fields can use the default value
+		return false;
+	}
+
+	JPClass *cls = field.getClass();
+	if (!cls->isExtension()) {
+		return false;
+	}
+
+	PyObject *locals = PyEval_GetLocals();
+	if (locals == nullptr) {
+		// access denied
+		return false;
+	}
+
+	JPPyObject obj = JPPyObject::call(PyMapping_GetItemString(locals, "self"));
+	if (obj.get() != nullptr) {
+		obj = JPPyObject::use((PyObject *) Py_TYPE(obj.get()));
+	} else {
+		obj = JPPyObject::call(PyMapping_GetItemString(locals, "cls"));
+	}
+
+	if (obj.isNull()) {
+		return false;
+	}
+
+	if (cls != PyJPClass_getJPClass(obj.get())) {
+		// it may only be initialized in the constructor for this class
+		return false;
+	}
+
+	// frame cannot be null or locals would have been null
+	// code cannot be null
+	JPPyObject code = JPPyObject::accept((PyObject*)PyFrame_GetCode(PyEval_GetFrame()));
+
+	Py_ssize_t size = 0;
+	const char *name = PyUnicode_AsUTF8AndSize(((PyCodeObject *)code.get())->co_name, &size);
+	if (name == nullptr) {
+		JP_RAISE_PYTHON();
+	}
+	return std::string_view{name, (size_t)size} == "__init__"sv;
+}
+
 static int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 {
 	JP_PY_TRY("PyJPField_set");
@@ -61,8 +104,10 @@ static int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Field->isFinal())
 	{
-		PyErr_SetString(PyExc_AttributeError, "Field is final");
-		return -1;
+		if (self->m_Field->isStatic() || !isInitializingFinalField(*self->m_Field)) {
+			PyErr_SetString(PyExc_AttributeError, "Field is final");
+			return -1;
+		}
 	}
 	if (self->m_Field->isStatic())
 	{
@@ -118,10 +163,6 @@ PyType_Spec PyJPFieldSpec = {
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
 	fieldSlots
 };
-
-#ifdef __cplusplus
-}
-#endif
 
 void PyJPField_initType(PyObject* module)
 {

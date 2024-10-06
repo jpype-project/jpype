@@ -280,7 +280,7 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 	if (f.isNull())
 	{
 		JPClass *cls = PyJPClass_getJPClass((PyObject*) Py_TYPE(self));
-		if (cls != nullptr && JPModifier::isExtension(cls->getModifiers())) {
+		if (cls != nullptr && cls->isExtension()) {
 			// allow it for extension classes
 			// we only need to do setattr and it will be found later via getattr
 			return PyObject_GenericSetAttr(self, name, value);

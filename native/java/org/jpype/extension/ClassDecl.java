@@ -15,6 +15,7 @@
  **************************************************************************** */
 package org.jpype.extension;
 
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,6 +42,10 @@ public class ClassDecl {
 	}
 
 	public FieldDecl addField(Class<?> cls, String name, Object value, int modifiers) {
+		if (value != null && !Modifier.isStatic(modifiers)) {
+			String msg = "Setting a default value for a non static field has no effect";
+			throw new IllegalArgumentException(msg);
+		}
 		FieldDecl field = new FieldDecl(cls, name, value, modifiers);
 		fields.add(field);
 		return field;

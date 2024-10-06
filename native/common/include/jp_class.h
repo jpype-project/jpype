@@ -115,6 +115,11 @@ public:
 		return JPModifier::isInterface(m_Modifiers);
 	}
 
+	bool isExtension() const
+	{
+		return JPModifier::isExtension(m_Modifiers);
+	}
+
 	virtual bool isArray() const
 	{
 		return false;

@@ -584,9 +584,13 @@ public class TypeManager
   {
     // We only need declared fields as the wrappers for previous classes hold
     // members declared earlier
+	// If this causes a performance problem due to Python inheritance
+	// then the same strategy used for methods can be used here
 	Class<?> cls = desc.cls;
 	List<Field> fields = Arrays.stream(cls.getDeclaredFields())
 		.filter(getFilter(cls))
+		// don't allow access to the jclass pointer
+		.filter(Predicate.not(Factory::isExtensionField))
 		.collect(Collectors.toList());
     //LinkedList<Field> fields = filterPublic(cls.getDeclaredFields());
 
