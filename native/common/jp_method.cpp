@@ -24,10 +24,11 @@ JPMethod::JPMethod(JPJavaFrame& frame,
 		JPClass* claz,
 		const string& name,
 		jobject mth,
+		jclass declaringClass,
 		jmethodID mid,
 		JPMethodList& moreSpecific,
 		jint modifiers)
-: m_Method(frame, mth)
+: m_Method(frame, mth), m_DeclaringClass(frame, declaringClass)
 {
 	m_Class = claz;
 	m_Name = name;
@@ -244,7 +245,7 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 		// unless explicitly called as a static method through a base class (is this for a cast?)
 		if (!isAbstract() && selfObj != nullptr && (!selfObj->getClass()->isAnonymous() || !instance))
 		{
-			clazz = m_Class->getJavaClass();
+			clazz = m_DeclaringClass.get();
 			JP_TRACE("invoke nonvirtual", m_Name);
 		} else
 		{

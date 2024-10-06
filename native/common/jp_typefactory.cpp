@@ -420,6 +420,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethod(
 		JNIEnv *env, jobject self, jlong contextPtr,
 		jlong cls, jstring name,
 		jobject method,
+		jclass declaringCls,
 		jlongArray overloadList, jint modifiers)
 {
 	auto* context = (JPContext*) contextPtr;
@@ -434,7 +435,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethod(
 			frame,
 			(JPClass*) cls,
 			cname,
-			method, mid,
+			method, declaringCls, mid,
 			cover,
 			modifiers));
 	JP_JAVA_CATCH(0);

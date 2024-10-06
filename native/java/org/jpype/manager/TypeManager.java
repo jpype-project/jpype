@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jpype.JPypeContext;
 import org.jpype.JPypeUtilities;
@@ -667,8 +668,10 @@ public class TypeManager
               desc.classPtr,
               constructor.toString(),
               constructor,
+			  constructor.getDeclaringClass(),
               precedencePtrs,
-              modifiers);
+              modifiers
+			);
       overloadPtrs[--n] = ov.ptr;
     }
     return overloadPtrs;
@@ -690,8 +693,11 @@ public class TypeManager
 
     // Get the list of public declared methods
     //LinkedList<Method> declaredMethods = filterPublic(cls.getDeclaredMethods());
-	LinkedList<Method> declaredMethods = Arrays.stream(cls.getDeclaredMethods())
-		.filter(getFilter(cls))
+	LinkedList<Method> declaredMethods = Stream.concat(
+		Arrays.stream(cls.getDeclaredMethods()),
+		Arrays.stream(cls.getMethods())
+			.filter((m) -> m.getDeclaringClass() != cls)
+	).filter(getFilter(cls))
 		.collect(Collectors.toCollection(LinkedList::new));
 
     // We only need one dispatch per name
@@ -723,8 +729,6 @@ public class TypeManager
     Iterator<Method> iter = candidates.iterator();
 
     int modifiers = 0;
-	// TODO: we need to get overloads from base class too
-	// only public methods with the ame name from base classes need to be collected
     while (iter.hasNext())
     {
       Method next = iter.next();
@@ -809,6 +813,7 @@ public class TypeManager
               desc.classPtr,
               method.toString(),
               method,
+			  method.getDeclaringClass(),
               precedencePtrs,
               modifiers);
       overloadPtrs[--n] = ov.ptr;

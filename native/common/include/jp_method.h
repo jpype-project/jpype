@@ -41,6 +41,7 @@ public:
 			JPClass* claz,
 			const string& name,
 			jobject mth,
+			jclass declaringClass,
 			jmethodID mid,
 			JPMethodList& moreSpecific,
 			jint modifiers);
@@ -139,6 +140,7 @@ private:
 	JPClass*                 m_Class{};
 	string                   m_Name;
 	JPObjectRef              m_Method;
+	JPClassRef				 m_DeclaringClass;
 	jmethodID                m_MethodID{};
 	JPClass*                 m_ReturnType{};
 	JPClassList              m_ParameterTypes;

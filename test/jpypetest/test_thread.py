@@ -16,8 +16,7 @@
 #
 # *****************************************************************************
 import jpype
-import sys
-import time
+from jpype.imports import *
 import common
 import pytest
 

@@ -81,6 +81,7 @@ public native void newWrapper(long context, long cls);
           long cls,
           String name,
           Executable method,
+		  Class<?> declaringClass,
           long[] overloadList,
           int modifiers);
 
