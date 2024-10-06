@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.jpype.asm.Type;
+
 /**
  *
  * @author nelson85
@@ -66,5 +68,9 @@ public class ClassDecl {
 
 	public List<MethodDecl> getMethods() {
 		return Collections.unmodifiableList(methods);
+	}
+
+	public Type getType() {
+		return Type.getType("L"+internalName+";");
 	}
 }

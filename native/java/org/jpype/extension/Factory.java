@@ -208,7 +208,7 @@ public class Factory {
 		MethodVisitor mv = cw.visitMethod(Opcodes.ACC_STATIC, "<clinit>", "()V", null, null);
 		mv.visitCode();
 		String context = CONTEXT_TYPE.getInternalName();
-		Type type = Type.getType("L"+decl.internalName+";");
+		Type type = decl.getType();
 		mv.visitMethodInsn(Opcodes.INVOKESTATIC, context, "getInstance", "()Lorg/jpype/JPypeContext;", false);
 		mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, context, "getTypeManager", "()Lorg/jpype/manager/TypeManager;", false);
 		mv.visitLdcInsn(type);
@@ -291,7 +291,11 @@ public class Factory {
 		mv.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
 		mv.visitInsn(Opcodes.DUP); // two copies of the array reference
 		mv.visitInsn(Opcodes.ICONST_0);
-		mv.visitIntInsn(Opcodes.ALOAD, 0);
+		if (mdecl.isStatic()) {
+			mv.visitLdcInsn(cdecl.getType());
+		} else {
+			mv.visitIntInsn(Opcodes.ALOAD, 0);
+		}
 		mv.visitInsn(Opcodes.AASTORE);
 
 		// Marshal the parameters

@@ -108,4 +108,8 @@ public class MethodDecl {
 		return sb.toString();
 	}
 
+	boolean isStatic() {
+		return Modifier.isStatic(modifiers);
+	}
+
 }
