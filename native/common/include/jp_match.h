@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include <pytypedefs.h>
 #include <vector>
 
 class JPConversion;

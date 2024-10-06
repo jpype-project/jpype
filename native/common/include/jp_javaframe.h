@@ -21,7 +21,7 @@
 #include "jni.h"
 
 #include <string>
-#include <pytypedefs.h>
+#include <Python.h>
 
 using std::string;
 

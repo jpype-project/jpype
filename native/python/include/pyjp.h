@@ -16,7 +16,6 @@
 #ifndef PYJP_H
 #define PYJP_H
 #include <Python.h>
-#include <pytypedefs.h>
 #include "jpype.h"
 #include "jp_pythontypes.h"
 

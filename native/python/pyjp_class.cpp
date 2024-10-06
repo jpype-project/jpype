@@ -18,7 +18,6 @@
 #include <dictobject.h>
 #include <frameobject.h>
 #include <object.h>
-#include <pytypedefs.h>
 #include <string_view>
 #include <structmember.h>
 #include <tupleobject.h>
