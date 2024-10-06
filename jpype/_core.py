@@ -124,7 +124,7 @@ def _handleClassPath(
     """
     Return a classpath which represents the given tuple of classpath specifications
     """
-    out = []
+    out: typing.List[str] = []
     if classpath is None:
         return out
     if isinstance(classpath, (str, os.PathLike)):
@@ -264,11 +264,11 @@ def startJVM(
                 raise RuntimeError(f"{jvmpath} is older than required Java version{version}") from ex
         raise
 
-    """Prior versions of JPype used the jvmargs to setup the class paths via 
+    """Prior versions of JPype used the jvmargs to setup the class paths via
     JNI (Java Native Interface) option strings:
-    i.e -Djava.class.path=... 
+    i.e -Djava.class.path=...
     See: https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/invocation.html
-    
+
     Unfortunately, unicode is unsupported by this interface on windows, since
     windows uses wide-byte (16bit) character encoding.
     See: https://stackoverflow.com/questions/20052455/jni-start-jvm-with-unicode-support

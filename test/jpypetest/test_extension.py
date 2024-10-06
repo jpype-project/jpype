@@ -148,7 +148,7 @@ class JExtensionTestCase(common.JPypeTestCase):
             @JPublic
             @JOverride
             def identity(self, o: JObject) -> JObject:
-                return None
+                return None # type: ignore[return-value]
 
             @JPublic
             def super_identity(self, o: JObject) -> JObject:

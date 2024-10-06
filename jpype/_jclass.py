@@ -430,12 +430,12 @@ def _JExtension(name, bases, members: _JClassTable):
             annotations = _get_annotations(i, members.globals, members.locals)
             if i.__name__ == "__init__":
                 args = [annotations[j] for j in mspec.args[1:]]
-                cls.addCtor(args, exceptions, i.__jmodifiers__)
+                cls.addCtor(args, exceptions, i.__jmodifiers__) # type: ignore[attr-defined]
                 functions.append(i)
             else:
                 args = [annotations[j] for j in mspec.args[1:]]
                 ret = annotations.get("return", None)
-                cls.addMethod(i.__name__, ret, args, exceptions, i.__jmodifiers__)
+                cls.addMethod(i.__name__, ret, args, exceptions, i.__jmodifiers__) # type: ignore[attr-defined]
                 functions.append(i)
             try:
                 members.pop(i.__name__)
