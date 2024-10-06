@@ -24,7 +24,7 @@ __all__ = ['JClass', 'JInterface', 'JOverride', 'JPublic', 'JProtected',
         'JPrivate', 'JStatic', 'JThrows']
 
 
-def _get_annotations(target, /, globals=None, locals=None):
+def _get_annotations(target, globals, locals):
     # this isn't as straightforward as you might expect since our class hasn't been created yet
     if isinstance(target, _JClassTable):
         ann = target.get("__annotations__", {})
@@ -32,8 +32,6 @@ def _get_annotations(target, /, globals=None, locals=None):
         ann = getattr(target, "__annotations__", {})
     if not ann:
         return ann
-    if not globals and inspect.isfunction(target):
-        globals = getattr(target, '__globals__', None)
     return {
         key: value if not isinstance(value, str) else eval(value, globals, locals)
         for key, value in ann.items()
@@ -57,7 +55,7 @@ class _JFieldDecl(object):
         return "Field(%s,%s)" % (self.cls.__name__, self.name)
 
 
-def _JMemberDecl(nonlocals, target, strict, modifiers, locals, **kwargs):
+def _JMemberDecl(nonlocals, target, strict, modifiers, locals, globals, **kwargs):
     """Generic annotation to pass to the code generator.
     """
     if not "__jspec__" in nonlocals:
@@ -79,8 +77,11 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, locals, **kwargs):
             out.append(var)
         return out
 
+    if isinstance(target, classmethod):
+        target = target.__func__
+
     if isinstance(target, type(_JMemberDecl)):
-        annotations = _get_annotations(target, locals=locals)
+        annotations = _get_annotations(target, globals, locals)
         args = inspect.getfullargspec(target).args
 
         # Verify the requirements for arguments are met
@@ -88,7 +89,7 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, locals, **kwargs):
         if strict:
             if len(args) < 1:
                 raise TypeError("Methods require this argument")
-            if args[0] not in ("self", "this"):
+            if args[0] not in ("self", "cls", "this"):
                 raise TypeError("Methods first argument must be this")
 
             # All other arguments must be annotated as JClass types
@@ -99,9 +100,7 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, locals, **kwargs):
                     raise TypeError("Method arguments must be Java classes")
 
             if target.__name__ != "__init__":
-                if "return" not in annotations:
-                    raise TypeError("Return specification required")
-                if not isinstance(annotations["return"], (_jpype.JClass, type(None))):
+                if not isinstance(annotations.get("return", None), (_jpype.JClass, type(None))):
                     raise TypeError("Return type must be Java type")
 
         # Place in the Java spec list
@@ -120,13 +119,19 @@ class _JModifier:
     modifier: int
 
     def __new__(cls, target, **kwargs):
+        modifier = cls.modifier
         if hasattr(target, '__jmodifiers__'):
-            target.__jmodifiers__ |= cls.modifier
+            target.__jmodifiers__ |= modifier
             return target
+        elif isinstance(target, classmethod):
+            target = target.__func__
+            modifier |= JStatic.modifier
 
         nonlocals = inspect.stack()[1][0].f_locals
-        locals = inspect.stack()[2][0].f_locals
-        return _JMemberDecl(nonlocals, target, True, cls.modifier, locals, **kwargs)
+        frame = inspect.stack()[2][0]
+        locals = frame.f_locals
+        globals = frame.f_globals
+        return _JMemberDecl(nonlocals, target, True, modifier, locals, globals, **kwargs)
 
     def __class_getitem__(cls, key):
         if isinstance(key, _JFieldDecl):
@@ -175,7 +180,9 @@ def JOverride(*target, sticky=False, rename=None, **kwargs):
 
     """
     nonlocals = inspect.stack()[1][0].f_locals
-    locals = inspect.stack()[2][0].f_locals
+    frame = inspect.stack()[2][0]
+    locals = frame.f_locals
+    globals = frame.f_globals
     if len(target) == 0:
         overrides = {}
         if kwargs:
@@ -186,10 +193,10 @@ def JOverride(*target, sticky=False, rename=None, **kwargs):
             overrides["rename"] = rename
 
         def deferred(method):
-            return _JMemberDecl(nonlocals, method, False, None, locals, __joverride__=overrides)
+            return _JMemberDecl(nonlocals, method, False, None, locals, globals, __joverride__=overrides)
         return deferred
     if len(target) == 1:
-        return _JMemberDecl(nonlocals, *target, False, None, locals, __joverride__={})
+        return _JMemberDecl(nonlocals, *target, False, None, locals, globals, __joverride__={})
     raise TypeError("JOverride can only have one argument")
 
 
@@ -427,7 +434,7 @@ def _JExtension(name, bases, members: _JClassTable):
                 functions.append(i)
             else:
                 args = [annotations[j] for j in mspec.args[1:]]
-                ret = annotations["return"]
+                ret = annotations.get("return", None)
                 cls.addMethod(i.__name__, ret, args, exceptions, i.__jmodifiers__)
                 functions.append(i)
             try:

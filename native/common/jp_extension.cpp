@@ -18,17 +18,26 @@
 #include "jpype.h"
 #include "jp_extension.hpp" // IWYU pragma: keep
 
-static JPPyObject packArgs(JPExtensionType *cls, const JPMethodOverride &method, jobjectArray args)
+static JPPyObject packArgs(JPExtensionType &cls, const JPMethodOverride &method, jobjectArray args)
 {
 	JP_TRACE_IN("JProxy::getArgs");
-	JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
+	JPJavaFrame frame = JPJavaFrame::outer(cls.getContext());
 	const size_t argLen = method.paramTypes.size() + 1;
 	JPPyObject pyargs = JPPyObject::call(PyTuple_New(argLen));
 
-	for (jsize i = 0; i < argLen; i++)
-	{
+	// NOTE: we will always have at least one argument (cls or self)
+
+	jobject obj = frame.GetObjectArrayElement(args, 0);
+	if (cls == obj) {
+		PyTuple_SetItem(pyargs.get(), 0, JPPyObject::use((PyObject*)cls.getHost()).keep());
+	} else {
+		JPValue val = cls.getValueFromObject(JPValue(&cls, obj));
+		PyTuple_SetItem(pyargs.get(), 0, cls.convertToPythonObject(frame, val, false).keep());
+	}
+
+	for (jsize i = 1; i < argLen; i++) {
 		jobject obj = frame.GetObjectArrayElement(args, i);
-		JPClass *type = i > 0 ? const_cast<JPClass*>(method.paramTypes[i-1]) : cls;
+		JPClass *type = const_cast<JPClass*>(method.paramTypes[i-1]);
 		JPValue val = type->getValueFromObject(JPValue(type, obj));
 		PyTuple_SetItem(pyargs.get(), i, type->convertToPythonObject(frame, val, false).keep());
 	}
@@ -64,7 +73,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__1call(
 
 			// convert the arguments into a python list
 			JP_TRACE("Convert arguments");
-			JPPyObject pyargs = packArgs(cls, method, args);
+			JPPyObject pyargs = packArgs(*cls, method, args);
 
 			// Copy the privilege flags into the first argument
 			// FIXME how should this be stored.

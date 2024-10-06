@@ -24,6 +24,9 @@ public:
 		return m_Overrides;
 	}
 	void setOverrides(PyObject *args);
+	bool operator==(jobject obj) const {
+		return m_Context->getEnv()->IsSameObject(obj, getJavaClass());
+	}
 private:
 	JPMethodOverrideList m_Overrides{};
 };

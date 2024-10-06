@@ -353,8 +353,28 @@ class JExtensionTestCase(common.JPypeTestCase):
 
             @JPrivate
             @JStatic
-            def private_method(self, v: JInt) -> JObject:
-                return self
+            def private_method(cls, v: JInt):
+                self.assertIs(cls, MyObject)
+
+            def call_private_method(self):
+                return self.private_method(0)
+
+        o = MyObject()
+        o.call_private_method()
+
+    def testPrivateStaticMethodFromClassmethod(self):
+        # FIXME: bytecode verification error
+        # forgot to handle static methods in class generation
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPrivate
+            @classmethod
+            def private_method(cls, v: JInt):
+                self.assertIs(cls, MyObject)
 
             def call_private_method(self):
                 return self.private_method(0)
