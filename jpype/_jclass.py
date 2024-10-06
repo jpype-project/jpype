@@ -24,6 +24,22 @@ __all__ = ['JClass', 'JInterface', 'JOverride', 'JPublic', 'JProtected',
         'JPrivate', 'JStatic', 'JThrows']
 
 
+def _get_annotations(target, /, globals=None, locals=None):
+    # this isn't as straightforward as you might expect since our class hasn't been created yet
+    if isinstance(target, _JClassTable):
+        ann = target.get("__annotations__", {})
+    else:
+        ann = getattr(target, "__annotations__", {})
+    if not ann:
+        return ann
+    if not globals and inspect.isfunction(target):
+        globals = getattr(target, '__globals__', None)
+    return {
+        key: value if not isinstance(value, str) else eval(value, globals, locals)
+        for key, value in ann.items()
+    }
+
+
 class _JFieldDecl(object):
     '''
     def __init__(self, cls, name, value, modifiers):
@@ -41,7 +57,7 @@ class _JFieldDecl(object):
         return "Field(%s,%s)" % (self.cls.__name__, self.name)
 
 
-def _JMemberDecl(nonlocals, target, strict, modifiers, **kwargs):
+def _JMemberDecl(nonlocals, target, strict, modifiers, locals, **kwargs):
     """Generic annotation to pass to the code generator.
     """
     if not "__jspec__" in nonlocals:
@@ -64,8 +80,8 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, **kwargs):
         return out
 
     if isinstance(target, type(_JMemberDecl)):
-        spec = inspect.getfullargspec(target)
-        args = spec.args
+        annotations = _get_annotations(target, locals=locals)
+        args = inspect.getfullargspec(target).args
 
         # Verify the requirements for arguments are met
         # Must have a this argument first
@@ -77,15 +93,15 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, **kwargs):
 
             # All other arguments must be annotated as JClass types
             for i in range(1, len(args)):
-                if not args[i] in spec.annotations:
+                if not args[i] in annotations:
                     raise TypeError("Methods types must have specifications")
-                if not isinstance(spec.annotations[args[i]], _jpype.JClass):
+                if not isinstance(annotations[args[i]], _jpype.JClass):
                     raise TypeError("Method arguments must be Java classes")
 
             if target.__name__ != "__init__":
-                if "return" not in spec.annotations:
+                if "return" not in annotations:
                     raise TypeError("Return specification required")
-                if not isinstance(spec.annotations["return"], (_jpype.JClass, type(None))):
+                if not isinstance(annotations["return"], (_jpype.JClass, type(None))):
                     raise TypeError("Return type must be Java type")
 
         # Place in the Java spec list
@@ -108,9 +124,9 @@ class _JModifier:
             target.__jmodifiers__ |= cls.modifier
             return target
 
-        stack = inspect.stack()[1][0]
-        nonlocals = stack.f_locals
-        return _JMemberDecl(nonlocals, target, True, cls.modifier, **kwargs)
+        nonlocals = inspect.stack()[1][0].f_locals
+        locals = inspect.stack()[2][0].f_locals
+        return _JMemberDecl(nonlocals, target, True, cls.modifier, locals, **kwargs)
 
     def __class_getitem__(cls, key):
         if isinstance(key, _JFieldDecl):
@@ -159,6 +175,7 @@ def JOverride(*target, sticky=False, rename=None, **kwargs):
 
     """
     nonlocals = inspect.stack()[1][0].f_locals
+    locals = inspect.stack()[2][0].f_locals
     if len(target) == 0:
         overrides = {}
         if kwargs:
@@ -169,10 +186,10 @@ def JOverride(*target, sticky=False, rename=None, **kwargs):
             overrides["rename"] = rename
 
         def deferred(method):
-            return _JMemberDecl(nonlocals, method, False, None, __joverride__=overrides)
+            return _JMemberDecl(nonlocals, method, False, None, locals, __joverride__=overrides)
         return deferred
     if len(target) == 1:
-        return _JMemberDecl(nonlocals, *target, False, None, __joverride__={})
+        return _JMemberDecl(nonlocals, *target, False, None, locals, __joverride__={})
     raise TypeError("JOverride can only have one argument")
 
 
@@ -378,6 +395,12 @@ def _jclassDoc(cls):
 
 class _JClassTable(dict):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        frame = inspect.stack()[1][0]
+        self.locals = frame.f_locals
+        self.globals = frame.f_globals
+
     def __setitem__(self, key, value):
         # FIXME need to create a method dispatch for calling from python
         mods = "__jmodifiers__"
@@ -385,7 +408,7 @@ class _JClassTable(dict):
             dict.__setitem__(self, key, value)
 
 
-def _JExtension(name, bases, members):
+def _JExtension(name, bases, members: _JClassTable):
     if "__jspec__" not in members:
         raise TypeError("Java classes cannot be extended in Python")
     jspec = members['__jspec__']
@@ -397,13 +420,14 @@ def _JExtension(name, bases, members):
         if isinstance(i, type(_JExtension)):
             exceptions = getattr(i, '__jthrows__', None)
             mspec = inspect.getfullargspec(i)
+            annotations = _get_annotations(i, members.globals, members.locals)
             if i.__name__ == "__init__":
-                args = [mspec.annotations[j] for j in mspec.args[1:]]
+                args = [annotations[j] for j in mspec.args[1:]]
                 cls.addCtor(args, exceptions, i.__jmodifiers__)
                 functions.append(i)
             else:
-                args = [mspec.annotations[j] for j in mspec.args[1:]]
-                ret = mspec.annotations["return"]
+                args = [annotations[j] for j in mspec.args[1:]]
+                ret = annotations["return"]
                 cls.addMethod(i.__name__, ret, args, exceptions, i.__jmodifiers__)
                 functions.append(i)
             try:
@@ -413,7 +437,7 @@ def _JExtension(name, bases, members):
         else:
             raise TypeError("Unknown member %s" % type(i))
 
-    for k, v in members.get("__annotations__", {}).items():
+    for k, v in _get_annotations(members, members.globals, members.locals).items():
         # TODO: check for typing.ClassVar for static fields
         if isinstance(v, _JFieldDecl):
             cls.addField(v.cls, k, members.pop(k, None), v.modifiers)

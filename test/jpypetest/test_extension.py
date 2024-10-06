@@ -15,6 +15,7 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+from __future__ import annotations
 import common
 import jpype
 from jpype._jclass import *
@@ -66,7 +67,11 @@ class JExtensionTestCase(common.JPypeTestCase):
             def __init__(self):
                 self.initCount += 1
 
-        o = MyObject()
+            @JPublic
+            def get_self(self) -> JObject:
+                return self
+
+        o = MyObject().get_self()
         # once in TestBase constructor, then in the __init__ callback from constructor
         # then again when the Python __init__ is called
         self.assertEqual(o.initCount, 3)

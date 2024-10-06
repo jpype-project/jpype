@@ -5,6 +5,7 @@
 #include "jp_method.h"
 #include "pyjp.h"
 
+#include <pyconfig.h>
 #include <type_traits>
 
 /*
@@ -43,11 +44,11 @@ bool canAccess(JPJavaFrame &jframe, const T &member) {
 	JPPyObject frame = JPPyObject::accept((PyObject*)PyThreadState_GetFrame(state));
 	JPPyObject locals = JPPyObject::accept(PyFrame_GetLocals((PyFrameObject*)frame.get()));
 
-	PyObject *obj = PyDict_GetItemString(locals.get(), "self");
+	PyObject *obj = PyMapping_GetItemString(locals.get(), "self");
 	if (obj != nullptr) {
 		obj = (PyObject *) Py_TYPE(obj);
 	} else {
-		obj = PyDict_GetItemString(locals.get(), "cls");
+		obj = PyMapping_GetItemString(locals.get(), "cls");
 	}
 
 	if (obj == nullptr) {
