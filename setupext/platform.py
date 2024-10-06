@@ -57,7 +57,7 @@ def Platform(*, include_dirs: typing.Sequence[Path], sources: typing.Sequence[Pa
 
     platform_specific['extra_link_args'] = []
     distutils.log.info("Configure platform to", platform)
-    cpp_std = "c++11"
+    cpp_std = "c++17"
     gcc_like_cflags = ['-g0', f'-std={cpp_std}', '-O2']
 
     if platform == 'win32':
@@ -65,7 +65,7 @@ def Platform(*, include_dirs: typing.Sequence[Path], sources: typing.Sequence[Pa
         platform_specific['define_macros'] = [('WIN32', 1)]
         if sys.version > '3':
             platform_specific['extra_compile_args'] = [
-                '/Zi', '/EHsc', f'/std:c++14']
+                '/Zi', '/EHsc', f'/std:c++17']
         else:
             platform_specific['extra_compile_args'] = ['/Zi', '/EHsc']
         jni_md_platform = 'win32'
@@ -92,7 +92,7 @@ def Platform(*, include_dirs: typing.Sequence[Path], sources: typing.Sequence[Pa
     elif platform.startswith('freebsd'):
         distutils.log.info("Add freebsd settings")
         jni_md_platform = 'freebsd'
-     
+
     elif platform.startswith('openbsd'):
         distutils.log.info("Add openbsd settings")
         jni_md_platform = 'openbsd'
