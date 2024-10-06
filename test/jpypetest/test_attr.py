@@ -17,8 +17,6 @@
 # *****************************************************************************
 import jpype
 from jpype import JString, java, JArray, JClass
-import sys
-import time
 import common
 
 
@@ -133,11 +131,7 @@ class AttributeTestCase(common.JPypeTestCase):
 
     def testCallWithLong(self):
         h = JClass('jpype.attr.Test1')()
-        if sys.version > '3':
-            l = int(123)
-        else:
-            l = long(123)
-
+        l = int(123)
         h.setByte(l)
         self.assertEqual(l, h.mByteValue)
         h.setShort(l)
@@ -149,11 +143,7 @@ class AttributeTestCase(common.JPypeTestCase):
 
     def testCallWithBigLong(self):
         h = JClass('jpype.attr.Test1')()
-        if sys.version > '3':
-            l = int(4398046511103)
-        else:
-            l = long(4398046511103)
-
+        l = int(4398046511103)
         self.assertRaises(OverflowError, h.setByte, l)
         self.assertRaises(OverflowError, h.setShort, l)
         self.assertRaises(OverflowError, h.setInt, l)
@@ -162,11 +152,7 @@ class AttributeTestCase(common.JPypeTestCase):
 
     def testCallWithBigInt(self):
         h = JClass('jpype.attr.Test1')()
-        if sys.version > '3' or sys.maxint > 2**31:
-            l = int(4398046511103)
-        else:
-            l = long(4398046511103)
-
+        l = int(4398046511103)
         self.assertRaises(OverflowError, h.setByte, l)
         self.assertRaises(OverflowError, h.setShort, l)
         self.assertRaises(OverflowError, h.setInt, l)
@@ -185,16 +171,10 @@ class AttributeTestCase(common.JPypeTestCase):
         self.assertEqual(True, h.mBooleanValue)
         h.setBoolean(0)
         self.assertEqual(False, h.mBooleanValue)
-        if sys.version > '3':
-            l = int(4398046511103)
-        else:
-            l = long(4398046511103)
+        l = int(4398046511103)
         h.setBoolean(l)
         self.assertEqual(True, h.mBooleanValue)
-        if sys.version > '3':
-            l = int(0)
-        else:
-            l = long(0)
+        l = int(0)
         h.setBoolean(l)
         self.assertEqual(False, h.mBooleanValue)
 
@@ -207,10 +187,7 @@ class AttributeTestCase(common.JPypeTestCase):
         h.charValue = u'b'
 
         self.assertEqual(h.charValue, 'b')
-        if sys.version < '3':
-            exp_repr = "u'b'"
-        else:
-            exp_repr = "'b'"
+        exp_repr = "'b'"
         self.assertEqual(repr(h.charValue), exp_repr)
 
     def testGetPrimitiveType(self):
