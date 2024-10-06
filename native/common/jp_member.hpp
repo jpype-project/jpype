@@ -35,27 +35,25 @@ bool canAccess(JPJavaFrame &jframe, const T &member) {
 	if (member.isPublic()) {
 		return true;
 	}
-#if PY_MINOR_VERSION<11
-	// FIXME
-	return true;
-#endif
 
-	PyThreadState *state = PyThreadState_Get();
-	JPPyObject frame = JPPyObject::accept((PyObject*)PyThreadState_GetFrame(state));
-	JPPyObject locals = JPPyObject::accept(PyFrame_GetLocals((PyFrameObject*)frame.get()));
-
-	PyObject *obj = PyMapping_GetItemString(locals.get(), "self");
-	if (obj != nullptr) {
-		obj = (PyObject *) Py_TYPE(obj);
-	} else {
-		obj = PyMapping_GetItemString(locals.get(), "cls");
-	}
-
-	if (obj == nullptr) {
+	PyObject *locals = PyEval_GetLocals();
+	if (locals == nullptr) {
+		// access denied
 		return false;
 	}
 
-	JPClass *cls = PyJPClass_getJPClass(obj);
+	JPPyObject obj = JPPyObject::call(PyMapping_GetItemString(locals, "self"));
+	if (obj.get() != nullptr) {
+		obj = JPPyObject::use((PyObject *) Py_TYPE(obj.get()));
+	} else {
+		obj = JPPyObject::call(PyMapping_GetItemString(locals, "cls"));
+	}
+
+	if (obj.isNull()) {
+		return false;
+	}
+
+	JPClass *cls = PyJPClass_getJPClass(obj.get());
 	if (cls == nullptr) {
 		return false;
 	}
