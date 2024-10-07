@@ -189,7 +189,11 @@ class JExtensionTestCase(common.JPypeTestCase):
             def __init__(self):
                 ...
 
-        o = MyObject()
+            @JPublic
+            def get_self(self) -> JObject:
+                return self
+
+        o = MyObject().get_self()
         self.assertEqual(o.a, 0)
         self.assertEqual(o.b, 1)
 
