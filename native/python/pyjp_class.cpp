@@ -747,8 +747,15 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 
 	if (self->m_Class == NULL)
 	{
-		PyErr_Format(PyExc_TypeError, "Cannot instantiate unspecified array type");
-		return NULL;
+		// This is only reachable through an internal Jpype type that doesn't have a
+		// Java class equivalent such as JArray.
+		// __getitem__ takes precedence over __class_getitem__ which forces us through
+		// this path.
+		// If __class_getitem__ is not implemented in this class, the raised AttributeError
+		// will make its way back to Python.
+		PyObject *res = PyObject_CallMethod((PyObject *)self, "__class_getitem__", "O", item);
+		Py_DECREF(item);
+		return res;
 	}
 
 	if (PyIndex_Check(item))
