@@ -124,7 +124,7 @@ def _handleClassPath(
     """
     Return a classpath which represents the given tuple of classpath specifications
     """
-    out = []
+    out: list[str] = []
     if classpath is None:
         return out
     if isinstance(classpath, (str, os.PathLike)):
