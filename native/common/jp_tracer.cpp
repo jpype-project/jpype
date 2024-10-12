@@ -150,7 +150,7 @@ void JPypeTracer::tracePythonObject(const char* msg, PyObject* ref)
 	if (ref != nullptr)
 	{
 		std::stringstream str;
-		str << msg << " " << (void*) ref << " " << ref->ob_refcnt << " " << Py_TYPE(ref)->tp_name;
+		str << msg << " " << (void*) ref << " " << Py_REFCNT(ref) << " " << Py_TYPE(ref)->tp_name;
 		JPypeTracer::trace1("PY", str.str().c_str());
 
 	} else

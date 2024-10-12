@@ -737,6 +737,9 @@ PyMODINIT_FUNC PyInit__jpype()
 	// PyJPModule = module;
 	Py_INCREF(module);
 	PyJPModule = module;
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
+#endif
 	PyModule_AddStringConstant(module, "__version__", "1.5.1_dev0");
 
 	// Our module will be used for PyFrame object and it is a requirement that
