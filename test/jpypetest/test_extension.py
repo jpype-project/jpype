@@ -509,3 +509,23 @@ class JExtensionTestCase(common.JPypeTestCase):
                 @JOverride
                 def toString(self) -> String:
                     return "fail"
+
+    def testThrows(self):
+        from java.lang import Object, UnsupportedOperationException, IllegalArgumentException
+        from java.lang import IllegalCallerException, Throwable, RuntimeException
+        class MyClass(Object):
+
+            @JPublic
+            @JThrows(UnsupportedOperationException, IllegalArgumentException)
+            @JThrows(IllegalCallerException)
+            @JThrows(Throwable, RuntimeException)
+            def __init__(self):
+                ...
+
+        ctor = MyClass.class_.getDeclaredConstructors()[0]
+        exceptions = (
+            UnsupportedOperationException, IllegalArgumentException,
+            IllegalCallerException,
+            Throwable, RuntimeException
+        )
+        self.assertEqual(tuple(ctor.getExceptionTypes()), exceptions)

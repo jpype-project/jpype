@@ -165,7 +165,10 @@ def JThrows(*args):
             raise TypeError("JThrows requires Java exception arguments")
 
     def deferred(target):
-        object.__setattr__(target, '__jthrows__', args)
+        throws = getattr(target, '__jthrows__', tuple())
+        # decorators are processed lifo
+        # preserve the order in which they were added
+        object.__setattr__(target, '__jthrows__', (*args, *throws))
         return target
     return deferred
 
