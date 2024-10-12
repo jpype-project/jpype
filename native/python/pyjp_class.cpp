@@ -280,6 +280,9 @@ static void PyJPClass_hook_extends(JPJavaFrame &frame, JPClass &cls, PyObject *m
 		JPPyObject methodName(JPPyString::fromStringUTF8(m_Method->getName()));
 		PyDict_SetItem(members, methodName.get(), PyJPMethod_create(m_Method, nullptr).get());
 	}
+
+	JPValue value{frame.getContext()->_java_lang_Class, (jobject) cls.getJavaClass()};
+	PyJPValue_assignJavaSlot(frame, (PyObject*)cls.getHost(), value);
 }
 
 static int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)

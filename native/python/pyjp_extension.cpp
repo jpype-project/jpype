@@ -35,16 +35,16 @@ static JPMethodOverride createOverride(PyObject *def) {
 }
 
 void JPExtensionType::setOverrides(JPJavaFrame& frame, PyObject *args) {
-	if (m_instance == nullptr) {
+	if (m_Instance == nullptr) {
 		// This can't be done in the constructor because it will cause
 		// the Java class to be initialized (<cinit>). This will then cause the creation
 		// of another JPExtensionType whose overrides never get set and that JPExtensionType
 		// ends up cached by jpype. At the point that setOverrides is called, the correct
 		// JPExtensionType has already been cached and it is safe to get the field id.
 		if (m_SuperClass != nullptr && m_SuperClass->isExtension()) {
-			m_instance = static_cast<JPExtensionType*>(m_SuperClass)->m_instance;
+			m_Instance = static_cast<JPExtensionType*>(m_SuperClass)->m_Instance;
 		} else {
-			m_instance = frame.GetFieldID(m_Class.get(), "$instance", "J");
+			m_Instance = frame.GetFieldID(m_Class.get(), "$instance", "J");
 		}
 	}
 
@@ -65,7 +65,7 @@ JPPyObject JPExtensionType::convertToPythonObject(JPJavaFrame& frame, jvalue val
 	(void) cast;
 
 	jobject obj = val.l;
-	PyObject *instance = (PyObject *)frame.GetLongField(obj, m_instance);
+	PyObject *instance = (PyObject *)frame.GetLongField(obj, m_Instance);
 	if (instance == nullptr) {
 		// this is the first access when calling a python implemented constructor
 		// this cannot be done in newInstance or we will have to deal with it being
@@ -77,7 +77,7 @@ JPPyObject JPExtensionType::convertToPythonObject(JPJavaFrame& frame, jvalue val
 		JPValue jv{this, obj};
 		PyJPValue_assignJavaSlot(frame, instance, jv);
 
-		frame.SetLongField(obj, m_instance, (jlong)instance);
+		frame.SetLongField(obj, m_Instance, (jlong)instance);
 		frame.registerRef(obj, instance);
 		return res;
 	}

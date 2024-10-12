@@ -33,9 +33,9 @@ public:
 	}
 	JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args) override;
 	PyObject *getPythonObject(JPJavaFrame& frame, JPValue &jv) const {
-		return (PyObject *)frame.GetLongField(jv.getValue().l, m_instance);
+		return (PyObject *)frame.GetLongField(jv.getValue().l, m_Instance);
 	}
 private:
 	JPMethodOverrideList m_Overrides{};
-	jfieldID m_instance{};
+	jfieldID m_Instance{};
 };

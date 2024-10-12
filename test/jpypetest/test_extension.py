@@ -40,6 +40,17 @@ class JExtensionTestCase(common.JPypeTestCase):
 
         self.assertIsInstance(MyObject(), MyObject)
 
+    def testClassAttribute(self):
+        from java.lang import Class, Object
+        class MyObject(Object):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+        self.assertIsInstance(MyObject.class_, Class)
+        self.assertIs(MyObject, JClass(MyObject))
+
     def testSameObject(self):
         from java.lang import Object
         class MyObject(Object):
@@ -202,6 +213,29 @@ class JExtensionTestCase(common.JPypeTestCase):
                 return self
 
         o = MyObject()
+        o2 = o.get_self()
+        self.assertIs(o, o2)
+        self.assertEqual(o.a, 0)
+        self.assertEqual(o.b, 1)
+
+
+    def testConstructFromJava(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            def __init__(self):
+                self.a = 0
+                self.b = 1
+
+            @JPublic
+            def __init__(self):
+                # caveat Python __init__ isn't called when constructed from Java
+                self.__init__()
+
+            @JPublic
+            def get_self(self) -> JObject:
+                return self
+
+        o = MyObject.class_.newInstance()
         o2 = o.get_self()
         self.assertIs(o, o2)
         self.assertEqual(o.a, 0)
