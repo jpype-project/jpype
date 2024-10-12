@@ -135,6 +135,34 @@ class ProxyTestCase(common.JPypeTestCase):
             def testMethod1(self):
                 pass
 
+    def testDefault1(self):
+        itf1 = self.package.TestInterface1
+
+        @JImplements(itf1)
+        class MyImpl(object):
+            @JOverride
+            def testMethod1(self):
+                pass
+
+        obj = itf1@MyImpl()
+        self.assertEqual(obj.testDefault(), 1234)
+
+    def testDefault2(self):
+        itf1 = self.package.TestInterface1
+
+        @JImplements(itf1)
+        class MyImpl(object):
+            @JOverride
+            def testMethod1(self):
+                pass
+
+            @JOverride
+            def testDefault(self):
+                return 5678
+
+        obj = itf1@MyImpl()
+        self.assertEqual(obj.testDefault(), 5678)
+
     def testProxyImplementsForm2(self):
         itf1 = self.package.TestInterface1
         itf2 = self.package.TestInterface2
@@ -560,3 +588,5 @@ class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):
 
         startJVM()
         assert isinstance(MyImpl(), MyImpl)
+
+    

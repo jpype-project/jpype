@@ -7,6 +7,8 @@ Latest Changes:
 
 - **1.5.1_dev0 - 2023-12-15**
 
+  - Allow access to default methods implemented in interfaces when using ``@JImplements``.
+
   - Added support for typing ``JArray`` (Java type only), e.g. ``JArray[java.lang.Object]`` ``"JArray[java.lang.Object]"``
 
   - Fixed uncaught exception while setting traceback causing issues in Python 3.11/3.12.
