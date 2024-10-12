@@ -134,6 +134,11 @@ public:
 	{
 	}
 
+	JPPyObject(JPPyObject &&rhs) noexcept : m_PyObject(rhs.m_PyObject)
+	{
+		rhs.m_PyObject = nullptr;
+	}
+
 	JPPyObject(const JPPyObject &self);
 
 	~JPPyObject();

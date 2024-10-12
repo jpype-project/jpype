@@ -20,7 +20,7 @@
 #include "jp_boxedtype.h"
 #include "jp_functional.h"
 
-JPPyObject getArgs(JPContext* context, jlongArray parameterTypePtrs,
+static JPPyObject getArgs(JPContext* context, jlongArray parameterTypePtrs,
 		jobjectArray args)
 {
 	JP_TRACE_IN("JProxy::getArgs");
@@ -52,6 +52,9 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 		jlongArray parameterTypePtrs,
 		jobjectArray args)
 {
+	(void) clazz;
+	(void) hostObj;
+	(void) returnTypePtr;
 	auto* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 
@@ -167,7 +170,7 @@ JPProxy::JPProxy(JPContext* context, PyJPProxy* inst, JPClassList& intf)
 			m_Context->_java_lang_Class->getJavaClass(), nullptr);
 	for (unsigned int i = 0; i < intf.size(); i++)
 	{
-		frame.SetObjectArrayElement(ar, i, intf[i]->getJavaClass());
+		frame.SetObjectArrayElement(ar, (jsize)i, intf[i]->getJavaClass());
 	}
 	jvalue v[4];
 	v[0].l = m_Context->getJavaContext();

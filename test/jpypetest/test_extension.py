@@ -40,6 +40,20 @@ class JExtensionTestCase(common.JPypeTestCase):
 
         self.assertIsInstance(MyObject(), MyObject)
 
+    def testSameObject(self):
+        from java.lang import Object
+        class MyObject(Object):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            def get_self(self) -> Object:
+                return self
+
+        obj = MyObject()
+        self.assertIs(obj, obj.get_self())
+
     def testAddedMethod(self):
         from java.lang import Object
         class MyObject(Object):
@@ -53,7 +67,7 @@ class JExtensionTestCase(common.JPypeTestCase):
                 return self
 
         o = MyObject()
-        self.assertEqual(o.func(), o)
+        self.assertIs(o.func(), o)
 
     def testInitOnce(self):
         TestBase = JClass("jpype.extension.TestBase")
@@ -167,15 +181,9 @@ class JExtensionTestCase(common.JPypeTestCase):
                 return super(TestBase, self)
 
         o = MyObject()
-        value = o.get_super()
-        explicit = o.get_explicit_super()
-        print(value)
-        print(explicit)
-        sentinel = JObject()
-        # NOTE: when the java object comes back it gets a new python object
-        # this will cause 'is' to fail so assertEqual is used instead
-        self.assertEqual(o.test_identity(sentinel), sentinel)
-        self.assertEqual(o.super_identity(sentinel), sentinel)
+        sentinel = MyObject()
+        self.assertIs(o.test_identity(sentinel), sentinel)
+        self.assertIs(o.super_identity(sentinel), sentinel)
 
 
     def testPythonMembers(self):
@@ -193,7 +201,9 @@ class JExtensionTestCase(common.JPypeTestCase):
             def get_self(self) -> JObject:
                 return self
 
-        o = MyObject().get_self()
+        o = MyObject()
+        o2 = o.get_self()
+        self.assertIs(o, o2)
         self.assertEqual(o.a, 0)
         self.assertEqual(o.b, 1)
 

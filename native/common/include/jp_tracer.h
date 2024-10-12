@@ -87,7 +87,7 @@ public:
 	static void tracePythonObject(const char *msg, PyObject *ref);
 	static void traceLocks(const string& msg, void *ref);
 
-	static void trace1(const char *src, const char *msg);
+	static void trace1(const char *source, const char *msg);
 	static void trace2(const char *msg1, const char *msg2);
 private:
 	static void traceIn(const char *msg, void *ref);

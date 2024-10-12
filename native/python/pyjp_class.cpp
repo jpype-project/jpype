@@ -318,10 +318,11 @@ static int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 		// set host early to prevent double creation
 		cls->setHost(self);
-		cls->setOverrides(PyTuple_GetItem(tmp.get(), 1));
+
 		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
 
 		// fill out the Java class members
+		cls->setOverrides(frame, PyTuple_GetItem(tmp.get(), 1));
 		cls->ensureMembers(frame);
 
 		// finish setting members in our Python class that got skipped due to the host being set

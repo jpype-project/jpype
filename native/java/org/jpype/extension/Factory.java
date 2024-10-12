@@ -51,8 +51,12 @@ public class Factory {
 	private static final String CALL_DESCRIPTOR = "(JJ[Ljava/lang/Object;)Ljava/lang/Object;";
 	private static final String FIND_CLASS_DESCRIPTOR = "(Ljava/lang/Class;)J";
 	private static final String JCLASS_FIELD = "$jclass";
+	private static final String INSTANCE_FIELD = "$instance";
 
 	public static boolean isExtension(Class<?> cls) {
+		if (cls == null) {
+			return false;
+		}
 		try {
 			Field[] fields = cls.getDeclaredFields();
 			if (fields.length < 1) {
@@ -202,6 +206,17 @@ public class Factory {
 			null,
 			null
 		);
+
+		if (!isExtension(decl.base)) {
+			// create a private field to hold the pointer to our Python object
+			cw.visitField(
+				Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL,
+				INSTANCE_FIELD,
+				"J",
+				null,
+				null
+			);
+		}
 
 		// Implement fields
 		for (FieldDecl fdecl : decl.fields) {

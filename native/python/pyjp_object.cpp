@@ -13,6 +13,7 @@
 
    See NOTICE file for details.
  *****************************************************************************/
+#include "jp_extension.hpp"
 #include "jpype.h"
 #include "pyjp.h"
 
@@ -23,6 +24,7 @@ extern "C"
 
 static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *kwargs)
 {
+	(void) kwargs;
 	JP_PY_TRY("PyJPObject_new");
 	// Get the Java class from the type.
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
@@ -37,6 +39,12 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPPyObjectVector args(pyargs);
 	JPValue jv = cls->newInstance(frame, args);
+
+	if (cls->isExtension()) {
+		// extension allocates the wrapper when its Java constructor is called
+		// this allows it to be constructed from either Python or Java
+		return static_cast<JPExtensionType*>(cls)->getPythonObject(frame, jv);
+	}
 
 	// If it succeeded then allocate memory
 	PyObject *self = type->tp_alloc(type, 0);

@@ -22,7 +22,7 @@ static JPPyObject packArgs(JPExtensionType &cls, const JPMethodOverride &method,
 {
 	JP_TRACE_IN("JProxy::getArgs");
 	JPJavaFrame frame = JPJavaFrame::outer(cls.getContext());
-	const size_t argLen = method.paramTypes.size() + 1;
+	const Py_ssize_t argLen = (Py_ssize_t)method.paramTypes.size() + 1;
 	JPPyObject pyargs = JPPyObject::call(PyTuple_New(argLen));
 
 	// NOTE: we will always have at least one argument (cls or self)
@@ -31,11 +31,11 @@ static JPPyObject packArgs(JPExtensionType &cls, const JPMethodOverride &method,
 	if (cls == obj) {
 		PyTuple_SetItem(pyargs.get(), 0, JPPyObject::use((PyObject*)cls.getHost()).keep());
 	} else {
-		JPValue val = cls.getValueFromObject(JPValue(&cls, obj));
+		JPValue val{&cls, obj};
 		PyTuple_SetItem(pyargs.get(), 0, cls.convertToPythonObject(frame, val, false).keep());
 	}
 
-	for (size_t i = 1; i < argLen; i++) {
+	for (Py_ssize_t i = 1; i < argLen; i++) {
 		jobject obj = frame.GetObjectArrayElement(args, (jsize)i);
 		JPClass *type = const_cast<JPClass*>(method.paramTypes[i-1]);
 		JPValue val = type->getValueFromObject(JPValue(type, obj));
@@ -53,6 +53,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__1call(
 		jobjectArray args
 	)
 {
+	(void) clazz;
 	JPExtensionType *cls = (JPExtensionType *) contextPtr;
 	JPContext* context = cls->getContext();
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
@@ -67,7 +68,6 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__1call(
 			const JPMethodOverride &method = cls->getOverrides()[functionId];
 			// Find the return type
 
-			// why are these functions mutating it??????????
 			JPClass* returnClass = const_cast<JPClass*>(method.returnType);
 			JP_TRACE("Get return type", returnClass->getCanonicalName());
 
