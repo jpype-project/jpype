@@ -22,7 +22,7 @@
 
 static void assertValid(PyObject *obj)
 {
-	if (obj->ob_refcnt >= 1)
+	if (Py_REFCNT(obj) >= 1)
 		return;
 
 	// GCOVR_EXCL_START

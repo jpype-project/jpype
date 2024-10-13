@@ -68,6 +68,11 @@ def Platform(*, include_dirs: typing.Sequence[Path], sources: typing.Sequence[Pa
                 '/Zi', '/EHsc', f'/std:c++14']
         else:
             platform_specific['extra_compile_args'] = ['/Zi', '/EHsc']
+        if hasattr(sys, "_is_gil_enabled") and not sys._is_gil_enabled():
+            # running in free threaded build means build the free threaded one
+            # this is only neecessary for windows
+            platform_specific['define_macros'].append(('Py_GIL_DISABLED', '1'))
+
         jni_md_platform = 'win32'
 
     elif platform == 'darwin':
@@ -92,7 +97,7 @@ def Platform(*, include_dirs: typing.Sequence[Path], sources: typing.Sequence[Pa
     elif platform.startswith('freebsd'):
         distutils.log.info("Add freebsd settings")
         jni_md_platform = 'freebsd'
-     
+
     elif platform.startswith('openbsd'):
         distutils.log.info("Add openbsd settings")
         jni_md_platform = 'openbsd'
