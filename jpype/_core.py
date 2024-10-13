@@ -54,8 +54,8 @@ class JVMNotRunning(RuntimeError):
 
 # Activate jedi tab completion
 try:
-    from jedi import __version__ as _jedi_version
-    import jedi.access as _jedi_access
+    from jedi import __version__ as _jedi_version # type: ignore
+    import jedi.access as _jedi_access # type: ignore
     _jedi_access.ALLOWED_DESCRIPTOR_ACCESS += _jpype._JMethod, _jpype._JField
 except ModuleNotFoundError:
     pass
@@ -124,7 +124,7 @@ def _handleClassPath(
     """
     Return a classpath which represents the given tuple of classpath specifications
     """
-    out: typing.List[str] = []
+    out: list[str] = []
     if classpath is None:
         return out
     if isinstance(classpath, (str, os.PathLike)):
