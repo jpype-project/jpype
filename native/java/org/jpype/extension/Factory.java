@@ -31,6 +31,7 @@ import org.jpype.asm.ClassWriter;
 import org.jpype.asm.MethodVisitor;
 import org.jpype.asm.Opcodes;
 import org.jpype.asm.Type;
+import org.jpype.manager.ClassDescriptor;
 import org.jpype.manager.TypeManager;
 
 /**
@@ -68,8 +69,16 @@ public class Factory {
 		return false;
 	}
 
+	public static ClassLoader getNewExtensionClassLoader() {
+		return new ExtensionClassLoader();
+	}
+
 	public static boolean isExtensionField(Field field) {
-		return field != null && field.getName().equals(JCLASS_FIELD);
+		if (field == null) {
+			return false;
+		}
+		String name = field.getName();
+		return name.equals(JCLASS_FIELD) || name.equals(INSTANCE_FIELD);
 	}
 
 	//<editor-fold desc="hooks" defaultstate="collapsed">
@@ -86,13 +95,39 @@ public class Factory {
 	 * @param name is the name of the nee class.
 	 * @param bases is a list of the bases for this class containing no more than
 	 * one base class.
+	 * @param ldr the ExtensionClassLoader to use for the class or null for the builtin loader.
 	 * @return a new class declaration.
 	 */
-	public static ClassDecl newClass(String name, Class<?>[] bases) {
-		return new ClassDecl(name, bases);
+	public static ClassDecl newClass(String name, Class<?>[] bases, ExtensionClassLoader ldr) {
+		return new ClassDecl(name, bases, ldr);
 	}
 
 	public static long loadClass(ClassDecl decl) {
+		decl.internalName = "dynamic/" + decl.name.replace('.', '/');
+		try {
+			String name = decl.internalName.replace('/', '.');
+			Class<?> cls = Class.forName(name, false, decl.ldr);
+
+			// Oh joy, someone decided to use importlib.reload.
+			// While it is a niche edge case, we can and should
+			// handle it gracefully.
+
+			// To handle this, we get the existing JPClass, release
+			// the old host Python type and return the old JPClass.
+			// This allows a new Python type to be created and allows
+			// the old one float into the dark abyss.
+			// Whether or not it will see the light of day again
+			// depends on what references still exist and whoever decided
+			// to do this. It will most definetely leak something, probably,
+			// but if you didn't want a leak, then don't do that...
+
+			ClassDescriptor desc = JPypeContext.getInstance().getTypeManager().classMap.get(cls);
+			ExtensionClassLoader.clearHost(desc.classPtr);
+			return desc.classPtr;
+		} catch (ClassNotFoundException e) {
+			// not yet defined
+		}
+
 		Class<?> base = null;
 		List<Class<?>> interfaces = new ArrayList<>();
 
@@ -156,7 +191,8 @@ public class Factory {
 
 		try {
 			String name = decl.internalName.replace('/', '.');
-			Class<?> res = ExtensionClassLoader.instance.loadClass(name, out);
+			Class<?> res = decl.ldr.loadClass(name, out);
+			decl.ldr = null;
 			for (MethodDecl method : decl.methods) {
 				// resolve must occur AFTER class creation
 				method.resolve();
@@ -172,7 +208,6 @@ public class Factory {
 	static byte[] buildClass(ClassDecl cdecl) {
 		// Create the class
 		ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
-		cdecl.internalName = "dynamic/" + cdecl.name.replace('.', '/');
 		cw.visit(Opcodes.V1_7, Opcodes.ACC_PUBLIC, cdecl.internalName,
 			null,
 			Type.getInternalName(cdecl.base),

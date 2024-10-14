@@ -191,4 +191,15 @@ public interface TypeFactory
           long context,
           long[] resources, int sz);
 //</editor-fold>
+
+  /**
+   * Delete the resources, now.
+   *
+   * @param context JPContext object
+   * @param resources the resources to delete
+   * @param sz the length of the resources
+   */
+  void delete(
+        long context,
+        long[] resources, int sz);
 }

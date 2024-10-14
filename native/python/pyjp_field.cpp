@@ -17,6 +17,7 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_field.h"
+#include "pyjp_module.hpp"
 #include <string_view>
 
 struct PyJPField
@@ -31,7 +32,7 @@ static void PyJPField_dealloc(PyJPField *self)
 	Py_TYPE(self)->tp_free(self);
 }
 
-static PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
+static PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *)
 {
 	JP_PY_TRY("PyJPField_get");
 	JPContext *context = PyJPModule_getContext();
@@ -136,8 +137,8 @@ static PyObject *PyJPField_repr(PyJPField *self)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	return PyUnicode_FromFormat("<java field '%s' of '%s'>",
-			self->m_Field->getName().data(),
-			self->m_Field->getClass()->getCanonicalName().data()
+			self->m_Field->getName().c_str(),
+			self->m_Field->getClass()->getCanonicalName().c_str()
 			);
 	JP_PY_CATCH(nullptr);
 }
@@ -155,8 +156,8 @@ static PyType_Slot fieldSlots[] = {
 	{0}
 };
 
-PyTypeObject *PyJPField_Type = nullptr;
-PyType_Spec PyJPFieldSpec = {
+static PyTypeObject *PyJPField_Type = nullptr;
+static PyType_Spec PyJPFieldSpec = {
 	"_jpype._JField",
 	sizeof (PyJPField),
 	0,

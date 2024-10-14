@@ -113,7 +113,7 @@ JPPyObject::JPPyObject(const JPPyObject &self)
 	}
 }
 
-JPPyObject::~JPPyObject()
+JPPyObject::~JPPyObject() // NOLINT(bugprone-exception-escape)
 {
 	if (m_PyObject != nullptr)
 	{
@@ -125,16 +125,16 @@ JPPyObject::~JPPyObject()
 	}
 }
 
-JPPyObject& JPPyObject::operator=(const JPPyObject& self)
+JPPyObject& JPPyObject::operator=(const JPPyObject& rhs) // NOLINT(bugprone-unhandled-self-assignment)
 {
-	if (m_PyObject == self.m_PyObject)
+	if (m_PyObject == rhs.m_PyObject)
 		return *this;
 	if (m_PyObject != nullptr)
 	{
 		JP_TRACE_PY("pyref op=(dec)", m_PyObject);
 		decref();
 	}
-	m_PyObject = self.m_PyObject;
+	m_PyObject = rhs.m_PyObject;
 	if (m_PyObject != nullptr)
 	{
 		incref();
@@ -255,7 +255,7 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 		if (sz != 1)
 			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
-		jchar c = PyBytes_AsString(pyobj)[0];
+		jchar c = ((jchar*)PyBytes_AsString(pyobj))[0];
 		JP_PY_CHECK();
 		return c;
 	}
@@ -291,10 +291,8 @@ bool JPPyString::check(PyObject* obj)
  */
 JPPyObject JPPyString::fromStringUTF8(const std::string_view& str)
 {
-	auto len = static_cast<Py_ssize_t>(str.size());
-
 	// Python 3 is always unicode
-	JPPyObject bytes = JPPyObject::call(PyBytes_FromStringAndSize(str.data(), len));
+	JPPyObject bytes = JPPyObject::call(PyBytes_FromStringAndSize(str.data(), (Py_ssize_t)str.size()));
 	return JPPyObject::call(PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict"));
 }
 
@@ -386,30 +384,6 @@ void JPPyErr::restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JP
 	PyErr_Restore(exceptionClass.keepNull(), exceptionValue.keepNull(), exceptionTrace.keepNull());
 }
 
-JPPyCallAcquire::JPPyCallAcquire()
-{
-	m_State = (long) PyGILState_Ensure();
-}
-
-JPPyCallAcquire::~JPPyCallAcquire()
-{
-	PyGILState_Release((PyGILState_STATE) m_State);
-}
-
-// This is used when leaving python from to perform some
-
-JPPyCallRelease::JPPyCallRelease()
-{
-	// Release the lock and set the thread state to NULL
-	m_State1 = PyEval_SaveThread();
-}
-
-JPPyCallRelease::~JPPyCallRelease()
-{
-	// Re-acquire the lock
-	PyEval_RestoreThread(m_State1);
-}
-
 JPPyBuffer::JPPyBuffer(PyObject* obj, int flags)
 {
 	int ret = PyObject_GetBuffer(obj, &m_View, flags);
@@ -460,7 +434,7 @@ JPPyErrFrame::JPPyErrFrame()
 	good = JPPyErr::fetch(m_ExceptionClass, m_ExceptionValue, m_ExceptionTrace);
 }
 
-JPPyErrFrame::~JPPyErrFrame()
+JPPyErrFrame::~JPPyErrFrame() noexcept
 {
 	try
 	{

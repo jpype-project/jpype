@@ -1089,12 +1089,12 @@ string JPJavaFrame::toStringUTF8(jstring str)
 #endif
 }
 
-jstring JPJavaFrame::fromStringUTF8(const string& str)
+jstring JPJavaFrame::fromStringUTF8(const std::string_view& str)
 {
 #ifdef ANDROID
 	return (jstring) NewStringUTF(str.c_str());
 #else
-	string mstr = transcribe(str.c_str(), str.size(), JPEncodingUTF8(), JPEncodingJavaUTF8());
+	string mstr = transcribe(str.data(), str.size(), JPEncodingUTF8(), JPEncodingJavaUTF8());
 	return (jstring) NewStringUTF(mstr.c_str());
 #endif
 }
@@ -1180,7 +1180,7 @@ JPClass *JPJavaFrame::findClass(jclass obj)
 	return m_Context->getTypeManager()->findClass(obj);
 }
 
-JPClass *JPJavaFrame::findClassByName(const string& name)
+JPClass *JPJavaFrame::findClassByName(const std::string_view& name)
 {
 	return m_Context->getTypeManager()->findClassByName(name);
 }
@@ -1188,6 +1188,15 @@ JPClass *JPJavaFrame::findClassByName(const string& name)
 JPClass *JPJavaFrame::findClassForObject(jobject obj)
 {
 	return m_Context->getTypeManager()->findClassForObject(obj);
+}
+
+JPClass *JPJavaFrame::getClassByName(const std::string_view& name)
+{
+	JPClass *cls = findClassByName(name);
+	if (cls != nullptr && cls->getHost() == nullptr) {
+		newWrapper(cls);
+	}
+	return cls;
 }
 
 jint JPJavaFrame::compareTo(jobject obj, jobject obj2)

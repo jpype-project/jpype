@@ -198,14 +198,17 @@ public:
 	 * @param str
 	 * @return
 	 */
-	jstring fromStringUTF8(const string& str);
+	jstring fromStringUTF8(const std::string_view& str);
 	jobject callMethod(jobject method, jobject obj, jobject args);
 	jobject toCharArray(jstring jstr);
 	string getFunctional(jclass c);
 
 	JPClass *findClass(jclass obj);
-	JPClass *findClassByName(const string& name);
+	JPClass *findClassByName(const std::string_view& name);
 	JPClass *findClassForObject(jobject obj);
+
+	// gets and initializes the class if not already
+	JPClass *getClassByName(const std::string_view& name);
 
     // not implemented
     JPJavaFrame& operator= (const JPJavaFrame& frame) = delete;

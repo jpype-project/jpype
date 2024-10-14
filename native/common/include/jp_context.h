@@ -74,11 +74,16 @@ public:
 		m_Ref = (jref) frame.NewGlobalRef((jobject) obj);
 	}
 
-	JPRef(const JPRef& other);
+	JPRef(const JPRef& rhs);
+	JPRef(JPRef &&rhs) noexcept : m_Context(rhs.m_Context), m_Ref(rhs.m_Ref) {
+		rhs.m_Context = nullptr;
+		rhs.m_Ref = 0;
+	}
 
 	~JPRef();
 
-	JPRef& operator=(const JPRef& other);
+	JPRef& operator=(const JPRef& rhs);
+	JPRef& operator=(JPRef &&rhs) noexcept;
 
 	jref get() const
 	{
@@ -290,23 +295,20 @@ public:
 	std::list<JPResource*> m_Resources;
 } ;
 
-extern void JPRef_failed();
+[[noreturn]] extern void JPRef_failed();
 
 // GCOVR_EXCL_START
 // Not currently used
 
 template<class jref>
-JPRef<jref>::JPRef(const JPRef& other)
+JPRef<jref>::JPRef(const JPRef& rhs)
 {
-	m_Context = other.m_Context;
-	if (m_Context != nullptr)
-	{
-		JPJavaFrame frame = JPJavaFrame::external(m_Context, m_Context->getEnv());
-		m_Ref = (jref) frame.NewGlobalRef((jobject) other.m_Ref);
-	} else
-	{
+	if (rhs.m_Context == nullptr) {
 		JPRef_failed();
 	}
+	m_Context = rhs.m_Context;
+	JPJavaFrame frame = JPJavaFrame::external(m_Context, m_Context->getEnv());
+	m_Ref = (jref) frame.NewGlobalRef((jobject) rhs.m_Ref);
 }
 // GCOVR_EXCL_STOP
 
@@ -320,9 +322,9 @@ JPRef<jref>::~JPRef()
 }
 
 template<class jref>
-JPRef<jref>& JPRef<jref>::operator=(const JPRef<jref>& other)
+JPRef<jref>& JPRef<jref>::operator=(const JPRef<jref>& rhs) // NOLINT(bugprone-unhandled-self-assignment) it is handled
 {
-	if (other.m_Ref == m_Ref)
+	if (rhs.m_Ref == m_Ref)
 		return *this;
 	// m_Context may or may not be set up here, so we need to use a
 	// different frame for unreferencing and referencing
@@ -333,13 +335,32 @@ JPRef<jref>& JPRef<jref>::operator=(const JPRef<jref>& other)
 		if (m_Ref != 0)
 			frame.DeleteGlobalRef((jobject) m_Ref);
 	}  // GCOVR_EXCL_STOP
-	m_Context = other.m_Context;
-	m_Ref = other.m_Ref;
+	m_Context = rhs.m_Context;
+	m_Ref = rhs.m_Ref;
 	if (m_Context != nullptr && m_Ref != 0)
 	{
 		JPJavaFrame frame = JPJavaFrame::external(m_Context, m_Context->getEnv());
 		m_Ref = (jref) frame.NewGlobalRef((jobject) m_Ref);
 	}
+	return *this;
+}
+
+template<class jref>
+JPRef<jref>& JPRef<jref>::operator=(JPRef<jref> &&rhs) noexcept {
+	// m_Context may or may not be set up here, so we need to use a
+	// different frame for unreferencing and referencing
+	if (m_Context != nullptr && m_Ref != 0)
+	{  // GCOVR_EXCL_START
+		// This code is not currently used.
+		JPJavaFrame frame = JPJavaFrame::external(m_Context, m_Context->getEnv());
+		if (m_Ref != 0) {
+			frame.DeleteGlobalRef((jobject) m_Ref);
+		}
+	}  // GCOVR_EXCL_STOP
+	m_Context = rhs.m_Context;
+	m_Ref = rhs.m_Ref;
+	rhs.m_Context = nullptr;
+	rhs.m_Ref = 0;
 	return *this;
 }
 

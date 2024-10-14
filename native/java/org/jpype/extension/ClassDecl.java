@@ -35,10 +35,12 @@ public class ClassDecl {
 	Class<?> base;
 	List<Class<?>> interfaces;
 	String internalName;
+	ExtensionClassLoader ldr;
 
-	public ClassDecl(String name, Class<?>[] bases) {
+	ClassDecl(String name, Class<?>[] bases, ExtensionClassLoader ldr) {
 		this.name = name;
 		this.bases = bases;
+		this.ldr = ldr != null ? ldr : ExtensionClassLoader.BUILTIN_LOADER;
 	}
 
 	public FieldDecl addField(Class<?> cls, String name, Object value, int modifiers) {

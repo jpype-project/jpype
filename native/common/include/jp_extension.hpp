@@ -9,8 +9,8 @@
 
 
 struct JPMethodOverride {
-	const JPClass *returnType;
-	std::vector<const JPClass *> paramTypes;
+	JPClass *returnType;
+	std::vector<JPClass *> paramTypes;
 	JPPyObject function;
 };
 
@@ -34,6 +34,15 @@ public:
 	JPValue newInstance(JPJavaFrame& frame, JPPyObjectVector& args) override;
 	PyObject *getPythonObject(JPJavaFrame& frame, JPValue &jv) const {
 		return (PyObject *)frame.GetLongField(jv.getValue().l, m_Instance);
+	}
+	void reset();
+	void clearHost() {
+		m_Host = {};
+	}
+	bool wasReloaded() const {
+		// to be checked before setting overrides
+		// if this is true, then we are done in PyJPClass_init
+		return m_Instance != nullptr;
 	}
 private:
 	JPMethodOverrideList m_Overrides{};

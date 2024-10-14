@@ -43,7 +43,7 @@ JPClass* JPTypeManager::findClass(jclass obj)
 	JP_TRACE_OUT;
 }
 
-JPClass* JPTypeManager::findClassByName(const string& name)
+JPClass* JPTypeManager::findClassByName(const std::string_view& name)
 {
 	JP_TRACE_IN("JPTypeManager::findClassByName");
 	JPJavaFrame frame = JPJavaFrame::outer(m_Context);

@@ -342,7 +342,7 @@ public:
 	bool good;
 
 	JPPyErrFrame();
-	~JPPyErrFrame();
+	~JPPyErrFrame() noexcept;
 	void clear();
 	void normalize();
 } ;
@@ -354,9 +354,11 @@ class JPPyCallAcquire
 {
 public:
 	/** Acquire the lock. */
-	JPPyCallAcquire();
+	JPPyCallAcquire() : m_State((long) PyGILState_Ensure()) {}
 	/* Release the lock. */
-	~JPPyCallAcquire();
+	~JPPyCallAcquire() {
+		PyGILState_Release((PyGILState_STATE) m_State);
+	}
 private:
 	long m_State;
 } ;
@@ -368,9 +370,12 @@ class JPPyCallRelease
 {
 public:
 	/** Release the lock. */
-	JPPyCallRelease();
+	JPPyCallRelease() : // Release the lock and set the thread state to NULL
+		m_State1(PyEval_SaveThread()) {}
 	/** Reacquire the lock. */
-	~JPPyCallRelease();
+	~JPPyCallRelease() {
+		PyEval_RestoreThread(m_State1);
+	}
 private:
     PyThreadState* m_State1;
 } ;

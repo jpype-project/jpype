@@ -16,6 +16,7 @@
 #include "jp_extension.hpp"
 #include "jpype.h"
 #include "pyjp.h"
+#include "pyjp_module.hpp"
 
 #ifdef __cplusplus
 extern "C"
@@ -56,7 +57,7 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	JP_PY_CATCH(nullptr);
 }
 
-static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
+static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op) // NOLINT(misc-no-recursion)
 {
 	JP_PY_TRY("PyJPObject_compare");
 	if (op == Py_NE)
@@ -172,7 +173,7 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 	} else if (!null1 && javaSlot1 != nullptr && !javaSlot1->getClass()->isPrimitive())
 		obj1 = javaSlot1->getValue().l;
 
-	switch (op)
+	switch (op) // NOLINT(bugprone-switch-missing-default-case)
 	{
 		case Py_EQ:
 			if (null0 && null1)
@@ -231,6 +232,9 @@ static PyObject *PyJPObject_repr(PyObject *self)
 
 static PyObject *PyJPObject_initSubclass(PyObject *cls, PyObject* args, PyObject *kwargs)
 {
+	(void) cls;
+	(void) args;
+	(void) kwargs;
     Py_RETURN_NONE;
 }
 

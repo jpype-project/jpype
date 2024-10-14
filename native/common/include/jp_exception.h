@@ -55,7 +55,7 @@
 /**
  * This is the type of the exception to issue.
  */
-enum JPError
+enum JPError : uint8_t
 {
 _java_error,
 _python_error,

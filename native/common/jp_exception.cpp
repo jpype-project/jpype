@@ -23,7 +23,7 @@
 static_assert(std::is_nothrow_copy_constructible<JPypeException>::value,
               "S must be nothrow copy constructible");
 
-PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace);
+static PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace);
 
 JPypeException::JPypeException(JPJavaFrame &frame, jthrowable th, const JPStackInfo& stackInfo)
 : std::runtime_error(frame.toString(th)),
@@ -122,7 +122,7 @@ string JPypeException::getMessage()
 	// GCOVR_EXCL_STOP
 }*/
 
-bool isJavaThrowable(PyObject* exceptionClass)
+static bool isJavaThrowable(PyObject* exceptionClass)
 {
 	JPClass* cls = PyJPClass_getJPClass(exceptionClass);
 	if (cls == nullptr)
@@ -305,7 +305,7 @@ void JPypeException::toPython()
 		{
 			// Already on the stack
 		} else if (m_Type == JPError::_method_not_found)
-		{
+		{ // NOLINT(bugprone-branch-clone)
 			// This is hit when a proxy fails to implement a required
 			// method.  Only older style proxies should be able hit this.
 			JP_TRACE("Runtime error");
@@ -482,8 +482,8 @@ void JPypeException::toJava(JPContext *context)
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-PyObject *tb_create(
-		PyObject *last_traceback,
+static PyObject *tb_create(
+		PyObject *,
 		PyObject *dict,
 		const char* filename,
 		const char* funcname,

@@ -18,8 +18,6 @@ package org.jpype.manager;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 
-import org.jpype.extension.Factory;
-
 /**
  * A list of resources associated with this class.
  * <p>
@@ -69,9 +67,5 @@ public class ClassDescriptor
         return this.methods[i];
     return 0;
 
-  }
-
-  boolean isExtension() {
-	return Factory.isExtension(cls);
   }
 }

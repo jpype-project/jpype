@@ -45,16 +45,13 @@ static JPPyObject getArgs(JPContext* context, jlongArray parameterTypePtrs,
 }
 
 extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
-		JNIEnv *env, jclass clazz,
+		JNIEnv *env, jclass,
 		jlong contextPtr, jstring name,
 		jlong hostObj,
 		jlong returnTypePtr,
 		jlongArray parameterTypePtrs,
 		jobjectArray args)
 {
-	(void) clazz;
-	(void) hostObj;
-	(void) returnTypePtr;
 	auto* context = (JPContext*) contextPtr;
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
 
@@ -250,7 +247,7 @@ JPProxyType::JPProxyType(JPJavaFrame& frame,
 JPProxyType::~JPProxyType()
 = default;
 
-JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
+JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool)
 {
 	JP_TRACE_IN("JPProxyType::convertToPythonObject");
 	jobject ih = frame.CallStaticObjectMethodA(m_ProxyClass.get(),

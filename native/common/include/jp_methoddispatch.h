@@ -18,7 +18,6 @@
 
 #pragma once
 
-#include <string_view>
 #include <vector>
 
 using std::vector;
@@ -60,7 +59,7 @@ public:
 		return m_Class->getContext();
 	}
 
-	std::string_view getName() const
+	const std::string &getName() const
 	{
 		return m_Name;
 	}

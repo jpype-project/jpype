@@ -50,7 +50,7 @@ public:
 	 * The pointer returned is NOT owned by the caller
 	 */
 	JPClass* findClass(jclass cls);
-	JPClass* findClassByName(const string& str);
+	JPClass* findClassByName(const std::string_view& str);
 	JPClass* findClassForObject(jobject obj);
 	void populateMethod(void* method, jobject obj);
 	void populateMembers(JPClass* cls);

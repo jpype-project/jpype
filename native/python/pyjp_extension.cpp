@@ -12,8 +12,8 @@ static JPClass *getClass(PyObject *ptr) {
 	return reinterpret_cast<JPClass *>(static_cast<uintptr_t>(value));
 }
 
-static std::vector<const JPClass *> getParams(PyObject *types) {
-	std::vector<const JPClass *> res{};
+static std::vector<JPClass *> getParams(PyObject *types) {
+	std::vector<JPClass *> res{};
 	Py_ssize_t len = PySequence_Length(types);
 	res.reserve(len);
 	for (Py_ssize_t i = 0; i < len; i++) {
@@ -71,6 +71,11 @@ JPPyObject JPExtensionType::convertToPythonObject(JPJavaFrame& frame, jvalue val
 		// this cannot be done in newInstance or we will have to deal with it being
 		// null in the python implemented constructor and anything it calls
 		PyTypeObject *type = (PyTypeObject *) m_Host.get();
+		if (type == nullptr) {
+			// someone is holding onto something they shouldn't be
+			PyErr_Format(PyExc_TypeError, "%s has been queued for deletion", m_CanonicalName.c_str());
+			JP_RAISE_PYTHON();
+		}
 		JPPyObject res = JPPyObject::call(type->tp_alloc(type, 0));
 		instance = res.get();
 
@@ -85,5 +90,22 @@ JPPyObject JPExtensionType::convertToPythonObject(JPJavaFrame& frame, jvalue val
 }
 
 JPValue JPExtensionType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args) {
+	if (m_Class.get() == nullptr) {
+		// someone is holding onto something they shouldn't be
+		PyErr_Format(PyExc_TypeError, "%s has been queued for deletion", m_CanonicalName.c_str());
+		JP_RAISE_PYTHON();
+	}
 	return JPClass::newInstance(frame, args);
+}
+
+void JPExtensionType::reset() {
+	// prevent creation of another one
+	m_Context->getEnv()->SetLongField(m_Class.get(), m_Instance, 0);
+	m_Host = {};
+	m_Constructors = nullptr;
+	m_Class = {};
+	m_Hints = {};
+	m_Fields.clear();
+	m_Methods.clear();
+	m_Overrides.clear();
 }

@@ -60,8 +60,13 @@ jclass JPClass::getJavaClass() const
 {
 	jclass cls = m_Class.get();
 	// This sanity check should not be possible to exercise
-	if (cls == nullptr)
+	if (cls == nullptr) {
+		if (isExtension()) {
+			PyErr_Format(PyExc_TypeError, "%s has been queued for deletion", m_CanonicalName.c_str());
+			JP_RAISE_PYTHON();
+		}
 		JP_RAISE(PyExc_RuntimeError, "Class is null"); // GCOVR_EXCL_LINE
+	}
 	return cls;
 }
 
@@ -326,7 +331,7 @@ JPValue JPClass::getValueFromObject(const JPValue& obj)
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
+JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast) // NOLINT(misc-no-recursion)
 {
 	JP_TRACE_IN("JPClass::convertToPythonObject");
 	JPClass *cls = this;

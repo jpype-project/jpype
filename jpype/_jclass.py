@@ -19,9 +19,14 @@ import _jpype
 from ._pykeywords import pysafe
 from . import _jcustomizer
 import inspect
+import sys
+import weakref
 
 __all__ = ['JClass', 'JFinal', 'JInterface', 'JOverride', 'JPublic', 'JProtected',
         'JPrivate', 'JStatic', 'JThrows']
+
+
+_extension_classloaders = weakref.WeakKeyDictionary()
 
 
 def _get_annotations(target, globals, locals):
@@ -420,13 +425,51 @@ class _JClassTable(dict):
         if not hasattr(value, mods):
             dict.__setitem__(self, key, value)
 
+    @property
+    def loader(self):
+        return self.globals['__loader__']
 
-def _JExtension(name, bases, members: _JClassTable):
+    @property
+    def module(self):
+        return self['__module__']
+
+
+def _get_classloader(members: _JClassTable):
+    if members.module in sys.modules:
+        if members.loader is sys.modules[members.module].__loader__:
+            # we don't have the module object at this point
+            # so we check for reference equality of the loader
+            # any module loaded "normally" (via import)
+            # will use the "builtin" extension classloader
+            # and will live for the life of the program
+            # just like every other JClass.
+            return None
+    classloader = _extension_classloaders.get(members.loader)
+    if classloader is None:
+        classloader = _jpype.JClass('org.jpype.extension.Factory').getNewExtensionClassLoader()
+        _extension_classloaders[members.loader] = classloader
+        finalizer = weakref.finalize(members.loader, type(classloader).cleanup, classloader)
+        finalizer.atexit = False
+    return classloader
+
+
+def _throw_java_exception(cls: JClass, msg: str):
+    # Unfortunately our Kevlar is either worn out or I have
+    # it on inside out. We need to create the requested exception
+    # and give it an empty stack trace. If we don't, then the JVM
+    # will crash in initStackTraceElements.
+    ex = cls(msg)
+    ex.setStackTrace(JClass("java.lang.StackTraceElement")[0])
+    return ex
+
+
+def _JExtension(_, bases, members: _JClassTable):
     if "__jspec__" not in members:
         raise TypeError("Java classes cannot be extended in Python")
     jspec = members['__jspec__']
     Factory = _jpype.JClass('org.jpype.extension.Factory')
-    cls = Factory.newClass(members["__qualname__"], bases)
+    ldr = _get_classloader(members)
+    cls = Factory.newClass(members["__qualname__"], bases, ldr)
     overrides = []
     functions = []
     for i in jspec:
@@ -470,3 +513,4 @@ _jpype._jclassPre = _jclassPre
 _jpype._jclassPost = _jclassPost
 _jpype._JExtension = _JExtension
 _jpype._JClassTable = _JClassTable
+_jpype._throw_java_exception = _throw_java_exception

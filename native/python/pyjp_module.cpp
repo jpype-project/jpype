@@ -17,24 +17,11 @@
 #include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_gc.h"
+#include "pyjp_module.hpp"
 
-void PyJPModule_installGC(PyObject* module);
+static void PyJPModule_installGC(PyObject* module);
 
 bool _jp_cpp_exceptions = false;
-
-extern void PyJPArray_initType(PyObject* module);
-extern void PyJPBuffer_initType(PyObject* module);
-extern void PyJPClass_initType(PyObject* module);
-extern void PyJPField_initType(PyObject* module);
-extern void PyJPMethod_initType(PyObject* module);
-extern void PyJPMonitor_initType(PyObject* module);
-extern void PyJPProxy_initType(PyObject* module);
-extern void PyJPObject_initType(PyObject* module);
-extern void PyJPNumber_initType(PyObject* module);
-extern void PyJPClassHints_initType(PyObject* module);
-extern void PyJPPackage_initType(PyObject* module);
-extern void PyJPChar_initType(PyObject* module);
-extern void PyJPValue_initType(PyObject* module);
 
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype);
 
@@ -73,6 +60,7 @@ PyObject* _JVMNotRunning = NULL;
 PyObject* _JExtension = NULL;
 PyObject* JClass = NULL;
 PyObject* _JClassTable = NULL;
+PyObject* _throw_java_exception = NULL;
 
 void PyJPModule_loadResources(PyObject* module)
 {
@@ -127,6 +115,9 @@ void PyJPModule_loadResources(PyObject* module)
 		_JExtension = PyObject_GetAttrString(module, "_JExtension");
 		JP_PY_CHECK();
 		Py_INCREF(_JExtension);
+		_throw_java_exception = PyObject_GetAttrString(module, "_throw_java_exception");
+		JP_PY_CHECK();
+		Py_INCREF(_throw_java_exception);
 		JClass = PyObject_GetAttrString(module, "JClass");
 		JP_PY_CHECK();
 		Py_INCREF(JClass);
@@ -295,7 +286,7 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 	JP_PY_CATCH(nullptr);
 }
 
-static PyObject* PyJPModule_shutdown(PyObject* obj, PyObject* pyargs, PyObject* kwargs)
+static PyObject* PyJPModule_shutdown(PyObject*, PyObject* pyargs, PyObject*)
 {
 	JP_PY_TRY("PyJPModule_shutdown");
 	char destroyJVM = true;
@@ -310,14 +301,14 @@ static PyObject* PyJPModule_shutdown(PyObject* obj, PyObject* pyargs, PyObject* 
 }
 #endif
 
-static PyObject* PyJPModule_isStarted(PyObject* obj)
+static PyObject* PyJPModule_isStarted(PyObject*)
 {
 	return PyBool_FromLong(JPContext_global->isRunning());
 }
 
 #ifndef ANDROID
 
-static PyObject* PyJPModule_attachThread(PyObject* obj)
+static PyObject* PyJPModule_attachThread(PyObject*)
 {
 	JP_PY_TRY("PyJPModule_attachThread");
 	PyJPModule_getContext()->attachCurrentThread();
@@ -325,7 +316,7 @@ static PyObject* PyJPModule_attachThread(PyObject* obj)
 	JP_PY_CATCH(nullptr);
 }
 
-static PyObject* PyJPModule_attachThreadAsDaemon(PyObject* obj)
+static PyObject* PyJPModule_attachThreadAsDaemon(PyObject*)
 {
 	JP_PY_TRY("PyJPModule_attachThreadAsDaemon");
 	PyJPModule_getContext()->attachCurrentThreadAsDaemon();
@@ -333,7 +324,7 @@ static PyObject* PyJPModule_attachThreadAsDaemon(PyObject* obj)
 	JP_PY_CATCH(nullptr);
 }
 
-static PyObject* PyJPModule_detachThread(PyObject* obj)
+static PyObject* PyJPModule_detachThread(PyObject*)
 {
 	JP_PY_TRY("PyJPModule_detachThread");
 	if (JPContext_global->isRunning())
@@ -343,7 +334,7 @@ static PyObject* PyJPModule_detachThread(PyObject* obj)
 }
 #endif
 
-static PyObject* PyJPModule_isThreadAttached(PyObject* obj)
+static PyObject* PyJPModule_isThreadAttached(PyObject*)
 {
 	JP_PY_TRY("PyJPModule_isThreadAttached");
 	if (!JPContext_global->isRunning())
@@ -363,7 +354,7 @@ static void releaseView(void* view)
 	}
 }
 
-static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* src)
+static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject*, PyObject* src)
 {
 	JP_PY_TRY("PyJPModule_convertToDirectByteBuffer");
 	JPContext *context = PyJPModule_getContext();
@@ -389,13 +380,13 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 	JP_PY_CATCH(nullptr);
 }
 
-static PyObject* PyJPModule_enableStacktraces(PyObject* self, PyObject* src)
+static PyObject* PyJPModule_enableStacktraces(PyObject*, PyObject* src)
 {
 	_jp_cpp_exceptions = PyObject_IsTrue(src);
 	Py_RETURN_TRUE;
 }
 
-PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
+PyObject *PyJPModule_newArrayType(PyObject *, PyObject *args)
 {
 	JP_PY_TRY("PyJPModule_newArrayType");
 	JPContext *context = PyJPModule_getContext();
@@ -422,7 +413,7 @@ PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 	JP_PY_CATCH(nullptr);
 }
 
-PyObject *PyJPModule_getClass(PyObject* module, PyObject *obj)
+PyObject *PyJPModule_getClass(PyObject*, PyObject *obj)
 {
 	JP_PY_TRY("PyJPModule_getClass");
 	JPContext *context = PyJPModule_getContext();
@@ -459,7 +450,7 @@ PyObject *PyJPModule_getClass(PyObject* module, PyObject *obj)
 	JP_PY_CATCH(nullptr);
 }
 
-PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
+PyObject *PyJPModule_hasClass(PyObject*, PyObject *obj)
 {
 	JP_PY_TRY("PyJPModule_hasClass");
 	if (!JPContext_global->isRunning())
@@ -488,7 +479,7 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 	JP_PY_CATCH(nullptr);
 }
 
-static PyObject *PyJPModule_arrayFromBuffer(PyObject *module, PyObject *args, PyObject *kwargs)
+static PyObject *PyJPModule_arrayFromBuffer(PyObject *, PyObject *args, PyObject *)
 {
 	JP_PY_TRY("PyJPModule_arrayFromBuffer");
 	PyObject *source = nullptr;
@@ -523,7 +514,7 @@ static PyObject *PyJPModule_arrayFromBuffer(PyObject *module, PyObject *args, Py
 	JP_PY_CATCH(nullptr);
 }
 
-PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
+PyObject *PyJPModule_collect(PyObject*, PyObject *obj)
 {
 	JPContext* context = JPContext_global;
 	if (!context->isRunning())
@@ -546,7 +537,7 @@ PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 
 // GCOVR_EXCL_START
 
-PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
+PyObject *PyJPModule_gcStats(PyObject*, PyObject *)
 {
 	JPContext *context = PyJPModule_getContext();
 	JPGCStats stats;
@@ -569,7 +560,7 @@ PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 }
 // GCOVR_EXCL_STOP
 
-static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
+static PyObject* PyJPModule_isPackage(PyObject *, PyObject *pkg)
 {
 	JP_PY_TRY("PyJPModule_isPackage");
 	if (!PyUnicode_Check(pkg))
@@ -587,7 +578,7 @@ static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 #if 1
 // GCOVR_EXCL_START
 // This code was used in testing the Java slot memory layout.  It serves no purpose outside of debugging that issue.
-PyObject* examine(PyObject *module, PyObject *other)
+PyObject* examine(PyObject *, PyObject *other)
 {
 	JP_PY_TRY("examine");
 	int ret = 0;
@@ -623,7 +614,7 @@ PyObject* examine(PyObject *module, PyObject *other)
 	printf("    alloc: %p\n", type->tp_alloc);
 	printf("    free: %p\n", type->tp_free);
 	printf("    finalize: %p\n", type->tp_finalize);
-	long v = (long)_PyObject_VAR_SIZE(type, 1)+(PyJPValue_hasJavaSlot(type)?sizeof (JPValue):0);
+	long v = (long)_PyObject_VAR_SIZE(type, 1)+(PyJPValue_hasJavaSlot(type)? (long)sizeof(JPValue):0);
 	printf("    size?: %ld\n",v);
 	printf("======\n");
 
@@ -636,7 +627,7 @@ PyObject* examine(PyObject *module, PyObject *other)
 // GCOVR_EXCL_START
 int _PyJPModule_trace = 0;
 
-static PyObject* PyJPModule_trace(PyObject *module, PyObject *args)
+static PyObject* PyJPModule_trace(PyObject *, PyObject *args)
 {
 	bool old = _PyJPModule_trace;
 	_PyJPModule_trace = PyLong_AsLong(args);
@@ -647,7 +638,7 @@ static PyObject* PyJPModule_trace(PyObject *module, PyObject *args)
 #ifdef JP_INSTRUMENTATION
 uint32_t _PyJPModule_fault_code = -1;
 
-static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
+static PyObject* PyJPModule_fault(PyObject *, PyObject *args)
 {
 	if (args == Py_None)
 	{
@@ -922,7 +913,7 @@ void PyJPModuleFault_throw(uint32_t code)
 }
 #endif
 
-void PyJPModule_installGC(PyObject* module)
+static void PyJPModule_installGC(PyObject* module)
 {
 	// Get the Python garbage collector
 	JPPyObject gc = JPPyObject::call(PyImport_ImportModule("gc"));

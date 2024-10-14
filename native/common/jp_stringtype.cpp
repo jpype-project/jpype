@@ -46,7 +46,7 @@ JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val, b
 		if (context->getConvertStrings())
 		{
 			string str = frame.toStringUTF8((jstring) (val.l));
-			return JPPyObject::call(PyUnicode_FromStringAndSize(str.c_str(), str.length()));
+			return JPPyObject::call(PyUnicode_FromStringAndSize(str.c_str(), (Py_ssize_t)str.length()));
 		}
 	}
 

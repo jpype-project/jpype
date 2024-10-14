@@ -17,6 +17,7 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_stringtype.h" // IWYU pragma: keep
+#include "pyjp_module.hpp"
 #include <Python.h>
 #include <mutex>
 
@@ -66,7 +67,7 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 		std::lock_guard<std::mutex> lock(mtx);
 		// Mutate the allocator type
 		PyJPAlloc_Type->tp_flags = type->tp_flags;
-		PyJPAlloc_Type->tp_basicsize = type->tp_basicsize + sizeof (JPValue);
+		PyJPAlloc_Type->tp_basicsize = type->tp_basicsize + (Py_ssize_t)sizeof(JPValue);
 		PyJPAlloc_Type->tp_itemsize = type->tp_itemsize;
 
 		// Create a new allocation for the dummy type
@@ -111,7 +112,7 @@ Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self)
 #if PY_VERSION_HEX>=0x030c0000
 	// starting in 3.12 there is no longer ob_size in PyLong
 	if (PyType_HasFeature(self->ob_type, Py_TPFLAGS_LONG_SUBCLASS))
-		sz = (((PyLongObject*)self)->long_value.lv_tag) >> 3;  // Private NON_SIZE_BITS
+		sz = (Py_ssize_t)(((PyLongObject*)self)->long_value.lv_tag) >> 3;  // Private NON_SIZE_BITS
 	else
 #endif
 	if (type->tp_itemsize != 0)
@@ -120,9 +121,9 @@ Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self)
 	if (sz < 0) // NOLINT
 		sz = -sz;
 	if (type->tp_itemsize == 0)
-		offset = _PyObject_VAR_SIZE(type, 1);
+		offset = (Py_ssize_t)_PyObject_VAR_SIZE(type, 1);
 	else
-		offset = _PyObject_VAR_SIZE(type, sz + 1);
+		offset = (Py_ssize_t)_PyObject_VAR_SIZE(type, sz + 1);
 	return offset;
 }
 
@@ -345,12 +346,12 @@ bool PyJPValue_isSetJavaSlot(PyObject* self)
 }
 
 /***************** Create a dummy type for use when allocating. ************************/
-static int PyJPAlloc_traverse(PyObject *self, visitproc visit, void *arg)
+static int PyJPAlloc_traverse(PyObject *, visitproc, void *)
 {
 	return 0;
 }
 
-static int PyJPAlloc_clear(PyObject *self)
+static int PyJPAlloc_clear(PyObject *)
 {
 	return 0;
 }
@@ -372,6 +373,7 @@ static PyType_Spec allocSpec = {
 
 void PyJPValue_initType(PyObject* module)
 {
+	(void) module;
 	PyObject *bases = PyTuple_Pack(1, &PyBaseObject_Type);
 	PyJPAlloc_Type = (PyTypeObject*) PyType_FromSpecWithBases(&allocSpec, bases);
 	Py_DECREF(bases);

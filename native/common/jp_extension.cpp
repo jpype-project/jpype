@@ -14,8 +14,10 @@
   See NOTICE file for details.
  **************************************************************************** */
 #include "include/jp_class.h"
+#include "include/jp_exception.h"
 #include "jni.h"
 #include "jpype.h"
+#include "pyjp.h"
 #include "jp_extension.hpp" // IWYU pragma: keep
 
 static JPPyObject packArgs(JPExtensionType &cls, const JPMethodOverride &method, jobjectArray args)
@@ -37,7 +39,7 @@ static JPPyObject packArgs(JPExtensionType &cls, const JPMethodOverride &method,
 
 	for (Py_ssize_t i = 1; i < argLen; i++) {
 		jobject obj = frame.GetObjectArrayElement(args, (jsize)i);
-		JPClass *type = const_cast<JPClass*>(method.paramTypes[i-1]);
+		JPClass *type = method.paramTypes[i-1];
 		JPValue val = type->getValueFromObject(JPValue(type, obj));
 		PyTuple_SetItem(pyargs.get(), i, type->convertToPythonObject(frame, val, false).keep());
 	}
@@ -47,13 +49,12 @@ static JPPyObject packArgs(JPExtensionType &cls, const JPMethodOverride &method,
 
 extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__1call(
 		JNIEnv *env,
-		jclass clazz,
+		jclass,
 		jlong contextPtr,
 		jlong functionId,
 		jobjectArray args
 	)
 {
-	(void) clazz;
 	JPExtensionType *cls = (JPExtensionType *) contextPtr;
 	JPContext* context = cls->getContext();
 	JPJavaFrame frame = JPJavaFrame::external(context, env);
@@ -65,18 +66,34 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__1call(
 		JP_TRACE("context", context);
 		try
 		{
-			const JPMethodOverride &method = cls->getOverrides()[functionId];
-			// Find the return type
+			if (cls->getHost() == nullptr) {
+				//_throw_java_exception
+				JPClass *ex = frame.getClassByName("java.lang.IllegalStateException"sv);
+				std::string errmsg = cls->getCanonicalName() + " has been collected";
+				auto msg = JPPyObject::call(
+					PyUnicode_FromStringAndSize(errmsg.c_str(), (Py_ssize_t)errmsg.length())
+				);
+				JPPyObject args = JPPyTuple_Pack(ex->getHost(), msg);
+				JPPyObject exobj = JPPyObject::call(PyObject_Call(
+					_throw_java_exception,
+					args.get(),
+					NULL
+				));
+				JP_PY_CHECK();
+				JPValue *value = PyJPValue_getJavaSlot(exobj.get());
+				frame.Throw((jthrowable) value->getJavaObject());
+				return NULL;
+			}
 
-			JPClass* returnClass = const_cast<JPClass*>(method.returnType);
+			const JPMethodOverride &method = cls->getOverrides()[functionId];
+
+			// Find the return type
+			JPClass* returnClass = method.returnType;
 			JP_TRACE("Get return type", returnClass->getCanonicalName());
 
 			// convert the arguments into a python list
 			JP_TRACE("Convert arguments");
 			JPPyObject pyargs = packArgs(*cls, method, args);
-
-			// Copy the privilege flags into the first argument
-			// FIXME how should this be stored.
 
 			JP_TRACE("Call Python");
 			JPPyObject returnValue = JPPyObject::call(PyObject_Call(
@@ -137,4 +154,22 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__1call(
 	catch (...) // JP_TRACE_OUT implies a throw but that is not allowed.
 	{}
 	return NULL;
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_jpype_extension_ExtensionClassLoader_delete(
+		JNIEnv *,
+		jclass,
+		jlong cls
+	)
+{
+	delete (JPExtensionType *)cls;
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_jpype_extension_ExtensionClassLoader_clearHost(
+		JNIEnv *,
+		jclass,
+		jlong cls
+	)
+{
+	((JPExtensionType *)cls)->clearHost();
 }

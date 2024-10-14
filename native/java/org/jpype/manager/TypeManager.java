@@ -34,10 +34,12 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import org.jpype.JPypeContext;
 import org.jpype.JPypeUtilities;
+import org.jpype.extension.ExtensionClassLoader;
 import org.jpype.extension.Factory;
 import org.jpype.proxy.JPypeProxy;
 
@@ -331,6 +333,36 @@ public class TypeManager
     return this.findClass(cls);
   }
 
+  private static LongStream getPointers(ClassDescriptor entry) {
+    return LongStream.concat(
+      Stream.of(
+        entry.constructors,
+        entry.methodDispatch,
+        entry.methods,
+        entry.fields
+      ).flatMapToLong(LongStream::of),
+      LongStream.of(entry.anonymous, entry.classPtr)
+    );
+  }
+
+  public synchronized void destroy(ExtensionClassLoader ldr) {
+    // NOTE: this method takes an ExtensionClassLoader
+    // to avoid exposing a way to delete the JPClasses
+    // from a Class instance
+    if (ldr.isBuiltinLoader()) {
+      // this one is cleaned up along with everything else on shutdown
+      throw new UnsupportedOperationException("Builtin ExtensionClassLoader cannot be destroyed");
+    }
+    long[] ptrs = ldr.getClasses()
+      .stream()
+      .map(classMap::remove)
+      .map(TypeManager::getPointers)
+      .map(LongStream::toArray)
+      .flatMapToLong(LongStream::of)
+      .toArray();
+    typeFactory.delete(context, ptrs, ptrs.length);
+  }
+
   /**
    * Called to delete all C++ resources
    */
@@ -343,22 +375,7 @@ public class TypeManager
     // Destroy all the resources held in C++
     for (ClassDescriptor entry : this.classMap.values())
     {
-      destroyer.add(entry.constructorDispatch);
-      destroyer.add(entry.constructors);
-      destroyer.add(entry.methodDispatch);
-      destroyer.add(entry.methods);
-      destroyer.add(entry.fields);
-      destroyer.add(entry.anonymous);
-      destroyer.add(entry.classPtr);
-
-      // The same wrapper can appear more than once so blank as we go.
-      entry.constructorDispatch = 0;
-      entry.constructors = null;
-      entry.methodDispatch = null;
-      entry.methods = null;
-      entry.fields = null;
-      entry.anonymous = 0;
-      entry.classPtr = 0;
+      destroyer.add(entry);
     }
     destroyer.flush();
 
@@ -453,9 +470,9 @@ public class TypeManager
     if (Buffer.class.isAssignableFrom(cls))
       modifiers |= ModifierCode.BUFFER.value | ModifierCode.SPECIAL.value;
 
-	if (Factory.isExtension(cls)) {
-		modifiers |= ModifierCode.EXTENSION.value;
-	}
+  if (Factory.isExtension(cls)) {
+    modifiers |= ModifierCode.EXTENSION.value;
+  }
 
     // Check if is Functional class
     Method method = JPypeUtilities.getFunctionalInterfaceMethod(cls);
@@ -544,10 +561,14 @@ public class TypeManager
     try
     {
       createMembers(desc);
-    } catch (Exception ex)
+    ClassLoader ldr = cls.getClassLoader();
+      if (ldr instanceof ExtensionClassLoader) {
+        ((ExtensionClassLoader) ldr).register(cls, desc);
+      }
+    } catch (Throwable ex)
     {
       ex.printStackTrace(System.out);
-      throw ex;
+      throw new RuntimeException(ex);
     }
   }
 
@@ -570,13 +591,13 @@ public class TypeManager
   }
 
   private static Predicate<? super Member> getFilter(Class<?> cls) {
-	if (Factory.isExtension(cls)) {
-		return (a) -> true;
-	}
-	if (Modifier.isFinal(cls.getModifiers())) {
-		return (a) -> Modifier.isPublic(a.getModifiers());
-	}
-	return (a) -> Modifier.isPublic(a.getModifiers()) || Modifier.isProtected(a.getModifiers());
+    if (Factory.isExtension(cls)) {
+      return (a) -> true;
+    }
+    if (Modifier.isFinal(cls.getModifiers())) {
+      return (a) -> Modifier.isPublic(a.getModifiers());
+    }
+    return (a) -> Modifier.isPublic(a.getModifiers()) || Modifier.isProtected(a.getModifiers());
   }
 
 //<editor-fold desc="fields" defaultstate="collapsed">
@@ -584,14 +605,14 @@ public class TypeManager
   {
     // We only need declared fields as the wrappers for previous classes hold
     // members declared earlier
-	// If this causes a performance problem due to Python inheritance
-	// then the same strategy used for methods can be used here
-	Class<?> cls = desc.cls;
-	List<Field> fields = Arrays.stream(cls.getDeclaredFields())
-		.filter(getFilter(cls))
-		// don't allow access to the jclass pointer
-		.filter(Predicate.not(Factory::isExtensionField))
-		.collect(Collectors.toList());
+  // If this causes a performance problem due to Python inheritance
+  // then the same strategy used for methods can be used here
+  Class<?> cls = desc.cls;
+  List<Field> fields = Arrays.stream(cls.getDeclaredFields())
+    .filter(getFilter(cls))
+    // don't allow access to the jclass or instance pointer
+    .filter(Predicate.not(Factory::isExtensionField))
+    .collect(Collectors.toList());
     //LinkedList<Field> fields = filterPublic(cls.getDeclaredFields());
 
     long[] fieldPtr = new long[fields.size()];
@@ -672,10 +693,10 @@ public class TypeManager
               desc.classPtr,
               constructor.toString(),
               constructor,
-			  constructor.getDeclaringClass(),
+        constructor.getDeclaringClass(),
               precedencePtrs,
               modifiers
-			);
+      );
       overloadPtrs[--n] = ov.ptr;
     }
     return overloadPtrs;
@@ -697,12 +718,12 @@ public class TypeManager
 
     // Get the list of public declared methods
     //LinkedList<Method> declaredMethods = filterPublic(cls.getDeclaredMethods());
-	LinkedList<Method> declaredMethods = Stream.concat(
-		Arrays.stream(cls.getDeclaredMethods()),
-		Arrays.stream(cls.getMethods())
-			.filter((m) -> m.getDeclaringClass() != cls)
-	).filter(getFilter(cls))
-		.collect(Collectors.toCollection(LinkedList::new));
+  LinkedList<Method> declaredMethods = Stream.concat(
+    Arrays.stream(cls.getDeclaredMethods()),
+    Arrays.stream(cls.getMethods())
+      .filter((m) -> m.getDeclaringClass() != cls)
+  ).filter(getFilter(cls))
+    .collect(Collectors.toCollection(LinkedList::new));
 
     // We only need one dispatch per name
     TreeSet<String> resolve = new TreeSet<>();
@@ -817,7 +838,7 @@ public class TypeManager
               desc.classPtr,
               method.toString(),
               method,
-			  method.getDeclaringClass(),
+        method.getDeclaringClass(),
               precedencePtrs,
               modifiers);
       overloadPtrs[--n] = ov.ptr;
@@ -1023,6 +1044,26 @@ public class TypeManager
       }
       if (index == BLOCK_SIZE)
         flush();
+    }
+
+    void add(ClassDescriptor entry)
+    {
+      add(entry.constructorDispatch);
+      add(entry.constructors);
+      add(entry.methodDispatch);
+      add(entry.methods);
+      add(entry.fields);
+      add(entry.anonymous);
+      add(entry.classPtr);
+
+      // The same wrapper can appear more than once so blank as we go.
+      entry.constructorDispatch = 0;
+      entry.constructors = null;
+      entry.methodDispatch = null;
+      entry.methods = null;
+      entry.fields = null;
+      entry.anonymous = 0;
+      entry.classPtr = 0;
     }
 
     void flush()

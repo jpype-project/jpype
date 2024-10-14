@@ -17,12 +17,14 @@
 # *****************************************************************************
 from __future__ import annotations
 import common
-import jpype
+import gc
 from jpype._jclass import *
 from jpype.types import *
 from jpype.imports import *
-import inspect
-import typing
+import importlib.abc
+import importlib.util
+import textwrap
+import sys
 
 
 class JExtensionTestCase(common.JPypeTestCase):
@@ -513,7 +515,7 @@ class JExtensionTestCase(common.JPypeTestCase):
     def testThrows(self):
         from java.lang import Object, UnsupportedOperationException, IllegalArgumentException
         from java.lang import IllegalCallerException, Throwable, RuntimeException
-        class MyClass(Object):
+        class MyObject(Object):
 
             @JPublic
             @JThrows(UnsupportedOperationException, IllegalArgumentException)
@@ -522,10 +524,280 @@ class JExtensionTestCase(common.JPypeTestCase):
             def __init__(self):
                 ...
 
-        ctor = MyClass.class_.getDeclaredConstructors()[0]
+        ctor = MyObject.class_.getDeclaredConstructors()[0]
         exceptions = (
             UnsupportedOperationException, IllegalArgumentException,
             IllegalCallerException,
             Throwable, RuntimeException
         )
         self.assertEqual(tuple(ctor.getExceptionTypes()), exceptions)
+
+
+    def testThrownException(self):
+        from java.lang import Object, String, Throwable
+        class MyObject(Object):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPublic
+            def toString(self) -> String:
+                raise Throwable("fdnvdnkvnrne")
+
+        o = MyObject()
+        with self.assertRaises(Throwable):
+            str(o)
+
+
+    def testExtensionLoaderMutipleClassDefinition(self):
+        class TestLoader(importlib.abc.InspectLoader):
+
+            def get_source(self, _):
+                return textwrap.dedent(
+                    """\
+                    from jpype import JPublic
+                    from java.lang import Object
+                    class TemporaryObject(Object):
+
+                        @JPublic
+                        def __init__(self):
+                            ...
+
+                    """
+                )
+
+        def create_class():
+            loader = TestLoader()
+            spec = importlib.util.spec_from_loader("__main__", loader)
+            module = importlib.util.module_from_spec(spec)
+            loader.exec_module(module)
+
+        create_class()
+        create_class()
+
+    def testExtensionLoaderCleanup(self):
+        JPypeContext = JClass("org.jpype.JPypeContext")
+        manager = JPypeContext.getInstance().getTypeManager()
+
+        class TestLoader(importlib.abc.InspectLoader):
+
+            def get_source(self, _):
+                return textwrap.dedent(
+                    """\
+                    from jpype import JPublic
+                    from java.lang import Object
+                    class TemporaryObject(Object):
+
+                        @JPublic
+                        def __init__(self):
+                            ...
+
+                    """
+                )
+
+        loader = TestLoader()
+
+        # NOTE: module instances are never collected when debugging
+        spec = importlib.util.spec_from_loader("__main__", loader)
+        m = importlib.util.module_from_spec(spec)
+        start = manager.classMap.size()
+        loader.exec_module(m)
+        ldr = m.TemporaryObject.class_.getClassLoader()
+        end = manager.classMap.size()
+        self.assertGreater(end, start)
+
+        # ensure it can be collected
+        m.__dict__.clear()
+        del spec
+        del loader
+
+        # collect it
+        gc.collect()
+
+        # check it was collected
+        self.assertLess(manager.classMap.size(), end)
+
+        ldr.closeForTesting()
+
+    def testExtensionCleanupWithDanglingPythonReference(self):
+        JPypeContext = JClass("org.jpype.JPypeContext")
+        manager = JPypeContext.getInstance().getTypeManager()
+
+        class TestLoader(importlib.abc.InspectLoader):
+
+            def get_source(self, _):
+                return textwrap.dedent(
+                    """\
+                    from jpype import JPublic
+                    from java.lang import Object, String
+                    class TemporaryObject(Object):
+
+                        @JPublic
+                        def __init__(self):
+                            ...
+
+                        @JPublic
+                        def toString(self) -> String:
+                            from java.lang import String
+                            return String("wtf")
+
+                        def __repr__(self):
+                            from java.lang import String
+                            return String.format("%s", self)
+
+                    """
+                )
+
+        loader = TestLoader()
+
+        # NOTE: module instances are never collected when debugging
+        spec = importlib.util.spec_from_loader("__main__", loader)
+        m = importlib.util.module_from_spec(spec)
+        start = manager.classMap.size()
+        loader.exec_module(m)
+        TemporaryObject = getattr(m, "TemporaryObject")
+        cls = TemporaryObject.class_
+        ldr = cls.getClassLoader()
+        obj = TemporaryObject()
+        end = manager.classMap.size()
+        self.assertGreater(end, start)
+
+        # ensure the loader can be collected
+        m.__dict__.clear()
+        del spec
+        del loader
+        del m
+
+        # collect it
+        gc.collect()
+
+        # check it was collected
+        self.assertLess(manager.classMap.size(), end)
+
+        with self.assertRaises(TypeError):
+            TemporaryObject()
+
+        from java.lang import InstantiationException
+        with self.assertRaises(InstantiationException):
+            cls.newInstance()
+
+        #with self.assertRaises(TypeError):
+        #    str(obj)
+        # it needs to be something Java can catch
+        from java.lang import IllegalStateException
+        with self.assertRaises(IllegalStateException):
+            str(obj)
+
+        del obj
+        del TemporaryObject
+        del cls
+        gc.collect()
+
+        ldr.closeForTesting()
+
+
+    def testExtensionCleanupWithDanglingJavaReference(self):
+        JPypeContext = JClass("org.jpype.JPypeContext")
+        manager = JPypeContext.getInstance().getTypeManager()
+
+        class TestLoader(importlib.abc.InspectLoader):
+
+            def get_source(self, _):
+                return textwrap.dedent(
+                    """\
+                    from jpype import JPublic
+                    from java.lang import Object, String
+                    class TemporaryObject(Object):
+
+                        @JPublic
+                        def __init__(self):
+                            ...
+
+                        @JPublic
+                        def toString(self) -> String:
+                            ...
+
+                    """
+                )
+
+        loader = TestLoader()
+
+        # NOTE: module instances are never collected when debugging
+        spec = importlib.util.spec_from_loader("__main__", loader)
+        m = importlib.util.module_from_spec(spec)
+        TestDanglingObject = JClass("jpype.extension.TestDanglingObject")
+        start = manager.classMap.size()
+        loader.exec_module(m)
+        TemporaryObject = getattr(m, "TemporaryObject")
+        test = TestDanglingObject(TemporaryObject())
+        end = manager.classMap.size()
+        self.assertGreater(end, start)
+
+        # ensure the loader can be collected
+        m.__dict__.clear()
+        del spec
+        del loader
+
+        # collect it
+        gc.collect()
+
+        # check it was collected
+        self.assertLess(manager.classMap.size(), end)
+
+        from java.lang import IllegalStateException
+        with self.assertRaises(IllegalStateException):
+            test.test()
+
+
+    def testExtensionFromBuiltinLoader(self):
+        class TestLoader(importlib.abc.InspectLoader):
+
+            def get_source(self, _):
+                return textwrap.dedent(
+                    """\
+                    from jpype import JPublic
+                    from java.lang import Object
+                    class TemporaryObject(Object):
+
+                        @JPublic
+                        def __init__(self):
+                            ...
+
+                    """
+                )
+
+        loader = TestLoader()
+        spec = importlib.util.spec_from_loader("dummy", loader)
+        m = importlib.util.module_from_spec(spec)
+        sys.modules["dummy"] = m
+        loader.exec_module(m)
+        sys.modules.pop("dummy")
+
+    def testExtensionFromBuiltinLoaderReloaded(self):
+        class TestLoader(importlib.abc.InspectLoader):
+
+            def get_source(self, _):
+                return textwrap.dedent(
+                    """\
+                    from jpype import JPublic
+                    from java.lang import Object
+                    class TemporaryObject(Object):
+
+                        @JPublic
+                        def __init__(self):
+                            ...
+
+                    """
+                )
+
+        loader = TestLoader()
+        spec = importlib.util.spec_from_loader("dummy", loader)
+        m = importlib.util.module_from_spec(spec)
+        sys.modules["dummy"] = m
+        loader.exec_module(m)
+        # simulating importlib.reload
+        loader.exec_module(m)
+        sys.modules.pop("dummy")
+
+    # TODO: Annotations and documentation

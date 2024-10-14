@@ -104,4 +104,9 @@ public native void newWrapper(long context, long cls);
   public native void destroy(
           long context,
           long[] resources, int sz);
+
+  @Override
+  public native void delete(
+        long context,
+        long[] resources, int sz);
 }
