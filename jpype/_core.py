@@ -241,10 +241,10 @@ def startJVM(
     if classpath:
         extra_jvm_args += (f'-Djava.class.path={_handleClassPath(classpath)}', )
 
-    supportLib = os.path.join(os.path.dirname(os.path.dirname(__file__)),"org.jpype.jar")
+    supportLib = os.path.join(os.path.dirname(os.path.dirname(__file__)), "org.jpype.jar")
     if not os.path.exists(supportLib):
-        raise RuntimeError("Unable to find org.jpype.jar support library at "+supportLib)
-    extra_jvm_args += ('-javaagent:'+supportLib,)
+        raise RuntimeError("Unable to find org.jpype.jar support library at " + supportLib)
+    extra_jvm_args += ('-javaagent:' + supportLib,)
 
     try:
         import locale
