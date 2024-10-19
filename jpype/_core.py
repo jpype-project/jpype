@@ -241,15 +241,15 @@ def startJVM(
         classpath = _classpath.getClassPath()
 
     # Handle strings and list of strings.
-    extra_jvm_args = ()
+    extra_jvm_args = []
     if classpath:
         cp = _classpath._SEP.join(_handleClassPath(classpath))
-        extra_jvm_args += ('-Djava.class.path=%s'%cp, )
+        extra_jvm_args += ['-Djava.class.path=%s'%cp ]
 
     supportLib = os.path.join(os.path.dirname(os.path.dirname(__file__)), "org.jpype.jar")
     if not os.path.exists(supportLib):
         raise RuntimeError("Unable to find org.jpype.jar support library at " + supportLib)
-    extra_jvm_args += ('-javaagent:' + supportLib,)
+    extra_jvm_args += ['-javaagent:' + supportLib]
 
     try:
         import locale
@@ -258,7 +258,7 @@ def startJVM(
         # Keep the current locale settings, else Java will replace them.
         prior = [locale.getlocale(i) for i in categories]
         # Start the JVM
-        _jpype.startup(jvmpath, jvmargs + extra_jvm_args,
+        _jpype.startup(jvmpath, jvmargs + tuple(extra_jvm_args),
                        ignoreUnrecognized, convertStrings, interrupt)
         # Collect required resources for operation
         initializeResources()
