@@ -120,6 +120,7 @@ def _hasClassPath(args) -> bool:
 
 def _handleClassPath(
     classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
+    ascii: bool = True
 ) -> typing.Sequence[str]:
     """
     Return a classpath which represents the given tuple of classpath specifications
@@ -151,7 +152,9 @@ def _handleClassPath(
             out.extend(glob.glob(pth + '.jar'))
         else:
             out.append(pth)
-    return _classpath._SEP.join(out)
+    if ascii:
+        return _classpath._SEP.join([i for i in out if i.isascii()])
+    return [i for i in out if not i.isascii()]
 
 
 _JVM_started = False
@@ -274,20 +277,20 @@ def startJVM(
                 raise RuntimeError(f"{jvmpath} is older than required Java version{version}") from ex
         raise
 
-#    """Prior versions of JPype used the jvmargs to setup the class paths via 
-#    JNI (Java Native Interface) option strings:
-#    i.e -Djava.class.path=... 
-#    See: https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/invocation.html
-#    
-#    Unfortunately, unicode is unsupported by this interface on windows, since
-#    windows uses wide-byte (16bit) character encoding.
-#    See: https://stackoverflow.com/questions/20052455/jni-start-jvm-with-unicode-support
-#
-#    To resolve this issue we add the classpath after initialization since jpype
-#    itself supports unicode class paths.
-#    """
-#    for cp in _handleClassPath(classpath):
-#        addClassPath(Path.cwd() / Path(cp).resolve())
+    """Prior versions of JPype used the jvmargs to setup the class paths via 
+    JNI (Java Native Interface) option strings:
+    i.e -Djava.class.path=... 
+    See: https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/invocation.html
+    
+    Unfortunately, unicode is unsupported by this interface on windows, since
+    windows uses wide-byte (16bit) character encoding.
+    See: https://stackoverflow.com/questions/20052455/jni-start-jvm-with-unicode-support
+
+    To resolve this issue we add the classpath after initialization since jpype
+    itself supports unicode class paths.
+    """
+    for cp in _handleClassPath(classpath, False):
+        addClassPath(Path.cwd() / Path(cp).resolve())
 
 
 def initializeResources():
