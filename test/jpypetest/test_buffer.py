@@ -315,11 +315,11 @@ class BufferTestCase(common.JPypeTestCase):
         jtype = jpype.JByte[:]
 
         # Simple checks
-        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "n", "N"):
+        for dtype in "c?bBhHiIlLqQfdnN":
             jtype(mv.cast(dtype))
             jtype(mv.cast("@" + dtype))
 
-        for dtype in ("s", "p", "P", "e"):
+        for dtype in "spP":
             with self.assertRaises(Exception):
                 jtype(mv.cast(dtype))
 
@@ -328,11 +328,12 @@ class BufferTestCase(common.JPypeTestCase):
         jtype = jpype.JInt[:]
 
         # Simple checks
-        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "n", "N"):
+        for dtype in "c?bBhHiIlLqQfdnN":
+            print(dtype)
             jtype(mv.cast(dtype))
             jtype(mv.cast("@" + dtype))
 
-        for dtype in ("s", "p", "P", "e"):
+        for dtype in "spP":
             with self.assertRaises(Exception):
                 jtype(mv.cast(dtype))
 
@@ -341,11 +342,11 @@ class BufferTestCase(common.JPypeTestCase):
         jtype = jpype.JShort[:]
 
         # Simple checks
-        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "n", "N"):
+        for dtype in "c?bBhHiIlLqQfdnN":
             jtype(mv.cast(dtype))
             jtype(mv.cast("@" + dtype))
 
-        for dtype in ("s", "p", "P", "e"):
+        for dtype in "spP":
             with self.assertRaises(Exception):
                 jtype(mv.cast(dtype))
 
@@ -354,11 +355,11 @@ class BufferTestCase(common.JPypeTestCase):
         jtype = jpype.JLong[:]
 
         # Simple checks
-        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "n", "N"):
+        for dtype in "c?bBhHiIlLqQfdnN":
             jtype(mv.cast(dtype))
             jtype(mv.cast("@" + dtype))
 
-        for dtype in ("s", "p", "P", "e"):
+        for dtype in "spP":
             with self.assertRaises(Exception):
                 jtype(mv.cast(dtype))
 
@@ -367,11 +368,11 @@ class BufferTestCase(common.JPypeTestCase):
         jtype = jpype.JFloat[:]
 
         # Simple checks
-        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "n", "N"):
+        for dtype in "c?bBhHiIlLqQfdnN":
             jtype(mv.cast(dtype))
             jtype(mv.cast("@" + dtype))
 
-        for dtype in ("s", "p", "P", "e"):
+        for dtype in "spP":
             with self.assertRaises(Exception):
                 jtype(mv.cast(dtype))
 
@@ -380,11 +381,11 @@ class BufferTestCase(common.JPypeTestCase):
         jtype = jpype.JDouble[:]
 
         # Simple checks
-        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "n", "N"):
+        for dtype in "c?bBhHiIlLqQfdnN":
             jtype(mv.cast(dtype))
             jtype(mv.cast("@" + dtype))
 
-        for dtype in ("s", "p", "P", "e"):
+        for dtype in "spP":
             with self.assertRaises(Exception):
                 jtype(mv.cast(dtype))
 
@@ -393,11 +394,11 @@ class BufferTestCase(common.JPypeTestCase):
         jtype = jpype.JBoolean[:]
 
         # Simple checks
-        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "f", "d", "n", "N"):
+        for dtype in "c?bBhHiIlLqQfdnN":
             jtype(mv.cast(dtype))
             jtype(mv.cast("@" + dtype))
 
-        for dtype in ("s", "p", "P", "e"):
+        for dtype in "spP":
             with self.assertRaises(Exception):
                 jtype(mv.cast(dtype))
 
@@ -406,7 +407,7 @@ class BufferTestCase(common.JPypeTestCase):
         jtype = jpype.JChar[:]
 
         # Simple checks
-        for dtype in ("c", "?", "b", "B", "h", "H", "i", "I", "l", "L", "q", "Q", "n", "N"):
+        for dtype in "c?bBhHiIlLqQnN":
             jtype(mv.cast(dtype))
             jtype(mv.cast("@" + dtype))
 

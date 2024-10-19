@@ -15,13 +15,13 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+from functools import lru_cache
 
 import pytest
 import _jpype
 import jpype
 import logging
 from os import path
-import sys
 import unittest  # Extensively used as common.unittest.
 
 CLASSPATH = None
@@ -145,5 +145,12 @@ class JPypeTestCase(unittest.TestCase):
         return UseFunc(self, func, 'assertEqual')
 
 
-if __name__ == '__main__':
-    unittest.main()
+@lru_cache(1)
+def java_version():
+    import subprocess
+    import sys
+    java_version = str(subprocess.check_output([sys.executable, "-c",
+                          "import jpype; jpype.startJVM(); "
+                          "print(jpype.java.lang.System.getProperty('java.version'))"]),
+                       encoding='ascii')
+    return tuple(map(int, java_version.split(".")))

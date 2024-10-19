@@ -1,15 +1,16 @@
 # This file is Public Domain and may be used without restrictions,
 # because nobody should have to waste their lives typing this again.
-import jpype
-from jpype.types import *
-from jpype import java
-import jpype.dbapi2 as dbapi2
-import common
 import datetime
 import decimal
 import threading
 
-java = jpype.java
+import pytest
+
+import common
+import jpype
+import jpype.dbapi2 as dbapi2
+from jpype import java
+from jpype.types import JArray, JByte
 
 try:
     import zlib
@@ -18,6 +19,12 @@ except ImportError:
 
 
 db_name = "jdbc:sqlite::memory:"
+
+def setUpModule(module):
+    from common import java_version
+    version = java_version()
+    if version[0] == 1 and version[1] == 8:
+        pytest.skip("jdk8 unsupported", allow_module_level=True)
 
 
 class ConnectTestCase(common.JPypeTestCase):

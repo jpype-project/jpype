@@ -374,8 +374,8 @@ class JDoubleTestCase(common.JPypeTestCase):
         self.assertElementsAlmostEqual(a, jarr)
 
     @common.requireNumpy
-    def testArrayInitFromNPFloat(self):
-        a = np.random.random(100).astype(np.float_)
+    def testArrayInitFromNPFloat16(self):
+        a = np.random.random(100).astype(np.float16)
         jarr = JArray(JDouble)(a)
         self.assertElementsAlmostEqual(a, jarr)
 
@@ -436,3 +436,15 @@ class JDoubleTestCase(common.JPypeTestCase):
 
     def testCastBoolean(self):
         self.assertEqual(JDouble._canConvertToJava(JBoolean(True)), "none")
+
+    @common.requireNumpy
+    def testNPFloat16(self):
+        v= [0.000000e+00, 5.960464e-08, 1.788139e-07, 1.788139e-07, 4.172325e-07, 8.940697e-07, 1.847744e-06, 3.755093e-06, 7.569790e-06, 1.519918e-05, 3.045797e-05, 6.097555e-05, 6.103516e-05, 3.332520e-01, 1.000000e+00, 6.550400e+04, np.inf, -np.inf]
+        a = np.array(v, dtype=np.float16)
+        jarr = JArray(JDouble)(a)
+        for v1,v2 in zip(a, jarr):
+            self.assertEqual(v1,v2)
+        a = np.array([np.nan], dtype=np.float16)
+        jarr = JArray(JDouble)(a)
+        self.assertTrue(np.isnan(jarr[0]))
+
