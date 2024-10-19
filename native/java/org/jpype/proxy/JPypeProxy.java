@@ -144,7 +144,6 @@ public class JPypeProxy implements InvocationHandler
         }
 
         return MethodHandles.lookup()
-                .in(cls)
                 .findSpecial(cls,
                         method.getName(),
                         MethodType.methodType(method.getReturnType()),
