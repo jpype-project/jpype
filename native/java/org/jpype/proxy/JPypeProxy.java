@@ -16,6 +16,7 @@
 package org.jpype.proxy;
 
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -102,7 +103,10 @@ public class JPypeProxy implements InvocationHandler
     if (method.isDefault())
     {
       return MethodHandles.lookup()
-              .unreflectSpecial(method, method.getDeclaringClass())
+              .findSpecial(method.getDeclaringClass(), 
+                      method.getName(), 
+                      MethodType.methodType(method.getReturnType()), 
+                      method.getDeclaringClass())
               .bindTo(proxy)
               .invokeWithArguments(args);
     }

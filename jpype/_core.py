@@ -153,7 +153,7 @@ def _handleClassPath(
         else:
             out.append(pth)
     if ascii:
-        return _classpath._SEP.join([i for i in out if i.isascii()])
+        return [i for i in out if i.isascii()]
     return [i for i in out if not i.isascii()]
 
 
@@ -243,7 +243,8 @@ def startJVM(
     # Handle strings and list of strings.
     extra_jvm_args = ()
     if classpath:
-        extra_jvm_args += (f'-Djava.class.path={_handleClassPath(classpath)}', )
+        cp = _classpath._SEP.join(_handleClassPath(classpath))
+        extra_jvm_args += ('-Djava.class.path=%s'%cp, )
 
     supportLib = os.path.join(os.path.dirname(os.path.dirname(__file__)), "org.jpype.jar")
     if not os.path.exists(supportLib):
