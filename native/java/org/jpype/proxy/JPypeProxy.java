@@ -16,10 +16,14 @@
 package org.jpype.proxy;
 
 import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jpype.JPypeContext;
 import org.jpype.manager.TypeManager;
 import org.jpype.ref.JPypeReferenceQueue;
@@ -31,6 +35,7 @@ import org.jpype.ref.JPypeReferenceQueue;
 public class JPypeProxy implements InvocationHandler
 {
 
+  private final static Constructor<Lookup> constructor;
   private final static JPypeReferenceQueue referenceQueue = JPypeReferenceQueue.getInstance();
   JPypeContext context;
   public long instance;
@@ -38,6 +43,26 @@ public class JPypeProxy implements InvocationHandler
   Class<?>[] interfaces;
   ClassLoader cl = ClassLoader.getSystemClassLoader();
   public static Object missing = new Object();
+
+  // See following link for Java 8 default access implementation
+  //   https://blog.jooq.org/correct-reflective-access-to-interface-default-methods-in-java-8-9-10/
+  static
+  {
+    Constructor<Lookup> c = null;
+    if (System.getProperty("java.version").startsWith("1."))
+    {
+      try
+      {
+        c = Lookup.class
+                .getDeclaredConstructor(Class.class);
+        c.setAccessible(true);
+      } catch (NoSuchMethodException | SecurityException ex)
+      {
+        Logger.getLogger(JPypeProxy.class.getName()).log(Level.SEVERE, null, ex);
+      }
+    }
+    constructor = c;
+  }
 
   public static JPypeProxy newProxy(JPypeContext context,
           long instance,
@@ -94,23 +119,44 @@ public class JPypeProxy implements InvocationHandler
 
     // Check first to see if Python has implementated it
     Object result = hostInvoke(context.getContext(), method.getName(), instance, returnType, parameterTypes, args, missing);
-    
+
     // If we get a good result than return it
     if (result != missing)
       return result;
-    
+
     // If it is a default method in the interface then we have to invoke it using special reflection.
     if (method.isDefault())
     {
-      return MethodHandles.lookup()
-              .findSpecial(method.getDeclaringClass(), 
-                      method.getName(), 
-                      MethodType.methodType(method.getReturnType()), 
-                      method.getDeclaringClass())
-              .bindTo(proxy)
-              .invokeWithArguments(args);
+      try
+      {
+        Class<?> cls = method.getDeclaringClass();
+
+        // Java 8
+        if (constructor != null)
+        {
+          return constructor.newInstance(cls)
+                  .findSpecial(cls,
+                          method.getName(),
+                          MethodType.methodType(method.getReturnType()),
+                          cls)
+                  .bindTo(proxy)
+                  .invokeWithArguments(args);
+        }
+
+        return MethodHandles.lookup()
+                .in(cls)
+                .findSpecial(cls,
+                        method.getName(),
+                        MethodType.methodType(method.getReturnType()),
+                        cls)
+                .bindTo(proxy)
+                .invokeWithArguments(args);
+      } catch (java.lang.IllegalAccessException ex)
+      {
+        throw new RuntimeException(ex);
+      }
     }
-    
+
     // Else throw... (this should never happen as proxies are checked when created.)
     throw new NoSuchMethodError(method.getName());
   }
