@@ -26,7 +26,7 @@ import org.jpype.asm.Type;
  *
  * @author nelson85
  */
-public class ClassDecl {
+public final class ClassDecl extends JavaDecl {
 
 	final String name;
 	ArrayList<MethodDecl> methods = new ArrayList<>();
@@ -53,14 +53,15 @@ public class ClassDecl {
 		return field;
 	}
 
-	public MethodDecl addCtor(Class<?>[] arguments, Class<?>[] exceptions, int modifiers) {
-		return addMethod("<init>", null, arguments, exceptions, modifiers);
+	public MethodDecl addCtor(Class<?>[] arguments, String[] paramNames, Class<?>[] exceptions,
+			int modifiers) {
+		return addMethod("<init>", null, arguments, paramNames, exceptions, modifiers);
 	}
 
 	public MethodDecl addMethod(String name, Class<?> ret, Class<?>[] arguments,
-			Class<?>[] exceptions, int modifiers) {
+			String[] paramNames, Class<?>[] exceptions, int modifiers) {
 		MethodDecl method =
-			new MethodDecl(name, ret, arguments, exceptions, modifiers, methods.size());
+			new MethodDecl(name, ret, arguments, paramNames, exceptions, modifiers, methods.size());
 		methods.add(method);
 		return method;
 	}

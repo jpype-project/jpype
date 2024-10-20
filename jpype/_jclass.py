@@ -463,14 +463,9 @@ def _throw_java_exception(cls: JClass, msg: str):
     return ex
 
 
-def _JExtension(_, bases, members: _JClassTable):
-    if "__jspec__" not in members:
-        raise TypeError("Java classes cannot be extended in Python")
+def _prepare_methods(cls, members: _JClassTable):
     jspec = members['__jspec__']
-    Factory = _jpype.JClass('org.jpype.extension.Factory')
-    ldr = _get_classloader(members)
-    cls = Factory.newClass(members["__qualname__"], bases, ldr)
-    overrides = []
+
     functions = []
     for i in jspec:
         if isinstance(i, type(_JExtension)):
@@ -478,14 +473,19 @@ def _JExtension(_, bases, members: _JClassTable):
             mspec = inspect.getfullargspec(i)
             annotations = _get_annotations(i, members.globals, members.locals)
             if i.__name__ == "__init__":
-                args = [annotations[j] for j in mspec.args[1:]]
-                cls.addCtor(args, exceptions, i.__jmodifiers__) # type: ignore[attr-defined]
+                names = mspec.args[1:]
+                args = [annotations[j] for j in names]
+                fun = cls.addCtor(args, names, exceptions, i.__jmodifiers__) # type: ignore[attr-defined]
                 functions.append(i)
             else:
-                args = [annotations[j] for j in mspec.args[1:]]
+                names = mspec.args[1:]
+                args = [annotations[j] for j in names]
                 ret = annotations.get("return", None)
-                cls.addMethod(i.__name__, ret, args, exceptions, i.__jmodifiers__) # type: ignore[attr-defined]
+                fun = cls.addMethod(i.__name__, ret, args, names, exceptions, i.__jmodifiers__) # type: ignore[attr-defined]
                 functions.append(i)
+            java_annotations = getattr(i, "__jannotations__", None)
+            if java_annotations is not None:
+                fun.setAnnotations(java_annotations)
             try:
                 members.pop(i.__name__)
             except KeyError:
@@ -493,15 +493,38 @@ def _JExtension(_, bases, members: _JClassTable):
         else:
             raise TypeError("Unknown member %s" % type(i))
 
-    for k, v in _get_annotations(members, members.globals, members.locals).items():
-        # TODO: check for typing.ClassVar for static fields
-        if isinstance(v, _JFieldDecl):
-            cls.addField(v.cls, k, members.pop(k, None), v.modifiers)
+    return functions
 
+
+def _prepare_fields(cls, members: _JClassTable):
+    for k, v in _get_annotations(members, members.globals, members.locals).items():
+        if isinstance(v, _JFieldDecl):
+            field = cls.addField(v.cls, k, members.pop(k, None), v.modifiers)
+            java_annotations = getattr(v, "__jannotations__", None)
+            if java_annotations is not None:
+                field.setAnnotations(java_annotations)
+
+
+def _JExtension(_, bases, members: _JClassTable):
+    if "__jspec__" not in members:
+        raise TypeError("Java classes cannot be extended in Python")
+
+    Factory = _jpype.JClass('org.jpype.extension.Factory')
+    ldr = _get_classloader(members)
+    cls = Factory.newClass(members["__qualname__"], bases, ldr)
+
+    java_annotations = members.get("__jannotations__", None)
+    if java_annotations is not None:
+        cls.setAnnotations(java_annotations)
+
+    functions = _prepare_methods(cls, members)
+    _prepare_fields(cls, members)
+
+    overrides = []
     res = Factory.loadClass(cls)
     for i, method in enumerate(cls.getMethods()):
         overrides.append((method.retId, method.parametersId, functions[i]))
-    #_jpype._putOverrides(res, overrides)
+
     return (res, overrides)
 
 

@@ -26,11 +26,11 @@ import org.jpype.manager.TypeManager;
  *
  * @author nelson85
  */
-public class MethodDecl {
+public final class MethodDecl extends JavaDecl {
 
 	public final String name;
-	public final Parameter ret;
-	public final Parameter[] parameters;
+	public final ParameterDecl ret;
+	public final ParameterDecl[] parameters;
 	public final Class<?>[] exceptions;
 	public final int modifiers;
 	public Method method;
@@ -39,16 +39,16 @@ public class MethodDecl {
 	public String parametersName;
 	public final long id;
 
-	public MethodDecl(String name, Class<?> ret, Class<?>[] params, Class<?>[] exc, int mods, int id) {
+	public MethodDecl(String name, Class<?> ret, Class<?>[] params, String[] paramNames, Class<?>[] exc, int mods, int id) {
 		this.name = name;
 		if (ret == null) {
 			ret = Void.TYPE;
 		}
-		this.ret = new Parameter(ret, -1);
+		this.ret = new ParameterDecl(ret, "", -1);
 		int slot = Modifier.isStatic(mods) ? 0 : 1;
-		this.parameters = new Parameter[params.length];
+		this.parameters = new ParameterDecl[params.length];
 		for (int i = 0; i < params.length; i++) {
-			Parameter param = new Parameter(params[i], slot);
+			ParameterDecl param = new ParameterDecl(params[i], paramNames[i], slot);
 			this.parameters[i] = param;
 			slot = param.getNextSlot();
 		}
@@ -100,7 +100,7 @@ public class MethodDecl {
 	String descriptor() {
 		StringBuilder sb = new StringBuilder();
 		sb.append('(');
-		for (Parameter param : this.parameters) {
+		for (ParameterDecl param : this.parameters) {
 			sb.append(Type.getDescriptor(param.type));
 		}
 		sb.append(')');

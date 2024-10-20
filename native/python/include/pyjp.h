@@ -136,6 +136,7 @@ extern PyTypeObject *PyJPNumberLong_Type;
 extern PyTypeObject *PyJPNumberFloat_Type;
 extern PyTypeObject *PyJPNumberBool_Type;
 extern PyTypeObject *PyJPChar_Type;
+extern PyTypeObject *JAnnotation;
 
 
 // JPype resources

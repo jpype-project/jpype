@@ -35,6 +35,15 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 		return nullptr;
 	}
 
+	if (cls->isAnnotation()) {
+		// We don't create an underlying Java object
+		// Instead, we allow it to be used as a function or decorator
+		auto args = JPPyObject::call(PySequence_Concat(JPPyTuple_Pack(cls->getHost()).get(), pyargs));
+		JPPyObject self = JPPyObject::call(JAnnotation->tp_call((PyObject*)JAnnotation, args.get(), kwargs));
+		JP_PY_CHECK();
+		return self.keep();
+	}
+
 	// Create an instance (this may fail)
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer(context);

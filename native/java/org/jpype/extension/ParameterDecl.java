@@ -1,14 +1,17 @@
 package org.jpype.extension;
 
-final class Parameter {
+final class ParameterDecl extends JavaDecl {
 	final Class<?> type;
 	final TypeKind kind;
 	final int slot;
+	final String name;
+	long id;
 
-	Parameter(Class<?> type, int slot) {
+	ParameterDecl(Class<?> type, String name, int slot) {
 		this.type = type;
 		this.kind = TypeKind.of(type);
 		this.slot = slot;
+		this.name = name;
 	}
 
 	int getNextSlot() {

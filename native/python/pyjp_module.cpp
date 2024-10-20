@@ -43,6 +43,7 @@ public:
 	Py_buffer *view;
 } ;
 
+PyTypeObject* JAnnotation = NULL;
 
 PyObject* _JArray = NULL;
 PyObject* _JChar = NULL;
@@ -112,6 +113,9 @@ void PyJPModule_loadResources(PyObject* module)
 		_JClassTable = PyObject_GetAttrString(module, "_JClassTable");
 		JP_PY_CHECK();
 		Py_INCREF(_JClassTable);
+		JAnnotation = (PyTypeObject *) PyObject_GetAttrString(module, "JAnnotation");
+		JP_PY_CHECK();
+		Py_INCREF(JAnnotation);
 		_JExtension = PyObject_GetAttrString(module, "_JExtension");
 		JP_PY_CHECK();
 		Py_INCREF(_JExtension);

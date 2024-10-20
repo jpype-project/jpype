@@ -19,7 +19,7 @@ package org.jpype.extension;
  *
  * @author nelson85
  */
-public class FieldDecl
+public final class FieldDecl extends JavaDecl
 {
 
   final Class<?> type;

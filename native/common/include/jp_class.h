@@ -114,6 +114,11 @@ public:
 		return JPModifier::isInterface(m_Modifiers);
 	}
 
+	bool isAnnotation() const
+	{
+		return JPModifier::isAnnotation(m_Modifiers);
+	}
+
 	bool isExtension() const
 	{
 		return JPModifier::isExtension(m_Modifiers);

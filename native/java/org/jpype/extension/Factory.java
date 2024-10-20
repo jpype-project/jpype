@@ -297,7 +297,7 @@ public class Factory {
 
 		// forward parameters
 		mv.visitVarInsn(Opcodes.ALOAD, 0);
-		for (Parameter param : mdecl.parameters) {
+		for (ParameterDecl param : mdecl.parameters) {
 			mv.visitVarInsn(param.kind.load, param.slot);
 		}
 
@@ -405,7 +405,7 @@ public class Factory {
 		}
 	}
 
-	private static void load(MethodVisitor mv, Parameter param) {
+	private static void load(MethodVisitor mv, ParameterDecl param) {
 		if (param.kind == TypeKind.OBJECT) {
 			mv.visitIntInsn(Opcodes.ALOAD, param.slot);
 		} else {
@@ -420,7 +420,7 @@ public class Factory {
 		}
 	}
 
-	private static void handleReturn(MethodVisitor mv, Parameter ret) {
+	private static void handleReturn(MethodVisitor mv, ParameterDecl ret) {
 		String name;
 		String desc;
 		int op;

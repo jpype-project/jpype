@@ -41,6 +41,8 @@ from . import _jio          # lgtm [py/import-own-module]
 from . import protocol      # lgtm [py/import-own-module]
 from . import _jthread      # lgtm [py/import-own-module]
 
+from ._jannotation import *
+
 __all__ = ['java', 'javax']
 __all__.extend(_jinit.__all__)  # type: ignore[name-defined]
 __all__.extend(_core.__all__)
@@ -51,6 +53,7 @@ __all__.extend(_jpackage.__all__)  # type: ignore[name-defined]
 __all__.extend(_jclass.__all__)  # type: ignore[name-defined]
 __all__.extend(_jcustomizer.__all__)  # type: ignore[name-defined]
 __all__.extend(_gui.__all__)  # type: ignore[name-defined]
+__all__.extend(_jannotation.__all__)
 
 __version__ = "1.5.1_dev0"
 __version_info__ = __version__.split('.')
