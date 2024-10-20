@@ -418,11 +418,28 @@ class _JClassTable(dict):
         frame = inspect.stack()[1][0]
         self.locals = frame.f_locals
         self.globals = frame.f_globals
+        self.field_annotations = {}
+        self.annotations = tuple()
 
     def __setitem__(self, key, value):
-        # FIXME need to create a method dispatch for calling from python
-        mods = "__jmodifiers__"
-        if not hasattr(value, mods):
+        if key == "__jannotations__":
+            if isinstance(value, JClass):
+                self.annotations = (_jpype.JAnnotation(value),)
+            elif isinstance(value, _jpype.JAnnotation):
+                self.annotations = (value,)
+            else:
+                self.annotations = value
+        if not hasattr(value, "__jmodifiers__"):
+            if isinstance(value, tuple):
+                if value and isinstance(value[0], _jpype.JAnnotation):
+                    self.field_annotations[key] = value
+                    value = value[0]._default
+            elif isinstance(value, _jpype.JAnnotation):
+                self.field_annotations[key] = (value,)
+                value = value._default
+            elif isinstance(value, JClass) and value.class_.isAnnotation():
+                self.field_annotations[key] = (_jpype.JAnnotation(value),)
+                value = None
             dict.__setitem__(self, key, value)
 
     @property
@@ -463,6 +480,13 @@ def _throw_java_exception(cls: JClass, msg: str):
     return ex
 
 
+def _add_annotations(member, java_annotations):
+    args = JClass("java.util.ArrayList")(len(java_annotations))
+    for annotation in java_annotations:
+        args.add(annotation._decl)
+    member.setAnnotations(args)
+
+
 def _prepare_methods(cls, members: _JClassTable):
     jspec = members['__jspec__']
 
@@ -484,8 +508,8 @@ def _prepare_methods(cls, members: _JClassTable):
                 fun = cls.addMethod(i.__name__, ret, args, names, exceptions, i.__jmodifiers__) # type: ignore[attr-defined]
                 functions.append(i)
             java_annotations = getattr(i, "__jannotations__", None)
-            if java_annotations is not None:
-                fun.setAnnotations(java_annotations)
+            if java_annotations:
+                _add_annotations(fun, java_annotations)
             try:
                 members.pop(i.__name__)
             except KeyError:
@@ -500,9 +524,9 @@ def _prepare_fields(cls, members: _JClassTable):
     for k, v in _get_annotations(members, members.globals, members.locals).items():
         if isinstance(v, _JFieldDecl):
             field = cls.addField(v.cls, k, members.pop(k, None), v.modifiers)
-            java_annotations = getattr(v, "__jannotations__", None)
-            if java_annotations is not None:
-                field.setAnnotations(java_annotations)
+            java_annotations = members.field_annotations.get(k)
+            if java_annotations:
+                _add_annotations(field, java_annotations)
 
 
 def _JExtension(_, bases, members: _JClassTable):
@@ -513,9 +537,9 @@ def _JExtension(_, bases, members: _JClassTable):
     ldr = _get_classloader(members)
     cls = Factory.newClass(members["__qualname__"], bases, ldr)
 
-    java_annotations = members.get("__jannotations__", None)
-    if java_annotations is not None:
-        cls.setAnnotations(java_annotations)
+    java_annotations = members.annotations
+    if java_annotations:
+        _add_annotations(cls, java_annotations)
 
     functions = _prepare_methods(cls, members)
     _prepare_fields(cls, members)

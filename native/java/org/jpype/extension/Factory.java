@@ -24,13 +24,17 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jpype.JPypeContext;
+import org.jpype.asm.AnnotationVisitor;
 import org.jpype.asm.ClassWriter;
+import org.jpype.asm.FieldVisitor;
 import org.jpype.asm.MethodVisitor;
 import org.jpype.asm.Opcodes;
 import org.jpype.asm.Type;
+import org.jpype.extension.AnnotationDecl.ValueHelper;
 import org.jpype.manager.ClassDescriptor;
 import org.jpype.manager.TypeManager;
 
@@ -215,6 +219,8 @@ public class Factory {
 					.map(Type::getInternalName)
 					.toArray(String[]::new));
 
+		addAnnotations(cw, cdecl);
+
 		// Reserve space for parameter fields
 		implementFields(cw, cdecl);
 
@@ -228,6 +234,51 @@ public class Factory {
 
 		cw.visitEnd();
 		return cw.toByteArray();
+	}
+
+	private static void addAnnotations(ClassWriter cw, ClassDecl cdecl) {
+		for (AnnotationDecl annotation : cdecl.annotations) {
+			AnnotationVisitor av = cw.visitAnnotation(annotation.getDescriptor(), true);
+			for (Map.Entry<String, ValueHelper> entry : annotation.elements.entrySet()) {
+				av.visit(entry.getKey(), entry.getValue().value);
+			}
+			av.visitEnd();
+		}
+	}
+
+	private static void addAnnotations(FieldVisitor fv, FieldDecl fdecl) {
+		for (AnnotationDecl annotation : fdecl.annotations) {
+			AnnotationVisitor av = fv.visitAnnotation(annotation.getDescriptor(), true);
+			for (Map.Entry<String, ValueHelper> entry : annotation.elements.entrySet()) {
+				av.visit(entry.getKey(), entry.getValue().value);
+			}
+			av.visitEnd();
+		}
+	}
+
+	private static void addAnnotations(MethodVisitor mv, MethodDecl mdecl) {
+		for (AnnotationDecl annotation : mdecl.annotations) {
+			AnnotationVisitor av = mv.visitAnnotation(annotation.getDescriptor(), true);
+			for (Map.Entry<String, ValueHelper> entry : annotation.elements.entrySet()) {
+				av.visit(entry.getKey(), entry.getValue().value);
+			}
+			av.visitEnd();
+		}
+		for (int i = 0; i < mdecl.parameters.length; i++) {
+			ParameterDecl param = mdecl.parameters[i];
+			addAnnotations(mv, param, i);
+		}
+	}
+
+	private static void addAnnotations(MethodVisitor mv, ParameterDecl decl, int index) {
+		for (AnnotationDecl annotation : decl.annotations) {
+			AnnotationVisitor av = mv.visitParameterAnnotation(
+				index, annotation.getDescriptor(), true);
+			for (Map.Entry<String, ValueHelper> entry : annotation.elements.entrySet()) {
+				av.visit(entry.getKey(), entry.getValue().value);
+			}
+			av.visitEnd();
+		}
 	}
 
 
@@ -255,7 +306,10 @@ public class Factory {
 
 		// Implement fields
 		for (FieldDecl fdecl : decl.fields) {
-			cw.visitField(fdecl.modifiers, fdecl.name, Type.getDescriptor(fdecl.type), null, fdecl.value);
+			FieldVisitor fv = cw.visitField(
+				fdecl.modifiers, fdecl.name, Type.getDescriptor(fdecl.type), null, fdecl.value);
+			addAnnotations(fv, fdecl);
+			fv.visitEnd();
 		}
 
 		// Initialize the parameter lists
@@ -293,6 +347,8 @@ public class Factory {
 		MethodVisitor mv =
 			cw.visitMethod(mdecl.modifiers, mdecl.name, mdecl.descriptor(), null, exceptions);
 
+		addAnnotations(mv, mdecl);
+
 		mv.visitCode();
 
 		// forward parameters
@@ -326,6 +382,8 @@ public class Factory {
 		// Start a new method
 		MethodVisitor mv =
 			cw.visitMethod(mdecl.modifiers, mdecl.name, mdecl.descriptor(), null, exceptions);
+
+		addAnnotations(mv, mdecl);
 
 		// Start the implementation
 		mv.visitCode();

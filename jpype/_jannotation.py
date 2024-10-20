@@ -47,7 +47,7 @@ class _JAnnotationBase:
 
 class JAnnotation(_JAnnotationBase):
 
-    __slots__ = ('_decl',)
+    __slots__ = ('_decl', '_default')
 
     def __new__(cls, jcls, *args, **kwargs):
         """Object for all Java annotation instances.
@@ -83,6 +83,7 @@ class JAnnotation(_JAnnotationBase):
         self._decl = AnnotationDecl(cls)
         IllegalArgumentException = JClass("java.lang.IllegalArgumentException")
         UnsupportedOperationException = JClass("java.lang.UnsupportedOperationException")
+        self._default = kwargs.pop("default", None)
         if args:
             if callable(args[0]):
                 # marker annotation on a function
@@ -100,10 +101,6 @@ class JAnnotation(_JAnnotationBase):
         except IllegalArgumentException as e:
             fmt_args = (cls.class_.getSimpleName(), e.getMessage())
             raise KeyError("%s is missing a default value for the element '%s'" % fmt_args)
-
-    def __call__(self, fun):
-        self._obj = fun
-        return fun
 
 
 class JParameterAnnotation(_JAnnotationBase):

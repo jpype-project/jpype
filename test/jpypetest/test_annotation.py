@@ -80,11 +80,3 @@ class JAnnotationTestCase(common.JPypeTestCase):
         @TestMarkerAnnotation
         def fun():
             ...
-
-    def testFieldAnnotation(self):
-        TestSimpleAnnotation = JClass("jpype.annotation.TestSimpleAnnotation")
-
-        class MyClass:
-
-            field = (TestSimpleAnnotation(4),)
-

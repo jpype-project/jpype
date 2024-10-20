@@ -800,4 +800,84 @@ class JExtensionTestCase(common.JPypeTestCase):
         loader.exec_module(m)
         sys.modules.pop("dummy")
 
-    # TODO: Annotations and documentation
+    def testPublicFieldWithAnnotation(self):
+        TestSimpleAnnotation = JClass("jpype.annotation.TestSimpleAnnotation")
+        class MyObject(JClass("jpype.extension.TestBase")):
+            test: JPublic[JInt] = TestSimpleAnnotation(JInt(4))
+
+            @JPublic
+            def __init__(self):
+                ...
+
+        field = MyObject.class_.getDeclaredFields()[2]
+        annotation = field.getAnnotation(TestSimpleAnnotation)
+        self.assertIsNotNone(annotation)
+        self.assertEqual(annotation.value(), 4)
+
+    def testPublicConstructorWithAnnotation(self):
+        TestSimpleAnnotation = JClass("jpype.annotation.TestSimpleAnnotation")
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            @TestSimpleAnnotation(JInt(4))
+            def __init__(self):
+                ...
+
+        ctor = MyObject.class_.getDeclaredConstructors()[0]
+        annotation = ctor.getAnnotation(TestSimpleAnnotation)
+        self.assertIsNotNone(annotation)
+        self.assertEqual(annotation.value(), 4)
+
+
+    def testPublicMethodWithAnnotation(self):
+        TestSimpleAnnotation = JClass("jpype.annotation.TestSimpleAnnotation")
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPublic
+            @TestSimpleAnnotation(JInt(4))
+            def fun(self):
+                ...
+
+        method = MyObject.class_.getDeclaredMethods()[0]
+        annotation = method.getAnnotation(TestSimpleAnnotation)
+        self.assertIsNotNone(annotation)
+        self.assertEqual(annotation.value(), 4)
+
+    def testPublicMethodWithParameterAnnotation(self):
+        TestSimpleAnnotation = JClass("jpype.annotation.TestSimpleAnnotation")
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPublic
+            @TestSimpleAnnotation(JInt(4))
+            def fun(self):
+                ...
+
+        # FIXME: how do I actually check this?
+        #method = MyObject.class_.getDeclaredMethods()[0]
+        #annotation = method.getAnnotation(TestSimpleAnnotation)
+        #self.assertIsNotNone(annotation)
+        #self.assertEqual(annotation.value(), 4)
+
+    def testPublicClassWithAnnotation(self):
+        TestSimpleAnnotation = JClass("jpype.annotation.TestSimpleAnnotation")
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            __jannotations__ = TestSimpleAnnotation(JInt(4))
+
+            @JPublic
+            def __init__(self):
+                ...
+
+        annotation = MyObject.class_.getAnnotation(TestSimpleAnnotation)
+        self.assertIsNotNone(annotation)
+        self.assertEqual(annotation.value(), 4)
+
+    # TODO: more thorough annotation testing and finally documentation
