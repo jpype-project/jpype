@@ -143,7 +143,7 @@ def _handleClassPath(
         classpath = (classpath,)
     try:
         # Convert anything iterable into a tuple.
-        classpath = tuple(classpath)
+        classpath = tuple(classpath) # type: ignore[arg-type]
     except TypeError:
         raise TypeError("Unknown class path element")
 
@@ -246,8 +246,6 @@ def startJVM(
         # Allow the path to be a PathLike.
         jvmpath = os.fspath(jvmpath)
 
-    extra_jvm_args: typing.Tuple[str, ...] = tuple()
-
     # Classpath handling
     if _hasClassPath(jvmargs):
         # Old style, specified in the arguments
@@ -259,7 +257,7 @@ def startJVM(
         classpath = _classpath.getClassPath()
 
     # Handle strings and list of strings.
-    extra_jvm_args = []
+    extra_jvm_args: list[str] = []
 
     supportLib = os.path.join(os.path.dirname(os.path.dirname(__file__)), "org.jpype.jar")
     if not os.path.exists(supportLib):
