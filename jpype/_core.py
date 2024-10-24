@@ -120,6 +120,7 @@ def _hasClassPath(args) -> bool:
 
 def _handleClassPath(
     classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
+    ascii: bool = True
 ) -> typing.Sequence[str]:
     """
     Return a classpath which represents the given tuple of classpath specifications
@@ -151,7 +152,9 @@ def _handleClassPath(
             out.extend(glob.glob(pth + '.jar'))
         else:
             out.append(pth)
-    return out
+    if ascii:
+        return [i for i in out if i.isascii()]
+    return [i for i in out if not i.isascii()]
 
 
 _JVM_started = False
@@ -237,6 +240,17 @@ def startJVM(
         # Not specified at all, use the default classpath.
         classpath = _classpath.getClassPath()
 
+    # Handle strings and list of strings.
+    extra_jvm_args = []
+    if classpath:
+        cp = _classpath._SEP.join(_handleClassPath(classpath))
+        extra_jvm_args += ['-Djava.class.path=%s'%cp ]
+
+    supportLib = os.path.join(os.path.dirname(os.path.dirname(__file__)), "org.jpype.jar")
+    if not os.path.exists(supportLib):
+        raise RuntimeError("Unable to find org.jpype.jar support library at " + supportLib)
+    extra_jvm_args += ['-javaagent:' + supportLib]
+
     try:
         import locale
         # Gather a list of locale settings that Java may override (excluding LC_ALL)
@@ -244,7 +258,7 @@ def startJVM(
         # Keep the current locale settings, else Java will replace them.
         prior = [locale.getlocale(i) for i in categories]
         # Start the JVM
-        _jpype.startup(jvmpath, jvmargs,
+        _jpype.startup(jvmpath, jvmargs + tuple(extra_jvm_args),
                        ignoreUnrecognized, convertStrings, interrupt)
         # Collect required resources for operation
         initializeResources()
@@ -276,7 +290,7 @@ def startJVM(
     To resolve this issue we add the classpath after initialization since jpype
     itself supports unicode class paths.
     """
-    for cp in _handleClassPath(classpath):
+    for cp in _handleClassPath(classpath, False):
         addClassPath(Path.cwd() / Path(cp).resolve())
 
 

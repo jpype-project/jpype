@@ -220,7 +220,6 @@ private:
 public:
 	JPClassRef m_ContextClass;
 	JPClassRef m_RuntimeException;
-	JPClassRef m_NoSuchMethodError;
 
 private:
 	JPClassRef m_Array;
