@@ -156,6 +156,15 @@ class StartJVMCase(unittest.TestCase):
         assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
 
 
+    def testOldStyleNonASCIIPath(self):
+        """Test that paths with non-ASCII characters are handled correctly.
+        Regression test for https://github.com/jpype-project/jpype/issues/1194
+        """
+        jpype.startJVM("-Djava.class.path=test/jar/unicode_à😎/sample_package.jar", jvmpath=Path(self.jvmpath))
+        cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
+        self.assertEqual(type(cl), jpype.JClass("org.jpype.classloader.JpypeSystemClassLoader"))
+        assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
+
     def testNonASCIIPathWithSystemClassLoader(self):
         with self.assertRaises(ValueError):
             jpype.startJVM(
@@ -164,12 +173,29 @@ class StartJVMCase(unittest.TestCase):
                 classpath="test/jar/unicode_à😎/sample_package.jar"
             )
 
+    def testOldStyleNonASCIIPathWithSystemClassLoader(self):
+        with self.assertRaises(ValueError):
+            jpype.startJVM(
+                self.jvmpath,
+                "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
+                "-Djava.class.path=test/jar/unicode_à😎/sample_package.jar"
+            )
 
     def testASCIIPathWithSystemClassLoader(self):
         jpype.startJVM(
             "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
             jvmpath=Path(self.jvmpath),
             classpath=f"test/classes;test/jar/late/late.jar"
+        )
+        cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
+        self.assertEqual(type(cl), jpype.JClass("jpype.startup.TestSystemClassLoader"))
+        assert dir(jpype.JPackage('org.jpype.late')) == ['Test']
+
+    def testOldStyleASCIIPathWithSystemClassLoader(self):
+        jpype.startJVM(
+            self.jvmpath,
+            "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
+            "-Djava.class.path=test/classes;test/jar/late/late.jar"
         )
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
         self.assertEqual(type(cl), jpype.JClass("jpype.startup.TestSystemClassLoader"))

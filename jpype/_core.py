@@ -109,20 +109,14 @@ def isJVMStarted():
     return _jpype.isStarted()
 
 
-def _hasClassPath(args) -> bool:
+def _getOldClassPath(args) -> list[str]:
     for i in args:
-        if isinstance(i, str) and i.startswith('-Djava.class.path'):
-            if not i.isascii():
-                # This passes it to the system classloader.
-                # Unfortunately the string encoding gets butchered and the original
-                # isn't recoverable from System.getProperty("java.class.path").
-                # If it was, then I'd have our system classloader take care of
-                # it in the constructor, but for now it is impossible.
-                # raise a ValueError to tell the user they can't do this.
-                # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
-                raise ValueError("-Djava.class.path contains non ascii characters")
-            return True
-    return False
+        if not isinstance(i, str):
+            continue
+        _, _, classpath = i.partition('-Djava.class.path=')
+        if classpath:
+            return classpath.split(_classpath._SEP)
+    return []
 
 
 def _hasSystemClassLoader(args) -> bool:
@@ -247,11 +241,13 @@ def startJVM(
         jvmpath = os.fspath(jvmpath)
 
     # Classpath handling
-    if _hasClassPath(jvmargs):
+    old_classpath = _getOldClassPath(jvmargs)
+    if old_classpath:
         # Old style, specified in the arguments
         if classpath is not None:
             # Cannot apply both styles, conflict
             raise TypeError('classpath specified twice')
+        classpath = old_classpath
     elif classpath is None:
         # Not specified at all, use the default classpath.
         classpath = _classpath.getClassPath()
@@ -263,11 +259,14 @@ def startJVM(
     if not os.path.exists(supportLib):
         raise RuntimeError("Unable to find org.jpype.jar support library at " + supportLib)
 
+    late_load = not has_classloader
     if classpath:
         cp = _classpath._SEP.join(_handleClassPath(classpath))
         if cp.isascii():
             # no problems
             extra_jvm_args += ['-Djava.class.path=%s'%cp ]
+            jvmargs = _removeClassPath(jvmargs)
+            late_load = False
         elif has_classloader:
             # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
             raise ValueError("system classloader cannot be specified with non ascii characters in the classpath")
@@ -327,7 +326,7 @@ def startJVM(
     To resolve this issue, we add the classpath after initialization since Java has
     had the utilities to correctly encode it since 1.0
     """
-    if not has_classloader and classpath:
+    if late_load and classpath:
         # now we can add to the system classpath
         cl = _jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
         for cp in _handleClassPath(classpath):
