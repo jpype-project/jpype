@@ -26,6 +26,7 @@ import importlib.abc
 import importlib.util
 import textwrap
 import sys
+import typing
 
 
 class JExtensionTestCase(common.JPypeTestCase):
@@ -284,7 +285,7 @@ class JExtensionTestCase(common.JPypeTestCase):
 
     def testPublicField(self):
         class MyObject(JClass("jpype.extension.TestBase")):
-            myField: JPublic[JInt]
+            myField: typing.Annotated[JInt, JPublic]
 
             def __init__(self):
                 self.pythonMember = None
@@ -301,7 +302,7 @@ class JExtensionTestCase(common.JPypeTestCase):
         from java.lang import IllegalArgumentException
         with self.assertRaises(IllegalArgumentException):
             class MyObject(JClass("jpype.extension.TestBase")):
-                test: JPublic[JInt] = JInt(1)
+                test: typing.Annotated[JInt, JPublic] = JInt(1)
 
                 @JPublic
                 def __init__(self):
@@ -310,7 +311,7 @@ class JExtensionTestCase(common.JPypeTestCase):
     def testPublicFinalField(self):
         unittest = self
         class MyObject(JClass("jpype.extension.TestBase")):
-            test: JFinal[JPublic[JInt]]
+            test: typing.Annotated[JInt, JPublic, JFinal]
 
             @JPublic
             def __init__(self):
@@ -326,7 +327,7 @@ class JExtensionTestCase(common.JPypeTestCase):
 
     def testPrivateField(self):
         class MyObject(JClass("jpype.extension.TestBase")):
-            test: JPrivate[JInt]
+            test: typing.Annotated[JInt, JPrivate]
 
             @JPublic
             def __init__(self):
@@ -340,7 +341,7 @@ class JExtensionTestCase(common.JPypeTestCase):
 
     def testPrivateFieldExternalAccess(self):
         class MyObject(JClass("jpype.extension.TestBase")):
-            test: JPrivate[JInt]
+            test: typing.Annotated[JInt, JPrivate]
 
             @JPublic
             def __init__(self):
@@ -355,7 +356,7 @@ class JExtensionTestCase(common.JPypeTestCase):
 
     def testPublicStaticField(self):
         class MyObject(JClass("jpype.extension.TestBase")):
-            test: JStatic[JPublic[JInt]]
+            test: typing.Annotated[JInt, JPublic, JStatic]
 
             @JPublic
             def __init__(self):
@@ -366,7 +367,7 @@ class JExtensionTestCase(common.JPypeTestCase):
 
     def testPublicStaticFieldWithValue(self):
         class MyObject(JClass("jpype.extension.TestBase")):
-            test: JStatic[JPublic[JInt]] = JInt(1)
+            test: typing.Annotated[JInt, JPublic, JStatic] = JInt(1)
 
             @JPublic
             def __init__(self):
@@ -379,7 +380,7 @@ class JExtensionTestCase(common.JPypeTestCase):
 
     def testPublicStaticFinalFieldWithValue(self):
         class MyObject(JClass("jpype.extension.TestBase")):
-            test: JFinal[JStatic[JPublic[JInt]]] = JInt(1)
+            test: typing.Annotated[JInt, JPublic, JStatic, JFinal] = JInt(1)
 
             @JPublic
             def __init__(self):
@@ -392,7 +393,7 @@ class JExtensionTestCase(common.JPypeTestCase):
 
     def testPrivateStaticField(self):
         class MyObject(JClass("jpype.extension.TestBase")):
-            test: JStatic[JPrivate[JInt]]
+            test: typing.Annotated[JInt, JPrivate, JStatic]
 
             @JPublic
             def __init__(self):
@@ -406,7 +407,7 @@ class JExtensionTestCase(common.JPypeTestCase):
 
     def testPrivateStaticFieldExternalAccess(self):
         class MyObject(JClass("jpype.extension.TestBase")):
-            test: JStatic[JPrivate[JInt]]
+            test: typing.Annotated[JInt, JPrivate, JStatic]
 
             @JPublic
             def __init__(self):
@@ -470,8 +471,6 @@ class JExtensionTestCase(common.JPypeTestCase):
         o.call_private_method()
 
     def testPrivateStaticMethodFromClassmethod(self):
-        # FIXME: bytecode verification error
-        # forgot to handle static methods in class generation
         class MyObject(JClass("jpype.extension.TestBase")):
 
             @JPublic
@@ -802,7 +801,7 @@ class JExtensionTestCase(common.JPypeTestCase):
     def testPublicFieldWithAnnotation(self):
         TestSimpleAnnotation = JClass("jpype.annotation.TestSimpleAnnotation")
         class MyObject(JClass("jpype.extension.TestBase")):
-            test: JPublic[JInt] = TestSimpleAnnotation(JInt(4))
+            test: typing.Annotated[JInt, JPublic] = TestSimpleAnnotation(JInt(4))
 
             @JPublic
             def __init__(self):

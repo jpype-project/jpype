@@ -56,35 +56,35 @@ __all__ = [
 ]
 
 
-class JBoolean(_jpype._JBoolean, internal=True):  # type: ignore[call-arg]
+class JBoolean(_jpype._JBoolean, internal=True):
     pass
 
 
-class JByte(_jpype._JNumberLong, internal=True):  # type: ignore[call-arg]
+class JByte(_jpype._JNumberLong, internal=True):
     pass
 
 
-class JChar(_jpype._JChar, internal=True):  # type: ignore[call-arg]
+class JChar(_jpype._JChar, internal=True):
     pass
 
 
-class JInt(_jpype._JNumberLong, internal=True):  # type: ignore[call-arg]
+class JInt(_jpype._JNumberLong, internal=True):
     pass
 
 
-class JShort(_jpype._JNumberLong, internal=True):  # type: ignore[call-arg]
+class JShort(_jpype._JNumberLong, internal=True):
     pass
 
 
-class JLong(_jpype._JNumberLong, internal=True):  # type: ignore[call-arg]
+class JLong(_jpype._JNumberLong, internal=True):
     pass
 
 
-class JFloat(_jpype._JNumberFloat, internal=True):  # type: ignore[call-arg]
+class JFloat(_jpype._JNumberFloat, internal=True):
     pass
 
 
-class JDouble(_jpype._JNumberFloat, internal=True):  # type: ignore[call-arg]
+class JDouble(_jpype._JNumberFloat, internal=True):
     pass
 
 

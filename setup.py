@@ -62,7 +62,7 @@ setup(
         'Operating System :: Unix',
         'Operating System :: MacOS',
     ],
-    packages=['jpype', 'jpype._pyinstaller'],
+    packages=['jpype', 'jpype._pyinstaller', '_jpype-stubs'],
     package_dir={'jpype': 'jpype', },
     package_data={'jpype': ['*.pyi']},
     cmdclass={

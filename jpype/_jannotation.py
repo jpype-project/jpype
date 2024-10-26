@@ -63,7 +63,6 @@ class JAnnotation(_JAnnotationBase):
         Raises:
           TypeError: if the component class is not an annotation.
           TypeError: if the annotation class does not have RUNTIME retention.
-          ValueError: if JAnnotation is called directly
         """
         if not jcls.class_.isAnnotation():
             raise TypeError("%s is not an annotation" % jcls)
@@ -104,6 +103,7 @@ class JAnnotation(_JAnnotationBase):
 
 
 class JParameterAnnotation(_JAnnotationBase):
+    """Helper for Java method parameter annotations"""
 
     __slots__ = ('_name', '_annotations')
 

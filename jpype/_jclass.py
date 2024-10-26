@@ -19,8 +19,11 @@ import _jpype
 from ._pykeywords import pysafe
 from . import _jcustomizer
 import inspect
+import enum
 import sys
 import weakref
+import types
+import typing
 
 __all__ = ['JClass', 'JFinal', 'JInterface', 'JOverride', 'JPublic', 'JProtected',
         'JPrivate', 'JStatic', 'JThrows']
@@ -44,13 +47,6 @@ def _get_annotations(target, globals, locals):
 
 
 class _JFieldDecl(object):
-    '''
-    def __init__(self, cls, name, value, modifiers):
-        self.cls = cls
-        self.name = name
-        self.value = value
-        self.modifiers = modifiers
-    '''
 
     def __init__(self, cls, modifiers):
         self.cls = cls
@@ -119,18 +115,23 @@ def _JMemberDecl(nonlocals, target, strict, modifiers, locals, globals, **kwargs
     raise TypeError("Unknown Java specification '%s'" % type(target))
 
 
-class _JModifier:
+@enum.global_enum
+class _JModifier(enum.IntFlag):
 
-    modifier: int
+    JPublic = 1
+    JPrivate = 2
+    JProtected = 4
+    JStatic = 8
+    JFinal = 16
 
-    def __new__(cls, target, **kwargs):
-        modifier = cls.modifier
+    def __call__(self, target, **kwargs):
+        modifier = int(self)
         if hasattr(target, '__jmodifiers__'):
             target.__jmodifiers__ |= modifier
             return target
         elif isinstance(target, classmethod):
             target = target.__func__
-            modifier |= JStatic.modifier
+            modifier |= JStatic
 
         nonlocals = inspect.stack()[1][0].f_locals
         frame = inspect.stack()[2][0]
@@ -145,23 +146,11 @@ class _JModifier:
         return _JFieldDecl(key, cls.modifier)
 
 
-class JPublic(_JModifier):
-    modifier = 1
-
-
-class JProtected(_JModifier):
-    modifier = 4
-
-
-class JPrivate(_JModifier):
-    modifier = 2
-
-
-class JStatic(_JModifier):
-    modifier = 8
-
-class JFinal(_JModifier):
-    modifier = 16
+JPublic = _JModifier.JPublic
+JPrivate = _JModifier.JPrivate
+JProtected = _JModifier.JProtected
+JStatic = _JModifier.JStatic
+JFinal = _JModifier.JFinal
 
 
 def JThrows(*args):
@@ -528,9 +517,16 @@ def _prepare_methods(cls, members: _JClassTable):
 
 
 def _prepare_fields(cls, members: _JClassTable):
+    def compute_modifiers(mods: tuple[type[_JModifier]]):
+        res = 0
+        for mod in mods:
+            res |= mod
+        return res
+
     for k, v in _get_annotations(members, members.globals, members.locals).items():
-        if isinstance(v, _JFieldDecl):
-            field = cls.addField(v.cls, k, members.pop(k, None), v.modifiers)
+        if hasattr(v, "__metadata__"):
+            modifiers = compute_modifiers(v.__metadata__)
+            field = cls.addField(v.__origin__, k, members.pop(k, None), modifiers)
             java_annotations = members.field_annotations.get(k)
             if java_annotations:
                 _add_annotations(field, java_annotations)
