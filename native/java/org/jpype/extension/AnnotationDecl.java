@@ -35,7 +35,7 @@ public final class AnnotationDecl {
 
 	private void validate() {
 		for (Map.Entry<String, ValueHelper> entry : elements.entrySet()) {
-			if (entry.getValue() == null) {
+			if (entry.getValue().isEmpty()) {
 				// we will take the missing name from the msg and raise a KeyError
 				throw new IllegalArgumentException(entry.getKey());
 			}
@@ -58,26 +58,56 @@ public final class AnnotationDecl {
 			this.value = method.getDefaultValue();
 		}
 
+		private boolean isEmpty() {
+			return value == null;
+		}
+
+		private static Byte toByte(Number value) {
+			if (value.longValue() == value.byteValue()) {
+				return value.byteValue();
+			}
+			throw new IllegalArgumentException("Value: "+value+" doesn't fit in a byte");
+		}
+
+		private static Short toShort(Number value) {
+			if (value.longValue() == value.shortValue()) {
+				return value.shortValue();
+			}
+			throw new IllegalArgumentException("Value: "+value+" doesn't fit in a short");
+		}
+
+		private static Integer toInteger(Number value) {
+			if (value.longValue() == value.intValue()) {
+				return value.intValue();
+			}
+			throw new IllegalArgumentException("Value: "+value+" doesn't fit in a integer");
+		}
+
+		private static Float toFloat(Number value) {
+			if (value.doubleValue() == value.floatValue()) {
+				return value.floatValue();
+			}
+			throw new IllegalArgumentException("Value: "+value+" doesn't fit in a double");
+		}
+
 		private void setValue(Object value) {
 			if (!type.isPrimitive() || type == Boolean.TYPE) {
 				// bool doesn't suffer from box conversion trouble
 				this.value = value;
 				return;
 			}
-			// apply the casts here to cause an exception if the user wasn't explicit enough
-			// this way values won't silently be truncated
 			if (type == Byte.TYPE) {
-				this.value = (Byte) value;
+				this.value = toByte((Number)value);
 			} else if (type == Character.TYPE) {
 				this.value = (Character) value;
 			} else if (type == Short.TYPE) {
-				this.value = (Short) value;
+				this.value = toShort((Number)value);
 			} else if (type == Integer.TYPE) {
-				this.value = (Integer) value;
+				this.value = toInteger((Number)value);
 			} else if (type == Long.TYPE) {
 				this.value = (Long) value;
 			} else if (type == Float.TYPE) {
-				this.value = (Float) value;
+				this.value = toFloat((Number)value);
 			} else if (type == Double.TYPE) {
 				this.value = (Double) value;
 			}
