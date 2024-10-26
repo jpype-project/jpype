@@ -738,7 +738,7 @@ in parentheses in front of the object to be cast.  Python does not directly
 support Java casting syntax. To request an explicit conversion an object must
 be "cast" using a cast operator @.   Overloaded methods with an explicit
 argument will not be matched.  After applying an explicit cast, the match
-quality can improve to exact or derived depending on the cast type. 
+quality can improve to exact or derived depending on the cast type.
 
 Not every conversion is possible between Java types.  Types that cannot be
 converted are considerer to be conversion type "none".
@@ -751,7 +751,7 @@ Details on the standard conversions provided by JPype are given in the section
 Java casting
 ------------
 
-To access a casting operation we use the casting ``JObject`` wrapper.  
+To access a casting operation we use the casting ``JObject`` wrapper.
 For example, ``JObject(object, Type)`` would produce a copy with specificed type.
 The first argument is the object to convert and
 the second is the type to cast to.  The second argument should always be a Java
@@ -784,7 +784,7 @@ changes the resolution type for the object.  This can be very useful when
 trying to call a specific method overload.   For example, if we have a Java
 ``a=String("hello")`` and there were an overload of the method ``foo`` between
 ``String`` and ``Object`` we would need to select the overload with
-``foo(java.lang.Object@a)``.  
+``foo(java.lang.Object@a)``.
 
 .. _JObject:
 
@@ -1117,9 +1117,9 @@ any element cannot be converted a ``TypeError`` will be raised.
 
 As a shortcut the ``[]`` operator can be used to specify an array type or
 an array instance.   For example, ``JInt[5]`` will allocate an array instance
-of Java ints with length 5.  ``JInt[:]`` will create a type instance with 
+of Java ints with length 5.  ``JInt[:]`` will create a type instance with
 an unspecific length which can be used for the casting operator.  To create
-an array instance with multiple dimensions we would use ``JInt[5,10]`` 
+an array instance with multiple dimensions we would use ``JInt[5,10]``
 which would create a rectangular array which was 5 by 10.   To create a
 jagged array we would substitute ``:`` for the final dimensions.  So
 ``JInt[5,:]`` is a length 5 array of an array of ``int[]``.  Multidimensional
@@ -1195,7 +1195,7 @@ additional mathematical operations at this time.
 Creating a Java array is also required when pass by reference syntax is required.
 For example, if a Java function takes an array, modifies it and we want to
 retrieve those values.  In Java, all parameters are pass by value, but the contents
-of a container like an array can be modified which gives the appearance of 
+of a container like an array can be modified which gives the appearance of
 pass by reference.  For example.
 
 .. code-block:: java
@@ -1516,6 +1516,54 @@ following differences:
   import the outer class and call them as members.
 - Non-static inner classes cannot be instantiated from Python code.  Instances
   received from Java code can be used without problem.
+
+
+Annotations
+-----------
+
+Python classes which extend a Java class may apply an annotation to the class,
+fields, methods and method parameters.  All annotations **must** have runtime
+retention ie ``RetentionPolicy.RUNTIME``.  If it does not, a ``TypeError`` will
+be raised.  Applying an annotation is slightly different depending on what it
+is being applied to. The following list shows how to apply an annotation in
+each use case, followed by an example:
+
+- A class has annotations applied to the special ``__jannotations___`` member.
+  Use a ``tuple`` to apply multiple annotations.  Using a decorator here would
+  be a much more pythonic approach. Unfortunately, when a decorator is applied
+  to a class, the class is evaluated before the decorator is applied. Since the
+  backing Java class will have already been created, it would be too late to add
+  an annotation.
+
+- A field has annotations applied by assigning the result of calling the annotation
+  to the field. To apply multiple annotations, use a ``tuple``. To set a default
+  value for the field when annotations are used, use the ``default`` keyword argument
+  in the first annotation. Since ``default`` is a Java keyword in the context of an
+  annotation, it is not possible for it to conflict with any annotation elements.
+  Using a decorator here would be a much more pythonic approach. Unfortunately, Python
+  does not allow applying a decorator to a class attribute and using ``typing.Annotated``
+  would quickly become messy.
+
+- A method has annotations applied by using the annotation class as a decorator.
+
+- A method parameter has annotations applied by using the ``JParameterAnnotation``
+  on the method with the parameter name as the first argument followed by the
+  annotations to be applied.
+
+
+.. code-block:: python
+
+	class MyObject(java.lang.Object):
+	    __jannotations__ = (Annotation1(4), Annotation2)
+
+		field1: typing.Annotated[JInt, JPublic] = (Annotation1(default=4, 2), Annotation2)
+
+		@Annotation1(4)
+		@JParameterAnnotation("value", Annotation2)
+		@Annotation2
+		@JPublic
+		def method1(self, value: JInt):
+		   ...
 
 
 .. _import:
@@ -2622,7 +2670,7 @@ way that a thread would not be attached is if it has never called a Java method.
 The downside of automatic attachment is that each attachment allocates a
 small amount of resources in the JVM.  For applications that spawn frequent
 dynamically allocated threads, these threads will need to be detached prior
-to completing the thread with ``java.lang.Thread.detach()``.  When 
+to completing the thread with ``java.lang.Thread.detach()``.  When
 implementing dynamic threading, one can detach the thread
 whenever Java is no longer needed.  The thread will automatically reattach if
 Java is needed again.  There is a performance penalty each time a thread is
@@ -2775,7 +2823,7 @@ Javadoc
 
 JPype can display javadoc in ReStructured Text as part of the Python
 documentation.  To access the javadoc, the javadoc package must be located on
-the classpath.  This includes the JDK package documentation.  
+the classpath.  This includes the JDK package documentation.
 
 For example to get the documentation for ``java.lang.Class``, we start the JVM
 with the JDK documentation zip file on the classpath.
@@ -3187,12 +3235,13 @@ Annotations
 Some frameworks such as Spring use Java annotations to indicate specific
 actions.  These may be either runtime annotations or compile time annotations.
 Occasionally while using JPype someone would like to add a Java annotation to a
-JProxy method so that a framework like Spring can pick up that annotation.
+JProxy method so that a framework like Spring can pick up that annotation.  With
+the exception of Java classes extended from Python, this is not possible.
 
 JPype uses the Java supplied ``Proxy`` to implement an interface.  That API
 does not support addition of a runtime annotation to a method or class.  Thus,
 all methods and classes when probed with reflection that are implemented in
-Python will come back with no annotations.   
+Python will come back with no annotations.
 
 Further, the majority of annotation magic within Java is actually performed at
 compile time.  This is accomplished using an annotation processor.  When a
@@ -3200,15 +3249,7 @@ class or method is annotated, the compiler checks to see if there is an
 annotation processor which then can produce new code or modify the class
 annotations.  As this is a compile time process, even if annotations were added
 by Python to a class they would still not be active as the corresponding
-compilation phase would not have been executed.   
-
-This is a limitation of the implementation of annotations by the Java virtual
-machine.  It is technically possible though the use of specialized code
-generation with the ASM library or other code generation to add a runtime
-annotation.  Or through exploits of the Java virtual machine annotation
-implementation one can add annotation to existing Java classes.  But these
-annotations are unlikely to be useful. As such JPype will not be able to
-support class or method annotations.
+compilation phase would not have been executed.
 
 
 Restarting the JVM

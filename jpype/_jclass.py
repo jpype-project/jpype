@@ -478,6 +478,8 @@ def _add_annotations(member, java_annotations):
         if isinstance(annotation, JParameterAnnotation):
             param = member.getParameter(annotation._name)
             _add_annotations(param, annotation._annotations)
+        elif isinstance(annotation, JClass) and annotation.class_.isAnnotation():
+            args.add(annotation()._decl)
         else:
             args.add(annotation._decl)
     member.setAnnotations(args)

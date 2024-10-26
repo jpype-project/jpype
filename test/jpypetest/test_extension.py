@@ -801,7 +801,7 @@ class JExtensionTestCase(common.JPypeTestCase):
     def testPublicFieldWithAnnotation(self):
         TestSimpleAnnotation = JClass("jpype.annotation.TestSimpleAnnotation")
         class MyObject(JClass("jpype.extension.TestBase")):
-            test: typing.Annotated[JInt, JPublic] = TestSimpleAnnotation(JInt(4))
+            test: typing.Annotated[JInt, JPublic] = TestSimpleAnnotation(4)
 
             @JPublic
             def __init__(self):
@@ -812,12 +812,32 @@ class JExtensionTestCase(common.JPypeTestCase):
         self.assertIsNotNone(annotation)
         self.assertEqual(annotation.value(), 4)
 
+    def testPublicFieldWithMultipleAnnotations(self):
+        TestSimpleAnnotation = JClass("jpype.annotation.TestSimpleAnnotation")
+        TestMarkerAnnotation = JClass("jpype.annotation.TestMarkerAnnotation")
+        class MyObject(JClass("jpype.extension.TestBase")):
+            test: typing.Annotated[JInt, JPublic] = (
+                TestSimpleAnnotation(4),
+                TestMarkerAnnotation
+            )
+
+            @JPublic
+            def __init__(self):
+                ...
+
+        field = MyObject.class_.getDeclaredFields()[2]
+        annotation = field.getAnnotation(TestSimpleAnnotation)
+        self.assertIsNotNone(annotation)
+        self.assertEqual(annotation.value(), 4)
+        annotation = field.getAnnotation(TestMarkerAnnotation)
+        self.assertIsNotNone(annotation)
+
     def testPublicConstructorWithAnnotation(self):
         TestSimpleAnnotation = JClass("jpype.annotation.TestSimpleAnnotation")
         class MyObject(JClass("jpype.extension.TestBase")):
 
             @JPublic
-            @TestSimpleAnnotation(JInt(4))
+            @TestSimpleAnnotation(4)
             def __init__(self):
                 ...
 
@@ -836,7 +856,7 @@ class JExtensionTestCase(common.JPypeTestCase):
                 ...
 
             @JPublic
-            @TestSimpleAnnotation(JInt(4))
+            @TestSimpleAnnotation(4)
             def fun(self):
                 ...
 
@@ -854,7 +874,7 @@ class JExtensionTestCase(common.JPypeTestCase):
                 ...
 
             @JPublic
-            @JParameterAnnotation("annotation_value", TestSimpleAnnotation(JInt(4)))
+            @JParameterAnnotation("annotation_value", TestSimpleAnnotation(4))
             def fun(self, annotation_value: JLong):
                 ...
 
@@ -867,7 +887,7 @@ class JExtensionTestCase(common.JPypeTestCase):
         TestSimpleAnnotation = JClass("jpype.annotation.TestSimpleAnnotation")
         class MyObject(JClass("jpype.extension.TestBase")):
 
-            __jannotations__ = TestSimpleAnnotation(JInt(4))
+            __jannotations__ = TestSimpleAnnotation(4)
 
             @JPublic
             def __init__(self):
@@ -876,6 +896,27 @@ class JExtensionTestCase(common.JPypeTestCase):
         annotation = MyObject.class_.getAnnotation(TestSimpleAnnotation)
         self.assertIsNotNone(annotation)
         self.assertEqual(annotation.value(), 4)
+
+    def testPublicClassWithMultipleAnnotations(self):
+        TestSimpleAnnotation = JClass("jpype.annotation.TestSimpleAnnotation")
+        TestMarkerAnnotation = JClass("jpype.annotation.TestMarkerAnnotation")
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            __jannotations__ = (
+                TestSimpleAnnotation(4),
+                TestMarkerAnnotation
+            )
+
+            @JPublic
+            def __init__(self):
+                ...
+
+        annotation = MyObject.class_.getAnnotation(TestSimpleAnnotation)
+        self.assertIsNotNone(annotation)
+        self.assertEqual(annotation.value(), 4)
+        annotation = MyObject.class_.getAnnotation(TestMarkerAnnotation)
+        self.assertIsNotNone(annotation)
+
 
     def testPrimitiveParameterBool(self):
         class MyObject(JClass("jpype.extension.TestBase")):
