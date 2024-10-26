@@ -179,7 +179,6 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	m_Object_HashCodeID = frame.GetMethodID(objectClass, "hashCode", "()I");
 	m_Object_GetClassID = frame.GetMethodID(objectClass, "getClass", "()Ljava/lang/Class;");
 
-	m_NoSuchMethodError = JPClassRef(frame, (jclass) frame.FindClass("java/lang/NoSuchMethodError"));
 	m_RuntimeException = JPClassRef(frame, (jclass) frame.FindClass("java/lang/RuntimeException"));
 
 	jclass stringClass = frame.FindClass("java/lang/String");

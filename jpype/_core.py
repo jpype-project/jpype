@@ -32,8 +32,6 @@ from . import _pykeywords
 
 from ._jvmfinder import *
 
-from jpype._classpath import addClassPath
-
 # This import is required to bootstrap importlib, _jpype uses importlib.util
 # but on some systems it may not load properly from C.  To make sure it gets
 # loaded properly we are going to force the issue even through we don't
@@ -111,20 +109,14 @@ def isJVMStarted():
     return _jpype.isStarted()
 
 
-def _hasClassPath(args) -> bool:
+def _getOldClassPath(args) -> list[str]:
     for i in args:
-        if isinstance(i, str) and i.startswith('-Djava.class.path'):
-            if not i.isascii():
-                # This passes it to the system classloader.
-                # Unfortunately the string encoding gets butchered and the original
-                # isn't recoverable from System.getProperty("java.class.path").
-                # If it was, then I'd have our system classloader take care of
-                # it in the constructor, but for now it is impossible.
-                # raise a ValueError to tell the user they can't do this.
-                # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
-                raise ValueError("-Djava.class.path contains non ascii characters")
-            return True
-    return False
+        if not isinstance(i, str):
+            continue
+        _, _, classpath = i.partition('-Djava.class.path=')
+        if classpath:
+            return classpath.split(_classpath._SEP)
+    return []
 
 
 def _hasSystemClassLoader(args) -> bool:
@@ -136,7 +128,7 @@ def _hasSystemClassLoader(args) -> bool:
 
 def _handleClassPath(
     classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None
-) -> str:
+) -> typing.Sequence[str]:
     """
     Return a classpath which represents the given tuple of classpath specifications
     """
@@ -145,7 +137,7 @@ def _handleClassPath(
         classpath = (classpath,)
     try:
         # Convert anything iterable into a tuple.
-        classpath = tuple(classpath)
+        classpath = tuple(classpath) # type: ignore[arg-type]
     except TypeError:
         raise TypeError("Unknown class path element")
 
@@ -165,7 +157,7 @@ def _handleClassPath(
             out.extend(glob.glob(pth + '.jar'))
         else:
             out.append(pth)
-    return _classpath._SEP.join(out)
+    return out
 
 
 def _removeClassPath(args) -> tuple[str]:
@@ -248,32 +240,43 @@ def startJVM(
         # Allow the path to be a PathLike.
         jvmpath = os.fspath(jvmpath)
 
-    extra_jvm_args: typing.Tuple[str, ...] = tuple()
-
     # Classpath handling
-    if _hasClassPath(jvmargs):
+    old_classpath = _getOldClassPath(jvmargs)
+    if old_classpath:
         # Old style, specified in the arguments
         if classpath is not None:
             # Cannot apply both styles, conflict
             raise TypeError('classpath specified twice')
+        classpath = old_classpath
     elif classpath is None:
         # Not specified at all, use the default classpath.
         classpath = _classpath.getClassPath()
 
     # Handle strings and list of strings.
+    extra_jvm_args: list[str] = []
+
+    supportLib = os.path.join(os.path.dirname(os.path.dirname(__file__)), "org.jpype.jar")
+    if not os.path.exists(supportLib):
+        raise RuntimeError("Unable to find org.jpype.jar support library at " + supportLib)
+
+    late_load = not has_classloader
     if classpath:
-        classpath = _handleClassPath(classpath)
-        jpype_path = Path(__file__).parent.parent.absolute() / "org.jpype.jar"
-        if classpath.isascii():
+        cp = _classpath._SEP.join(_handleClassPath(classpath))
+        if cp.isascii():
             # no problems
-            extra_jvm_args += (f'-Djava.class.path={classpath}', )
+            extra_jvm_args += ['-Djava.class.path=%s'%cp ]
+            jvmargs = _removeClassPath(jvmargs)
+            late_load = False
         elif has_classloader:
             # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
             raise ValueError("system classloader cannot be specified with non ascii characters in the classpath")
-        elif str(jpype_path).isascii():
+        elif supportLib.isascii():
             # ok, setup the jpype system classloader and add to the path after startup
-            extra_jvm_args += (f'-Djava.system.class.loader=org.jpype.classloader.JpypeSystemClassLoader', )
-            extra_jvm_args += (f'-Djava.class.path={jpype_path}', )
+            # this guarentees all classes have the same permissions as they did in the past
+            extra_jvm_args += [
+                '-Djava.system.class.loader=org.jpype.classloader.JpypeSystemClassLoader',
+                '-Djava.class.path=%s'%supportLib
+            ]
             jvmargs = _removeClassPath(jvmargs)
         else:
             # We are screwed no matter what we try or do.
@@ -282,6 +285,9 @@ def startJVM(
             # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
             raise ValueError("jpype jar must be ascii to add to the system class path")
 
+
+    extra_jvm_args += ['-javaagent:' + supportLib]
+
     try:
         import locale
         # Gather a list of locale settings that Java may override (excluding LC_ALL)
@@ -289,7 +295,7 @@ def startJVM(
         # Keep the current locale settings, else Java will replace them.
         prior = [locale.getlocale(i) for i in categories]
         # Start the JVM
-        _jpype.startup(jvmpath, jvmargs + extra_jvm_args,
+        _jpype.startup(jvmpath, jvmargs + tuple(extra_jvm_args),
                        ignoreUnrecognized, convertStrings, interrupt)
         # Collect required resources for operation
         initializeResources()
@@ -309,10 +315,21 @@ def startJVM(
                 raise RuntimeError(f"{jvmpath} is older than required Java version{version}") from ex
         raise
 
-    if not has_classloader and classpath:
+    """Prior versions of JPype used the jvmargs to setup the class paths via
+    JNI (Java Native Interface) option strings:
+    i.e -Djava.class.path=...
+    See: https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/invocation.html
+
+    Unfortunately, only ascii paths work because url encoding is not handled correctly
+    see: https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
+
+    To resolve this issue, we add the classpath after initialization since Java has
+    had the utilities to correctly encode it since 1.0
+    """
+    if late_load and classpath:
         # now we can add to the system classpath
         cl = _jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        for cp in _handleClassPath(classpath).split(_classpath._SEP):
+        for cp in _handleClassPath(classpath):
             cl.addPath(_jpype._java_lang_String(cp))
 
 

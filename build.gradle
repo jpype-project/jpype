@@ -15,4 +15,9 @@ sourceSets {
 jar {
     destinationDirectory.set(file(project.rootDir))
 	archiveFileName.set('org.jpype.jar')
+	manifest {
+		attributes(
+			'Premain-Class': 'org.jpype.agent.JPypeAgent'
+		)
+	}
 }

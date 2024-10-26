@@ -62,7 +62,6 @@ _python_error,
 _python_exc,
 _os_error_unix,
 _os_error_windows,
-_method_not_found,
 };
 
 // Create a stackinfo for a particular location in the code that can then

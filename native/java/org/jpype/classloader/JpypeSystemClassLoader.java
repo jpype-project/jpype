@@ -34,4 +34,10 @@ public final class JpypeSystemClassLoader extends URLClassLoader {
 			addPath(path);
 		}
 	}
+
+	// this is required to add a Java agent even if it is already in the path
+	@SuppressWarnings("unused")
+	private void appendToClassPathForInstrumentation(String path) throws Throwable {
+		addPath(path);
+	}
 }
