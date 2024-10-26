@@ -1528,7 +1528,7 @@ be raised.  Applying an annotation is slightly different depending on what it
 is being applied to. The following list shows how to apply an annotation in
 each use case, followed by an example:
 
-- A class has annotations applied to the special ``__jannotations___`` member.
+- A class has annotations applied to the special ``__jannotations__`` member.
   Use a ``tuple`` to apply multiple annotations.  Using a decorator here would
   be a much more pythonic approach. Unfortunately, when a decorator is applied
   to a class, the class is evaluated before the decorator is applied. Since the
