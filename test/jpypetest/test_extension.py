@@ -21,6 +21,7 @@ import gc
 from jpype._jclass import *
 from jpype.types import *
 from jpype.imports import *
+from jpype import JParameterAnnotation
 import importlib.abc
 import importlib.util
 import textwrap
@@ -451,8 +452,6 @@ class JExtensionTestCase(common.JPypeTestCase):
             o.private_method()
 
     def testPrivateStaticMethod(self):
-        # FIXME: bytecode verification error
-        # forgot to handle static methods in class generation
         class MyObject(JClass("jpype.extension.TestBase")):
 
             @JPublic
@@ -856,15 +855,14 @@ class JExtensionTestCase(common.JPypeTestCase):
                 ...
 
             @JPublic
-            @TestSimpleAnnotation(JInt(4))
-            def fun(self):
+            @JParameterAnnotation("annotation_value", TestSimpleAnnotation(JInt(4)))
+            def fun(self, annotation_value: JLong):
                 ...
 
-        # FIXME: how do I actually check this?
-        #method = MyObject.class_.getDeclaredMethods()[0]
-        #annotation = method.getAnnotation(TestSimpleAnnotation)
-        #self.assertIsNotNone(annotation)
-        #self.assertEqual(annotation.value(), 4)
+        method = MyObject.class_.getDeclaredMethods()[0]
+        annotation = method.getParameterAnnotations()[0][0]
+        self.assertIsNotNone(annotation)
+        self.assertEqual(annotation.value(), 4)
 
     def testPublicClassWithAnnotation(self):
         TestSimpleAnnotation = JClass("jpype.annotation.TestSimpleAnnotation")
@@ -880,4 +878,99 @@ class JExtensionTestCase(common.JPypeTestCase):
         self.assertIsNotNone(annotation)
         self.assertEqual(annotation.value(), 4)
 
-    # TODO: more thorough annotation testing and finally documentation
+    def testPrimitiveParameterBool(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPrivate
+            @JStatic
+            def private_method(cls, v: JBoolean):
+                self.assertIs(cls, MyObject)
+
+    def testPrimitiveParameterByte(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPrivate
+            @JStatic
+            def private_method(cls, v: JByte):
+                self.assertIs(cls, MyObject)
+
+    def testPrimitiveParameterChar(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPrivate
+            @JStatic
+            def private_method(cls, v: JChar):
+                self.assertIs(cls, MyObject)
+
+    def testPrimitiveParameterShort(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPrivate
+            @JStatic
+            def private_method(cls, v: JShort):
+                self.assertIs(cls, MyObject)
+
+    def testPrimitiveParameterInt(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPrivate
+            @JStatic
+            def private_method(cls, v: JInt):
+                self.assertIs(cls, MyObject)
+
+    def testPrimitiveParameterLong(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPrivate
+            @JStatic
+            def private_method(cls, v: JLong):
+                self.assertIs(cls, MyObject)
+
+    def testPrimitiveParameterFloat(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPrivate
+            @JStatic
+            def private_method(cls, v: JFloat):
+                self.assertIs(cls, MyObject)
+
+    def testPrimitiveParameterDouble(self):
+        class MyObject(JClass("jpype.extension.TestBase")):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPrivate
+            @JStatic
+            def private_method(cls, v: JDouble):
+                self.assertIs(cls, MyObject)
+

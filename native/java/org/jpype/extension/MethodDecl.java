@@ -112,4 +112,13 @@ public final class MethodDecl extends JavaDecl {
 		return Modifier.isStatic(modifiers);
 	}
 
+	public ParameterDecl getParameter(String name) {
+		for (ParameterDecl decl : parameters) {
+			if (decl.name.equals(name)) {
+				return decl;
+			}
+		}
+		return null;
+	}
+
 }

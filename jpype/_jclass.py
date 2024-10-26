@@ -481,9 +481,16 @@ def _throw_java_exception(cls: JClass, msg: str):
 
 
 def _add_annotations(member, java_annotations):
-    args = JClass("java.util.ArrayList")(len(java_annotations))
+    # this is gross but I couldn't think of a better way
+    # importing normally would cause a circular import
+    from jpype import JParameterAnnotation
+    args = JClass("java.util.ArrayList")()
     for annotation in java_annotations:
-        args.add(annotation._decl)
+        if isinstance(annotation, JParameterAnnotation):
+            param = member.getParameter(annotation._name)
+            _add_annotations(param, annotation._annotations)
+        else:
+            args.add(annotation._decl)
     member.setAnnotations(args)
 
 

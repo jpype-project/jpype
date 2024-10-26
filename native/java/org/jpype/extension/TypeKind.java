@@ -8,9 +8,9 @@ enum TypeKind {
 	CHAR(Opcodes.ILOAD, "java/lang/Character", "(C)Ljava/lang/Character;"),
 	SHORT(Opcodes.ILOAD, "java/lang/Short", "(S)Ljava/lang/Short;"),
 	INT(Opcodes.ILOAD, "java/lang/Integer", "(I)Ljava/lang/Integer;"),
-	LONG(Opcodes.LLOAD, "java/lang/Long", "(L)Ljava/lang/Long;"),
-	FLOAT(Opcodes.FLOAD, "java/lang/Float", "(L)Ljava/lang/Float;"),
-	DOUBLE(Opcodes.DLOAD, "java/lang/Double", "(L)Ljava/lang/Double;"),
+	LONG(Opcodes.LLOAD, "java/lang/Long", "(J)Ljava/lang/Long;"),
+	FLOAT(Opcodes.FLOAD, "java/lang/Float", "(F)Ljava/lang/Float;"),
+	DOUBLE(Opcodes.DLOAD, "java/lang/Double", "(D)Ljava/lang/Double;"),
 	VOID(-1, "java/lang/Void", null),
 	OBJECT(Opcodes.ALOAD, null, null);
 

@@ -541,9 +541,3 @@ public class Factory {
 		mv.visitInsn(op);
 	}
 }
-
-// how do we define what arguments are passed to the ctor?
-// how do we define ctors
-// how do we get to TypeError rather that RuntimeException?
-// how do we keep from clobbering.
-// how does the type system know that this is an extension class?
