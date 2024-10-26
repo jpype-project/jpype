@@ -1556,14 +1556,14 @@ each use case, followed by an example:
 	class MyObject(java.lang.Object):
 	    __jannotations__ = (Annotation1(4), Annotation2)
 
-		field1: typing.Annotated[JInt, JPublic] = (Annotation1(default=4, 2), Annotation2)
+        field1: typing.Annotated[JInt, JPublic] = (Annotation1(default=4, 2), Annotation2)
 
-		@Annotation1(4)
-		@JParameterAnnotation("value", Annotation2)
-		@Annotation2
-		@JPublic
-		def method1(self, value: JInt):
-		   ...
+        @Annotation1(4)
+        @JParameterAnnotation("value", Annotation2)
+        @Annotation2
+        @JPublic
+        def method1(self, value: JInt):
+            ...
 
 
 .. _import:
