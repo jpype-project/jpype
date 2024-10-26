@@ -295,7 +295,7 @@ design goals.
   The goal of bridge is to open up places and not to restrict flow.
 
 - Keep the design as simple as possible. Mixing languages is already complex
-  enough so don't required the user to learn a huge arsenal of unique methods.
+  enough so don't require the user to learn a huge arsenal of unique methods.
   Instead keep it simple with well defined rules and reuse
   these concepts.  For example, all array types originate from JArray, and
   thus using one can also use isinstance to check if a class is an array
