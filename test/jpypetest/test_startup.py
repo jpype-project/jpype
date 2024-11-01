@@ -185,21 +185,23 @@ class StartJVMCase(unittest.TestCase):
         jpype.startJVM(
             "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
             jvmpath=Path(self.jvmpath),
-            classpath=f"test/classes;test/jar/late/late.jar"
+            classpath=f"test/classes"
         )
-        cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        self.assertEqual(type(cl), jpype.JClass("jpype.startup.TestSystemClassLoader"))
-        assert dir(jpype.JPackage('org.jpype.late')) == ['Test']
+        classloader = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
+        test_classLoader = jpype.JClass("jpype.startup.TestSystemClassLoader")
+        self.assertEqual(type(classloader), test_classLoader)
+        assert dir(jpype.JPackage('jpype.startup')) == ['TestSystemClassLoader']
 
     def testOldStyleASCIIPathWithSystemClassLoader(self):
         jpype.startJVM(
             self.jvmpath,
             "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
-            "-Djava.class.path=test/classes;test/jar/late/late.jar"
+            "-Djava.class.path=test/classes"
         )
-        cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        self.assertEqual(type(cl), jpype.JClass("jpype.startup.TestSystemClassLoader"))
-        assert dir(jpype.JPackage('org.jpype.late')) == ['Test']
+        classloader = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
+        test_classLoader = jpype.JClass("jpype.startup.TestSystemClassLoader")
+        self.assertEqual(type(classloader), test_classLoader)
+        assert dir(jpype.JPackage('jpype.startup')) == ['TestSystemClassLoader']
 
     def testDefaultSystemClassLoader(self):
         # we introduce no behavior change unless absolutely necessary
