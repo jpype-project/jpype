@@ -158,7 +158,6 @@ extern PyObject *PyJPClassMagic;
 extern PyObject *_JExtension;
 extern PyObject *JClass;
 extern PyObject *_JClassTable;
-extern PyObject *_throw_java_exception;
 
 extern JPContext* JPContext_global;
 

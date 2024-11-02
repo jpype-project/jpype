@@ -21,7 +21,7 @@ import gc
 from jpype._jclass import *
 from jpype.types import *
 from jpype.imports import *
-from jpype import JParameterAnnotation
+from jpype import JParameterAnnotation, synchronized
 import importlib.abc
 import importlib.util
 import textwrap
@@ -601,7 +601,6 @@ class JExtensionTestCase(common.JPypeTestCase):
         m = importlib.util.module_from_spec(spec)
         start = manager.classMap.size()
         loader.exec_module(m)
-        ldr = m.TemporaryObject.class_.getClassLoader()
         end = manager.classMap.size()
         self.assertGreater(end, start)
 
@@ -614,9 +613,8 @@ class JExtensionTestCase(common.JPypeTestCase):
         gc.collect()
 
         # check it was collected
-        self.assertLess(manager.classMap.size(), end)
-
-        ldr.closeForTesting()
+        with synchronized(manager):
+            self.assertLess(manager.classMap.size(), end)
 
     def testExtensionCleanupWithDanglingPythonReference(self):
         JPypeContext = JClass("org.jpype.JPypeContext")
@@ -638,7 +636,7 @@ class JExtensionTestCase(common.JPypeTestCase):
                         @JPublic
                         def toString(self) -> String:
                             from java.lang import String
-                            return String("wtf")
+                            return String("failed")
 
                         def __repr__(self):
                             from java.lang import String
@@ -656,7 +654,6 @@ class JExtensionTestCase(common.JPypeTestCase):
         loader.exec_module(m)
         TemporaryObject = getattr(m, "TemporaryObject")
         cls = TemporaryObject.class_
-        ldr = cls.getClassLoader()
         obj = TemporaryObject()
         end = manager.classMap.size()
         self.assertGreater(end, start)
@@ -670,8 +667,8 @@ class JExtensionTestCase(common.JPypeTestCase):
         # collect it
         gc.collect()
 
-        # check it was collected
-        self.assertLess(manager.classMap.size(), end)
+        from java.lang import System
+        System.gc()
 
         with self.assertRaises(TypeError):
             TemporaryObject()
@@ -680,9 +677,6 @@ class JExtensionTestCase(common.JPypeTestCase):
         with self.assertRaises(InstantiationException):
             cls.newInstance()
 
-        #with self.assertRaises(TypeError):
-        #    str(obj)
-        # it needs to be something Java can catch
         from java.lang import IllegalStateException
         with self.assertRaises(IllegalStateException):
             str(obj)
@@ -691,8 +685,6 @@ class JExtensionTestCase(common.JPypeTestCase):
         del TemporaryObject
         del cls
         gc.collect()
-
-        ldr.closeForTesting()
 
 
     def testExtensionCleanupWithDanglingJavaReference(self):
@@ -704,7 +696,7 @@ class JExtensionTestCase(common.JPypeTestCase):
             def get_source(self, _):
                 return textwrap.dedent(
                     """\
-                    from jpype import JPublic
+                    from jpype import JClass, JPublic
                     from java.lang import Object, String
                     class TemporaryObject(Object):
 
@@ -716,6 +708,7 @@ class JExtensionTestCase(common.JPypeTestCase):
                         def toString(self) -> String:
                             ...
 
+                    obj = JClass("jpype.extension.TestDanglingObject")(TemporaryObject())
                     """
                 )
 
@@ -724,11 +717,9 @@ class JExtensionTestCase(common.JPypeTestCase):
         # NOTE: module instances are never collected when debugging
         spec = importlib.util.spec_from_loader("__main__", loader)
         m = importlib.util.module_from_spec(spec)
-        TestDanglingObject = JClass("jpype.extension.TestDanglingObject")
         start = manager.classMap.size()
         loader.exec_module(m)
-        TemporaryObject = getattr(m, "TemporaryObject")
-        test = TestDanglingObject(TemporaryObject())
+        obj = getattr(m, "obj")
         end = manager.classMap.size()
         self.assertGreater(end, start)
 
@@ -741,11 +732,16 @@ class JExtensionTestCase(common.JPypeTestCase):
         gc.collect()
 
         # check it was collected
-        self.assertLess(manager.classMap.size(), end)
+        with synchronized(manager):
+            self.assertLess(manager.classMap.size(), end)
+
+        from java.lang import InstantiationException
+        with self.assertRaises(InstantiationException):
+            obj.newInstance()
 
         from java.lang import IllegalStateException
         with self.assertRaises(IllegalStateException):
-            test.test()
+            obj.test()
 
 
     def testExtensionFromBuiltinLoader(self):

@@ -98,9 +98,14 @@ JPValue JPExtensionType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 	return JPClass::newInstance(frame, args);
 }
 
-void JPExtensionType::reset() {
+void JPExtensionType::reset(JPJavaFrame& frame) {
 	// prevent creation of another one
-	m_Context->getEnv()->SetLongField(m_Class.get(), m_Instance, 0);
+	// also prevents use of an existing one
+	// The PyJPValue now has ownership of this JPExtensionType
+	// it will be deleted in PyJPValue_finalize
+	// Factory::call checks if $jclass is null prior to calling into native code
+	auto jclass = frame.GetStaticFieldID(m_Class.get(), "$jclass", "J");
+	frame.SetStaticLongField(m_Class.get(), jclass, 0);
 	m_Host = {};
 	m_Constructors = nullptr;
 	m_Class = {};

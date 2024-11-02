@@ -486,7 +486,7 @@ JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_delete(
 	for (int i = 0; i < sz; ++i) {
 		JPExtensionType *ext = dynamic_cast<JPExtensionType*>(values[i]);
 		if (ext != nullptr) {
-			ext->reset();
+			ext->reset(frame);
 		} else {
 			delete values[i];
 		}

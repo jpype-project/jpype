@@ -35,7 +35,7 @@ public:
 	PyObject *getPythonObject(JPJavaFrame& frame, JPValue &jv) const {
 		return (PyObject *)frame.GetLongField(jv.getValue().l, m_Instance);
 	}
-	void reset();
+	void reset(JPJavaFrame& frame);
 	void clearHost() {
 		m_Host = {};
 	}

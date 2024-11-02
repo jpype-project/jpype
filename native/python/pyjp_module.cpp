@@ -61,7 +61,6 @@ PyObject* _JVMNotRunning = NULL;
 PyObject* _JExtension = NULL;
 PyObject* JClass = NULL;
 PyObject* _JClassTable = NULL;
-PyObject* _throw_java_exception = NULL;
 
 void PyJPModule_loadResources(PyObject* module)
 {
@@ -119,9 +118,6 @@ void PyJPModule_loadResources(PyObject* module)
 		_JExtension = PyObject_GetAttrString(module, "_JExtension");
 		JP_PY_CHECK();
 		Py_INCREF(_JExtension);
-		_throw_java_exception = PyObject_GetAttrString(module, "_throw_java_exception");
-		JP_PY_CHECK();
-		Py_INCREF(_throw_java_exception);
 		JClass = PyObject_GetAttrString(module, "JClass");
 		JP_PY_CHECK();
 		Py_INCREF(JClass);

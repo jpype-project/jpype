@@ -17,7 +17,6 @@
 #include "include/jp_exception.h"
 #include "jni.h"
 #include "jpype.h"
-#include "pyjp.h"
 #include "jp_extension.hpp" // IWYU pragma: keep
 
 static JPPyObject packArgs(JPExtensionType &cls, const JPMethodOverride &method, jobjectArray args)
@@ -66,25 +65,6 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__1call(
 		JP_TRACE("context", context);
 		try
 		{
-			if (cls->getHost() == nullptr) {
-				//_throw_java_exception
-				JPClass *ex = frame.getClassByName("java.lang.IllegalStateException"sv);
-				std::string errmsg = cls->getCanonicalName() + " has been collected";
-				auto msg = JPPyObject::call(
-					PyUnicode_FromStringAndSize(errmsg.c_str(), (Py_ssize_t)errmsg.length())
-				);
-				JPPyObject args = JPPyTuple_Pack(ex->getHost(), msg);
-				JPPyObject exobj = JPPyObject::call(PyObject_Call(
-					_throw_java_exception,
-					args.get(),
-					NULL
-				));
-				JP_PY_CHECK();
-				JPValue *value = PyJPValue_getJavaSlot(exobj.get());
-				frame.Throw((jthrowable) value->getJavaObject());
-				return NULL;
-			}
-
 			const JPMethodOverride &method = cls->getOverrides()[functionId];
 
 			// Find the return type
@@ -154,15 +134,6 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_extension_Factory__1call(
 	catch (...) // JP_TRACE_OUT implies a throw but that is not allowed.
 	{}
 	return NULL;
-}
-
-extern "C" JNIEXPORT void JNICALL Java_org_jpype_extension_ExtensionClassLoader_delete(
-		JNIEnv *,
-		jclass,
-		jlong cls
-	)
-{
-	delete (JPExtensionType *)cls;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_jpype_extension_ExtensionClassLoader_clearHost(

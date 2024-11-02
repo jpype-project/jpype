@@ -561,10 +561,6 @@ public class TypeManager
     try
     {
       createMembers(desc);
-    ClassLoader ldr = cls.getClassLoader();
-      if (ldr instanceof ExtensionClassLoader) {
-        ((ExtensionClassLoader) ldr).register(cls, desc);
-      }
     } catch (Throwable ex)
     {
       ex.printStackTrace(System.out);

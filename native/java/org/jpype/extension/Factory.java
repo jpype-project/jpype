@@ -85,11 +85,23 @@ public class Factory {
 		return name.equals(JCLASS_FIELD) || name.equals(INSTANCE_FIELD);
 	}
 
+	private static native Object _call(long ctx, long id, Object[] args);
+
 	//<editor-fold desc="hooks" defaultstate="collapsed">
 	/**
 	 * Hook to call a Python implemented method
 	 */
-	public static native Object _call(long ctx, long id, Object... args);
+	public static Object call(long ctx, long id, Object... args) throws InstantiationException {
+		if (ctx == 0) {
+			StackTraceElement ste = Thread.currentThread().getStackTrace()[2];
+            String cls = ste.getClassName();
+			if (ste.getMethodName().equals("<init>")) {
+				throw new InstantiationException(cls + " has been collected");
+			}
+			throw new IllegalStateException(cls + " has been collected");
+		}
+		return _call(ctx, id, args);
+	}
 
 	//</editor_fold>
 
@@ -422,7 +434,7 @@ public class Factory {
 		mv.visitMethodInsn(
 			Opcodes.INVOKESTATIC,
 			FACTORY_TYPE.getInternalName(),
-			"_call",
+			"call",
 			CALL_DESCRIPTOR,
 			false
 		);

@@ -459,16 +459,6 @@ def _get_classloader(members: _JClassTable):
     return classloader
 
 
-def _throw_java_exception(cls: JClass, msg: str):
-    # Unfortunately our Kevlar is either worn out or I have
-    # it on inside out. We need to create the requested exception
-    # and give it an empty stack trace. If we don't, then the JVM
-    # will crash in initStackTraceElements.
-    ex = cls(msg)
-    ex.setStackTrace(JClass("java.lang.StackTraceElement")[0])
-    return ex
-
-
 def _add_annotations(member, java_annotations):
     # this is gross but I couldn't think of a better way
     # importing normally would cause a circular import
@@ -565,4 +555,3 @@ _jpype._jclassPre = _jclassPre
 _jpype._jclassPost = _jclassPost
 _jpype._JExtension = _JExtension
 _jpype._JClassTable = _JClassTable
-_jpype._throw_java_exception = _throw_java_exception

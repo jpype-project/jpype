@@ -15,6 +15,7 @@
  *****************************************************************************/
 #include "jp_class.h"
 #include "jpype.h"
+#include "object.h"
 #include "pyjp.h"
 #include "jp_stringtype.h" // IWYU pragma: keep
 #include "pyjp_module.hpp"
@@ -180,6 +181,10 @@ void PyJPValue_finalize(void* obj)
 		JP_TRACE("Dereference object");
 		context->ReleaseGlobalRef(value->getValue().l);
 		*value = JPValue();
+		if (Py_TYPE(obj) == PyJPClass_Type && cls->isExtension()) {
+			// the Python type object has ownership of the JPExtensionType
+			delete cls;
+		}
 	}
 	JP_PY_CATCH_NONE();
 }
