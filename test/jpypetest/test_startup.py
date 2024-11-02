@@ -216,7 +216,8 @@ class StartJVMCase(unittest.TestCase):
             classpath="test/jar/unicode_à😎/service.jar",
         )
         ZoneId = jpype.JClass("java.time.ZoneId")
+        ZoneRulesException = jpype.JClass("java.time.zone.ZoneRulesException")
         try:
             ZoneId.of("JpypeTest/Timezone")
-        except:
+        except ZoneRulesException:
             self.fail("JpypeZoneRulesProvider not loaded")
