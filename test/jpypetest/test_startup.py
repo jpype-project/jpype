@@ -209,3 +209,15 @@ class StartJVMCase(unittest.TestCase):
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
         self.assertNotEqual(type(cl), jpype.JClass("org.jpype.classloader.JpypeSystemClassLoader"))
 
+    def testServiceWithNonASCIIPath(self):
+        jpype.startJVM(
+            self.jvmpath,
+            "-Djava.locale.providers=SPI,CLDR",
+            classpath="test/jar/unicode_à😎/service.jar",
+        )
+        ZoneId = jpype.JClass("java.time.ZoneId")
+        ZoneRulesException = jpype.JClass("java.time.zone.ZoneRulesException")
+        try:
+            ZoneId.of("JpypeTest/Timezone")
+        except ZoneRulesException:
+            self.fail("JpypeZoneRulesProvider not loaded")
