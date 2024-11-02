@@ -4,6 +4,7 @@
 #include "jp_class.h"
 #include "jp_pythontypes.h"
 #include "jp_value.h"
+#include "pyjp.h"
 
 #include <vector>
 
@@ -37,6 +38,7 @@ public:
 	}
 	void reset(JPJavaFrame& frame);
 	void clearHost() {
+		PyJPClass_clearJPClass(m_Host.get());
 		m_Host = {};
 	}
 	bool wasReloaded() const {
