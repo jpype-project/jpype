@@ -1,0 +1,20 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+sourceCompatibility = 8
+targetCompatibility = 8
+
+
+tasks.withType(JavaCompile) {
+    options.release = 8
+	options.debug = false
+}
+
+jar {
+    destinationDirectory = file('dist')
+	from ('./src/main/java') {
+		include 'META-INF/services/java.time.zone.ZoneRulesProvider'
+	}
+}
+
+build.dependsOn(jar)
