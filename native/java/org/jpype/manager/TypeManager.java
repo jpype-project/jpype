@@ -588,15 +588,23 @@ public class TypeManager
 
   private static Predicate<? super Member> getFilter(Class<?> cls) {
     if (Factory.isExtension(cls)) {
-      return (a) -> true;
+      return (a) -> !a.isSynthetic();
     }
-    if (Modifier.isFinal(cls.getModifiers())) {
-      return (a) -> Modifier.isPublic(a.getModifiers());
-    }
-    return (a) -> Modifier.isPublic(a.getModifiers()) || Modifier.isProtected(a.getModifiers());
+    return (a) -> Modifier.isPublic(a.getModifiers()) && !a.isSynthetic();
   }
 
 //<editor-fold desc="fields" defaultstate="collapsed">
+
+  private static Stream<Field> getProtectedFields(Class<?> cls) {
+    Class<?> base = cls.getSuperclass();
+    if (base == Object.class) {
+      return Stream.empty();
+    }
+    Stream<Field> fields = Arrays.stream(base.getDeclaredFields())
+      .filter(f -> Modifier.isProtected(f.getModifiers()) && !f.isSynthetic());
+    return Stream.concat(fields, getProtectedFields(base));
+  }
+
   private void createFields(ClassDescriptor desc)
   {
     // We only need declared fields as the wrappers for previous classes hold
@@ -604,11 +612,15 @@ public class TypeManager
   // If this causes a performance problem due to Python inheritance
   // then the same strategy used for methods can be used here
   Class<?> cls = desc.cls;
-  List<Field> fields = Arrays.stream(cls.getDeclaredFields())
-    .filter(getFilter(cls))
-    // don't allow access to the jclass or instance pointer
-    .filter(Predicate.not(Factory::isExtensionField))
-    .collect(Collectors.toList());
+  Stream<Field> builder = Arrays.stream(cls.getDeclaredFields())
+    .filter(getFilter(cls));
+    if (Factory.isExtension(cls) && !Factory.isExtension(cls.getSuperclass())) {
+      // The first extension class in the hierarchy gets all protected members
+      // this allows us to keep the old behavior while only adding new behavior
+      // for the new extension classes. It also reduces the memory footprint.
+      builder = Stream.concat(builder, getProtectedFields(cls));
+    }
+    List<Field> fields = builder.collect(Collectors.toList());
     //LinkedList<Field> fields = filterPublic(cls.getDeclaredFields());
 
     long[] fieldPtr = new long[fields.size()];
@@ -700,6 +712,17 @@ public class TypeManager
 
 //</editor-fold>
 //<editor-fold desc="methods" defaultstate="collapsed">
+
+  private static Stream<Method> getProtectedMethods(Class<?> cls) {
+    Class<?> base = cls.getSuperclass();
+    if (base == Object.class) {
+      return Stream.empty();
+    }
+    Stream<Method> methods = Arrays.stream(base.getDeclaredMethods())
+      .filter(m -> Modifier.isProtected(m.getModifiers()) && !m.isSynthetic());
+    return Stream.concat(methods, getProtectedMethods(base));
+  }
+
   /**
    * Load the methods for a class.
    *
@@ -714,12 +737,22 @@ public class TypeManager
 
     // Get the list of public declared methods
     //LinkedList<Method> declaredMethods = filterPublic(cls.getDeclaredMethods());
-  LinkedList<Method> declaredMethods = Stream.concat(
-    Arrays.stream(cls.getDeclaredMethods()),
-    Arrays.stream(cls.getMethods())
-      .filter((m) -> m.getDeclaringClass() != cls)
-  ).filter(getFilter(cls))
-    .collect(Collectors.toCollection(LinkedList::new));
+    Stream<Method> builder = Stream.concat(
+      Arrays.stream(cls.getDeclaredMethods()),
+      Arrays.stream(cls.getMethods())
+        .filter((m) -> m.getDeclaringClass() != cls)
+    ).filter(getFilter(cls));
+
+    if (Factory.isExtension(cls) && !Factory.isExtension(cls.getSuperclass())) {
+      // The first extension class in the hierarchy gets all protected members
+      // this allows us to keep the old behavior while only adding new behavior
+      // for the new extension classes. It also reduces the memory footprint.
+      // The main difference between the old behavior and new extension behavior
+      // is method resolution. Throwing protecting members into the mix changes
+      // the behavior of existing user code which should be avoided.
+      builder = Stream.concat(builder, getProtectedMethods(cls));
+    }
+    LinkedList<Method> declaredMethods = builder.collect(Collectors.toCollection(LinkedList::new));
 
     // We only need one dispatch per name
     TreeSet<String> resolve = new TreeSet<>();

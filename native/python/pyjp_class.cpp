@@ -487,9 +487,6 @@ PyObject *PyJPClass_getattro(PyObject *obj, PyObject *name)
 		return nullptr;
 	}
 
-	const char *name_tmp = PyUnicode_AsUTF8(name);
-	(void) name_tmp;
-
 	// Private members are accessed directly
 	PyObject* pyattr = PyType_Type.tp_getattro(obj, name);
 	if (pyattr == nullptr)

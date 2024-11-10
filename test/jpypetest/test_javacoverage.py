@@ -108,6 +108,11 @@ class JavaCoverageTestCase(common.JPypeTestCase):
             def destroy(self, context, resources, sz):
                 for i in range(sz):
                     del self.entities[resources[i]]
+
+            @JOverride
+            def delete(self, context, resources, sz):
+                return
+
         manager = TypeManager()
         factory = TF()
         manager = TypeManager(62621463, factory)

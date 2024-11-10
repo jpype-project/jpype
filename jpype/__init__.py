@@ -55,7 +55,7 @@ __all__.extend(_jcustomizer.__all__)  # type: ignore[name-defined]
 __all__.extend(_gui.__all__)  # type: ignore[name-defined]
 __all__.extend(_jannotation.__all__)
 
-__version__ = "1.5.1_dev0"
+__version__ = "2.0.0_dev0"
 __version_info__ = __version__.split('.')
 
 

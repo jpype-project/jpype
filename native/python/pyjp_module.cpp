@@ -731,7 +731,7 @@ PyMODINIT_FUNC PyInit__jpype()
 #ifdef Py_GIL_DISABLED
     PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
 #endif
-	PyModule_AddStringConstant(module, "__version__", "1.5.1_dev0");
+	PyModule_AddStringConstant(module, "__version__", "2.0.0_dev0");
 
 	// Our module will be used for PyFrame object and it is a requirement that
 	// we have a builtins in our dictionary.

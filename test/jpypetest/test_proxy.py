@@ -589,4 +589,4 @@ class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):
         startJVM()
         assert isinstance(MyImpl(), MyImpl)
 
-    
+

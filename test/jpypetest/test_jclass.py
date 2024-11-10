@@ -156,7 +156,7 @@ class JClassTestCase(common.JPypeTestCase):
 
     def testProtectedMethod(self):
         cls = JClass('jpype.common.Fixture')
-        with self.assertRaises(TypeError):
+        with self.assertRaises(AttributeError):
             cls.callProtectedObject(JObject())
         with self.assertRaises(AttributeError):
             cls().callProtectedObject(JObject())

@@ -308,7 +308,7 @@ public class Factory {
 		if (!isExtension(decl.base)) {
 			// create a private field to hold the pointer to our Python object
 			cw.visitField(
-				Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL,
+				Opcodes.ACC_PRIVATE | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC,
 				INSTANCE_FIELD,
 				"J",
 				null,
