@@ -6,7 +6,9 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 - **1.5.1 - 2024-11-09**
 
-- **1.5.1.dev0 - 2023-12-15**
+  - Future proofing for Python 3.14
+
+  - Support for Python 3.13
 
   - Allow access to default methods implemented in interfaces when using ``@JImplements``.
 
