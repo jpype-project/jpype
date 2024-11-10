@@ -220,7 +220,8 @@ void JPypeException::convertJavaToPython()
 			PyJPException_normalize(frame, prev, jcause, th);
 			PyException_SetCause(cause.get(), prev.keep());
 		}
-		PyException_SetTraceback(cause.get(), trace.get());
+		if (trace.get() != nullptr)
+			PyException_SetTraceback(cause.get(), trace.get());
 		PyException_SetCause(pyvalue.get(), cause.keep());
 	}	catch (JPypeException& ex)
 	{
@@ -303,12 +304,6 @@ void JPypeException::toPython()
 		} else if (m_Type == JPError::_python_error)
 		{
 			// Already on the stack
-		} else if (m_Type == JPError::_method_not_found)
-		{
-			// This is hit when a proxy fails to implement a required
-			// method.  Only older style proxies should be able hit this.
-			JP_TRACE("Runtime error");
-			PyErr_SetString(PyExc_RuntimeError, mesg);
 		}// This section is only reachable during startup of the JVM.
 			// GCOVR_EXCL_START
 		else if (m_Type == JPError::_os_error_unix)
@@ -428,12 +423,6 @@ void JPypeException::toJava(JPContext *context)
 			return;
 		}
 
-		if (m_Type == JPError::_method_not_found)
-		{
-			frame.ThrowNew(context->m_NoSuchMethodError.get(), mesg);
-			return;
-		}
-
 		if (m_Type == JPError::_python_error)
 		{
 			JPPyCallAcquire callback;
@@ -511,7 +500,7 @@ PyObject *tb_create(
 	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(PyFrame_GetLasti(pframe)));
 #endif
 	JPPyObject linenuma = JPPyObject::claim(PyLong_FromLong(linenum));
-	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(4, Py_None, frame.get(), lasti.get(), linenuma.get()));
+	JPPyObject tuple = JPPyTuple_Pack(Py_None, frame.get(), lasti.get(), linenuma.get());
 	JPPyObject traceback = JPPyObject::accept(PyObject_Call((PyObject*) &PyTraceBack_Type, tuple.get(), NULL));
 
 	// We could fail in process

@@ -37,6 +37,7 @@ extern void PyJPNumber_initType(PyObject* module);
 extern void PyJPClassHints_initType(PyObject* module);
 extern void PyJPPackage_initType(PyObject* module);
 extern void PyJPChar_initType(PyObject* module);
+extern void PyJPValue_initType(PyObject* module);
 
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype);
 
@@ -179,7 +180,7 @@ PyObject* PyJP_GetAttrDescriptor(PyTypeObject *type, PyObject *attr_name)
 	for (Py_ssize_t i = 0; i < n; ++i)
 	{
 		auto *type2 = (PyTypeObject*) PyTuple_GetItem(mro, i);
-		
+
 		// Skip objects without a functioning dictionary
 		if (type2->tp_dict == NULL)
 			continue;
@@ -729,8 +730,11 @@ PyMODINIT_FUNC PyInit__jpype()
 	// PyJPModule = module;
 	Py_INCREF(module);
 	PyJPModule = module;
-	PyModule_AddStringConstant(module, "__version__", "1.5.0");
-	
+#ifdef Py_GIL_DISABLED
+    PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
+#endif
+	PyModule_AddStringConstant(module, "__version__", "1.5.1_dev0");
+
 	// Our module will be used for PyFrame object and it is a requirement that
 	// we have a builtins in our dictionary.
 	PyObject *builtins = PyEval_GetBuiltins();
@@ -739,6 +743,7 @@ PyMODINIT_FUNC PyInit__jpype()
 
 	PyJPClassMagic = PyDict_New();
 	// Initialize each of the python extension types
+	PyJPValue_initType(module);
 	PyJPClass_initType(module);
 	PyJPObject_initType(module);
 

@@ -943,7 +943,7 @@ must be enabled with a compiler switch to activate. To active the logger, touch
 one of the cpp files in the native directory to mark the build as dirty, then
 compile the ``jpype`` module with: ::
 
-     python setup.py --enable-tracing develop
+     python setup.py develop --enable-tracing
 
 Once built run a short test program that demonstrates the problem and capture the
 output of the terminal to a file. This should allow the developer to isolate
@@ -957,6 +957,14 @@ a very good picture of both JPype and Python states at the time of the crash.
 To use the Python tracing, start Python with... ::
 
     python -m trace --trace myscript.py
+
+
+Coverage
+--------
+Some of the tests require additional instrumentation to run, this can be enabled
+with the ``enable-coverage`` option::
+
+    python setup.py develop --enable-coverage
 
 
 Debugging issues

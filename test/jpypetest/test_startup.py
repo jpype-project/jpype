@@ -17,7 +17,6 @@
 # *****************************************************************************
 import jpype
 import subrun
-import functools
 import os
 from pathlib import Path
 import unittest
@@ -146,3 +145,79 @@ class StartJVMCase(unittest.TestCase):
     def testBadKeyword(self):
         with self.assertRaises(TypeError):
             jpype.startJVM(invalid=True)  # type: ignore
+
+    def testNonASCIIPath(self):
+        """Test that paths with non-ASCII characters are handled correctly.
+        Regression test for https://github.com/jpype-project/jpype/issues/1194
+        """
+        jpype.startJVM(jvmpath=Path(self.jvmpath), classpath="test/jar/unicode_à😎/sample_package.jar")
+        cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
+        self.assertEqual(type(cl), jpype.JClass("org.jpype.classloader.JpypeSystemClassLoader"))
+        assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
+
+
+    def testOldStyleNonASCIIPath(self):
+        """Test that paths with non-ASCII characters are handled correctly.
+        Regression test for https://github.com/jpype-project/jpype/issues/1194
+        """
+        jpype.startJVM("-Djava.class.path=test/jar/unicode_à😎/sample_package.jar", jvmpath=Path(self.jvmpath))
+        cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
+        self.assertEqual(type(cl), jpype.JClass("org.jpype.classloader.JpypeSystemClassLoader"))
+        assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
+
+    def testNonASCIIPathWithSystemClassLoader(self):
+        with self.assertRaises(ValueError):
+            jpype.startJVM(
+                "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
+                jvmpath=Path(self.jvmpath),
+                classpath="test/jar/unicode_à😎/sample_package.jar"
+            )
+
+    def testOldStyleNonASCIIPathWithSystemClassLoader(self):
+        with self.assertRaises(ValueError):
+            jpype.startJVM(
+                self.jvmpath,
+                "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
+                "-Djava.class.path=test/jar/unicode_à😎/sample_package.jar"
+            )
+
+    def testASCIIPathWithSystemClassLoader(self):
+        jpype.startJVM(
+            "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
+            jvmpath=Path(self.jvmpath),
+            classpath=f"test/classes"
+        )
+        classloader = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
+        test_classLoader = jpype.JClass("jpype.startup.TestSystemClassLoader")
+        self.assertEqual(type(classloader), test_classLoader)
+        assert dir(jpype.JPackage('jpype.startup')) == ['TestSystemClassLoader']
+
+    def testOldStyleASCIIPathWithSystemClassLoader(self):
+        jpype.startJVM(
+            self.jvmpath,
+            "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
+            "-Djava.class.path=test/classes"
+        )
+        classloader = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
+        test_classLoader = jpype.JClass("jpype.startup.TestSystemClassLoader")
+        self.assertEqual(type(classloader), test_classLoader)
+        assert dir(jpype.JPackage('jpype.startup')) == ['TestSystemClassLoader']
+
+    def testDefaultSystemClassLoader(self):
+        # we introduce no behavior change unless absolutely necessary
+        jpype.startJVM(jvmpath=Path(self.jvmpath))
+        cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
+        self.assertNotEqual(type(cl), jpype.JClass("org.jpype.classloader.JpypeSystemClassLoader"))
+
+    def testServiceWithNonASCIIPath(self):
+        jpype.startJVM(
+            self.jvmpath,
+            "-Djava.locale.providers=SPI,CLDR",
+            classpath="test/jar/unicode_à😎/service.jar",
+        )
+        ZoneId = jpype.JClass("java.time.ZoneId")
+        ZoneRulesException = jpype.JClass("java.time.zone.ZoneRulesException")
+        try:
+            ZoneId.of("JpypeTest/Timezone")
+        except ZoneRulesException:
+            self.fail("JpypeZoneRulesProvider not loaded")

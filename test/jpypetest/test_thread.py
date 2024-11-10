@@ -16,10 +16,10 @@
 #
 # *****************************************************************************
 import jpype
-import sys
-import time
 import common
 import pytest
+
+from jpype.imports import *
 
 
 class ThreadTestCase(common.JPypeTestCase):

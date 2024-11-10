@@ -216,8 +216,7 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 		jvalue v;
 		v.l = (jobject) self->m_Method->getClass()->getJavaClass();
 		JPPyObject obj(context->_java_lang_Class->convertToPythonObject(frame, v, true));
-		JPPyObject args = JPPyObject::call(PyTuple_Pack(3,
-				self, obj.get(), ov.get()));
+		JPPyObject args = JPPyTuple_Pack(self, obj.get(), ov.get());
 		JP_TRACE("Call Python");
 		self->m_Doc = PyObject_Call(_JMethodDoc, args.get(), nullptr);
 		Py_XINCREF(self->m_Doc);
@@ -268,8 +267,7 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 		jvalue v;
 		v.l = (jobject) self->m_Method->getClass()->getJavaClass();
 		JPPyObject obj(context->_java_lang_Class->convertToPythonObject(frame, v, true));
-		JPPyObject args = JPPyObject::call(PyTuple_Pack(3,
-				self, obj.get(), ov.get()));
+		JPPyObject args = JPPyTuple_Pack(self, obj.get(), ov.get());
 		JP_TRACE("Call Python");
 		self->m_Annotations = PyObject_Call(_JMethodAnnotations, args.get(), nullptr);
 	}
@@ -293,7 +291,7 @@ PyObject *PyJPMethod_getCodeAttr(PyJPMethod *self, void *ctx, const char *attr)
 	PyJPModule_getContext();
 	if (self->m_CodeRep == nullptr)
 	{
-		JPPyObject args = JPPyObject::call(PyTuple_Pack(1, self));
+		JPPyObject args = JPPyTuple_Pack(self);
 		JP_TRACE("Call Python");
 		self->m_CodeRep = PyObject_Call(_JMethodCode, args.get(), nullptr);
 	}
@@ -396,7 +394,7 @@ void PyJPMethod_initType(PyObject* module)
 	// We inherit from PyFunction_Type just so we are an instance
 	// for purposes of inspect and tab completion tools.  But
 	// we will just ignore their memory layout as we have our own.
-	JPPyObject tuple = JPPyObject::call(PyTuple_Pack(1, &PyFunction_Type));
+	JPPyObject tuple = JPPyTuple_Pack(&PyFunction_Type);
 	unsigned long flags = PyFunction_Type.tp_flags;
 	PyFunction_Type.tp_flags |= Py_TPFLAGS_BASETYPE;
 	PyJPMethod_Type = (PyTypeObject*) PyType_FromSpecWithBases(&methodSpec, tuple.get());
