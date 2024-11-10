@@ -5,7 +5,7 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 
-- **1.5.1_dev0 - 2023-12-15**
+- **1.5.1.dev0 - 2023-12-15**
 
   - Allow access to default methods implemented in interfaces when using ``@JImplements``.
 
