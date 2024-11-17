@@ -182,5 +182,10 @@ inline bool isExtension(jlong modifier)
 {
 	return (modifier & 0x80000000) == 0x80000000;
 }
+
+inline bool isExtensionBase(jlong modifier)
+{
+	return (modifier & 0x100000000) == 0x100000000;
+}
 }
 #endif /* JP_MODIFIER_H */

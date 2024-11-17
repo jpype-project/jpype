@@ -54,9 +54,10 @@ string JPMethod::toString() const
 	return m_Name;
 }
 
-JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVector &arg, size_t start, JPClass *vartype)
+static JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVector &arg, size_t start, JPClass *vartype)
 {
 	JP_TRACE_IN("JPMethod::matchVars");
+	(void)frame;
 	auto *arraytype = dynamic_cast<JPArrayClass*>( vartype);
 	JPClass *type = arraytype->getComponentType();
 	size_t len = arg.size();
@@ -197,7 +198,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	}
 
 	JP_TRACE("Pack fixed total=", len - match.m_Offset);
-	for (size_t i = match.m_Skip; i < len; i++)
+	for (size_t i = (unsigned char)match.m_Skip; i < len; i++)
 	{
 		v[i - match.m_Skip] = match.m_Arguments[i].convert();
 	}
@@ -207,8 +208,6 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
 {
 	JP_TRACE_IN("JPMethod::invoke");
-	checkAccess(frame, *this);
-
 	// Check if it is caller sensitive
 	if (isCallerSensitive())
 		return invokeCallerSensitive(match, arg, instance);
@@ -241,11 +240,15 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 			c = selfObj->getJavaObject();
 		}
 		jclass clazz = nullptr;
-		// anonymous classes can't be extended from python and should always use the virtual call
-		// unless explicitly called as a static method through a base class (is this for a cast?)
-		if (!isAbstract() && selfObj != nullptr && (!selfObj->getClass()->isAnonymous() || !instance))
+		if (!isAbstract() && !instance)
 		{
-			clazz = m_DeclaringClass.get();
+			clazz = m_Class->getJavaClass();
+			JP_TRACE("invoke nonvirtual", m_Name);
+		} else if (m_Class->isExtension() || m_Class->isExtensionBase())
+		{
+			// extensions always use nonvirtual to allow use of super
+			checkAccess(frame, *this);
+			clazz = m_Class->getJavaClass();
 			JP_TRACE("invoke nonvirtual", m_Name);
 		} else
 		{
@@ -259,6 +262,7 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
 {
 	JP_TRACE_IN("JPMethod::invokeCallerSensitive");
+	(void)instance;
 	JPContext *context = m_Class->getContext();
 	size_t alen = m_ParameterTypes.size();
 	JPJavaFrame frame = JPJavaFrame::outer(context, (int) (8 + alen));
@@ -385,7 +389,7 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 			break;
 	}
 	// GCOVR_EXCL_STOP
-	res << std::endl;
+	res << '\n';
 	return res.str();
 }
 

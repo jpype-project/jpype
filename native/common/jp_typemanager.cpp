@@ -23,6 +23,7 @@ JPTypeManager::JPTypeManager(JPJavaFrame& frame)
 
 	jclass cls = m_Context->getClassLoader()->findClass(frame, "org.jpype.manager.TypeManager");
 	m_FindClass = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Class;)J");
+	m_FindExtensionBaseClass = frame.GetMethodID(cls, "findExtensionBaseClass", "(Ljava/lang/Class;)J");
 	m_FindClassByName = frame.GetMethodID(cls, "findClassByName", "(Ljava/lang/String;)J");
 	m_FindClassForObject = frame.GetMethodID(cls, "findClassForObject", "(Ljava/lang/Object;)J");
 	m_PopulateMethod = frame.GetMethodID(cls, "populateMethod", "(JLjava/lang/reflect/Executable;)V");
@@ -40,6 +41,16 @@ JPClass* JPTypeManager::findClass(jclass obj)
 	jvalue val;
 	val.l = obj;
 	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClass, &val));
+	JP_TRACE_OUT;
+}
+
+JPClass* JPTypeManager::findExtensionBaseClass(jclass obj)
+{
+	JP_TRACE_IN("JPTypeManager::findExtensionBaseClass");
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+	jvalue val;
+	val.l = obj;
+	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindExtensionBaseClass, &val));
 	JP_TRACE_OUT;
 }
 

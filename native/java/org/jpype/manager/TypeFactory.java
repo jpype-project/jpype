@@ -77,7 +77,7 @@ public interface TypeFactory
           String name,
           long superClass,
           long[] interfaces,
-          int modifiers);
+          long modifiers);
 
   /**
    * Define a primitive types.

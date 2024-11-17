@@ -47,11 +47,13 @@ public class ClassDescriptor
   public long[] fields;
   public long anonymous;
   public int functional_interface_parameter_count;
+  private boolean extension;
 
-  ClassDescriptor(Class<?> cls, long classPtr, Method method)
+  ClassDescriptor(Class<?> cls, long classPtr, Method method, boolean isExtensionBase)
   {
     this.cls = cls;
     this.classPtr = classPtr;
+	this.extension = isExtensionBase;
     if (this.classPtr == 0)
       throw new NullPointerException("Class pointer is null for " + cls);
     if (method != null)
@@ -67,5 +69,9 @@ public class ClassDescriptor
         return this.methods[i];
     return 0;
 
+  }
+
+  public boolean isExtensionBase() {
+	return extension;
   }
 }

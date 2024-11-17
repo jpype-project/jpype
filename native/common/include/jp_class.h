@@ -48,13 +48,13 @@ class JPClass : public JPResource
 {
 public:
 	// Special entry point for JVM independent entities
-	JPClass(const string& name, jint modifiers);
+	JPClass(const string& name, jlong modifiers);
 	JPClass(JPJavaFrame& context,
 			jclass clss,
 			const string& name,
 			JPClass* super,
 			const JPClassList& interfaces,
-			jint modifiers);
+			jlong modifiers);
 	~JPClass() override;
 
 	void setHost(PyObject* host);
@@ -122,6 +122,11 @@ public:
 	bool isExtension() const
 	{
 		return JPModifier::isExtension(m_Modifiers);
+	}
+
+	bool isExtensionBase() const
+	{
+		return JPModifier::isExtensionBase(m_Modifiers);
 	}
 
 	virtual bool isArray() const
@@ -255,7 +260,7 @@ protected:
 	JPMethodDispatchList m_Methods;
 	JPFieldList          m_Fields;
 	string               m_CanonicalName;
-	jint                 m_Modifiers;
+	jlong                m_Modifiers;
 	JPPyObject           m_Host;
 	JPPyObject           m_Hints;
 } ;

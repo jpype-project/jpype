@@ -410,6 +410,10 @@ public:
 
 	void clearInterrupt(bool throws);
 
+	bool isSameObject(jobject ref1, jobject ref2) const {
+		return m_Env->IsSameObject(ref1, ref2);
+	}
+
 } ;
 
 #endif // _JP_JAVA_FRAME_H_

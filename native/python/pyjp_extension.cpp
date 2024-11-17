@@ -70,7 +70,10 @@ JPPyObject JPExtensionType::convertToPythonObject(JPJavaFrame& frame, jvalue val
 		// this is the first access when calling a python implemented constructor
 		// this cannot be done in newInstance or we will have to deal with it being
 		// null in the python implemented constructor and anything it calls
-		PyTypeObject *type = (PyTypeObject *) m_Host.get();
+
+		// we might also be a base class so fetching the JPClass is required
+		JPClass *cls = m_Context->getTypeManager()->findClassForObject(obj);
+		PyTypeObject *type = (PyTypeObject *) cls->getHost();
 		if (type == nullptr) {
 			// someone is holding onto something they shouldn't be
 			PyErr_Format(PyExc_TypeError, "%s has been queued for deletion", m_CanonicalName.c_str());
@@ -79,7 +82,7 @@ JPPyObject JPExtensionType::convertToPythonObject(JPJavaFrame& frame, jvalue val
 		JPPyObject res = JPPyObject::call(type->tp_alloc(type, 0));
 		instance = res.get();
 
-		JPValue jv{this, obj};
+		JPValue jv{cls, obj};
 		PyJPValue_assignJavaSlot(frame, instance, jv);
 
 		frame.SetLongField(obj, m_Instance, (jlong)instance);

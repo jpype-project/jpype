@@ -20,7 +20,7 @@
 
 JPClass::JPClass(
 		const string& name,
-		jint modifiers)
+		jlong modifiers)
 {
 	m_Context = nullptr;
 	m_CanonicalName = name;
@@ -34,7 +34,7 @@ JPClass::JPClass(JPJavaFrame& frame,
 		const string& name,
 		JPClass* super,
 		const JPClassList& interfaces,
-		jint modifiers)
+		jlong modifiers)
 : m_Class(frame, clss)
 {
 	m_Context = frame.getContext();

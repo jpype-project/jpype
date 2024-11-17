@@ -48,7 +48,7 @@ public native void newWrapper(long context, long cls);
           String name,
           long superClass,
           long[] interfaces,
-          int modifiers);
+          long modifiers);
 
   @Override
   public native long definePrimitive(

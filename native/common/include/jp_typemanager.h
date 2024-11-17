@@ -50,6 +50,7 @@ public:
 	 * The pointer returned is NOT owned by the caller
 	 */
 	JPClass* findClass(jclass cls);
+	JPClass* findExtensionBaseClass(jclass cls);
 	JPClass* findClassByName(const std::string_view& str);
 	JPClass* findClassForObject(jobject obj);
 	void populateMethod(void* method, jobject obj);
@@ -60,6 +61,7 @@ private:
 	JPContext* m_Context;
 	JPObjectRef m_JavaTypeManager;
 	jmethodID m_FindClass;
+	jmethodID m_FindExtensionBaseClass;
 	jmethodID m_FindClassByName;
 	jmethodID m_FindClassForObject;
 	jmethodID m_PopulateMethod;

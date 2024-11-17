@@ -298,7 +298,7 @@ public class Factory {
 	private static void implementFields(ClassWriter cw, ClassDecl decl) {
 		// create a static private field to hold the pointer to our JPClass
 		cw.visitField(
-			Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL,
+			Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC,
 			JCLASS_FIELD,
 			"J",
 			null,

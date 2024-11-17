@@ -23,6 +23,7 @@
 #include "jp_class.h"
 #include "jp_extension.hpp"
 #include "jpype.h"
+#include "pyconfig.h"
 #include "pyjp.h"
 #include "jp_array.h"
 #include "jp_arrayclass.h"
@@ -31,6 +32,7 @@
 #include "jp_methoddispatch.h"
 #include "jp_primitive_accessor.h"
 #include "pyjp_module.hpp"
+#include "pytypedefs.h"
 
 
 using namespace std::literals;
@@ -616,7 +618,12 @@ static PyObject *PyJPClass_prepare(PyObject *, PyObject *const *args, Py_ssize_t
 	if (cls == nullptr) {
 		return PyDict_New();
 	}
-	// extension
+	if (cls->isExtension() || cls->isExtensionBase()) {
+		return PyObject_CallNoArgs(_JClassTable);
+	}
+	// swap in our special extension base
+	JPClass *base = cls->getContext()->getTypeManager()->findExtensionBaseClass(cls->getJavaClass());
+	PyTuple_SetItem(bases, 0, JPPyObject::use((PyObject*)base->getHost()).keep());
 	return PyObject_CallNoArgs(_JClassTable);
 }
 
@@ -917,6 +924,14 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 		}
 		jvalue v = match.convert();
 		return type->convertToPythonObject(frame, v, true).keep();
+	}
+
+	if (type->isExtension() || type->isExtensionBase()) {
+			PyErr_Format(PyExc_TypeError,
+					"Casting to extension class '%s' is not allowed",
+					((PyTypeObject*)self)->tp_name
+				);
+			return nullptr;
 	}
 
 	// Cast on java object

@@ -1010,3 +1010,64 @@ class JExtensionTestCase(common.JPypeTestCase):
             def private_method(cls, v: JDouble):
                 self.assertIs(cls, MyObject)
 
+    def testBaseCast(self):
+        TestBase = JClass("jpype.extension.TestBase")
+        class MyObject(TestBase):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPublic
+            def identity(self, i: JInt) -> JInt:
+                return JInt(0)
+
+        obj = MyObject()
+        obj.toString()
+        obj.equals(obj)
+        self.assertEqual(obj.identity(JInt(4)), 0)
+        # NOTE: you can NOT overwrite obj or it will be deleted
+        newobj = TestBase@obj
+        self.assertEqual(newobj.identity(JInt(4)), 0)
+
+    def testSelfCast(self):
+        TestBase = JClass("jpype.extension.TestBase")
+        class MyObject(TestBase):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPublic
+            def identity(self, i: JInt) -> JInt:
+                return JInt(0)
+
+        obj = MyObject()
+        MyObject@obj
+
+    def testIllegalExtensionCast(self):
+        from java.lang import Object, String
+        class MyBaseObject(Object):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPublic
+            def toString(self) -> String:
+                return "test"
+
+        class MyObject(MyBaseObject):
+
+            @JPublic
+            def __init__(self):
+                ...
+
+            @JPublic
+            @JOverride
+            def toString(self) -> String:
+                return "again"
+
+        obj = MyObject()
+        with self.assertRaises(TypeError):
+            MyBaseObject@obj

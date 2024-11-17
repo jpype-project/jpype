@@ -174,7 +174,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 		jstring name,
 		jlong superClass,
 		jlongArray interfacePtrs,
-		jint modifiers)
+		jlong modifiers)
 {
 	(void) self;
 	// All resources are created here are owned by Java and deleted by Java shutdown routine
@@ -194,37 +194,37 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 
 	if (!JPModifier::isSpecial(modifiers))
 	{
-		// Create a normal class
+		// Create a normal class, this also covers the extension base
 		return (jlong) new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
 	}
 
 	if (JPModifier::isFunctional(modifiers)) {
-		return (jlong) new JPFunctional(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+		return (jlong) new JPFunctional(frame, cls, className, (JPClass*) superClass, interfaces, (jint)modifiers);
 	}
 	if (JPModifier::isBuffer(modifiers)) {
-		return (jlong) new JPBufferType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+		return (jlong) new JPBufferType(frame, cls, className, (JPClass*) superClass, interfaces, (jint)modifiers);
 	}
 	// Certain classes require special implementations
 	if (className == "java.lang.Object")
 		return (jlong) (context->_java_lang_Object
-			= new JPObjectType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
+			= new JPObjectType(frame, cls, className, (JPClass*) superClass, interfaces, (jint)modifiers));
 	if (className == "java.lang.Class")
 		return (jlong) (context->_java_lang_Class
-			= new JPClassType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
+			= new JPClassType(frame, cls, className, (JPClass*) superClass, interfaces, (jint)modifiers));
 	if (className == "java.lang.CharSequence")
 		return (jlong) (new JPStringType(frame, cls, className,
-			(JPClass*) superClass, interfaces, modifiers));
+			(JPClass*) superClass, interfaces, (jint)modifiers));
 	if (className == "java.lang.String")
 		return (jlong) (context->_java_lang_String
 			= new JPStringType(frame, cls, className,
-			(JPClass*) superClass, interfaces, modifiers));
+			(JPClass*) superClass, interfaces, (jint)modifiers));
 	if (className == "java.lang.Throwable")
 		return (jlong) (context->_java_lang_Throwable
 			= new JPClassType(frame, cls, className,
-			(JPClass*) superClass, interfaces, modifiers));
+			(JPClass*) superClass, interfaces, (jint)modifiers));
 
 	if (className == "java.lang.Number")
-		return (jlong) new JPNumberType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+		return (jlong) new JPNumberType(frame, cls, className, (JPClass*) superClass, interfaces, (jint)modifiers);
 
 
 	// Register the box types
@@ -233,68 +233,68 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 		context->_void = new JPVoidType();
 		return (jlong) (context->_java_lang_Void
 				= new JPBoxedType(frame, cls, className,
-				(JPClass*) superClass, interfaces, modifiers, context->_void));
+				(JPClass*) superClass, interfaces, (jint)modifiers, context->_void));
 	}
 	if (className == "java.lang.Boolean")
 	{
 		context->_boolean = new JPBooleanType();
 		return (jlong) (context->_java_lang_Boolean
 				= new JPBoxedType(frame, cls, className,
-				(JPClass*) superClass, interfaces, modifiers, context->_boolean));
+				(JPClass*) superClass, interfaces, (jint)modifiers, context->_boolean));
 	}
 	if (className == "java.lang.Byte")
 	{
 		context->_byte = new JPByteType();
 		return (jlong) (context->_java_lang_Byte
 				= new JPBoxedType(frame, cls, className,
-				(JPClass*) superClass, interfaces, modifiers, context->_byte));
+				(JPClass*) superClass, interfaces, (jint)modifiers, context->_byte));
 	}
 	if (className == "java.lang.Character")
 	{
 		context->_char = new JPCharType();
 		return (jlong) (context->_java_lang_Character
 				= new JPBoxedType(frame, cls, className,
-				(JPClass*) superClass, interfaces, modifiers, context->_char));
+				(JPClass*) superClass, interfaces, (jint)modifiers, context->_char));
 	}
 	if (className == "java.lang.Short")
 	{
 		context->_short = new JPShortType();
 		return (jlong) (context->_java_lang_Short
 				= new JPBoxedType(frame, cls, className,
-				(JPClass*) superClass, interfaces, modifiers, context->_short));
+				(JPClass*) superClass, interfaces, (jint)modifiers, context->_short));
 	}
 	if (className == "java.lang.Integer")
 	{
 		context->_int = new JPIntType();
 		return (jlong) (context->_java_lang_Integer
 				= new JPBoxedType(frame, cls, className,
-				(JPClass*) superClass, interfaces, modifiers, context->_int));
+				(JPClass*) superClass, interfaces, (jint)modifiers, context->_int));
 	}
 	if (className == "java.lang.Long")
 	{
 		context->_long = new JPLongType();
 		return (jlong) (context->_java_lang_Long
 				= new JPBoxedType(frame, cls, className,
-				(JPClass*) superClass, interfaces, modifiers, context->_long));
+				(JPClass*) superClass, interfaces, (jint)modifiers, context->_long));
 	}
 	if (className == "java.lang.Float")
 	{
 		context->_float = new JPFloatType();
 		return (jlong) (context->_java_lang_Float
 				= new JPBoxedType(frame, cls, className,
-				(JPClass*) superClass, interfaces, modifiers, context->_float));
+				(JPClass*) superClass, interfaces, (jint)modifiers, context->_float));
 	}
 	if (className == "java.lang.Double")
 	{
 		context->_double = new JPDoubleType();
 		return (jlong) (context->_java_lang_Double
 				= new JPBoxedType(frame, cls, className,
-				(JPClass*) superClass, interfaces, modifiers, context->_double));
+				(JPClass*) superClass, interfaces, (jint)modifiers, context->_double));
 	}
 	if (className == "org.jpype.proxy.JPypeProxy")
 		return (jlong)
 		new JPProxyType(frame, cls, className,
-			(JPClass*) superClass, interfaces, modifiers);
+			(JPClass*) superClass, interfaces, (jint)modifiers);
 
 	// Register reflection types for later use
 	if (className == "java.lang.reflect.Method")

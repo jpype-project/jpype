@@ -53,6 +53,7 @@ public class TypeManager
   public boolean isStarted = false;
   public boolean isShutdown = false;
   public HashMap<Class<?>, ClassDescriptor> classMap = new HashMap<>();
+  private HashMap<Class<?>, ClassDescriptor> extensionClassMap = new HashMap<>();
   public TypeFactory typeFactory = null;
   public TypeAudit audit = null;
   private ClassDescriptor java_lang_Object;
@@ -159,6 +160,31 @@ public class TypeManager
     }
 
     return out;
+  }
+
+  public synchronized long findExtensionBaseClass(Class<?> cls) {
+	return findOrCreateExtensionBaseClass(cls).classPtr;
+  }
+
+  /**
+   * Find an extension wrapper for a class.
+   * <p>
+   * Creates one if needed. This a front end used by JPype.
+   *
+   * @param cls
+   * @return the JPClass, or 0 it one cannot be created.
+   */
+  private ClassDescriptor findOrCreateExtensionBaseClass(Class<?> cls) {
+	ClassDescriptor desc = extensionClassMap.get(cls);
+	if (desc != null) {
+		return desc;
+	}
+	// bases are guarenteed to have been created already
+	// this is called from PyJPClass_mro
+	desc = createOrdinaryClass(cls, false, false, true);
+	createMembers(desc);
+	typeFactory.newWrapper(context, desc.classPtr);
+	return desc;
   }
 
   /**
@@ -417,10 +443,10 @@ public class TypeManager
     if (cls.isArray())
       return this.createArrayClass(cls);
 
-    return createOrdinaryClass(cls, special, true);
+    return createOrdinaryClass(cls, special, true, false);
   }
 
-  private ClassDescriptor createOrdinaryClass(Class<?> cls, boolean special, boolean bases)
+  private ClassDescriptor createOrdinaryClass(Class<?> cls, boolean special, boolean bases, boolean extensionBase)
   {
     // Verify the class will be loadable prior to creating the class.
     // If we fail to do this then the class may end up crashing later when the
@@ -438,7 +464,12 @@ public class TypeManager
     superClassPtr = 0;
     if (superClass != null)
     {
-      parents[0] = this.getClass(superClass);
+	  if (Factory.isExtension(cls) && !Factory.isExtension(superClass)) {
+		// inject a special extension base class wrapper for protected field/member access
+		parents[0] = findOrCreateExtensionBaseClass(superClass);
+	  } else {
+      	parents[0] = this.getClass(superClass);
+	  }
       superClassPtr = parents[0].classPtr;
     }
 
@@ -458,7 +489,7 @@ public class TypeManager
     }
 
     // Set up the modifiers
-    int modifiers = cls.getModifiers() & 0xffff;
+    long modifiers = cls.getModifiers() & 0xffff;
     if (special)
       modifiers |= ModifierCode.SPECIAL.value;
     if (Throwable.class.isAssignableFrom(cls))
@@ -472,6 +503,8 @@ public class TypeManager
 
   if (Factory.isExtension(cls)) {
     modifiers |= ModifierCode.EXTENSION.value;
+  } else if (extensionBase) {
+	modifiers |= ModifierCode.EXTENSION_BASE.value;
   }
 
     // Check if is Functional class
@@ -491,8 +524,12 @@ public class TypeManager
             modifiers);
 
     // Cache the wrapper.
-    ClassDescriptor out = new ClassDescriptor(cls, classPtr, method);
-    this.classMap.put(cls, out);
+    ClassDescriptor out = new ClassDescriptor(cls, classPtr, method, extensionBase);
+	if (extensionBase) {
+		extensionClassMap.put(cls, out);
+	} else {
+    	classMap.put(cls, out);
+	}
     return out;
   }
 
@@ -505,7 +542,7 @@ public class TypeManager
             parent.cls, parent.cls.getCanonicalName() + "$Anonymous",
             parent.classPtr,
             null,
-            ModifierCode.ANONYMOUS.value);
+            (int)ModifierCode.ANONYMOUS.value);
     return parent.anonymous;
   }
 
@@ -527,7 +564,7 @@ public class TypeManager
                     componentTypePtr,
                     modifiers);
 
-    ClassDescriptor out = new ClassDescriptor(cls, classPtr, null);
+    ClassDescriptor out = new ClassDescriptor(cls, classPtr, null, false);
     this.classMap.put(cls, out);
     return out;
   }
@@ -546,7 +583,7 @@ public class TypeManager
             cls,
             this.getClass(boxed).classPtr,
             cls.getModifiers() & 0xffff);
-    this.classMap.put(cls, new ClassDescriptor(cls, classPtr, null));
+    this.classMap.put(cls, new ClassDescriptor(cls, classPtr, null, false));
   }
 
 //</editor-fold>
@@ -596,25 +633,28 @@ public class TypeManager
 //<editor-fold desc="fields" defaultstate="collapsed">
 
   private static Stream<Field> getProtectedFields(Class<?> cls) {
-    Class<?> base = cls.getSuperclass();
-    if (base == Object.class) {
+	return getProtectedFields(cls, true);
+  }
+
+  private static Stream<Field> getProtectedFields(Class<?> cls, boolean start) {
+    Class<?> base = start ? cls : cls.getSuperclass();
+    if (base == Object.class || base == null) {
+		// base can be null if cls was Object
       return Stream.empty();
     }
     Stream<Field> fields = Arrays.stream(base.getDeclaredFields())
       .filter(f -> Modifier.isProtected(f.getModifiers()) && !f.isSynthetic());
-    return Stream.concat(fields, getProtectedFields(base));
+    return Stream.concat(fields, getProtectedFields(base, false));
   }
 
   private void createFields(ClassDescriptor desc)
   {
     // We only need declared fields as the wrappers for previous classes hold
     // members declared earlier
-  // If this causes a performance problem due to Python inheritance
-  // then the same strategy used for methods can be used here
   Class<?> cls = desc.cls;
   Stream<Field> builder = Arrays.stream(cls.getDeclaredFields())
     .filter(getFilter(cls));
-    if (Factory.isExtension(cls) && !Factory.isExtension(cls.getSuperclass())) {
+    if (desc.isExtensionBase()) {
       // The first extension class in the hierarchy gets all protected members
       // this allows us to keep the old behavior while only adding new behavior
       // for the new extension classes. It also reduces the memory footprint.
@@ -667,7 +707,7 @@ public class TypeManager
                     desc.classPtr,
                     "<init>",
                     desc.constructors,
-                    ModifierCode.PUBLIC.value | ModifierCode.CTOR.value);
+                    (int)(ModifierCode.PUBLIC.value | ModifierCode.CTOR.value));
   }
 
   /**
@@ -714,13 +754,18 @@ public class TypeManager
 //<editor-fold desc="methods" defaultstate="collapsed">
 
   private static Stream<Method> getProtectedMethods(Class<?> cls) {
-    Class<?> base = cls.getSuperclass();
-    if (base == Object.class) {
+	return getProtectedMethods(cls, true);
+  }
+
+  private static Stream<Method> getProtectedMethods(Class<?> cls, boolean start) {
+    Class<?> base = start ? cls : cls.getSuperclass();
+    if (base == Object.class || base == null) {
+		// base can be null if cls was Object
       return Stream.empty();
     }
     Stream<Method> methods = Arrays.stream(base.getDeclaredMethods())
       .filter(m -> Modifier.isProtected(m.getModifiers()) && !m.isSynthetic());
-    return Stream.concat(methods, getProtectedMethods(base));
+    return Stream.concat(methods, getProtectedMethods(base, false));
   }
 
   /**
@@ -743,7 +788,7 @@ public class TypeManager
         .filter((m) -> m.getDeclaringClass() != cls)
     ).filter(getFilter(cls));
 
-    if (Factory.isExtension(cls) && !Factory.isExtension(cls.getSuperclass())) {
+    if (desc.isExtensionBase()) {
       // The first extension class in the hierarchy gets all protected members
       // this allows us to keep the old behavior while only adding new behavior
       // for the new extension classes. It also reduces the memory footprint.

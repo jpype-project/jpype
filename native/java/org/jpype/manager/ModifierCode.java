@@ -52,17 +52,18 @@ public enum ModifierCode
   CTOR(0x10000000),
   BEAN_ACCESSOR(0x20000000),
   BEAN_MUTATOR(0x40000000),
-  EXTENSION(0x80000000);
-  final public int value;
+  EXTENSION(0x80000000L),
+  EXTENSION_BASE(0x100000000L);
+  final public long value;
 
-  ModifierCode(int value)
+  ModifierCode(long value)
   {
     this.value = value;
   }
 
-  public static int get(EnumSet<ModifierCode> set)
+  public static long get(EnumSet<ModifierCode> set)
   {
-    int out = 0;
+    long out = 0;
     for (ModifierCode m : set)
     {
       out |= m.value;
