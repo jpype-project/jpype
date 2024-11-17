@@ -154,6 +154,14 @@ void JPGarbageCollection::init(JPJavaFrame& frame)
 	_SystemClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/System"));
 	_gcMethodID = frame.GetStaticMethodID(_SystemClass, "gc", "()V");
 
+    jclass ctxt = frame.getContext()->m_ContextClass.get();
+    _ContextClass = ctxt;
+	_totalMemoryID = frame.GetStaticMethodID(ctxt, "getTotalMemory", "()J");
+	_freeMemoryID = frame.GetStaticMethodID(ctxt, "getFreeMemory", "()J");
+	_maxMemoryID = frame.GetStaticMethodID(ctxt, "getMaxMemory", "()J");
+	_usedMemoryID = frame.GetStaticMethodID(ctxt, "getUsedMemory", "()J");
+	_heapMemoryID = frame.GetStaticMethodID(ctxt, "getHeapMemory", "()J");
+
 	running = true;
 	high_water = getWorkingSize();
 	limit = high_water + DELTA_LIMIT;
@@ -237,10 +245,24 @@ void JPGarbageCollection::onEnd()
 		Py_ssize_t pred = current + 2 * (current - last);
 		last = current;
 		if ((Py_ssize_t) pred > (Py_ssize_t) limit)
+		{
 			run_gc = 2;
+            limit = high_water + (high_water>>3) + 8 * (current - last);
+        }
 
-		//		printf("consider gc %d (%ld, %ld, %ld, %ld) %ld\n", run_gc,
-		//				current, low_water, high_water, limit, limit - pred);
+#if 0
+        {
+			JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+		    jlong totalMemory = frame.CallStaticLongMethodA(_ContextClass, _totalMemoryID, nullptr);
+		    jlong freeMemory = frame.CallStaticLongMethodA(_ContextClass, _freeMemoryID, nullptr);
+		    jlong maxMemory = frame.CallStaticLongMethodA(_ContextClass, _maxMemoryID, nullptr);
+		    jlong usedMemory = frame.CallStaticLongMethodA(_ContextClass, _usedMemoryID, nullptr);
+		    jlong heapMemory = frame.CallStaticLongMethodA(_ContextClass, _heapMemoryID, nullptr);
+			printf("consider gc run=%d (current=%ld, low=%ld, high=%ld, limit=%ld) %ld\n", run_gc,
+					current, low_water, high_water, limit, limit - pred);
+            printf(" java total=%ld free=%ld max=%ld used=%ld heap=%ld\n", totalMemory, freeMemory, maxMemory, usedMemory, heapMemory);
+        }
+#endif
 
 		if (run_gc > 0)
 		{
