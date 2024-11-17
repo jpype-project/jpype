@@ -44,4 +44,3 @@ sudo ln -s /usr/local/bin/python$PYTHON_VERSION /usr/local/bin/python
 which python
 python --version
 python -m ensurepip
-python -m pip install setuptools wheel
