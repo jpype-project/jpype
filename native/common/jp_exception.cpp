@@ -563,6 +563,10 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 		jint lineNum =
 				frame.CallIntMethodA(frame.GetObjectArrayElement(obj, i + 3), context->_java_lang_Integer->m_IntValueID, nullptr);
 
+		// sending -1 will cause issues on Windows
+		if (lineNum<0)
+			lineNum = 0;
+
 		last_traceback = tb_create(last_traceback, dict,  filename.c_str(),
 				method.c_str(), lineNum);
 		frame.DeleteLocalRef(jclassname);
