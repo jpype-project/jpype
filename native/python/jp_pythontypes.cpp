@@ -22,6 +22,7 @@
 
 static void assertValid(PyObject *obj)
 {
+#ifndef Py_GIL_DISABLED
 	if (Py_REFCNT(obj) >= 1)
 		return;
 
@@ -34,6 +35,9 @@ static void assertValid(PyObject *obj)
 	JP_TRACE_PY("pyref FAULT", obj);
 	JP_RAISE(PyExc_SystemError, "Deleted reference");
 	// GCOVR_EXCL_STOP
+#else
+    return; // GIL is disabled; we assume obj is valid
+#endif
 }
 
 /**
