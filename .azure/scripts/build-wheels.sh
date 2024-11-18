@@ -4,8 +4,9 @@ set -e -x
 # Collect the pythons
 pys=(/opt/python/cp*/bin)
 
-# Exclude specific Pythons (3.6)
+# Exclude specific Pythons (3.6, 3.7)
 pys=(${pys[@]//*36*/})
+pys=(${pys[@]//*37*/})
 
 # Compile wheels
 for PYBIN in "${pys[@]}"; do
