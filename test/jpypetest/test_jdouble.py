@@ -15,12 +15,12 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import sys
+from unittest.util import safe_repr
+
 import jpype
 import common
 import random
 import _jpype
-import jpype
 from jpype import java
 from jpype.types import *
 try:
@@ -49,8 +49,8 @@ class JDoubleTestCase(common.JPypeTestCase):
             b = -b
         if b < a * 1e-14:
             return
-        msg = self._formatMessage(msg, '%s == %s' % (safe_repr(first),
-                                                     safe_repr(second)))
+        msg = self._formatMessage(msg, '%s == %s' % (safe_repr(x),
+                                                     safe_repr(y)))
         raise self.failureException(msg)
 
     @common.requireInstrumentation

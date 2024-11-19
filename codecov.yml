@@ -11,7 +11,8 @@ coverage:
       python:
         target: 85%
         threshold: 1%
-        paths: "jpype/"
+        paths:
+        - "jpype/"
       cpp:
         target: 80%
         threshold: 1%
@@ -21,7 +22,8 @@ coverage:
       java:
         target: 75%
         threshold: 2%
-        paths: "native/java/"
+        paths:
+        - "native/java/"
 
 parsers:
   gcov:

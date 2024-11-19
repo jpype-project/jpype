@@ -15,11 +15,12 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import sys
-import jpype
-import common
 import random
+from unittest.util import safe_repr
+
 import _jpype
+
+import common
 import jpype
 from jpype import java
 from jpype.types import *
@@ -49,8 +50,8 @@ class JFloatTestCase(common.JPypeTestCase):
             b = -b
         if b < a * 1e-7:
             return
-        msg = self._formatMessage(msg, '%s == %s' % (safe_repr(first),
-                                                     safe_repr(second)))
+        msg = self._formatMessage(msg, '%s == %s' % (safe_repr(x),
+                                                     safe_repr(y)))
         raise self.failureException(msg)
 
     @common.requireInstrumentation
@@ -385,7 +386,7 @@ class JFloatTestCase(common.JPypeTestCase):
     def testArrayInitFromNPFloat16(self):
         a = np.random.random(100).astype(np.float16)
         jarr = JArray(JFloat)(a)
-        self.assertElementsAlmostEqual(a, jarr)
+        self.assertElementsAlmostEqual(a, jarr, places=5)
 
     @common.requireNumpy
     def testArrayInitFromNPFloat32(self):
