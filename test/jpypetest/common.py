@@ -136,10 +136,11 @@ class JPypeTestCase(unittest.TestCase):
         for i in range(len(a)):
             self.assertEqual(a[i], b[i])
 
-    def assertElementsAlmostEqual(self, a, b):
+    def assertElementsAlmostEqual(self, a, b, places=None, msg=None,
+                          delta=None):
         self.assertEqual(len(a), len(b))
         for i in range(len(a)):
-            self.assertAlmostEqual(a[i], b[i])
+            self.assertAlmostEqual(a[i], b[i], places, msg, delta)
 
     def useEqualityFunc(self, func):
         return UseFunc(self, func, 'assertEqual')
@@ -153,4 +154,5 @@ def java_version():
                           "import jpype; jpype.startJVM(); "
                           "print(jpype.java.lang.System.getProperty('java.version'))"]),
                        encoding='ascii')
+    # todo: make this robust for version "numbers" containing strings (e.g.) 22.1-internal
     return tuple(map(int, java_version.split(".")))
