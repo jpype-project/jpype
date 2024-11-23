@@ -1026,9 +1026,8 @@ class JExtensionTestCase(common.JPypeTestCase):
         obj.toString()
         obj.equals(obj)
         self.assertEqual(obj.identity(JInt(4)), 0)
-        # NOTE: you can NOT overwrite obj or it will be deleted
-        newobj = TestBase@obj
-        self.assertEqual(newobj.identity(JInt(4)), 0)
+        obj = TestBase@obj
+        self.assertEqual(obj.identity(JInt(4)), 0)
 
     def testSelfCast(self):
         TestBase = JClass("jpype.extension.TestBase")

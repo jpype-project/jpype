@@ -46,6 +46,46 @@ struct PyJPClass
 
 PyObject* PyJPClassMagic = nullptr;
 
+static PyObject *extensionCastFinalizer(PyObject *self, PyObject *const *args, Py_ssize_t nargs)
+{
+	(void)self;
+	if (nargs == 1)
+	{
+		// decref the extension object and the tuple needed for the finalizer class
+		//Py_DECREF(PyTuple_GetItem(args[0], 0));
+	    Py_DECREF(args[0]);
+	}
+    Py_RETURN_NONE;
+}
+
+static PyMethodDef extensionCastFinalizerMethod = {NULL, (PyCFunction)extensionCastFinalizer, METH_FASTCALL, NULL};
+
+static JPPyObject weakrefFinalizeClass{};
+static JPPyObject extensionFinalizer{};
+
+static void createExtensionCastFinalizer(PyObject *cast, PyObject *ext)
+{
+	if (weakrefFinalizeClass.isNull())
+	{
+		JPPyObject weakref = JPPyObject::call(PyImport_ImportModule("weakref"));
+		JP_PY_CHECK();
+		extensionFinalizer = JPPyObject::call(PyCFunction_New(&extensionCastFinalizerMethod, NULL));
+		JP_PY_CHECK();
+		weakrefFinalizeClass = JPPyObject::call(PyObject_GetAttrString(weakref.get(), "finalize"));
+		JP_PY_CHECK();
+	}
+	auto obj = JPPyObject::use(ext);
+    JPPyObject::call(PyObject_CallFunctionObjArgs(
+		weakrefFinalizeClass.get(),
+		cast,
+		extensionFinalizer.get(),
+		JPPyTuple_Pack(obj.get()).keep(),
+		NULL)
+	);
+	obj.incref();
+	JP_PY_CHECK();
+}
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -973,7 +1013,11 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 		}
 	}
 
-	return type->convertToPythonObject(frame, val->getValue(), true).keep();
+	auto res = type->convertToPythonObject(frame, val->getValue(), true).keep();
+	if (otherClass->isExtension()) {
+		createExtensionCastFinalizer(res, other);
+	}
+	return res;
 
 	Py_RETURN_NONE;
 	JP_PY_CATCH(nullptr);
