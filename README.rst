@@ -1,5 +1,4 @@
-.. image:: doc/logo.png
-   :scale: 50 %
+.. image:: doc/logo_small.png
    :alt: JPype logo
    :align: center
 

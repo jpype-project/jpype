@@ -1,4 +1,4 @@
-* test=auto
+* text=auto
 
 # Specify lf for all source files
 *.py text eol=lf

@@ -634,4 +634,29 @@ public class JPypeContext
     }
   }
 
+  private static long getTotalMemory()
+  {
+    return Runtime.getRuntime().totalMemory();
+  }
+
+  private static long getFreeMemory()
+  {
+    return Runtime.getRuntime().freeMemory();
+  }
+
+  private static long getMaxMemory()
+  {
+    return Runtime.getRuntime().maxMemory();
+  }
+
+  private static long getUsedMemory()
+  {
+    return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
+  }
+
+  private static long getHeapMemory()
+  {
+    java.lang.management.MemoryMXBean memoryBean = java.lang.management.ManagementFactory.getMemoryMXBean();
+    return memoryBean.getHeapMemoryUsage().getUsed();
+  }
 }

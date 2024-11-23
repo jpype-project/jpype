@@ -26,6 +26,10 @@ case $PYTHON_VERSION in
 3.12)
   FULL_VERSION=3.12.0
   INSTALLER_NAME=python-$FULL_VERSION-macos11.pkg
+  ;;
+3.13)
+  FULL_VERSION=3.13.0
+  INSTALLER_NAME=python-$FULL_VERSION-macos11.pkg
 esac
 
 URL=https://www.python.org/ftp/python/$FULL_VERSION/$INSTALLER_NAME
@@ -44,4 +48,3 @@ sudo ln -s /usr/local/bin/python$PYTHON_VERSION /usr/local/bin/python
 which python
 python --version
 python -m ensurepip
-python -m pip install setuptools wheel

@@ -65,7 +65,14 @@ private:
 	bool java_triggered;
 	PyObject *python_gc;
 	jclass _SystemClass;
+	jclass _ContextClass;
 	jmethodID _gcMethodID;
+
+	jmethodID _totalMemoryID;
+	jmethodID _freeMemoryID;
+	jmethodID _maxMemoryID;
+	jmethodID _usedMemoryID;
+	jmethodID _heapMemoryID;
 
 	size_t last_python;
 	size_t last_java;
