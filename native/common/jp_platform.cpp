@@ -72,6 +72,7 @@ public:
 		wchar_t *tmp = wcsstr(wpath, L"bin\\server\\jvm.dll");
 		if (tmp == NULL)
 		{
+			PyMem_RawFree(wpath);
 			PyErr_Format(PyExc_ValueError, "Unable to get JVM bin path from %s", path);
 			JP_RAISE_PYTHON();
 		}
@@ -80,6 +81,7 @@ public:
 		// there may be multiple in the current system PATH
 		if (!SetDllDirectoryW(wpath))
 		{
+			PyMem_RawFree(wpath);
 			JP_RAISE_OS_ERROR_WINDOWS( GetLastError(), path);
 		}
 		tmp[3] = L'\\';
