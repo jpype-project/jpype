@@ -151,17 +151,27 @@ public class DynamicClassLoader extends URLClassLoader
   @Override
   public URL getResource(String name)
   {
+    // Search our parent
     URL url = this.getParent().getResource(name);
     if (url != null)
       return url;
+    
+    // Otherwise search locally
+    return findResource(name);
+  }
 
-    url = super.getResource(name);
-    if (url != null)
-      return url;
-
-    for (ClassLoader cl : this.loaders)
+  @Override
+  public URL findResource(String name)
+  {
+    // Check local first
+    URL url = super.findResource(name);
+      if (url != null)
+        return url;
+      
+    // Use one of the subs
+    for (URLClassLoader cl : this.loaders)
     {
-      url = cl.getResource(name);
+      url = cl.findResource(name);
       if (url != null)
         return url;
     }
