@@ -109,26 +109,21 @@ def isJVMStarted():
     return _jpype.isStarted()
 
 
-def _getOption(args, var, sep) -> list[str]:
+def _getOption(args, var, sep=None, keep=False) -> list[str]:
     """ Get an option and remove it from the current jvm arguments list """
     for i,v in enumerate(args):
         if not isinstance(v, str):
             continue
-        _, _, value = v.partition('%s='%s)
+        _, _, value = v.partition('%s='%var)
         if value:
-            del args[i]
-            return value.split(sep)
+            if not keep:
+                del args[i]
+            if sep is not None:
+                return value.split(sep)
+            return value
     return []
 
-
-def _hasSystemClassLoader(args) -> bool:
-    for i in args:
-        if isinstance(i, str) and i.startswith('-Djava.system.class.loader'):
-            return True
-    return False
-
-
-def _handleClassPath(
+def _expandClassPath(
     classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None
 ) -> typing.Sequence[str]:
     """
@@ -177,6 +172,7 @@ def startJVM(
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
+    agent: bool = False,
 ) -> None:
     """
     Starts a Java Virtual Machine.  Without options it will start
@@ -196,7 +192,6 @@ def startJVM(
       classpath (str, PathLike, [str, PathLike]): Set the classpath for the JVM.
         This will override any classpath supplied in the arguments
         list. A value of None will give no classpath to JVM.
-      modulepath (str, PathList, [str, PathList]): Set the module path for JVM.
       ignoreUnrecognized (bool): Option to ignore
         invalid JVM arguments. Default is False.
       convertStrings (bool): Option to force Java strings to
@@ -210,6 +205,9 @@ def startJVM(
         transfer control to Python rather than halting.  If
         not specified will be False if Python is started as
         an interactive shell.
+      agent (bool): Start as agent.  This allows for certain
+        privilaged operations, but required java.instrumentation
+        module.
 
     Raises:
       OSError: if the JVM cannot be started or is already running.
@@ -222,7 +220,8 @@ def startJVM(
     if _JVM_started:
         raise OSError('JVM cannot be restarted')
 
-    has_classloader = _hasSystemClassLoader(jvmargs)
+    # Convert to list
+    jvmargs = list(jvmargs)
 
     # JVM path
     if jvmargs:
@@ -254,49 +253,55 @@ def startJVM(
         # Not specified at all, use the default classpath.
         classpath = _classpath.getClassPath()
 
-    # Modulepath handling
-    old_modulepath = _getOption(jvmargs, "--module-path", _classpath._SEP)
-    if old_modulepath:
-        # Old style, specified in the arguments
-        if modulepath is not None:
-            # Cannot apply both styles, conflict
-            raise TypeError('modulepath specified twice')
-        modulepath = old_modulepath
-    if modulepath is not None:
-        mp = _classpath._SEP.join(_handleClassPath(modulepath))
-        extra_jvm_args += ['--module-path=%s'%mp ]
+# Code for 1.6 release when we add module support
+#    # Modulepath handling
+#    old_modulepath = _getOption(jvmargs, "--module-path", _classpath._SEP)
+#    if old_modulepath:
+#        # Old style, specified in the arguments
+#        if modulepath is not None:
+#            # Cannot apply both styles, conflict
+#            raise TypeError('modulepath specified twice')
+#        modulepath = old_modulepath
+#    if modulepath is not None:
+#        mp = _classpath._SEP.join(_expandClassPath(modulepath))
+#        extra_jvm_args += ['--module-path=%s'%mp ]
 
     # Get the support library
-    supportLib = os.path.join(os.path.dirname(os.path.dirname(__file__)), "org.jpype.jar")
-    if not os.path.exists(supportLib):
-        raise RuntimeError("Unable to find org.jpype.jar support library at " + supportLib)
+    support_lib = os.path.join(os.path.dirname(os.path.dirname(__file__)), "org.jpype.jar")
+    if not os.path.exists(support_lib):
+        raise RuntimeError("Unable to find org.jpype.jar support library at " + support_lib)
 
-    late_load = not has_classloader
-    if classpath:
-        cp = _classpath._SEP.join(_handleClassPath(classpath))
-        if cp.isascii():
-            # no problems
-            extra_jvm_args += ['-Djava.class.path=%s'%cp ]
-            late_load = False
-        elif has_classloader:
-            # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
-            raise ValueError("system classloader cannot be specified with non ascii characters in the classpath")
-        elif supportLib.isascii():
-            # ok, setup the jpype system classloader and add to the path after startup
-            # this guarentees all classes have the same permissions as they did in the past
-            extra_jvm_args += [
-                '-Djava.system.class.loader=org.jpype.classloader.JpypeSystemClassLoader',
-                '-Djava.class.path=%s'%supportLib
-            ]
-        else:
-            # We are screwed no matter what we try or do.
-            # Unfortunately the jdk maintainers don't seem to care either.
-            # This bug is almost 10 years old and spans 16 jdk versions and counting.
-            # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
-            raise ValueError("jpype jar must be ascii to add to the system class path")
+    system_class_loader = _getOption(jvmargs, "-Djava.system.class.loader", keep=True)
+    late_load = not system_class_loader
 
+    java_class_path = _expandClassPath(classpath)
+    java_class_path.append(support_lib)
+    java_class_path = _classpath._SEP.join(java_class_path)
 
-    extra_jvm_args += ['-javaagent:' + supportLib]
+    # Make sure our module is always on the classpath
+    if java_class_path.isascii():
+        # no problems
+        extra_jvm_args += ['-Djava.class.path=%s'%java_class_path ]
+        late_load = False
+    elif system_class_loader:
+        # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
+        raise ValueError("system classloader cannot be specified with non ascii characters in the classpath")
+    elif support_lib.isascii():
+        # ok, setup the jpype system classloader and add to the path after startup
+        # this guarentees all classes have the same permissions as they did in the past
+        extra_jvm_args += [
+            '-Djava.system.class.loader=org.jpype.classloader.JpypeSystemClassLoader',
+            '-Djava.class.path=%s'%support_lib
+        ]
+    else:
+        # We are screwed no matter what we try or do.
+        # Unfortunately the jdk maintainers don't seem to care either.
+        # This bug is almost 10 years old and spans 16 jdk versions and counting.
+        # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
+        raise ValueError("jpype jar must be ascii to add to the system class path")
+
+    if agent:
+        extra_jvm_args += ['-javaagent:' + support_lib]
 
     try:
         import locale
@@ -339,7 +344,7 @@ def startJVM(
     if late_load and classpath:
         # now we can add to the system classpath
         cl = _jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        for cp in _handleClassPath(classpath):
+        for cp in _expandClassPath(classpath):
             cl.addPath(_jpype._java_lang_String(cp))
 
 

@@ -5,6 +5,9 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 - **1.5.2.dev0 - 2024-11-18**
+
+  - Roll back agent change due to misbehaving JVM installs.
+
 - **1.5.1 - 2024-11-09**
 
   - Future proofing for Python 3.14
