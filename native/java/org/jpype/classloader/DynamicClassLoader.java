@@ -14,6 +14,7 @@ import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-public class DynamicClassLoader extends ClassLoader
+public class DynamicClassLoader extends URLClassLoader
 {
 
   List<URLClassLoader> loaders = new LinkedList<>();
@@ -34,7 +35,14 @@ public class DynamicClassLoader extends ClassLoader
 
   public DynamicClassLoader(ClassLoader parent)
   {
-    super(parent);
+    super(new URL[0], parent);
+  }
+
+  // this is required to add a Java agent even if it is already in the path
+  @SuppressWarnings("unused")
+  private void appendToClassPathForInstrumentation(String path) throws Throwable
+  {
+    addURL(Paths.get(path).toAbsolutePath().toUri().toURL());
   }
 
   public int getCode()
@@ -77,7 +85,7 @@ public class DynamicClassLoader extends ClassLoader
       }
     });
 
-    loaders.add(new URLClassLoader(urls.toArray(new URL[urls.size()])));
+    loaders.add(new URLClassLoader(urls.toArray(new URL[0])));
   }
 
   public void addFile(Path path) throws FileNotFoundException
@@ -120,7 +128,7 @@ public class DynamicClassLoader extends ClassLoader
     try
     {
       URLConnection connection = url.openConnection();
-      try ( InputStream is = connection.getInputStream())
+      try (InputStream is = connection.getInputStream())
       {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         int bytes;
@@ -146,6 +154,11 @@ public class DynamicClassLoader extends ClassLoader
     URL url = this.getParent().getResource(name);
     if (url != null)
       return url;
+
+    url = super.getResource(name);
+    if (url != null)
+      return url;
+
     for (ClassLoader cl : this.loaders)
     {
       url = cl.getResource(name);
@@ -164,12 +177,11 @@ public class DynamicClassLoader extends ClassLoader
   public Enumeration<URL> getResources(String name) throws IOException
   {
     ArrayList<URL> out = new ArrayList<>();
-    Enumeration<URL> urls = getParent().getResources(name);
-    out.addAll(Collections.list(urls));
+    out.addAll(Collections.list(getParent().getResources(name)));
+    out.addAll(Collections.list(super.getResources(name)));
     for (URLClassLoader cl : this.loaders)
     {
-      urls = cl.findResources(name);
-      out.addAll(Collections.list(urls));
+      out.addAll(Collections.list(cl.findResources(name)));
     }
     // Both with and without / should generate the same result
     if (name.endsWith("/"))
@@ -201,7 +213,7 @@ public class DynamicClassLoader extends ClassLoader
       return;
     if (Files.isDirectory(p1))
       return;
-    try ( JarFile jf = new JarFile(p1.toFile()))
+    try (JarFile jf = new JarFile(p1.toFile()))
     {
       Enumeration<JarEntry> entries = jf.entries();
       URI abs = p1.toAbsolutePath().toUri();

@@ -168,7 +168,6 @@ def startJVM(
     *jvmargs: str,
     jvmpath: typing.Optional[_PathOrStr] = None,
     classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
-    modulepath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
@@ -214,6 +213,10 @@ def startJVM(
       TypeError: if a keyword argument conflicts with the positional arguments.
 
      """
+
+# Code for 1.6
+#    modulepath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
+
     if _jpype.isStarted():
         raise OSError('JVM is already started')
     global _JVM_started
@@ -290,7 +293,7 @@ def startJVM(
         # ok, setup the jpype system classloader and add to the path after startup
         # this guarentees all classes have the same permissions as they did in the past
         extra_jvm_args += [
-            '-Djava.system.class.loader=org.jpype.classloader.JpypeSystemClassLoader',
+            '-Djava.system.class.loader=org.jpype.classloader.DynamicClassLoader',
             '-Djava.class.path=%s'%support_lib
         ]
     else:
@@ -345,7 +348,7 @@ def startJVM(
         # now we can add to the system classpath
         cl = _jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
         for cp in _expandClassPath(classpath):
-            cl.addPath(_jpype._java_lang_String(cp))
+            cl.addFile(_jpype._java_lang_String(cp))
 
 
 def initializeResources():
