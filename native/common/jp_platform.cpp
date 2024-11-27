@@ -69,7 +69,21 @@ public:
 		{
 			JP_RAISE(PyExc_SystemError, "Unable to get JVM path with locale.");
 		}
-		jvmLibrary = LoadLibraryW(wpath);
+		wchar_t *tmp = wcsstr(wpath, L"bin\\server\\jvm.dll");
+		if (tmp == NULL)
+		{
+			PyErr_Format(PyExc_ValueError, "Unable to get JVM bin path from %s", path);
+			JP_RAISE_PYTHON();
+		}
+		tmp[3] = L'\0'; // null terminate to temporarily use as directory
+		// we need to ensure the correct JVM DLLs are loaded
+		// there may be multiple in the current system PATH
+		if (!SetDllDirectoryW(wpath))
+		{
+			JP_RAISE_OS_ERROR_WINDOWS( GetLastError(), path);
+		}
+		tmp[3] = L'\\';
+		jvmLibrary = LoadLibraryExW(wpath, NULL, LOAD_LIBRARY_SEARCH_USER_DIRS|LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 		PyMem_RawFree(wpath);
 		if (jvmLibrary == NULL)
 		{
