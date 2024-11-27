@@ -109,13 +109,15 @@ def isJVMStarted():
     return _jpype.isStarted()
 
 
-def _getOldClassPath(args) -> list[str]:
-    for i in args:
-        if not isinstance(i, str):
+def _getOption(args, var, sep) -> list[str]:
+    """ Get an option and remove it from the current jvm arguments list """
+    for i,v in enumerate(args):
+        if not isinstance(v, str):
             continue
-        _, _, classpath = i.partition('-Djava.class.path=')
-        if classpath:
-            return classpath.split(_classpath._SEP)
+        _, _, value = v.partition('%s='%s)
+        if value:
+            del args[i]
+            return value.split(sep)
     return []
 
 
@@ -160,10 +162,6 @@ def _handleClassPath(
     return out
 
 
-def _removeClassPath(args) -> tuple[str]:
-    return tuple(arg for arg in args if not str(arg).startswith("-Djava.class.path"))
-
-
 _JVM_started = False
 
 
@@ -175,6 +173,7 @@ def startJVM(
     *jvmargs: str,
     jvmpath: typing.Optional[_PathOrStr] = None,
     classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
+    modulepath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
@@ -197,6 +196,7 @@ def startJVM(
       classpath (str, PathLike, [str, PathLike]): Set the classpath for the JVM.
         This will override any classpath supplied in the arguments
         list. A value of None will give no classpath to JVM.
+      modulepath (str, PathList, [str, PathList]): Set the module path for JVM.
       ignoreUnrecognized (bool): Option to ignore
         invalid JVM arguments. Default is False.
       convertStrings (bool): Option to force Java strings to
@@ -224,7 +224,6 @@ def startJVM(
 
     has_classloader = _hasSystemClassLoader(jvmargs)
 
-
     # JVM path
     if jvmargs:
         # jvm is the first argument the first argument is a path or None
@@ -240,8 +239,11 @@ def startJVM(
         # Allow the path to be a PathLike.
         jvmpath = os.fspath(jvmpath)
 
+    # Handle strings and list of strings.
+    extra_jvm_args: list[str] = []
+
     # Classpath handling
-    old_classpath = _getOldClassPath(jvmargs)
+    old_classpath = _getOption(jvmargs, "-Djava.class.path", _classpath._SEP)
     if old_classpath:
         # Old style, specified in the arguments
         if classpath is not None:
@@ -252,9 +254,19 @@ def startJVM(
         # Not specified at all, use the default classpath.
         classpath = _classpath.getClassPath()
 
-    # Handle strings and list of strings.
-    extra_jvm_args: list[str] = []
+    # Modulepath handling
+    old_modulepath = _getOption(jvmargs, "--module-path", _classpath._SEP)
+    if old_modulepath:
+        # Old style, specified in the arguments
+        if modulepath is not None:
+            # Cannot apply both styles, conflict
+            raise TypeError('modulepath specified twice')
+        modulepath = old_modulepath
+    if modulepath is not None:
+        mp = _classpath._SEP.join(_handleClassPath(modulepath))
+        extra_jvm_args += ['--module-path=%s'%mp ]
 
+    # Get the support library
     supportLib = os.path.join(os.path.dirname(os.path.dirname(__file__)), "org.jpype.jar")
     if not os.path.exists(supportLib):
         raise RuntimeError("Unable to find org.jpype.jar support library at " + supportLib)
@@ -265,7 +277,6 @@ def startJVM(
         if cp.isascii():
             # no problems
             extra_jvm_args += ['-Djava.class.path=%s'%cp ]
-            jvmargs = _removeClassPath(jvmargs)
             late_load = False
         elif has_classloader:
             # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
@@ -277,7 +288,6 @@ def startJVM(
                 '-Djava.system.class.loader=org.jpype.classloader.JpypeSystemClassLoader',
                 '-Djava.class.path=%s'%supportLib
             ]
-            jvmargs = _removeClassPath(jvmargs)
         else:
             # We are screwed no matter what we try or do.
             # Unfortunately the jdk maintainers don't seem to care either.
@@ -295,7 +305,7 @@ def startJVM(
         # Keep the current locale settings, else Java will replace them.
         prior = [locale.getlocale(i) for i in categories]
         # Start the JVM
-        _jpype.startup(jvmpath, jvmargs + tuple(extra_jvm_args),
+        _jpype.startup(jvmpath, tuple(jvmargs + extra_jvm_args),
                        ignoreUnrecognized, convertStrings, interrupt)
         # Collect required resources for operation
         initializeResources()
