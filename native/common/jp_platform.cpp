@@ -21,6 +21,7 @@ JPPlatformAdapter::~JPPlatformAdapter()
 
 #ifdef WIN32
 #include <windows.h>
+#include <string>
 
 /**
  * Windows-specific platform adapter
@@ -64,29 +65,26 @@ public:
 	virtual void loadLibrary(const char* path) override
 	{
 		JP_TRACE_IN("Win32PlatformAdapter::loadLibrary");
-		wchar_t *wpath = Py_DecodeLocale(path, NULL);
-		if (wpath == NULL)
+		wchar_t *tmp = Py_DecodeLocale(path, NULL);
+		if (tmp == NULL)
 		{
 			JP_RAISE(PyExc_SystemError, "Unable to get JVM path with locale.");
 		}
-		wchar_t *tmp = wcsstr(wpath, L"bin\\server\\jvm.dll");
-		if (tmp == NULL)
+		std::wstring wpath = tmp;
+		PyMem_RawFree(tmp);
+		auto pos = wpath.rfind(L'\\', wpath.size()-9);
+		if (pos == std::wstring::npos)
 		{
-			PyMem_RawFree(wpath);
 			PyErr_Format(PyExc_ValueError, "Unable to get JVM bin path from %s", path);
 			JP_RAISE_PYTHON();
 		}
-		tmp[3] = L'\0'; // null terminate to temporarily use as directory
-		// we need to ensure the correct JVM DLLs are loaded
-		// there may be multiple in the current system PATH
-		if (!SetDllDirectoryW(wpath))
+		wpath[pos] = L'\0'; // null terminate to temporarily use as directory
+		if (!SetDllDirectoryW(wpath.c_str()))
 		{
-			PyMem_RawFree(wpath);
 			JP_RAISE_OS_ERROR_WINDOWS( GetLastError(), path);
 		}
-		tmp[3] = L'\\';
-		jvmLibrary = LoadLibraryExW(wpath, NULL, LOAD_LIBRARY_SEARCH_USER_DIRS|LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
-		PyMem_RawFree(wpath);
+		wpath[pos] = L'\\';
+		jvmLibrary = LoadLibraryExW(wpath.c_str(), NULL, LOAD_LIBRARY_SEARCH_USER_DIRS|LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 		if (jvmLibrary == NULL)
 		{
 			JP_RAISE_OS_ERROR_WINDOWS( GetLastError(), path);
