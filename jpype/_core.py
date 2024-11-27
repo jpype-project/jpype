@@ -168,7 +168,6 @@ def startJVM(
     *jvmargs: str,
     jvmpath: typing.Optional[_PathOrStr] = None,
     classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
-    modulepath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
@@ -214,6 +213,10 @@ def startJVM(
       TypeError: if a keyword argument conflicts with the positional arguments.
 
      """
+
+# Code for 1.6
+#    modulepath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
+
     if _jpype.isStarted():
         raise OSError('JVM is already started')
     global _JVM_started
@@ -286,19 +289,19 @@ def startJVM(
     elif system_class_loader:
         # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
         raise ValueError("system classloader cannot be specified with non ascii characters in the classpath")
-    elif support_lib.isascii():
-        # ok, setup the jpype system classloader and add to the path after startup
-        # this guarentees all classes have the same permissions as they did in the past
-        extra_jvm_args += [
-            '-Djava.system.class.loader=org.jpype.classloader.JpypeSystemClassLoader',
-            '-Djava.class.path=%s'%support_lib
-        ]
     else:
-        # We are screwed no matter what we try or do.
-        # Unfortunately the jdk maintainers don't seem to care either.
-        # This bug is almost 10 years old and spans 16 jdk versions and counting.
-        # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
-        raise ValueError("jpype jar must be ascii to add to the system class path")
+        if not support_lib.isascii():
+            import tempfile
+            import shutil
+            tmp = tempfile.gettempdir()
+            if not tmp.isascii():
+                raise ValueError("Unable to create ascii temp directory. Clear TEMPDIR, TEMP, and TMP environment variables")
+            support_lib2 = os.path.join(tmp, "org.jpype.jar")
+            shutil.copyfile(support_lib, support_lib2)
+            support_lib = support_lib2
+
+        extra_jvm_args += ['-Djava.system.class.loader=org.jpype.classloader.DynamicClassLoader' ]
+        extra_jvm_args += ['-Djava.class.path=%s'%os.path.join(tmp, "org.jpype.jar") ]
 
     if agent:
         extra_jvm_args += ['-javaagent:' + support_lib]
@@ -344,8 +347,9 @@ def startJVM(
     if late_load and classpath:
         # now we can add to the system classpath
         cl = _jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
+        from pathlib import Path
         for cp in _expandClassPath(classpath):
-            cl.addPath(_jpype._java_lang_String(cp))
+            cl.addFile(Path(cp))
 
 
 def initializeResources():

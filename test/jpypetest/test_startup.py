@@ -152,7 +152,7 @@ class StartJVMCase(unittest.TestCase):
         """
         jpype.startJVM(jvmpath=Path(self.jvmpath), classpath="test/jar/unicode_à😎/sample_package.jar")
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        self.assertEqual(type(cl), jpype.JClass("org.jpype.classloader.JpypeSystemClassLoader"))
+        self.assertEqual(type(cl), jpype.JClass("org.jpype.classloader.DynamicClassLoader"))
         assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
 
 
@@ -162,7 +162,7 @@ class StartJVMCase(unittest.TestCase):
         """
         jpype.startJVM("-Djava.class.path=test/jar/unicode_à😎/sample_package.jar", jvmpath=Path(self.jvmpath))
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        self.assertEqual(type(cl), jpype.JClass("org.jpype.classloader.JpypeSystemClassLoader"))
+        self.assertEqual(type(cl), jpype.JClass("org.jpype.classloader.DynamicClassLoader"))
         assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
 
     def testNonASCIIPathWithSystemClassLoader(self):
@@ -207,7 +207,7 @@ class StartJVMCase(unittest.TestCase):
         # we introduce no behavior change unless absolutely necessary
         jpype.startJVM(jvmpath=Path(self.jvmpath))
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        self.assertNotEqual(type(cl), jpype.JClass("org.jpype.classloader.JpypeSystemClassLoader"))
+        self.assertNotEqual(type(cl), jpype.JClass("org.jpype.classloader.DynamicClassLoader"))
 
     def testServiceWithNonASCIIPath(self):
         jpype.startJVM(
