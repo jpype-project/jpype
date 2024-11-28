@@ -125,7 +125,7 @@ def _getOption(args, var, sep=None, keep=False):
 
 def _expandClassPath(
     classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None
-) -> typing.Sequence[str]:
+) -> typing.List[str]:
     """
     Return a classpath which represents the given tuple of classpath specifications
     """
@@ -230,7 +230,7 @@ def startJVM(
     if jvm_args:
         # jvm is the first argument the first argument is a path or None
         if jvm_args[0] is None or (isinstance(jvm_args[0], str) and not jvm_args[0].startswith('-')):
-            if jvm_path:
+            if jvmpath:
                 raise TypeError('jvmpath specified twice')
             jvm_path = jvm_args[0]
             jvm_args = jvm_args[1:]
@@ -278,10 +278,10 @@ def startJVM(
 
     java_class_path = _expandClassPath(classpath)
     java_class_path.append(support_lib)
-    java_class_path = _classpath._SEP.join(java_class_path)
+    classpath = _classpath._SEP.join(java_class_path)
 
     # Make sure our module is always on the classpath
-    if not java_class_path.isascii():
+    if not classpath.isascii():
         if system_class_loader:
             # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
             raise ValueError("system classloader cannot be specified with non ascii characters in the classpath")
@@ -298,16 +298,12 @@ def startJVM(
             shutil.copyfile(support_lib, sl2)
             support_lib = sl2
 
-        java_class_path = _expandClassPath(classpath)
-        java_class_path.append(support_lib)
-        java_class_path = _classpath._SEP.join(java_class_path)
-
         # ok, setup the jpype system classloader and add to the path after startup
         # this guarentees all classes have the same permissions as they did in the past
         extra_jvm_args += [
             '-Djava.system.class.loader=org.jpype.JPypeClassLoader',
             '-Djava.class.path=%s'%support_lib,
-            '-Djpype.class.path=%s'%java_class_path,
+            '-Djpype.class.path=%s'%classpath,
             '-Xshare:off'
         ]
     else:
