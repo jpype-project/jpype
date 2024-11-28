@@ -407,18 +407,18 @@ def connect(dsn, *, driver=None, driver_args=None,
 
     # User is supplying Java properties
     if isinstance(driver_args, Properties):
-        connection = DM.getConnection(dsn, driver_args, caller=False)
+        connection = DM.getConnection(dsn, driver_args)
 
     # User is supplying a mapping that can be converted Properties
     elif isinstance(driver_args, typing.Mapping):
         info = Properties()
         for k, v in driver_args.items():
             info.setProperty(k, v)
-        connection = DM.getConnection(dsn, info, caller=False)
+        connection = DM.getConnection(dsn, info)
 
     # User supplied nothing
     elif driver_args is None:
-        connection = DM.getConnection(dsn, caller=False)
+        connection = DM.getConnection(dsn)
 
     # Otherwise use the kwargs
     else:

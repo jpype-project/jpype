@@ -19,11 +19,8 @@ import java.io.File;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteOrder;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -244,21 +241,21 @@ public class JPypeContext
 
     if (freeResources)
     {
-       // Release all Python references
-       try
-       {
-         JPypeReferenceQueue.getInstance().stop();
-       } catch (Throwable th)
-       {
-       }
+      // Release all Python references
+      try
+      {
+        JPypeReferenceQueue.getInstance().stop();
+      } catch (Throwable th)
+      {
+      }
 
-       // Release any C++ resources
-       try
-       {
-         this.typeManager.shutdown();
-       } catch (Throwable th)
-       {
-       }
+      // Release any C++ resources
+      try
+      {
+        this.typeManager.shutdown();
+      } catch (Throwable th)
+      {
+      }
     }
 
     // Execute post hooks
@@ -324,9 +321,10 @@ public class JPypeContext
   }
 
   /**
-   * Call a method using reflection.This method creates a stackframe so that
-   * caller sensitive methods will execute properly.
+   * Call a method using reflection.
    *
+   * This method creates a stackframe so that caller sensitive methods will
+   * execute properly.
    *
    * @param method is the method to call.
    * @param obj is the object to operate on, it will be null if the method is
@@ -344,10 +342,11 @@ public class JPypeContext
       return method.invoke(obj, args);
     } catch (InvocationTargetException ex)
     {
+//      ex.printStackTrace();
       throw ex.getCause();
     }
   }
-
+  
   /**
    * Helper function for collect rectangular,
    */
@@ -637,22 +636,22 @@ public class JPypeContext
     }
   }
 
-  private static long getTotalMemory() 
+  private static long getTotalMemory()
   {
     return Runtime.getRuntime().totalMemory();
   }
 
-  private static long getFreeMemory() 
+  private static long getFreeMemory()
   {
     return Runtime.getRuntime().freeMemory();
   }
 
-  private static long getMaxMemory() 
+  private static long getMaxMemory()
   {
     return Runtime.getRuntime().maxMemory();
   }
 
-  private static long getUsedMemory() 
+  private static long getUsedMemory()
   {
     return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
   }

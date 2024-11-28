@@ -57,8 +57,8 @@ public class DynamicClassLoader extends URLClassLoader
     ArrayList<URL> path = new ArrayList<>();
     int last = 0;
     int next = 0;
-    
-    while (next!=-1)
+
+    while (next != -1)
     {
       // Find the parts
       next = cp.indexOf(File.pathSeparator, last);
