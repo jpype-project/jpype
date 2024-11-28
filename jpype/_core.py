@@ -305,7 +305,7 @@ def startJVM(
         # ok, setup the jpype system classloader and add to the path after startup
         # this guarentees all classes have the same permissions as they did in the past
         extra_jvm_args += [
-            '-Djava.system.class.loader=org.jpype.classloader.DynamicClassLoader',
+            '-Djava.system.class.loader=org.jpype.JPypeClassLoader',
             '-Djava.class.path=%s'%support_lib,
             '-Djpype.class.path=%s'%java_class_path,
             '-Xshare:off'

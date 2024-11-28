@@ -38,7 +38,7 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 	m_SystemClassLoader = JPObjectRef(frame,
 			frame.CallStaticObjectMethodA(classLoaderClass, getSystemClassLoader, nullptr));
 
-	jclass dynamicLoaderClass = frame.getEnv()->FindClass("org/jpype/classloader/DynamicClassLoader");
+	jclass dynamicLoaderClass = frame.getEnv()->FindClass("org/jpype/JPypeClassLoader");
 	if (dynamicLoaderClass != nullptr)
 	{
 		// Use the one in place already
