@@ -293,26 +293,31 @@ def startJVM(
             import shutil
             tmp = tempfile.gettempdir()
             if not tmp.isascii():
-                raise ValueError("Unable to create ascii temp directory. Clear TEMPDIR, TEMP, and TMP environment variables")
+                raise ValueError("Unable to find ascii temp directory. Clear TEMPDIR, TEMP, and TMP environment variables")
             remove = os.path.join(tmp, "org.jpype.jar")
             shutil.copyfile(support_lib, remove)
             support_lib = remove
+
+        java_class_path = _expandClassPath(classpath)
+        java_class_path.append(support_lib)
+        java_class_path = _classpath._SEP.join(java_class_path)
 
         # ok, setup the jpype system classloader and add to the path after startup
         # this guarentees all classes have the same permissions as they did in the past
         extra_jvm_args += [
             '-Djava.system.class.loader=org.jpype.classloader.DynamicClassLoader',
             '-Djava.class.path=%s'%support_lib,
+            '-Djpype.class.path=%s'%java_class_path,
             '-Xshare:off'
         ]
-        late_load = True
     else:
         # no problems
         extra_jvm_args += ['-Djava.class.path=%s'%java_class_path ]
-        late_load = False
 
     if agent:
         extra_jvm_args += ['-javaagent:' + support_lib]
+
+    print("extra", extra_jvm_args)
 
     try:
         import locale
@@ -341,24 +346,7 @@ def startJVM(
                 raise RuntimeError(f"{jvmpath} is older than required Java version{version}") from ex
         raise
 
-    """Prior versions of JPype used the jvmargs to setup the class paths via
-    JNI (Java Native Interface) option strings:
-    i.e -Djava.class.path=...
-    See: https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/invocation.html
-
-    Unfortunately, only ascii paths work because url encoding is not handled correctly
-    see: https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
-
-    To resolve this issue, we add the classpath after initialization since Java has
-    had the utilities to correctly encode it since 1.0
-    """
-    if late_load and classpath:
-        # now we can add to the system classpath
-        cl = _jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        from pathlib import Path
-        for cp in _expandClassPath(classpath):
-            print("Late load", cp)
-            cl.addFile(Path(cp))
+    # Clean up
     if remove is not None:
         os.remove(remove)
 
