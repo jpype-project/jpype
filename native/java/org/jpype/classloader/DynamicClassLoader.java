@@ -1,6 +1,7 @@
 package org.jpype.classloader;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,6 +27,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DynamicClassLoader extends URLClassLoader
 {
@@ -35,7 +38,51 @@ public class DynamicClassLoader extends URLClassLoader
 
   public DynamicClassLoader(ClassLoader parent)
   {
-    super(new URL[0], parent);
+    super(launch(), parent);
+  }
+
+  private static URL[] launch()
+  {
+    String cp = System.getProperty("jpype.class.path");
+    if (cp == null)
+      return new URL[0];
+
+    ArrayList<URL> path = new ArrayList<>();
+    int off = 0, next;
+    do
+    {
+      next = cp.indexOf(File.pathSeparator, off);
+      String element = (next == -1)
+              ? cp.substring(off)
+              : cp.substring(off, next);
+      if (!element.isEmpty())
+      {
+        try
+        {
+          URL url = Paths.get(element).toUri().toURL();
+          if (url != null)
+            path.add(url);
+        } catch (MalformedURLException ex)
+        {
+          System.err.println("Malformed url "+ element);
+        } catch (IOException ex)
+        {
+          System.err.println("Unable to open "+ element);
+        }
+      }
+      off = next + 1;
+    } while (next != -1);
+
+    System.out.println("jpype.class.path " + cp);
+    System.clearProperty("jpype.class.path");
+    System.setProperty("java.class.path", cp);
+    return path.toArray(new URL[0]);
+  }
+
+  public void deferred()
+  {
+    System.getProperty("jpype.class.path");
+
   }
 
   // this is required to add a Java agent even if it is already in the path
@@ -155,7 +202,7 @@ public class DynamicClassLoader extends URLClassLoader
     URL url = this.getParent().getResource(name);
     if (url != null)
       return url;
-    
+
     // Otherwise search locally
     return findResource(name);
   }
@@ -165,9 +212,9 @@ public class DynamicClassLoader extends URLClassLoader
   {
     // Check local first
     URL url = super.findResource(name);
-      if (url != null)
-        return url;
-      
+    if (url != null)
+      return url;
+
     // Use one of the subs
     for (URLClassLoader cl : this.loaders)
     {
