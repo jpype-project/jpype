@@ -1,6 +1,7 @@
 package org.jpype.classloader;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +36,52 @@ public class DynamicClassLoader extends URLClassLoader
 
   public DynamicClassLoader(ClassLoader parent)
   {
-    super(new URL[0], parent);
+    super(launch(), parent);
+  }
+
+  /**
+   * Special routine for handling non-ascii paths.
+   *
+   * If we are loaded as the system ClassLoader, then we will use
+   * "jpype.class.path" rather than "java.class.path" during the load process.
+   * We will move it into the expected place after so no one is the wiser.
+   *
+   * @return
+   */
+  private static URL[] launch()
+  {
+    String cp = System.getProperty("jpype.class.path");
+    if (cp == null)
+      return new URL[0];
+
+    ArrayList<URL> path = new ArrayList<>();
+    int last = 0;
+    int next = 0;
+    
+    while (next!=-1)
+    {
+      // Find the parts
+      next = cp.indexOf(File.pathSeparator, last);
+      String element = (next == -1) ? cp.substring(last) : cp.substring(last, next);
+      if (!element.isEmpty())
+      {
+        try
+        {
+          URL url = Paths.get(element).toUri().toURL();
+          if (url != null)
+            path.add(url);
+        } catch (MalformedURLException ex)
+        {
+          System.err.println("Malformed url in classpath skipped " + element);
+        }
+      }
+      last = next + 1;
+    }
+
+    // Replace the path
+    System.clearProperty("jpype.class.path");
+    System.setProperty("java.class.path", cp);
+    return path.toArray(new URL[0]);
   }
 
   // this is required to add a Java agent even if it is already in the path
@@ -155,7 +201,7 @@ public class DynamicClassLoader extends URLClassLoader
     URL url = this.getParent().getResource(name);
     if (url != null)
       return url;
-    
+
     // Otherwise search locally
     return findResource(name);
   }
@@ -165,9 +211,9 @@ public class DynamicClassLoader extends URLClassLoader
   {
     // Check local first
     URL url = super.findResource(name);
-      if (url != null)
-        return url;
-      
+    if (url != null)
+      return url;
+
     // Use one of the subs
     for (URLClassLoader cl : this.loaders)
     {
