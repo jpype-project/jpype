@@ -311,10 +311,17 @@ class BuildExtCommand(build_ext):
             cmd1 = shlex.split('%s -cp "%s" -d "%s" -g:none -source %s -target %s -encoding UTF-8' %
                                (javac, classpath, build_dir, target_version, target_version))
             cmd1.extend(ext.sources)
-
             os.makedirs("build/classes", exist_ok=True)
+            os.makedirs("build/classes/META-INF", exist_ok=True)
             self.announce("  %s" % " ".join(cmd1), level=distutils.log.INFO)
             subprocess.check_call(cmd1)
+
+            cmd1 = shlex.split('%s -cp "%s" -d "%s" -g:none -source %s -target %s -encoding UTF-8' %
+                               (javac, build_dir, build_dir+"/META-INF/versions/0", target_version, target_version))
+            cmd1.extend(["native/java0/org/jpype/Reflector0.java"])
+            self.announce("  %s" % " ".join(cmd1), level=distutils.log.INFO)
+            subprocess.check_call(cmd1)
+
             manifest = None
             try:
                 for file in glob.iglob("native/java/**/*.*", recursive=True):

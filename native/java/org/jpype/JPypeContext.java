@@ -27,7 +27,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.jpype.classloader.DynamicClassLoader;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jpype.manager.TypeFactory;
 import org.jpype.manager.TypeFactoryNative;
 import org.jpype.manager.TypeManager;
@@ -77,11 +78,12 @@ public class JPypeContext
   private long context;
   private TypeFactory typeFactory;
   private TypeManager typeManager;
-  private DynamicClassLoader classLoader;
+  private JPypeClassLoader classLoader;
   private final AtomicInteger shutdownFlag = new AtomicInteger();
   private final List<Thread> shutdownHooks = new ArrayList<>();
   private final List<Runnable> postHooks = new ArrayList<>();
   public static boolean freeResources = true;
+  public JPypeReflector reflector = null;
 
   static public JPypeContext getInstance()
   {
@@ -92,20 +94,32 @@ public class JPypeContext
    * Start the JPype system.
    *
    * @param context is the C++ portion of the context.
-   * @param bootLoader is the classloader holding JPype resources.
+   * @param loader is the classloader holding JPype resources.
    * @return the created context.
    */
-  static JPypeContext createContext(long context, ClassLoader bootLoader, String nativeLib, boolean interrupt)
+  static JPypeContext createContext(long context, ClassLoader loader, String nativeLib, boolean interrupt)
   {
     if (nativeLib != null)
     {
       System.load(nativeLib);
     }
     INSTANCE.context = context;
-    INSTANCE.classLoader = (DynamicClassLoader) bootLoader;
+    INSTANCE.classLoader = (JPypeClassLoader) loader;
     INSTANCE.typeFactory = new TypeFactoryNative();
     INSTANCE.typeManager = new TypeManager(context, INSTANCE.typeFactory);
     INSTANCE.initialize(interrupt);
+    
+    try
+    {
+      INSTANCE.reflector = (JPypeReflector) Class.forName("org.jpype.Reflector0", true, loader)
+              .getConstructor()
+              .newInstance();
+    } catch (ClassNotFoundException | NoSuchMethodException | SecurityException 
+            | InstantiationException | IllegalAccessException 
+            | IllegalArgumentException | InvocationTargetException ex)
+    {
+      System.err.println("Unable to create reflector "+ ex);
+    }
 
     scanExistingJars();
     return INSTANCE;
@@ -460,15 +474,6 @@ public class JPypeContext
     return shutdownFlag.get() > 0;
   }
 
-//  public void incrementProxy()
-//  {
-//    proxyCount.incrementAndGet();
-//  }
-//
-//  public void decrementProxy()
-//  {
-//    proxyCount.decrementAndGet();
-//  }
   /**
    * Clear the current interrupt.
    *

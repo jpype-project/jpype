@@ -109,7 +109,7 @@ def isJVMStarted():
     return _jpype.isStarted()
 
 
-def _getOption(args, var, sep=None, keep=False) -> list[str]:
+def _getOption(args, var, sep=None, keep=False):
     """ Get an option and remove it from the current jvm arguments list """
     for i,v in enumerate(args):
         if not isinstance(v, str):
@@ -125,7 +125,7 @@ def _getOption(args, var, sep=None, keep=False) -> list[str]:
 
 def _expandClassPath(
     classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None
-) -> typing.Sequence[str]:
+) -> typing.List[str]:
     """
     Return a classpath which represents the given tuple of classpath specifications
     """
@@ -224,28 +224,28 @@ def startJVM(
         raise OSError('JVM cannot be restarted')
 
     # Convert to list
-    jvmargs = list(jvmargs)
+    jvm_args: list[str] = list(jvmargs)
 
     # JVM path
-    if jvmargs:
+    if jvm_args:
         # jvm is the first argument the first argument is a path or None
-        if jvmargs[0] is None or (isinstance(jvmargs[0], str) and not jvmargs[0].startswith('-')):
+        if jvm_args[0] is None or (isinstance(jvm_args[0], str) and not jvm_args[0].startswith('-')):
             if jvmpath:
                 raise TypeError('jvmpath specified twice')
-            jvmpath = jvmargs[0]
-            jvmargs = jvmargs[1:]
+            jvm_path = jvm_args[0]
+            jvm_args = jvm_args[1:]
 
     if not jvmpath:
         jvmpath = getDefaultJVMPath()
     else:
         # Allow the path to be a PathLike.
-        jvmpath = os.fspath(jvmpath)
+        jvmpath = os.fspath(jvm_path)
 
     # Handle strings and list of strings.
     extra_jvm_args: list[str] = []
 
     # Classpath handling
-    old_classpath = _getOption(jvmargs, "-Djava.class.path", _classpath._SEP)
+    old_classpath = _getOption(jvm_args, "-Djava.class.path", _classpath._SEP)
     if old_classpath:
         # Old style, specified in the arguments
         if classpath is not None:
@@ -258,7 +258,7 @@ def startJVM(
 
 # Code for 1.6 release when we add module support
 #    # Modulepath handling
-#    old_modulepath = _getOption(jvmargs, "--module-path", _classpath._SEP)
+#    old_modulepath = _getOption(jvm_args, "--module-path", _classpath._SEP)
 #    if old_modulepath:
 #        # Old style, specified in the arguments
 #        if modulepath is not None:
@@ -274,14 +274,15 @@ def startJVM(
     if not os.path.exists(support_lib):
         raise RuntimeError("Unable to find org.jpype.jar support library at " + support_lib)
 
-    system_class_loader = _getOption(jvmargs, "-Djava.system.class.loader", keep=True)
+    system_class_loader = _getOption(jvm_args, "-Djava.system.class.loader", keep=True)
 
     java_class_path = _expandClassPath(classpath)
     java_class_path.append(support_lib)
-    java_class_path = _classpath._SEP.join(java_class_path)
+    java_class_path = filter(len, java_class_path)
+    classpath = _classpath._SEP.join(java_class_path)
 
     # Make sure our module is always on the classpath
-    if not java_class_path.isascii():
+    if not classpath.isascii():
         if system_class_loader:
             # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
             raise ValueError("system classloader cannot be specified with non ascii characters in the classpath")
@@ -298,24 +299,21 @@ def startJVM(
             shutil.copyfile(support_lib, sl2)
             support_lib = sl2
 
-        java_class_path = _expandClassPath(classpath)
-        java_class_path.append(support_lib)
-        java_class_path = _classpath._SEP.join(java_class_path)
-
         # ok, setup the jpype system classloader and add to the path after startup
         # this guarentees all classes have the same permissions as they did in the past
         extra_jvm_args += [
-            '-Djava.system.class.loader=org.jpype.classloader.DynamicClassLoader',
+            '-Djava.system.class.loader=org.jpype.JPypeClassLoader',
             '-Djava.class.path=%s'%support_lib,
-            '-Djpype.class.path=%s'%java_class_path,
+            '-Djpype.class.path=%s'%classpath,
             '-Xshare:off'
         ]
     else:
         # no problems
-        extra_jvm_args += ['-Djava.class.path=%s'%java_class_path ]
+        extra_jvm_args += ['-Djava.class.path=%s'%classpath ]
 
     if agent:
         extra_jvm_args += ['-javaagent:' + support_lib]
+    print(extra_jvm_args)
 
     try:
         import locale
@@ -324,7 +322,7 @@ def startJVM(
         # Keep the current locale settings, else Java will replace them.
         prior = [locale.getlocale(i) for i in categories]
         # Start the JVM
-        _jpype.startup(jvmpath, tuple(jvmargs + extra_jvm_args),
+        _jpype.startup(jvmpath, tuple(jvm_args + extra_jvm_args),
                        ignoreUnrecognized, convertStrings, interrupt)
         # Collect required resources for operation
         initializeResources()

@@ -52,7 +52,7 @@ def addClassPath(path1: typing.Union[str, _os.PathLike]) -> None:
         path1 = path2.joinpath(path1)
 
     # If the JVM is already started then we will have to load the paths
-    # immediately into the DynamicClassLoader
+    # immediately into the JPypeClassLoader
     if _jpype.isStarted():
         Paths = _jpype.JClass('java.nio.file.Paths')
         JContext = _jpype.JClass('org.jpype.JPypeContext')
@@ -62,9 +62,9 @@ def addClassPath(path1: typing.Union[str, _os.PathLike]) -> None:
             if len(paths) == 0:
                 return
             for path in paths:
-                classLoader.addFile(Paths.get(str(path)))
+                classLoader.addPath(Paths.get(str(path)))
         else:
-            classLoader.addFile(Paths.get(str(path1)))
+            classLoader.addPath(Paths.get(str(path1)))
     _CLASSPATHS.append(path1)
 
 
