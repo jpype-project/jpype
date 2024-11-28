@@ -20,6 +20,7 @@ import subrun
 import os
 from pathlib import Path
 import unittest
+import common
 
 root = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 cp = os.path.join(root, 'classes').replace('\\', '/')
@@ -181,6 +182,7 @@ class StartJVMCase(unittest.TestCase):
                 "-Djava.class.path=test/jar/unicode_à😎/sample_package.jar"
             )
 
+    @common.requireAscii
     def testASCIIPathWithSystemClassLoader(self):
         jpype.startJVM(
             "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
@@ -192,6 +194,7 @@ class StartJVMCase(unittest.TestCase):
         self.assertEqual(type(classloader), test_classLoader)
         assert dir(jpype.JPackage('jpype.startup')) == ['TestSystemClassLoader']
 
+    @common.requireAscii
     def testOldStyleASCIIPathWithSystemClassLoader(self):
         jpype.startJVM(
             self.jvmpath,
@@ -203,6 +206,7 @@ class StartJVMCase(unittest.TestCase):
         self.assertEqual(type(classloader), test_classLoader)
         assert dir(jpype.JPackage('jpype.startup')) == ['TestSystemClassLoader']
 
+    @common.requireAscii
     def testDefaultSystemClassLoader(self):
         # we introduce no behavior change unless absolutely necessary
         jpype.startJVM(jvmpath=Path(self.jvmpath))

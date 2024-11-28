@@ -67,6 +67,16 @@ def requireNumpy(func):
         raise unittest.SkipTest("numpy required")
     return f
 
+def requireAscii(func):
+    def f(self):
+        try:
+            root = path.dirname(path.abspath(path.dirname(__file__)))
+            if root.isascii():
+                return func(self)
+        except ImportError:
+            pass
+        raise unittest.SkipTest("Ascii root directory required")
+    return f
 
 class UseFunc(object):
     def __init__(self, obj, func, attr):
