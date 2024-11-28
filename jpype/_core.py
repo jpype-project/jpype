@@ -171,7 +171,6 @@ def startJVM(
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
-    agent: bool = False,
 ) -> None:
     """
     Starts a Java Virtual Machine.  Without options it will start
@@ -204,9 +203,6 @@ def startJVM(
         transfer control to Python rather than halting.  If
         not specified will be False if Python is started as
         an interactive shell.
-      agent (bool): Start as agent.  This allows for certain
-        privilaged operations, but required java.instrumentation
-        module.
 
     Raises:
       OSError: if the JVM cannot be started or is already running.
@@ -310,10 +306,6 @@ def startJVM(
     else:
         # no problems
         extra_jvm_args += ['-Djava.class.path=%s'%classpath ]
-
-    if agent:
-        extra_jvm_args += ['-javaagent:' + support_lib]
-    print(extra_jvm_args)
 
     try:
         import locale
