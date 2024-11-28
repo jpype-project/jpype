@@ -27,8 +27,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class DynamicClassLoader extends URLClassLoader
 {
@@ -41,6 +39,15 @@ public class DynamicClassLoader extends URLClassLoader
     super(launch(), parent);
   }
 
+  /**
+   * Special routine for handling non-ascii paths.
+   *
+   * If we are loaded as the system ClassLoader, then we will use
+   * "jpype.class.path" rather than "java.class.path" during the load process.
+   * We will move it into the expected place after so no one is the wiser.
+   *
+   * @return
+   */
   private static URL[] launch()
   {
     String cp = System.getProperty("jpype.class.path");
@@ -48,13 +55,14 @@ public class DynamicClassLoader extends URLClassLoader
       return new URL[0];
 
     ArrayList<URL> path = new ArrayList<>();
-    int off = 0, next;
-    do
+    int last = 0;
+    int next = 0;
+    
+    while (next!=-1)
     {
-      next = cp.indexOf(File.pathSeparator, off);
-      String element = (next == -1)
-              ? cp.substring(off)
-              : cp.substring(off, next);
+      // Find the parts
+      next = cp.indexOf(File.pathSeparator, last);
+      String element = (next == -1) ? cp.substring(last) : cp.substring(last, next);
       if (!element.isEmpty())
       {
         try
@@ -64,25 +72,16 @@ public class DynamicClassLoader extends URLClassLoader
             path.add(url);
         } catch (MalformedURLException ex)
         {
-          System.err.println("Malformed url "+ element);
-        } catch (IOException ex)
-        {
-          System.err.println("Unable to open "+ element);
+          System.err.println("Malformed url in classpath skipped " + element);
         }
       }
-      off = next + 1;
-    } while (next != -1);
+      last = next + 1;
+    }
 
-    System.out.println("jpype.class.path " + cp);
+    // Replace the path
     System.clearProperty("jpype.class.path");
     System.setProperty("java.class.path", cp);
     return path.toArray(new URL[0]);
-  }
-
-  public void deferred()
-  {
-    System.getProperty("jpype.class.path");
-
   }
 
   // this is required to add a Java agent even if it is already in the path
