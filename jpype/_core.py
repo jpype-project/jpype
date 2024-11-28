@@ -158,7 +158,7 @@ def _expandClassPath(
 
 
 _JVM_started = False
-
+_tmp = None
 
 def interactive():
     return bool(getattr(sys, 'ps1', sys.flags.interactive))
@@ -280,7 +280,6 @@ def startJVM(
     java_class_path.append(support_lib)
     java_class_path = _classpath._SEP.join(java_class_path)
 
-    remove = None
     # Make sure our module is always on the classpath
     if not java_class_path.isascii():
         if system_class_loader:
@@ -291,12 +290,13 @@ def startJVM(
         if not support_lib.isascii():
             import tempfile
             import shutil
-            tmp = tempfile.gettempdir()
-            if not tmp.isascii():
+            global _tmp
+            _tmp = tempfile.TemporaryDirectory(dir = tempfile.gettempdir())
+            if not _tmp.name.isascii():
                 raise ValueError("Unable to find ascii temp directory. Clear TEMPDIR, TEMP, and TMP environment variables")
-            remove = os.path.join(tmp, "org.jpype.jar")
-            shutil.copyfile(support_lib, remove)
-            support_lib = remove
+            sl2 = os.path.join(_tmp.name, "org.jpype.jar")
+            shutil.copyfile(support_lib, sl2)
+            support_lib = sl2
 
         java_class_path = _expandClassPath(classpath)
         java_class_path.append(support_lib)
@@ -316,8 +316,6 @@ def startJVM(
 
     if agent:
         extra_jvm_args += ['-javaagent:' + support_lib]
-
-    print("extra", extra_jvm_args)
 
     try:
         import locale
@@ -345,10 +343,6 @@ def startJVM(
                 version = int(match.group(1)) - 44
                 raise RuntimeError(f"{jvmpath} is older than required Java version{version}") from ex
         raise
-
-    # Clean up
-    if remove is not None:
-        os.remove(remove)
 
 
 def initializeResources():

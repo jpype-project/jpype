@@ -401,23 +401,24 @@ def connect(dsn, *, driver=None, driver_args=None,
     """
     Properties = _jpype.JClass("java.util.Properties")
     if driver:
-        _jpype.JClass('java.lang.Class').forName(driver).newInstance()
+        _jpype.JClass('java.lang.Class').forName(driver,True,_jpype.JPypeClassLoader).newInstance()
     DM = _jpype.JClass('java.sql.DriverManager')
+    #DM.setLogStream(_jpype.JClass("java.lang.System").out)
 
     # User is supplying Java properties
     if isinstance(driver_args, Properties):
-        connection = DM.getConnection(dsn, driver_args)
+        connection = DM.getConnection(dsn, driver_args, caller=False)
 
     # User is supplying a mapping that can be converted Properties
     elif isinstance(driver_args, typing.Mapping):
         info = Properties()
         for k, v in driver_args.items():
             info.setProperty(k, v)
-        connection = DM.getConnection(dsn, info)
+        connection = DM.getConnection(dsn, info, caller=False)
 
     # User supplied nothing
     elif driver_args is None:
-        connection = DM.getConnection(dsn)
+        connection = DM.getConnection(dsn, caller=False)
 
     # Otherwise use the kwargs
     else:

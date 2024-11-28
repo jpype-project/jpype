@@ -63,7 +63,7 @@ public:
 		return JPModifier::isBeanAccessor(m_Modifiers);
 	}
 
-	JPPyObject invoke(JPJavaFrame& frame, JPPyObjectVector& vargs, bool instance);
+	JPPyObject invoke(JPJavaFrame& frame, JPPyObjectVector& vargs, bool instance, bool no_caller);
 	JPValue invokeConstructor(JPJavaFrame& frame, JPPyObjectVector& vargs);
 	bool matches(JPJavaFrame& frame, JPPyObjectVector& args, bool instance);
 

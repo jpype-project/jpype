@@ -201,11 +201,11 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
+JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObjectVector& arg, bool instance, bool caller)
 {
 	JP_TRACE_IN("JPMethod::invoke");
 	// Check if it is caller sensitive
-	if (isCallerSensitive())
+	if (caller && isCallerSensitive())
 		return invokeCallerSensitive(match, arg, instance);
 
 	size_t alen = m_ParameterTypes.size();
