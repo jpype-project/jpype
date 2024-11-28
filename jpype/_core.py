@@ -275,30 +275,28 @@ def startJVM(
         raise RuntimeError("Unable to find org.jpype.jar support library at " + support_lib)
 
     system_class_loader = _getOption(jvmargs, "-Djava.system.class.loader", keep=True)
-    late_load = not system_class_loader
 
     java_class_path = _expandClassPath(classpath)
     java_class_path.append(support_lib)
     java_class_path = _classpath._SEP.join(java_class_path)
 
+    remove = None
     # Make sure our module is always on the classpath
-    if java_class_path.isascii():
-        # no problems
-        extra_jvm_args += ['-Djava.class.path=%s'%java_class_path ]
-        late_load = False
-    elif system_class_loader:
-        # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
-        raise ValueError("system classloader cannot be specified with non ascii characters in the classpath")
-    else:
+    if not java_class_path.isascii():
+        if system_class_loader:
+            # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
+            raise ValueError("system classloader cannot be specified with non ascii characters in the classpath")
+
+        # If we are not installed on an ascii path then we will need to copy the jar to a new location
         if not support_lib.isascii():
             import tempfile
             import shutil
             tmp = tempfile.gettempdir()
             if not tmp.isascii():
                 raise ValueError("Unable to create ascii temp directory. Clear TEMPDIR, TEMP, and TMP environment variables")
-            support_lib2 = os.path.join(tmp, "org.jpype.jar")
-            shutil.copyfile(support_lib, support_lib2)
-            support_lib = support_lib2
+            remove = os.path.join(tmp, "org.jpype.jar")
+            shutil.copyfile(support_lib, remove)
+            support_lib = remove
 
         # ok, setup the jpype system classloader and add to the path after startup
         # this guarentees all classes have the same permissions as they did in the past
@@ -307,6 +305,11 @@ def startJVM(
             '-Djava.class.path=%s'%support_lib,
             '-Xshare:off'
         ]
+        late_load = True
+    else:
+        # no problems
+        extra_jvm_args += ['-Djava.class.path=%s'%java_class_path ]
+        late_load = False
 
     if agent:
         extra_jvm_args += ['-javaagent:' + support_lib]
@@ -356,6 +359,8 @@ def startJVM(
         for cp in _expandClassPath(classpath):
             print("Late load", cp)
             cl.addFile(Path(cp))
+    if remove is not None:
+        os.remove(remove)
 
 
 def initializeResources():
