@@ -278,6 +278,7 @@ def startJVM(
 
     java_class_path = _expandClassPath(classpath)
     java_class_path.append(support_lib)
+    java_class_path = filter(len, java_class_path)
     classpath = _classpath._SEP.join(java_class_path)
 
     # Make sure our module is always on the classpath
@@ -308,10 +309,11 @@ def startJVM(
         ]
     else:
         # no problems
-        extra_jvm_args += ['-Djava.class.path=%s'%java_class_path ]
+        extra_jvm_args += ['-Djava.class.path=%s'%classpath ]
 
     if agent:
         extra_jvm_args += ['-javaagent:' + support_lib]
+    print(extra_jvm_args)
 
     try:
         import locale

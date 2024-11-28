@@ -1,3 +1,5 @@
 Manifest-Version: 1.0
+Specification-Title: org.jpype
+Implementation-Title: org.jpype
+Implementation-Version: 1.5.1
 Premain-Class: org.jpype.agent.JPypeAgent
-Multi-Release: true
