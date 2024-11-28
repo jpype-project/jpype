@@ -304,7 +304,8 @@ def startJVM(
         # this guarentees all classes have the same permissions as they did in the past
         extra_jvm_args += [
             '-Djava.system.class.loader=org.jpype.classloader.DynamicClassLoader',
-            '-Djava.class.path=%s'%support_lib
+            '-Djava.class.path=%s'%support_lib,
+            '-Xshare:off'
         ]
 
     if agent:
