@@ -354,6 +354,7 @@ def startJVM(
         cl = _jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
         from pathlib import Path
         for cp in _expandClassPath(classpath):
+            print("Late load", cp)
             cl.addFile(Path(cp))
 
 
