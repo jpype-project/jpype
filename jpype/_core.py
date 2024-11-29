@@ -228,14 +228,14 @@ def startJVM(
         if jvm_args[0] is None or (isinstance(jvm_args[0], str) and not jvm_args[0].startswith('-')):
             if jvmpath:
                 raise TypeError('jvmpath specified twice')
-            jvm_path = jvm_args[0]
+            jvmpath = jvm_args[0]
             jvm_args = jvm_args[1:]
 
     if not jvmpath:
         jvmpath = getDefaultJVMPath()
     else:
         # Allow the path to be a PathLike.
-        jvmpath = os.fspath(jvm_path)
+        jvmpath = os.fspath(jvmpath)
 
     # Handle strings and list of strings.
     extra_jvm_args: list[str] = []
