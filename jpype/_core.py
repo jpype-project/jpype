@@ -179,13 +179,13 @@ def _findTemp():
     else:
         dirlist.extend([ '/tmp', '/var/tmp', '/usr/tmp' ])
     
-    name = str(os.getpid)
+    name = str(os.getpid())
     for d in dirlist:
         p = Path("%s/%s"%(d,name))
         try:
             p.touch()
             p.unlink()
-        except Exception:
+        except Exception as ex:
             continue
         return d
     raise SystemError("Unable to find non-ansii path")
