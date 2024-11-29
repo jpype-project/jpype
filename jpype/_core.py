@@ -301,7 +301,7 @@ def startJVM(
 
     java_class_path = _expandClassPath(classpath)
     java_class_path.append(support_lib)
-    java_class_path = filter(len, java_class_path)
+    java_class_path = list(filter(len, java_class_path))
     classpath = _classpath._SEP.join(java_class_path)
 
     # Make sure our module is always on the classpath
