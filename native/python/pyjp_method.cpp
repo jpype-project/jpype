@@ -96,18 +96,15 @@ static PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwa
 	// Clear any pending interrupts if we are on the main thread
 	if (hasInterrupt())
 		frame.clearInterrupt(false);
-	bool caller = true;
-	if (kwargs != nullptr && PyDict_GetItemString(kwargs, "caller") == Py_False)
-		caller = false;
 	PyObject *out = nullptr;
 	if (self->m_Instance == nullptr)
 	{
 		JPPyObjectVector vargs(args);
-		out = self->m_Method->invoke(frame, vargs, false, caller).keep();
+		out = self->m_Method->invoke(frame, vargs, false).keep();
 	} else
 	{
 		JPPyObjectVector vargs(self->m_Instance, args);
-		out = self->m_Method->invoke(frame, vargs, true, caller).keep();
+		out = self->m_Method->invoke(frame, vargs, true).keep();
 	}
 	return out;
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE

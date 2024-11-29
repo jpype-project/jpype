@@ -48,7 +48,7 @@ public:
 	 *
 	 */
 	JPMatch::Type matches(JPJavaFrame &frame, JPMethodMatch& match, bool isInstance, JPPyObjectVector& args);
-	JPPyObject invoke(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVector& arg, bool instance, bool caller);
+	JPPyObject invoke(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVector& arg, bool instance);
 	JPPyObject invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVector& arg, bool instance);
 	JPValue invokeConstructor(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVector& arg);
 

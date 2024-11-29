@@ -8,6 +8,8 @@ Latest Changes:
 
   - Roll back agent change due to misbehaving JVM installs.
 
+  - Correct issues with non-ascii path for jdbc connections and forName.
+
 - **1.5.1 - 2024-11-09**
 
   - Future proofing for Python 3.14

@@ -209,12 +209,12 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPMethodDispatch::invoke(JPJavaFrame& frame, JPPyObjectVector& args, bool instance, bool caller)
+JPPyObject JPMethodDispatch::invoke(JPJavaFrame& frame, JPPyObjectVector& args, bool instance)
 {
 	JP_TRACE_IN("JPMethodDispatch::invoke");
 	JPMethodMatch match(frame, args, instance);
 	findOverload(frame, match, args, instance, true);
-	return match.m_Overload->invoke(frame, match, args, instance, caller);
+	return match.m_Overload->invoke(frame, match, args, instance);
 	JP_TRACE_OUT;
 }
 
