@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -26,6 +27,9 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.net.URLDecoder;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class JPypeClassLoader extends URLClassLoader
 {
@@ -57,6 +61,14 @@ public class JPypeClassLoader extends URLClassLoader
     String cp = System.getProperty("jpype.class.path");
     if (cp == null)
       return new URL[0];
+    
+    try
+    {
+      cp =  URLDecoder.decode(cp, "UTF-8");
+    } catch (UnsupportedEncodingException ex)
+    {
+      // ignored
+    }
 
     ArrayList<URL> path = new ArrayList<>();
     int last = 0;
