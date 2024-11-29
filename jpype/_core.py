@@ -171,7 +171,7 @@ def _findTemp():
         if dirname and dirname.isascii(): 
             dirlist.append(dirname)
     if os.name == 'nt':
-        for envname in [ os.path.expanduser(r'~\AppData\Local\Temp'),
+        for dirname in [ os.path.expanduser(r'~\AppData\Local\Temp'),
                          os.path.expandvars(r'%SYSTEMROOT%\Temp'),
                          r'c:\temp', r'c:\tmp', r'\temp', r'\tmp' ]:
             if dirname and dirname.isascii(): 
@@ -301,7 +301,7 @@ def startJVM(
 
     java_class_path = _expandClassPath(classpath)
     java_class_path.append(support_lib)
-    java_class_path = filter(len, java_class_path)
+    java_class_path = list(filter(len, java_class_path))
     classpath = _classpath._SEP.join(java_class_path)
 
     # Make sure our module is always on the classpath
@@ -324,10 +324,11 @@ def startJVM(
 
         # ok, setup the jpype system classloader and add to the path after startup
         # this guarentees all classes have the same permissions as they did in the past
+        from urllib.parse import quote
         extra_jvm_args += [
             '-Djava.system.class.loader=org.jpype.JPypeClassLoader',
             '-Djava.class.path=%s'%support_lib,
-            '-Djpype.class.path=%s'%classpath,
+            '-Djpype.class.path=%s'%quote(classpath),
             '-Xshare:off'
         ]
     else:
