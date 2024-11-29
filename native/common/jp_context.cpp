@@ -239,7 +239,7 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	// Set up methods after everything is start so we get better error
 	// messages
 	jclass reflectorClass = frame.FindClass("org/jpype/JPypeReflector");
-    jfieldID reflectorField = frame.GetFieldID(contextClass, "reflector", "Lorg/jpype/JPypeReflector;");
+	jfieldID reflectorField = frame.GetFieldID(contextClass, "reflector", "Lorg/jpype/JPypeReflector;");
 	m_Reflector = JPObjectRef(frame, frame.GetObjectField(m_JavaContext.get(), reflectorField));
 	m_CallMethodID = frame.GetMethodID(reflectorClass, "callMethod",
 			"(Ljava/lang/reflect/Method;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
