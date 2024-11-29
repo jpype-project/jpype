@@ -171,7 +171,7 @@ def _findTemp():
         if dirname and dirname.isascii(): 
             dirlist.append(dirname)
     if os.name == 'nt':
-        for envname in [ os.path.expanduser(r'~\AppData\Local\Temp'),
+        for dirname in [ os.path.expanduser(r'~\AppData\Local\Temp'),
                          os.path.expandvars(r'%SYSTEMROOT%\Temp'),
                          r'c:\temp', r'c:\tmp', r'\temp', r'\tmp' ]:
             if dirname and dirname.isascii(): 

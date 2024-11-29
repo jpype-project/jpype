@@ -74,8 +74,7 @@ def requireAscii(func):
             if root.isascii():
                 return func(self)
         except ImportError:
-            pass
-        raise unittest.SkipTest("Ascii root directory required")
+            raise unittest.SkipTest("Ascii root directory required")
     return f
 
 class UseFunc(object):

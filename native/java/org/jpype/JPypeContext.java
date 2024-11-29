@@ -27,8 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jpype.manager.TypeFactory;
 import org.jpype.manager.TypeFactoryNative;
 import org.jpype.manager.TypeManager;
@@ -73,7 +71,7 @@ public class JPypeContext
 
   public final String VERSION = "1.5.2.dev0";
 
-  private static JPypeContext INSTANCE = new JPypeContext();
+  private static final JPypeContext INSTANCE = new JPypeContext();
   // This is the C++ portion of the context.
   private long context;
   private TypeFactory typeFactory;
@@ -332,33 +330,6 @@ public class JPypeContext
   public void _addPost(Runnable run)
   {
     this.postHooks.add(run);
-  }
-
-  /**
-   * Call a method using reflection.
-   *
-   * This method creates a stackframe so that caller sensitive methods will
-   * execute properly.
-   *
-   * @param method is the method to call.
-   * @param obj is the object to operate on, it will be null if the method is
-   * static.
-   * @param args the arguments to method.
-   * @return the object that results form the invocation.
-   * @throws java.lang.Throwable throws whatever type the called method
-   * produces.
-   */
-  public Object callMethod(Method method, Object obj, Object[] args)
-          throws Throwable
-  {
-    try
-    {
-      return method.invoke(obj, args);
-    } catch (InvocationTargetException ex)
-    {
-//      ex.printStackTrace();
-      throw ex.getCause();
-    }
   }
   
   /**
