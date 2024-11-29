@@ -163,6 +163,33 @@ _tmp = None
 def interactive():
     return bool(getattr(sys, 'ps1', sys.flags.interactive))
 
+def _findTemp():
+    dirlist = []
+    # Mirror Python tempfile with a check for ascii
+    for envname in 'TMPDIR', 'TEMP', 'TMP':
+        dirname = os.getenv(envname)
+        if dirname and dirname.isascii(): 
+            dirlist.append(dirname)
+    if os.name == 'nt':
+        for envname in [ os.path.expanduser(r'~\AppData\Local\Temp'),
+                         os.path.expandvars(r'%SYSTEMROOT%\Temp'),
+                         r'c:\temp', r'c:\tmp', r'\temp', r'\tmp' ]:
+            if dirname and dirname.isascii(): 
+                dirlist.append(dirname)
+    else:
+        dirlist.extend([ '/tmp', '/var/tmp', '/usr/tmp' ])
+    
+    name = str(os.getpid)
+    for d in dirlist:
+        p = Path("%s/%s"%(d,name))
+        try:
+            p.touch()
+            p.unlink()
+        except Exception:
+            continue
+        return d
+    raise SystemError("Unable to find non-ansii path")
+
 
 def startJVM(
     *jvmargs: str,
@@ -288,7 +315,7 @@ def startJVM(
             import tempfile
             import shutil
             global _tmp
-            _tmp = tempfile.TemporaryDirectory(dir = tempfile.gettempdir())
+            _tmp = tempfile.TemporaryDirectory(dir = _findTemp())
             if not _tmp.name.isascii():
                 raise ValueError("Unable to find ascii temp directory. Clear TEMPDIR, TEMP, and TMP environment variables")
             sl2 = os.path.join(_tmp.name, "org.jpype.jar")
