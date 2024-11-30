@@ -158,7 +158,6 @@ def _expandClassPath(
 
 
 _JVM_started = False
-_tmp = None
 
 def interactive():
     return bool(getattr(sys, 'ps1', sys.flags.interactive))
@@ -179,13 +178,13 @@ def _findTemp():
     else:
         dirlist.extend([ '/tmp', '/var/tmp', '/usr/tmp' ])
     
-    name = str(os.getpid)
+    name = str(os.getpid())
     for d in dirlist:
         p = Path("%s/%s"%(d,name))
         try:
             p.touch()
             p.unlink()
-        except Exception:
+        except Exception as ex:
             continue
         return d
     raise SystemError("Unable to find non-ansii path")
@@ -303,6 +302,7 @@ def startJVM(
     java_class_path.append(support_lib)
     java_class_path = list(filter(len, java_class_path))
     classpath = _classpath._SEP.join(java_class_path)
+    tmp = None
 
     # Make sure our module is always on the classpath
     if not classpath.isascii():
@@ -314,13 +314,14 @@ def startJVM(
         if not support_lib.isascii():
             import tempfile
             import shutil
-            global _tmp
-            _tmp = tempfile.TemporaryDirectory(dir = _findTemp())
-            if not _tmp.name.isascii():
-                raise ValueError("Unable to find ascii temp directory. Clear TEMPDIR, TEMP, and TMP environment variables")
-            sl2 = os.path.join(_tmp.name, "org.jpype.jar")
-            shutil.copyfile(support_lib, sl2)
-            support_lib = sl2
+            fd, path = tempfile.mkstemp(dir = _findTemp())
+            if not path.isascii():
+                raise ValueError("Unable to find ascii temp directory.")
+            shutil.copyfile(support_lib, path)
+            support_lib = path
+            tmp = path
+            os.close(fd)
+            # Don't remove
 
         # ok, setup the jpype system classloader and add to the path after startup
         # this guarentees all classes have the same permissions as they did in the past
@@ -343,7 +344,7 @@ def startJVM(
         prior = [locale.getlocale(i) for i in categories]
         # Start the JVM
         _jpype.startup(jvmpath, tuple(jvm_args + extra_jvm_args),
-                       ignoreUnrecognized, convertStrings, interrupt)
+                       ignoreUnrecognized, convertStrings, interrupt, tmp)
         # Collect required resources for operation
         initializeResources()
         # Restore locale
