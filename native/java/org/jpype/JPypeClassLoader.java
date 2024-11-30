@@ -28,9 +28,13 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.net.URLDecoder;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
+/**
+ * Class loader for JPype.
+ * 
+ * This is augmented to manage directory resources, allow for late loading,
+ * and handling of resources on non-ASCII paths.
+ */
 public class JPypeClassLoader extends URLClassLoader
 {
 
@@ -42,6 +46,11 @@ public class JPypeClassLoader extends URLClassLoader
     super(initial(), parent);
   }
 
+  /**
+   * Used to keep the cache up to date.
+   *
+   * @return
+   */
   public int getCode()
   {
     return code;
@@ -58,13 +67,14 @@ public class JPypeClassLoader extends URLClassLoader
    */
   private static URL[] initial()
   {
+    // Check to see if we have a late loaded path
     String cp = System.getProperty("jpype.class.path");
     if (cp == null)
       return new URL[0];
-    
+
     try
     {
-      cp =  URLDecoder.decode(cp, "UTF-8");
+      cp = URLDecoder.decode(cp, "UTF-8");
     } catch (UnsupportedEncodingException ex)
     {
       // ignored
@@ -100,7 +110,7 @@ public class JPypeClassLoader extends URLClassLoader
     return path.toArray(new URL[0]);
   }
 
-  // this is required to add a Java agent even if it is already in the path
+  // This is required to add a Java agent even if it is already in the path
   @SuppressWarnings("unused")
   private void appendToClassPathForInstrumentation(String path) throws Throwable
   {
@@ -143,6 +153,12 @@ public class JPypeClassLoader extends URLClassLoader
 
   }
 
+  /**
+   * Add a path to the loader after the JVM is started.
+   *
+   * @param path
+   * @throws FileNotFoundException
+   */
   public void addPath(Path path) throws FileNotFoundException
   {
     try
@@ -229,6 +245,15 @@ public class JPypeClassLoader extends URLClassLoader
     return Collections.enumeration(out);
   }
 
+  /** 
+   * Add a resource to the search.
+   * 
+   * Many jar files lack directory support which is needed for the packaging
+   * import.
+   * 
+   * @param name
+   * @param url 
+   */
   public void addResource(String name, URL url)
   {
     if (!this.map.containsKey(name))
@@ -241,7 +266,11 @@ public class JPypeClassLoader extends URLClassLoader
   {
     // Mark our cache as dirty
     code = code * 98745623 + url.hashCode();
+    
+    // add to the search tree
     super.addURL(url);
+    
+    // See if it is a path
     Path path;
     try
     {

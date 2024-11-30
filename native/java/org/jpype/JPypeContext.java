@@ -95,39 +95,46 @@ public class JPypeContext
    * @param loader is the classloader holding JPype resources.
    * @return the created context.
    */
-  static JPypeContext createContext(long context, ClassLoader loader, String nativeLib, boolean interrupt)
+  private static JPypeContext createContext(long context, ClassLoader loader, String nativeLib, boolean interrupt) throws Throwable
   {
-    if (nativeLib != null)
-    {
-      System.load(nativeLib);
-    }
-    INSTANCE.context = context;
-    INSTANCE.classLoader = (JPypeClassLoader) loader;
-    INSTANCE.typeFactory = new TypeFactoryNative();
-    INSTANCE.typeManager = new TypeManager(context, INSTANCE.typeFactory);
-    INSTANCE.initialize(interrupt);
-    
     try
     {
-      INSTANCE.reflector = (JPypeReflector) Class.forName("org.jpype.Reflector0", true, loader)
-              .getConstructor()
-              .newInstance();
-    } catch (ClassNotFoundException | NoSuchMethodException | SecurityException 
-            | InstantiationException | IllegalAccessException 
-            | IllegalArgumentException | InvocationTargetException ex)
-    {
-      System.err.println("Unable to create reflector "+ ex);
-    }
+      if (nativeLib != null)
+      {
+        System.load(nativeLib);
+      }
+      INSTANCE.context = context;
+      INSTANCE.classLoader = (JPypeClassLoader) loader;
+      INSTANCE.typeFactory = new TypeFactoryNative();
+      INSTANCE.typeManager = new TypeManager(context, INSTANCE.typeFactory);
+      INSTANCE.initialize(interrupt);
 
-    scanExistingJars();
-    return INSTANCE;
+      try
+      {
+        INSTANCE.reflector = (JPypeReflector) Class.forName("org.jpype.Reflector0", true, loader)
+                .getConstructor()
+                .newInstance();
+      } catch (ClassNotFoundException | NoSuchMethodException | SecurityException
+              | InstantiationException | IllegalAccessException
+              | IllegalArgumentException | InvocationTargetException ex)
+      {
+        throw new RuntimeException("Unable to create reflector "+ ex.getMessage(), ex);
+      }
+
+      scanExistingJars();
+      return INSTANCE;
+    } catch (Throwable ex)
+    {
+      ex.printStackTrace(System.err);
+      throw ex;
+    }
   }
 
   private JPypeContext()
   {
   }
 
-  void initialize(boolean interrupt)
+  private void initialize(boolean interrupt)
   {
     // Okay everything is setup so lets give it a go.
     this.typeManager.init();
@@ -278,7 +285,7 @@ public class JPypeContext
 
   }
 
-  static native void onShutdown(long ctxt);
+  private static native void onShutdown(long ctxt);
 
   public void addShutdownHook(Thread th)
   {
@@ -331,7 +338,7 @@ public class JPypeContext
   {
     this.postHooks.add(run);
   }
-  
+
   /**
    * Helper function for collect rectangular,
    */
@@ -426,7 +433,7 @@ public class JPypeContext
     return a1;
   }
 
-  public Object assemble(int[] dims, Object parts)
+  private Object assemble(int[] dims, Object parts)
   {
     int n = dims.length;
     if (n == 1)
@@ -497,12 +504,12 @@ public class JPypeContext
     return 0;
   }
 
-  public Exception createException(long l0, long l1)
+  private Exception createException(long l0, long l1)
   {
     return new PyExceptionProxy(l0, l1);
   }
 
-  public boolean order(Buffer b)
+  private boolean order(Buffer b)
   {
     if (b instanceof java.nio.ByteBuffer)
       return ((java.nio.ByteBuffer) b).order() == ByteOrder.LITTLE_ENDIAN;
