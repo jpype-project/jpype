@@ -109,4 +109,4 @@ class JCallerSensitiveCase(common.JPypeTestCase):
 
     def testStackWalker2(self):
         self.assertEqual(self.obj.callStackWalker2(), jpype.JClass(
-            jpype.java.lang.Class.forName("org.jpype.JPypeContext")).class_)
+            jpype.java.lang.Class.forName("org.jpype.Reflector0")).class_)

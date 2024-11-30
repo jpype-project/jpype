@@ -223,6 +223,7 @@ public:
 
 private:
 	JPClassRef m_Array;
+	JPObjectRef m_Reflector;
 
 	// Java Functions
 	jmethodID m_Object_ToStringID{};

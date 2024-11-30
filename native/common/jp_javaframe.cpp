@@ -1162,7 +1162,7 @@ jobject JPJavaFrame::callMethod(jobject method, jobject obj, jobject args)
 	v[0].l = method;
 	v[1].l = obj;
 	v[2].l = args;
-	return frame.keep(frame.CallObjectMethodA(m_Context->m_JavaContext.get(), m_Context->m_CallMethodID, v));
+	return frame.keep(frame.CallObjectMethodA(m_Context->m_Reflector.get(), m_Context->m_CallMethodID, v));
 	JP_TRACE_OUT;
 }
 

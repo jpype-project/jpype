@@ -67,6 +67,15 @@ def requireNumpy(func):
         raise unittest.SkipTest("numpy required")
     return f
 
+def requireAscii(func):
+    def f(self):
+        try:
+            root = path.dirname(path.abspath(path.dirname(__file__)))
+            if root.isascii():
+                return func(self)
+        except ImportError:
+            raise unittest.SkipTest("Ascii root directory required")
+    return f
 
 class UseFunc(object):
     def __init__(self, obj, func, attr):
@@ -117,9 +126,8 @@ class JPypeTestCase(unittest.TestCase):
                 args.append(
                     "-javaagent:lib/org.jacoco.agent-0.8.5-runtime.jar=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
                 warnings.warn("using JaCoCo")
-            import pathlib
-            jpype.addClassPath(pathlib.Path("lib/*").absolute())
-            jpype.addClassPath(pathlib.Path("test/jar/*").absolute())
+            jpype.addClassPath(path.join(root, "../lib/*"))
+            jpype.addClassPath(path.join(root, "jar/*"))
             classpath_arg %= jpype.getClassPath()
             args.append(classpath_arg)
             _jpype.enableStacktraces(True)

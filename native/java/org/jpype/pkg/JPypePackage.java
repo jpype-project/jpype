@@ -25,9 +25,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
+import org.jpype.JPypeClassLoader;
 import org.jpype.JPypeContext;
 import org.jpype.JPypeKeywords;
-import org.jpype.classloader.DynamicClassLoader;
 
 /**
  * Representation of a JPackage in Java.
@@ -45,13 +45,13 @@ public class JPypePackage
   // A mapping from Python names into Paths into the module/jar file system.
   Map<String, URI> contents;
   int code;
-  private final DynamicClassLoader classLoader;
+  private final JPypeClassLoader classLoader;
 
   public JPypePackage(String pkg)
   {
     this.pkg = pkg;
     this.contents = JPypePackageManager.getContentMap(pkg);
-    this.classLoader = ((DynamicClassLoader)(JPypeContext.getInstance().getClassLoader()));
+    this.classLoader = ((JPypeClassLoader)(JPypeContext.getInstance().getClassLoader()));
     this.code = classLoader.getCode();
   }
 
