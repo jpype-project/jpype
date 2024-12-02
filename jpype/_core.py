@@ -194,6 +194,7 @@ def startJVM(
     *jvmargs: str,
     jvmpath: typing.Optional[_PathOrStr] = None,
     classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
+    modulepath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
@@ -215,6 +216,9 @@ def startJVM(
         Using None will apply the default jvmpath.
       classpath (str, PathLike, [str, PathLike]): Set the classpath for the JVM.
         This will override any classpath supplied in the arguments
+        list. A value of None will give no classpath to JVM.
+      modulepath (str, PathLike, [str, PathLike]): Set the modulepath for the JVM.
+        This will override any modulepath supplied in the arguments
         list. A value of None will give no classpath to JVM.
       ignoreUnrecognized (bool): Option to ignore
         invalid JVM arguments. Default is False.
@@ -279,17 +283,17 @@ def startJVM(
         classpath = _classpath.getClassPath()
 
 # Code for 1.6 release when we add module support
-#    # Modulepath handling
-#    old_modulepath = _getOption(jvm_args, "--module-path", _classpath._SEP)
-#    if old_modulepath:
-#        # Old style, specified in the arguments
-#        if modulepath is not None:
-#            # Cannot apply both styles, conflict
-#            raise TypeError('modulepath specified twice')
-#        modulepath = old_modulepath
-#    if modulepath is not None:
-#        mp = _classpath._SEP.join(_expandClassPath(modulepath))
-#        extra_jvm_args += ['--module-path=%s'%mp ]
+    # Modulepath handling
+    old_modulepath = _getOption(jvm_args, "--module-path", _classpath._SEP)
+    if old_modulepath:
+        # Old style, specified in the arguments
+        if modulepath is not None:
+            # Cannot apply both styles, conflict
+            raise TypeError('modulepath specified twice')
+        modulepath = old_modulepath
+    if modulepath is not None:
+        mp = _classpath._SEP.join(_expandClassPath(modulepath))
+        extra_jvm_args += ['--module-path=%s'%mp ]
 
     # Get the support library
     support_lib = os.path.join(os.path.dirname(os.path.dirname(__file__)), "org.jpype.jar")
