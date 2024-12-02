@@ -401,8 +401,9 @@ def connect(dsn, *, driver=None, driver_args=None,
     """
     Properties = _jpype.JClass("java.util.Properties")
     if driver:
-        _jpype.JClass('java.lang.Class').forName(driver).newInstance()
+        _jpype.JClass('java.lang.Class').forName(driver,True,_jpype.JPypeClassLoader).newInstance()
     DM = _jpype.JClass('java.sql.DriverManager')
+    #DM.setLogStream(_jpype.JClass("java.lang.System").out)
 
     # User is supplying Java properties
     if isinstance(driver_args, Properties):

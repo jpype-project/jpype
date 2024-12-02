@@ -85,3 +85,4 @@ jacoco/
 wheelhouse/
 vc*.pdb
 *.class
+/project/jpype_java_old/nbproject/private/

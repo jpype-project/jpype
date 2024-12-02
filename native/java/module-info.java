@@ -13,31 +13,16 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package org.jpype.classloader;
 
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.nio.file.Paths;
-
-public final class JpypeSystemClassLoader extends URLClassLoader {
-
-	public JpypeSystemClassLoader(ClassLoader parent) throws Throwable {
-		super(new URL[0], parent);
-	}
-
-	public void addPath(String path) throws Throwable {
-		addURL(Paths.get(path).toAbsolutePath().toUri().toURL());
-	}
-
-	public void addPaths(String[] paths) throws Throwable {
-		for (String path : paths) {
-			addPath(path);
-		}
-	}
-
-	// this is required to add a Java agent even if it is already in the path
-	@SuppressWarnings("unused")
-	private void appendToClassPathForInstrumentation(String path) throws Throwable {
-		addPath(path);
-	}
+module org.jpype {
+  requires java.sql;
+  
+  exports org.jpype;
+  exports org.jpype.manager;
+  exports org.jpype.html;
+  exports org.jpype.javadoc;
+  exports org.jpype.pickle;
+  exports org.jpype.pkg;
+  exports org.jpype.proxy;
+  exports org.jpype.ref;
 }

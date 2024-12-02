@@ -160,7 +160,6 @@ void JPGarbageCollection::init(JPJavaFrame& frame)
 	_freeMemoryID = frame.GetStaticMethodID(ctxt, "getFreeMemory", "()J");
 	_maxMemoryID = frame.GetStaticMethodID(ctxt, "getMaxMemory", "()J");
 	_usedMemoryID = frame.GetStaticMethodID(ctxt, "getUsedMemory", "()J");
-	_heapMemoryID = frame.GetStaticMethodID(ctxt, "getHeapMemory", "()J");
 
 	running = true;
 	high_water = getWorkingSize();
@@ -257,7 +256,6 @@ void JPGarbageCollection::onEnd()
 			jlong freeMemory = frame.CallStaticLongMethodA(_ContextClass, _freeMemoryID, nullptr);
 			jlong maxMemory = frame.CallStaticLongMethodA(_ContextClass, _maxMemoryID, nullptr);
 			jlong usedMemory = frame.CallStaticLongMethodA(_ContextClass, _usedMemoryID, nullptr);
-			jlong heapMemory = frame.CallStaticLongMethodA(_ContextClass, _heapMemoryID, nullptr);
 			printf("consider gc run=%d (current=%ld, low=%ld, high=%ld, limit=%ld) %ld\n", run_gc,
 				current, low_water, high_water, limit, limit - pred);
 			printf(" java total=%ld free=%ld max=%ld used=%ld heap=%ld\n", totalMemory, freeMemory, maxMemory, usedMemory, heapMemory);
