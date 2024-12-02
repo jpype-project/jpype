@@ -130,6 +130,8 @@ def _expandClassPath(
     Return a classpath which represents the given tuple of classpath specifications
     """
     out: list[str] = []
+    if classpath is None:
+        return out
     if isinstance(classpath, (str, os.PathLike)):
         classpath = (classpath,)
     try:
@@ -195,6 +197,7 @@ def startJVM(
     jvmpath: typing.Optional[_PathOrStr] = None,
     classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
     modulepath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
+    modules: typing.Union[typing.Sequence[str], str, None] = None,
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
@@ -270,6 +273,24 @@ def startJVM(
     # Handle strings and list of strings.
     extra_jvm_args: list[str] = []
 
+    # Get the support library
+    support_lib = os.path.join(os.path.dirname(os.path.dirname(__file__)), "org.jpype.jar")
+    if not os.path.exists(support_lib):
+        raise RuntimeError("Unable to find org.jpype.jar support library at " + support_lib)
+
+    # If we are not installed on an ascii path then we will need to copy the jar to a new location
+    if not support_lib.isascii():
+        import tempfile
+        import shutil
+        fd, path = tempfile.mkstemp(dir = _findTemp())
+        if not path.isascii():
+            raise ValueError("Unable to find ascii temp directory.")
+        shutil.copyfile(support_lib, path)
+        support_lib = path
+        tmp = path
+        os.close(fd)
+        # Don't remove
+
     # Classpath handling
     old_classpath = _getOption(jvm_args, "-Djava.class.path", _classpath._SEP)
     if old_classpath:
@@ -282,7 +303,6 @@ def startJVM(
         # Not specified at all, use the default classpath.
         classpath = _classpath.getClassPath()
 
-# Code for 1.6 release when we add module support
     # Modulepath handling
     old_modulepath = _getOption(jvm_args, "--module-path", _classpath._SEP)
     if old_modulepath:
@@ -291,19 +311,22 @@ def startJVM(
             # Cannot apply both styles, conflict
             raise TypeError('modulepath specified twice')
         modulepath = old_modulepath
-    if modulepath is not None:
-        mp = _classpath._SEP.join(_expandClassPath(modulepath))
-        extra_jvm_args += ['--module-path=%s'%mp ]
 
-    # Get the support library
-    support_lib = os.path.join(os.path.dirname(os.path.dirname(__file__)), "org.jpype.jar")
-    if not os.path.exists(support_lib):
-        raise RuntimeError("Unable to find org.jpype.jar support library at " + support_lib)
+    # Modules 
+    old_modules = _getOption(jvm_args, "--add-modules", ',')
+    if old_modules:
+        # Old style, specified in the arguments
+        if modules is not None:
+            # Cannot apply both styles, conflict
+            raise TypeError('modules specified twice')
+        modules = old_modules
+    if modules is None:
+      modules = []
+    modules.append("org.jpype")
 
     system_class_loader = _getOption(jvm_args, "-Djava.system.class.loader", keep=True)
 
     java_class_path = _expandClassPath(classpath)
-    java_class_path.append(support_lib)
     java_class_path = list(filter(len, java_class_path))
     classpath = _classpath._SEP.join(java_class_path)
     tmp = None
@@ -313,19 +336,6 @@ def startJVM(
         if system_class_loader:
             # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
             raise ValueError("system classloader cannot be specified with non ascii characters in the classpath")
-
-        # If we are not installed on an ascii path then we will need to copy the jar to a new location
-        if not support_lib.isascii():
-            import tempfile
-            import shutil
-            fd, path = tempfile.mkstemp(dir = _findTemp())
-            if not path.isascii():
-                raise ValueError("Unable to find ascii temp directory.")
-            shutil.copyfile(support_lib, path)
-            support_lib = path
-            tmp = path
-            os.close(fd)
-            # Don't remove
 
         # ok, setup the jpype system classloader and add to the path after startup
         # this guarentees all classes have the same permissions as they did in the past
@@ -338,7 +348,13 @@ def startJVM(
         ]
     else:
         # no problems
-        extra_jvm_args += ['-Djava.class.path=%s'%classpath ]
+        if classpath:
+           extra_jvm_args += ['-Djava.class.path=%s'%classpath ]
+
+    mp =_expandClassPath(modulepath)
+    mp.append(support_lib)
+    extra_jvm_args += ['--module-path=%s'%_classpath._SEP.join(mp) ]
+    extra_jvm_args += ['--add-modules=%s'%(",".join(modules))]
 
     try:
         import locale
