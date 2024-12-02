@@ -63,7 +63,6 @@ private:
 	jmethodID _freeMemoryID;
 	jmethodID _maxMemoryID;
 	jmethodID _usedMemoryID;
-	jmethodID _heapMemoryID;
 
 	size_t last_python;
 	size_t last_java;

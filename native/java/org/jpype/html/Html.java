@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import org.jpype.JPypeContext;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 

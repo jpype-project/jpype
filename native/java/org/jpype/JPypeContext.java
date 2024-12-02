@@ -639,9 +639,5 @@ public class JPypeContext
     return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
   }
 
-  private static long getHeapMemory()
-  {
-    java.lang.management.MemoryMXBean memoryBean = java.lang.management.ManagementFactory.getMemoryMXBean();
-    return memoryBean.getHeapMemoryUsage().getUsed();
-  }
+
 }
