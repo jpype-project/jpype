@@ -300,7 +300,7 @@ class BuildExtCommand(build_ext):
         distutils.log.info(
             "Jar cache is missing, using --enable-build-jar to recreate it.")
 
-        target_version = "1.8"
+        target_version = "9"
         # build the jar
         try:
             dirname = os.path.dirname(self.get_ext_fullpath("JAVA"))
