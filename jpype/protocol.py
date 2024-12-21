@@ -49,7 +49,8 @@ else:
     # 3.8 onward
     from typing import Protocol, runtime_checkable
     from typing import SupportsIndex, SupportsFloat  # lgtm [py/unused-import]
-    from typing import Sequence, Mapping, Set, Callable  # lgtm [py/unused-import]
+    # lgtm [py/unused-import]
+    from typing import Sequence, Mapping, Set, Callable
 
 # Types we need
 

@@ -307,7 +307,7 @@ class DarwinJVMFinder(LinuxJVMFinder):
 
         current = Version(platform.mac_ver()[0][:4])
         # TODO: check if the java_home tool is still available and fix the version boundaries.
-        if Version('10.6') <= current: #< Version('10.9'):
+        if Version('10.6') <= current:  # < Version('10.9'):
             return subprocess.check_output(
                 ['/usr/libexec/java_home']).strip()
 

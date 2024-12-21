@@ -49,8 +49,8 @@ class CoverageCase(common.JPypeTestCase):
 
     def testHandleClassPath(self):
         with self.assertRaises(TypeError):
-            jpype._core._handleClassPath([1])
-        jpype._core._handleClassPath(["./*.jar"])
+            jpype._core._expandClassPath([1])
+        jpype._core._expandClassPath(["./*.jar"])
 
     def testRestart(self):
         with self.assertRaises(OSError):

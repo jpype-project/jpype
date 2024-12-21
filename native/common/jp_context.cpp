@@ -22,6 +22,18 @@
 #include "jp_platform.h"
 #include "jp_gc.h"
 
+#ifdef WIN32
+#include <Windows.h>
+#else
+#if defined(_HPUX) && !defined(_IA64)
+#include <dl.h>
+#else
+#include <dlfcn.h>
+#endif // HPUX
+#include <errno.h>
+#endif
+
+
 JPResource::~JPResource() = default;
 
 
@@ -159,6 +171,36 @@ void JPContext::attachJVM(JNIEnv* env)
 	initializeResources(env, false);
 }
 
+std::string getShared() 
+{
+#ifdef WIN32
+	// Windows specific
+	char path[MAX_PATH];
+	HMODULE hm = NULL;
+	if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | 
+		GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+		(LPCSTR) &getShared, &hm) != 0 &&
+		GetModuleFileName(hm, path, sizeof(path)) != 0)
+	{
+		// This is needed when there is no-ascii characters in path
+		char shortPathBuffer[MAX_PATH];
+		long len = GetShortPathName(path, shortPathBuffer, MAX_PATH);
+		if (len != 0)
+			return std::string(shortPathBuffer);
+	}
+#else
+	// Linux specific
+	Dl_info info;
+	if (dladdr((void*)getShared, &info))
+		return info.dli_fname;
+#endif
+	// Generic
+	JPPyObject import = JPPyObject::use(PyImport_AddModule("importlib.util"));
+	JPPyObject jpype = JPPyObject::call(PyObject_CallMethod(import.get(), "find_spec", "s", "_jpype"));
+	JPPyObject origin = JPPyObject::call(PyObject_GetAttrString(jpype.get(), "origin"));
+	return JPPyString::asStringUTF8(origin.get());
+}
+
 void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 {
 	JPJavaFrame frame = JPJavaFrame::external(this, env);
@@ -215,10 +257,8 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 
 	if (!m_Embedded)
 	{
-		JPPyObject import = JPPyObject::use(PyImport_AddModule("importlib.util"));
-		JPPyObject jpype = JPPyObject::call(PyObject_CallMethod(import.get(), "find_spec", "s", "_jpype"));
-		JPPyObject origin = JPPyObject::call(PyObject_GetAttrString(jpype.get(), "origin"));
-		val[2].l = frame.fromStringUTF8(JPPyString::asStringUTF8(origin.get()));
+		std::string shared = getShared();
+		val[2].l = frame.fromStringUTF8(shared);
 	}
 
 	// Required before launch
@@ -238,7 +278,10 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 
 	// Set up methods after everything is start so we get better error
 	// messages
-	m_CallMethodID = frame.GetMethodID(contextClass, "callMethod",
+	jclass reflectorClass = frame.FindClass("org/jpype/JPypeReflector");
+	jfieldID reflectorField = frame.GetFieldID(contextClass, "reflector", "Lorg/jpype/JPypeReflector;");
+	m_Reflector = JPObjectRef(frame, frame.GetObjectField(m_JavaContext.get(), reflectorField));
+	m_CallMethodID = frame.GetMethodID(reflectorClass, "callMethod",
 			"(Ljava/lang/reflect/Method;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
 	m_Context_collectRectangularID = frame.GetMethodID(contextClass,
 			"collectRectangular",

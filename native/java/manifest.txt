@@ -1,3 +1,4 @@
 Manifest-Version: 1.0
-Premain-Class: org.jpype.agent.JPypeAgent
-
+Specification-Title: org.jpype
+Implementation-Title: org.jpype
+Implementation-Version: 1.5.1

@@ -16,21 +16,18 @@
 package org.jpype;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.nio.Buffer;
 import java.nio.ByteOrder;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.jpype.classloader.DynamicClassLoader;
 import org.jpype.manager.TypeFactory;
 import org.jpype.manager.TypeFactoryNative;
 import org.jpype.manager.TypeManager;
@@ -75,16 +72,17 @@ public class JPypeContext
 
   public final String VERSION = "1.5.2.dev0";
 
-  private static JPypeContext INSTANCE = new JPypeContext();
+  private static final JPypeContext INSTANCE = new JPypeContext();
   // This is the C++ portion of the context.
   private long context;
   private TypeFactory typeFactory;
   private TypeManager typeManager;
-  private DynamicClassLoader classLoader;
+  private JPypeClassLoader classLoader;
   private final AtomicInteger shutdownFlag = new AtomicInteger();
   private final List<Thread> shutdownHooks = new ArrayList<>();
   private final List<Runnable> postHooks = new ArrayList<>();
   public static boolean freeResources = true;
+  public JPypeReflector reflector = null;
 
   static public JPypeContext getInstance()
   {
@@ -95,30 +93,49 @@ public class JPypeContext
    * Start the JPype system.
    *
    * @param context is the C++ portion of the context.
-   * @param bootLoader is the classloader holding JPype resources.
+   * @param loader is the classloader holding JPype resources.
    * @return the created context.
    */
-  static JPypeContext createContext(long context, ClassLoader bootLoader, String nativeLib, boolean interrupt)
+  private static JPypeContext createContext(long context, ClassLoader loader, String nativeLib, boolean interrupt) throws Throwable
   {
-    if (nativeLib != null)
+    try
     {
-      System.load(nativeLib);
-    }
-    INSTANCE.context = context;
-    INSTANCE.classLoader = (DynamicClassLoader) bootLoader;
-    INSTANCE.typeFactory = new TypeFactoryNative();
-    INSTANCE.typeManager = new TypeManager(context, INSTANCE.typeFactory);
-    INSTANCE.initialize(interrupt);
+      if (nativeLib != null)
+      {
+        System.load(nativeLib);
+      }
+      INSTANCE.context = context;
+      INSTANCE.classLoader = (JPypeClassLoader) loader;
+      INSTANCE.typeFactory = new TypeFactoryNative();
+      INSTANCE.typeManager = new TypeManager(context, INSTANCE.typeFactory);
+      INSTANCE.initialize(interrupt);
 
-    scanExistingJars();
-    return INSTANCE;
+      try
+      {
+        INSTANCE.reflector = (JPypeReflector) Class.forName("org.jpype.Reflector0", true, loader)
+                .getConstructor()
+                .newInstance();
+      } catch (ClassNotFoundException | NoSuchMethodException | SecurityException
+              | InstantiationException | IllegalAccessException
+              | IllegalArgumentException | InvocationTargetException ex)
+      {
+        throw new RuntimeException("Unable to create reflector "+ ex.getMessage(), ex);
+      }
+
+      scanExistingJars();
+      return INSTANCE;
+    } catch (Throwable ex)
+    {
+      ex.printStackTrace(System.err);
+      throw ex;
+    }
   }
 
   private JPypeContext()
   {
   }
 
-  void initialize(boolean interrupt)
+  private void initialize(boolean interrupt)
   {
     // Okay everything is setup so lets give it a go.
     this.typeManager.init();
@@ -244,21 +261,21 @@ public class JPypeContext
 
     if (freeResources)
     {
-       // Release all Python references
-       try
-       {
-         JPypeReferenceQueue.getInstance().stop();
-       } catch (Throwable th)
-       {
-       }
+      // Release all Python references
+      try
+      {
+        JPypeReferenceQueue.getInstance().stop();
+      } catch (Throwable th)
+      {
+      }
 
-       // Release any C++ resources
-       try
-       {
-         this.typeManager.shutdown();
-       } catch (Throwable th)
-       {
-       }
+      // Release any C++ resources
+      try
+      {
+        this.typeManager.shutdown();
+      } catch (Throwable th)
+      {
+      }
     }
 
     // Execute post hooks
@@ -266,10 +283,18 @@ public class JPypeContext
     {
       run.run();
     }
+    try
+    {
+      classLoader.close();
+    } catch (IOException ex)
+    {
+      // ignored
+    }
+    
 
   }
 
-  static native void onShutdown(long ctxt);
+  private static native void onShutdown(long ctxt);
 
   public void addShutdownHook(Thread th)
   {
@@ -321,31 +346,6 @@ public class JPypeContext
   public void _addPost(Runnable run)
   {
     this.postHooks.add(run);
-  }
-
-  /**
-   * Call a method using reflection.This method creates a stackframe so that
-   * caller sensitive methods will execute properly.
-   *
-   *
-   * @param method is the method to call.
-   * @param obj is the object to operate on, it will be null if the method is
-   * static.
-   * @param args the arguments to method.
-   * @return the object that results form the invocation.
-   * @throws java.lang.Throwable throws whatever type the called method
-   * produces.
-   */
-  public Object callMethod(Method method, Object obj, Object[] args)
-          throws Throwable
-  {
-    try
-    {
-      return method.invoke(obj, args);
-    } catch (InvocationTargetException ex)
-    {
-      throw ex.getCause();
-    }
   }
 
   /**
@@ -442,7 +442,7 @@ public class JPypeContext
     return a1;
   }
 
-  public Object assemble(int[] dims, Object parts)
+  private Object assemble(int[] dims, Object parts)
   {
     int n = dims.length;
     if (n == 1)
@@ -461,15 +461,6 @@ public class JPypeContext
     return shutdownFlag.get() > 0;
   }
 
-//  public void incrementProxy()
-//  {
-//    proxyCount.incrementAndGet();
-//  }
-//
-//  public void decrementProxy()
-//  {
-//    proxyCount.decrementAndGet();
-//  }
   /**
    * Clear the current interrupt.
    *
@@ -522,12 +513,12 @@ public class JPypeContext
     return 0;
   }
 
-  public Exception createException(long l0, long l1)
+  private Exception createException(long l0, long l1)
   {
     return new PyExceptionProxy(l0, l1);
   }
 
-  public boolean order(Buffer b)
+  private boolean order(Buffer b)
   {
     if (b instanceof java.nio.ByteBuffer)
       return ((java.nio.ByteBuffer) b).order() == ByteOrder.LITTLE_ENDIAN;
@@ -637,22 +628,22 @@ public class JPypeContext
     }
   }
 
-  private static long getTotalMemory() 
+  private static long getTotalMemory()
   {
     return Runtime.getRuntime().totalMemory();
   }
 
-  private static long getFreeMemory() 
+  private static long getFreeMemory()
   {
     return Runtime.getRuntime().freeMemory();
   }
 
-  private static long getMaxMemory() 
+  private static long getMaxMemory()
   {
     return Runtime.getRuntime().maxMemory();
   }
 
-  private static long getUsedMemory() 
+  private static long getUsedMemory()
   {
     return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
   }

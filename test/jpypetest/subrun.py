@@ -23,6 +23,8 @@ import traceback
 import queue
 import unittest
 import common
+from contextlib import redirect_stdout
+import io
 
 _modules = {}  # type: ignore[var-annotated]
 
@@ -51,14 +53,17 @@ def _execute(inQueue, outQueue):
         ret = None
         (func_name, func_file, args, kwargs) = datum
         try:
-            module = _import(func_file)
-            func = getattr(module, func_name)
-            ret = func(*args, **kwargs)
+            f = io.StringIO()
+            with redirect_stdout(f):
+                module = _import(func_file)
+                func = getattr(module, func_name)
+                ret = func(*args, **kwargs)
         except Exception as ex1:
             traceback.print_exc()
             ex = ex1
+        out = f.getvalue()
         # This may fail if we get a Java exception so timeout is used
-        outQueue.put([ret, ex])
+        outQueue.put([ret, out, ex])
 
 
 class Client(object):
@@ -77,7 +82,7 @@ class Client(object):
         self.inQueue.put([function.__name__, os.path.abspath(
             inspect.getfile(function)), args, kwargs])
         try:
-            (ret, ex) = self.outQueue.get(True, self.timeout)
+            (ret, out, ex) = self.outQueue.get(True, self.timeout)
         except queue.Empty:
             raise AssertionError("function {func} FAILED with args: {args} and kwargs: {kwargs}"
                                  .format(func=function, args=args, kwargs=kwargs))

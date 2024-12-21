@@ -216,10 +216,12 @@ class BuildExtCommand(build_ext):
         if c == 'unix' and self.enable_coverage:
             jpypeLib.extra_compile_args.extend(
                 ['-ggdb', '--coverage', '-ftest-coverage'])
-            jpypeLib.extra_compile_args = ['-O0' if x == '-O2' else x for x in jpypeLib.extra_compile_args]
+            jpypeLib.extra_compile_args = [
+                '-O0' if x == '-O2' else x for x in jpypeLib.extra_compile_args]
             jpypeLib.extra_link_args.extend(['--coverage'])
         if c == 'unix' and self.enable_tracing:
-            jpypeLib.extra_compile_args = ['-O0' if x == '-O2' else x for x in jpypeLib.extra_compile_args]
+            jpypeLib.extra_compile_args = [
+                '-O0' if x == '-O2' else x for x in jpypeLib.extra_compile_args]
 
     def build_extensions(self):
         if self.makefile:
@@ -275,13 +277,15 @@ class BuildExtCommand(build_ext):
         javac = "javac"
         try:
             if os.path.exists(os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')):
-                javac = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'javac')
+                javac = '"%s"' % os.path.join(
+                    os.environ['JAVA_HOME'], 'bin', 'javac')
         except KeyError:
             pass
         jar = "jar"
         try:
             if os.path.exists(os.path.join(os.environ['JAVA_HOME'], 'bin', 'jar')):
-                jar = '"%s"' % os.path.join(os.environ['JAVA_HOME'], 'bin', 'jar')
+                jar = '"%s"' % os.path.join(
+                    os.environ['JAVA_HOME'], 'bin', 'jar')
         except KeyError:
             pass
         # Try to use the cache if we are not requested build
@@ -311,10 +315,18 @@ class BuildExtCommand(build_ext):
             cmd1 = shlex.split('%s -cp "%s" -d "%s" -g:none -source %s -target %s -encoding UTF-8' %
                                (javac, classpath, build_dir, target_version, target_version))
             cmd1.extend(ext.sources)
-
-            os.makedirs("build/classes", exist_ok=True)
             self.announce("  %s" % " ".join(cmd1), level=distutils.log.INFO)
             subprocess.check_call(cmd1)
+
+            cmd1 = shlex.split('%s -cp "%s" -d "%s" -g:none -source %s -target %s -encoding UTF-8' %
+                               (javac, build_dir, os.path.join(build_dir, "META-INF", "versions", "0"), target_version, target_version))
+            cmd1.extend(glob.glob(os.path.join(
+                "native", "java0", "**", "*.java"), recursive=True))
+            os.makedirs(os.path.join(build_dir, "META-INF",
+                        "versions", "0"), exist_ok=True)
+            self.announce("  %s" % " ".join(cmd1), level=distutils.log.INFO)
+            subprocess.check_call(cmd1)
+
             manifest = None
             try:
                 for file in glob.iglob("native/java/**/*.*", recursive=True):
@@ -323,14 +335,15 @@ class BuildExtCommand(build_ext):
                         continue
                     if file.endswith(".java") or os.path.isdir(file):
                         continue
-                    p = os.path.join(build_dir, os.path.relpath(file, "native/java"))
+                    p = os.path.join(
+                        build_dir, os.path.relpath(file, "native/java"))
                     print("Copy file", file, p)
                     shutil.copyfile(file, p)
             except Exception as ex:
                 print("FAIL", ex)
                 pass
             cmd3 = shlex.split(
-                    '%s cvfm "%s" "%s" -C "%s" .' % (jar, jarFile, manifest, build_dir))
+                '%s cvfm "%s" "%s" -C "%s" .' % (jar, jarFile, manifest, build_dir))
             self.announce("  %s" % " ".join(cmd3), level=distutils.log.INFO)
             subprocess.check_call(cmd3)
 

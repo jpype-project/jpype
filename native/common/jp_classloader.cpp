@@ -38,9 +38,16 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 	m_SystemClassLoader = JPObjectRef(frame,
 			frame.CallStaticObjectMethodA(classLoaderClass, getSystemClassLoader, nullptr));
 
-	jclass dynamicLoaderClass = frame.getEnv()->FindClass("org/jpype/classloader/DynamicClassLoader");
+	jclass dynamicLoaderClass = frame.getEnv()->FindClass("org/jpype/JPypeClassLoader");
 	if (dynamicLoaderClass != nullptr)
 	{
+		// Use the one in place already
+		if (frame.IsInstanceOf(m_SystemClassLoader.get(), dynamicLoaderClass))
+		{
+			m_BootLoader = m_SystemClassLoader;
+			return;
+		}
+
 		// Easy the Dynamic loader is already in the path, so just use it as the bootloader
 		jmethodID newDyLoader = frame.GetMethodID(dynamicLoaderClass, "<init>",
 				"(Ljava/lang/ClassLoader;)V");

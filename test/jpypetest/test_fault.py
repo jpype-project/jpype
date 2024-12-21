@@ -1083,13 +1083,15 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(TypeError, "takes exactly"):
             _jpype.startup()
         with self.assertRaisesRegex(TypeError, "must be tuple"):
-            _jpype.startup(object(), object(), True, True, True)
+            _jpype.startup(object(), object(), True, True, True, None)
         with self.assertRaisesRegex(TypeError, "must be strings"):
-            _jpype.startup("", (object(),), True, True, True)
+            _jpype.startup("", (object(),), True, True, True, None)
         with self.assertRaisesRegex(TypeError, "must be a string"):
-            _jpype.startup(object(), tuple(), True, True, True)
+            _jpype.startup(object(), tuple(), True, True, True, None)
+        with self.assertRaisesRegex(TypeError, "must be a string"):
+            _jpype.startup("", tuple(), True, True, True, object())
         with self.assertRaisesRegex(OSError, "started"):
-            _jpype.startup("", tuple(), True, True, True)
+            _jpype.startup("", tuple(), True, True, True, None)
 
     def testGetClass(self):
         with self.assertRaisesRegex(TypeError, "not found"):

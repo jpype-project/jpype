@@ -34,7 +34,8 @@ class Develop(develop_cmd):
         super().initialize_options()
 
     def reinitialize_command(self, command, reinit_subcommands=0, **kw):
-        cmd = super().reinitialize_command(command, reinit_subcommands=reinit_subcommands, **kw)
+        cmd = super().reinitialize_command(
+            command, reinit_subcommands=reinit_subcommands, **kw)
         build_ext_command = self.distribution.get_command_obj("build_ext")
         build_ext_command.enable_tracing = self.enable_tracing
         build_ext_command.enable_build_jar = self.enable_build_jar
