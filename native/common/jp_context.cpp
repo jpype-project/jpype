@@ -184,8 +184,9 @@ std::string getShared()
 	{
 		// This is needed when there is no-ascii characters in path
 		char shortPathBuffer[MAX_PATH];
-		GetShortPathName(path, shortPathBuffer, MAX_PATH);
-		return shortPathBuffer;
+		long len = GetShortPathName(path, shortPathBuffer, MAX_PATH);
+		if (len != 0)
+			return std::string(shortPathBuffer);
 	}
 #else
 	// Linux specific
