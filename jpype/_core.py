@@ -111,10 +111,10 @@ def isJVMStarted():
 
 def _getOption(args, var, sep=None, keep=False):
     """ Get an option and remove it from the current jvm arguments list """
-    for i,v in enumerate(args):
+    for i, v in enumerate(args):
         if not isinstance(v, str):
             continue
-        _, _, value = v.partition('%s='%var)
+        _, _, value = v.partition('%s=' % var)
         if value:
             if not keep:
                 del args[i]
@@ -123,8 +123,10 @@ def _getOption(args, var, sep=None, keep=False):
             return value
     return []
 
+
 def _expandClassPath(
-    classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None
+    classpath: typing.Union[typing.Sequence[_PathOrStr],
+                            _PathOrStr, None] = None
 ) -> typing.List[str]:
     """
     Return a classpath which represents the given tuple of classpath specifications
@@ -134,7 +136,7 @@ def _expandClassPath(
         classpath = (classpath,)
     try:
         # Convert anything iterable into a tuple.
-        classpath = tuple(classpath) # type: ignore[arg-type]
+        classpath = tuple(classpath)  # type: ignore[arg-type]
     except TypeError:
         raise TypeError("Unknown class path element")
 
@@ -142,7 +144,8 @@ def _expandClassPath(
         try:
             pth = os.fspath(element)
         except TypeError as err:
-            raise TypeError("Classpath elements must be strings or Path-like") from err
+            raise TypeError(
+                "Classpath elements must be strings or Path-like") from err
 
         if isinstance(pth, bytes):
             # In the future we may allow this to support Paths which are undecodable.
@@ -159,28 +162,30 @@ def _expandClassPath(
 
 _JVM_started = False
 
+
 def interactive():
     return bool(getattr(sys, 'ps1', sys.flags.interactive))
+
 
 def _findTemp():
     dirlist = []
     # Mirror Python tempfile with a check for ascii
     for envname in 'TMPDIR', 'TEMP', 'TMP':
         dirname = os.getenv(envname)
-        if dirname and dirname.isascii(): 
+        if dirname and dirname.isascii():
             dirlist.append(dirname)
     if os.name == 'nt':
-        for dirname in [ os.path.expanduser(r'~\AppData\Local\Temp'),
-                         os.path.expandvars(r'%SYSTEMROOT%\Temp'),
-                         r'c:\temp', r'c:\tmp', r'\temp', r'\tmp' ]:
-            if dirname and dirname.isascii(): 
+        for dirname in [os.path.expanduser(r'~\AppData\Local\Temp'),
+                        os.path.expandvars(r'%SYSTEMROOT%\Temp'),
+                        r'c:\temp', r'c:\tmp', r'\temp', r'\tmp']:
+            if dirname and dirname.isascii():
                 dirlist.append(dirname)
     else:
-        dirlist.extend([ '/tmp', '/var/tmp', '/usr/tmp' ])
-    
+        dirlist.extend(['/tmp', '/var/tmp', '/usr/tmp'])
+
     name = str(os.getpid())
     for d in dirlist:
-        p = Path("%s/%s"%(d,name))
+        p = Path("%s/%s" % (d, name))
         try:
             p.touch()
             p.unlink()
@@ -193,7 +198,8 @@ def _findTemp():
 def startJVM(
     *jvmargs: str,
     jvmpath: typing.Optional[_PathOrStr] = None,
-    classpath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
+    classpath: typing.Union[typing.Sequence[_PathOrStr],
+                            _PathOrStr, None] = None,
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
@@ -292,11 +298,14 @@ def startJVM(
 #        extra_jvm_args += ['--module-path=%s'%mp ]
 
     # Get the support library
-    support_lib = os.path.join(os.path.dirname(os.path.dirname(__file__)), "org.jpype.jar")
+    support_lib = os.path.join(os.path.dirname(
+        os.path.dirname(__file__)), "org.jpype.jar")
     if not os.path.exists(support_lib):
-        raise RuntimeError("Unable to find org.jpype.jar support library at " + support_lib)
+        raise RuntimeError(
+            "Unable to find org.jpype.jar support library at " + support_lib)
 
-    system_class_loader = _getOption(jvm_args, "-Djava.system.class.loader", keep=True)
+    system_class_loader = _getOption(
+        jvm_args, "-Djava.system.class.loader", keep=True)
 
     java_class_path = _expandClassPath(classpath)
     java_class_path.append(support_lib)
@@ -308,13 +317,14 @@ def startJVM(
     if not classpath.isascii():
         if system_class_loader:
             # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
-            raise ValueError("system classloader cannot be specified with non ascii characters in the classpath")
+            raise ValueError(
+                "system classloader cannot be specified with non ascii characters in the classpath")
 
         # If we are not installed on an ascii path then we will need to copy the jar to a new location
         if not support_lib.isascii():
             import tempfile
             import shutil
-            fd, path = tempfile.mkstemp(dir = _findTemp())
+            fd, path = tempfile.mkstemp(dir=_findTemp())
             if not path.isascii():
                 raise ValueError("Unable to find ascii temp directory.")
             shutil.copyfile(support_lib, path)
@@ -328,18 +338,19 @@ def startJVM(
         from urllib.parse import quote
         extra_jvm_args += [
             '-Djava.system.class.loader=org.jpype.JPypeClassLoader',
-            '-Djava.class.path=%s'%support_lib,
-            '-Djpype.class.path=%s'%quote(classpath),
+            '-Djava.class.path=%s' % support_lib,
+            '-Djpype.class.path=%s' % quote(classpath),
             '-Xshare:off'
         ]
     else:
         # no problems
-        extra_jvm_args += ['-Djava.class.path=%s'%classpath ]
+        extra_jvm_args += ['-Djava.class.path=%s' % classpath]
 
     try:
         import locale
         # Gather a list of locale settings that Java may override (excluding LC_ALL)
-        categories = [getattr(locale, i) for i in dir(locale) if i.startswith('LC_') and i != 'LC_ALL']
+        categories = [getattr(locale, i) for i in dir(
+            locale) if i.startswith('LC_') and i != 'LC_ALL']
         # Keep the current locale settings, else Java will replace them.
         prior = [locale.getlocale(i) for i in categories]
         # Start the JVM
@@ -360,7 +371,8 @@ def startJVM(
             match = re.search(r"([0-9]+)\.[0-9]+", source)
             if match:
                 version = int(match.group(1)) - 44
-                raise RuntimeError(f"{jvmpath} is older than required Java version{version}") from ex
+                raise RuntimeError(
+                    f"{jvmpath} is older than required Java version{version}") from ex
         raise
 
 

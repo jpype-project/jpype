@@ -69,7 +69,8 @@ class JDBCType(object):
         _types.append(self)
         if _jpype.isStarted():
             java = _jpype._JPackage("java")
-            self._initialize(java.sql.CallableStatement, java.sql.PreparedStatement, java.sql.ResultSet)
+            self._initialize(java.sql.CallableStatement,
+                             java.sql.PreparedStatement, java.sql.ResultSet)
 
     def _initialize(self, cs, ps, rs):
         """ Called after the JVM starts initialize Java resources """
@@ -96,7 +97,8 @@ class JDBCType(object):
                 return self._csget(rs, column)
             return self._rsget(rs, column)
         except _SQLException as ex:
-            raise InterfaceError("Unable to get '%s' using '%s'" % (self._name, self._getter)) from ex
+            raise InterfaceError("Unable to get '%s' using '%s'" %
+                                 (self._name, self._getter)) from ex
 
     def set(self, ps, column, value):
         """ A method used to set a parameter to a query.
@@ -116,9 +118,11 @@ class JDBCType(object):
             # Otherwise, try to set with the generic method
             return ps.setObject(column, value)
         except TypeError as ex:
-            raise InterfaceError("Unable to convert '%s' into '%s'" % (type(value).__name__, self._name)) from ex
+            raise InterfaceError("Unable to convert '%s' into '%s'" % (
+                type(value).__name__, self._name)) from ex
         except OverflowError as ex:
-            raise InterfaceError("Unable to convert '%s' into '%s' calling '%s'" % (type(value).__name__, self._name, self._setter)) from ex
+            raise InterfaceError("Unable to convert '%s' into '%s' calling '%s'" % (
+                type(value).__name__, self._name, self._setter)) from ex
 
     def __repr__(self):
         if self._name is None:
@@ -143,7 +147,8 @@ class _JDBCTypePrimitive(JDBCType):
                 return None
             return rc
         except _SQLException as ex:
-            raise InterfaceError("Unable to get '%s' using '%s'" % (self._name, self._getter)) from ex
+            raise InterfaceError("Unable to get '%s' using '%s'" %
+                                 (self._name, self._getter)) from ex
 
 
 # From https://www.cis.upenn.edu/~bcpierce/courses/629/jdkdocs/guide/jdbc/getstart/mapping.doc.html
@@ -180,7 +185,8 @@ SQLXML = JDBCType('SQLXML', 2009, 'getSQLXML', 'setSQLXML')
 TIME = JDBCType('TIME', 92, 'getTime', 'setTime')
 TIME_WITH_TIMEZONE = JDBCType('TIME_WITH_TIMEZONE', 2013, 'getTime', 'setTime')
 TIMESTAMP = JDBCType('TIMESTAMP', 93, 'getTimestamp', 'setTimestamp')
-TIMESTAMP_WITH_TIMEZONE = JDBCType('TIMESTAMP_WITH_TIMEZONE', 2014, 'getTimestamp', 'setTimestamp')
+TIMESTAMP_WITH_TIMEZONE = JDBCType(
+    'TIMESTAMP_WITH_TIMEZONE', 2014, 'getTimestamp', 'setTimestamp')
 TINYINT = _JDBCTypePrimitive('TINYINT', -6, 'getShort', 'setShort')
 VARBINARY = JDBCType('VARBINARY', -3, 'getBytes', 'setBytes')
 VARCHAR = JDBCType('VARCHAR', 12, 'getString', 'setString')
@@ -203,8 +209,10 @@ DATETIME = TIMESTAMP
 # Special types
 ASCII_STREAM = JDBCType(None, None, 'getAsciiStream', 'setAsciiStream')
 BINARY_STREAM = JDBCType(None, None, 'getBinaryStream', 'setBinaryStream')
-CHARACTER_STREAM = JDBCType(None, None, 'getCharacterStream', 'setCharacterStream')
-NCHARACTER_STREAM = JDBCType(None, None, 'getNCharacterStream', 'setNCharacterStream')
+CHARACTER_STREAM = JDBCType(
+    None, None, 'getCharacterStream', 'setCharacterStream')
+NCHARACTER_STREAM = JDBCType(
+    None, None, 'getNCharacterStream', 'setNCharacterStream')
 URL = JDBCType(None, None, 'getURL', 'setURL')
 
 # The converters are defined in a customizer
@@ -401,9 +409,10 @@ def connect(dsn, *, driver=None, driver_args=None,
     """
     Properties = _jpype.JClass("java.util.Properties")
     if driver:
-        _jpype.JClass('java.lang.Class').forName(driver,True,_jpype.JPypeClassLoader).newInstance()
+        _jpype.JClass('java.lang.Class').forName(
+            driver, True, _jpype.JPypeClassLoader).newInstance()
     DM = _jpype.JClass('java.sql.DriverManager')
-    #DM.setLogStream(_jpype.JClass("java.lang.System").out)
+    # DM.setLogStream(_jpype.JClass("java.lang.System").out)
 
     # User is supplying Java properties
     if isinstance(driver_args, Properties):
@@ -708,7 +717,8 @@ class Cursor(object):
         if types is None:
             types = [None] * count
         if isinstance(params, str):
-            raise _UnsupportedTypeError("parameters must be a sequence of values")
+            raise _UnsupportedTypeError(
+                "parameters must be a sequence of values")
         if isinstance(params, typing.Sequence):
             if count != len(params):
                 raise ProgrammingError("incorrect number of parameters (%d!=%d)"
@@ -726,7 +736,8 @@ class Cursor(object):
                     s = cx._setters(cx, meta, i, type(p))
                     types[i] = s
                 if s is None:
-                    raise _UnsupportedTypeError("no setter found for '%s'" % type(p).__name__)
+                    raise _UnsupportedTypeError(
+                        "no setter found for '%s'" % type(p).__name__)
                 s.set(self._statement, i + 1, p)
             # Cache
             if hasattr(cx._setters, "_cachable"):
@@ -736,7 +747,8 @@ class Cursor(object):
         elif isinstance(params, typing.Iterable):
             for i, p in enumerate(params):
                 if i >= count:
-                    raise ProgrammingError("incorrect number of parameters (%d!=%d)" % (count, i + 1))
+                    raise ProgrammingError(
+                        "incorrect number of parameters (%d!=%d)" % (count, i + 1))
 
                 # Find and apply the adapter
                 a = cx._adapters.get(type(p), None)
@@ -748,15 +760,18 @@ class Cursor(object):
                     s = cx._setters(cx, meta, i, type(p))
                     types[i] = s
                 if s is None:
-                    raise _UnsupportedTypeError("no setter found for '%s'" % type(p).__name__)
+                    raise _UnsupportedTypeError(
+                        "no setter found for '%s'" % type(p).__name__)
                 s.set(self._statement, i + 1, p)
             if count != i + 1:
-                raise ProgrammingError("incorrect number of parameters (%d!=%d)" % (count, i + 1))
+                raise ProgrammingError(
+                    "incorrect number of parameters (%d!=%d)" % (count, i + 1))
             # Cache
             if hasattr(cx._setters, "_cachable"):
                 self._parameterTypes = types
         else:
-            raise _UnsupportedTypeError("'%s' parameters not supported" % (type(params).__name__))  # pragma: no cover
+            raise _UnsupportedTypeError("'%s' parameters not supported" % (
+                type(params).__name__))  # pragma: no cover
 
     def _onResultSet(self, rs):
         meta = rs.getMetaData()
@@ -949,10 +964,13 @@ class Cursor(object):
             self._validate()
             self._finish()
             if not isinstance(procname, str):
-                raise _UnsupportedTypeError("procname must be str, not '%s'" % type(procname).__name__)
+                raise _UnsupportedTypeError(
+                    "procname must be str, not '%s'" % type(procname).__name__)
             if not isinstance(parameters, typing.Sequence):
-                raise _UnsupportedTypeError("parameters must be sequence, not '%s'" % type(procname).__name__)
-            query = "{CALL %s(%s)}" % (procname, ",".join("?" * len(parameters)))
+                raise _UnsupportedTypeError(
+                    "parameters must be sequence, not '%s'" % type(procname).__name__)
+            query = "{CALL %s(%s)}" % (
+                procname, ",".join("?" * len(parameters)))
             try:
                 self._statement = self._jcx.prepareCall(query)
             except _SQLException as ex:
@@ -967,7 +985,8 @@ class Cursor(object):
                 types = [None] * count
             else:
                 if len(types) != count:
-                    raise ProgrammingError("expected '%d' types, got '%d'" % (count, len(types)))
+                    raise ProgrammingError(
+                        "expected '%d' types, got '%d'" % (count, len(types)))
             for i in range(count):
                 # Lookup the JDBC Type
                 p = parameters[i]
@@ -979,7 +998,8 @@ class Cursor(object):
                     types[i] = cx._setters(cx, meta, i, type(p))
                 jdbcType = types[i]
                 if jdbcType is None:
-                    raise _UnsupportedTypeError("no setter found for '%s'" % type(p).__name__)
+                    raise _UnsupportedTypeError(
+                        "no setter found for '%s'" % type(p).__name__)
 
                 mode = meta.getParameterMode(i + 1)
                 if mode == 1:
@@ -1047,7 +1067,8 @@ class Cursor(object):
         if parameters is None:
             parameters = ()
         if not isinstance(parameters, (typing.Sequence, typing.Iterable, typing.Iterator)):
-            raise _UnsupportedTypeError("parameters are of unsupported type '%s'" % type(parameters).__name__)
+            raise _UnsupportedTypeError(
+                "parameters are of unsupported type '%s'" % type(parameters).__name__)
         # complete the previous operation
         try:
             if keys:
@@ -1113,7 +1134,8 @@ class Cursor(object):
         except TypeError as ex:
             raise _UnsupportedTypeError(str(ex))
         except _SQLException as ex:
-            raise ProgrammingError("Failed to prepare '%s'" % operation) from ex
+            raise ProgrammingError(
+                "Failed to prepare '%s'" % operation) from ex
         if self._connection._batch:
             return self._executeBatch(seq_of_parameters)
         else:  # pragma: no cover
@@ -1125,7 +1147,8 @@ class Cursor(object):
                 self._setParams(params)
                 self._statement.addBatch()
         else:
-            raise _UnsupportedTypeError("'%s' is not supported" % type(seq_of_parameters).__name__)
+            raise _UnsupportedTypeError(
+                "'%s' is not supported" % type(seq_of_parameters).__name__)
         try:
             counts = self._statement.executeBatch()
         except _SQLException as ex:  # pragma: no cover
@@ -1148,7 +1171,8 @@ class Cursor(object):
                 except StopIteration:
                     break
         else:
-            raise _UnsupportedTypeError("'%s' is not supported" % str(type(seq_of_parameters)))
+            raise _UnsupportedTypeError(
+                "'%s' is not supported" % str(type(seq_of_parameters)))
         self._rowcount = sum(counts)
         if self._rowcount < 0:
             self._rowcount = -1
