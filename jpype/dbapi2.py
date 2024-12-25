@@ -244,8 +244,8 @@ def SETTERS_BY_META(cx, meta, col, ptype):
     """ Option for setters to use the metadata of the parameters.
 
     On some databases this option is useless as they do not track parameter
-    types.  This method can be cached for faster performance when lots of
-    parameters.  Usually types can only be determined accurately on inserts
+    types.  This method can be cached for faster performance when the are lots
+    of parameters.  Usually types can only be determined accurately on inserts
     into defined columns.
     """
     return _default_map[_registry[meta.getParameterType(col + 1)]]
@@ -282,12 +282,12 @@ def GETTERS_BY_TYPE(cx, meta, idx):
 
 
 def GETTERS_BY_NAME(cx, meta, idx):
-    """ Option to getters to determine column type by the column name.
+    """ Option for getters to determine column type by the column name.
 
     This option uses the column name to select the type.  It looks up
     the column type name, converts it to uppercase, and then searches
-    for a matchine type.  It falls back to the type code meta information if
-    the typename can not be found in the registery.  New types can be created
+    for a matching type.  It falls back to the type code meta information if
+    the type name cannot be found in the registry.  New types can be created
     using JDBCType for database specific types such as ``JSON``.
     """
     name = str(meta.getColumnTypeName(idx + 1)).upper()
@@ -388,7 +388,7 @@ def connect(dsn, *, driver=None, driver_args=None,
        dsn (str): The database connection string for JDBC.
        driver (str, optional): A JDBC driver to load.
        driver_args: Arguments to the driver.  This may either be a dict,
-          java.util.Properties.  If not supplied, kwargs are used as as the
+          java.util.Properties.  If not supplied, kwargs are used as the
           parameters for the JDBC connection.
        *kwargs: Arguments to the driver if not supplied as
           driver_args.
@@ -432,7 +432,7 @@ def connect(dsn, *, driver=None, driver_args=None,
 class Connection(object):
     """ Connection provides access to a JDBC database.
 
-    Connections are managed and can be as part of a Python with statement.
+    Connections are managed and can be used as part of a Python 'with' statement.
     Connections close automatically when they are garbage collected, at the
     end of a with statement scope, or when manually closed.  Once a connection
     is closed all operations using the database will raise an Error.
@@ -528,7 +528,7 @@ class Connection(object):
 
     @property
     def setters(self):
-        """ Setter are used to set parameters to ``.execute*()`` methods.
+        """ Setters are used to set parameters to ``.execute*()`` methods.
 
         Setters should be a function taking (connection, meta, col, type) -> JDBCTYPE
         """
@@ -578,7 +578,7 @@ class Connection(object):
     def commit(self):
         """Commit any pending transaction to the database.
 
-        Calling commit on a cooonection that does not support the operation
+        Calling commit on a connection that does not support the operation
         will raise NotSupportedError.
         """
         self._validate()
@@ -593,8 +593,8 @@ class Connection(object):
         """Rollback the transaction.
 
         This method is optional since not all databases provide transaction
-        support.  Calling rollback on a cooonection that does not support will
-        raise NotSupportedError.
+        support.  Calling rollback on a connection that does not support it 
+        will raise NotSupportedError.
 
         In case a database does provide transactions this method causes the
         database to roll back to the start of any pending transaction. Closing
@@ -839,8 +839,8 @@ class Cursor(object):
 
     @property
     def parameters(self):
-        """ (extension) Parameters is read-only attribute is a sequence of
-        6-item sequences.
+        """ (extension) Parameters is a read-only attribute. It is a sequence
+        of 6-item sequences.
 
         Each of these sequences contains information describing one result
         column:
@@ -869,7 +869,7 @@ class Cursor(object):
 
     @property
     def description(self):
-        """ Description is read-only attribute is a sequence of 7-item
+        """ Description is a read-only attribute. It is a sequence of 7-item
         sequences.
 
         Each of these sequences contains information describing one result
@@ -909,7 +909,7 @@ class Cursor(object):
         .execute*() affected (for DML statements like UPDATE or INSERT).
 
         The attribute is -1 in case no .execute*() has been performed on the
-        cursor or the rowcount of the last operation is cannot be determined by
+        cursor or the rowcount of the last operation cannot be determined by
         the interface.  JDBC does not support getting the number of rows
         returned from SELECT, so for most drivers rowcount will be -1 after a
         SELECT statement.
@@ -1031,7 +1031,7 @@ class Cursor(object):
         Parameters:
            operation (str): A statement to be executed.
            parameters (list, optional): A list of parameters for the statement.
-              The number of parameters much match the number required by the
+              The number of parameters must match the number required by the
               statement or an Error will be raised.
            keys (bool, optional): Specify if the keys should be available to 
               retrieve. (Default False) 
@@ -1088,11 +1088,11 @@ class Cursor(object):
         Args:
            operation (str): A statement to be executed.
            seq_of_parameters (list, optional): A list of lists of parameters
-               for the statement.  The number of parameters much match the number
+               for the statement.  The number of parameters must match the number
                required by the statement or an Error will be raised.
            keys (bool, optional): Specify if the keys should be available to 
               retrieve. (Default False) For drivers that do not support
-              batch updates only that last key will be returned.
+              batch updates only the last key will be returned.
 
         Returns:
            This cursor.
@@ -1353,7 +1353,7 @@ def Time(hour, minute, second):
 
 
 def Timestamp(year, month, day, hour, minute, second, nano=0):
-    """ This function constructs an object holding a time stamp value. """
+    """ This function constructs an object holding a timestamp value. """
     return _jpype.JClass('java.sql.Timestamp')(year - 1900, month - 1, day, hour, minute, second, nano)
 
 
@@ -1378,7 +1378,7 @@ def TimeFromTicks(ticks):
 
 def TimestampFromTicks(ticks):
     """
-    This function constructs an object holding a time stamp value from the
+    This function constructs an object holding a timestamp value from the
     given ticks value (number of seconds since the epoch; see the documentation
     of the standard Python time module for details).
     """
