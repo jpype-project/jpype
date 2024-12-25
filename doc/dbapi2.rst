@@ -5,7 +5,7 @@ JPype DBAPI2 Guide
 `Introduction`
 ==============
 
-One common use of JPype is to provide access to databases used JDBC.  The JDBC
+One common use of JPype is to provide access to databases using JDBC.  The JDBC
 API is well established, very capable, and supports most databases.
 JPype can be used to access JDBC both directly or through the use of the Python
 DBAPI2 as layed (see PEP-0249_).  Unfortunately, the Python API leaves a lot of
@@ -15,7 +15,7 @@ The JPype dbapi2 module provides our implementation of this Python API.
 Normally the Python API has to deal with two different type systems, Python
 and SQL.  When using JDBC, we have the added complexity that Java types are
 used to communicate with the driver.  We have introduced concepts appropriate
-to handle this addition complexity.
+to handle this additional complexity.
 
 
 `Module Interface`
@@ -49,7 +49,7 @@ These values are constants.
     The threadsafety level is 2 meaning "Threads may share the module and
     connections".  But the actual threading level depends on the driver
     implementation that JDBC is connected to.  Connections for many databases
-    are synchronized so they can be shared, but threads must execute statement
+    are synchronized so they can be shared, but threads must execute statements
     in series.  Connections in the module are implemented in Python and 
     have per object resources that cannot be shared.  Attempting to use a
     connection with a thread other than the thread that created it will
@@ -91,7 +91,7 @@ exceptions:
 .. autoclass:: jpype.dbapi2.ProgrammingError
 .. autoclass:: jpype.dbapi2.NotSupportedError
 
-Python exceptions are more fine grain than JDBC exceptions.  Whereever possible
+Python exceptions are more fine grain than JDBC exceptions.  Wherever possible
 we have redirected the Java exception to the nearest Python exception.  However,
 there are cases in which the Java exception may appear.  Those exceptions
 inherit from `:py:class:jpype.dbapi2.Error`.  This is the exception inheritance layout::
@@ -127,7 +127,7 @@ Type Access
 
 JPype dbapi2 provides two different maps which serve to convert data
 between Python and SQL types.  When setting parameters and fetching 
-results, Java types are used.  The connection provides to maps for converting
+results, Java types are used.  The connection provides two maps for converting
 the types of parameters.  An `adapter <adapters_>`_ is used to translate from a Python
 type into a Java type when setting a parameter.  Once a result is produced,
 a `converter <converters_>`_ can be used to translate the Java type back into a Python type.
@@ -143,13 +143,13 @@ adapters_
 Whenever a Python type is passed to a statement, it must first be converted
 to the appropriate Java type.  This can be accomplished in a few ways.  The
 user can manually convert to the correct type by constructing a Java object or
-applying the JPype casting operator.  Some Java types have built in implicit
+applying the JPype casting operator.  Some Java types have built-in implicit
 conversions from the corresponding type.  For all other conversions, an adapter.
 An adapter is defined as a type to convert from and a conversion function which 
 takes a single argument that returns a Java object.
 
 The adapter maps are stored in the connection.  The adapter map can be
-supplied when calling `connect`_ , or added to the map later
+supplied when calling `connect`_, or added to the map later
 through the `adapters <connection.adapters_>`_ property. 
 
 
@@ -159,14 +159,14 @@ setters_
 --------
 
 A setter transfers the Java type into a SQL parameter.  There are multiple
-types can an individual parameter may accept.  The type of setter is determined
+types that an individual parameter may accept.  The type of setter is determined
 by the JDBC type.  Each individual JDBC type can have its own setter.  Not
-every database supports the same setter.  There is a default setter may that
-would work for most purposes.  Setters can also be set individually using 
+every database supports the same setter.  There is a default setter that
+should work for most purposes.  Setters can also be set individually using 
 the ``types`` argument to the ``.execute*()`` methods.  The setter is a 
 function which processes the database metadata into a type.
 
-Setters can supplied as a map to `connect`_ or by accessing
+Setters can be supplied as a map to `connect`_ or by accessing
 the `setter <connection.setters_>`_ property on a Connection.
 
 .. autofunction:: jpype.dbapi2.SETTERS_BY_META
@@ -177,7 +177,7 @@ the `setter <connection.setters_>`_ property on a Connection.
 converters_
 -----------
 
-When a result is fetched the database, it is returned as Jave type.  This Java
+When a result is fetched from the database it is returned as a Java type.  This Java
 type then has a converter applied.  Converters are stored in a map holding the 
 type as key and a converter function that takes one argument and returns the desired type.
 The default converter map will convert all types to Python.  This can be 
@@ -207,7 +207,7 @@ function that uses the metadata to find the most appropriate type.
 `Connection Objects`_
 =====================
 
-A Connection object can be created using the using `connect`_ function.  Once a
+A Connection object can be created by using the `connect`_ function.  Once a
 connection is established the resulting Connection contains the following.
 
 .. autoclass:: jpype.dbapi2.Connection
@@ -230,7 +230,7 @@ transaction support is implemented (see also the connection's
   :members:
 
 
-Cursors can act as an iterator.  So to get the contents of table one
+Cursors can act as an iterator.  So to get the contents of a table one
 could use code like:
 
 .. code-block:: python
@@ -253,7 +253,7 @@ the `.execute*()` method are untyped.  When the database module sees
 a Python string object, it doesn't know if it should be bound as a
 simple `CHAR` column, as a raw `BINARY` item, or as a `DATE`.
 
-This is less of a problem in JPype dbapi2 than in a typically 
+This is less of a problem in JPype dbapi2 than in a typical 
 dbapi driver as we have strong typing backing the connection,
 but we are still required to supply methods to construct individual
 SQL types.  These functions are:
@@ -266,9 +266,9 @@ SQL types.  These functions are:
 .. autofunction::  jpype.dbapi2.TimestampFromTicks
 .. autofunction::  jpype.dbapi2.Binary
 
-For the most part these constructors are largely redundant as 
+For the most part these constructors are largely redundant because 
 adapters can provide the same functionality and Java types
-can directly use to communicate type information.
+can be used directly to communicate type information.
 
 .. `JDBC Types`
 
@@ -276,8 +276,8 @@ can directly use to communicate type information.
 =============
 
 In the Python DBAPI2, the SQL type system is normally reduced to a subset
-of the SQL types by mapping multiple types together for example ``STRING``
-covers the types `STRING`, `CHAR`, `NCHAR` , `NVARCHAR` , `VARCHAR`, 
+of the SQL types by mapping multiple types together. For example, ``STRING``
+covers types `STRING`, `CHAR`, `NCHAR` , `NVARCHAR` , `VARCHAR`, 
 and `OTHER`.  JPype dbapi2 supports both the recommended Python types and
 the fine grain JDBC types.  Each type is represented by an object 
 of type JBDCType.
@@ -288,10 +288,11 @@ of type JBDCType.
 The following types are defined with the correspond Python grouping, the
 default setter, getter, and Python type.  For types that support more than
 one type of getter, the special getter can be applied as the converter for
-the type.  For example, the defaulf configuration has ``getter[BLOB] = BINARY.get``,
+the type.  For example, the default configuration has ``getter[BLOB] = BINARY.get``,
 to get the Blob type use ``getter[BLOB] = BLOB.get`` or specify it when
 calling `use <cursor.use_>`_.
 
+.. The link to cursor.use above appears to be broken. Does cursor.use exist?
 
 ======== ======================== =================== ============== ================= ===============
 Group    JDBC Type                Default Getter      Default Setter PyTypes           Special Getter 
@@ -365,7 +366,7 @@ A user can declare a new type using ``JDBCType``.  The arguments are the name of
 new type which must match a SQL typename.  Use ``typeinfo`` on the connection to 
 get the list of available types.
 
-It may necessary to define a custom getter function which defining a new type
+It may be necessary to define a custom getter function when defining a new type
 so that the custom return type accurately reflects the column type.
 
 .. code-block:: python
@@ -381,11 +382,11 @@ so that the custom return type accurately reflects the column type.
 Interactions with prepared statements
 -------------------------------------
 
-Certain calls can be problematic for dbapi2 depending on driver.  In
+Certain calls can be problematic for dbapi2 depending on the driver.  In
 particular, SQL calls which invalidate the state of the connection will issue
-an exception when the connection is used.   In HSQLDB the statement
-``cur.execute('shutdown')`` invalidates the connection which when the statement
-is then automatically closed will then produce an exception.
+an exception when the connection is used.  For example, when using HSQLDB, the
+statement ``cur.execute('shutdown')`` will invalidate and close the connection,
+causing an exception to be raised.
 
 This exception is due to a conflict between dbapi2, Java, and HSQLDB
 specifications.  Dbapi2 requires that statements be executed as prepared
@@ -394,7 +395,7 @@ connection is already closed, and HSQLBD sets the ``isValid`` to false but not
 ``isClosed``.  Thus executing a shutdown through dbapi2 would be expected to
 close the prepared statement on an invalid connection resulting in an error.
 
-We can address these sort of driver specific behaviors by applying a customizer
+We can address these sorts of driver specific behaviors by applying a customizer
 to the Java class to add additional behaviors.
 
 .. code-block:: python
@@ -416,7 +417,7 @@ Conclusion
 ==========
 
 This wraps up the JPype dbapi2 module.  Because JDBC supports many different
-dataase drivers, not every behavior is defined on every driver.  Consult the
+database drivers, not every behavior is defined on every driver.  Consult the
 driver specific information to determine what is available.  
 
 The dbapi2 does not fully cover all of the capabilities of the JDBC driver.  To
