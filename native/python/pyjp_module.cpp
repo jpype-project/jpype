@@ -20,6 +20,9 @@
 #include "jp_gc.h"
 #include "jp_stringtype.h"
 #include "jp_classloader.h"
+#ifdef WIN32
+#include <Windows.h>
+#endif
 
 void PyJPModule_installGC(PyObject* module);
 
@@ -229,6 +232,7 @@ int PyJP_IsInstanceSingle(PyObject* obj, PyTypeObject* type)
 #ifndef ANDROID
 extern JNIEnv *Android_JNI_GetEnv();
 
+static string jarTmpPath;
 static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 {
 	JP_PY_TRY("PyJPModule_startup");
@@ -238,10 +242,22 @@ static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 	char ignoreUnrecognized = true;
 	char convertStrings = false;
 	char interrupt = false;
+	PyObject* tmp;
 
-	if (!PyArg_ParseTuple(pyargs, "OO!bbb", &vmPath, &PyTuple_Type, &vmOpt,
-			&ignoreUnrecognized, &convertStrings, &interrupt))
+	if (!PyArg_ParseTuple(pyargs, "OO!bbbO", &vmPath, &PyTuple_Type, &vmOpt,
+			&ignoreUnrecognized, &convertStrings, &interrupt, &tmp))
 		return nullptr;
+
+	if (tmp != Py_None)
+	{
+		if (!(JPPyString::check(tmp)))
+		{
+			PyErr_SetString(PyExc_TypeError, "Java jar path must be a string");
+			return nullptr;
+		}
+		jarTmpPath = JPPyString::asStringUTF8(tmp);
+	}
+
 
 	if (!(JPPyString::check(vmPath)))
 	{
@@ -298,6 +314,18 @@ static PyObject* PyJPModule_shutdown(PyObject* obj, PyObject* pyargs, PyObject* 
 		return nullptr;
 
 	JPContext_global->shutdownJVM(destroyJVM, freeJVM);
+
+#ifdef WIN32
+	// Thus far this doesn't work on WINDOWS.  The issue is a bug in the JVM
+	// is holding the file open and there is no apparent method to close it
+	// so that this can succeed
+	if (jarTmpPath != "")
+		remove(jarTmpPath.c_str());
+#else
+	if (jarTmpPath != "")
+		unlink(jarTmpPath.c_str());
+#endif
+
 	Py_RETURN_NONE;
 	JP_PY_CATCH(nullptr);
 }

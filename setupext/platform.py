@@ -39,7 +39,8 @@ def Platform(*, include_dirs: typing.Sequence[Path], sources: typing.Sequence[Pa
     java_home = os.getenv('JAVA_HOME', '')
     found_jni = False
     if os.path.exists(java_home):
-        platform_specific['include_dirs'] += [os.path.join(java_home, 'include')]
+        platform_specific['include_dirs'] += [
+            os.path.join(java_home, 'include')]
 
         # check if jni.h can be found
         for d in platform_specific['include_dirs']:
@@ -105,7 +106,8 @@ def Platform(*, include_dirs: typing.Sequence[Path], sources: typing.Sequence[Pa
     elif platform.startswith('android'):
         distutils.log.info("Add android settings")
         platform_specific['libraries'] = ['dl', 'c++_shared', 'SDL2']
-        platform_specific['extra_compile_args'] = gcc_like_cflags + ['-fexceptions', '-frtti']
+        platform_specific['extra_compile_args'] = gcc_like_cflags + \
+            ['-fexceptions', '-frtti']
 
         print("PLATFORM_SPECIFIC:", platform_specific)
         jni_md_platform = 'linux'
@@ -129,7 +131,8 @@ def Platform(*, include_dirs: typing.Sequence[Path], sources: typing.Sequence[Pa
    #     platform_specific['extra_link_args'].append(sysconfig.get_config_var('BLDLIBRARY'))
 
     if found_jni:
-        distutils.log.info("Add JNI directory %s" % os.path.join(java_home, 'include', jni_md_platform))
+        distutils.log.info("Add JNI directory %s" %
+                           os.path.join(java_home, 'include', jni_md_platform))
         platform_specific['include_dirs'] += \
             [os.path.join(java_home, 'include', jni_md_platform)]
     return platform_specific

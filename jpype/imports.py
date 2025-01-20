@@ -79,9 +79,11 @@ def _JExceptionHandler(pkg, name, ex):
     exname = type(ex).__name__
     ex._expandStacktrace()
     if exname == "java.lang.ExceptionInInitializerError":
-        raise ImportError("Unable to import '%s' due to initializer error" % javaname) from ex
+        raise ImportError(
+            "Unable to import '%s' due to initializer error" % javaname) from ex
     if exname == "java.lang.UnsupportedClassVersionError":
-        raise ImportError("Unable to import '%s' due to incorrect Java version" % javaname) from ex
+        raise ImportError(
+            "Unable to import '%s' due to incorrect Java version" % javaname) from ex
     if exname == "java.lang.NoClassDefFoundError":
         missing = str(ex).replace('/', '.')
         raise ImportError("Unable to import '%s' due to missing dependency '%s'" % (
@@ -152,13 +154,15 @@ class _JImportLoader:
             base = name.partition('.')[0]
             if not base in _JDOMAINS:
                 return None
-            raise ImportError("Attempt to create Java package '%s' without jvm" % name)
+            raise ImportError(
+                "Attempt to create Java package '%s' without jvm" % name)
 
         # Check for aliases
         if name in _JDOMAINS:
             jname = _JDOMAINS[name]
             if not _jpype.isPackage(jname):
-                raise ImportError("Java package '%s' not found, requested by alias '%s'" % (jname, name))
+                raise ImportError(
+                    "Java package '%s' not found, requested by alias '%s'" % (jname, name))
             ms = _ModuleSpec(name, self)
             ms._jname = jname
             return ms
@@ -192,12 +196,14 @@ class _JImportLoader:
             # so we produce a meaningful diagnositic.
             try:
                 # Use forname because it give better diagnostics
-                cls = _jpype._java_lang_Class.forName(name, True, _jpype.JPypeClassLoader)
+                cls = _jpype._java_lang_Class.forName(
+                    name, True, _jpype.JPypeClassLoader)
 
                 # This code only is hit if an error was not thrown
                 if cls.getModifiers() & 1 == 0:
                     raise ImportError("Class `%s` is not public" % name)
-                raise ImportError("Class `%s` was found but was not expected" % name)
+                raise ImportError(
+                    "Class `%s` was found but was not expected" % name)
             # Not found is acceptable
             except Exception as ex:
                 raise ImportError("Failed to import '%s'" % name) from ex
