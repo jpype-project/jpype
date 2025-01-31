@@ -17,6 +17,7 @@
 # *****************************************************************************
 import os
 import signal
+import sys
 import threading
 import unittest
 import jpype
@@ -63,5 +64,9 @@ class SignalsTest(unittest.TestCase):
         os.kill(os.getpid(), signal.SIGTERM)
 
         self.sigterm_event.wait(0.1)
-        self.assertTrue(self.sigterm_event.is_set())
-        self.assertFalse(self.sigint_event.is_set())
+        if sys.version_info < (3, 10):
+            self.assertTrue(self.sigint_event.is_set())
+            self.assertFalse(self.sigterm_event.is_set())
+        else:
+            self.assertTrue(self.sigterm_event.is_set())
+            self.assertFalse(self.sigint_event.is_set())
