@@ -65,6 +65,8 @@ class SignalsTest(unittest.TestCase):
 
         self.sigterm_event.wait(0.1)
         if sys.version_info < (3, 10):
+            # python versions below 3.10 do not support PyErr_SetInterruptEx
+            # so SIGTERM will be sent as SIGINT to the interpreter
             self.assertTrue(self.sigint_event.is_set())
             self.assertFalse(self.sigterm_event.is_set())
         else:
