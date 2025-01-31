@@ -492,7 +492,11 @@ extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeSignal_interruptPy
 (JNIEnv *env, jclass cls, jint signal)
 {
 	interruptState = 1;
+#if PY_MINOR_VERSION<10
+	PyErr_SetInterrupt();
+#else
 	PyErr_SetInterruptEx((int) signal);
+#endif
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeSignal_acknowledgePy
