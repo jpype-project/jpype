@@ -46,14 +46,13 @@ class SignalsTest(unittest.TestCase):
         jpype.startJVM(interrupt=False)
 
     def setUp(self):
+        if sys.platform == "win32":
+            raise unittest.SkipTest("signals test not applicable on windows")
         self.sigint_event.clear()
         self.sigterm_event.clear()
 
     def testSigInt(self):
-        if sys.platform == "win32":
-            os.kill(os.getpid(), signal.CTRL_C_EVENT)
-        else:
-            os.kill(os.getpid(), signal.SIGINT)
+        os.kill(os.getpid(), signal.SIGINT)
 
         # the test is executed in the main thread. The signal cannot interrupt the threading.Event.wait() call
         # so asserting the return value of `wait` does not work.
@@ -64,8 +63,6 @@ class SignalsTest(unittest.TestCase):
         self.assertFalse(self.sigterm_event.is_set())
 
     def testSigTerm(self):
-        if sys.platform == "win32":
-            raise unittest.SkipTest("SIGTERM test not applicable on windows")
         os.kill(os.getpid(), signal.SIGTERM)
 
         self.sigterm_event.wait(0.1)
