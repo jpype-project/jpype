@@ -46,6 +46,8 @@ class SignalsTest(unittest.TestCase):
         jpype.startJVM(interrupt=False)
 
     def setUp(self):
+        if sys.platform == "win32":
+            raise unittest.SkipTest("signals test not applicable on windows")
         self.sigint_event.clear()
         self.sigterm_event.clear()
 
