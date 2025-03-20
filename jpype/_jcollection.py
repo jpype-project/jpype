@@ -162,8 +162,14 @@ class _JList(object):
         return self
 
     def __add__(self, obj):
-        new = self.clone()
+        new = _jpype.JClass("java.util.ArrayList")(self)
         new.extend(obj)
+        return new
+
+    def __mul__(self, obj):
+        new = _jpype.JClass("java.util.ArrayList")()
+        for i in range(obj):
+            new.extend(self)
         return new
 
     @JOverride(sticky=True, rename='remove_')
