@@ -120,7 +120,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	}
 
 	// Determine the memory requirements
-#define PAD(x) (x+31)&~32
+#define PAD(x) ((x+31)&~31)
 	size_t mem = PAD(sizeof(JavaVMInitArgs));
 	size_t oblock = mem;
 	mem += PAD(sizeof(JavaVMOption)*args.size() + 1);
@@ -129,7 +129,6 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	{
 		mem += PAD(args[i].size()+1);
 	}
-
 
 	// Pack the arguments
 	JP_TRACE("Pack arguments");
@@ -144,7 +143,7 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	JP_TRACE("IgnoreUnrecognized", ignoreUnrecognized);
 
 	jniArgs->nOptions = (jint) args.size();
-	JP_TRACE("NumOptions", jniArgs.nOptions);
+	JP_TRACE("NumOptions", jniArgs->nOptions);
 	size_t j = sblock;
 	for (size_t i = 0; i < args.size(); i++)
 	{
