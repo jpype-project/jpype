@@ -134,6 +134,24 @@ static Py_ssize_t PyJPArray_len(PyJPArray *self)
 	JP_PY_CATCH(-1);
 }
 
+static PyObject* PyJPArray_concat(PyJPArray *self, PyObject* bb)
+{
+	JP_PY_TRY("PyJPArray_concat");
+	PyJPModule_getContext();
+	JP_RAISE(PyExc_TypeError, "Not supported"); // GCOVR_EXCL_LINE
+	Py_RETURN_NONE;
+	JP_PY_CATCH(nullptr);
+}
+
+static PyObject* PyJPArray_repeat(PyJPArray *self, Py_ssize_t n)
+{
+	JP_PY_TRY("PyJPArray_repeat");
+	PyJPModule_getContext();
+	JP_RAISE(PyExc_TypeError, "Not supported"); // GCOVR_EXCL_LINE
+	Py_RETURN_NONE;
+	JP_PY_CATCH(nullptr);
+}
+
 static PyObject* PyJPArray_length(PyJPArray *self, PyObject *closure)
 {
 	return PyLong_FromSsize_t(PyJPArray_len(self));
@@ -429,6 +447,8 @@ static PyType_Slot arraySlots[] = {
 	{ Py_tp_methods,  (void*) &arrayMethods},
 	{ Py_mp_subscript, (void*) &PyJPArray_getItem},
 	{ Py_sq_length,   (void*) &PyJPArray_len},
+	{ Py_sq_concat,   (void*) &PyJPArray_concat},
+	{ Py_sq_repeat,   (void*) &PyJPArray_repeat},
 	{ Py_tp_getset,   (void*) &arrayGetSets},
 	{ Py_mp_ass_subscript, (void*) &PyJPArray_assignSubscript},
 #if PY_VERSION_HEX >= 0x03090000
