@@ -263,3 +263,17 @@ class JListTestCase(common.JPypeTestCase):
         self.assertTrue(issubclass(ArrayList, MutableSequence))
         self.assertTrue(issubclass(LinkedList, Sequence))
         self.assertTrue(issubclass(LinkedList, MutableSequence))
+
+    def testConcat(self):
+        ArrayList = jpype.JClass('java.util.ArrayList')
+        l1 = ArrayList([1,2,3])
+        l2 = ArrayList([4,5,6])
+        l3 = l1 + l2
+        self.assertEqual(l3, ArrayList([1,2,3,4,5,6]))
+
+    def testRepeat(self):
+        ArrayList = jpype.JClass('java.util.ArrayList')
+        l1 = ArrayList([1,2,3])
+        l2 = l1 * 3
+        print(l2)
+        self.assertEqual(l2, ArrayList([1,2,3,1,2,3,1,2,3]))
