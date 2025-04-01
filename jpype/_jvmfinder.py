@@ -99,7 +99,7 @@ class JVMFinder:
         found_non_supported_jvm = False
 
         # Look for the file
-        for root, _, names in os.walk(java_home):
+        for root, _, names in sorted(os.walk(java_home), key=lambda t: len(t[0].split(os.sep))):
             if self._libfile in names:
                 # Found it, but check for non supported jvms
                 candidate = os.path.split(root)[1]
