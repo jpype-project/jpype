@@ -29,12 +29,12 @@ class ConversionTestCase(common.JPypeTestCase):
         self.jc2 = jpype.JClass("java.lang.Integer")
 
     def testList(self):
-        cls = JClass('jpype.collection.CollectionTest')
+        cls = JClass('jpype.test.collection.CollectionTest')
         self.assertIsInstance(cls.testList(
             [1, 2, 3]), JClass('java.util.List'))
 
     def testMap(self):
-        cls = JClass('jpype.collection.CollectionTest')
+        cls = JClass('jpype.test.collection.CollectionTest')
         self.assertIsInstance(cls.testMap(
             {'a': 1, 'b': 2}), JClass('java.util.Map'))
 
