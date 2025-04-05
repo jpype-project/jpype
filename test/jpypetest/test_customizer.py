@@ -32,15 +32,15 @@ class CustomizerTestCase(common.JPypeTestCase):
         self.fixture = JClass('jpype.test.common.Fixture')()
 
     def testSticky(self):
-        @jpype.JImplementationFor("jpype.override.A")
+        @jpype.JImplementationFor("jpype.test.override.A")
         class _A:
             @jpype.JOverride(sticky=True, rename="remove_")
             def remove(self, obj):
                 pass
 
-        A = jpype.JClass("jpype.override.A")
-        B = jpype.JClass("jpype.override.B")
+        A = jpype.JClass("jpype.test.override.A")
+        B = jpype.JClass("jpype.test.override.B")
         self.assertEqual(A.remove, _A.remove)
         self.assertEqual(B.remove, _A.remove)
-        self.assertEqual(str(A.remove_), "jpype.override.A.remove")
-        self.assertEqual(str(B.remove_), "jpype.override.B.remove")
+        self.assertEqual(str(A.remove_), "jpype.test.override.A.remove")
+        self.assertEqual(str(B.remove_), "jpype.test.override.B.remove")
