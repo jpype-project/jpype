@@ -49,7 +49,7 @@ class ProxyMultiThreadedTestCase(common.JPypeTestCase):
 
     def setUp(self):
         super(ProxyMultiThreadedTestCase, self).setUp()
-        self.package = JPackage("jpype.proxy")
+        self.package = JPackage("jpype.test.proxy")
         self.executor = None
 
     def tearDown(self):
