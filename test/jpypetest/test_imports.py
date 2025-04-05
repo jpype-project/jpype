@@ -121,8 +121,9 @@ class ImportsTestCase(common.JPypeTestCase):
         self.assertFalse("late" in dir(ojp))
         with self.assertRaises(ImportError):
             import org.jpype.late as late  # type: ignore
-
-        jpype.addClassPath(pathlib.Path("test/jar/late/late.jar").absolute())
+        jar = pathlib.Path(__file__).parent.parent / "jar/late/late.jar"
+        assert jar.exists()
+        jpype.addClassPath(jar.absolute())
         import org.jpype.late as late
         self.assertTrue("Test" in dir(late))
         t = late.Test()
