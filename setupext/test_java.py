@@ -87,4 +87,4 @@ class TestJavaCommand(distutils.cmd.Command):
         self.announce("  %s" % " ".join(cmdStr), level=distutils.log.INFO)
         subprocess.check_call(cmdStr)
         subprocess.check_call(shlex.split(
-            "javadoc -Xdoclint:none test/harness/jpype/doc/Test.java -d test/classes/"))
+            "javadoc -Xdoclint:none test/harness/jpype/test/doc/Test.java -d test/classes/"))
