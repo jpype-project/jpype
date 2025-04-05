@@ -19,7 +19,6 @@ import jpype
 import jpype.imports
 import common
 import sys
-import os
 import importlib
 import pytest
 from unittest import mock
@@ -128,7 +127,9 @@ class CoverageCase(common.JPypeTestCase):
     def testJStringAppend(self):
         js = jpype.JString("foo")
         self.assertEqual(js + "bar", "foobar")
-        if not self._convertStrings:
+
+        from conftest import my_options
+        if not my_options["convertStrings"]:
             self.assertIsInstance(js + "bar", jpype.java.lang.String)
 
     def testJStringNE(self):
