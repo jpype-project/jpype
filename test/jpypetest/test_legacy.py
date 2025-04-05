@@ -33,13 +33,14 @@ def proxy(s):
 class LegacyTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        # fixme: this would never do anything...
         # Run with automatic string conversion
         jpype.startJVM(classpath=os.path.abspath(
             "test/classes"), convertStrings=True)
 
     def setUp(self):
-        self._test = jpype.JClass("jpype.str.Test")
-        self._intf = jpype.JClass("jpype.str.StringFunction")
+        self._test = jpype.JClass("jpype.test.str.Test")
+        self._intf = jpype.JClass("jpype.test.str.StringFunction")
 
     def testStaticField(self):
         s = self._test.staticField
