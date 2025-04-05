@@ -15,6 +15,8 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+import pathlib
+
 import jpype
 import common
 import subrun
@@ -33,10 +35,9 @@ def proxy(s):
 class LegacyTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        # fixme: this would never do anything...
         # Run with automatic string conversion
-        jpype.startJVM(classpath=os.path.abspath(
-            "test/classes"), convertStrings=True)
+        jpype.startJVM(classpath=pathlib.Path(__file__).parent.parent / "classes",
+             convertStrings=True)
 
     def setUp(self):
         self._test = jpype.JClass("jpype.test.str.Test")
