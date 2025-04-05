@@ -88,11 +88,11 @@ class ImportsTestCase(common.JPypeTestCase):
 
     def testAlias1(self):
         jpype.imports.registerDomain("jpypex", alias="jpype")
-        from jpypex.common import Fixture  # type: ignore
+        from jpypex.test.common import Fixture  # type: ignore
         self.assertEqual(Fixture, jpype.JClass("jpype.test.common.Fixture"))
 
     def testAlias2(self):
-        jpype.imports.registerDomain("commonx", alias="jpype.common")
+        jpype.imports.registerDomain("commonx", alias="jpype.test.common")
         from commonx import Fixture as Fixture2  # type: ignore
         self.assertEqual(Fixture2, jpype.JClass("jpype.test.common.Fixture"))
 
