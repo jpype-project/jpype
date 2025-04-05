@@ -24,6 +24,11 @@ import common
 
 root = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
 cp = os.path.join(root, 'classes').replace('\\', '/')
+print("cp: ", cp)
+
+root = Path(__file__).parent.parent
+unicode_path_jar = root / "jar/unicode_à😎/sample_package.jar"
+assert unicode_path_jar.exists()
 
 
 @subrun.TestCase(individual=True)
@@ -58,33 +63,33 @@ class StartJVMCase(unittest.TestCase):
 
     def testClasspathArgKeyword(self):
         jpype.startJVM(classpath=cp, convertStrings=False)
-        assert jpype.JClass('jpype.array.TestArray') is not None
+        assert jpype.JClass('jpype.test.array.TestArray') is not None
 
     def testClasspathArgList(self):
         jpype.startJVM(
             classpath=[cp],
             convertStrings=False,
         )
-        assert jpype.JClass('jpype.array.TestArray') is not None
+        assert jpype.JClass('jpype.test.array.TestArray') is not None
 
     def testClasspathArgListEmpty(self):
         jpype.startJVM(
             classpath=[cp, ''],
             convertStrings=False,
         )
-        assert jpype.JClass('jpype.array.TestArray') is not None
+        assert jpype.JClass('jpype.test.array.TestArray') is not None
 
     def testClasspathArgDef(self):
         jpype.startJVM('-Djava.class.path=%s' % cp, convertStrings=False)
-        assert jpype.JClass('jpype.array.TestArray') is not None
+        assert jpype.JClass('jpype.test.array.TestArray') is not None
 
     def testClasspathArgPath(self):
         jpype.startJVM(classpath=Path(cp), convertStrings=False)
-        assert jpype.JClass('jpype.array.TestArray') is not None
+        assert jpype.JClass('jpype.test.array.TestArray') is not None
 
     def testClasspathArgPathList(self):
         jpype.startJVM(classpath=[Path(cp)], convertStrings=False)
-        assert jpype.JClass('jpype.array.TestArray') is not None
+        assert jpype.JClass('jpype.test.array.TestArray') is not None
 
     def testClasspathArgGlob(self):
         jpype.startJVM(classpath=os.path.join(cp, '..', 'jar', 'mrjar*'))
@@ -101,7 +106,7 @@ class StartJVMCase(unittest.TestCase):
 
     def testJVMPathArg_Str(self):
         jpype.startJVM(self.jvmpath, classpath=cp, convertStrings=False)
-        assert jpype.JClass('jpype.array.TestArray') is not None
+        assert jpype.JClass('jpype.test.array.TestArray') is not None
 
     def testJVMPathArg_None(self):
         # It is allowed to pass None as a JVM path
@@ -109,13 +114,13 @@ class StartJVMCase(unittest.TestCase):
             None,  # type: ignore
             classpath=cp,
         )
-        assert jpype.JClass('jpype.array.TestArray') is not None
+        assert jpype.JClass('jpype.test.array.TestArray') is not None
 
     def testJVMPathArg_NoArgs(self):
         jpype.startJVM(
             classpath=cp,
         )
-        assert jpype.JClass('jpype.array.TestArray') is not None
+        assert jpype.JClass('jpype.test.array.TestArray') is not None
 
     def testJVMPathArg_Path(self):
         with self.assertRaises(TypeError):
@@ -133,11 +138,11 @@ class StartJVMCase(unittest.TestCase):
             jvmpath=self.jvmpath,
             convertStrings=False,
         )
-        assert jpype.JClass('jpype.array.TestArray') is not None
+        assert jpype.JClass('jpype.test.array.TestArray') is not None
 
     def testJVMPathKeyword_Path(self):
         jpype.startJVM(jvmpath=Path(self.jvmpath), classpath=cp, convertStrings=False)
-        assert jpype.JClass('jpype.array.TestArray') is not None
+        assert jpype.JClass('jpype.test.array.TestArray') is not None
 
     def testPathTwice(self):
         with self.assertRaises(TypeError):
@@ -151,17 +156,17 @@ class StartJVMCase(unittest.TestCase):
         """Test that paths with non-ASCII characters are handled correctly.
         Regression test for https://github.com/jpype-project/jpype/issues/1194
         """
-        jpype.startJVM(jvmpath=Path(self.jvmpath), classpath="test/jar/unicode_à😎/sample_package.jar")
+        jpype.startJVM(jvmpath=Path(self.jvmpath), classpath=str(unicode_path_jar.absolute()))
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
         self.assertEqual(type(cl), jpype.JClass("org.jpype.JPypeClassLoader"))
-        assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
+        assert dir(jpype.JPackage('org.jpype.test.sample_package')) == ['A', 'B']
 
 
     def testOldStyleNonASCIIPath(self):
         """Test that paths with non-ASCII characters are handled correctly.
         Regression test for https://github.com/jpype-project/jpype/issues/1194
         """
-        jpype.startJVM("-Djava.class.path=test/jar/unicode_à😎/sample_package.jar", jvmpath=Path(self.jvmpath))
+        jpype.startJVM(f"-Djava.class.path={unicode_path_jar}", jvmpath=Path(self.jvmpath))
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
         self.assertEqual(type(cl), jpype.JClass("org.jpype.JPypeClassLoader"))
         assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
@@ -171,7 +176,7 @@ class StartJVMCase(unittest.TestCase):
             jpype.startJVM(
                 "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
                 jvmpath=Path(self.jvmpath),
-                classpath="test/jar/unicode_à😎/sample_package.jar"
+                classpath=str(unicode_path_jar.absolute())
             )
 
     def testOldStyleNonASCIIPathWithSystemClassLoader(self):
@@ -179,7 +184,7 @@ class StartJVMCase(unittest.TestCase):
             jpype.startJVM(
                 self.jvmpath,
                 "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
-                "-Djava.class.path=test/jar/unicode_à😎/sample_package.jar"
+                f"-Djava.class.path={unicode_path_jar.absolute()}",
             )
 
     @common.requireAscii
