@@ -303,7 +303,7 @@ class JMethodTestCase(common.JPypeTestCase):
         fixture = JClass("jpype.test.common.Fixture")()
         self.assertIsInstance(fixture.callInt.__qualname__, str)
         self.assertEqual(fixture.callInt.__qualname__,
-                         'jpype.common.Fixture.callInt')
+                         'jpype.test.common.Fixture.callInt')
 
     def testMatches(self):
         js = JClass("java.lang.String")()

@@ -201,7 +201,7 @@ class JClassTestCase(common.JPypeTestCase):
         # This tests for problems when the inner class implements the
         # outer interface which creates a race condition.  Success is
         # not throwing an exception
-        test = JClass("jpype.types.InnerTest")()
+        test = JClass("jpype.test.types.InnerTest")()
         test.test()
 
     def testLookupGeneric(self):
