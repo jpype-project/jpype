@@ -15,7 +15,6 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-
 import pytest
 
 import common
@@ -39,6 +38,52 @@ def pytest_collection_modifyitems(config, items):
         common.fast = True
 
 
+def start_test_jvm(checkjni=False, classpath=None, convertStrings=False, jacoco=False):
+    """Starts a JVM with testing arguments."""
+    import jpype
+    import _jpype
+    from pathlib import Path
+
+    import logging
+    try:
+        import faulthandler
+        faulthandler.enable()
+        faulthandler.disable()
+    except: ## tODO: too broad exception handling
+        pass
+    root = Path(__file__).parent.parent
+    test_java_classes = root / "classes"
+    assert test_java_classes.exists()
+    jpype.addClassPath(test_java_classes.absolute())
+    jvm_path = jpype.getDefaultJVMPath()
+
+    logger = logging.getLogger(__name__)
+    logger.info("Running testsuite using JVM %s" % jvm_path)
+    classpath_arg = "-Djava.class.path=%s"
+    args = ["-ea", "-Xmx256M", "-Xms16M"]
+    if checkjni:
+        args.append("-Xcheck:jni")
+    if classpath:
+        import warnings
+        # This needs to be relative to run location
+        jpype.addClassPath(Path(classpath).resolve())
+        warnings.warn("using jar instead of thunks")
+    if convertStrings:
+        import warnings
+        warnings.warn("using deprecated convertStrings")
+    if jacoco:
+        import warnings
+        args.append(
+            "-javaagent:lib/org.jacoco.agent-0.8.5-runtime.jar=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
+        warnings.warn("using JaCoCo")
+    jpype.addClassPath(root / "../lib/*")
+    jpype.addClassPath(root /  "jar/*")
+    classpath_arg %= jpype.getClassPath()
+    args.append(classpath_arg)
+    _jpype.enableStacktraces(True)
+    jpype.startJVM(jvm_path, *args,
+                   convertStrings=convertStrings)
+
 @pytest.fixture(scope="session")
 def start_test_jvm_per_session(request):
     """Passes the custom pytest arguments for classpath etc. to the testing session JVM."""
@@ -47,49 +92,5 @@ def start_test_jvm_per_session(request):
     jacoco = request.config.getoption("--jacoco")
     checkjni = request.config.getoption("--checkjni")
 
-    def start_test_jvm():
-        print("starting jvm")
-        import jpype
-        import _jpype
-        from os import path
-        import logging
-        try:
-            import faulthandler
-            faulthandler.enable()
-            faulthandler.disable()
-        except: ## tODO: too broad exception handling
-            pass
-        root = path.dirname(path.abspath(path.dirname(__file__)))
-        jpype.addClassPath(path.join(root, 'classes'))
-        jvm_path = jpype.getDefaultJVMPath()
-        logger = logging.getLogger(__name__)
-        logger.info("Running testsuite using JVM %s" % jvm_path)
-        classpath_arg = "-Djava.class.path=%s"
-        args = ["-ea", "-Xmx256M", "-Xms16M"]
-        if checkjni:
-            args.append("-Xcheck:jni")
-        if classpath:
-            from pathlib import Path
-            import warnings
-            # This needs to be relative to run location
-            jpype.addClassPath(Path(classpath).resolve())
-            warnings.warn("using jar instead of thunks")
-        if convertStrings:
-            import warnings
-            warnings.warn("using deprecated convertStrings")
-        if jacoco:
-            import warnings
-            args.append(
-                "-javaagent:lib/org.jacoco.agent-0.8.5-runtime.jar=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
-            warnings.warn("using JaCoCo")
-        jpype.addClassPath(path.join(root, "../lib/*"))
-        jpype.addClassPath(path.join(root, "jar/*"))
-        classpath_arg %= jpype.getClassPath()
-        args.append(classpath_arg)
-        _jpype.enableStacktraces(True)
-        # JPypeTestCase.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))
-        jpype.startJVM(jvm_path, *args,
-                       convertStrings=convertStrings)
 
-
-    start_test_jvm()
+    start_test_jvm(checkjni=checkjni, classpath=classpath, convertStrings=convertStrings, jacoco=jacoco)
