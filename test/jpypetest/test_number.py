@@ -32,7 +32,7 @@ except ImportError:
 class JNumberTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.cls = JClass("jpype.common.Fixture")
+        self.cls = JClass("jpype.test.common.Fixture")
         self.fixture = self.cls()
 
     def testJavaPrimitives(self):

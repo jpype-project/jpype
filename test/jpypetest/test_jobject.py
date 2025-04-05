@@ -223,7 +223,7 @@ class JClassTestCase(common.JPypeTestCase):
             setattr(jo, object(), 1)
 
     def testSetAttrFail2(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("jpype.test.common.Fixture")()
         with self.assertRaisesRegex(AttributeError, "is not settable"):
             setattr(fixture, "callObject", 4)
 
