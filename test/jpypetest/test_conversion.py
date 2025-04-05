@@ -69,7 +69,7 @@ class ConversionTestCase(common.JPypeTestCase):
             self.jc1._convertToJava(1)
 
     def testUnbox(self):
-        jf = JClass('jpype.common.Fixture')
+        jf = JClass('jpype.test.common.Fixture')
         java = jpype.java
         jf.static_bool_field = java.lang.Boolean(True)
         self.assertEqual(jf.static_bool_field, True)

@@ -38,7 +38,7 @@ class JClassTestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.fixture = JClass('jpype.common.Fixture')()
+        self.fixture = JClass('jpype.test.common.Fixture')()
 
     def testSetAttrPythonField(self):
         cls = JClass('java.lang.String')

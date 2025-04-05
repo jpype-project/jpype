@@ -29,7 +29,7 @@ except ImportError:
 class CustomizerTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.fixture = JClass('jpype.common.Fixture')()
+        self.fixture = JClass('jpype.test.common.Fixture')()
 
     def testSticky(self):
         @jpype.JImplementationFor("jpype.override.A")

@@ -86,76 +86,76 @@ class JClassTestCase(common.JPypeTestCase):
             cls.args = 1
 
     def testGetAttrStaticField_2(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         cls.static_object_field = "fred"
         self.assertEqual(cls.static_object_field, "fred")
 
     def testSetAttrStaticField_3(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         cls.static_object_field = "fred"
 
     def testGetAttrField(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         with self.assertRaises(AttributeError):
             v = cls.object_field
 
     def testSetAttrField(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         with self.assertRaises(AttributeError):
             cls.object_field = "fred"
 
     def testGetAttrPrivateField(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         with self.assertRaises(AttributeError):
             v = cls.privateObjectField
 
     def testSetAttrPrivateField(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         with self.assertRaises(AttributeError):
             cls.private_object_field = "fred"
 
     def testGetAttrFinalField(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         with self.assertRaises(AttributeError):
             v = cls.final_object_field
 
     def testSetAttrFinalField(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         with self.assertRaises(AttributeError):
             cls.final_object_field = "fred"
 
     def testGetAttrStaticFinalField(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         self.assertEqual(cls.final_static_object_field,
                          "final static object field")
 
     def testSetAttrStaticFinalField(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         with self.assertRaises(AttributeError):
             cls.final_static_object_field = "bar"
 
     def testStaticMethod(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         cls.callStaticObject(JObject())
 
     def testPrivateStaticMethod(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         with self.assertRaises(AttributeError):
             cls.callPrivateStaticObject(JObject())
 
     def testMethod(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         with self.assertRaises(TypeError):
             cls.callObject(JObject())
         cls.callObject(cls(), JObject())
 
     def testPrivateMethod(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         with self.assertRaises(AttributeError):
             cls.callPrivateObject(JObject())
 
     def testProtectedMethod(self):
-        cls = JClass('jpype.common.Fixture')
+        cls = JClass('jpype.test.common.Fixture')
         with self.assertRaises(AttributeError):
             cls.callProtectedObject(JObject())
 
