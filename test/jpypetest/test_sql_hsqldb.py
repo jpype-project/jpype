@@ -6,7 +6,7 @@ from jpype.types import *
 from jpype import java
 import jpype.dbapi2 as dbapi2
 import common
-import time
+import pytest
 import datetime
 import decimal
 import threading
@@ -25,9 +25,7 @@ db_name = "jdbc:hsqldb:mem:myDb"
 
 
 def setUpModule(module):
-    from common import java_version
-    import pytest
-    version = java_version()
+    version = jpype.getJVMVersion()
     if version[0] == 1 and version[1] == 8:
         pytest.skip("jdk8 unsupported", allow_module_level=True)
 

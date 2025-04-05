@@ -563,17 +563,17 @@ def synchronized(obj):
     return _jpype._JMonitor(obj)
 
 
-def getJVMVersion():
+def getJVMVersion() -> tuple[int, int, int]:
     """ Get the JVM version if the JVM is started.
 
     This function can be used to determine the version of the JVM. It is
     useful to help determine why a Jar has failed to load.
 
     Returns:
-      A typle with the (major, minor, revison) of the JVM if running.
+      A tuple with the (major, minor, revision) of the JVM if running.
     """
     if not _jpype.isStarted():
-        return (0, 0, 0)
+        return 0, 0, 0
 
     import re
     runtime = _jpype.JClass('java.lang.Runtime')

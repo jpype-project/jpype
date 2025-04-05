@@ -23,15 +23,15 @@ import common
 
 def pytest_addoption(parser):
     parser.addoption('--classpath', action="store", default=None,
-                     help="Use a jar rather than the thunks")
+                     help="Use a jar rather than the thunks.")
     parser.addoption('--convertStrings', action="store_true",
-                     default=False, help="Give convert strings to startJVMs")
+                     default=False, help="Give convert strings to startJVM.")
     parser.addoption('--jacoco', action="store_true",
-                     default=False, help="Add Java coverage tool")
+                     default=False, help="Add Java coverage tool.")
     parser.addoption('--checkjni', action="store_true",
-                     default=False, help="Enable JNI checking")
+                     default=False, help="Enable JNI checking.")
     parser.addoption('--fast', action="store_true",
-                     default=False, help="Skip subrun tests")
+                     default=False, help="Skip subrun, jedi and SQL tests.")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -39,9 +39,57 @@ def pytest_collection_modifyitems(config, items):
         common.fast = True
 
 
-@pytest.fixture(scope="class")
-def common_opts(request):
-    request.cls._classpath = request.config.getoption("--classpath")
-    request.cls._convertStrings = request.config.getoption("--convertStrings")
-    request.cls._jacoco = request.config.getoption("--jacoco")
-    request.cls._checkjni = request.config.getoption("--checkjni")
+@pytest.fixture(scope="session")
+def start_test_jvm_per_session(request):
+    """Passes the custom pytest arguments for classpath etc. to the testing session JVM."""
+    classpath = request.config.getoption("--classpath")
+    convertStrings = request.config.getoption("--convertStrings")
+    jacoco = request.config.getoption("--jacoco")
+    checkjni = request.config.getoption("--checkjni")
+
+    def start_test_jvm():
+        print("starting jvm")
+        import jpype
+        import _jpype
+        from os import path
+        import logging
+        try:
+            import faulthandler
+            faulthandler.enable()
+            faulthandler.disable()
+        except: ## tODO: too broad exception handling
+            pass
+        root = path.dirname(path.abspath(path.dirname(__file__)))
+        jpype.addClassPath(path.join(root, 'classes'))
+        jvm_path = jpype.getDefaultJVMPath()
+        logger = logging.getLogger(__name__)
+        logger.info("Running testsuite using JVM %s" % jvm_path)
+        classpath_arg = "-Djava.class.path=%s"
+        args = ["-ea", "-Xmx256M", "-Xms16M"]
+        if checkjni:
+            args.append("-Xcheck:jni")
+        if classpath:
+            from pathlib import Path
+            import warnings
+            # This needs to be relative to run location
+            jpype.addClassPath(Path(classpath).resolve())
+            warnings.warn("using jar instead of thunks")
+        if convertStrings:
+            import warnings
+            warnings.warn("using deprecated convertStrings")
+        if jacoco:
+            import warnings
+            args.append(
+                "-javaagent:lib/org.jacoco.agent-0.8.5-runtime.jar=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
+            warnings.warn("using JaCoCo")
+        jpype.addClassPath(path.join(root, "../lib/*"))
+        jpype.addClassPath(path.join(root, "jar/*"))
+        classpath_arg %= jpype.getClassPath()
+        args.append(classpath_arg)
+        _jpype.enableStacktraces(True)
+        # JPypeTestCase.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))
+        jpype.startJVM(jvm_path, *args,
+                       convertStrings=convertStrings)
+
+
+    start_test_jvm()
