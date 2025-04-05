@@ -19,6 +19,8 @@ import pytest
 
 import common
 
+my_options = {}
+
 
 def pytest_addoption(parser):
     parser.addoption('--classpath', action="store", default=None,
@@ -92,5 +94,9 @@ def start_test_jvm_per_session(request):
     jacoco = request.config.getoption("--jacoco")
     checkjni = request.config.getoption("--checkjni")
 
+    my_options["classpath"] = classpath
+    my_options["convertStrings"] = convertStrings
+    my_options["jacoco"] = jacoco
+    my_options["checkjni"] = checkjni
 
     start_test_jvm(checkjni=checkjni, classpath=classpath, convertStrings=convertStrings, jacoco=jacoco)
