@@ -33,7 +33,7 @@ class BoxedTestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.TestBoxed = jpype.JClass('jpype.boxed.Boxed')
+        self.TestBoxed = jpype.JClass('jpype.test.boxed.Boxed')
         self.Number = jpype.JClass('java.lang.Number')
         self.Comparable = jpype.JClass('java.lang.Comparable')
 
