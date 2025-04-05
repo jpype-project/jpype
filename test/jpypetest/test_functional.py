@@ -20,16 +20,15 @@ import common
 
 
 def callFunctional(cls, i):
-    fun = cls @(lambda x: x)
+    fun = cls @ (lambda x: x)
     return fun.call(i)
 
 
 class FunctionalTestCase(common.JPypeTestCase):
-    
     def _checkValidFunctional(self, name, value):
-        cls = jpype.JClass("jpype.functional." + name)
+        cls = jpype.JClass("jpype.test.functional." + name)
         self.assertEqual(callFunctional(cls, value), value)
-    
+
     def testAnnotated(self):
         self._checkValidFunctional("Annotated", 0)
 
@@ -42,7 +41,7 @@ class FunctionalTestCase(common.JPypeTestCase):
     def testExtendsNonFunctional(self):
         with self.assertRaises(TypeError):
             self._checkValidFunctional("ExtendsNonFunctional", 3)
-    
+
     def testAnnotatedWithObjectMethods(self):
         self._checkValidFunctional("AnnotatedWithObjectMethods", 4)
 
