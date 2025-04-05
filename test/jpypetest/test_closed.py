@@ -20,8 +20,6 @@ import common
 
 
 class ClosedTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testObjects(self):
         from jpype import java
@@ -48,7 +46,7 @@ class ClosedTestCase(common.JPypeTestCase):
             raise AssertionError("AttributeError not raised")
 
     def testStatic(self):
-        static = jpype.JClass('jpype.objectwrapper.StaticTest')
+        static = jpype.JClass('jpype.test.objectwrapper.StaticTest')
         self.assertEqual(static.i, 1)
         self.assertEqual(static.d, 1.2345)
         self.assertEqual(static.s, "hello")

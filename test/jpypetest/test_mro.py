@@ -23,8 +23,8 @@ import common
 
 class MroTestCase(common.JPypeTestCase):
     def testMro(self):
-        C = JClass('jpype.mro.C')
+        C = JClass('jpype.test.mro.C')
 
     def testMultipleInterfaces(self):
-        j = JClass("jpype.mro.MultipleInterfaces")
+        j = JClass("jpype.test.mro.MultipleInterfaces")
         myinstance = j()
