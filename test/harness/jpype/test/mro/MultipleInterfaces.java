@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.mro;
+package jpype.test.mro;
 
 interface IA
 {

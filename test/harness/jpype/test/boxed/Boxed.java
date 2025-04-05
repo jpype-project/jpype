@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.boxed;
+package jpype.test.boxed;
 
 public class Boxed
 {

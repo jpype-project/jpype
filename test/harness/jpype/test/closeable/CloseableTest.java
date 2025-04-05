@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.closeable;
+package jpype.test.closeable;
 
 class CloseableTest implements java.io.Closeable
 {

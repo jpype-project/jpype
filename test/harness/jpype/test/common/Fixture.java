@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.common;
+package jpype.test.common;
 
 public class Fixture
 {

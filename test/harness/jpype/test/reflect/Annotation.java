@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.reflect;
+package jpype.test.reflect;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

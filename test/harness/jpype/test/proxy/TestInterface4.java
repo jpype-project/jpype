@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.proxy;
+package jpype.test.proxy;
 
 import java.util.List;
 

@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.objectwrapper;
+package jpype.test.objectwrapper;
 
 public class Test1
 {

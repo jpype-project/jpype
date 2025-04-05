@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package org.jpype.fail;
+package org.jpype.test.fail;
 
 // To test this with more than one path, we need a second
 // copy.  Java caches the result of the first attempt

@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.attr;
+package jpype.test.attr;
 
 import java.awt.image.BufferStrategy;
 

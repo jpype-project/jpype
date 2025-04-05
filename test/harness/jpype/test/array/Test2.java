@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.array;
+package jpype.test.array;
 
 public class Test2
 {

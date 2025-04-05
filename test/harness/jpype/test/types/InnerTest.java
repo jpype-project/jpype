@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.types;
+package jpype.test.types;
 
 public class InnerTest
 {

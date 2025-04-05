@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.collection;
+package jpype.test.collection;
 
 import java.util.Collection;
 import java.util.Map;

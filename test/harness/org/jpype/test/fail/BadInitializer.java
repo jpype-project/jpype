@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package org.jpype.fail;
+package org.jpype.test.fail;
 
 public class BadInitializer
 {

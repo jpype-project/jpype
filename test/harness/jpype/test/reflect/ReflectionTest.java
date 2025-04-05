@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.reflect;
+package jpype.test.reflect;
 
 public class ReflectionTest
 {

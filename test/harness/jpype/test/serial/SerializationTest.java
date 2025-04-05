@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.serial;
+package jpype.test.serial;
 
 public class SerializationTest implements java.io.Serializable
 {

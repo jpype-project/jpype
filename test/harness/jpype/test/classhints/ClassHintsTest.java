@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.classhints;
+package jpype.test.classhints;
 
 public class ClassHintsTest
 {

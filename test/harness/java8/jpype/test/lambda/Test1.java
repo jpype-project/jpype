@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.lambda;
+package jpype.test.lambda;
 
 import java.util.function.Function;
 

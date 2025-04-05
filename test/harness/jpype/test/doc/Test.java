@@ -1,7 +1,7 @@
 /*
  * Attempt at javadoc coverage test.
  */
-package jpype.doc;
+package jpype.test.doc;
 
 /**
  * A bunch of random stuff.

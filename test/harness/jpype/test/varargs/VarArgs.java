@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.varargs;
+package jpype.test.varargs;
 
 import java.util.Map;
 

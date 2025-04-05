@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.startup;
+package jpype.test.startup;
 
 import java.net.URL;
 import java.net.URLClassLoader;

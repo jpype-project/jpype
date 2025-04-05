@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.functional;
+package jpype.test.functional;
 
 public interface ExtendsNonFunctional extends NonAnnotated
 {

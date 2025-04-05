@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.overloads;
+package jpype.test.overloads;
 
 /** Test to see that using a derived type rather than a base class will 
  * not alter the method resolution process.

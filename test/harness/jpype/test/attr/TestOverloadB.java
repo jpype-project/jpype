@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.attr;
+package jpype.test.attr;
 
 public class TestOverloadB extends TestOverloadA
 {

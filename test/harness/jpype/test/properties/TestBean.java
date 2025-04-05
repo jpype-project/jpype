@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.properties;
+package jpype.test.properties;
 
 public class TestBean
 {

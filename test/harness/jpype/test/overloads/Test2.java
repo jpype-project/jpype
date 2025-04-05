@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.overloads;
+package jpype.test.overloads;
 
 import java.util.List;
 

@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.str;
+package jpype.test.str;
 
 public class Test
 {

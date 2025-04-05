@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.numeric;
+package jpype.test.numeric;
 
 public class NumericTest
 {

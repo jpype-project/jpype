@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.utf8;
+package jpype.test.utf8;
 
 public class Utf8Test
 {

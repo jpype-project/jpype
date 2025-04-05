@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.override;
+package jpype.test.override;
 
 public class A
 {

@@ -13,7 +13,7 @@
 
   See NOTICE file for details.
 **************************************************************************** */
-package jpype.exc;
+package jpype.test.exc;
 
 public class WierdException extends Exception
 {
