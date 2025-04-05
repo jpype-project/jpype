@@ -15,12 +15,9 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-from functools import lru_cache
-
 import pytest
 import _jpype
 import jpype
-import logging
 from os import path
 import unittest  # Extensively used as common.unittest.
 
