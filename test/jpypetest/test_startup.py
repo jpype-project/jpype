@@ -64,33 +64,33 @@ class StartJVMCase(unittest.TestCase):
 
     def testClasspathArgKeyword(self):
         jpype.startJVM(classpath=cp, convertStrings=False)
-        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.jpype.test.array.TestArray') is not None
 
     def testClasspathArgList(self):
         jpype.startJVM(
             classpath=[cp],
             convertStrings=False,
         )
-        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.jpype.test.array.TestArray') is not None
 
     def testClasspathArgListEmpty(self):
         jpype.startJVM(
             classpath=[cp, ''],
             convertStrings=False,
         )
-        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.jpype.test.array.TestArray') is not None
 
     def testClasspathArgDef(self):
         jpype.startJVM('-Djava.class.path=%s' % cp, convertStrings=False)
-        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.jpype.test.array.TestArray') is not None
 
     def testClasspathArgPath(self):
         jpype.startJVM(classpath=Path(cp), convertStrings=False)
-        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.jpype.test.array.TestArray') is not None
 
     def testClasspathArgPathList(self):
         jpype.startJVM(classpath=[Path(cp)], convertStrings=False)
-        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.jpype.test.array.TestArray') is not None
 
     def testClasspathArgGlob(self):
         jpype.startJVM(classpath=os.path.join(cp, '..', 'jar', 'mrjar*'))
@@ -107,7 +107,7 @@ class StartJVMCase(unittest.TestCase):
 
     def testJVMPathArg_Str(self):
         jpype.startJVM(self.jvmpath, classpath=cp, convertStrings=False)
-        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.jpype.test.array.TestArray') is not None
 
     def testJVMPathArg_None(self):
         # It is allowed to pass None as a JVM path
@@ -115,13 +115,13 @@ class StartJVMCase(unittest.TestCase):
             None,  # type: ignore
             classpath=cp,
         )
-        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.jpype.test.array.TestArray') is not None
 
     def testJVMPathArg_NoArgs(self):
         jpype.startJVM(
             classpath=cp,
         )
-        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.jpype.test.array.TestArray') is not None
 
     def testJVMPathArg_Path(self):
         with self.assertRaises(TypeError):
@@ -139,11 +139,11 @@ class StartJVMCase(unittest.TestCase):
             jvmpath=self.jvmpath,
             convertStrings=False,
         )
-        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.jpype.test.array.TestArray') is not None
 
     def testJVMPathKeyword_Path(self):
         jpype.startJVM(jvmpath=Path(self.jvmpath), classpath=cp, convertStrings=False)
-        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.jpype.test.array.TestArray') is not None
 
     def testPathTwice(self):
         with self.assertRaises(TypeError):
