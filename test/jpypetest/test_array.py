@@ -203,7 +203,7 @@ class ArrayTestCase(common.JPypeTestCase):
             jl.get(0)
 
     def testReadArray(self):
-        t = JClass("jpype.array.TestArray")()
+        t = JClass("jpype.test.array.TestArray")()
         self.assertNotIsInstance(t, JPackage)
 
         self.assertCountEqual(self.VALUES, t.i)
@@ -212,13 +212,13 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertCountEqual(self.VALUES[1:-2], t.i[1:-2])
 
     def testEmptyObjectArray(self):
-        ''' Test for strange crash reported in bug #1089302'''
-        Test2 = jpype.JPackage('jpype.array').Test2
+        """Test for strange crash reported in bug #1089302"""
+        Test2 = jpype.JPackage('jpype.test.array').Test2
         test = Test2()
         test.test(test.getValue())
 
     def testWriteArray(self):
-        t = JClass("jpype.array.TestArray")()
+        t = JClass("jpype.test.array.TestArray")()
         self.assertNotIsInstance(t, JPackage)
 
         t.i[0] = 32
@@ -236,19 +236,19 @@ class ArrayTestCase(common.JPypeTestCase):
         self.assertEqual("Foo", a[1])
 
     def testIterateArray(self):
-        t = JClass("jpype.array.TestArray")()
+        t = JClass("jpype.test.array.TestArray")()
         self.assertFalse(isinstance(t, JPackage))
 
         for i in t.i:
             self.assertNotEqual(i, 0)
 
     def testGetSubclass(self):
-        t = JClass("jpype.array.TestArray")()
+        t = JClass("jpype.test.array.TestArray")()
         v = t.getSubClassArray()
         self.assertTrue(isinstance(v[0], jpype.java.lang.Integer))
 
     def testGetArrayAsObject(self):
-        t = JClass("jpype.array.TestArray")()
+        t = JClass("jpype.test.array.TestArray")()
         v = t.getArrayAsObject()
 
     def testJArrayPythonTypes(self):

@@ -23,9 +23,6 @@ import common
 
 class HtmlTestCase(common.JPypeTestCase):
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     def testEntities(self):
         html = JClass("org.jpype.html.Html")
         for k, v in html.ENTITIES.items():
@@ -35,7 +32,7 @@ class HtmlTestCase(common.JPypeTestCase):
             self.assertEqual(ord(u[0][0]), v)
 
     def testClass(self):
-        JC = jpype.JClass("jpype.doc.Test")
+        JC = jpype.JClass("jpype.test.doc.Test")
         jd = JC.__doc__
         self.assertIsInstance(jd, str)
         # Disabled this test for now. Java needs a better API for accessing Java doc.  
@@ -43,7 +40,7 @@ class HtmlTestCase(common.JPypeTestCase):
         #self.assertRegex(jd, "random stuff")
 
     def testMethod(self):
-        JC = jpype.JClass("jpype.doc.Test")
+        JC = jpype.JClass("jpype.test.doc.Test")
         jd = JC.methodOne.__doc__
         self.assertIsInstance(jd, str)
         # Disabling this test for now.  Something fails in Linux but I can't replicate it.

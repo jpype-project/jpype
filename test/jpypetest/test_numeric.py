@@ -28,7 +28,7 @@ class NumericTestCase(common.JPypeTestCase):
 
     def testDoubleConversion(self):
         f = java.lang.Float.MAX_VALUE * 2
-        self.assertTrue(JClass("jpype.numeric.NumericTest").doubleIsTwiceMaxFloat(f))
+        self.assertTrue(JClass("jpype.test.numeric.NumericTest").doubleIsTwiceMaxFloat(f))
 
     def testDoubleIsProperlyConverted(self):
         self.assertTrue(java.lang.Double.POSITIVE_INFINITY != 0.0)
