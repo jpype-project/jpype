@@ -22,18 +22,19 @@ from pathlib import Path
 import unittest
 import common
 
-root = os.path.dirname(os.path.abspath(os.path.dirname(__file__)))
-cp = os.path.join(root, 'classes').replace('\\', '/')
-print("cp: ", cp)
-
 root = Path(__file__).parent.parent
-unicode_path_jar = root / "jar/unicode_à😎/sample_package.jar"
-assert unicode_path_jar.exists()
+cp = (root / "classes").absolute()
+
+unicode_sample_jar = (root / "jar/unicode_à😎/sample_package.jar").absolute()
+unicode_service_jar = (root / "jar/unicode_à😎/service.jar").absolute()
+assert unicode_sample_jar.exists() and unicode_sample_jar.is_file()
+assert unicode_service_jar.exists() and unicode_service_jar.is_file()
 
 
 @subrun.TestCase(individual=True)
 class StartJVMCase(unittest.TestCase):
     def setUp(self):
+        assert not jpype.isJVMStarted()
         self.jvmpath = jpype.getDefaultJVMPath()
 
     def testStartup(self):
@@ -156,17 +157,17 @@ class StartJVMCase(unittest.TestCase):
         """Test that paths with non-ASCII characters are handled correctly.
         Regression test for https://github.com/jpype-project/jpype/issues/1194
         """
-        jpype.startJVM(jvmpath=Path(self.jvmpath), classpath=str(unicode_path_jar.absolute()))
+        jpype.startJVM(jvmpath=Path(self.jvmpath), classpath=str(unicode_sample_jar))
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
         self.assertEqual(type(cl), jpype.JClass("org.jpype.JPypeClassLoader"))
-        assert dir(jpype.JPackage('org.jpype.test.sample_package')) == ['A', 'B']
+        assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
 
 
     def testOldStyleNonASCIIPath(self):
         """Test that paths with non-ASCII characters are handled correctly.
         Regression test for https://github.com/jpype-project/jpype/issues/1194
         """
-        jpype.startJVM(f"-Djava.class.path={unicode_path_jar}", jvmpath=Path(self.jvmpath))
+        jpype.startJVM(f"-Djava.class.path={unicode_sample_jar}", jvmpath=Path(self.jvmpath))
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
         self.assertEqual(type(cl), jpype.JClass("org.jpype.JPypeClassLoader"))
         assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
@@ -174,42 +175,42 @@ class StartJVMCase(unittest.TestCase):
     def testNonASCIIPathWithSystemClassLoader(self):
         with self.assertRaises(ValueError):
             jpype.startJVM(
-                "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
+                "-Djava.system.class.loader=jpype.test.startup.TestSystemClassLoader",
                 jvmpath=Path(self.jvmpath),
-                classpath=str(unicode_path_jar.absolute())
+                classpath=str(unicode_sample_jar.absolute())
             )
 
     def testOldStyleNonASCIIPathWithSystemClassLoader(self):
         with self.assertRaises(ValueError):
             jpype.startJVM(
                 self.jvmpath,
-                "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
-                f"-Djava.class.path={unicode_path_jar.absolute()}",
+                "-Djava.system.class.loader=jpype.test.startup.TestSystemClassLoader",
+                f"-Djava.class.path={unicode_sample_jar.absolute()}",
             )
 
     @common.requireAscii
     def testASCIIPathWithSystemClassLoader(self):
         jpype.startJVM(
-            "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
+            "-Djava.system.class.loader=jpype.test.startup.TestSystemClassLoader",
             jvmpath=Path(self.jvmpath),
-            classpath=f"test/classes"
+            classpath=cp
         )
         classloader = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        test_classLoader = jpype.JClass("jpype.startup.TestSystemClassLoader")
+        test_classLoader = jpype.JClass("jpype.test.startup.TestSystemClassLoader")
         self.assertEqual(type(classloader), test_classLoader)
-        assert dir(jpype.JPackage('jpype.startup')) == ['TestSystemClassLoader']
+        assert dir(jpype.JPackage('jpype.test.startup')) == ['TestSystemClassLoader']
 
     @common.requireAscii
     def testOldStyleASCIIPathWithSystemClassLoader(self):
         jpype.startJVM(
             self.jvmpath,
-            "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
-            "-Djava.class.path=test/classes"
+            "-Djava.system.class.loader=jpype.test.startup.TestSystemClassLoader",
+            f"-Djava.class.path={cp}",
         )
         classloader = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        test_classLoader = jpype.JClass("jpype.startup.TestSystemClassLoader")
+        test_classLoader = jpype.JClass("jpype.test.startup.TestSystemClassLoader")
         self.assertEqual(type(classloader), test_classLoader)
-        assert dir(jpype.JPackage('jpype.startup')) == ['TestSystemClassLoader']
+        assert dir(jpype.JPackage('jpype.test.startup')) == ['TestSystemClassLoader']
 
     @common.requireAscii
     def testDefaultSystemClassLoader(self):
@@ -222,7 +223,7 @@ class StartJVMCase(unittest.TestCase):
         jpype.startJVM(
             self.jvmpath,
             "-Djava.locale.providers=SPI,CLDR",
-            classpath="test/jar/unicode_à😎/service.jar",
+            classpath=unicode_service_jar
         )
         ZoneId = jpype.JClass("java.time.ZoneId")
         ZoneRulesException = jpype.JClass("java.time.zone.ZoneRulesException")
