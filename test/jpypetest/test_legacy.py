@@ -40,8 +40,8 @@ class LegacyTestCase(unittest.TestCase):
              convertStrings=True)
 
     def setUp(self):
-        self._test = jpype.JClass("jpype.test.str.Test")
-        self._intf = jpype.JClass("jpype.test.str.StringFunction")
+        self._test = jpype.JClass("org.jpype.test.str.Test")
+        self._intf = jpype.JClass("org.jpype.test.str.StringFunction")
 
     def testStaticField(self):
         s = self._test.staticField

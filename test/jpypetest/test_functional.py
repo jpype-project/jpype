@@ -26,7 +26,7 @@ def callFunctional(cls, i):
 
 class FunctionalTestCase(common.JPypeTestCase):
     def _checkValidFunctional(self, name, value):
-        cls = jpype.JClass("jpype.test.functional." + name)
+        cls = jpype.JClass("org.jpype.test.functional." + name)
         self.assertEqual(callFunctional(cls, value), value)
 
     def testAnnotated(self):

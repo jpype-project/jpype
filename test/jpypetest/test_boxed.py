@@ -33,7 +33,7 @@ class BoxedTestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.TestBoxed = jpype.JClass('jpype.test.boxed.Boxed')
+        self.TestBoxed = jpype.JClass('org.jpype.test.boxed.Boxed')
         self.Number = jpype.JClass('java.lang.Number')
         self.Comparable = jpype.JClass('java.lang.Comparable')
 
@@ -182,7 +182,7 @@ class BoxedTestCase(common.JPypeTestCase):
         self.assertTrue(java.lang.Boolean(set(['a', 'b'])))
 
         # Implicit does not automatically cast
-        fixture = JClass('jpype.test.common.Fixture')()
+        fixture = JClass('org.jpype.test.common.Fixture')()
         with self.assertRaises(TypeError):
             fixture.callBoxedBoolean(tuple())
         with self.assertRaises(TypeError):

@@ -25,7 +25,7 @@ class FieldsTestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.cls = JClass("jpype.test.common.Fixture")
+        self.cls = JClass("org.jpype.test.common.Fixture")
         self.obj = self.cls()
 
     def testBoolean(self):

@@ -91,7 +91,7 @@ class UseFunc(object):
 @pytest.mark.usefixtures("start_test_jvm_per_session")
 class JPypeTestCase(unittest.TestCase):
     def setUp(self):
-        self.jpype = jpype.JPackage('jpype')
+        self.jpype = jpype.JPackage('org.jpype')
 
     def assertElementsEqual(self, a, b):
         self.assertEqual(len(a), len(b))

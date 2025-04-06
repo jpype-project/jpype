@@ -22,7 +22,7 @@ import common
 class CloseableTestCase(common.JPypeTestCase):
 
     def testCloseable(self):
-        CloseableTest = jpype.JClass("jpype.test.closeable.CloseableTest")
+        CloseableTest = jpype.JClass("org.jpype.test.closeable.CloseableTest")
         CloseableTest.reset()
         self.assertFalse(CloseableTest.closed)
         with CloseableTest() as myFile:
@@ -31,7 +31,7 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertTrue(CloseableTest.closed)
 
     def testCloseableFail(self):
-        CloseableTest = jpype.JClass("jpype.test.closeable.CloseableTest")
+        CloseableTest = jpype.JClass("org.jpype.test.closeable.CloseableTest")
         CloseableTest.reset()
         CloseableTest.willfail = True
         self.assertFalse(CloseableTest.closed)
@@ -50,7 +50,7 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertTrue(CloseableTest.closed)
 
     def testCloseablePyExcept(self):
-        CloseableTest = jpype.JClass("jpype.test.closeable.CloseableTest")
+        CloseableTest = jpype.JClass("org.jpype.test.closeable.CloseableTest")
         CloseableTest.reset()
         self.assertFalse(CloseableTest.closed)
         try:
@@ -64,7 +64,7 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertTrue(CloseableTest.closed)
 
     def testCloseablePyExceptFail(self):
-        CloseableTest = jpype.JClass("jpype.test.closeable.CloseableTest")
+        CloseableTest = jpype.JClass("org.jpype.test.closeable.CloseableTest")
         CloseableTest.reset()
         CloseableTest.willfail = True
         self.assertFalse(CloseableTest.closed)
@@ -80,7 +80,7 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertTrue(CloseableTest.failed)
 
     def testCloseableJExcept(self):
-        CloseableTest = jpype.JClass("jpype.test.closeable.CloseableTest")
+        CloseableTest = jpype.JClass("org.jpype.test.closeable.CloseableTest")
         CloseableTest.reset()
         self.assertFalse(CloseableTest.closed)
         try:
@@ -96,7 +96,7 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertTrue(CloseableTest.closed)
 
     def testCloseableJExceptFail(self):
-        CloseableTest = jpype.JClass("jpype.test.closeable.CloseableTest")
+        CloseableTest = jpype.JClass("org.jpype.test.closeable.CloseableTest")
         CloseableTest.reset()
         CloseableTest.willfail = True
         self.assertFalse(CloseableTest.closed)

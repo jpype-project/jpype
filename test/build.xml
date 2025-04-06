@@ -1,8 +1,8 @@
-<project default="test" name="JPype - Native">
+<project default="test" name="JPype - Java test classes">
 
 	<property name="src" location="harness"/>
 	<property name="build" location="classes"/>
-        <property name="version" value="${ant.java.version}"/>
+	<property name="version" value="${ant.java.version}"/>
 
 	<target name="test" depends="compile">
 	</target>
@@ -28,7 +28,7 @@
 			<src>
 				<pathelement location="${src}/java9"/>
 			</src>
-			<include name="jpype/**/*"/>
+			<include name="org/jpype/**/*"/>
 		</javac>
 	</target>
 
@@ -40,7 +40,7 @@
 			<src>
 				<pathelement location="${src}/java8"/>
 			</src>
-			<include name="jpype/**/*"/>
+			<include name="org/jpype/**/*"/>
 		</javac>
 	</target>
 

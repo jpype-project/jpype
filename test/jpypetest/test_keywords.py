@@ -59,6 +59,6 @@ def testPySafe__NotKeywords(identifier):
 
 class AttributeTestCase(common.JPypeTestCase):
     def testPySafe(self):
-        cls = jpype.JPackage("jpype").test.attr.TestKeywords
+        cls = jpype.JPackage("org.jpype").test.attr.TestKeywords
         self.assertTrue(hasattr(cls, "__leading_double_underscore"))
         self.assertFalse(hasattr(cls, "__dunder_name__"))

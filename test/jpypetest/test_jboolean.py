@@ -31,7 +31,7 @@ except ImportError:
 class JBooleanTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.Test = jpype.JClass("jpype.test.common.Fixture")()
+        self.Test = jpype.JClass("org.jpype.test.common.Fixture")()
 
     @common.requireInstrumentation
     def testJPBoolean_str(self):
@@ -50,7 +50,7 @@ class JBooleanTestCase(common.JPypeTestCase):
             ja[1:3] = [0, 0]
         with self.assertRaises(TypeError):
             ja[1] = object()
-        jf = JClass("jpype.test.common.Fixture")
+        jf = JClass("org.jpype.test.common.Fixture")
         with self.assertRaises(TypeError):
             jf.static_bool_field = object()
         with self.assertRaises(TypeError):

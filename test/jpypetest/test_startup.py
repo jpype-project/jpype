@@ -64,33 +64,33 @@ class StartJVMCase(unittest.TestCase):
 
     def testClasspathArgKeyword(self):
         jpype.startJVM(classpath=cp, convertStrings=False)
-        assert jpype.JClass('jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
 
     def testClasspathArgList(self):
         jpype.startJVM(
             classpath=[cp],
             convertStrings=False,
         )
-        assert jpype.JClass('jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
 
     def testClasspathArgListEmpty(self):
         jpype.startJVM(
             classpath=[cp, ''],
             convertStrings=False,
         )
-        assert jpype.JClass('jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
 
     def testClasspathArgDef(self):
         jpype.startJVM('-Djava.class.path=%s' % cp, convertStrings=False)
-        assert jpype.JClass('jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
 
     def testClasspathArgPath(self):
         jpype.startJVM(classpath=Path(cp), convertStrings=False)
-        assert jpype.JClass('jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
 
     def testClasspathArgPathList(self):
         jpype.startJVM(classpath=[Path(cp)], convertStrings=False)
-        assert jpype.JClass('jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
 
     def testClasspathArgGlob(self):
         jpype.startJVM(classpath=os.path.join(cp, '..', 'jar', 'mrjar*'))
@@ -107,7 +107,7 @@ class StartJVMCase(unittest.TestCase):
 
     def testJVMPathArg_Str(self):
         jpype.startJVM(self.jvmpath, classpath=cp, convertStrings=False)
-        assert jpype.JClass('jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
 
     def testJVMPathArg_None(self):
         # It is allowed to pass None as a JVM path
@@ -115,13 +115,13 @@ class StartJVMCase(unittest.TestCase):
             None,  # type: ignore
             classpath=cp,
         )
-        assert jpype.JClass('jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
 
     def testJVMPathArg_NoArgs(self):
         jpype.startJVM(
             classpath=cp,
         )
-        assert jpype.JClass('jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
 
     def testJVMPathArg_Path(self):
         with self.assertRaises(TypeError):
@@ -139,11 +139,11 @@ class StartJVMCase(unittest.TestCase):
             jvmpath=self.jvmpath,
             convertStrings=False,
         )
-        assert jpype.JClass('jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
 
     def testJVMPathKeyword_Path(self):
         jpype.startJVM(jvmpath=Path(self.jvmpath), classpath=cp, convertStrings=False)
-        assert jpype.JClass('jpype.test.array.TestArray') is not None
+        assert jpype.JClass('org.org.jpype.test.array.TestArray') is not None
 
     def testPathTwice(self):
         with self.assertRaises(TypeError):
@@ -175,7 +175,7 @@ class StartJVMCase(unittest.TestCase):
     def testNonASCIIPathWithSystemClassLoader(self):
         with self.assertRaises(ValueError):
             jpype.startJVM(
-                "-Djava.system.class.loader=jpype.test.startup.TestSystemClassLoader",
+                "-Djava.system.class.loader=org.jpype.test.startup.TestSystemClassLoader",
                 jvmpath=Path(self.jvmpath),
                 classpath=str(unicode_sample_jar.absolute())
             )
@@ -184,33 +184,33 @@ class StartJVMCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             jpype.startJVM(
                 self.jvmpath,
-                "-Djava.system.class.loader=jpype.test.startup.TestSystemClassLoader",
+                "-Djava.system.class.loader=org.jpype.test.startup.TestSystemClassLoader",
                 f"-Djava.class.path={unicode_sample_jar.absolute()}",
             )
 
     @common.requireAscii
     def testASCIIPathWithSystemClassLoader(self):
         jpype.startJVM(
-            "-Djava.system.class.loader=jpype.test.startup.TestSystemClassLoader",
+            "-Djava.system.class.loader=org.jpype.test.startup.TestSystemClassLoader",
             jvmpath=Path(self.jvmpath),
             classpath=cp
         )
         classloader = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        test_classLoader = jpype.JClass("jpype.test.startup.TestSystemClassLoader")
+        test_classLoader = jpype.JClass("org.jpype.test.startup.TestSystemClassLoader")
         self.assertEqual(type(classloader), test_classLoader)
-        assert dir(jpype.JPackage('jpype.test.startup')) == ['TestSystemClassLoader']
+        assert dir(jpype.JPackage('org.jpype.test.startup')) == ['TestSystemClassLoader']
 
     @common.requireAscii
     def testOldStyleASCIIPathWithSystemClassLoader(self):
         jpype.startJVM(
             self.jvmpath,
-            "-Djava.system.class.loader=jpype.test.startup.TestSystemClassLoader",
+            "-Djava.system.class.loader=org.jpype.test.startup.TestSystemClassLoader",
             f"-Djava.class.path={cp}",
         )
         classloader = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        test_classLoader = jpype.JClass("jpype.test.startup.TestSystemClassLoader")
+        test_classLoader = jpype.JClass("org.jpype.test.startup.TestSystemClassLoader")
         self.assertEqual(type(classloader), test_classLoader)
-        assert dir(jpype.JPackage('jpype.test.startup')) == ['TestSystemClassLoader']
+        assert dir(jpype.JPackage('org.jpype.test.startup')) == ['TestSystemClassLoader']
 
     @common.requireAscii
     def testDefaultSystemClassLoader(self):

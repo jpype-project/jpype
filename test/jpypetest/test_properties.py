@@ -30,7 +30,7 @@ class PropertiesTestCase(unittest.TestCase):
         import jpype.beans
 
     def setUp(self):
-        self._bean = jpype.JClass('jpype.test.properties.TestBean')()
+        self._bean = jpype.JClass('org.jpype.test.properties.TestBean')()
 
     def testPropertyPublicMethodOverlap(self):
         self._bean.setProperty1("val")
@@ -85,7 +85,7 @@ class PropertiesTestCase(unittest.TestCase):
         self.assertEqual("setval", self._bean.property7)
 
     def testHasProperties(self):
-        cls = jpype.JClass("jpype.test.properties.TestBean")
+        cls = jpype.JClass("org.jpype.test.properties.TestBean")
         obj = cls()
         self.assertTrue(isinstance(cls.__dict__['propertyMember'], property))
         self.assertTrue(isinstance(cls.__dict__['readOnly'], property))
@@ -93,19 +93,19 @@ class PropertiesTestCase(unittest.TestCase):
         self.assertTrue(isinstance(cls.__dict__['with_'], property))
 
     def testPropertyMember(self):
-        obj = jpype.JClass("jpype.test.properties.TestBean")()
+        obj = jpype.JClass("org.jpype.test.properties.TestBean")()
         obj.propertyMember = "q"
         self.assertEqual(obj.propertyMember, "q")
 
     def testPropertyKeyword(self):
-        obj = jpype.JClass("jpype.test.properties.TestBean")()
+        obj = jpype.JClass("org.jpype.test.properties.TestBean")()
         obj.with_ = "a"
         self.assertEqual(obj.with_, "a")
         self.assertEqual(obj.m5, "a")
 
     def testPropertyReadOnly(self):
         # Test readonly
-        obj = jpype.JClass("jpype.test.properties.TestBean")()
+        obj = jpype.JClass("org.jpype.test.properties.TestBean")()
         obj.m3 = "b"
         self.assertEqual(obj.readOnly, "b")
         with self.assertRaises(AttributeError):
@@ -113,14 +113,14 @@ class PropertiesTestCase(unittest.TestCase):
 
     def testPropertyWriteOnly(self):
         # Test writeonly
-        obj = jpype.JClass("jpype.test.properties.TestBean")()
+        obj = jpype.JClass("org.jpype.test.properties.TestBean")()
         obj.writeOnly = "c"
         self.assertEqual(obj.m4, "c")
         with self.assertRaises(AttributeError):
             x = obj.writeOnly
 
     def testNoProperties(self):
-        cls = jpype.JClass("jpype.test.properties.TestBean")
+        cls = jpype.JClass("org.jpype.test.properties.TestBean")
         with self.assertRaises(KeyError):
             cls.__dict__['failure1']
         with self.assertRaises(KeyError):

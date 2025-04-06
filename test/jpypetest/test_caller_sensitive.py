@@ -39,11 +39,11 @@ class JCallerSensitiveCase(common.JPypeTestCase):
     """
 
     def setUp(self):
-        common.JPypeTestCase.setUp(self)
+        super().setUp()
         if not jpype.getJVMVersion() > (1, 8, 0):
             raise common.unittest.SkipTest
 
-        self.Class = jpype.JClass("jpype.test.method.Caller")
+        self.Class = jpype.JClass("org.jpype.test.method.Caller")
         self.obj = self.Class()
 
     def testCallStatic(self):

@@ -25,7 +25,7 @@ class ZZZTestCase(common.JPypeTestCase):
     def testShutdown(self):
         # Install a coverage hook
         instance = jpype.JClass("org.jpype.JPypeContext").getInstance()
-        jpype.JClass("jpype.test.common.OnShutdown").addCoverageHook(instance)
+        jpype.JClass("org.jpype.test.common.OnShutdown").addCoverageHook(instance)
 
         # Shutdown
         jpype.shutdownJVM()

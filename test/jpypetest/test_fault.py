@@ -80,7 +80,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPObject_null(self):
-        Fixture = JClass("jpype.test.common.Fixture")
+        Fixture = JClass("org.jpype.test.common.Fixture")
         _jpype.fault("PyJPObject_init.null")
         null = Fixture()
         with self.assertRaisesRegex(TypeError, 'Not a Java value'):
@@ -477,7 +477,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPField(self):
-        jf = JClass("jpype.test.common.Fixture")
+        jf = JClass("org.jpype.test.common.Fixture")
         jfi = jf()
         with self.assertRaises(AttributeError):
             jf.final_static_int_field = 2
@@ -521,8 +521,8 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPObject(self):
-        jf = JClass("jpype.test.common.Fixture")
-        jfi = JClass("jpype.test.common.Fixture")()
+        jf = JClass("org.jpype.test.common.Fixture")
+        jfi = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("JPClass::setStaticField")
         with self.assertRaisesRegex(SystemError, "fault"):
             jf.static_object_field = None
@@ -621,7 +621,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameByteField(self):
-        fields = JClass("jpype.test.common.Fixture")()
+        fields = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticByteField")
         with self.assertRaisesRegex(SystemError, "fault"):
             print(fields.static_byte_field)
@@ -637,7 +637,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameByteMethods(self):
-        cls = JClass("jpype.test.common.Fixture")
+        cls = JClass("org.jpype.test.common.Fixture")
         obj = cls()
         _jpype.fault("JPJavaFrame::CallStaticByteMethodA")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -651,7 +651,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameShortField(self):
-        fields = JClass("jpype.test.common.Fixture")()
+        fields = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticShortField")
         with self.assertRaisesRegex(SystemError, "fault"):
             print(fields.static_short_field)
@@ -667,7 +667,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameShortMethod(self):
-        cls = JClass("jpype.test.common.Fixture")
+        cls = JClass("org.jpype.test.common.Fixture")
         obj = cls()
         _jpype.fault("JPJavaFrame::CallStaticShortMethodA")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -681,7 +681,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameIntField(self):
-        fields = JClass("jpype.test.common.Fixture")()
+        fields = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticIntField")
         with self.assertRaisesRegex(SystemError, "fault"):
             print(fields.static_int_field)
@@ -697,7 +697,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameIntMethod(self):
-        cls = JClass("jpype.test.common.Fixture")
+        cls = JClass("org.jpype.test.common.Fixture")
         obj = cls()
         _jpype.fault("JPJavaFrame::CallStaticIntMethodA")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -711,7 +711,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameLongField(self):
-        fields = JClass("jpype.test.common.Fixture")()
+        fields = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticLongField")
         with self.assertRaisesRegex(SystemError, "fault"):
             print(fields.static_long_field)
@@ -727,7 +727,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameLongMethod(self):
-        cls = JClass("jpype.test.common.Fixture")
+        cls = JClass("org.jpype.test.common.Fixture")
         obj = cls()
         _jpype.fault("JPJavaFrame::CallStaticLongMethodA")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -741,7 +741,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameFloatField(self):
-        fields = JClass("jpype.test.common.Fixture")()
+        fields = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticFloatField")
         with self.assertRaisesRegex(SystemError, "fault"):
             print(fields.static_float_field)
@@ -757,7 +757,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameFloatMethod(self):
-        cls = JClass("jpype.test.common.Fixture")
+        cls = JClass("org.jpype.test.common.Fixture")
         obj = cls()
         _jpype.fault("JPJavaFrame::CallStaticFloatMethodA")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -771,7 +771,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameDoubleField(self):
-        fields = JClass("jpype.test.common.Fixture")()
+        fields = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticDoubleField")
         with self.assertRaisesRegex(SystemError, "fault"):
             print(fields.static_double_field)
@@ -787,7 +787,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameDoubleMethod(self):
-        cls = JClass("jpype.test.common.Fixture")
+        cls = JClass("org.jpype.test.common.Fixture")
         obj = cls()
         _jpype.fault("JPJavaFrame::CallStaticDoubleMethodA")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -801,7 +801,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameCharField(self):
-        fields = JClass("jpype.test.common.Fixture")()
+        fields = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticCharField")
         with self.assertRaisesRegex(SystemError, "fault"):
             print(fields.static_char_field)
@@ -817,7 +817,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameCharMethod(self):
-        cls = JClass("jpype.test.common.Fixture")
+        cls = JClass("org.jpype.test.common.Fixture")
         obj = cls()
         _jpype.fault("JPJavaFrame::CallStaticCharMethodA")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -831,7 +831,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameBooleanField(self):
-        fields = JClass("jpype.test.common.Fixture")()
+        fields = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticBooleanField")
         with self.assertRaisesRegex(SystemError, "fault"):
             print(fields.static_bool_field)
@@ -847,7 +847,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameBooleanMethod(self):
-        cls = JClass("jpype.test.common.Fixture")
+        cls = JClass("org.jpype.test.common.Fixture")
         obj = cls()
         _jpype.fault("JPJavaFrame::CallStaticBooleanMethodA")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -861,7 +861,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameObjectField(self):
-        fields = JClass("jpype.test.common.Fixture")()
+        fields = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("JPJavaFrame::GetStaticObjectField")
         with self.assertRaisesRegex(SystemError, "fault"):
             print(fields.static_object_field)
@@ -877,7 +877,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameObjectMethod(self):
-        cls = JClass("jpype.test.common.Fixture")
+        cls = JClass("org.jpype.test.common.Fixture")
         obj = cls()
         _jpype.fault("JPJavaFrame::CallStaticObjectMethodA")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -1134,7 +1134,7 @@ class FaultTestCase(common.JPypeTestCase):
         def _ATestConversion(jcls, obj):
             return java.lang.Integer(123)
 
-        fixture = JClass("jpype.test.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("JPPythonConversion::convert")
         with self.assertRaisesRegex(SystemError, "fault"):
             fixture.callNumber(CTest())
@@ -1157,7 +1157,7 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testConversionFaults(self):
-        fixture = JClass("jpype.test.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("JPConversionCharArray::matches")
         with self.assertRaisesRegex(SystemError, "fault"):
             fixture.callCharArray(object())

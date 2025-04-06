@@ -30,7 +30,7 @@ class JBufferTestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.fixture = JClass('jpype.test.common.Fixture')()
+        self.fixture = JClass('org.jpype.test.common.Fixture')()
         self.bo = JClass("java.nio.ByteOrder")
         self.cls = JClass("java.nio.ByteBuffer")
 

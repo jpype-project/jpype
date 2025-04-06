@@ -34,7 +34,7 @@ VALUES = [random.randint(-2**31, 2**31 - 1) for i in range(10)]
 class JIntTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.cls = JClass("jpype.test.common.Fixture")
+        self.cls = JClass("org.jpype.test.common.Fixture")
         self.fixture = self.cls()
 
     @common.requireInstrumentation
@@ -189,7 +189,7 @@ class JIntTestCase(common.JPypeTestCase):
         ja = JArray(JInt)(5)
         with self.assertRaises(TypeError):
             ja[1] = object()
-        jf = JClass("jpype.test.common.Fixture")
+        jf = JClass("org.jpype.test.common.Fixture")
         with self.assertRaises(TypeError):
             jf.static_int_field = object()
         with self.assertRaises(TypeError):

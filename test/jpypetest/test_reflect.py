@@ -25,9 +25,9 @@ class ReflectCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.test1 = jpype.JClass('jpype.test.overloads.Test1')()
-        self.Reflect = jpype.JClass('jpype.test.reflect.ReflectionTest')
-        self.Annotation = jpype.JClass('jpype.test.reflect.Annotation')
+        self.test1 = jpype.JClass('org.jpype.test.overloads.Test1')()
+        self.Reflect = jpype.JClass('org.jpype.test.reflect.ReflectionTest')
+        self.Annotation = jpype.JClass('org.jpype.test.reflect.Annotation')
 
     def testClass(self):
         t = jpype.JClass('java.lang.Object')

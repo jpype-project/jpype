@@ -29,18 +29,18 @@ except ImportError:
 class CustomizerTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.fixture = JClass('jpype.test.common.Fixture')()
+        self.fixture = JClass('org.jpype.test.common.Fixture')()
 
     def testSticky(self):
-        @jpype.JImplementationFor("jpype.test.override.A")
+        @jpype.JImplementationFor("org.jpype.test.override.A")
         class _A:
             @jpype.JOverride(sticky=True, rename="remove_")
             def remove(self, obj):
                 pass
 
-        A = jpype.JClass("jpype.test.override.A")
-        B = jpype.JClass("jpype.test.override.B")
+        A = jpype.JClass("org.jpype.test.override.A")
+        B = jpype.JClass("org.jpype.test.override.B")
         self.assertEqual(A.remove, _A.remove)
         self.assertEqual(B.remove, _A.remove)
-        self.assertEqual(str(A.remove_), "jpype.test.override.A.remove")
-        self.assertEqual(str(B.remove_), "jpype.test.override.B.remove")
+        self.assertEqual(str(A.remove_), "org.jpype.test.override.A.remove")
+        self.assertEqual(str(B.remove_), "org.jpype.test.override.B.remove")
