@@ -2,15 +2,16 @@
 
 	<property name="src" location="harness"/>
 	<property name="build" location="classes"/>
+	<property name="build9" location="classes-9"/>
+	<property name="jar.dir" location="jar"/>
 	<property name="version" value="${ant.java.version}"/>
 
-	<target name="test" depends="compile">
-	</target>
+	<target name="test" depends="compile,build-sample-package,build-late-jars,build-missing-jar,build-unsatisfied-jar,build-mrjar"/>
 
 	<condition property="build-9">
 		<not><or>
-		<equals arg1="${version}" arg2="1.8"/>
-		<equals arg1="${version}" arg2="1.7"/>
+			<equals arg1="${version}" arg2="1.8"/>
+			<equals arg1="${version}" arg2="1.7"/>
 		</or></not>
 	</condition>
 
@@ -20,9 +21,8 @@
 
 	<target name="compile-9" if="build-9">
 		<javac destdir="${build}"
-			source="${version}"
-			target="${version}"
-			>
+			   source="${version}"
+			   target="${version}">
 			<compilerarg value="--add-exports"/>
 			<compilerarg value="java.base/jdk.internal.reflect=ALL-UNNAMED"/>
 			<src>
@@ -34,9 +34,8 @@
 
 	<target name="compile-8" if="build-8">
 		<javac destdir="${build}"
-			source="${version}"
-			target="${version}"
-			>
+			   source="${version}"
+			   target="${version}">
 			<src>
 				<pathelement location="${src}/java8"/>
 			</src>
@@ -47,27 +46,93 @@
 	<target name="compile-main">
 		<mkdir dir="${build}"/>
 		<javac destdir="${build}"
-			source="${version}"
-			target="${version}"
-			debug="true"
-			debuglevel="lines,vars,source"
-			>
+			   source="${version}"
+			   target="${version}"
+			   debug="true"
+			   debuglevel="lines,vars,source">
 			<src>
 				<pathelement location="${src}"/>
 			</src>
 			<include name="jpype/**/*"/>
 			<include name="org/**/*"/>
 		</javac>
-	<!--		<rmic base="${build}"
-			classname="jpype.rmi.ServerImpl"
-		/>
-  -->
 	</target>
 
 	<target name="compile" depends="compile-main,compile-8,compile-9"/>
 
 	<target name="clean">
 		<delete dir="${build}"/>
+		<delete dir="${build9}"/>
+		<delete dir="${jar.dir}"/>
+	</target>
+
+	<target name="init">
+		<mkdir dir="${jar.dir}"/>
+	</target>
+
+	<!-- Task 1: sample_package.jar -->
+	<target name="build-sample-package" depends="compile,init">
+		<jar destfile="${jar.dir}/sample_package.jar">
+			<fileset dir="${build}">
+				<include name="org/jpype/test/sample_package/**"/>
+			</fileset>
+		</jar>
+	</target>
+
+	<!-- Task 2: late.jar and late2.jar -->
+	<target name="build-late-jars" depends="compile,init">
+		<jar destfile="${jar.dir}/late/late.jar">
+			<fileset dir="${build}">
+				<include name="org/jpype/test/late/**"/>
+			</fileset>
+		</jar>
+		<jar destfile="${jar.dir}/late/late2.jar">
+			<fileset dir="${build}">
+				<include name="org/jpype/test/late2/**"/>
+			</fileset>
+		</jar>
+	</target>
+
+	<!-- Task 3: missing.jar -->
+	<target name="build-missing-jar" depends="compile,init">
+		<jar destfile="${jar.dir}/missing.jar">
+			<fileset dir="${build}">
+				<include name="org/jpype/missing/**"/>
+			</fileset>
+		</jar>
+	</target>
+
+	<!-- Task 5: unsatisfied.jar -->
+	<target name="build-unsatisfied-jar" depends="compile,init">
+		<jar destfile="${jar.dir}/unsatisfied.jar">
+			<fileset dir="${build}">
+				<include name="org/jpype/test/unsatisfied/**"/>
+			</fileset>
+		</jar>
+	</target>
+
+	<!-- Task 4: Automated MR-JAR build -->
+	<target name="build-mrjar" depends="init">
+		<!-- Compile Java 7 compatible classes -->
+		<mkdir dir="${build}"/>
+		<javac destdir="${build}" source="7" target="7">
+			<src path="${src}/org/jpype/mrjar"/>
+			<src path="${src}/org/jpype/mrjar/sub"/>
+		</javac>
+
+		<!-- Compile Java 9 classes into META-INF/versions/9 -->
+		<mkdir dir="${build}/META-INF/versions/9"/>
+		<javac destdir="${build}/META-INF/versions/9" source="9" target="9" release="9">
+			<src path="${src}/java9/org/jpype/mrjar"/>
+		</javac>
+
+		<!-- Create MR-JAR -->
+		<jar destfile="${jar.dir}/mrjar.jar">
+			<manifest>
+				<attribute name="Multi-Release" value="true"/>
+			</manifest>
+			<fileset dir="${build}"/>
+		</jar>
 	</target>
 
 </project>

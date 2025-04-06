@@ -1,4 +1,4 @@
-package org.jpype.late;
+package org.jpype.test.late;
 
 public class Test
 {
