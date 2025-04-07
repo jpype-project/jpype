@@ -372,7 +372,7 @@ def startJVM(
             v1 = parse(minimum_version)
             v2 = parse(str(version))
             if v1>v2:
-                err = "Version of JVM is less than minimum requested. (%s<%s)"%(v2,v1)
+                err = "Version of JVM is less than minimum requested. (%s<%s, path=%s)"%(v2, v1, jvmpath)
                 raise RuntimeError(err)
             
     except RuntimeError as ex:
