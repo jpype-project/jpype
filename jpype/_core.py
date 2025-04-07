@@ -203,7 +203,7 @@ def startJVM(
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
-    minimum_version: String = None,
+    minimum_version: str = None,
 ) -> None:
     """
     Starts a Java Virtual Machine.  Without options it will start
