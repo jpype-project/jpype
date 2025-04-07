@@ -5,6 +5,9 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 - **1.6.0.dev0 - 2025-01-20**
+
+  - Support for minimum_version on startJVM
+
 - **1.5.2 - 2025-01-20**
 
   - Roll back agent change due to misbehaving JVM installs.
