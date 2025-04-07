@@ -17,6 +17,7 @@
 # *****************************************************************************
 import _jpype
 from . import _jcustomizer
+from collections.abc import Sequence
 
 
 __all__ = ['JArray']
@@ -216,3 +217,4 @@ class _JCharArray(object):
 # Install module hooks
 _jcustomizer._applyCustomizerPost(_jpype._JArray, _JArrayProto)
 _jpype.JArray = JArray
+Sequence.register(_jpype._JArray)

@@ -7,6 +7,10 @@ Latest Changes:
 - **1.6.0.dev0 - 2025-01-20**
 
   - Support for minimum_version on startJVM
+  
+  - JArray is now registered as a Sequence.
+
+  - Fixed bugs with java.util.List concat and repeat methods.
 
 - **1.5.2 - 2025-01-20**
 

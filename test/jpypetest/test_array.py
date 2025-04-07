@@ -619,3 +619,18 @@ class ArrayTestCase(common.JPypeTestCase):
 
     def testJArrayJavaClass(self):
         self.assertEqual(type(JObject[0]), JArray[JObject.class_])
+
+    def testJArrayProtocol(self):
+        from collections.abc import Sequence
+        a = jpype.JInt[5]
+        self.assertTrue(isinstance(a, Sequence))
+
+    def testJArrayConcat(self):
+        a = jpype.JInt[5]
+        with self.assertRaises(TypeError):
+            b = a + a
+
+    def testJArrayRepeat(self):
+        a = jpype.JInt[5]
+        with self.assertRaises(TypeError):
+            b = a * 3

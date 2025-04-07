@@ -40,6 +40,7 @@ class JVMFinderTest(unittest.TestCase):
         walk_fake = [('jre', ('lib',), ()),
                      ('jre/lib', ('amd64',), ()),
                      ('jre/lib/amd64',
+                      # cacoa and jamvm are not supported.
                       ('cacao', 'jamvm', 'server'), ()),
                      ('jre/lib/amd64/cacao',
                       ('',), ('libjvm.so',)),
@@ -54,16 +55,28 @@ class JVMFinderTest(unittest.TestCase):
 
             finder = LinuxJVMFinder()
             p = finder.find_libjvm('arbitrary java home')
+            # cacoa and javmvm should not be found
             self.assertEqual(
                 p, os.path.join('jre/lib/amd64/server', 'libjvm.so'), 'wrong jvm returned')
 
+    def test_find_libjvm_unsupported_jvm(self):
+        """Checks for the case only unsupported JVM impls are being found."""
+        walk_fake = [('jre', ('lib',), ()),
+                     ('jre/lib', ('amd64',), ()),
+                     ('jre/lib/amd64',
+                      # cacoa and jamvm are not supported.
+                      ('cacao', 'jamvm', ), ()),
+                     ('jre/lib/amd64/cacao',
+                      ('',), ('libjvm.so',)),
+                     ('jre/lib/amd64/jamvm',
+                      ('',), ('libjvm.so',)),
+                     ]
         with mock.patch('os.walk') as mockwalk:
-            # contains only broken jvms, since server impl is removed
-            walk_fake[-1] = ((), (), (),)
+            # contains broken and working jvms
             mockwalk.return_value = walk_fake
 
             finder = LinuxJVMFinder()
-            with self.assertRaises(JVMNotSupportedException) as context:
+            with self.assertRaises(JVMNotSupportedException):
                 finder.find_libjvm('arbitrary java home')
 
     @mock.patch('os.walk')
