@@ -203,6 +203,7 @@ def startJVM(
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
+    minimum_version: typing.Optional[str] = None,
 ) -> None:
     """
     Starts a Java Virtual Machine.  Without options it will start
@@ -364,6 +365,16 @@ def startJVM(
                 locale.setlocale(i, j)
             except locale.Error:
                 pass
+
+        if minimum_version is not None:
+            version = _jpype.JClass("java.lang.System").getProperty("java.version")
+            from packaging.version import parse
+            v1 = parse(minimum_version)
+            v2 = parse(str(version))
+            if v1>v2:
+                err = "Version of JVM is less than minimum requested. (%s<%s, path=%s)"%(v2, v1, jvmpath)
+                raise RuntimeError(err)
+            
     except RuntimeError as ex:
         source = str(ex)
         if "UnsupportedClassVersion" in source:
