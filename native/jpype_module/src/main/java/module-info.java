@@ -21,6 +21,7 @@ module jpype {
   requires java.management;
   
   exports org.jpype;
+  exports org.jpype.bridge;
   exports org.jpype.html;
   exports org.jpype.javadoc;
   exports org.jpype.manager;

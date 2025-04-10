@@ -58,6 +58,7 @@ homepage = "https://github.com/jpype-project/jpype"
 [[tool.mypy.overrides]]
 module = [
     "_jpype",
+    "_jpyne",
     "commonx",
     "brokenx",
     "java.*",
