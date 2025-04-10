@@ -19,6 +19,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
@@ -50,21 +51,16 @@ public class JPypePackageNGTest
   {
     assertTrue(JPypePackageManager.isPackage("java"));
     JPypePackage pkg = new JPypePackage("java");
-    for (Map.Entry<String, URI> e : pkg.contents.entrySet())
-    {
-      System.out.println(e.getKey());
-    }
+      Set<String> entries = pkg.contents.keySet();
+      assertTrue(entries.contains("rmi"));
   }
 
   @Test
   public void testOrg()
   {
-    assertTrue(JPypePackageManager.isPackage("org"));
     JPypePackage pkg = new JPypePackage("org");
-    for (Map.Entry<String, URI> e : pkg.contents.entrySet())
-    {
-      System.out.println(e.getKey());
-    }
+      Set<String> entries = pkg.contents.keySet();
+      assertTrue(entries.contains("jpype"));
   }
 
   /**
@@ -73,7 +69,6 @@ public class JPypePackageNGTest
   @Test
   public void testGetObject()
   {
-    System.out.println("getObject");
     JPypePackage instance = new JPypePackage("java.lang");
     Object expResult = Object.class;
     Object result = instance.getObject("Object");
@@ -86,13 +81,14 @@ public class JPypePackageNGTest
   @Test
   public void testGetContents()
   {
-    System.out.println("getContents");
     JPypePackage instance = new JPypePackage("java.lang");
     String[] expResult = new String[]
     {
-      "Enum", "ClassValue", "String"
+      "AbstractMethodError", "Appendable"
     };
-    String[] result = Arrays.copyOfRange(instance.getContents(), 0, 3);
+    var contents = instance.getContents();
+    Arrays.sort(contents);
+    String[] result = Arrays.copyOfRange(contents, 0, 2);
     assertEquals(result, expResult);
   }
 

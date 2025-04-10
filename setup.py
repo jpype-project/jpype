@@ -43,6 +43,13 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
     ),
     platform=platform,
 ))
+jpypeBootstrapLib = Extension(name='_jpypeb', **setupext.platform.Platform(
+    include_dirs=[],
+    sources=sorted(
+        list(Path('native', 'bootstrap').glob('*.cpp')) 
+    ),
+    platform=platform,
+))
 
 p = [ i for i in Path("native", "jpype_module", "src", "main", "java").glob("**/*.java")]
 javaSrc = [i for i in p if not "exclude" in str(i)]
@@ -73,5 +80,5 @@ setup(
         'sdist': setupext.sdist.BuildSourceDistribution,
     },
     zip_safe=False,
-    ext_modules=[jpypeLib, jpypeJar],
+    ext_modules=[jpypeBootstrapLib, jpypeLib, jpypeJar],
 )
