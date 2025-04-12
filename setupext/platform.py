@@ -125,10 +125,10 @@ def Platform(*, include_dirs: typing.Sequence[Path], sources: typing.Sequence[Pa
         distutils.log.warn("Your platform '%s' is not being handled explicitly."
                            " It may work or not!", platform)
 
-   # This code is used to include python library in the build when starting Python from
-   # within Java.  It will be used in the future, but is not currently required.
-   # if static and sysconfig.get_config_var('BLDLIBRARY') is not None:
-   #     platform_specific['extra_link_args'].append(sysconfig.get_config_var('BLDLIBRARY'))
+    # This code is used to include python library in the build when starting Python from
+    # within Java.  It will be used in the future, but is not currently required.
+    if sysconfig.get_config_var('BLDLIBRARY') is not None:
+        platform_specific['extra_link_args'].append(sysconfig.get_config_var('BLDLIBRARY'))
 
     if found_jni:
         distutils.log.info("Add JNI directory %s" %

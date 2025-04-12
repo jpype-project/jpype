@@ -10,10 +10,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Properties;
 
 /**
@@ -50,39 +48,27 @@ public class Bridge
 
     public static Bridge create()
     {
-        if (instance == null)
-        {
-            Bridge bridge = new Bridge();
-            bridge.launch();
-            instance = bridge;
-        }
+        
+        if (instance != null)
+            return instance;
+        Bridge bridge = new Bridge();
+        bridge.launch();
+        instance = bridge;
         return instance;
     }
 
     private void launch()
     {
-        // Tasks here
-        //  1) Figure out what python we will use.
-        //     using System.getProperty("python.home")
-        //     using PYTHONHOME
-        //     using command line
-        //  2) Figure out where libpython is so we can launch a shell.
-        //
-        //  3) Figure out where jpype and its support library are in Python
-        //   - Check the property file cache
-        //   - Call Python executable and execute the search script.
-        //     (save the result to the cache so we don't need to probe a second time)
-        //  
-        //  4) Import org.jpype and load the module to create entry points.
-        //
-        //  5) Call the entry point in org.jpype
-
+        // We need special handling for Windows.
         checkWindows();
+        
+        // Load the native libraries
         loadLibraries();
-        instance = new Bridge();
+        
+        // Launch an interpreter
     }
 
-    public void loadLibraries()
+    private void loadLibraries()
     {
         // Get the _jpype extension library
         resolveLibraries();
@@ -93,18 +79,11 @@ public class Bridge
 
         // Load libraries in Java so they are available for native calls.
         if (Paths.get(pythonLibrary).isAbsolute())
-        {
-            System.out.println("Load "+pythonLibrary);
             System.load(pythonLibrary);
-        }
         else
-        {
-            System.out.println("Load2 "+pythonLibrary);
             System.loadLibrary(pythonLibrary);
-        }
-
+        
         // Our native points are in the Python native module
-        System.out.println("Load "+jpypeLibrary);
         System.load(jpypeLibrary);
 
         // Add to FFI name lookup table
@@ -123,14 +102,20 @@ public class Bridge
      * Determine if this is windows system, because everything is different on
      * windows.
      */
-    public void checkWindows()
+    private void checkWindows()
     {
         String osName = System.getProperty("os.name");
         if (osName.startsWith("Windows"))
             this.isWindows = true;
     }
 
-    public String checkPath(String exec)
+    /**
+     * Search the PATH for an executable.
+     * 
+     * @param exec is the name of the executable.
+     * @return the path found or null if not located.
+     */
+    private String checkPath(String exec)
     {
         String path = System.getenv("PATH");
         if (path == null)
@@ -145,7 +130,19 @@ public class Bridge
         return null;
     }
 
-    public String getExecutable()
+    /**
+     * Determine the location of the Python executable we will probe.
+     *
+     * This uses a series of methods.
+     * <ul>
+     * <li> (Application) Java system property "python.executable" </li>
+     * <li> (User) Environment variable PYTHONHOME </li>
+     * <li> (System) First python3 found in PATH </li>
+     * </ul>
+     *
+     * @return the python executable location or null if not found.
+     */
+    private String getExecutable()
     {
         // Was is supplied via Java
         String out = System.getProperty("python.executable");
@@ -160,34 +157,46 @@ public class Bridge
             return String.format("%s%sbin%spython3%s", home, File.separator, File.separator, suffix);
 
         String onPath = checkPath("python3" + suffix);
-        System.out.println(onPath);
         if (onPath != null)
             return onPath;
 
         throw new RuntimeException("Unable to locate Python executable");
     }
 
-    public boolean checkCache(String key)
+    /**
+     * Consult the cache to see if we have already probed this python
+     * installation.
+     *
+     * @param key is a hash code associated with this Python install.
+     * @return
+     */
+    private boolean checkCache(String key)
     {
+        // Determine the location
         String homeDir = System.getProperty("user.home");
         String appHome = isWindows ? "\\AppData\\Roaming\\JPype" : ".jpype";
         Path appPath = Paths.get(homeDir, appHome);
         if (!Files.exists(appPath))
             return false;
-        Properties prop = new Properties();
-        try (InputStream is = Files.newInputStream(appPath))
+        Properties properties = new Properties();
+
+        // Load the properties
+        Path propFile = appPath.resolve("jpype.properties");
+        if (!Files.exists(propFile))
+            return false;
+        try (InputStream is = Files.newInputStream(propFile))
         {
             String parameters;
-            prop.load(is);
-            parameters = (String) prop.get(key + "-python.lib");
+            properties.load(is);
+            parameters = (String) properties.get(key + "-python.lib");
             if (parameters == null)
                 return false;
             this.pythonLibrary = parameters;
-            parameters = (String) prop.get(key + "-jpype.lib");
+            parameters = (String) properties.get(key + "-jpype.lib");
             if (parameters == null)
                 return false;
             this.jpypeLibrary = parameters;
-            parameters = (String) prop.get(key + "-jpype.version");
+            parameters = (String) properties.get(key + "-jpype.version");
             if (parameters == null)
                 return false;
             this.jpypeVersion = parameters;
@@ -198,34 +207,46 @@ public class Bridge
         }
     }
 
-    public void saveCache(String key, String exe)
+    /**
+     * Store the results of the probe in the users home directory so we can skip
+     * future probes.
+     *
+     * @param key is a hash code for this python environment.
+     * @param exe is the location of the executable.
+     */
+    private void saveCache(String key, String exe)
     {
         try
         {
-            System.out.println("Save cache");
+            // Determine where to store it
             String homeDir = System.getProperty("user.home");
             String appHome = isWindows ? "\\AppData\\Roaming\\JPype" : ".jpype";
             Path appPath = Paths.get(homeDir, appHome);
-            System.out.println(appPath);
+
+            // Create the path if it doesn't exist
             if (!Files.exists(appPath))
                 Files.createDirectories(appPath);
 
+            // Load the existing configuration
             Path propFile = appPath.resolve("jpype.properties");
             Properties prop = new Properties();
             if (Files.exists(propFile))
             {
-                System.out.println("Read " + propFile);
                 try (InputStream is = Files.newInputStream(propFile))
                 {
                     prop.load(is);
                 }
             }
+
+            // Store the executable name so the user knows which configuration this is for.
             prop.setProperty(key, exe);
+
+            // Store the values we need
             prop.setProperty(key + "-python.lib", this.pythonLibrary);
             prop.setProperty(key + "-jpype.lib", this.jpypeLibrary);
             prop.setProperty(key + "-jpype.version", this.jpypeVersion);
 
-            System.out.println("Write " + propFile);
+            // Save back to disk
             try (OutputStream os = Files.newOutputStream(propFile))
             {
                 prop.store(os, "");
@@ -233,7 +254,6 @@ public class Bridge
 
         } catch (IOException ex)
         {
-            System.out.println(ex);
             // do nothing if we can't cache our variables
             return;
         }
@@ -250,7 +270,7 @@ public class Bridge
         return Long.toHexString(hash);
     }
 
-    public void resolveLibraries()
+    private void resolveLibraries()
     {
         // System properties dub compiled in paths
         this.pythonLibrary = System.getProperty("python.lib", pythonLibrary);
@@ -259,11 +279,13 @@ public class Bridge
         if (this.jpypeLibrary != null && this.pythonLibrary != null)
             return;
 
+        // Find the Python executable
         String pythonExecutable = getExecutable();
         String key = makeHash(pythonExecutable);
         if (checkCache(key))
             return;
 
+        // Probe the Python executeable for the values we need to start
         try
         {
             String[] cmd =
@@ -287,9 +309,12 @@ public class Bridge
                 System.err.println(e);
                 e = err.readLine();
             }
+            
+            // Failed to run Python
             if (rc != 0)
                 throw new RuntimeException("Python was unable to be probed.  Check stderr for details.");
 
+            // Copy over the values from stdout.
             if (pythonLibrary == null)
                 pythonLibrary = a;
             if (jpypeLibrary == null)
@@ -297,6 +322,7 @@ public class Bridge
             if (jpypeVersion == null)
                 jpypeVersion = c;
 
+            // Verify that everything we need was found
             if (pythonLibrary == null || !Files.exists(Paths.get(pythonLibrary)))
                 throw new RuntimeException("Unable to locate Python shared library");
             if (jpypeLibrary == null || !Files.exists(Paths.get(jpypeLibrary)))
@@ -304,6 +330,7 @@ public class Bridge
             if (jpypeVersion == null) // FIXME check version here
                 throw new RuntimeException("Incorrect JPype version");
 
+            // Update the cache
             saveCache(key, pythonExecutable);
 
             // FIXME we need to check to see if JPype is equal to or newer than
@@ -316,11 +343,7 @@ public class Bridge
 
     public static void main(String[] args)
     {
-        System.out.println("Hello World!");
         create();
-        System.out.println(instance.isWindows);
-        System.out.println(instance.jpypeLibrary);
-        System.out.println(instance.jpypeVersion);
-        System.out.println(instance.pythonLibrary);
+        System.out.println("SUCCESS");
     }
 }
