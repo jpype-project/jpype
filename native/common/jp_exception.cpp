@@ -19,6 +19,7 @@
 #include "jpype.h"
 #include "jp_exception.h"
 #include "pyjp.h"
+#include "jp_reference_queue.h"
 
 static_assert(std::is_nothrow_copy_constructible<JPypeException>::value,
               "S must be nothrow copy constructible");
@@ -102,15 +103,14 @@ void JPypeException::from(const JPStackInfo& info)
 // they are actually out to get you.
 //
 // Onward my friends to victory or a glorious segfault!
-/*
 string JPypeException::getMessage()
 {
 	JP_TRACE_IN("JPypeException::getMessage");
 	// Must be bullet proof
 	try
 	{
-		stringstream str;
-		str << m_Message << endl;
+		std::stringstream str;
+		str << getMessage() << std::endl;
 		JP_TRACE(str.str());
 		return str.str();
 		// GCOVR_EXCL_START
@@ -120,7 +120,7 @@ string JPypeException::getMessage()
 	}
 	JP_TRACE_OUT;
 	// GCOVR_EXCL_STOP
-}*/
+}
 
 bool isJavaThrowable(PyObject* exceptionClass)
 {
@@ -365,6 +365,9 @@ void JPypeException::toPython()
 			{
 				PyException_SetTraceback(cause.get(), trace.get());
 				PyException_SetCause(eframe.m_ExceptionValue.get(), cause.keep());
+			} else
+			{
+				PyErr_Clear();
 			}
 		}
 	}// GCOVR_EXCL_START
@@ -576,4 +579,20 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 	if (last_traceback == nullptr)
 		return {};
 	return JPPyObject::call((PyObject*) last_traceback);
+}
+
+/* 
+ * Class:     org_jpype_PyExceptionProxy
+ * Method:    _getMessage                                                                                                                                                    * Signature: (Ljava/lang/Object;)Ljava/lang/String;
+ */
+extern "C" JNIEXPORT jstring JNICALL Java_org_jpype_PyExceptionProxy__1getMessage
+(JNIEnv *env, jclass, jlong jcls, jlong jval)
+{
+	JPJavaFrame frame = JPJavaFrame::external(JPContext_global, env);
+	JPPyCallAcquire callback;
+	PyObject* value = (PyObject*) jval;
+	PyObject* str = PyObject_Str(value);
+	string cvalue = JPPyString::asStringUTF8(str);
+	Py_DECREF(str);
+	return (jstring) frame.keep(frame.fromStringUTF8(cvalue));
 }

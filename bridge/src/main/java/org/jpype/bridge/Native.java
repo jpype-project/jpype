@@ -13,61 +13,15 @@
  *
  * See NOTICE file for details.
  * ***************************************************************************/
-package python.lang;
+package org.jpype.bridge;
 
 /**
  *
  * @author nelson85
  */
-public interface PyObject
+public class Native
 {
-
-  // attributes
-  boolean hasAttr(String s);
-
-  PyObject getAttr(String s);
-
-  void setAttr(String s, Object obj);
-
-  void delAttr(String s);
-
-  // Executable
-  PyObject call(PyTuple args, PyDict kwargs);
-
-  // dict like
-  PyObject setItem(PyObject key, Object value);
-
-  PyObject getItem(PyObject key);
-
-  void delItem(PyObject obj);
-
-  int len();
-
-  PyObject iter();
-
-  // types
-  boolean isInstance(PyObject cls);
-
-  PyObject type();
-
-  PyObject dir();
-
-  // logial  
-  boolean not();
-
-  boolean isTrue();
-
-  int hash();
-
-  // conversions
-  double asFloat();
-
-  int asInt();
-
-  PyObject str();
-
-  PyObject repr();
-
-  PyObject bytes();
-
+    native void start();
+    native long getSymbol(String symbol);
+    native void addLibrary(String library);
 }

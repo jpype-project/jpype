@@ -1,6 +1,4 @@
-package python.lang;
-
-/** ***************************************************************************
+/* ****************************************************************************
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -14,7 +12,8 @@ package python.lang;
  * limitations under the License.
  *
  * See NOTICE file for details.
- **************************************************************************** */
+ * ***************************************************************************/
+package python.lang;
 
 
 import java.util.List;

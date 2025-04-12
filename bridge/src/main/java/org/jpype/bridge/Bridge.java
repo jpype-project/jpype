@@ -53,6 +53,9 @@ public class Bridge
             return instance;
         Bridge bridge = new Bridge();
         bridge.launch();
+        int[] version = parseVersion(bridge.jpypeVersion);
+        if (version[0]<1 || version[1]<6)
+            throw new RuntimeException("JPype version is too old.  Found "+bridge.jpypeLibrary);
         instance = bridge;
         return instance;
     }
@@ -107,6 +110,19 @@ public class Bridge
         String osName = System.getProperty("os.name");
         if (osName.startsWith("Windows"))
             this.isWindows = true;
+    }
+    
+    private static int[] parseVersion(String version)
+    {
+        String[] parts = version.split("\\.");
+        int[] out = new int[3];
+        for (int i=0; i<parts.length; ++i)
+        {
+            if (i==3)
+                break;
+            out[i] = Integer.parseInt(parts[i]);
+        }
+        return out;
     }
 
     /**
@@ -255,7 +271,6 @@ public class Bridge
         } catch (IOException ex)
         {
             // do nothing if we can't cache our variables
-            return;
         }
     }
 
@@ -312,7 +327,7 @@ public class Bridge
             
             // Failed to run Python
             if (rc != 0)
-                throw new RuntimeException("Python was unable to be probed.  Check stderr for details.");
+                throw new RuntimeException(String.format("Python was unable to be probed.  Check stderr for details. (%d)", rc));
 
             // Copy over the values from stdout.
             if (pythonLibrary == null)
@@ -345,5 +360,10 @@ public class Bridge
     {
         create();
         System.out.println("SUCCESS");
+        System.out.println(instance.jpypeVersion);
+        Native n = new Native();
+        n.addLibrary(instance.pythonLibrary);
+        n.addLibrary(instance.jpypeLibrary);
+        System.out.println(n.getSymbol("PyObject_Init"));
     }
 }

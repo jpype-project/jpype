@@ -151,6 +151,13 @@ public:
 		return m_Type;
 	}
 
+	jthrowable getThrowable()
+	{
+		return m_Throwable.get();
+	}
+
+	string getMessage();
+
 private:
 	JPContext* m_Context{};
 	int m_Type;
