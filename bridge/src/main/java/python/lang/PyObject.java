@@ -1,3 +1,5 @@
+package python.lang;
+
 /** ***************************************************************************
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +15,61 @@
  *
  * See NOTICE file for details.
  **************************************************************************** */
-package python.lang;
+
 
 /**
  *
  * @author nelson85
  */
-public interface PyString extends PyObject 
+public interface PyObject
 {
-  
+
+  // attributes
+  boolean hasAttr(String s);
+
+  PyObject getAttr(String s);
+
+  void setAttr(String s, Object obj);
+
+  void delAttr(String s);
+
+  // Executable
+  PyObject call(PyTuple args, PyDict kwargs);
+
+  // dict like
+  PyObject setItem(PyObject key, Object value);
+
+  PyObject getItem(PyObject key);
+
+  void delItem(PyObject obj);
+
+  int len();
+
+  PyObject iter();
+
+  // types
+  boolean isInstance(PyObject cls);
+
+  PyObject type();
+
+  PyObject dir();
+
+  // logial  
+  boolean not();
+
+  boolean isTrue();
+
+  int hash();
+
+  // conversions
+  double asFloat();
+
+  int asInt();
+
+  PyObject str();
+
+  PyObject repr();
+
+  PyObject bytes();
+
 }

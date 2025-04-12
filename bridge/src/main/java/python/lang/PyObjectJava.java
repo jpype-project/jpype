@@ -1,3 +1,5 @@
+package python.lang;
+
 /** ***************************************************************************
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +15,7 @@
  *
  * See NOTICE file for details.
  **************************************************************************** */
-package python.lang;
+
 
 /**
  *  This is a wrapper for a Java object which was returned from Python.
