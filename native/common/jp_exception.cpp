@@ -581,6 +581,9 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 	return JPPyObject::call((PyObject*) last_traceback);
 }
 
+// FIXME that was added in epypj but likely was not hooked up current.   
+// I am leaving it because most likely proxy exception will need to return, but 
+// if not remove it.
 /* 
  * Class:     org_jpype_PyExceptionProxy
  * Method:    _getMessage                                                                                                                                                    * Signature: (Ljava/lang/Object;)Ljava/lang/String;

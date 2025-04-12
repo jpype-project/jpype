@@ -16,13 +16,10 @@
 package python.lang;
 
 /**
- * Represents a dictionary which acts as a scope for execution and holding variables.
- * 
+ *
  * @author nelson85
  */
-public interface PyScope
+public interface PyType extends PyObject
 {
-    PyObject eval(String source);
-    void imports(String module);
-    void imports(String module, String as);
+    
 }

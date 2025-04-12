@@ -60,6 +60,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 		PyEval_InitThreads();
 #endif
 		s_ThreadState = PyThreadState_Get();
+		PySys_SetPath(L".");
 
 		// Import the Python side to create the hooks
 		PyObject *jpype = PyImport_ImportModule("jpype");
@@ -113,6 +114,8 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 // FIXME global
 static std::list<void*> libraries;
 
+// FIXME this was the full CFFI interface so we could directly call symbols in C.  
+// Likely is not necessary.  But I need it for testing now.
 /*
  * Class:     python_lang_PyEngine
  * Method:    getSymbol

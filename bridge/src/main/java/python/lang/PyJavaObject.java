@@ -22,11 +22,11 @@ package python.lang;
  * 
  * @author nelson85
  */
-public class PyObjectJava implements PyObject
+public class PyJavaObject implements PyObject
 {
   Object obj_;
 
-  public PyObjectJava(Object obj)
+  public PyJavaObject(Object obj)
   {
     this.obj_ = obj;
   }
@@ -153,7 +153,7 @@ public class PyObjectJava implements PyObject
   {
     if (obj_ == null)
       return null;
-    return new PyObjectJava(obj_.toString());
+    return new PyJavaObject(obj_.toString());
   }
 
   @Override

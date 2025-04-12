@@ -13,23 +13,25 @@
  *
  * See NOTICE file for details.
  * ***************************************************************************/
-package python.lang;
+package org.jpype.bridge;
 
 
 import java.util.List;
 import java.util.Map;
+import python.lang.PyDict;
+import python.lang.PyList;
+import python.lang.PyString;
+import python.lang.PyTuple;
 
 /**
  *
  * @author nelson85
  */
-public interface PyBuiltin
+public interface Builtin
 {
-  public static PyBuiltin builtins = null;
-  
   public PyTuple tuple(Object... obj);
-  public PyDict dict(Map map);
-  public PyList list(List list);
+  public PyDict dict(Map<Object,Object> map);
+  public PyList list(List<Object> list);
   public PyString str(String str);
 
 

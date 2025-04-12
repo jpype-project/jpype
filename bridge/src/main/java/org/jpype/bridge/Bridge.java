@@ -27,6 +27,7 @@ public class Bridge
     private String pythonLibrary;
     private String jpypeVersion;
     private boolean isWindows = false;
+    private Builtin builtin = null;
 
     static final String WINDOWS_PROBE = ""
             + "import sysconfig\n"
@@ -46,17 +47,35 @@ public class Bridge
             + "print(_jpype.__file__)\n"
             + "print(_jpype.__version__)\n";
 
+    // FIXME we need a check point to prevent accidents.   
+    // There are two ways that we can get here.
+    // -  A bridge create from within Java
+    // -  bridge support initialized from Java via startJVM.
+    // Only those spawned from Java should attempt to load the resources.
+    
+    /** 
+     * Create a bridge from within Java.
+     * 
+     * @return the bridge object.
+     */
     public static Bridge create()
     {
-        
-        if (instance != null)
-            return instance;
-        Bridge bridge = new Bridge();
+        Bridge bridge = getInstance();
+        // Once builtin is set internally then we can't call create again.
+        if (bridge.builtin != null)
+            return bridge;
         bridge.launch();
         int[] version = parseVersion(bridge.jpypeVersion);
         if (version[0]<1 || version[1]<6)
             throw new RuntimeException("JPype version is too old.  Found "+bridge.jpypeLibrary);
-        instance = bridge;
+        return bridge;
+    }
+    
+    public static Bridge getInstance()
+    {
+        if (instance != null)
+            return instance;
+        instance = new Bridge();
         return instance;
     }
 
@@ -354,6 +373,13 @@ public class Bridge
         {
             throw new RuntimeException("Failed to find JPype resources");
         }
+    }
+    
+    public static void setBuiltin(Builtin entry)
+    {
+        // This is the first entry point called from Python.
+        // it should lock out calling the create method
+        instance.builtin = entry;   
     }
 
     public static void main(String[] args)
