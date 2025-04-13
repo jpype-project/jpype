@@ -20,5 +20,5 @@ package python.lang;
  */
 public interface PyGenerator extends PyObject
 {
-    
+    PyIterator iter();
 }

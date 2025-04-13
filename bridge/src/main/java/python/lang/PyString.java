@@ -17,21 +17,21 @@ package python.lang;
 
 /**
  * Interface for Python objects acting as strings.
- * 
+ *
  * This has some Java behaviors to facility use in Java code.
- * 
+ *
  * @author nelson85
  */
 public interface PyString extends PyObject, CharSequence
 {
 
     @Override
-    public int length();
- 
-    @Override
     public char charAt(int index);
 
     @Override
-    public CharSequence subSequence(int start, int end);
-  
+    public int length();
+
+    @Override
+    public PyString subSequence(int start, int end);
+
 }

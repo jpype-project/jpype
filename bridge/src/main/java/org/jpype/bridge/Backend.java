@@ -61,6 +61,8 @@ public interface Backend
 
     void delattr(Object obj, String str);
 
+    public boolean delindex(PyList aThis, int indexOf);
+
     PyDict dict();
 
     PyList dir(Object obj);
@@ -90,6 +92,8 @@ public interface Backend
     PyMemoryView memoryview(Object obj);
 
     PyDict newDict(Map<Object, Object> map);
+
+    public PySet newSet(Iterable c);
 
     PyObject next(PyIterator iter, PyObject stop);
 
@@ -155,7 +159,7 @@ public interface Backend
 
     public void setitem(PyDict globalsDict, String key, Object value);
 
-    PySlice slice(Integer start, Integer stop, int step);
+    PySlice slice(Integer start, Integer stop, Integer step);
 
     PyString str(Object str);
 

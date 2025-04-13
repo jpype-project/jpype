@@ -27,11 +27,23 @@ import python.protocol.PyCallable;
 public interface PyIterator extends PyObject
 {
 
+    PyIterator filter(PyCallable callable);
+
+    /**
+     * Converts the Python iterator into a Java iterator.
+     *
+     * @return
+     */
+    default Iterator<PyObject> iterator()
+    {
+        return new GenericIterator(Bridge.getBackend().tee(this));
+    }
+
     /**
      * Get the next item.
      *
-     * FIXME This throws StopIteration, we need to figure out how to convert and catch
-     * it.
+     * FIXME This throws StopIteration, we need to figure out how to convert and
+     * catch it.
      *
      * @return the next element in the series.
      */
@@ -41,7 +53,7 @@ public interface PyIterator extends PyObject
         if (out.equals(Bridge.stop))
             throw new NoSuchElementException();
         return out;
-    } 
+    }
 
     /**
      * Get the next item.
@@ -55,16 +67,4 @@ public interface PyIterator extends PyObject
         return Bridge.getBackend().next(this, defaults);
     }
 
-    PyIterator filter(PyCallable callable);
-
-    /**
-     * Converts the Python iterator into a Java iterator.
-     *
-     * @return
-     */
-    default Iterator<PyObject> iterator()
-    {
-        return new GenericIterator(Bridge.getBackend().tee(this));
-    }
-    
 }

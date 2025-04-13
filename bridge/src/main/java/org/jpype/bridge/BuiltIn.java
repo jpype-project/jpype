@@ -105,7 +105,7 @@ public class BuiltIn
         return Bridge.backend.iter(obj);
     }
 
-    public static PyObject list(Iterable<Object> objects)
+    public static PyList list(Iterable<Object> objects)
     {
         return Bridge.backend.list(objects);
     }
@@ -182,7 +182,7 @@ public class BuiltIn
      */
     public static PySlice slice(int start)
     {
-        return Bridge.backend.slice(start, start + 1, 1);
+        return Bridge.backend.slice(start, start + 1, null);
     }
 
     /**
@@ -201,7 +201,7 @@ public class BuiltIn
      */
     public static PySlice slice(Integer start, Integer stop)
     {
-        return Bridge.backend.slice(start, stop, 1);
+        return Bridge.backend.slice(start, stop, null);
     }
 
     /**
@@ -220,7 +220,7 @@ public class BuiltIn
      * @param step
      * @return a new slice object.
      */
-    public static PySlice slice(Integer start, Integer stop, int step)
+    public static PySlice slice(Integer start, Integer stop, Integer step)
     {
         return Bridge.backend.slice(start, stop, step);
     }

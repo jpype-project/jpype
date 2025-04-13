@@ -15,29 +15,37 @@
  */
 package python.lang;
 
+import java.util.Iterator;
+import org.jpype.bridge.GenericIterator;
 import python.protocol.PyCallable;
 
 /**
  *
  * @author nelson85
  */
-public interface PyIterable extends PyObject
+public interface PyIterable extends PyObject, Iterable<PyObject>
 {
 
     boolean all();
 
     boolean any();
 
-    PyObject min();
+    PyIterator iter();
 
-    PyObject max();
-
-    PyObject sum();
+    @Override
+    default Iterator<PyObject> iterator()
+    {
+        return new GenericIterator(this.iter());
+    }
 
     PyObject map(PyCallable callable);
 
-    PyObject reversed();
+    PyObject max();
+
+    PyObject min();
 
     PyObject sorted();
+
+    PyObject sum();
 
 }

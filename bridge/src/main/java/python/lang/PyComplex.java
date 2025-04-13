@@ -23,5 +23,5 @@ import python.protocol.PyNumber;
  */
 public interface PyComplex extends PyNumber, PyObject
 {
-    
+    PyComplex conjugate();
 }

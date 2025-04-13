@@ -15,30 +15,49 @@
  */
 package python.lang;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Set;
+import org.jpype.bridge.Bridge;
+
 /**
  * Java front end for concrete Python bytearray.
- * 
- * FIXME can we get Java set behavior for this object?
- * FIXME need additional dunder methods.
+ *
+ * FIXME can we get Java set behavior for this object? FIXME need additional
+ * dunder methods.
  */
-public interface PySet extends PyObject
+public interface PySet extends PyObject, Set<PyObject>
 {
 
-    int len();
+    public static PySet create(Iterable c)
+    {
+        return Bridge.getBackend().newSet(c);
+    }
 
-    PySet isDisjoint(PySet set);
+    @Override
+    public boolean add(PyObject e);
 
-    PySet isSubset(PySet set);
+    @Override
+    default public boolean addAll(Collection<? extends PyObject> c)
+    {
+        int l1 = this.size();
+        this.update(create(c));
+        int l2 = this.size();
+        return l1 != l2;
+    }
 
-    PySet isSuperset(PySet set);
+    @Override
+    void clear();
 
-    PySet union(PySet... set);
+    @Override
+    boolean contains(Object o);
 
-    PySet intersect(PySet... set);
-
-    PySet difference(PySet... set);
-
-    PySet symmetricDifference(PySet... set);
+    @Override
+    default public boolean containsAll(Collection<?> c)
+    {
+        throw new UnsupportedOperationException();
+    }
 
     /**
      * Shallow copy.
@@ -46,4 +65,74 @@ public interface PySet extends PyObject
      * @return a new set
      */
     PySet copy();
+
+    PySet difference(PySet... set);
+
+    void discard(Object item);
+
+    PySet intersect(PySet... set);
+
+    boolean isDisjoint(PySet set);
+
+    @Override
+    default public boolean isEmpty()
+    {
+        return size() == 0;
+    }
+
+    boolean isSubset(PySet set);
+
+    boolean isSuperset(PySet set);
+
+    @Override
+    default Iterator<PyObject> iterator()
+    {
+        return Bridge.getBackend().iter(this).iterator();
+    }
+
+    PyObject pop();
+
+    @Override
+    default public boolean removeAll(Collection<?> c)
+    {
+        int l1 = this.size();
+        PyObject delta = this.difference(create(c));
+        this.clear();
+        this.update(delta);
+        int l2 = this.size();
+        return l1 != l2;
+    }
+
+    @Override
+    default public boolean retainAll(Collection<?> c)
+    {
+        int l1 = this.size();
+        PyObject delta = this.intersect(create(c));
+        this.clear();
+        this.update(delta);
+        int l2 = this.size();
+        return l1 != l2;
+    }
+
+    @Override
+    public int size();
+
+    PySet symmetricDifference(PySet... set);
+
+    @Override
+    default public Object[] toArray()
+    {
+        return new ArrayList(this).toArray();
+    }
+
+    @Override
+    default public <T> T[] toArray(T[] a)
+    {
+        return (T[]) new ArrayList(this).toArray(a);
+    }
+
+    PySet union(PySet... set);
+
+    void update(PyObject other);
+
 }

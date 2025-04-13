@@ -149,6 +149,15 @@ def _divassign(x,v):
 def _matmul(x,v):
     return x@v
 
+def _divmod(x,v):
+    return x//v
+
+def _pow(x,v):
+    return x**v
+
+def _remainder(x,v):
+    return x%v
+
 def _call(x, v, k):
     if k is None:
         return x(*v)
@@ -172,11 +181,26 @@ def  _set_difference(x, args):
 def  _set_symmetric_difference(x, args):
     return x.symmetric_difference(*tuple(args))
 
+def _set_add(s, v):
+    if v in s:
+        return False
+    s.add(v)
+    return True
+
+def _set_contains(s, v):
+    return v in s
+
 def _equals(x,y):
     return x == y
 
 def _filter(x, f):
     return filter(f,x)
+
+def _charat(x,y):
+    return x[y]
+
+def _str_subseq(x,s,e):
+    return x[s:e]
 
 
 _PyJPBackendMethods = {
@@ -289,6 +313,9 @@ _PyNumberMethods = {
     "multAssign": _multassign,
     "divAssign": _divassign,
     "matMult": _matmul,
+    "divMod": _divmod,
+    "pow": _pow,
+    "remainder": _remainder,
 }
 
 _PySequenceMethods = {
@@ -302,12 +329,13 @@ _PySequenceMethods = {
 _PyIterableMethods = {
     "any": any,
     "all": all,
+    "iter": iter,
+    "map": _map,
     "min": min,
     "max": max,
-    "sum": sum,
     "reversed": reversed,
     "sorted": sorted,
-    "map": _map,
+    "sum": sum,
 }
 _PyIterableMethods.update(_PyObjectMethods)
 
@@ -331,7 +359,9 @@ _PyByteArrayMethods = {
 }
 _PyByteArrayMethods.update(_PyObjectMethods)
 
-_PyComplexMethods = {}
+_PyComplexMethods = {
+    "conjugate": complex.conjugate
+}
 _PyComplexMethods.update(_PyObjectMethods)
 _PyComplexMethods.update(_PyNumberMethods)
 
@@ -339,7 +369,9 @@ _PyDictMethods = {}
 _PyDictMethods.update(_PyObjectMethods)
 
 # enumerate, zip, range
-_PyGeneratorMethods = {}
+_PyGeneratorMethods = {
+    "iter": iter
+}
 _PyGeneratorMethods.update(_PyObjectMethods)
 
 _PyListMethods = {}
@@ -349,21 +381,34 @@ _PyMemoryViewMethods = {}
 _PyMemoryViewMethods.update(_PyObjectMethods)
 
 _PySetMethods = {
+    "add": _set_add,
+    "clear": set.clear,
+    "contains": _set_contains,
+    "copy": set.copy,
+    "difference": _set_difference,
+    "discard": set.discard,
+    "intersect": _set_intersect,
     "isDisjoint": set.isdisjoint,
     "isSubset": set.issubset,
     "isSuperset": set.issuperset,
-    "union": _set_union,
-    "intersect": _set_intersect,
-    "difference": _set_difference,
+    "size": len,
+    "pop": set.pop,
     "symmetricDifference": _set_symmetric_difference,
-    "copy": set.copy,
+    "union": _set_union,
+    "update": set.update,
 }
 _PySetMethods.update(_PyObjectMethods)
 
-_PySliceMethods = {}
+_PySliceMethods = {
+    "indices": slice.indices
+}
 _PySliceMethods.update(_PyObjectMethods)
 
-_PyStringMethods = {}
+_PyStringMethods = {
+    "charAt": _charat,
+    "length": len,
+    "subSequence": _str_subseq,
+}
 _PyStringMethods.update(_PyObjectMethods)
 
 _PyTupleMethods = {}

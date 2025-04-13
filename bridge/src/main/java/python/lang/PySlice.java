@@ -20,5 +20,5 @@ package python.lang;
  */
 public interface PySlice extends PyObject
 {
-    
+    PyTuple indices(int i);
 }

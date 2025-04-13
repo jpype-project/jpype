@@ -15,12 +15,12 @@
  */
 package python.lang;
 
-import python.protocol.PyCallable;
-import python.protocol.PySequence;
-import python.protocol.PyAttributes;
 import org.jpype.bridge.Context;
+import python.protocol.PyAttributes;
+import python.protocol.PyCallable;
 import python.protocol.PyMapping;
 import python.protocol.PyNumber;
+import python.protocol.PySequence;
 
 /**
  * Java front end for a Python wrapped Java object.
@@ -33,35 +33,6 @@ public class PyJavaObject implements PyObject
     public PyJavaObject(Object obj)
     {
         this.obj_ = obj;
-    }
-
-    public Object get()
-    {
-        return obj_;
-    }
-
-    @Override
-    public PyType getType()
-    {
-        return Context.type(obj_);
-    }
-
-    @Override
-    public boolean isInstance(PyObject cls)
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return obj_.hashCode();
-    }
-
-    @Override
-    public PyObject bytes()
-    {
-        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -79,13 +50,6 @@ public class PyJavaObject implements PyObject
     }
 
     @Override
-    public PySequence asSequence()
-    {
-        // Java objects don't act as Python sequences
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public PyMapping asMapping()
     {
         throw new UnsupportedOperationException();
@@ -94,7 +58,43 @@ public class PyJavaObject implements PyObject
     @Override
     public PyNumber asNumber()
     {
-        throw new UnsupportedOperationException(); 
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public PySequence asSequence()
+    {
+        // Java objects don't act as Python sequences
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public PyObject bytes()
+    {
+        throw new UnsupportedOperationException();
+    }
+
+    public Object get()
+    {
+        return obj_;
+    }
+
+    @Override
+    public PyType getType()
+    {
+        return Context.type(obj_);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return obj_.hashCode();
+    }
+
+    @Override
+    public boolean isInstance(PyObject cls)
+    {
+        throw new UnsupportedOperationException();
     }
 
 }

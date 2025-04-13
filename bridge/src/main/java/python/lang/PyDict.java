@@ -26,10 +26,7 @@ public interface PyDict extends PyObject, Map<PyObject, Object>
 {
 
     @Override
-    public int size();
-
-    @Override
-    public boolean isEmpty();
+    public void clear();
 
     @Override
     public boolean containsKey(Object key);
@@ -38,27 +35,30 @@ public interface PyDict extends PyObject, Map<PyObject, Object>
     public boolean containsValue(Object value);
 
     @Override
+    public Set<Entry<PyObject, Object>> entrySet();
+
+    @Override
     public PyObject get(Object key);
 
     @Override
-    public PyObject put(PyObject key, Object value);
-
-    @Override
-    public PyObject remove(Object key);
-
-    @Override
-    public void putAll(Map<? extends PyObject, ? extends Object> m);
-
-    @Override
-    public void clear();
+    public boolean isEmpty();
 
     @Override
     public Set<PyObject> keySet();
 
     @Override
-    public Collection<Object> values();
+    public PyObject put(PyObject key, Object value);
 
     @Override
-    public Set<Entry<PyObject, Object>> entrySet();
-  
+    public void putAll(Map<? extends PyObject, ? extends Object> m);
+
+    @Override
+    public PyObject remove(Object key);
+
+    @Override
+    public int size();
+
+    @Override
+    public Collection<Object> values();
+
 }
