@@ -16,8 +16,7 @@
 package python.lang;
 
 /**
- *
- * @author nelson85
+ * Java front end for concrete Python memoryview.
  */
 public interface PyMemoryView extends PyObject
 {

@@ -15,20 +15,35 @@
  */
 package python.lang;
 
-import org.jpype.bridge.Bridge;
-
 /**
- * Java front end for concrete Python bytes.
+ * Java front end for concrete Python bytearray.
+ * 
+ * FIXME can we get Java set behavior for this object?
+ * FIXME need additional dunder methods.
  */
-public interface PyBytes extends PyObject
+public interface PySet extends PyObject
 {
 
-    static PyBytes fromhex(String str)
-    {
-        return Bridge.getBackend().bytes_fromhex(str);
-    }
+    int len();
 
-    PyObject decode(PyObject encoding, PyObject delete);
+    PySet isDisjoint(PySet set);
 
-    PyObject translate(PyObject table);
+    PySet isSubset(PySet set);
+
+    PySet isSuperset(PySet set);
+
+    PySet union(PySet... set);
+
+    PySet intersect(PySet... set);
+
+    PySet difference(PySet... set);
+
+    PySet symmetricDifference(PySet... set);
+
+    /**
+     * Shallow copy.
+     *
+     * @return a new set
+     */
+    PySet copy();
 }

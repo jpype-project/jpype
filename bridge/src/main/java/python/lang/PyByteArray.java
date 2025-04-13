@@ -18,17 +18,18 @@ package python.lang;
 import org.jpype.bridge.Bridge;
 
 /**
- * Java front end for concrete Python bytes.
+ * Java front end for concrete Python bytearray.
  */
-public interface PyBytes extends PyObject
+public interface PyByteArray extends PyObject
 {
 
-    static PyBytes fromhex(String str)
+    static PyByteArray fromhex(String str)
     {
-        return Bridge.getBackend().bytes_fromhex(str);
+        return Bridge.getBackend().bytearray_fromhex(str);
     }
 
     PyObject decode(PyObject encoding, PyObject delete);
 
     PyObject translate(PyObject table);
+
 }

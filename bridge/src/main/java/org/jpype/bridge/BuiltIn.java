@@ -15,6 +15,12 @@
  */
 package org.jpype.bridge;
 
+import python.lang.PyBytes;
+import python.lang.PyDict;
+import python.lang.PyEnumerate;
+import python.lang.PyIterator;
+import python.lang.PyList;
+import python.lang.PyMemoryView;
 import python.lang.PyObject;
 import python.lang.PyRange;
 import python.lang.PySlice;
@@ -25,6 +31,8 @@ import python.lang.PyZip;
 
 /**
  * Collection of static methods available in Python.
+ *
+ * In general these are set as widely as possible. Many will accept Java objects
  */
 public class BuiltIn
 {
@@ -35,12 +43,12 @@ public class BuiltIn
      * @param obj
      * @return a new bytes object.
      */
-    public static PyObject bytes(PyObject obj)
+    public static PyBytes bytes(Object obj)
     {
         return Bridge.backend.bytes(obj);
     }
 
-    public static PyObject dir(PyObject obj)
+    public static PyList dir(PyObject obj)
     {
         return Bridge.backend.dir(obj);
     }
@@ -48,6 +56,26 @@ public class BuiltIn
     public static void delattr(PyObject obj, String key)
     {
         Bridge.backend.delattr(obj, key);
+    }
+
+    public PyEnumerate enumerate(PyObject obj)
+    {
+        return Bridge.backend.enumerate(obj);
+    }
+
+    public PyEnumerate enumerate(Iterable obj)
+    {
+        return Bridge.backend.enumerate(obj);
+    }
+
+    public PyObject eval(String statement, PyDict globals, PyDict locals)
+    {
+        return Bridge.backend.eval(statement, globals, locals);
+    }
+
+    public void exec(String statement, PyDict globals, PyDict locals)
+    {
+        Bridge.backend.eval(statement, globals, locals);
     }
 
     public static PyObject getattr(PyObject obj, String key)
@@ -72,6 +100,11 @@ public class BuiltIn
         return Bridge.backend.isinstance(obj, types);
     }
 
+    public static PyIterator iter(Object obj)
+    {
+        return Bridge.backend.iter(obj);
+    }
+
     public static PyObject list(Iterable<Object> objects)
     {
         return Bridge.backend.list(objects);
@@ -88,7 +121,7 @@ public class BuiltIn
      * @param obj is the object to convert.
      * @return a new memoryview.
      */
-    public static PyObject memoryview(PyObject obj)
+    public static PyMemoryView memoryview(Object obj)
     {
         return Bridge.backend.memoryview(obj);
     }
@@ -129,7 +162,7 @@ public class BuiltIn
         return Bridge.backend.range(start, stop, step);
     }
 
-    public static PyString repr(PyObject obj)
+    public static PyString repr(Object obj)
     {
         return Bridge.backend.repr(obj);
     }
@@ -198,6 +231,11 @@ public class BuiltIn
     }
 
     public static <T> PyTuple tuple(T... args)
+    {
+        return Bridge.backend.tuple(args);
+    }
+
+    public static <T> PyTuple tuple(Iterable<T>... args)
     {
         return Bridge.backend.tuple(args);
     }

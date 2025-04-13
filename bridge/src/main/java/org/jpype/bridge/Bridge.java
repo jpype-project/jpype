@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
+import python.lang.PyObject;
 
 /**
  * This is a singleton the is created once to connect to Python.
@@ -38,6 +39,7 @@ public class Bridge
     private String jpypeVersion;
     private boolean isWindows = false;
     static Backend backend = null;
+    public static PyObject stop = null;
 
     static final String WINDOWS_PROBE = ""
             + "import sysconfig\n"
@@ -389,7 +391,8 @@ public class Bridge
     {
         // This is the first entry point called from Python.
         // it should lock out calling the create method
-        backend = entry;   
+        backend = entry;        
+        stop = backend.object();
     }
     
     public static Backend getBackend()

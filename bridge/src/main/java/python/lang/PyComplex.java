@@ -15,20 +15,13 @@
  */
 package python.lang;
 
-import org.jpype.bridge.Bridge;
+import python.protocol.PyNumber;
 
 /**
- * Java front end for concrete Python bytes.
+ *
+ * @author nelson85
  */
-public interface PyBytes extends PyObject
+public interface PyComplex extends PyNumber, PyObject
 {
-
-    static PyBytes fromhex(String str)
-    {
-        return Bridge.getBackend().bytes_fromhex(str);
-    }
-
-    PyObject decode(PyObject encoding, PyObject delete);
-
-    PyObject translate(PyObject table);
+    
 }

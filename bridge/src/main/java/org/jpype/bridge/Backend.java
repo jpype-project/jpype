@@ -16,12 +16,17 @@
 package org.jpype.bridge;
 
 import java.util.Map;
+import python.lang.PyByteArray;
 import python.lang.PyBytes;
+import python.lang.PyComplex;
 import python.lang.PyDict;
+import python.lang.PyEnumerate;
+import python.lang.PyIterator;
 import python.lang.PyList;
 import python.lang.PyMemoryView;
 import python.lang.PyObject;
 import python.lang.PyRange;
+import python.lang.PySet;
 import python.lang.PySlice;
 import python.lang.PyString;
 import python.lang.PyTuple;
@@ -44,19 +49,39 @@ import python.lang.PyZip;
 public interface Backend
 {
 
+    PyByteArray bytearray(Object obj);
+
+    PyByteArray bytearray_fromhex(String str);
+
     PyBytes bytes(Object obj);
+
+    PyBytes bytes_fromhex(String str);
+
+    PyComplex complex(double r, double i);
 
     void delattr(Object obj, String str);
 
+    PyDict dict();
+
     PyList dir(Object obj);
+
+    PyEnumerate enumerate(Object obj);
+
+    PyObject eval(String source, PyDict globalsDict, PyDict localsDict);
+
+    void exec(String source, PyDict globalsDict, PyDict localsDict);
 
     PyDict getDict(Object obj);
 
     PyObject getattr(Object obj, String str);
 
+    public PyObject getitem(PyDict globalsDict, String key);
+
     boolean hasattr(Object obj, String str);
 
     boolean isinstance(Object obj, Object[] types);
+
+    PyIterator iter(Object obj);
 
     <T> PyList list(Iterable<T> list);
 
@@ -66,73 +91,29 @@ public interface Backend
 
     PyDict newDict(Map<Object, Object> map);
 
-    PyRange range(int stop);
+    PyObject next(PyIterator iter, PyObject stop);
 
-    PyRange range(int start, int stop);
-
-    PyRange range(int start, int stop, int step);
-
-    PyString repr(Object str);
-
-    void setattr(Object obj, String str, Object value);
-
-    PySlice slice(Integer start, Integer stop, int step);
-
-    PyString str(Object str);
-
-    <T> PyList tuple(Iterable<T> list);
-
-    <T> PyTuple tuple(T... obj);
-
-    PyType type(Object obj);
-
-    <T> PyZip zip(T... objects);
+    PyObject object();
 
 // It is okay if not everything is exposed as the user can always evaluate
 // statements if something is missing.
 //Creation
-//   dict()
-//   set()
-//   tuple()
-//   complex()
-//   bytearray()
-//   list()
-//   memoryview()
 //   open()
 //   property()
-//   slice()
 //Casting? 
 // These take one argument they act on so they could be considered object method
 // place on PyOject?
 //   ascii()
-//   str()
 //   int()
-//   iter()
-//   bytes()
 //   classmethod()
 //   float()
-//   type()
 // Int only methods?
 //   bin()
 //   hex()
 //   oct()
 // Methods?  move to PyObject
-//   memoryview - asMemoryView()
-//   bool() - asBool()
-//   float() - asFloat()
-//   int() - asInt()
-//   callable() - isCallable
-//   repr()
-//   len()
 //   id()
-//   hash()
-//   isinstance()
 //   issubclass()
-//   setattr()
-//   getattr()
-//   hasattr()
-//   delattr()
-//   dir()
 //   vars()
 // Belong on scopes?
 //   compile()
@@ -147,20 +128,7 @@ public interface Backend
 //   chr()
 //   ord()
 //   round()
-// Iterable/Iterator/generators
-//   max()
-//   min()
-//   all()
-//   sum()
-//   map()
-//   zip()
-//   enumerate()
-//   range()
-//   reversed()
-//   sorted()
-//   any()
 // Method for iterator
-//  next()
 //  filter()
 //aiter()
 //anext()
@@ -173,4 +141,32 @@ public interface Backend
 //print()
 //staticmethod()
 //super()
+    PyRange range(int stop);
+
+    PyRange range(int start, int stop);
+
+    PyRange range(int start, int stop, int step);
+
+    PyString repr(Object str);
+
+    PySet set();
+
+    void setattr(Object obj, String str, Object value);
+
+    public void setitem(PyDict globalsDict, String key, Object value);
+
+    PySlice slice(Integer start, Integer stop, int step);
+
+    PyString str(Object str);
+
+    PyIterator tee(PyIterator iter);
+
+    <T> PyList tuple(Iterable<T> list);
+
+    <T> PyTuple tuple(T... obj);
+
+    PyType type(Object obj);
+
+    <T> PyZip zip(T... objects);
+
 }

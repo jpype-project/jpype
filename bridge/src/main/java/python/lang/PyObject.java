@@ -86,5 +86,8 @@ public interface PyObject
 
     @Override
     int hashCode();
+    
+    @Override
+    boolean equals(Object obj);
 
 }
