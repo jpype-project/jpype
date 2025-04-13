@@ -16,10 +16,9 @@
 package python.lang;
 
 /**
- *
- * @author nelson85
+ * Java front end for concrete Python enumerate.
  */
-public interface PyList extends PyIterable
+public interface PyEnumerate extends PyGenerator
 {
 
 }

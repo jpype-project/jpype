@@ -15,11 +15,29 @@
  */
 package python.lang;
 
+import python.protocol.PyCallable;
+
 /**
  *
  * @author nelson85
  */
-public interface PyList extends PyIterable
+public interface PyIterable extends PyObject
 {
+
+    boolean all();
+
+    boolean any();
+
+    PyObject min();
+
+    PyObject max();
+
+    PyObject sum();
+
+    PyObject map(PyCallable callable);
+
+    PyObject reversed();
+
+    PyObject sorted();
 
 }

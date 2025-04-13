@@ -1,18 +1,18 @@
-/* ****************************************************************************
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * See NOTICE file for details.
- * ***************************************************************************/
+/*
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ *  use this file except in compliance with the License. You may obtain a copy of
+ *  the License at
+ * 
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ *  License for the specific language governing permissions and limitations under
+ *  the License.
+ * 
+ *  See NOTICE file for details.
+ */
 package org.jpype.bridge;
 
 import java.util.Map;
@@ -21,9 +21,12 @@ import python.lang.PyDict;
 import python.lang.PyList;
 import python.lang.PyMemoryView;
 import python.lang.PyObject;
+import python.lang.PyRange;
+import python.lang.PySlice;
 import python.lang.PyString;
 import python.lang.PyTuple;
 import python.lang.PyType;
+import python.lang.PyZip;
 
 /**
  * Backend for all Python entry points.
@@ -32,42 +35,58 @@ import python.lang.PyType;
  * is not callable directly but is used by other support classes to provide
  * behavior.
  *
+ * The user should not call these directly. The user interface is located on
+ * Context.
+ *
+ * These are the most generic type possible so that they can be used universally
+ * throughout the bridge.
  */
 public interface Backend
 {
 
-    PyType type(Object obj);
+    PyBytes bytes(Object obj);
 
-    PyList tuple(Iterable<Object> list);
+    void delattr(Object obj, String str);
 
-    PyTuple tuple(Object... obj);
+    PyList dir(Object obj);
 
-    PyDict newDict(Map<Object, Object> map);
+    PyDict getDict(Object obj);
 
-    PyList list(Iterable<Object> list);
+    PyObject getattr(Object obj, String str);
+
+    boolean hasattr(Object obj, String str);
+
+    boolean isinstance(Object obj, Object[] types);
+
+    <T> PyList list(Iterable<T> list);
 
     PyList list(Object... list);
 
-    PyString str(Object str);
+    PyMemoryView memoryview(Object obj);
+
+    PyDict newDict(Map<Object, Object> map);
+
+    PyRange range(int stop);
+
+    PyRange range(int start, int stop);
+
+    PyRange range(int start, int stop, int step);
 
     PyString repr(Object str);
 
-    boolean hasattr(PyObject obj, String str);
+    void setattr(Object obj, String str, Object value);
 
-    void delattr(PyObject obj, String str);
+    PySlice slice(Integer start, Integer stop, int step);
 
-    PyObject getattr(PyObject obj, String str);
+    PyString str(Object str);
 
-    void setattr(PyObject obj, String str, Object value);
+    <T> PyList tuple(Iterable<T> list);
 
-    PyList dir(PyObject obj);
+    <T> PyTuple tuple(T... obj);
 
-    PyDict getDict(PyObject obj);
-    
-    PyBytes bytes(PyObject obj);
-    
-    PyMemoryView memoryview(PyObject obj);
-    
+    PyType type(Object obj);
+
+    <T> PyZip zip(T... objects);
 
 // It is okay if not everything is exposed as the user can always evaluate
 // statements if something is missing.
@@ -128,7 +147,7 @@ public interface Backend
 //   chr()
 //   ord()
 //   round()
-// Iterator/generators
+// Iterable/Iterator/generators
 //   max()
 //   min()
 //   all()
@@ -154,6 +173,4 @@ public interface Backend
 //print()
 //staticmethod()
 //super()
-
-    public boolean isinstance(Object obj, PyObject[] types);
 }

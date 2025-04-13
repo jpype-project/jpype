@@ -16,10 +16,9 @@
 package python.lang;
 
 /**
- *
- * @author nelson85
+ * Java front end for concrete Python type zip.
  */
-public interface PyList extends PyIterable
+public interface PyZip extends PyGenerator
 {
-
+    
 }

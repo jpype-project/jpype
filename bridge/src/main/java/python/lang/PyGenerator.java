@@ -16,10 +16,9 @@
 package python.lang;
 
 /**
- *
- * @author nelson85
+ * Java front end for abstract concept of a generator.
  */
-public interface PyList extends PyIterable
+public interface PyGenerator extends PyObject
 {
-
+    
 }

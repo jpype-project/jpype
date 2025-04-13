@@ -1,10 +1,23 @@
 /*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ *  use this file except in compliance with the License. You may obtain a copy of
+ *  the License at
+ * 
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ *  License for the specific language governing permissions and limitations under
+ *  the License.
+ * 
+ *  See NOTICE file for details.
  */
 package python.protocol;
 
+import org.jpype.bridge.BuiltIn;
 import python.lang.PyObject;
+import python.lang.PySlice;
 
 /**
  * Interface for objects that act as sequences.
@@ -20,7 +33,37 @@ public interface PySequence extends PyProtocol
      * @param index
      * @return
      */
-    PyObject get(int index);
+    default PyObject get(int index)
+    {
+        return _get(index);
+    }
+
+    /**
+     * Get a slice.
+     *
+     * Equivalent to obj[slice].
+     *
+     * @param slice
+     * @return
+     */
+    default PyObject get(PySlice slice)
+    {
+        return _get(slice);
+    }
+
+    /**
+     * Get slices.
+     *
+     * Equivalent to obj[slice, slice].
+     *
+     *
+     * @param slices
+     * @return
+     */
+    default PyObject get(PySlice... slices)
+    {
+        return _get(BuiltIn.tuple(slices));
+    }
 
     /**
      * Set an item by index.
@@ -50,4 +93,5 @@ public interface PySequence extends PyProtocol
      */
     int size();
 
+    PyObject _get(Object object);
 }

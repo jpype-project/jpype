@@ -147,6 +147,12 @@ def _call(x, v, k):
         return x(*v)
     return x(*v, **k)
 
+def _range(*args):
+    return range(*args)
+
+def _map(x,f):
+    return map(f,x)
+
 
 _PyJPBackendMethods = {
     "hasattr": _hasattr,
@@ -161,7 +167,9 @@ _PyJPBackendMethods = {
     "dir": dir,
     "getDict": _getdict,
     "newDict": _newdict,
-    "isinstance": _isinstance
+    "isinstance": _isinstance,
+    "slice": slice,
+    "range": _range,
 }
 
 
@@ -246,6 +254,48 @@ _PySequenceMethods = {
     "size": len,
 }
 
+_PyIterableMethods = {
+    "any": any,
+    "all": all,
+    "min": min,
+    "max": max,
+    "sum": sum,
+    "reversed": reversed,
+    "sorted": sorted,
+    "map": _map,
+}
+_PyIterableMethods.update(_PyObjectMethods)
+
+## Concrete types
+
+_PyBytesMethods = {}
+_PyBytesMethods.update(_PyObjectMethods)
+
+_PyDictMethods = {}
+_PyDictMethods.update(_PyObjectMethods)
+
+# enumerate, zip, range
+_PyGeneratorMethods = {}
+_PyGeneratorMethods.update(_PyObjectMethods)
+
+_PyListMethods = {}
+_PyListMethods.update(_PyIterableMethods)
+
+_PyMemoryViewMethods = {}
+_PyMemoryViewMethods.update(_PyObjectMethods)
+
+_PySliceMethods = {}
+_PySliceMethods.update(_PyObjectMethods)
+
+_PyStringMethods = {}
+_PyStringMethods.update(_PyObjectMethods)
+
+_PyTupleMethods = {}
+_PyTupleMethods.update(_PyIterableMethods)
+
+_PyTypeMethods = {}
+_PyTypeMethods.update(_PyObjectMethods)
+
 
 def initialize():
     # Install the handler
@@ -258,13 +308,19 @@ def initialize():
     # Concrete types
     _PyBytes = JClass("python.lang.PyBytes")
     _PyDict = JClass("python.lang.PyDict")
+    _PyEnumerate = JClass("python.lang.PyEnumerate")
+    _PyGenerator = JClass("python.lang.PyGenerator")
+    _PyIterable = JClass("python.lang.PyIterable")
     _PyJavaObject = JClass("python.lang.PyJavaObject")
     _PyList = JClass("python.lang.PyList")
     _PyMemoryView = JClass("python.lang.PyMemoryView")
     _PyObject = JClass("python.lang.PyObject")
+    _PyRange = JClass("python.lang.PyRange")
+    _PySlice = JClass("python.lang.PySlice")
     _PyString = JClass("python.lang.PyString")
     _PyTuple = JClass("python.lang.PyTuple")
     _PyType = JClass("python.lang.PyType")
+    _PyZip = JClass("python.lang.PyZip")
 
     # Protocolos
     _PyAttributes = JClass("python.protocol.PyAttributes")
@@ -277,12 +333,19 @@ def initialize():
     # Bind the method tables
 
     # Define the method tables for each type here
+    _PyBytes._methods = _PyBytesMethods
+    _PyDict._methods = _PyDictMethods
+    _PyEnumerate._methods = _PyGeneratorMethods
+    _PyGenerator._methods = _PyGeneratorMethods
+    _PyList._methods = _PyListMethods
+    _PyMemoryView._methods = _PyMemoryViewMethods
     _PyObject._methods = _PyObjectMethods
-    _PyDict._methods = _PyObjectMethods
-    _PyTuple._methods = _PyObjectMethods
-    _PyList._methods = _PyObjectMethods
-    _PyString._methods = _PyObjectMethods
-    _PyType._methods = _PyObjectMethods
+    _PyRange._methods = _PyGeneratorMethods
+    _PySlice._methods = _PySliceMethods
+    _PyString._methods = _PyStringMethods
+    _PyTuple._methods = _PyTupleMethods
+    _PyType._methods = _PyTypeMethods
+    _PyZip._methods = _PyGeneratorMethods
 
     _PyAttributes._methods = _PyAttributesMethods
     _PyCallable._methods = _PyCallableMethods
@@ -301,11 +364,15 @@ def initialize():
     # Bind the concrete types
     @JConversion(_PyBytes, instanceof=bytes)
     @JConversion(_PyDict, instanceof=dict)
+    @JConversion(_PyEnumerate, instanceof=enumerate)
     @JConversion(_PyList, instanceof=list)
     @JConversion(_PyMemoryView, instanceof=memoryview)
+    @JConversion(_PyRange, instanceof=range)
+    @JConversion(_PySlice, instanceof=slice)
     @JConversion(_PyString, instanceof=str)
     @JConversion(_PyTuple, instanceof=tuple)
     @JConversion(_PyType, instanceof=type)
+    @JConversion(_PyZip, instanceof=zip)
     # Bind the protocols
     @JConversion(_PyAttributes, instanceof=object)
     @JConversion(_PyCallable, instanceof=object)

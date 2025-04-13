@@ -56,28 +56,28 @@ p = PyTuple@tuple((1,2))
 #==========================================================
 # Test the backend calls
 
-print(type(be))
-print(dir(be))
-print(be.list(Arrays.asList("A","B","C")))
-print(be.list("A","B","C"))
-print(be.str(PyString@"hello"))
+built = JClass("org.jpype.bridge.BuiltIn")
+
+print(built.list(Arrays.asList("A","B","C")))
+print(built.list("A","B","C"))
+print(built.str(PyString@"hello"))
 
 class MyTest():
     def __init__(self):
         pass
 o = MyTest()
 setattr(o, "field", "AA")
-print(be.dir(o))
-print(type(be.dir(o)))
-print(be.getDict(o))
-print(be.hasattr(o, "field"))
-print(be.getattr(o, "field"))
-print(be.setattr(o, "field", "BB"))
+print(built.dir(o))
+print(type(built.dir(o)))
+#print(built.getDict(o))
+print(built.hasattr(o, "field"))
+print(built.getattr(o, "field"))
+print(built.setattr(o, "field", "BB"))
 print(o.field=="BB")
-print(be.delattr(o, "field"))
+print(built.delattr(o, "field"))
 print(hasattr(o, "field"))
 
-print(be.isinstance(int(), PyObject[:]((int, float))))
+print(built.isinstance(int(), PyObject[:]((int, float))))
 #==========================================================
 # Test the object behavior
 
