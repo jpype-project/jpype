@@ -17,6 +17,9 @@ package org.jpype.bridge;
 
 import python.lang.PyDict;
 import python.lang.PyObject;
+import python.lang.PyString;
+import python.lang.PyTuple;
+import python.lang.PyType;
 
 /**
  * Represents an scope of variables in the Python interpreter.
@@ -28,10 +31,10 @@ import python.lang.PyObject;
  * When wrapping a Python module the Java wrapper class should hold its own
  * private scope object.
  *
- * @author nelson85
  */
 public class Context
 {
+
 
     public final PyDict globals;
     public final PyDict locals;
@@ -56,7 +59,42 @@ public class Context
     {
 
     }
-    
-    
 
+//<editor-fold desc="builtins" defaultstate="collapsed">
+    public static PyString str(Object obj)
+    {
+        return Bridge.backend.str(obj);
+    }
+
+    public static PyString repr(Object obj)
+    {
+        return Bridge.backend.repr(obj);
+    }
+    
+    public static PyTuple tuple(Object ... args)
+    {
+        return Bridge.backend.tuple(args);
+    }
+    
+    public static PyType type(Object obj)
+    {
+        return Bridge.backend.type(obj);
+    }
+    
+    public static boolean isinstance(Object obj, PyObject... types)
+    {
+        return Bridge.backend.isinstance(obj, types);     
+    }
+    
+    public static PyObject bytes(PyObject obj)
+    {
+        return Bridge.backend.bytes(obj);        
+    }
+    
+    public static PyObject memoryview(PyObject obj)
+    {
+        return Bridge.backend.memoryview(obj);        
+    }
+    
+//</editor-fold>
 }

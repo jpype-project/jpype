@@ -15,20 +15,28 @@
  * ***************************************************************************/
 package python.lang;
 
+import python.protocol.PyCallable;
+import python.protocol.PySequence;
+import python.protocol.PyAttributes;
+import python.protocol.PyMapping;
+import python.protocol.PyNumber;
+
 /**
  * PyObject is a representation of a generic object in Python.
  *
- * This object will have very limited behaviors. To accept a specific behavior
- * of a Python object use one of the "as" functions.
+ * PyObjects are very generic and thus must be converted to a protocol using the
+ * "as" methods. Specific Java like behaviors are implemented on the protocols
+ * where applicable.
  *
- * @author nelson85
  */
 public interface PyObject
 {
-    /** Get the type of this object.
-     * 
+
+    /**
+     * Get the type of this object.
+     *
      * Equivalent of type(obj).
-     * 
+     *
      * @return the object type.
      */
     PyType getType();
@@ -36,66 +44,47 @@ public interface PyObject
     boolean isInstance(PyObject cls);
 
     /**
-     * Get the attributes of the object.
+     * Apply the attributes protocol to this object.
      *
-     * @return an attribute interface for this object.
+     * This method never fails.
+     *
+     * @return an attribute protocol.
      */
     PyAttributes asAttributes();
 
     /**
-     * Treat this object as a function.
+     * Apply the callable protocol to this object.
      *
-     * FIXME if the object isn't callable what should we do?
+     * The object must be callable for this to succeed.
      *
-     * @return a function interface.
+     * @return a callable protocol.
      */
-    PyCallable asFunc();
+    PyCallable asCallable();
 
     /**
-     * Treat the object as a sequence.
+     * Apply the sequence protocol to this object.
      *
-     * @return
+     * @return a sequence protocol.
      */
     PySequence asSequence();
 
-    // conversions
-    int toInt();
+    /**
+     * Apply the mapping protocol to this object.
+     *
+     * @return a mapping protocol.
+     */
+    PyMapping asMapping();
 
-    double toFloat();
-
-    boolean toBool();
-
-//  // attributes
-//  boolean hasAttr(String s);
-//
-//  PyObject getAttr(String s);
-//
-//  void setAttr(String s, Object obj);
-//
-//  void delAttr(String s);
-    // Executable
-    //PyObject call(PyTuple args, PyDict kwargs);
-    // dict like
-//  PyObject setItem(PyObject key, Object value);
-//
-//  PyObject getItem(PyObject key);
-//
-//  void delItem(PyObject obj);
-//
-//  int len();
-    PyObject dir();
-
-    // logial  
-    boolean not();
-
-    boolean isTrue();
-
-    int hash();
-
-    PyObject str();
-
-    PyObject repr();
+    /**
+     * Apply the number protocol to this object.
+     *
+     * @return a number protocol.
+     */
+    PyNumber asNumber();
 
     PyObject bytes();
+
+    @Override
+    int hashCode();
 
 }

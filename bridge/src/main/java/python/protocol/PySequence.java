@@ -2,14 +2,14 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package python.lang;
+package python.protocol;
+
+import python.lang.PyObject;
 
 /**
  * Interface for objects that act as sequences.
- *
- * @author nelson85
  */
-public interface PySequence
+public interface PySequence extends PyProtocol
 {
 
     /**

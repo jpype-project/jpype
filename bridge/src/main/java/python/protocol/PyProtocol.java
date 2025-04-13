@@ -2,15 +2,20 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package python.lang;
+package python.protocol;
+
+import python.lang.PyObject;
 
 /**
- * Interface for Python objects that act as a function.
  *
  * @author nelson85
  */
-public interface PyCallable
+public interface PyProtocol
 {
-    PyObject call(PyObject args, PyDict kwargs);
-    
+    /** 
+     * Return the base object protocol.
+     * 
+     * @return the object this protocol represents. 
+     */
+    PyObject asObject();
 }

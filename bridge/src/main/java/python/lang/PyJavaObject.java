@@ -1,6 +1,11 @@
 package python.lang;
 
-import org.jpype.bridge.Bridge;
+import python.protocol.PyCallable;
+import python.protocol.PySequence;
+import python.protocol.PyAttributes;
+import org.jpype.bridge.Context;
+import python.protocol.PyMapping;
+import python.protocol.PyNumber;
 
 /**
  * ***************************************************************************
@@ -42,131 +47,19 @@ public class PyJavaObject implements PyObject
     @Override
     public PyType getType()
     {
-        return Bridge.getBackend().type(obj_);
+        return Context.type(obj_);
     }
 
-//
-//  @Override
-//  public boolean hasAttr(String s)
-//  {
-//    throw new UnsupportedOperationException();
-//  }
-//
-//  @Override
-//  public PyObject getAttr(String s)
-//  {
-//    throw new UnsupportedOperationException();
-//  }
-//
-//  @Override
-//  public void setAttr(String s, Object obj)
-//  {
-//    throw new UnsupportedOperationException();
-//  }
-//
-//  @Override
-//  public void delAttr(String s)
-//  {
-//    throw new UnsupportedOperationException();
-//  }
-//
-//  @Override
-//  public PyObject call(PyTuple args, PyDict kwargs)
-//  {
-//    throw new UnsupportedOperationException();
-//  }
-//
-//  @Override
-//  public PyObject setItem(PyObject key, Object value)
-//  {
-//    throw new UnsupportedOperationException();
-//  }
-//
-//  @Override
-//  public PyObject getItem(PyObject key)
-//  {
-//    throw new UnsupportedOperationException();
-//  }
-//
-//  @Override
-//  public void delItem(PyObject obj)
-//  {
-//    throw new UnsupportedOperationException();
-//  }
-//
-//  @Override
-//  public int len()
-//  {
-//    throw new UnsupportedOperationException();
-//  }
-//  @Override
-//  public PyObject iter()
-//  {
-//    throw new UnsupportedOperationException();
-//  }
     @Override
     public boolean isInstance(PyObject cls)
     {
         throw new UnsupportedOperationException();
     }
 
-//  @Override
-//  public PyObject type()
-//  {
-//    throw new UnsupportedOperationException();
-//  }
     @Override
-    public PyObject dir()
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean not()
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean isTrue()
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int hash()
+    public int hashCode()
     {
         return obj_.hashCode();
-    }
-
-    @Override
-    public double toFloat()
-    {
-        if (obj_ instanceof Number)
-            return ((Number) obj_).doubleValue();
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int toInt()
-    {
-        if (obj_ instanceof Number)
-            return ((Number) obj_).intValue();
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public PyObject str()
-    {
-        if (obj_ == null)
-            return null;
-        return new PyJavaObject(obj_.toString());
-    }
-
-    @Override
-    public PyObject repr()
-    {
-        return str();
     }
 
     @Override
@@ -183,7 +76,7 @@ public class PyJavaObject implements PyObject
     }
 
     @Override
-    public PyCallable asFunc()
+    public PyCallable asCallable()
     {
         // Java objects don't act as Python functions.
         throw new UnsupportedOperationException();
@@ -197,9 +90,15 @@ public class PyJavaObject implements PyObject
     }
 
     @Override
-    public boolean toBool()
+    public PyMapping asMapping()
     {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public PyNumber asNumber()
+    {
+        throw new UnsupportedOperationException(); 
     }
 
 }

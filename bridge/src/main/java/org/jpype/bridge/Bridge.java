@@ -16,8 +16,6 @@ import java.util.Properties;
 
 /**
  * This is a singleton the is created once to connect to Python.
- *
- * @author nelson85
  */
 public class Bridge
 {

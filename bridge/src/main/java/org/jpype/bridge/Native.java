@@ -16,8 +16,10 @@
 package org.jpype.bridge;
 
 /**
- *
- * @author nelson85
+ * Internal behaviors used by the binding.
+ * 
+ * These correspond to JNI function held in the JPype shared library.
+ * No user interactions are allowed.
  */
 public class Native
 {

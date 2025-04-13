@@ -15,10 +15,11 @@
  * ***************************************************************************/
 package org.jpype.bridge;
 
-import java.util.List;
 import java.util.Map;
+import python.lang.PyBytes;
 import python.lang.PyDict;
 import python.lang.PyList;
+import python.lang.PyMemoryView;
 import python.lang.PyObject;
 import python.lang.PyString;
 import python.lang.PyTuple;
@@ -31,33 +32,42 @@ import python.lang.PyType;
  * is not callable directly but is used by other support classes to provide
  * behavior.
  *
- * @author nelson85
  */
 public interface Backend
 {
-    public PyType type(Object obj);
 
-    public PyList tuple(Iterable<Object> list);
-    public PyTuple tuple(Object... obj);
+    PyType type(Object obj);
 
-    public PyDict newDict(Map<Object, Object> map);
+    PyList tuple(Iterable<Object> list);
 
-    public PyList list(Iterable<Object> list);
-    public PyList list(Object... list);
+    PyTuple tuple(Object... obj);
 
-    public PyString str(Object str);
+    PyDict newDict(Map<Object, Object> map);
+
+    PyList list(Iterable<Object> list);
+
+    PyList list(Object... list);
+
+    PyString str(Object str);
+
+    PyString repr(Object str);
+
+    boolean hasattr(PyObject obj, String str);
+
+    void delattr(PyObject obj, String str);
+
+    PyObject getattr(PyObject obj, String str);
+
+    void setattr(PyObject obj, String str, Object value);
+
+    PyList dir(PyObject obj);
+
+    PyDict getDict(PyObject obj);
     
-    public boolean hasattr(PyObject obj, String str);
+    PyBytes bytes(PyObject obj);
     
-    public void delattr(PyObject obj, String str);
+    PyMemoryView memoryview(PyObject obj);
     
-    public PyObject getattr(PyObject obj, String str);
-    
-    public void setattr(PyObject obj, String str, Object value);
-    
-    public PyList dir(PyObject obj);
-    
-    public PyDict getDict(PyObject obj);
 
 // It is okay if not everything is exposed as the user can always evaluate
 // statements if something is missing.
@@ -144,4 +154,6 @@ public interface Backend
 //print()
 //staticmethod()
 //super()
+
+    public boolean isinstance(Object obj, PyObject[] types);
 }
