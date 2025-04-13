@@ -15,29 +15,52 @@
  * ***************************************************************************/
 package org.jpype.bridge;
 
-
 import java.util.List;
 import java.util.Map;
 import python.lang.PyDict;
 import python.lang.PyList;
+import python.lang.PyObject;
 import python.lang.PyString;
 import python.lang.PyTuple;
+import python.lang.PyType;
 
 /**
+ * Backend for all Python entry points.
+ *
+ * This will be implemented by Python to allow access to Java. This class will
+ * is not callable directly but is used by other support classes to provide
+ * behavior.
  *
  * @author nelson85
  */
-public interface Builtin
+public interface Backend
 {
-  public PyTuple tuple(Object... obj);
-  public PyDict dict(Map<Object,Object> map);
-  public PyList list(List<Object> list);
-  public PyString str(String str);
+    public PyType type(Object obj);
 
+    public PyList tuple(Iterable<Object> list);
+    public PyTuple tuple(Object... obj);
+
+    public PyDict newDict(Map<Object, Object> map);
+
+    public PyList list(Iterable<Object> list);
+    public PyList list(Object... list);
+
+    public PyString str(Object str);
+    
+    public boolean hasattr(PyObject obj, String str);
+    
+    public void delattr(PyObject obj, String str);
+    
+    public PyObject getattr(PyObject obj, String str);
+    
+    public void setattr(PyObject obj, String str, Object value);
+    
+    public PyList dir(PyObject obj);
+    
+    public PyDict getDict(PyObject obj);
 
 // It is okay if not everything is exposed as the user can always evaluate
 // statements if something is missing.
-  
 //Creation
 //   dict()
 //   set()
@@ -49,7 +72,6 @@ public interface Builtin
 //   open()
 //   property()
 //   slice()
-  
 //Casting? 
 // These take one argument they act on so they could be considered object method
 // place on PyOject?
@@ -61,13 +83,10 @@ public interface Builtin
 //   classmethod()
 //   float()
 //   type()
-  
-  
 // Int only methods?
 //   bin()
 //   hex()
 //   oct()
-  
 // Methods?  move to PyObject
 //   memoryview - asMemoryView()
 //   bool() - asBool()
@@ -86,14 +105,12 @@ public interface Builtin
 //   delattr()
 //   dir()
 //   vars()
-  
 // Belong on scopes?
 //   compile()
 //   eval()
 //   exec()
 //   globals()
 //   locals()
-  
 // Math
 //   abs()
 //   pow()
@@ -101,7 +118,6 @@ public interface Builtin
 //   chr()
 //   ord()
 //   round()
-  
 // Iterator/generators
 //   max()
 //   min()
@@ -114,11 +130,9 @@ public interface Builtin
 //   reversed()
 //   sorted()
 //   any()
-  
 // Method for iterator
 //  next()
 //  filter()
-
 //aiter()
 //anext()
 //breakpoint()
@@ -130,7 +144,4 @@ public interface Builtin
 //print()
 //staticmethod()
 //super()
-
-  
-  
 }

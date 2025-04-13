@@ -42,6 +42,11 @@ public:
 	virtual JPPyObject getCallable(const string& cname) = 0;
 	static void releaseProxyPython(void* host);
 
+	PyJPProxy* getInstance()
+	{
+		return m_Instance;
+	}
+
 protected:
 	JPContext*    m_Context;
 	PyJPProxy*    m_Instance;

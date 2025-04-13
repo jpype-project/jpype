@@ -30,31 +30,33 @@ import python.lang.PyObject;
  *
  * @author nelson85
  */
-public class Scope
+public class Context
 {
 
-    public final Builtin builtin;
     public final PyDict globals;
+    public final PyDict locals;
 
-    private Scope(Builtin builtin, PyDict globals)
+    private Context(PyDict globals, PyDict locals)
     {
-        this.builtin = builtin;
         this.globals = globals;
+        this.locals = locals;
     }
 
-    PyObject eval(String source)
+    public PyObject eval(String source)
     {
         return null;
     }
 
-    void imports(String module)
+    public void importModule(String module)
     {
 
     }
 
-    void imports(String module, String as)
+    public void importModule(String module, String as)
     {
 
     }
+    
+    
 
 }

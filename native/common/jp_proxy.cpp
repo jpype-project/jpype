@@ -22,17 +22,16 @@
 #include "jp_boxedtype.h"
 #include "jp_functional.h"
 
-JPPyObject getArgs(JPContext* context, jlongArray parameterTypePtrs,
-		jobjectArray args)
+JPPyObject getArgs(JPContext* context, jlongArray parameterTypePtrs, jobjectArray args)
 {
 	JP_TRACE_IN("JProxy::getArgs");
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jsize argLen = frame.GetArrayLength(parameterTypePtrs);
-	JPPyObject pyargs = JPPyObject::call(PyTuple_New(argLen));
 	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, parameterTypePtrs,
 			&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
 
 	jlong* types = accessor.get();
+	JPPyObject pyargs = JPPyObject::call(PyTuple_New(argLen));
 	for (jsize i = 0; i < argLen; i++)
 	{
 		jobject obj = frame.GetObjectArrayElement(args, i);
@@ -81,7 +80,8 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 			JP_TRACE("Get callable for", cname);
 
 			// Get the callable object
-			JPPyObject callable(((JPProxy*) hostObj)->getCallable(cname));
+			auto* proxy = (JPProxy*) hostObj;
+			JPPyObject callable(proxy->getCallable(cname));
 
 			// If method can't be called, throw an exception
 			if (callable.isNull() || callable.get() == Py_None)
@@ -91,7 +91,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 			auto* returnClass = (JPClass*) returnTypePtr;
 			JP_TRACE("Get return type", returnClass->getCanonicalName());
 
-			// convert the arguments into a python list
+			// convert the arguments into a Python list
 			JP_TRACE("Convert arguments");
 			JPPyObject pyargs = getArgs(context, parameterTypePtrs, args);
 
@@ -251,9 +251,18 @@ JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bo
 	JP_TRACE_IN("JPProxyType::convertToPythonObject");
 	jobject ih = frame.CallStaticObjectMethodA(m_ProxyClass.get(),
 			m_GetInvocationHandlerID, &val);
-	PyJPProxy *target = ((JPProxy*) frame.GetLongField(ih, m_InstanceID))->m_Instance;
-	if (target->m_Target != Py_None && target->m_Convert)
-		return JPPyObject::use(target->m_Target);
+	JPProxy *proxy = (JPProxy*) frame.GetLongField(ih, m_InstanceID);
+	PyJPProxy *target = proxy->m_Instance;
+
+	// Is it a native Python object
+	if (target->m_Convert && target->m_Target != Py_None)
+			return JPPyObject::use(target->m_Target);
+
+	// Is it something we can keep as a Java Object
+	if (target->m_Dispatch != Py_None && proxy->m_InterfaceClasses.size() == 1)
+			return proxy->m_InterfaceClasses[0]->convertToPythonObject(frame, val, cast);
+
+	// Return the Proxy itself
 	JP_TRACE("Target", target);
 	return JPPyObject::use((PyObject*) target);
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
@@ -282,7 +291,7 @@ JPProxyIndirect::~JPProxyIndirect()
 
 JPPyObject JPProxyIndirect::getCallable(const string& cname)
 {
-	JPPyObject out = JPPyObject::accept(PyObject_GetAttrString(m_Instance->m_Target, cname.c_str()));
+	JPPyObject out = JPPyObject::accept(PyObject_GetAttrString(m_Instance->m_Dispatch, cname.c_str()));
 	if (!out.isNull())
 		return out;
 	return JPPyObject::accept(PyObject_GetAttrString((PyObject*) m_Instance, cname.c_str()));

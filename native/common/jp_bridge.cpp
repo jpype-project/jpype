@@ -47,15 +47,34 @@ static void convertException(JNIEnv *env, JPypeException& ex)
 	}
 }
 
+PyObject* jpype = nullptr;
+PyObject* jpypep = nullptr;
+
 
 JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 (JNIEnv *env, jobject engine)
 {
 	try
 	{
+		PyStatus status;
+		PyConfig config;
+		PyConfig_InitPythonConfig(&config);
+		status = PyConfig_SetBytesString(&config, &config.program_name, "jpython");
+		if (PyStatus_Exception(status))
+		{
+			PyConfig_Clear(&config);
+			fail(env, "configuration failed");
+		}
+			
 		// Get Python started
 		PyImport_AppendInittab("_jpype", &PyInit__jpype);
-		Py_InitializeEx(0);
+		status = Py_InitializeFromConfig(&config);
+		PyConfig_Clear(&config);
+		if (PyStatus_Exception(status))
+		{
+			fail(env, "Python initialization failed");
+		}
+	
 #if  PY_VERSION_HEX<0x030a0000
 		PyEval_InitThreads();
 #endif
@@ -63,7 +82,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 		PySys_SetPath(L".");
 
 		// Import the Python side to create the hooks
-		PyObject *jpype = PyImport_ImportModule("jpype");
+		jpype = PyImport_ImportModule("jpype");
 		if (jpype == NULL)
 		{
 			fail(env, "jpype module not found");
@@ -72,7 +91,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 		Py_DECREF(jpype);
 
 		// Next install the hooks into the private side.
-		PyObject *jpypep = PyImport_ImportModule("_jpype");
+		jpypep = PyImport_ImportModule("_jpype");
 		if (jpypep == NULL)
 		{
 			fail(env, "_jpype module not found");
@@ -105,6 +124,12 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 	{
 		fail(env, "C++ exception during start");
 	}
+}
+
+JNIEXPORT jlong JNICALL Java_org_jpype_bridge_Native_newContext
+(JNIEnv *env, jobject, jstring str)
+{
+	
 }
 
 

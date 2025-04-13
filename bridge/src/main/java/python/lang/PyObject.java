@@ -16,58 +16,86 @@
 package python.lang;
 
 /**
+ * PyObject is a representation of a generic object in Python.
+ *
+ * This object will have very limited behaviors. To accept a specific behavior
+ * of a Python object use one of the "as" functions.
  *
  * @author nelson85
  */
 public interface PyObject
 {
+    /** Get the type of this object.
+     * 
+     * Equivalent of type(obj).
+     * 
+     * @return the object type.
+     */
+    PyType getType();
 
-  // attributes
-  boolean hasAttr(String s);
+    boolean isInstance(PyObject cls);
 
-  PyObject getAttr(String s);
+    /**
+     * Get the attributes of the object.
+     *
+     * @return an attribute interface for this object.
+     */
+    PyAttributes asAttributes();
 
-  void setAttr(String s, Object obj);
+    /**
+     * Treat this object as a function.
+     *
+     * FIXME if the object isn't callable what should we do?
+     *
+     * @return a function interface.
+     */
+    PyCallable asFunc();
 
-  void delAttr(String s);
+    /**
+     * Treat the object as a sequence.
+     *
+     * @return
+     */
+    PySequence asSequence();
 
-  // Executable
-  PyObject call(PyTuple args, PyDict kwargs);
+    // conversions
+    int toInt();
 
-  // dict like
-  PyObject setItem(PyObject key, Object value);
+    double toFloat();
 
-  PyObject getItem(PyObject key);
+    boolean toBool();
 
-  void delItem(PyObject obj);
+//  // attributes
+//  boolean hasAttr(String s);
+//
+//  PyObject getAttr(String s);
+//
+//  void setAttr(String s, Object obj);
+//
+//  void delAttr(String s);
+    // Executable
+    //PyObject call(PyTuple args, PyDict kwargs);
+    // dict like
+//  PyObject setItem(PyObject key, Object value);
+//
+//  PyObject getItem(PyObject key);
+//
+//  void delItem(PyObject obj);
+//
+//  int len();
+    PyObject dir();
 
-  int len();
+    // logial  
+    boolean not();
 
-  PyObject iter();
+    boolean isTrue();
 
-  // types
-  boolean isInstance(PyObject cls);
+    int hash();
 
-  PyObject type();
+    PyObject str();
 
-  PyObject dir();
+    PyObject repr();
 
-  // logial  
-  boolean not();
-
-  boolean isTrue();
-
-  int hash();
-
-  // conversions
-  double asFloat();
-
-  int asInt();
-
-  PyObject str();
-
-  PyObject repr();
-
-  PyObject bytes();
+    PyObject bytes();
 
 }

@@ -19,7 +19,7 @@ package python.lang;
  *
  * @author nelson85
  */
-public class PyTuple
+public interface PyTuple extends PyObject
 {
   
 }

@@ -15,11 +15,51 @@
  * ***************************************************************************/
 package python.lang;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
 /**
  *
  * @author nelson85
  */
-public interface PyDict extends PyObject
+public interface PyDict extends PyObject, Map<PyObject, Object>
 {
+
+    @Override
+    public int size();
+
+    @Override
+    public boolean isEmpty();
+
+    @Override
+    public boolean containsKey(Object key);
+
+    @Override
+    public boolean containsValue(Object value);
+
+    @Override
+    public PyObject get(Object key);
+
+    @Override
+    public PyObject put(PyObject key, Object value);
+
+    @Override
+    public PyObject remove(Object key);
+
+    @Override
+    public void putAll(Map<? extends PyObject, ? extends Object> m);
+
+    @Override
+    public void clear();
+
+    @Override
+    public Set<PyObject> keySet();
+
+    @Override
+    public Collection<Object> values();
+
+    @Override
+    public Set<Entry<PyObject, Object>> entrySet();
   
 }

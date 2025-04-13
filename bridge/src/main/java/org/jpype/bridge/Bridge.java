@@ -27,7 +27,7 @@ public class Bridge
     private String pythonLibrary;
     private String jpypeVersion;
     private boolean isWindows = false;
-    private Builtin builtin = null;
+    static Backend backend = null;
 
     static final String WINDOWS_PROBE = ""
             + "import sysconfig\n"
@@ -62,7 +62,7 @@ public class Bridge
     {
         Bridge bridge = getInstance();
         // Once builtin is set internally then we can't call create again.
-        if (bridge.builtin != null)
+        if (bridge.backend != null)
             return bridge;
         bridge.launch();
         int[] version = parseVersion(bridge.jpypeVersion);
@@ -375,11 +375,16 @@ public class Bridge
         }
     }
     
-    public static void setBuiltin(Builtin entry)
+    public static void setBackend(Backend entry)
     {
         // This is the first entry point called from Python.
         // it should lock out calling the create method
-        instance.builtin = entry;   
+        backend = entry;   
+    }
+    
+    public static Backend getBackend()
+    {
+        return backend;
     }
 
     public static void main(String[] args)
