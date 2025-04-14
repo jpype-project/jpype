@@ -196,6 +196,7 @@ def _c_add(x, *args):
         x.append(args[0])
         return True
     x.insert(args[0], args[1])
+    return None
 
 def _indexof(x, v):
     try:
@@ -420,7 +421,6 @@ _PyGeneratorMethods.update(_PyObjectMethods)
         
 
 _PyListMethods: MutableMapping[str, Callable] = {
-    "add": _c_add,
     "add": _c_add,
     "addAny": _c_add,
     "clear": list.clear,
@@ -656,3 +656,6 @@ def initialize():
 
     bridge.setBackend(backend)
 
+    @JConversion(_PyObject, instanceof=_jpype._JObject)
+    def _pyobject(jcls, obj):
+        return _PyJavaObject(obj)

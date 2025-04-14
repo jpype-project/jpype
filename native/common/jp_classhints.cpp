@@ -85,7 +85,10 @@ JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool ca
 }
 
 JPConversion::~JPConversion() = default;
-JPClassHints::JPClassHints() = default;
+JPClassHints::JPClassHints()
+{
+	convertJava = false;
+}
 
 JPClassHints::~JPClassHints()
 {
@@ -297,6 +300,8 @@ private:
 void JPClassHints::addTypeConversion(PyObject *type, PyObject *method, bool exact)
 {
 	JP_TRACE_IN("JPClassHints::addTypeConversion", this);
+	if (PyJPClass_Check(type))
+		convertJava = true;
 	conversions.push_back(new JPTypeConversion(type, method, exact));
 	JP_TRACE_OUT;
 }
@@ -332,8 +337,6 @@ public:
 	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		auto *pyhints = (PyJPClassHints*) cls->getHints();
-		if (pyhints == nullptr)
-			return;
 		JPClassHints *hints = pyhints->m_Hints;
 		hints->getInfo(cls, info);
 	}
@@ -631,6 +634,15 @@ public:
 		bool assignable = match.frame->IsAssignableFrom(oc->getJavaClass(), cls->getJavaClass()) != 0;
 		JP_TRACE("assignable", assignable, oc->getCanonicalName(), cls->getCanonicalName());
 		match.type = (assignable ? JPMatch::_derived : JPMatch::_none);
+
+		// User has request a Java class to class conversion.  We must pass through check it.
+		if (!assignable)
+		{
+			auto *pyhints = (PyJPClassHints*) cls->getHints();
+			JPClassHints *hints = pyhints->m_Hints;
+			if (hints->convertJava)
+				return match.type;
+		}
 
 		// This is the one except to the conversion rule patterns.
 		// If it is a Java value then we must prevent it from proceeding

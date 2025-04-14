@@ -96,6 +96,7 @@ PyObject *PyJPClassHints_addTypeConversion(PyJPClassHints *self, PyObject* args,
 		PyErr_SetString(PyExc_TypeError, "callable method is required");
 		return nullptr;
 	}
+
 	self->m_Hints->addTypeConversion(type, method, exact != 0);
 	Py_RETURN_NONE;
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
