@@ -22,8 +22,9 @@ from . import types as _jtypes
 from . import _jcustomizer
 from collections.abc import Mapping, Sequence, MutableSequence
 import itertools
+from typing import MutableMapping, Callable, List
 
-__all__ = []
+__all__: List[str] = []
 
 JImplements = _jproxy.JImplements
 JProxy = _jproxy.JProxy
@@ -39,9 +40,6 @@ def _isTrue(x):
 
 def _not(x):
     return not x
-
-def _call(x, a, k):
-    return x(a,k)
 
 def _setitem(x, k, v):
     x[k] = v
@@ -108,15 +106,6 @@ def _isempty(x):
 
 def _keyset(x):
     return JClass("org.jpype.bridge.KeySet")(x)
-
-def _values(x):
-    raise RuntimeError()
-
-def _entries(x):
-    raise RuntimeError()
-
-def _not(x):
-    return not x
 
 def _add(x,v):
     return x+v
@@ -239,11 +228,6 @@ def _real(x):
 def _imag(x):
     return x.imag
 
-def _call(x, a, k):
-    if k is None:
-        return x(*a)
-    return x(*a, **k)
-
 def _items(x):
     return x.items()
 
@@ -263,7 +247,7 @@ def _step(x):
     return x.step
 
 
-_PyJPBackendMethods = {
+_PyJPBackendMethods: MutableMapping[str, Callable] = {
     "bytearray": bytearray,
     "bytearray_fromhex": bytearray.fromhex,
     "bytes": bytes,
@@ -307,7 +291,7 @@ _PyJPBackendMethods = {
 
 # Now we need to set up the dictionary for the proxy object
 #  This seems trivial but the name binds the Java interface to existing functions
-_PyObjectMethods = { 
+_PyObjectMethods: MutableMapping[str, Callable] = { 
     "getType": type,
     "isInstance": isinstance,
     "asAttributes": _identity,
@@ -319,19 +303,9 @@ _PyObjectMethods = {
     "equals": _equals,
 }
 
-_PyAttributesMethods = { 
-    "asObject": _identity,
-    "get": _getattr,
-    "set": _setattr,
-    "del": _delattr,
-    "has": _hasattr,
-    "dir": dir,
-    "dict": _getdict
-}
-
 # Protocols
 
-_PyAttributesMethods = { 
+_PyAttributesMethods: MutableMapping[str, Callable]= { 
     "asObject": _identity,
     "get": _getattr,
     "set": _setattr,
@@ -341,12 +315,12 @@ _PyAttributesMethods = {
     "dict": _getdict
 }
 
-_PyCallableMethods = { 
+_PyCallableMethods: MutableMapping[str, Callable] = { 
     "asObject": _identity,
 }
 
 
-_PyMappingMethods = { 
+_PyMappingMethods: MutableMapping[str, Callable] = { 
     "asObject": _identity,
     "clear": _clear,
     "containsKey": _contains,
@@ -357,7 +331,7 @@ _PyMappingMethods = {
     "putAll": _putall,
 }
 
-_PyNumberMethods = {
+_PyNumberMethods: MutableMapping[str, Callable] = {
     "asObject": _identity,
     "toInt": int,
     "toFloat": float,
@@ -385,7 +359,7 @@ _PySequenceMethods = {
     "size": len,
 }
 
-_PyIterableMethods = {
+_PyIterableMethods: MutableMapping[str, Callable] = {
     "any": any,
     "all": all,
     "iter": iter,
@@ -398,7 +372,7 @@ _PyIterableMethods = {
 }
 _PyIterableMethods.update(_PyObjectMethods)
 
-_PyIteratorMethods = {
+_PyIteratorMethods: MutableMapping[str, Callable] = {
     "filter": _filter,
     "next": next,
 }
@@ -406,19 +380,19 @@ _PyIterableMethods.update(_PyObjectMethods)
 
 ## Concrete types
 
-_PyBytesMethods = {
+_PyBytesMethods: MutableMapping[str, Callable] = {
     "decode": bytes.decode,
     "translate": bytes.translate,
 }
 _PyBytesMethods.update(_PyObjectMethods)
 
-_PyByteArrayMethods = {
+_PyByteArrayMethods: MutableMapping[str, Callable] = {
     "decode": bytearray.decode,
     "translate": bytearray.translate,
 }
 _PyByteArrayMethods.update(_PyObjectMethods)
 
-_PyComplexMethods = {
+_PyComplexMethods: MutableMapping[str, Callable] = {
     "real": _real,
     "imag": _imag,
     "conjugate": complex.conjugate
@@ -426,7 +400,7 @@ _PyComplexMethods = {
 _PyComplexMethods.update(_PyObjectMethods)
 _PyComplexMethods.update(_PyNumberMethods)
 
-_PyDictMethods = {
+_PyDictMethods: MutableMapping[str, Callable] = {
     "clear": _clear,
     "containsKey": _contains,
     "containsValue": _containsvalue,
@@ -438,14 +412,14 @@ _PyDictMethods = {
 _PyDictMethods.update(_PyObjectMethods)
 
 # enumerate, zip, range
-_PyGeneratorMethods = {
+_PyGeneratorMethods: MutableMapping[str, Callable] = {
     "iter": iter
 }
 _PyGeneratorMethods.update(_PyObjectMethods)
 
         
 
-_PyListMethods = {
+_PyListMethods: MutableMapping[str, Callable] = {
     "add": _c_add,
     "add": _c_add,
     "addAny": _c_add,
@@ -464,7 +438,7 @@ _PyListMethods = {
 }
 _PyListMethods.update(_PyIterableMethods)
 
-_PyMemoryViewMethods = {}
+_PyMemoryViewMethods: MutableMapping[str, Callable] = {}
 _PyMemoryViewMethods.update(_PyObjectMethods)
 
 _PySetMethods = {
@@ -486,7 +460,7 @@ _PySetMethods = {
 }
 _PySetMethods.update(_PyObjectMethods)
 
-_PySliceMethods = {
+_PySliceMethods: MutableMapping[str, Callable] = {
     "start": _start,
     "end": _end,
     "step": _step,
@@ -494,7 +468,7 @@ _PySliceMethods = {
 }
 _PySliceMethods.update(_PyObjectMethods)
 
-_PyStringMethods = {
+_PyStringMethods: MutableMapping[str, Callable] = {
     "charAt": _charat,
     "length": len,
     "subSequence": _str_subseq,
