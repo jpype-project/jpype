@@ -24,7 +24,10 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import python.lang.PyObject;
 
 /**
@@ -406,15 +409,60 @@ public class Bridge
         System.out.println("SUCCESS");
         System.out.println(instance.jpypeVersion);
         
-        // Verify we can see native symbols
-        Native n = new Native();
-        n.addLibrary(instance.pythonLibrary);
-        n.addLibrary(instance.jpypeLibrary);
-        n.start();
+        try
+        {
+            String[] cmd =
+            {
+                instance.getExecutable(), "-c",  
+//              "import sys; print('\\n'.join(sys.path))"
+                "try:\n" +
+                "  print('a', flush=True)\n" +
+                "  import _jpype\n" +
+                "except Exception as ex:\n" +
+                "  print(ex)\n"
+            };
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            Map<String, String> sysenv = System.getenv();
+            Map<String, String> env = pb.environment();
+            env.putAll(sysenv);
+            pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
+            Process process = pb.start();
+            BufferedReader out = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            BufferedReader err = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            int rc = process.waitFor();
+
+            // Dump stderr out to so users can see problems.
+            String e = out.readLine();
+            while (e != null)
+            {
+                System.out.println(e);
+                e = out.readLine();
+            }
+                e = err.readLine();
+            while (e != null)
+            {
+                System.out.println("err " + e);
+                e = err.readLine();
+            }
+         
+            System.out.println("rc="+rc);
+       } catch (IOException ex)
+        {
+            Logger.getLogger(Bridge.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InterruptedException ex)
+        {
+            Logger.getLogger(Bridge.class.getName()).log(Level.SEVERE, null, ex);
+        }
         
-        // If this isn't zero then we have access to natives
-        System.out.println(n.getSymbol("PyObject_Init"));
-        
+//        // Verify we can see native symbols
+//        Native n = new Native();
+//        n.addLibrary(instance.pythonLibrary);
+//        n.addLibrary(instance.jpypeLibrary);
+//        n.start();
+//        
+//        // If this isn't zero then we have access to natives
+//        System.out.println(n.getSymbol("PyObject_Init"));
+//        
         
     }
 }

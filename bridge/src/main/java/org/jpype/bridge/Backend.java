@@ -15,6 +15,7 @@
  */
 package org.jpype.bridge;
 
+import java.util.Collection;
 import java.util.Map;
 import python.lang.PyByteArray;
 import python.lang.PyBytes;
@@ -32,6 +33,8 @@ import python.lang.PyString;
 import python.lang.PyTuple;
 import python.lang.PyType;
 import python.lang.PyZip;
+import python.protocol.PyCallable;
+import python.protocol.PyMapping;
 
 /**
  * Backend for all Python entry points.
@@ -43,23 +46,28 @@ import python.lang.PyZip;
  * The user should not call these directly. The user interface is located on
  * Context.
  *
- * These are the most generic type possible so that they can be used universally
- * throughout the bridge.
+ * Parameters are the most generic type possible so that they can be used universally
+ * throughout the bridge.  Return types are the most specific.
+ * 
+ * CharSequence will be used rather than the usual Java String as it allows
+ * both Python str and Java String through the same interface.
  */
 public interface Backend
 {
 
     PyByteArray bytearray(Object obj);
 
-    PyByteArray bytearray_fromhex(String str);
+    PyByteArray bytearray_fromhex(CharSequence str);
 
     PyBytes bytes(Object obj);
 
-    PyBytes bytes_fromhex(String str);
+    PyBytes bytes_fromhex(CharSequence str);
+
+    PyObject call(PyCallable obj, PyTuple args, PyDict kwargs);
 
     PyComplex complex(double r, double i);
 
-    void delattr(Object obj, String str);
+    void delattr(Object obj, CharSequence str);
 
     public boolean delindex(PyList aThis, int indexOf);
 
@@ -69,17 +77,17 @@ public interface Backend
 
     PyEnumerate enumerate(Object obj);
 
-    PyObject eval(String source, PyDict globalsDict, PyDict localsDict);
+    PyObject eval(CharSequence source, PyDict globalsDict, PyMapping localsDict);
 
-    void exec(String source, PyDict globalsDict, PyDict localsDict);
+    void exec(CharSequence source, PyDict globalsDict, PyMapping localsDict);
 
     PyDict getDict(Object obj);
 
-    PyObject getattr(Object obj, String str);
+    PyObject getattr(Object obj, CharSequence str);
 
-    public PyObject getitem(PyDict globalsDict, String key);
+    public PyObject getitem(PyDict globalsDict, CharSequence key);
 
-    boolean hasattr(Object obj, String str);
+    boolean hasattr(Object obj, CharSequence str);
 
     boolean isinstance(Object obj, Object[] types);
 
@@ -99,6 +107,37 @@ public interface Backend
 
     PyObject object();
 
+    PyRange range(int stop);
+
+    PyRange range(int start, int stop);
+
+    PyRange range(int start, int stop, int step);
+
+    PyString repr(Object str);
+
+    PySet set();
+
+    void setattr(Object obj, CharSequence str, Object value);
+
+    public void setitem(PyDict globalsDict, CharSequence key, Object value);
+
+    PySlice slice(Integer start, Integer stop, Integer step);
+
+    PyString str(Object str);
+
+    PyIterator tee(PyIterator iter);
+
+    <T> PyList tuple(Iterable<T> list);
+
+    <T> PyTuple tuple(T... obj);
+
+    PyType type(Object obj);
+
+    PyObject items(PyObject obj);
+    
+    PyObject values(PyObject obj);
+
+    <T> PyZip zip(T... objects);
 // It is okay if not everything is exposed as the user can always evaluate
 // statements if something is missing.
 //Creation
@@ -145,32 +184,5 @@ public interface Backend
 //print()
 //staticmethod()
 //super()
-    PyRange range(int stop);
-
-    PyRange range(int start, int stop);
-
-    PyRange range(int start, int stop, int step);
-
-    PyString repr(Object str);
-
-    PySet set();
-
-    void setattr(Object obj, String str, Object value);
-
-    public void setitem(PyDict globalsDict, String key, Object value);
-
-    PySlice slice(Integer start, Integer stop, Integer step);
-
-    PyString str(Object str);
-
-    PyIterator tee(PyIterator iter);
-
-    <T> PyList tuple(Iterable<T> list);
-
-    <T> PyTuple tuple(T... obj);
-
-    PyType type(Object obj);
-
-    <T> PyZip zip(T... objects);
 
 }

@@ -15,13 +15,23 @@
  */
 package python.lang;
 
+import org.jpype.bridge.BuiltIn;
 import python.protocol.PyNumber;
 
 /**
- *
- * @author nelson85
+ * Java front end for concrete Python complex.
  */
 public interface PyComplex extends PyNumber, PyObject
 {
+
+    static PyType type()
+    {
+        return (PyType) BuiltIn.eval("complex", null, null);
+    }
+
+    double real();
+
+    double imag();
+
     PyComplex conjugate();
 }

@@ -13,43 +13,42 @@
  * 
  *  See NOTICE file for details.
  */
-package org.jpype.bridge;
+package python.protocol;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
-import python.protocol.PyMapping;
 
 /**
  *  Representation of a KeySet of Python Mappings.
  */
-public class KeySet implements Set<Object>
+class PyMappingKeySet implements Set<Object>
 {
 
-    final PyMapping obj;
+    final PyMapping map;
     
-    public KeySet(PyMapping mapping)
+    public PyMappingKeySet(PyMapping mapping)
     {
-        this.obj = mapping;
+        this.map = mapping;
     }
 
     @Override
     public int size()
     {
-        return obj.size();
+        return map.size();
     }
 
     @Override
     public boolean isEmpty()
     {
-        return obj.isEmpty();
+        return map.isEmpty();
     }
 
     @Override
     public boolean contains(Object o)
     {
-        return obj.containsKey(o);
+        return map.containsKey(o);
     }
 
     @Override
@@ -80,7 +79,7 @@ public class KeySet implements Set<Object>
     @Override
     public boolean remove(Object o)
     {
-        return obj.remove(o) != null;
+        return map.remove(o) != null;
     }
 
     @Override
@@ -88,7 +87,7 @@ public class KeySet implements Set<Object>
     {
         for (var x : c)
         {
-            if (!obj.containsKey(c))
+            if (!map.containsKey(c))
                 return false;
         }
         return true;
@@ -120,7 +119,7 @@ public class KeySet implements Set<Object>
     @Override
     public void clear()
     {
-        obj.clear();
+        map.clear();
     }
 
 }

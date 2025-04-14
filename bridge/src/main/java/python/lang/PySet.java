@@ -20,16 +20,28 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import org.jpype.bridge.Bridge;
+import org.jpype.bridge.BuiltIn;
 
 /**
- * Java front end for concrete Python bytearray.
+ * Java front end for concrete Python set.
  *
- * FIXME can we get Java set behavior for this object? FIXME need additional
- * dunder methods.
+ * This mostly obeys the Java contract for sets.
+ *
  */
 public interface PySet extends PyObject, Set<PyObject>
 {
 
+    static PyType type()
+    {
+        return (PyType) BuiltIn.eval("set", null, null);
+    }
+
+    /**
+     * Create a Python set from an Iterable.
+     *
+     * @param c
+     * @return
+     */
     public static PySet create(Iterable c)
     {
         return Bridge.getBackend().newSet(c);

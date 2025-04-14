@@ -16,6 +16,7 @@
 package python.lang;
 
 import org.jpype.bridge.Bridge;
+import org.jpype.bridge.BuiltIn;
 
 /**
  * Java front end for concrete Python bytearray.
@@ -23,7 +24,12 @@ import org.jpype.bridge.Bridge;
 public interface PyByteArray extends PyObject
 {
 
-    static PyByteArray fromhex(String str)
+    static PyType type()
+    {
+        return (PyType) BuiltIn.eval("bytearray", null, null);
+    }
+
+    static PyByteArray fromHex(CharSequence str)
     {
         return Bridge.getBackend().bytearray_fromhex(str);
     }

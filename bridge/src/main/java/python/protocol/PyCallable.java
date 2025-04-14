@@ -15,6 +15,7 @@
  */
 package python.protocol;
 
+import org.jpype.bridge.BuiltIn;
 import org.jpype.bridge.Context;
 import python.lang.PyDict;
 import python.lang.PyObject;
@@ -31,26 +32,17 @@ public interface PyCallable extends PyProtocol
     
     default PyObject call(PyTuple args, PyDict kwargs)
     {
-        return _call(args, kwargs);
+        return BuiltIn.call(this, args, kwargs);
     }
             
     default PyObject call(PyTuple args)
     {
-        return _call(args, null);
+        return BuiltIn.call(this, args, null);
     }
     
     default PyObject call(Object... args)
     {
-        return _call(Context.tuple(args), null);
+        return BuiltIn.call(this, PyTuple.create(args), null);
     }
-    
-    /** 
-     * Actual interface used for dispatch.
-     * 
-     * @param args
-     * @param kwargs
-     * @return 
-     */
-    PyObject _call(PyTuple args, PyDict kwargs);
     
 }

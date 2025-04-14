@@ -28,6 +28,8 @@ import python.lang.PyString;
 import python.lang.PyTuple;
 import python.lang.PyType;
 import python.lang.PyZip;
+import python.protocol.PyCallable;
+import python.protocol.PyMapping;
 
 /**
  * Collection of static methods available in Python.
@@ -48,42 +50,52 @@ public class BuiltIn
         return Bridge.backend.bytes(obj);
     }
 
+    public static PyObject call(PyCallable obj, PyTuple args, PyDict kwargs)
+    {
+        return Bridge.backend.call(obj, args, kwargs);
+    }
+
     public static PyList dir(PyObject obj)
     {
         return Bridge.backend.dir(obj);
     }
 
-    public static void delattr(PyObject obj, String key)
+    public static void delattr(PyObject obj, CharSequence key)
     {
         Bridge.backend.delattr(obj, key);
     }
 
-    public PyEnumerate enumerate(PyObject obj)
+    public static PyObject next(PyIterator iter, PyObject stop)
+    {
+        return Bridge.backend.next(iter, stop);
+    }
+
+    public static PyEnumerate enumerate(PyObject obj)
     {
         return Bridge.backend.enumerate(obj);
     }
 
-    public PyEnumerate enumerate(Iterable obj)
+    public static PyEnumerate enumerate(Iterable obj)
     {
         return Bridge.backend.enumerate(obj);
     }
 
-    public PyObject eval(String statement, PyDict globals, PyDict locals)
+    public static PyObject eval(CharSequence statement, PyDict globals, PyMapping locals)
     {
         return Bridge.backend.eval(statement, globals, locals);
     }
 
-    public void exec(String statement, PyDict globals, PyDict locals)
+    public static void exec(CharSequence statement, PyDict globals, PyMapping locals)
     {
         Bridge.backend.eval(statement, globals, locals);
     }
 
-    public static PyObject getattr(PyObject obj, String key)
+    public static PyObject getattr(PyObject obj, CharSequence key)
     {
         return Bridge.backend.getattr(obj, key);
     }
 
-    public static boolean hasattr(PyObject obj, String key)
+    public static boolean hasattr(PyObject obj, CharSequence key)
     {
         return Bridge.backend.hasattr(obj, key);
     }
@@ -167,7 +179,7 @@ public class BuiltIn
         return Bridge.backend.repr(obj);
     }
 
-    public static void setattr(PyObject obj, String key, Object value)
+    public static void setattr(PyObject obj, CharSequence key, Object value)
     {
         Bridge.backend.setattr(obj, key, value);
     }

@@ -15,10 +15,24 @@
  */
 package python.lang;
 
+import org.jpype.bridge.BuiltIn;
+
 /**
- * Java front end for concrete Python type slice.
+ * Java front end for concrete Python slice.
  */
 public interface PySlice extends PyObject
 {
+
+    static PyType type()
+    {
+        return (PyType) BuiltIn.eval("slice", null, null);
+    }
+
+    Integer start();
+
+    Integer stop();
+
+    Integer step();
+
     PyTuple indices(int i);
 }

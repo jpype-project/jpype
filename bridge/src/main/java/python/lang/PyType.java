@@ -15,11 +15,14 @@
  */
 package python.lang;
 
+import python.protocol.PyCallable;
+
 /**
- *
- * @author nelson85
+ * Java front end for concrete Python type.
  */
-public interface PyType extends PyObject
+public interface PyType extends PyObject, PyCallable
 {
-    
+
+    PyTuple mro();
+
 }

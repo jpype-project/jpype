@@ -15,10 +15,16 @@
  */
 package python.lang;
 
+import org.jpype.bridge.BuiltIn;
+
 /**
  * Java front end for concrete Python enumerate.
  */
 public interface PyEnumerate extends PyGenerator
 {
 
+    static PyType type()
+    {
+        return (PyType) BuiltIn.eval("enumerate", null, null);
+    }
 }

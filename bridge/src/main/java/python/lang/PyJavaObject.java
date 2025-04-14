@@ -15,6 +15,7 @@
  */
 package python.lang;
 
+import java.util.Objects;
 import org.jpype.bridge.Context;
 import python.protocol.PyAttributes;
 import python.protocol.PyCallable;
@@ -89,6 +90,19 @@ public class PyJavaObject implements PyObject
     public int hashCode()
     {
         return obj_.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final PyJavaObject other = (PyJavaObject) obj;
+        return Objects.equals(this.obj_, other.obj_);
     }
 
     @Override

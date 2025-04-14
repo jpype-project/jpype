@@ -16,6 +16,7 @@
 package python.lang;
 
 import org.jpype.bridge.Bridge;
+import org.jpype.bridge.BuiltIn;
 
 /**
  * Java front end for concrete Python bytes.
@@ -23,7 +24,12 @@ import org.jpype.bridge.Bridge;
 public interface PyBytes extends PyObject
 {
 
-    static PyBytes fromhex(String str)
+    static PyType type()
+    {
+        return (PyType) BuiltIn.eval("bytes", null, null);
+    }
+
+    static PyBytes fromHex(CharSequence str)
     {
         return Bridge.getBackend().bytes_fromhex(str);
     }

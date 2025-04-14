@@ -22,18 +22,18 @@ import java.util.List;
 import java.util.ListIterator;
 import org.jpype.bridge.Bridge;
 import org.jpype.bridge.BuiltIn;
-import org.jpype.bridge.GenericIterator;
 
 /**
+ * Java front end for concrete Python list.
  *
- * @author nelson85
+ * This mostly obeys the Java contract for List.
  */
 public interface PyList extends List<PyObject>, PyIterable
 {
-        @Override
-    default Iterator<PyObject> iterator()
+
+    static PyType type()
     {
-        return new GenericIterator(this.iter());
+        return (PyType) BuiltIn.eval("list", null, null);
     }
 
     public static PyList create(Iterable c)
@@ -42,10 +42,10 @@ public interface PyList extends List<PyObject>, PyIterable
     }
 
     @Override
-    public boolean add(PyObject e);
+    boolean add(PyObject e);
 
     @Override
-    public void add(int index, PyObject element);
+    void add(int index, PyObject element);
 
     @Override
     default boolean addAll(Collection<? extends PyObject> c)
@@ -61,11 +61,13 @@ public interface PyList extends List<PyObject>, PyIterable
         return !c.isEmpty();
     }
 
-    @Override
-    public void clear();
+    void addAny(Object obj);
 
     @Override
-    public boolean contains(Object o);
+    void clear();
+
+    @Override
+    boolean contains(Object o);
 
     @Override
     default boolean containsAll(Collection<?> c)
@@ -75,20 +77,26 @@ public interface PyList extends List<PyObject>, PyIterable
         return s2.isSubset(s1);
     }
 
-    public void extend(Collection<? extends PyObject> c);
+    void extend(Collection<? extends PyObject> c);
 
     @Override
     PyObject get(int index);
 
     @Override
-    public int indexOf(Object o);
+    int indexOf(Object o);
 
-    public void insert(int index, Collection<? extends PyObject> c);
+    void insert(int index, Collection<? extends PyObject> c);
 
     @Override
     default boolean isEmpty()
     {
         return size() == 0;
+    }
+
+    @Override
+    default Iterator<PyObject> iterator()
+    {
+        return new PyIteratorImpl(this.iter());
     }
 
     @Override
@@ -100,13 +108,15 @@ public interface PyList extends List<PyObject>, PyIterable
     @Override
     default ListIterator<PyObject> listIterator()
     {
-        throw new UnsupportedOperationException();
+        return new PyListIterator(this, 0);
     }
 
     @Override
     default ListIterator<PyObject> listIterator(int index)
     {
-        throw new UnsupportedOperationException();
+        if (index < 0 || index > size())
+            throw new IndexOutOfBoundsException();
+        return new PyListIterator(this, index);
     }
 
     @Override
@@ -124,19 +134,21 @@ public interface PyList extends List<PyObject>, PyIterable
     }
 
     @Override
-    public boolean removeAll(Collection<?> c);
+    boolean removeAll(Collection<?> c);
 
     @Override
-    public boolean retainAll(Collection<?> c);
+    boolean retainAll(Collection<?> c);
 
     @Override
-    public PyObject set(int index, PyObject element);
+    PyObject set(int index, PyObject element);
+
+    void setAny(int index, Object obj);
 
     @Override
-    public int size();
+    int size();
 
     @Override
-    public PyList subList(int fromIndex, int toIndex);
+    PyList subList(int fromIndex, int toIndex);
 
     @Override
     default Object[] toArray()

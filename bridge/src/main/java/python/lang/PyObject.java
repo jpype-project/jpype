@@ -15,6 +15,7 @@
  */
 package python.lang;
 
+import org.jpype.bridge.BuiltIn;
 import python.protocol.PyCallable;
 import python.protocol.PySequence;
 import python.protocol.PyAttributes;
@@ -31,6 +32,11 @@ import python.protocol.PyNumber;
  */
 public interface PyObject
 {
+
+    static PyType type()
+    {
+        return (PyType) BuiltIn.eval("object", null, null);
+    }
 
     /**
      * Get the type of this object.
@@ -86,7 +92,7 @@ public interface PyObject
 
     @Override
     int hashCode();
-    
+
     @Override
     boolean equals(Object obj);
 

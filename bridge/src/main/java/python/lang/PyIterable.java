@@ -16,10 +16,13 @@
 package python.lang;
 
 import java.util.Iterator;
-import org.jpype.bridge.GenericIterator;
 import python.protocol.PyCallable;
 
 /**
+ *
+ * Java front end for abstract concept of Python iterable.
+ *
+ * FIXME reversed removed because of contract conflict with List.
  *
  * @author nelson85
  */
@@ -35,7 +38,7 @@ public interface PyIterable extends PyObject, Iterable<PyObject>
     @Override
     default Iterator<PyObject> iterator()
     {
-        return new GenericIterator(this.iter());
+        return new PyIteratorImpl(this.iter());
     }
 
     PyObject map(PyCallable callable);

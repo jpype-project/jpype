@@ -18,11 +18,12 @@ package python.lang;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import org.jpype.bridge.Bridge;
-import org.jpype.bridge.GenericIterator;
 import python.protocol.PyCallable;
 
 /**
  * Python concept of an iterator.
+ *
+ * This can be converted to a Java iterator by calling iterator().
  */
 public interface PyIterator extends PyObject
 {
@@ -36,7 +37,7 @@ public interface PyIterator extends PyObject
      */
     default Iterator<PyObject> iterator()
     {
-        return new GenericIterator(Bridge.getBackend().tee(this));
+        return new PyIteratorImpl(Bridge.getBackend().tee(this));
     }
 
     /**

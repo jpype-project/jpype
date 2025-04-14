@@ -15,10 +15,18 @@
  */
 package python.lang;
 
+import java.util.Iterator;
+
 /**
  * Java front end for abstract concept of a generator.
  */
 public interface PyGenerator extends PyObject
 {
+
     PyIterator iter();
+
+    default Iterator<PyObject> iterator()
+    {
+        return iter().iterator();
+    }
 }

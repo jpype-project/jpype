@@ -15,10 +15,17 @@
  */
 package python.lang;
 
+import org.jpype.bridge.BuiltIn;
+
 /**
  * Java front end for concrete Python memoryview.
  */
 public interface PyMemoryView extends PyObject
 {
-    
+
+    static PyType type()
+    {
+        return (PyType) BuiltIn.eval("memoryview", null, null);
+    }
+
 }

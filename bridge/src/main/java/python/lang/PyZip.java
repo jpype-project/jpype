@@ -16,9 +16,9 @@
 package python.lang;
 
 /**
- * Java front end for concrete Python type zip.
+ * Java front end for concrete Python zip.
  */
 public interface PyZip extends PyGenerator
 {
-    
+
 }

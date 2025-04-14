@@ -15,50 +15,19 @@
  */
 package python.lang;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import org.jpype.bridge.BuiltIn;
+import python.protocol.PyMapping;
 
 /**
  * Java front end for concrete Python dict.
+ *
+ * This mostly obeys the Java contract for Map.
  */
-public interface PyDict extends PyObject, Map<PyObject, Object>
+public interface PyDict extends PyObject, PyMapping
 {
 
-    @Override
-    public void clear();
-
-    @Override
-    public boolean containsKey(Object key);
-
-    @Override
-    public boolean containsValue(Object value);
-
-    @Override
-    public Set<Entry<PyObject, Object>> entrySet();
-
-    @Override
-    public PyObject get(Object key);
-
-    @Override
-    public boolean isEmpty();
-
-    @Override
-    public Set<PyObject> keySet();
-
-    @Override
-    public PyObject put(PyObject key, Object value);
-
-    @Override
-    public void putAll(Map<? extends PyObject, ? extends Object> m);
-
-    @Override
-    public PyObject remove(Object key);
-
-    @Override
-    public int size();
-
-    @Override
-    public Collection<Object> values();
-
+    static PyType type()
+    {
+        return (PyType) BuiltIn.eval("dict", null, null);
+    }
 }

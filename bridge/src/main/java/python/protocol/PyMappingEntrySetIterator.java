@@ -13,31 +13,32 @@
  * 
  *  See NOTICE file for details.
  */
-package python.lang;
+package python.protocol;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import org.jpype.bridge.Bridge;
 import org.jpype.bridge.BuiltIn;
+import python.lang.PyIterator;
+import python.lang.PyObject;
 
 /**
- * Conversion of a Python iterator to Java.
  *
- * This is a private class used under the hood.
- *
- * Python and Java iterators don't share similar design philosophies, so we will
- * need to keep some state on the Java side to manage the conversion.
+ * @author nelson85
  */
-class PyIteratorImpl implements Iterator<PyObject>
+public class PyMappingEntrySetIterator implements Iterator<Map.Entry<Object, PyObject>>
 {
 
+    private final PyMapping map;
     private final PyIterator iter;
     private PyObject yield;
     private boolean done = false;
     private boolean check = false;
 
-    public PyIteratorImpl(PyIterator iter)
+    public PyMappingEntrySetIterator(PyMapping map, PyIterator iter)
     {
+        this.map = map;
         this.iter = iter;
     }
 
@@ -56,14 +57,53 @@ class PyIteratorImpl implements Iterator<PyObject>
     }
 
     @Override
-    public PyObject next() throws NoSuchElementException
+    public Map.Entry<Object, PyObject> next() throws NoSuchElementException
     {
         if (!check)
             hasNext();
         if (done)
             throw new NoSuchElementException();
         check = false;
-        return yield;
+        //The obbject has two members
+        PySequence tuple = yield.asSequence();
+        PyObject key = tuple.get(0);
+        PyObject value = tuple.get(1);
+        return new Entry(key, value);
+    }
+
+    class Entry implements Map.Entry<Object, PyObject>
+    {
+
+        private final PyObject key;
+        private PyObject value;
+
+        private Entry(PyObject key, PyObject value)
+        {
+            this.key = key;
+            this.value = value;
+        }
+
+        @Override
+        public Object getKey()
+        {
+            return key;
+        }
+
+        @Override
+        public PyObject getValue()
+        {
+            return value;
+        }
+
+        @Override
+        public PyObject setValue(PyObject value)
+        {
+            PyObject prior = this.value;
+            map.put(key, value);
+            this.value = value;
+            return prior;
+        }
+
     }
 
 }

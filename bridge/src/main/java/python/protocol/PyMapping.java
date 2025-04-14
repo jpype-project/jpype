@@ -18,6 +18,8 @@ package python.protocol;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import org.jpype.bridge.Bridge;
+import org.jpype.bridge.BuiltIn;
 import python.lang.PyObject;
 
 /**
@@ -26,36 +28,49 @@ import python.lang.PyObject;
  */
 public interface PyMapping extends PyProtocol, Map<Object, PyObject>
 {
-    @Override
-    public int size();
 
     @Override
-    public boolean isEmpty();
+    void clear();
 
     @Override
-    public boolean containsKey(Object key);
+    boolean containsKey(Object key);
 
     @Override
-    public boolean containsValue(Object value);
+    boolean containsValue(Object value);
 
     @Override
-    public PyObject put(Object key, PyObject value);
+    default Set<Entry<Object, PyObject>> entrySet()
+    {
+        return new PyMappingEntrySet(this, Bridge.getBackend().items(this.asObject()));
+    }
+
+    default boolean isEmpty()
+    {
+        return size() == 0;
+    }
 
     @Override
-    public PyObject remove(Object key);
-    
-    @Override
-    public void putAll(Map<? extends Object, ? extends PyObject> m);
+    default Set<Object> keySet()
+    {
+        return new PyMappingKeySet(this);
+    }
 
     @Override
-    public void clear();
-    
-    @Override
-    public Set<Object> keySet();
+    PyObject put(Object key, PyObject value);
 
     @Override
-    public Collection<PyObject> values();
-    
+    void putAll(Map<? extends Object, ? extends PyObject> m);
+
     @Override
-    public Set<Entry<Object, PyObject>> entrySet();
+    PyObject remove(Object key);
+
+    @Override
+    int size();
+
+    @Override
+    default Collection<PyObject> values()
+    {
+        return new PyMappingValues(this, Bridge.getBackend().values(this.asObject()));
+    }
+
 }

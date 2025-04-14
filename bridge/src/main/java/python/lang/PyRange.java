@@ -15,10 +15,17 @@
  */
 package python.lang;
 
+import org.jpype.bridge.BuiltIn;
+
 /**
- * Java front end for concrete Python type range.
+ * Java front end for concrete Python range.
  */
 public interface PyRange extends PyGenerator
 {
-    
+
+    static PyType type()
+    {
+        return (PyType) BuiltIn.eval("range", null, null);
+    }
+
 }
