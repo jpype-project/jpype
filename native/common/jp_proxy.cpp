@@ -101,7 +101,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 
 			// convert the arguments into a python list
 			JP_TRACE("Convert arguments");
-			JPPyObject pyargs = getArgs(context, parameterTypePtrs, args, proxy->m_Instance->m_Instance, addSelf);
+			JPPyObject pyargs = getArgs(context, parameterTypePtrs, args, proxy->m_Instance->m_Target, addSelf);
 
 			JP_TRACE("Call Python");
 			JPPyObject returnValue = JPPyObject::call(PyObject_Call(callable.get(), pyargs.get(), nullptr));
@@ -290,10 +290,10 @@ JPProxyIndirect::~JPProxyIndirect()
 
 JPPyObject JPProxyIndirect::getCallable(const string& cname, bool& addSelf)
 {
-	JPPyObject out = JPPyObject::accept(PyObject_GetAttrString(m_Instance->m_Target, cname.c_str()));
+	JPPyObject out = JPPyObject::accept(PyObject_GetAttrString(m_Instance->m_Dispatch, cname.c_str()));
 	if (!out.isNull())
 	{
-		addSelf = (m_Instance->m_Target != m_Instance->m_Instance) && (m_Instance->m_Instance != Py_None);
+		addSelf = (m_Instance->m_Dispatch != m_Instance->m_Target) && (m_Instance->m_Target != Py_None);
 		return out;
 	}
 	return JPPyObject::accept(PyObject_GetAttrString((PyObject*) m_Instance, cname.c_str()));
@@ -311,6 +311,6 @@ JPProxyFunctional::~JPProxyFunctional()
 JPPyObject JPProxyFunctional::getCallable(const string& cname, bool& addSelf)
 {
 	if (cname == m_Functional->getMethod())
-		return JPPyObject::accept(PyObject_GetAttrString(m_Instance->m_Target, "__call__"));
+		return JPPyObject::accept(PyObject_GetAttrString(m_Instance->m_Dispatch, "__call__"));
 	return JPPyObject::accept(PyObject_GetAttrString((PyObject*) m_Instance, cname.c_str()));
 }
