@@ -25,8 +25,4 @@ public class Native
 {
 
     native void start();
-
-    native long getSymbol(String symbol);
-
-    native void addLibrary(String library);
 }

@@ -9,8 +9,6 @@
 #include "pyjp.h"
 #include <list>
 
-PyThreadState *s_ThreadState;
-PyThreadState *m_State1;
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -47,13 +45,13 @@ static void convertException(JNIEnv *env, JPypeException& ex)
 	}
 }
 
-PyObject* jpype = nullptr;
-PyObject* jpypep = nullptr;
 
 
 JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 (JNIEnv *env, jobject engine)
 {
+	PyObject* jpype = nullptr;
+	PyObject* jpypep = nullptr;
 	try
 	{
 		PyStatus status;
@@ -78,6 +76,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 #if  PY_VERSION_HEX<0x030a0000
 		PyEval_InitThreads();
 #endif
+		PyThreadState *s_ThreadState;
 		s_ThreadState = PyThreadState_Get();
 
 		// Import the Python side to create the hooks
@@ -115,6 +114,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 		// Everything is up and ready
 
 		// Next, we need to release the state so we can return to Java.
+		PyThreadState *m_State1;
 		m_State1 = PyEval_SaveThread();
 	} catch (JPypeException& ex)
 	{
@@ -122,86 +122,6 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 	}	catch (...)
 	{
 		fail(env, "C++ exception during start");
-	}
-}
-
-
-// This section will allow us to look up symbols in shared libraries from within
-// Java.  We will then call those symbols using the invoker. 
-
-// FIXME global
-static std::list<void*> libraries;
-
-// FIXME this was the full CFFI interface so we could directly call symbols in C.  
-// Likely is not necessary.  But I need it for testing now.
-/*
- * Class:     python_lang_PyEngine
- * Method:    getSymbol
- * Signature: (Ljava/lang/String;)J
- */
-JNIEXPORT jlong JNICALL Java_org_jpype_bridge_Native_getSymbol
-(JNIEnv *env, jobject, jstring str)
-{
-	try
-	{
-		jboolean copy;
-		const char* name = env->GetStringUTFChars(str, &copy);
-		for (std::list<void*>::iterator iter = libraries.begin();
-				iter != libraries.end(); iter++)
-		{
-			void* res = NULL;
-#ifdef WIN32
-			res = (void*) GetProcAddress((HMODULE) *iter, name);
-#else
-			res = dlsym(*iter, name);
-#endif
-			if (res != NULL)
-				return (jlong) res;
-		}
-		env->ReleaseStringUTFChars(str, name);
-		return 0;
-	} catch (JPypeException& ex)
-	{
-		convertException(env, ex);
-	}	catch (...)
-	{
-		fail(env, "C++ exception during getSymbol");
-	}
-	return 0;
-}
-
-/*
- * Class:     python_lang_PyEngine
- * Method:    addLibrary
- * Signature: (Ljava/lang/String;)V
- */
-JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_addLibrary
-(JNIEnv *env, jobject, jstring str)
-{
-	try
-	{
-		jboolean copy;
-		const char* name = env->GetStringUTFChars(str, &copy);
-		void *library = NULL;
-#ifdef WIN32
-		library = LoadLibrary(name);
-#else
-#if defined(_HPUX) && !defined(_IA64)
-		jvmLibrary = shl_load(name, BIND_DEFERRED | BIND_VERBOSE, 0L);
-#else
-		library = dlopen(name, RTLD_LAZY | RTLD_GLOBAL);
-#endif // HPUX
-#endif
-		env->ReleaseStringUTFChars(str, name);
-
-		if (library == NULL)
-			fail(env, "Failed to load library");
-		else
-			libraries.push_back(library);
-		return;
-	}	catch (...)
-	{
-		fail(env, "C++ exception in addLibrary");
 	}
 }
 

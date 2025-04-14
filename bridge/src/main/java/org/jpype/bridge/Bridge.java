@@ -454,15 +454,5 @@ public class Bridge
             Logger.getLogger(Bridge.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-//        // Verify we can see native symbols
-//        Native n = new Native();
-//        n.addLibrary(instance.pythonLibrary);
-//        n.addLibrary(instance.jpypeLibrary);
-//        n.start();
-//        
-//        // If this isn't zero then we have access to natives
-//        System.out.println(n.getSymbol("PyObject_Init"));
-//        
-        
     }
 }
