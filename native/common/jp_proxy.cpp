@@ -259,11 +259,25 @@ JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bo
 	JP_TRACE_IN("JPProxyType::convertToPythonObject");
 	jobject ih = frame.CallStaticObjectMethodA(m_ProxyClass.get(),
 			m_GetInvocationHandlerID, &val);
-	PyJPProxy *target = ((JPProxy*) frame.GetLongField(ih, m_InstanceID))->m_Instance;
-	if (target->m_Target != Py_None && target->m_Convert)
-		return JPPyObject::use(target->m_Target);
-	JP_TRACE("Target", target);
-	return JPPyObject::use((PyObject*) target);
+
+	JPProxy *proxy = (JPProxy*) frame.GetLongField(ih, m_InstanceID);
+	PyJPProxy *pproxy = proxy->m_Instance;
+
+	// Is it a native Python object
+	if (pproxy->m_Convert && pproxy->m_Target != Py_None)
+		return JPPyObject::use(pproxy->m_Target);
+
+	// Is it a user extended class
+	if (pproxy->m_Dispatch == Py_None)
+		return JPPyObject::use((PyObject*) pproxy);
+
+	// Is it something we can keep as a Java Object
+	//if (proxy->m_InterfaceClasses.size() == 1)
+	//	return proxy->m_InterfaceClasses[0]->convertToPythonObject(frame, val, cast);
+
+	// Return the Proxy itself
+	JP_TRACE("Target", pproxy);
+	return JPPyObject::use((PyObject*) pproxy);
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
