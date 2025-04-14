@@ -40,10 +40,7 @@ public:
 
 	void setHints(PyObject* host);
 
-	PyObject* getHints()
-	{
-		return m_Hints.get();
-	}
+	PyObject* getHints();
 
 public:
 	void ensureMembers(JPJavaFrame& frame);

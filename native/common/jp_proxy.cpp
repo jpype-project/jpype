@@ -271,10 +271,6 @@ JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bo
 	if (pproxy->m_Dispatch == Py_None)
 		return JPPyObject::use((PyObject*) pproxy);
 
-	// Is it something we can keep as a Java Object
-	//if (proxy->m_InterfaceClasses.size() == 1)
-	//	return proxy->m_InterfaceClasses[0]->convertToPythonObject(frame, val, cast);
-
 	// Return the Proxy itself
 	JP_TRACE("Target", pproxy);
 	return JPPyObject::use((PyObject*) pproxy);
