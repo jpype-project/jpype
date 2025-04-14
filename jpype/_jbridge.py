@@ -202,12 +202,73 @@ def _charat(x,y):
 def _str_subseq(x,s,e):
     return x[s:e]
 
+def _c_add(x, *args):
+    if len(args)==1:
+        x.append(args[0])
+        return True
+    x.insert(args[0], args[1])
+
+def _indexof(x, v):
+    try:
+        return x.index(v)
+    except ValueError:
+        return -1
+
+def _c_set(x, i, v):
+    if i<0:
+        raise ValueError()
+    out = x[i]
+    x[i] = v
+    return out
+
+def _removeall(x, c):
+    c = set(c)
+    nl = [i for i in x if not i in c]
+    x.clear()
+    x.extend(nl)
+
+def _retainall(x, c):
+    c = set(c)
+    nl = [i for i in x if i in c]
+    x.clear()
+    x.extend(nl)
+
+def _real(x):
+    return x.real
+
+def _imag(x):
+    return x.imag
+
+def _call(x, a, k):
+    if k is None:
+        return x(*a)
+    return x(*a, **k)
+
+def _items(x):
+    return x.items()
+
+def _values(x):
+    return x.values()
+
+def _sublist(x, s, e):
+    return x[s:e]
+
+def _start(x):
+    return x.start
+
+def _end(x):
+    return x.end
+
+def _step(x):
+    return x.step
+
 
 _PyJPBackendMethods = {
     "bytearray": bytearray,
     "bytearray_fromhex": bytearray.fromhex,
     "bytes": bytes,
     "bytes_fromhex": bytes.fromhex,
+    "call": _call,
     "complex": complex,
     "delattr": _delattr,
     "dict": dict,
@@ -224,6 +285,7 @@ _PyJPBackendMethods = {
     "list": list,
     "memoryview": memoryview,
     "newDict": _newdict,
+    "newSet": set,
     "newTuple": tuple,
     "next": next,
     "object": object,
@@ -238,6 +300,8 @@ _PyJPBackendMethods = {
     "tuple": tuple,
     "type": type,
     "zip": zip,
+    "items": _items,
+    "values": _values,
 }
 
 
@@ -279,23 +343,18 @@ _PyAttributesMethods = {
 
 _PyCallableMethods = { 
     "asObject": _identity,
-    "_call": _call,
 }
 
 
 _PyMappingMethods = { 
     "asObject": _identity,
-    "get": _getitem,
-    "put": _setitem,
-    "remove": _delitem,
+    "clear": _clear,
     "containsKey": _contains,
     "containsValue": _containsvalue,
+    "get": _getitem,
+    "put": _c_set,
+    "remove": _delitem,
     "putAll": _putall,
-    "clear": _clear,
-    "isEmpty": _isempty,
-    "keySet": _keyset,
-    "values": _values,
-    "entrySet": _entries,
 }
 
 _PyNumberMethods = {
@@ -360,12 +419,22 @@ _PyByteArrayMethods = {
 _PyByteArrayMethods.update(_PyObjectMethods)
 
 _PyComplexMethods = {
+    "real": _real,
+    "imag": _imag,
     "conjugate": complex.conjugate
 }
 _PyComplexMethods.update(_PyObjectMethods)
 _PyComplexMethods.update(_PyNumberMethods)
 
-_PyDictMethods = {}
+_PyDictMethods = {
+    "clear": _clear,
+    "containsKey": _contains,
+    "containsValue": _containsvalue,
+    "get": _getitem,
+    "put": _c_set,
+    "remove": _delitem,
+    "putAll": _putall,
+}
 _PyDictMethods.update(_PyObjectMethods)
 
 # enumerate, zip, range
@@ -374,7 +443,25 @@ _PyGeneratorMethods = {
 }
 _PyGeneratorMethods.update(_PyObjectMethods)
 
-_PyListMethods = {}
+        
+
+_PyListMethods = {
+    "add": _c_add,
+    "add": _c_add,
+    "addAny": _c_add,
+    "clear": list.clear,
+    "contains": _contains,
+    "extend": list.extend,
+    "get": _getitem,
+    "indexOf": _indexof,
+    "insert": list.insert,
+    "removeAll": _removeall,
+    "retainAll": _retainall,
+    "set": _c_set,
+    "setAny": _setitem,
+    "size": len,
+    "subList": _sublist,
+}
 _PyListMethods.update(_PyIterableMethods)
 
 _PyMemoryViewMethods = {}
@@ -400,6 +487,9 @@ _PySetMethods = {
 _PySetMethods.update(_PyObjectMethods)
 
 _PySliceMethods = {
+    "start": _start,
+    "end": _end,
+    "step": _step,
     "indices": slice.indices
 }
 _PySliceMethods.update(_PyObjectMethods)
@@ -408,13 +498,62 @@ _PyStringMethods = {
     "charAt": _charat,
     "length": len,
     "subSequence": _str_subseq,
+    "capitalize":     str.capitalize,
+    "casefold":       str.casefold,
+    "center":         str.center,
+    "count":          str.count,
+    "encode":         str.encode,
+    "endsWith":       str.endswith,
+    "expandTabs":     str.expandtabs,
+    "find":           str.find,
+    "format":         str.format,
+    "formatMap":      str.format_map,
+    "index":          str.index,
+    "isAlnum":        str.isalnum,
+    "isAlpha":        str.isalpha,
+    "isAscii":        str.isascii,
+    "isDecimal":      str.isdecimal,
+    "isDigit":        str.isdigit,
+    "isIdentifier":   str.isidentifier,
+    "isLower":        str.islower,
+    "isNumeric":      str.isnumeric,
+    "isPrintable":    str.isprintable,
+    "isSpace":        str.isspace,
+    "isTitle":        str.istitle,
+    "isUpper":        str.isupper,
+    "join":           str.join,
+    "lstrip":         str.lstrip,
+    "partition":      str.partition,
+    "removePrefix":   str.removeprefix,
+    "removeSuffix":   str.removesuffix,
+    "replace":        str.replace,
+    "rfind":          str.rfind,
+    "rindex":         str.rindex,
+    "rpartition":     str.rpartition,
+    "rsplit":         str.rsplit,
+    "split":          str.split,
+    "splitLines":     str.splitlines,
+    "startsWith":     str.startswith,
+    "swapCase":       str.swapcase,
+    "title":          str.title,
+    "translate":      str.translate,
+    "upper":          str.upper,
+    "zfill":          str.zfill,
 }
 _PyStringMethods.update(_PyObjectMethods)
 
-_PyTupleMethods = {}
+_PyTupleMethods = {
+    "contains": _contains,
+    "get": _getitem,
+    "indexOf": _indexof,
+    "size": len,
+    "subList": _sublist,
+}
 _PyTupleMethods.update(_PyIterableMethods)
 
-_PyTypeMethods = {}
+_PyTypeMethods = {
+    "mro": type.mro,
+}
 _PyTypeMethods.update(_PyObjectMethods)
 
 
