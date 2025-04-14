@@ -34,11 +34,11 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	JP_PY_CHECK();
 
 	// Parse arguments
+	PyObject *instance;
 	PyObject *target;
-	PyObject *dispatch;
 	PyObject *pyintf;
 	int convert = 0;
-	if (!PyArg_ParseTuple(args, "OOO|p", &target, &dispatch, &pyintf, &convert))
+	if (!PyArg_ParseTuple(args, "OOO|p", &instance, &target, &pyintf, &convert))
 		return nullptr;
 
 	// Pack interfaces
@@ -65,15 +65,15 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 		interfaces.push_back(cls);
 	}
 
-	if (dispatch == Py_None)
+	if (target == Py_None)
 		self->m_Proxy = new JPProxyDirect(context, self, interfaces);
 	else
 		self->m_Proxy = new JPProxyIndirect(context, self, interfaces);
+	self->m_Instance = instance;
 	self->m_Target = target;
-	self->m_Dispatch = dispatch;
 	self->m_Convert = (convert != 0);
-	Py_INCREF(target);
-	Py_INCREF(dispatch);
+	Py_INCREF(self->m_Instance);
+	Py_INCREF(self->m_Target);
 
 	JP_TRACE("Proxy", self);
 	JP_TRACE("Target", target);
@@ -83,15 +83,15 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 
 static int PyJPProxy_traverse(PyJPProxy *self, visitproc visit, void *arg)
 {
+	Py_VISIT(self->m_Instance);
 	Py_VISIT(self->m_Target);
-	Py_VISIT(self->m_Dispatch);
 	return 0;
 }
 
 static int PyJPProxy_clear(PyJPProxy *self)
 {
+	Py_CLEAR(self->m_Instance);
 	Py_CLEAR(self->m_Target);
-	Py_CLEAR(self->m_Dispatch);
 	return 0;
 }
 

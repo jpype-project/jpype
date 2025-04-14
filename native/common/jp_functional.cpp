@@ -113,11 +113,11 @@ public:
 		JPClassList cl;
 		cl.push_back(cls);
 		self->m_Proxy = new JPProxyFunctional(context, self, cl);
+		self->m_Instance = Py_None;
 		self->m_Target = match.object;
-		self->m_Dispatch = match.object;
 		self->m_Convert = true;
-		Py_INCREF(match.object);
-		Py_INCREF(match.object);
+		Py_INCREF(self->m_Instance);
+		Py_INCREF(self->m_Target);
 		jvalue v = self->m_Proxy->getProxy();
 		v.l = frame.keep(v.l);
 		Py_DECREF(self);

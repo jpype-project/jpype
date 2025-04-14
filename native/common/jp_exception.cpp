@@ -19,7 +19,6 @@
 #include "jpype.h"
 #include "jp_exception.h"
 #include "pyjp.h"
-#include "jp_reference_queue.h"
 
 static_assert(std::is_nothrow_copy_constructible<JPypeException>::value,
               "S must be nothrow copy constructible");
@@ -34,6 +33,7 @@ JPypeException::JPypeException(JPJavaFrame &frame, jthrowable th, const JPStackI
 {
 	JP_TRACE("JAVA EXCEPTION THROWN with java throwable");
 	m_Error.l = nullptr;
+	m_Message = "Throwable";
 	from(stackInfo);
 }
 
@@ -42,6 +42,7 @@ JPypeException::JPypeException(int type, void* error, const JPStackInfo& stackIn
 {
 	JP_TRACE("EXCEPTION THROWN with error", error);
 	m_Error.l = error;
+	m_Message = "none";
 	from(stackInfo);
 }
 
@@ -50,7 +51,7 @@ JPypeException::JPypeException(int type, void* errType, const string& msn, const
 {
 	JP_TRACE("EXCEPTION THROWN", errType, msn);
 	m_Error.l = errType;
-	//m_Message = msn;
+	m_Message = msn;
 	from(stackInfo);
 }
 
@@ -62,12 +63,13 @@ JPypeException::JPypeException(int type,  const string& msn, int errType, const 
 {
 	JP_TRACE("EXCEPTION THROWN", errType, msn);
 	m_Error.i = errType;
+	m_Message = msn;
 	from(stackInfo);
 }
 
 JPypeException::JPypeException(const JPypeException &ex) noexcept
         : runtime_error(ex.what()), m_Context(ex.m_Context),  m_Type(ex.m_Type),  m_Error(ex.m_Error),
-        m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable)
+        m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable), m_Message(ex.m_Message)
 {
 }
 
@@ -110,7 +112,7 @@ string JPypeException::getMessage()
 	try
 	{
 		std::stringstream str;
-		str << getMessage() << std::endl;
+		str << m_Message << std::endl;
 		JP_TRACE(str.str());
 		return str.str();
 		// GCOVR_EXCL_START
@@ -365,9 +367,6 @@ void JPypeException::toPython()
 			{
 				PyException_SetTraceback(cause.get(), trace.get());
 				PyException_SetCause(eframe.m_ExceptionValue.get(), cause.keep());
-			} else
-			{
-				PyErr_Clear();
 			}
 		}
 	}// GCOVR_EXCL_START
@@ -579,23 +578,4 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 	if (last_traceback == nullptr)
 		return {};
 	return JPPyObject::call((PyObject*) last_traceback);
-}
-
-// FIXME that was added in epypj but likely was not hooked up current.   
-// I am leaving it because most likely proxy exception will need to return, but 
-// if not remove it.
-/* 
- * Class:     org_jpype_PyExceptionProxy
- * Method:    _getMessage                                                                                                                                                    * Signature: (Ljava/lang/Object;)Ljava/lang/String;
- */
-extern "C" JNIEXPORT jstring JNICALL Java_org_jpype_PyExceptionProxy__1getMessage
-(JNIEnv *env, jclass, jlong jcls, jlong jval)
-{
-	JPJavaFrame frame = JPJavaFrame::external(JPContext_global, env);
-	JPPyCallAcquire callback;
-	PyObject* value = (PyObject*) jval;
-	PyObject* str = PyObject_Str(value);
-	string cvalue = JPPyString::asStringUTF8(str);
-	Py_DECREF(str);
-	return (jstring) frame.keep(frame.fromStringUTF8(cvalue));
 }

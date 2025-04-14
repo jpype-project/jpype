@@ -79,7 +79,6 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 		PyEval_InitThreads();
 #endif
 		s_ThreadState = PyThreadState_Get();
-		PySys_SetPath(L".");
 
 		// Import the Python side to create the hooks
 		jpype = PyImport_ImportModule("jpype");
@@ -124,12 +123,6 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 	{
 		fail(env, "C++ exception during start");
 	}
-}
-
-JNIEXPORT jlong JNICALL Java_org_jpype_bridge_Native_newContext
-(JNIEnv *env, jobject, jstring str)
-{
-	
 }
 
 
