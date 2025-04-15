@@ -323,6 +323,8 @@ public class JPypeContext
 
   public ClassLoader getClassLoader()
   {
+    if (this.classLoader == null)
+        this.classLoader = new JPypeClassLoader(ClassLoader.getSystemClassLoader());
     return this.classLoader;
   }
 
