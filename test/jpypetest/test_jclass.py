@@ -31,9 +31,6 @@ class JClassTestCase(common.JPypeTestCase):
     - ``mro``
     """
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     def testGetAttrPyMethod(self):
         cls = JClass('java.util.Iterator')
         obj = JClass('java.util.ArrayList')()
