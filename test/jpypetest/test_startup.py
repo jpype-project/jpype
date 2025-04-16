@@ -160,7 +160,7 @@ class StartJVMCase(unittest.TestCase):
         jpype.startJVM(jvmpath=Path(self.jvmpath), classpath=str(unicode_sample_jar))
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
         self.assertEqual(type(cl), jpype.JClass("org.jpype.JPypeClassLoader"))
-        assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
+        assert dir(jpype.JPackage('org.jpype.test.sample_package')) == ['A', 'B']
 
 
     def testOldStyleNonASCIIPath(self):
@@ -170,7 +170,7 @@ class StartJVMCase(unittest.TestCase):
         jpype.startJVM(f"-Djava.class.path={unicode_sample_jar}", jvmpath=Path(self.jvmpath))
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
         self.assertEqual(type(cl), jpype.JClass("org.jpype.JPypeClassLoader"))
-        assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
+        assert dir(jpype.JPackage('org.jpype.test.sample_package')) == ['A', 'B']
 
     def testNonASCIIPathWithSystemClassLoader(self):
         with self.assertRaises(ValueError):
