@@ -35,12 +35,12 @@ import python.lang.PyObject;
  */
 public class Bridge
 {
-
-    static Bridge instance = null;
+    static final String REQUIRED_VERSION = "1.6.0";
+    static Bridge instance = new Bridge();
     private String jpypeLibrary;
     private String pythonLibrary;
     private String jpypeVersion;
-    private boolean isWindows = false;
+    private boolean isWindows = checkWindows();
     static Backend backend = null;
     public static PyObject stop = null;
 
@@ -62,6 +62,13 @@ public class Bridge
             + "print(_jpype.__file__)\n"
             + "print(_jpype.__version__)\n";
 
+    
+    
+    public static Bridge getInstance()
+    {
+        return instance;
+    }
+
     // FIXME we need a check point to prevent accidents.   
     // There are two ways that we can get here.
     // -  A bridge create from within Java
@@ -73,34 +80,24 @@ public class Bridge
      * 
      * @return the bridge object.
      */
-    public static Bridge create()
+    public void create()
     {
-        Bridge bridge = getInstance();
         // Once builtin is set internally then we can't call create again.
-        if (bridge.backend != null)
-            return bridge;
-        bridge.launch();
-        int[] version = parseVersion(bridge.jpypeVersion);
+        if (this.backend != null)
+            return;
+        loadLibraries();
+             int[] version = parseVersion(this.jpypeVersion);
         if (version[0]<1 || version[1]<6)
-            throw new RuntimeException("JPype version is too old.  Found "+bridge.jpypeLibrary);
-        return bridge;
+            throw new RuntimeException("JPype version is too old.  Found "+this.jpypeLibrary);
+        
+       Native  natives = new Native();
+       natives.start();
     }
     
-    public static Bridge getInstance()
-    {
-        if (instance != null)
-            return instance;
-        instance = new Bridge();
-        return instance;
-    }
-
     private void launch()
     {
-        // We need special handling for Windows.
-        checkWindows();
         
         // Load the native libraries
-        loadLibraries();
         
         // Launch an interpreter
     }
@@ -121,6 +118,7 @@ public class Bridge
             System.loadLibrary(pythonLibrary);
         
         // Our native points are in the Python native module
+        System.out.println("Load "+jpypeLibrary);
         System.load(jpypeLibrary);
 
         // Add to FFI name lookup table
@@ -139,11 +137,10 @@ public class Bridge
      * Determine if this is windows system, because everything is different on
      * windows.
      */
-    private void checkWindows()
+    private static boolean checkWindows()
     {
         String osName = System.getProperty("os.name");
-        if (osName.startsWith("Windows"))
-            this.isWindows = true;
+        return osName.startsWith("Windows");
     }
     
     private static int[] parseVersion(String version)
@@ -204,9 +201,9 @@ public class Bridge
         String suffix = isWindows ? ".exe" : "";
         String home = System.getenv("PYTHONHOME");
         if (home != null)
-            return String.format("%s%sbin%spython3%s", home, File.separator, File.separator, suffix);
-
-        String onPath = checkPath("python3" + suffix);
+            return Paths.get(home, "python"+suffix).toString();
+        
+        String onPath = checkPath("python" + suffix);
         if (onPath != null)
             return onPath;
 
@@ -333,6 +330,8 @@ public class Bridge
         String key = makeHash(pythonExecutable);
         if (checkCache(key))
             return;
+        
+        System.out.println("Python exec "+pythonExecutable);
 
         // Probe the Python executeable for the values we need to start
         try
@@ -405,19 +404,21 @@ public class Bridge
 
     public static void main(String[] args)
     {
-        create();
+        System.out.println(Paths.get(".").toAbsolutePath());
+        getInstance().create();
         System.out.println("SUCCESS");
         System.out.println(instance.jpypeVersion);
+        System.out.println(backend);
         
         try
         {
             String[] cmd =
             {
                 instance.getExecutable(), "-c",  
-//              "import sys; print('\\n'.join(sys.path))"
                 "try:\n" +
-                "  print('a', flush=True)\n" +
-                "  import _jpype\n" +
+                "  import jpype\n" +
+                "  print(jpype.__file__)\n" +
+                "  print(jpype._core.initializeResources())\n" +
                 "except Exception as ex:\n" +
                 "  print(ex)\n"
             };

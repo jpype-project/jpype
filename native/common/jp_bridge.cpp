@@ -50,6 +50,7 @@ static void convertException(JNIEnv *env, JPypeException& ex)
 JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 (JNIEnv *env, jobject engine)
 {
+printf("native start\n");
 	PyObject* jpype = nullptr;
 	PyObject* jpypep = nullptr;
 	try
@@ -58,18 +59,22 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 		PyConfig config;
 		PyConfig_InitPythonConfig(&config);
 		status = PyConfig_SetBytesString(&config, &config.program_name, "jpython");
+printf("configure\n");
 		if (PyStatus_Exception(status))
 		{
+printf("fail\n");
 			PyConfig_Clear(&config);
 			fail(env, "configuration failed");
 		}
 			
 		// Get Python started
+printf("initialize\n");
 		PyImport_AppendInittab("_jpype", &PyInit__jpype);
 		status = Py_InitializeFromConfig(&config);
 		PyConfig_Clear(&config);
 		if (PyStatus_Exception(status))
 		{
+printf("fail\n");
 			fail(env, "Python initialization failed");
 		}
 	
@@ -81,6 +86,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 
 		// Import the Python side to create the hooks
 		jpype = PyImport_ImportModule("jpype");
+printf("jpype = %p\n", jpype);
 		if (jpype == NULL)
 		{
 			fail(env, "jpype module not found");
@@ -90,6 +96,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 
 		// Next install the hooks into the private side.
 		jpypep = PyImport_ImportModule("_jpype");
+printf("jpypep = %p\n", jpypep);
 		if (jpypep == NULL)
 		{
 			fail(env, "_jpype module not found");
@@ -105,6 +112,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 		// Initialize the resources in the jpype module
 		PyObject *obj = PyObject_GetAttrString(jpype, "_core");
 		PyObject *obj2 = PyObject_GetAttrString(obj, "initializeResources");
+printf("initializeResources = %p\n", obj2);
 		PyObject *obj3 = PyTuple_New(0);
 		PyObject_Call(obj2, obj3, NULL);
 		Py_DECREF(obj);
@@ -112,6 +120,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
 		Py_DECREF(obj3);
 		
 		// Everything is up and ready
+printf("DONE\n");
 
 		// Next, we need to release the state so we can return to Java.
 		PyThreadState *m_State1;

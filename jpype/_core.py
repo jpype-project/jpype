@@ -29,6 +29,7 @@ from . import _classpath
 from . import _jcustomizer
 from . import _jinit
 from . import _pykeywords
+from . import _jbridge
 
 from ._jvmfinder import *
 
@@ -377,6 +378,7 @@ def startJVM(
 
 
 def initializeResources():
+    print("XXXX")
     global _JVM_started
     _jpype._java_lang_Class = None
     _jpype._java_lang_Object = _jpype.JClass("java.lang.Object")
@@ -458,6 +460,8 @@ def initializeResources():
 
     _jpype.JPypeContext = _jpype.JClass('org.jpype.JPypeContext').getInstance()
     _jpype.JPypeClassLoader = _jpype.JPypeContext.getClassLoader()
+
+    _jbridge.initialize()
 
     # Everything succeeded so started is now true.
     _JVM_started = True
