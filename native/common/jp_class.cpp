@@ -411,6 +411,17 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
+PyObject* JPClass::getHints()
+{
+	PyObject* out = m_Hints.get();
+	if (out != nullptr)
+		return out;
+	// Force creation
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+	PyJPClass_create(frame, this);
+	return m_Hints.get();
+}
+
 void JPClass::getConversionInfo(JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPClass::getConversionInfo");

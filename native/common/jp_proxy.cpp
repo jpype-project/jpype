@@ -23,15 +23,21 @@
 #include "jp_functional.h"
 
 JPPyObject getArgs(JPContext* context, jlongArray parameterTypePtrs,
-		jobjectArray args)
+		jobjectArray args, PyObject* self, bool addSelf)
 {
 	JP_TRACE_IN("JProxy::getArgs");
 	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jsize argLen = frame.GetArrayLength(parameterTypePtrs);
-	JPPyObject pyargs = JPPyObject::call(PyTuple_New(argLen));
+	jsize extra = addSelf?1:0;
+	JPPyObject pyargs = JPPyObject::call(PyTuple_New(argLen+extra));
 	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, parameterTypePtrs,
 			&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
 
+	if (addSelf)
+	{
+		Py_IncRef(self);
+		PyTuple_SetItem(pyargs.get(), 0, self);
+	}
 	jlong* types = accessor.get();
 	for (jsize i = 0; i < argLen; i++)
 	{
@@ -40,7 +46,7 @@ JPPyObject getArgs(JPContext* context, jlongArray parameterTypePtrs,
 		if (type == nullptr)
 			type = reinterpret_cast<JPClass*> (types[i]);
 		JPValue val = type->getValueFromObject(JPValue(type, obj));
-		PyTuple_SetItem(pyargs.get(), i, type->convertToPythonObject(frame, val, false).keep());
+		PyTuple_SetItem(pyargs.get(), i+extra, type->convertToPythonObject(frame, val, false).keep());
 	}
 	return pyargs;
 	JP_TRACE_OUT;
@@ -81,7 +87,9 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 			JP_TRACE("Get callable for", cname);
 
 			// Get the callable object
-			JPPyObject callable(((JPProxy*) hostObj)->getCallable(cname));
+			bool addSelf = false;
+			JPProxy* proxy = (JPProxy*) hostObj;
+			JPPyObject callable(proxy->getCallable(cname, addSelf));
 
 			// If method can't be called, throw an exception
 			if (callable.isNull() || callable.get() == Py_None)
@@ -93,7 +101,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 
 			// convert the arguments into a python list
 			JP_TRACE("Convert arguments");
-			JPPyObject pyargs = getArgs(context, parameterTypePtrs, args);
+			JPPyObject pyargs = getArgs(context, parameterTypePtrs, args, proxy->m_Instance->m_Target, addSelf);
 
 			JP_TRACE("Call Python");
 			JPPyObject returnValue = JPPyObject::call(PyObject_Call(callable.get(), pyargs.get(), nullptr));
@@ -251,11 +259,21 @@ JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bo
 	JP_TRACE_IN("JPProxyType::convertToPythonObject");
 	jobject ih = frame.CallStaticObjectMethodA(m_ProxyClass.get(),
 			m_GetInvocationHandlerID, &val);
-	PyJPProxy *target = ((JPProxy*) frame.GetLongField(ih, m_InstanceID))->m_Instance;
-	if (target->m_Target != Py_None && target->m_Convert)
-		return JPPyObject::use(target->m_Target);
-	JP_TRACE("Target", target);
-	return JPPyObject::use((PyObject*) target);
+
+	JPProxy *proxy = (JPProxy*) frame.GetLongField(ih, m_InstanceID);
+	PyJPProxy *pproxy = proxy->m_Instance;
+
+	// Is it a native Python object
+	if (pproxy->m_Convert && pproxy->m_Target != Py_None)
+		return JPPyObject::use(pproxy->m_Target);
+
+	// Is it a user extended class
+	if (pproxy->m_Dispatch == Py_None)
+		return JPPyObject::use((PyObject*) pproxy);
+
+	// Return the Proxy itself
+	JP_TRACE("Target", pproxy);
+	return JPPyObject::use((PyObject*) pproxy);
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
@@ -267,7 +285,7 @@ JPProxyDirect::JPProxyDirect(JPContext* context, PyJPProxy* inst, JPClassList& i
 JPProxyDirect::~JPProxyDirect()
 = default;
 
-JPPyObject JPProxyDirect::getCallable(const string& cname)
+JPPyObject JPProxyDirect::getCallable(const string& cname, bool& addSelf)
 {
 	return JPPyObject::accept(PyObject_GetAttrString((PyObject*) m_Instance, cname.c_str()));
 }
@@ -280,11 +298,14 @@ JPProxyIndirect::JPProxyIndirect(JPContext* context, PyJPProxy* inst, JPClassLis
 JPProxyIndirect::~JPProxyIndirect()
 = default;
 
-JPPyObject JPProxyIndirect::getCallable(const string& cname)
+JPPyObject JPProxyIndirect::getCallable(const string& cname, bool& addSelf)
 {
-	JPPyObject out = JPPyObject::accept(PyObject_GetAttrString(m_Instance->m_Target, cname.c_str()));
+	JPPyObject out = JPPyObject::accept(PyObject_GetAttrString(m_Instance->m_Dispatch, cname.c_str()));
 	if (!out.isNull())
+	{
+		addSelf = (m_Instance->m_Dispatch != m_Instance->m_Target) && (m_Instance->m_Target != Py_None);
 		return out;
+	}
 	return JPPyObject::accept(PyObject_GetAttrString((PyObject*) m_Instance, cname.c_str()));
 }
 
@@ -297,9 +318,9 @@ JPProxyFunctional::JPProxyFunctional(JPContext* context, PyJPProxy* inst, JPClas
 JPProxyFunctional::~JPProxyFunctional()
 = default;
 
-JPPyObject JPProxyFunctional::getCallable(const string& cname)
+JPPyObject JPProxyFunctional::getCallable(const string& cname, bool& addSelf)
 {
 	if (cname == m_Functional->getMethod())
-		return JPPyObject::accept(PyObject_GetAttrString(m_Instance->m_Target, "__call__"));
+		return JPPyObject::accept(PyObject_GetAttrString(m_Instance->m_Dispatch, "__call__"));
 	return JPPyObject::accept(PyObject_GetAttrString((PyObject*) m_Instance, cname.c_str()));
 }

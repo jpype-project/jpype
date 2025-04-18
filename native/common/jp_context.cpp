@@ -119,38 +119,24 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		throw;
 	}
 
-	// Determine the memory requirements
-#define PAD(x) ((x+31)&~31)
-	size_t mem = PAD(sizeof(JavaVMInitArgs));
-	size_t oblock = mem;
-	mem += PAD(sizeof(JavaVMOption)*args.size() + 1);
-	size_t sblock = mem;
-	for (size_t i = 0; i < args.size(); i++)
-	{
-		mem += PAD(args[i].size()+1);
-	}
-
 	// Pack the arguments
 	JP_TRACE("Pack arguments");
-	char *block = (char*) malloc(mem);
-	JavaVMInitArgs* jniArgs = (JavaVMInitArgs*) block;
-	memset(jniArgs, 0, mem);
-	jniArgs->options = (JavaVMOption*)(&block[oblock]);
+	JavaVMInitArgs jniArgs;
+	jniArgs.options = nullptr;
 
 	// prepare this ...
-	jniArgs->version = USE_JNI_VERSION;
-	jniArgs->ignoreUnrecognized = ignoreUnrecognized;
+	jniArgs.version = USE_JNI_VERSION;
+	jniArgs.ignoreUnrecognized = ignoreUnrecognized;
 	JP_TRACE("IgnoreUnrecognized", ignoreUnrecognized);
 
-	jniArgs->nOptions = (jint) args.size();
-	JP_TRACE("NumOptions", jniArgs->nOptions);
-	size_t j = sblock;
-	for (size_t i = 0; i < args.size(); i++)
+	jniArgs.nOptions = (jint) args.size();
+	JP_TRACE("NumOptions", jniArgs.nOptions);
+	jniArgs.options = new JavaVMOption[jniArgs.nOptions];
+	memset(jniArgs.options, 0, sizeof (JavaVMOption) * jniArgs.nOptions);
+	for (int i = 0; i < jniArgs.nOptions; i++)
 	{
 		JP_TRACE("Option", args[i]);
-		strncpy(&block[j], args[i].c_str(), args[i].size());
-		jniArgs->options[i].optionString = (char*) &block[j];
-		j += PAD(args[i].size()+1);
+		jniArgs.options[i].optionString = (char*) args[i].c_str();
 	}
 
 	// Launch the JVM
@@ -158,13 +144,13 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	JP_TRACE("Create JVM");
 	try
 	{
-		CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) jniArgs);
+		CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) &jniArgs);
 	} catch (...)
 	{
 		JP_TRACE("Exception in CreateJVM?");
 	}
 	JP_TRACE("JVM created");
-	free(jniArgs);
+	delete [] jniArgs.options;
 
 	if (m_JavaVM == nullptr)
 	{
