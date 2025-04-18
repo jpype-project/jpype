@@ -104,9 +104,11 @@ final public class JPypeReferenceQueue extends ReferenceQueue
   {
     try
     {
+      System.out.println("wait");
       synchronized (queueStopMutex)
       {
-        synchronized (this)
+        System.out.println("stop");
+         synchronized (this)
         {
           isStopped = true;
           queueThread.interrupt();

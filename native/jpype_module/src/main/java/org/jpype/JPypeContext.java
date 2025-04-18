@@ -119,7 +119,7 @@ public class JPypeContext
               | InstantiationException | IllegalAccessException
               | IllegalArgumentException | InvocationTargetException ex)
       {
-        throw new RuntimeException("Unable to create reflector "+ ex.getMessage(), ex);
+        throw new RuntimeException("Unable to create reflector " + ex.getMessage(), ex);
       }
 
       scanExistingJars();
@@ -172,6 +172,7 @@ public class JPypeContext
           })
   private void shutdown()
   {
+    System.out.print("shutdown");
     try
     {
       // Try to yield in case there is a race condition.  The user
@@ -193,6 +194,7 @@ public class JPypeContext
         }
       }
 
+      System.out.print("A");
       // Execute any used defined shutdown hooks registered with JPype.
       if (!this.shutdownHooks.isEmpty())
       {
@@ -211,6 +213,7 @@ public class JPypeContext
         }
       }
 
+      System.out.print("B");
       // Disable all future calls to proxies
       this.shutdownFlag.incrementAndGet();
 
@@ -227,34 +230,11 @@ public class JPypeContext
       }
 
       // Inform Python no more calls are permitted
+      System.out.println("C");
       onShutdown(this.context);
       Thread.yield();
+      System.out.println("D");
 
-      // Wait for any unregistered proxies to finish so that we don't yank
-      // the rug out from under them result in a segfault.
-//      while (this.proxyCount.get() > 0)
-//      {
-//        try
-//        {
-//          Thread.sleep(10);
-//        } catch (InterruptedException ex)
-//        {
-//        }
-//      }
-//      // Check to see if who is alive
-//      threads = Thread.getAllStackTraces();
-//      System.out.println("Check for remaining");
-//      for (Thread t : threads.keySet())
-//      {
-//        // Daemon threads don't count for shutdown so skip them.
-//        if (t.isDaemon())
-//          continue;
-//        System.out.println("  " + t.getName() + " " + t.getState() + " " + t.isDaemon());
-//        for (StackTraceElement e : t.getStackTrace())
-//        {
-//          System.out.println("    " + e.getClassName());
-//        }
-//      }
     } catch (Throwable th)
     {
     }
@@ -264,6 +244,7 @@ public class JPypeContext
       // Release all Python references
       try
       {
+        System.out.println("D1");
         JPypeReferenceQueue.getInstance().stop();
       } catch (Throwable th)
       {
@@ -272,11 +253,13 @@ public class JPypeContext
       // Release any C++ resources
       try
       {
+        System.out.println("D2");
         this.typeManager.shutdown();
       } catch (Throwable th)
       {
       }
     }
+    System.out.println("E");
 
     // Execute post hooks
     for (Runnable run : this.postHooks)
@@ -290,7 +273,7 @@ public class JPypeContext
     {
       // ignored
     }
-    
+    System.out.println("F");
 
   }
 
@@ -324,7 +307,7 @@ public class JPypeContext
   public ClassLoader getClassLoader()
   {
     if (this.classLoader == null)
-        this.classLoader = new JPypeClassLoader(ClassLoader.getSystemClassLoader());
+      this.classLoader = new JPypeClassLoader(ClassLoader.getSystemClassLoader());
     return this.classLoader;
   }
 

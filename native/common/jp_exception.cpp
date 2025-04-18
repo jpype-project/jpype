@@ -33,7 +33,6 @@ JPypeException::JPypeException(JPJavaFrame &frame, jthrowable th, const JPStackI
 {
 	JP_TRACE("JAVA EXCEPTION THROWN with java throwable");
 	m_Error.l = nullptr;
-	m_Message = "Throwable";
 	from(stackInfo);
 }
 
@@ -42,7 +41,6 @@ JPypeException::JPypeException(int type, void* error, const JPStackInfo& stackIn
 {
 	JP_TRACE("EXCEPTION THROWN with error", error);
 	m_Error.l = error;
-	m_Message = "none";
 	from(stackInfo);
 }
 
@@ -51,7 +49,7 @@ JPypeException::JPypeException(int type, void* errType, const string& msn, const
 {
 	JP_TRACE("EXCEPTION THROWN", errType, msn);
 	m_Error.l = errType;
-	m_Message = msn;
+	//m_Message = msn;
 	from(stackInfo);
 }
 
@@ -63,13 +61,12 @@ JPypeException::JPypeException(int type,  const string& msn, int errType, const 
 {
 	JP_TRACE("EXCEPTION THROWN", errType, msn);
 	m_Error.i = errType;
-	m_Message = msn;
 	from(stackInfo);
 }
 
 JPypeException::JPypeException(const JPypeException &ex) noexcept
         : runtime_error(ex.what()), m_Context(ex.m_Context),  m_Type(ex.m_Type),  m_Error(ex.m_Error),
-        m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable), m_Message(ex.m_Message)
+        m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable)
 {
 }
 
@@ -92,36 +89,6 @@ void JPypeException::from(const JPStackInfo& info)
 {
 	JP_TRACE("EXCEPTION FROM: ", info.getFile(), info.getLine());
 	m_Trace.push_back(info);
-}
-
-// Okay from this point on we have to suit up in full Kevlar because
-// this code must handle every conceivable and still reach a resolution.
-// Exceptions may be throws during initialization where only a fraction
-// of the resources are available, during the middle of normal operation,
-// or worst of all as the system is being yanked out from under us during
-// shutdown.  Each and every one of these cases must be considered.
-// Further each and every function called here must be hardened similarly
-// or they will become the weak link. And remember it is not paranoia if
-// they are actually out to get you.
-//
-// Onward my friends to victory or a glorious segfault!
-string JPypeException::getMessage()
-{
-	JP_TRACE_IN("JPypeException::getMessage");
-	// Must be bullet proof
-	try
-	{
-		std::stringstream str;
-		str << m_Message << std::endl;
-		JP_TRACE(str.str());
-		return str.str();
-		// GCOVR_EXCL_START
-	} catch (...)
-	{
-		return "error during get message";
-	}
-	JP_TRACE_OUT;
-	// GCOVR_EXCL_STOP
 }
 
 bool isJavaThrowable(PyObject* exceptionClass)

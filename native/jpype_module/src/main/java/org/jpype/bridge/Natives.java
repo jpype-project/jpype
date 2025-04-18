@@ -21,8 +21,11 @@ package org.jpype.bridge;
  * These correspond to JNI function held in the JPype shared library. No user
  * interactions are allowed.
  */
-public class Native
+class Natives
 {
 
-    native void start();
+  native static void loadLibrary(String library);
+
+  native static void dumpLibraries();
+
 }

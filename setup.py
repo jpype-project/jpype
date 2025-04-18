@@ -39,11 +39,18 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
                   Path('native', 'python', 'include')],
     sources=sorted(
         list(Path('native', 'common').glob('*.cpp')) +
-        list(Path('native', 'python').glob('*.cpp')) +
-        list(Path('native', 'embedded').glob('*.cpp'))
+        list(Path('native', 'python').glob('*.cpp')) 
     ),
     platform=platform,
 ))
+jpyneLib = Extension(name='_jpyne', **setupext.platform.Platform(
+    include_dirs=[],
+    sources=sorted(
+        list(Path('native', 'embedded').glob('*.cpp')) 
+    ),
+    platform=platform,
+))
+
 p = [ i for i in Path("native", "jpype_module", "src", "main", "java").glob("**/*.java")]
 javaSrc = [i for i in p if not "exclude" in str(i)]
 jpypeJar = Extension(name="org.jpype",
@@ -73,5 +80,5 @@ setup(
         'sdist': setupext.sdist.BuildSourceDistribution,
     },
     zip_safe=False,
-    ext_modules=[jpypeJar, jpypeLib, ],
+    ext_modules=[jpyneLib, jpypeLib, jpypeJar],
 )

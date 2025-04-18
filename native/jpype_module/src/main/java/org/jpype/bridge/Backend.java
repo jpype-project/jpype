@@ -15,7 +15,6 @@
  */
 package org.jpype.bridge;
 
-import java.util.Collection;
 import java.util.Map;
 import python.lang.PyByteArray;
 import python.lang.PyBytes;
@@ -46,98 +45,98 @@ import python.protocol.PyMapping;
  * The user should not call these directly. The user interface is located on
  * Context.
  *
- * Parameters are the most generic type possible so that they can be used universally
- * throughout the bridge.  Return types are the most specific.
- * 
- * CharSequence will be used rather than the usual Java String as it allows
- * both Python str and Java String through the same interface.
+ * Parameters are the most generic type possible so that they can be used
+ * universally throughout the bridge. Return types are the most specific.
+ *
+ * CharSequence will be used rather than the usual Java String as it allows both
+ * Python str and Java String through the same interface.
  */
 public interface Backend
 {
 
-    PyByteArray bytearray(Object obj);
+  PyByteArray bytearray(Object obj);
 
-    PyByteArray bytearray_fromhex(CharSequence str);
+  PyByteArray bytearray_fromhex(CharSequence str);
 
-    PyBytes bytes(Object obj);
+  PyBytes bytes(Object obj);
 
-    PyBytes bytes_fromhex(CharSequence str);
+  PyBytes bytes_fromhex(CharSequence str);
 
-    PyObject call(PyCallable obj, PyTuple args, PyDict kwargs);
+  PyObject call(PyCallable obj, PyTuple args, PyDict kwargs);
 
-    PyComplex complex(double r, double i);
+  PyComplex complex(double r, double i);
 
-    void delattr(Object obj, CharSequence str);
+  void delattr(Object obj, CharSequence str);
 
-    public boolean delindex(PyList aThis, int indexOf);
+  public boolean delindex(PyList aThis, int indexOf);
 
-    PyDict dict();
+  PyDict dict();
 
-    PyList dir(Object obj);
+  PyList dir(Object obj);
 
-    PyEnumerate enumerate(Object obj);
+  PyEnumerate enumerate(Object obj);
 
-    PyObject eval(CharSequence source, PyDict globalsDict, PyMapping localsDict);
+  PyObject eval(CharSequence source, PyDict globalsDict, PyMapping localsDict);
 
-    void exec(CharSequence source, PyDict globalsDict, PyMapping localsDict);
+  void exec(CharSequence source, PyDict globalsDict, PyMapping localsDict);
 
-    PyDict getDict(Object obj);
+  PyDict getDict(Object obj);
 
-    PyObject getattr(Object obj, CharSequence str);
+  PyObject getattr(Object obj, CharSequence str);
 
-    public PyObject getitem(PyDict globalsDict, CharSequence key);
+  public PyObject getitem(PyDict globalsDict, CharSequence key);
 
-    boolean hasattr(Object obj, CharSequence str);
+  boolean hasattr(Object obj, CharSequence str);
 
-    boolean isinstance(Object obj, Object[] types);
+  boolean isinstance(Object obj, Object[] types);
 
-    PyIterator iter(Object obj);
+  PyIterator iter(Object obj);
 
-    <T> PyList list(Iterable<T> list);
+  <T> PyList list(Iterable<T> list);
 
-    PyList list(Object... list);
+  PyList list(Object... list);
 
-    PyMemoryView memoryview(Object obj);
+  PyMemoryView memoryview(Object obj);
 
-    PyDict newDict(Map<Object, Object> map);
+  PyDict newDict(Map<Object, Object> map);
 
-    public PySet newSet(Iterable c);
+  public PySet newSet(Iterable c);
 
-    PyObject next(PyIterator iter, PyObject stop);
+  PyObject next(PyIterator iter, PyObject stop);
 
-    PyObject object();
+  PyObject object();
 
-    PyRange range(int stop);
+  PyRange range(int stop);
 
-    PyRange range(int start, int stop);
+  PyRange range(int start, int stop);
 
-    PyRange range(int start, int stop, int step);
+  PyRange range(int start, int stop, int step);
 
-    PyString repr(Object str);
+  PyString repr(Object str);
 
-    PySet set();
+  PySet set();
 
-    void setattr(Object obj, CharSequence str, Object value);
+  void setattr(Object obj, CharSequence str, Object value);
 
-    public void setitem(PyDict globalsDict, CharSequence key, Object value);
+  public void setitem(PyDict globalsDict, CharSequence key, Object value);
 
-    PySlice slice(Integer start, Integer stop, Integer step);
+  PySlice slice(Integer start, Integer stop, Integer step);
 
-    PyString str(Object str);
+  PyString str(Object str);
 
-    PyIterator tee(PyIterator iter);
+  PyIterator tee(PyIterator iter);
 
-    <T> PyList tuple(Iterable<T> list);
+  <T> PyList tuple(Iterable<T> list);
 
-    <T> PyTuple tuple(T... obj);
+  <T> PyTuple tuple(T... obj);
 
-    PyType type(Object obj);
+  PyType type(Object obj);
 
-    PyObject items(PyObject obj);
-    
-    PyObject values(PyObject obj);
+  PyObject items(PyObject obj);
 
-    <T> PyZip zip(T... objects);
+  PyObject values(PyObject obj);
+
+  <T> PyZip zip(T... objects);
 // It is okay if not everything is exposed as the user can always evaluate
 // statements if something is missing.
 //Creation

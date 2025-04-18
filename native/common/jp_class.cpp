@@ -404,8 +404,7 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 	if (nullConversion->matches(this, match)
 			|| objectConversion->matches(this, match)
 			|| proxyConversion->matches(this, match)
-			|| hintsConversion->matches(this, match)
-	)
+			|| hintsConversion->matches(this, match))
 		return match.type;
 	JP_TRACE("No match");
 	return match.type = JPMatch::_none;

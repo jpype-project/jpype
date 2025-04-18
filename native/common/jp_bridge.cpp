@@ -8,10 +8,21 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include <list>
+#include <link.h>
+#include <iostream>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+jint JNI_OnLoad(JavaVM *vm, void *reserved)
+{
+	JNIEnv *env;
+    if (vm->GetEnv((void**)&env, JNI_VERSION_1_6) != JNI_OK)
+        return -1;
+    printf("Load python library\n");
+    return JNI_VERSION_1_6;
+}
 
 static void fail(JNIEnv *env, const char* msg)
 {
@@ -41,90 +52,98 @@ static void convertException(JNIEnv *env, JPypeException& ex)
 		env->ThrowNew(runtimeException, "Exception in Python");
 	} else
 	{
-		env->ThrowNew(runtimeException, ex.getMessage().c_str());
+		env->ThrowNew(runtimeException, "Internal error");
 	}
 }
 
-
-
-JNIEXPORT void JNICALL Java_org_jpype_bridge_Native_start
-(JNIEnv *env, jobject engine)
+JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives2_start
+(JNIEnv *env, jclass cls)
 {
-printf("native start\n");
+	printf("  natives2 start\n");
 	PyObject* jpype = nullptr;
 	PyObject* jpypep = nullptr;
+	JPContext* context;
+	PyObject *obj;
+	PyObject *obj2;
+	PyObject *obj3;
+	PyStatus status;
+	PyConfig config;
+	PyGILState_STATE gstate;
+
 	try
 	{
-		PyStatus status;
-		PyConfig config;
+		printf("  configure\n");
 		PyConfig_InitPythonConfig(&config);
-		status = PyConfig_SetBytesString(&config, &config.program_name, "jpython");
-printf("configure\n");
+
+		status = PyConfig_Read(&config);
 		if (PyStatus_Exception(status))
-		{
-printf("fail\n");
-			PyConfig_Clear(&config);
-			fail(env, "configuration failed");
-		}
+			goto error_config;
+
+		if (PyStatus_Exception(status))
+			goto error_config;
+	
+		status = PyConfig_SetBytesString(&config, &config.program_name, "jpython");
+		if (PyStatus_Exception(status))
+			goto error_config;
 			
 		// Get Python started
-printf("initialize\n");
+		printf("  initialize\n");
 		PyImport_AppendInittab("_jpype", &PyInit__jpype);
 		status = Py_InitializeFromConfig(&config);
-		PyConfig_Clear(&config);
 		if (PyStatus_Exception(status))
-		{
-printf("fail\n");
-			fail(env, "Python initialization failed");
-		}
+			goto error_config;
 	
+		PyConfig_Clear(&config);
 #if  PY_VERSION_HEX<0x030a0000
 		PyEval_InitThreads();
 #endif
-		PyThreadState *s_ThreadState;
-		s_ThreadState = PyThreadState_Get();
 
-		// Import the Python side to create the hooks
+		printf("lock\n");
+		//gstate = PyGILState_Ensure();
+		printf("go\n");
 		jpype = PyImport_ImportModule("jpype");
-printf("jpype = %p\n", jpype);
-		if (jpype == NULL)
-		{
-			fail(env, "jpype module not found");
-			return;
-		}
-		Py_DECREF(jpype);
-
-		// Next install the hooks into the private side.
 		jpypep = PyImport_ImportModule("_jpype");
-printf("jpypep = %p\n", jpypep);
 		if (jpypep == NULL)
 		{
 			fail(env, "_jpype module not found");
 			return;
 		}
-		PyJPModule_loadResources(jpypep);
-		Py_DECREF(jpypep);
 		
+		// Import the Python side to create the hooks
+		if (jpype == NULL)
+		{
+			fail(env, "jpype module not found");
+			return;
+		}
+
+		PyJPModule_loadResources(jpypep);
+
+		Py_DECREF(jpype);
+		Py_DECREF(jpypep);
+
 		// Then attach the private module to the JVM
-		JPContext* context = JPContext_global;
+		context = JPContext_global;
 		context->attachJVM(env);
 		
 		// Initialize the resources in the jpype module
-		PyObject *obj = PyObject_GetAttrString(jpype, "_core");
-		PyObject *obj2 = PyObject_GetAttrString(obj, "initializeResources");
-printf("initializeResources = %p\n", obj2);
-		PyObject *obj3 = PyTuple_New(0);
+		obj = PyObject_GetAttrString(jpype, "_core");
+		obj2 = PyObject_GetAttrString(obj, "initializeResources");
+		obj3 = PyTuple_New(0);
 		PyObject_Call(obj2, obj3, NULL);
 		Py_DECREF(obj);
 		Py_DECREF(obj2);
 		Py_DECREF(obj3);
-		
-		// Everything is up and ready
-printf("DONE\n");
 
 		// Next, we need to release the state so we can return to Java.
-		PyThreadState *m_State1;
-		m_State1 = PyEval_SaveThread();
+		//PyGILState_Release(gstate);
+		return;
+
+error_config:
+		PyConfig_Clear(&config);
+		fail(env, "configuration failed");
+		return;
+
+
 	} catch (JPypeException& ex)
 	{
 		convertException(env, ex);

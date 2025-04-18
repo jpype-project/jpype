@@ -156,8 +156,6 @@ public:
 		return m_Throwable.get();
 	}
 
-	string getMessage();
-
 private:
 	JPContext* m_Context{};
 	int m_Type;
