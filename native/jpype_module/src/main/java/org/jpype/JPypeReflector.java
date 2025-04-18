@@ -6,8 +6,9 @@ import java.lang.reflect.Method;
  *
  * @author nelson85
  */
-public interface JPypeReflector 
+public interface JPypeReflector
 {
+
   /**
    * Call a method using reflection.
    *

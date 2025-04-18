@@ -74,7 +74,8 @@ class Makefile:
         self.compile_pre = pre
         self.compile_post = post
         self.includes = includes
-        self.sources.append(x[i1 + 1])
+        if not "bootstrap" in x[i1 + 1]:
+            self.sources.append(x[i1 + 1])
 
     def captureLink(self, x):
         self.link_command = x[0]
@@ -304,7 +305,7 @@ class BuildExtCommand(build_ext):
         distutils.log.info(
             "Jar cache is missing, using --enable-build-jar to recreate it.")
 
-        target_version = "1.8"
+        target_version = "11"
         # build the jar
         try:
             dirname = os.path.dirname(self.get_ext_fullpath("JAVA"))
@@ -321,7 +322,7 @@ class BuildExtCommand(build_ext):
             cmd1 = shlex.split('%s -cp "%s" -d "%s" -g:none -source %s -target %s -encoding UTF-8' %
                                (javac, build_dir, os.path.join(build_dir, "META-INF", "versions", "0"), target_version, target_version))
             cmd1.extend(glob.glob(os.path.join(
-                "native", "java0", "**", "*.java"), recursive=True))
+                "native", "jpype_module","src","main","java","exclude", "**", "*.java"), recursive=True))
             os.makedirs(os.path.join(build_dir, "META-INF",
                         "versions", "0"), exist_ok=True)
             self.announce("  %s" % " ".join(cmd1), level=distutils.log.INFO)
@@ -329,14 +330,14 @@ class BuildExtCommand(build_ext):
 
             manifest = None
             try:
-                for file in glob.iglob("native/java/**/*.*", recursive=True):
+                for file in glob.iglob("native/jpype_module/src/main/java/**/*.*", recursive=True):
                     if file.endswith("manifest.txt"):
                         manifest = file
                         continue
                     if file.endswith(".java") or os.path.isdir(file):
                         continue
                     p = os.path.join(
-                        build_dir, os.path.relpath(file, "native/java"))
+                        build_dir, os.path.relpath(file, "native/jpype_module/src/main/java"))
                     print("Copy file", file, p)
                     shutil.copyfile(file, p)
             except Exception as ex:

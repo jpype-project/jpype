@@ -31,9 +31,9 @@ import java.net.URLDecoder;
 
 /**
  * Class loader for JPype.
- * 
- * This is augmented to manage directory resources, allow for late loading,
- * and handling of resources on non-ASCII paths.
+ *
+ * This is augmented to manage directory resources, allow for late loading, and
+ * handling of resources on non-ASCII paths.
  */
 public class JPypeClassLoader extends URLClassLoader
 {
@@ -245,14 +245,14 @@ public class JPypeClassLoader extends URLClassLoader
     return Collections.enumeration(out);
   }
 
-  /** 
+  /**
    * Add a resource to the search.
-   * 
+   *
    * Many jar files lack directory support which is needed for the packaging
    * import.
-   * 
+   *
    * @param name
-   * @param url 
+   * @param url
    */
   public void addResource(String name, URL url)
   {
@@ -266,10 +266,10 @@ public class JPypeClassLoader extends URLClassLoader
   {
     // Mark our cache as dirty
     code = code * 98745623 + url.hashCode();
-    
+
     // add to the search tree
     super.addURL(url);
-    
+
     // See if it is a path
     Path path;
     try
