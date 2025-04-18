@@ -31,120 +31,120 @@ import org.jpype.bridge.BuiltIn;
 public interface PySet extends PyObject, Set<PyObject>
 {
 
-    static PyType type()
-    {
-        return (PyType) BuiltIn.eval("set", null, null);
-    }
+  static PyType type()
+  {
+    return (PyType) BuiltIn.eval("set", null, null);
+  }
 
-    /**
-     * Create a Python set from an Iterable.
-     *
-     * @param c
-     * @return
-     */
-    public static PySet create(Iterable c)
-    {
-        return Interpreter.getBackend().newSet(c);
-    }
+  /**
+   * Create a Python set from an Iterable.
+   *
+   * @param c
+   * @return
+   */
+  public static PySet create(Iterable c)
+  {
+    return Interpreter.getBackend().newSet(c);
+  }
 
-    @Override
-    public boolean add(PyObject e);
+  @Override
+  public boolean add(PyObject e);
 
-    @Override
-    default public boolean addAll(Collection<? extends PyObject> c)
-    {
-        int l1 = this.size();
-        this.update(create(c));
-        int l2 = this.size();
-        return l1 != l2;
-    }
+  @Override
+  default public boolean addAll(Collection<? extends PyObject> c)
+  {
+    int l1 = this.size();
+    this.update(create(c));
+    int l2 = this.size();
+    return l1 != l2;
+  }
 
-    @Override
-    void clear();
+  @Override
+  void clear();
 
-    @Override
-    boolean contains(Object o);
+  @Override
+  boolean contains(Object o);
 
-    @Override
-    default public boolean containsAll(Collection<?> c)
-    {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  default public boolean containsAll(Collection<?> c)
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    /**
-     * Shallow copy.
-     *
-     * @return a new set
-     */
-    PySet copy();
+  /**
+   * Shallow copy.
+   *
+   * @return a new set
+   */
+  PySet copy();
 
-    PySet difference(PySet... set);
+  PySet difference(PySet... set);
 
-    void discard(Object item);
+  void discard(Object item);
 
-    PySet intersect(PySet... set);
+  PySet intersect(PySet... set);
 
-    boolean isDisjoint(PySet set);
+  boolean isDisjoint(PySet set);
 
-    @Override
-    default public boolean isEmpty()
-    {
-        return size() == 0;
-    }
+  @Override
+  default public boolean isEmpty()
+  {
+    return size() == 0;
+  }
 
-    boolean isSubset(PySet set);
+  boolean isSubset(PySet set);
 
-    boolean isSuperset(PySet set);
+  boolean isSuperset(PySet set);
 
-    @Override
-    default Iterator<PyObject> iterator()
-    {
-        return Interpreter.getBackend().iter(this).iterator();
-    }
+  @Override
+  default Iterator<PyObject> iterator()
+  {
+    return Interpreter.getBackend().iter(this).iterator();
+  }
 
-    PyObject pop();
+  PyObject pop();
 
-    @Override
-    default public boolean removeAll(Collection<?> c)
-    {
-        int l1 = this.size();
-        PyObject delta = this.difference(create(c));
-        this.clear();
-        this.update(delta);
-        int l2 = this.size();
-        return l1 != l2;
-    }
+  @Override
+  default public boolean removeAll(Collection<?> c)
+  {
+    int l1 = this.size();
+    PyObject delta = this.difference(create(c));
+    this.clear();
+    this.update(delta);
+    int l2 = this.size();
+    return l1 != l2;
+  }
 
-    @Override
-    default public boolean retainAll(Collection<?> c)
-    {
-        int l1 = this.size();
-        PyObject delta = this.intersect(create(c));
-        this.clear();
-        this.update(delta);
-        int l2 = this.size();
-        return l1 != l2;
-    }
+  @Override
+  default public boolean retainAll(Collection<?> c)
+  {
+    int l1 = this.size();
+    PyObject delta = this.intersect(create(c));
+    this.clear();
+    this.update(delta);
+    int l2 = this.size();
+    return l1 != l2;
+  }
 
-    @Override
-    public int size();
+  @Override
+  public int size();
 
-    PySet symmetricDifference(PySet... set);
+  PySet symmetricDifference(PySet... set);
 
-    @Override
-    default public Object[] toArray()
-    {
-        return new ArrayList(this).toArray();
-    }
+  @Override
+  default public Object[] toArray()
+  {
+    return new ArrayList(this).toArray();
+  }
 
-    @Override
-    default public <T> T[] toArray(T[] a)
-    {
-        return (T[]) new ArrayList(this).toArray(a);
-    }
+  @Override
+  default public <T> T[] toArray(T[] a)
+  {
+    return (T[]) new ArrayList(this).toArray(a);
+  }
 
-    PySet union(PySet... set);
+  PySet union(PySet... set);
 
-    void update(PyObject other);
+  void update(PyObject other);
 
 }

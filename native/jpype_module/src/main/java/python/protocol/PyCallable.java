@@ -23,26 +23,26 @@ import python.lang.PyTuple;
 
 /**
  * Interface for Python objects that act as a callable.
- * 
+ *
  * To allow for overloading, the entry point must be private.
  *
  */
 public interface PyCallable extends PyProtocol
 {
-    
-    default PyObject call(PyTuple args, PyDict kwargs)
-    {
-        return BuiltIn.call(this, args, kwargs);
-    }
-            
-    default PyObject call(PyTuple args)
-    {
-        return BuiltIn.call(this, args, null);
-    }
-    
-    default PyObject call(Object... args)
-    {
-        return BuiltIn.call(this, PyTuple.create(args), null);
-    }
-    
+
+  default PyObject call(PyTuple args, PyDict kwargs)
+  {
+    return BuiltIn.call(this, args, kwargs);
+  }
+
+  default PyObject call(PyTuple args)
+  {
+    return BuiltIn.call(this, args, null);
+  }
+
+  default PyObject call(Object... args)
+  {
+    return BuiltIn.call(this, PyTuple.create(args), null);
+  }
+
 }

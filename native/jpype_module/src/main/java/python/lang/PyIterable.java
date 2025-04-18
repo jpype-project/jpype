@@ -29,26 +29,26 @@ import python.protocol.PyCallable;
 public interface PyIterable extends PyObject, Iterable<PyObject>
 {
 
-    boolean all();
+  boolean all();
 
-    boolean any();
+  boolean any();
 
-    PyIterator iter();
+  PyIterator iter();
 
-    @Override
-    default Iterator<PyObject> iterator()
-    {
-        return new PyIteratorImpl(this.iter());
-    }
+  @Override
+  default Iterator<PyObject> iterator()
+  {
+    return new PyIteratorImpl(this.iter());
+  }
 
-    PyObject map(PyCallable callable);
+  PyObject map(PyCallable callable);
 
-    PyObject max();
+  PyObject max();
 
-    PyObject min();
+  PyObject min();
 
-    PyObject sorted();
+  PyObject sorted();
 
-    PyObject sum();
+  PyObject sum();
 
 }

@@ -29,151 +29,151 @@ import python.protocol.PySequence;
 public interface PyString extends PyObject, CharSequence
 {
 
-    static PyType type()
-    {
-        return (PyType) BuiltIn.eval("str", null, null);
-    }
+  static PyType type()
+  {
+    return (PyType) BuiltIn.eval("str", null, null);
+  }
 
-    public static PyString create(CharSequence s)
-    {
-        return BuiltIn.str(s);
-    }
+  public static PyString create(CharSequence s)
+  {
+    return BuiltIn.str(s);
+  }
 
-    PyString capitalize();
+  PyString capitalize();
 
-    PyString casefold();
+  PyString casefold();
 
-    PyString center(int width);
+  PyString center(int width);
 
-    PyString center(int width, char fill);
+  PyString center(int width, char fill);
 
-    @Override
-    char charAt(int index);
+  @Override
+  char charAt(int index);
 
-    int count(CharSequence str);
+  int count(CharSequence str);
 
-    int count(CharSequence str, int start);
+  int count(CharSequence str, int start);
 
-    int count(CharSequence str, int start, int end);
+  int count(CharSequence str, int start, int end);
 
-    PyBytes encode();
+  PyBytes encode();
 
-    PyBytes encode(CharSequence encoding);
+  PyBytes encode(CharSequence encoding);
 
-    PyBytes encode(CharSequence encoding, String errors);
+  PyBytes encode(CharSequence encoding, String errors);
 
-    boolean endsWith(CharSequence suffix);
+  boolean endsWith(CharSequence suffix);
 
-    boolean endsWith(CharSequence suffix, int start);
+  boolean endsWith(CharSequence suffix, int start);
 
-    boolean endsWith(CharSequence suffix, int start, int end);
+  boolean endsWith(CharSequence suffix, int start, int end);
 
-    PyString expandTabs(int tabsize);
+  PyString expandTabs(int tabsize);
 
-    int find(CharSequence str);
+  int find(CharSequence str);
 
-    int find(CharSequence str, int start);
+  int find(CharSequence str, int start);
 
-    int find(CharSequence str, int start, int end);
+  int find(CharSequence str, int start, int end);
 
-    PyString format(PyTuple args, PyDict kwargs);
+  PyString format(PyTuple args, PyDict kwargs);
 
-    PyString formatMap(PyMapping mapping);
+  PyString formatMap(PyMapping mapping);
 
-    int index(CharSequence str);
+  int index(CharSequence str);
 
-    int index(CharSequence str, int start);
+  int index(CharSequence str, int start);
 
-    int index(CharSequence str, int start, int end);
+  int index(CharSequence str, int start, int end);
 
-    boolean isAlnum();
+  boolean isAlnum();
 
-    boolean isAlpha();
+  boolean isAlpha();
 
-    boolean isAscii();
+  boolean isAscii();
 
-    boolean isDecimal();
+  boolean isDecimal();
 
-    boolean isDigit();
+  boolean isDigit();
 
-    boolean isIdentifier();
+  boolean isIdentifier();
 
-    boolean isLower();
+  boolean isLower();
 
-    boolean isNumeric();
+  boolean isNumeric();
 
-    boolean isPrintable();
+  boolean isPrintable();
 
-    boolean isSpace();
+  boolean isSpace();
 
-    boolean isTitle();
+  boolean isTitle();
 
-    boolean isUpper();
+  boolean isUpper();
 
-    PyString join(PyIterable iter);
+  PyString join(PyIterable iter);
 
-    @Override
-    int length();
+  @Override
+  int length();
 
-    PyString lstrip();
+  PyString lstrip();
 
-    PyString lstrip(CharSequence characters);
+  PyString lstrip(CharSequence characters);
 
-    // Skipping maketrans
-    PyTuple partition(CharSequence sep);
+  // Skipping maketrans
+  PyTuple partition(CharSequence sep);
 
-    PyString removePrefix(CharSequence prefix);
+  PyString removePrefix(CharSequence prefix);
 
-    PyString removeSuffix(CharSequence suffix);
+  PyString removeSuffix(CharSequence suffix);
 
-    PyString replace(CharSequence old, CharSequence rep);
+  PyString replace(CharSequence old, CharSequence rep);
 
-    PyString replace(CharSequence old, CharSequence rep, int count);
+  PyString replace(CharSequence old, CharSequence rep, int count);
 
-    int rfind(CharSequence sub);
+  int rfind(CharSequence sub);
 
-    int rfind(CharSequence sub, int start);
+  int rfind(CharSequence sub, int start);
 
-    int rfind(CharSequence sub, int start, int end);
+  int rfind(CharSequence sub, int start, int end);
 
-    int rindex(CharSequence sub);
+  int rindex(CharSequence sub);
 
-    int rindex(CharSequence sub, int start);
+  int rindex(CharSequence sub, int start);
 
-    int rindex(CharSequence sub, int start, int end);
+  int rindex(CharSequence sub, int start, int end);
 
-    PyTuple rpartition(CharSequence sep);
+  PyTuple rpartition(CharSequence sep);
 
-    PyList rsplit(CharSequence sep);
+  PyList rsplit(CharSequence sep);
 
-    PyList rsplit(CharSequence sep, int maxsplit);
+  PyList rsplit(CharSequence sep, int maxsplit);
 
-    PyString rstrip(CharSequence chars);
+  PyString rstrip(CharSequence chars);
 
-    PyList split(CharSequence sep);
+  PyList split(CharSequence sep);
 
-    PyList split(CharSequence sep, int maxsplit);
+  PyList split(CharSequence sep, int maxsplit);
 
-    PyList splitLines(boolean keepends);
+  PyList splitLines(boolean keepends);
 
-    boolean startsWith(CharSequence prefix);
+  boolean startsWith(CharSequence prefix);
 
-    boolean startsWith(CharSequence prefix, int start);
+  boolean startsWith(CharSequence prefix, int start);
 
-    boolean startsWith(CharSequence prefix, int start, int end);
+  boolean startsWith(CharSequence prefix, int start, int end);
 
-    @Override
-    PyString subSequence(int start, int end);
+  @Override
+  PyString subSequence(int start, int end);
 
-    PyString swapCase();
+  PyString swapCase();
 
-    PyString title();
+  PyString title();
 
-    PyString translate(PyMapping m);
+  PyString translate(PyMapping m);
 
-    PyString translate(PySequence seq);
+  PyString translate(PySequence seq);
 
-    PyString upper();
+  PyString upper();
 
-    PyString zfill(int width);
+  PyString zfill(int width);
 }

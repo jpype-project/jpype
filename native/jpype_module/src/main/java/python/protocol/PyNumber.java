@@ -24,68 +24,68 @@ import python.lang.PyObject;
 public interface PyNumber extends PyProtocol
 {
 
-    PyObject add(PyObject o);
+  PyObject add(PyObject o);
 
-    PyObject add(long o);
+  PyObject add(long o);
 
-    PyObject add(double o);
+  PyObject add(double o);
 
-    PyObject addAssign(PyObject o);
+  PyObject addAssign(PyObject o);
 
-    PyObject addAssign(long o);
+  PyObject addAssign(long o);
 
-    PyObject addAssign(double o);
+  PyObject addAssign(double o);
 
-    PyObject div(PyObject o);
+  PyObject div(PyObject o);
 
-    PyObject div(long o);
+  PyObject div(long o);
 
-    PyObject div(double o);
+  PyObject div(double o);
 
-    PyObject divAssign(PyObject o);
+  PyObject divAssign(PyObject o);
 
-    PyObject divAssign(long o);
+  PyObject divAssign(long o);
 
-    PyObject divAssign(double o);
+  PyObject divAssign(double o);
 
-    PyObject divMod(PyObject o);
+  PyObject divMod(PyObject o);
 
-    PyObject matMult(PyObject o);
+  PyObject matMult(PyObject o);
 
-    PyObject mult(PyObject o);
+  PyObject mult(PyObject o);
 
-    PyObject mult(long o);
+  PyObject mult(long o);
 
-    PyObject mult(double o);
+  PyObject mult(double o);
 
-    PyObject multAssign(PyObject o);
+  PyObject multAssign(PyObject o);
 
-    PyObject multAssign(long o);
+  PyObject multAssign(long o);
 
-    PyObject multAssign(double o);
+  PyObject multAssign(double o);
 
-    boolean not();
+  boolean not();
 
-    PyObject pow(PyObject o);
+  PyObject pow(PyObject o);
 
-    PyObject remainder(PyObject o);
+  PyObject remainder(PyObject o);
 
-    PyObject sub(PyObject o);
+  PyObject sub(PyObject o);
 
-    PyObject sub(long o);
+  PyObject sub(long o);
 
-    PyObject sub(double o);
+  PyObject sub(double o);
 
-    PyObject subAssign(PyObject o);
+  PyObject subAssign(PyObject o);
 
-    PyObject subAssign(long o);
+  PyObject subAssign(long o);
 
-    PyObject subAssign(double o);
+  PyObject subAssign(double o);
 
-    boolean toBool();
+  boolean toBool();
 
-    double toFloat();
+  double toFloat();
 
-    int toInt();
+  int toInt();
 
 }

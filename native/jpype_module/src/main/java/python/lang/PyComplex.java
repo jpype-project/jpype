@@ -24,14 +24,14 @@ import python.protocol.PyNumber;
 public interface PyComplex extends PyNumber, PyObject
 {
 
-    static PyType type()
-    {
-        return (PyType) BuiltIn.eval("complex", null, null);
-    }
+  static PyType type()
+  {
+    return (PyType) BuiltIn.eval("complex", null, null);
+  }
 
-    double real();
+  double real();
 
-    double imag();
+  double imag();
 
-    PyComplex conjugate();
+  PyComplex conjugate();
 }

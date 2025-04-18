@@ -25,73 +25,73 @@ import python.lang.PySlice;
 public interface PySequence extends PyProtocol
 {
 
-    /**
-     * Get the item by index.
-     *
-     * Equivalent to getitem(obj, index).
-     *
-     * @param index
-     * @return
-     */
-    default PyObject get(int index)
-    {
-        return _get(index);
-    }
+  /**
+   * Get the item by index.
+   *
+   * Equivalent to getitem(obj, index).
+   *
+   * @param index
+   * @return
+   */
+  default PyObject get(int index)
+  {
+    return _get(index);
+  }
 
-    /**
-     * Get a slice.
-     *
-     * Equivalent to obj[slice].
-     *
-     * @param slice
-     * @return
-     */
-    default PyObject get(PySlice slice)
-    {
-        return _get(slice);
-    }
+  /**
+   * Get a slice.
+   *
+   * Equivalent to obj[slice].
+   *
+   * @param slice
+   * @return
+   */
+  default PyObject get(PySlice slice)
+  {
+    return _get(slice);
+  }
 
-    /**
-     * Get slices.
-     *
-     * Equivalent to obj[slice, slice].
-     *
-     *
-     * @param slices
-     * @return
-     */
-    default PyObject get(PySlice... slices)
-    {
-        return _get(BuiltIn.tuple(slices));
-    }
+  /**
+   * Get slices.
+   *
+   * Equivalent to obj[slice, slice].
+   *
+   *
+   * @param slices
+   * @return
+   */
+  default PyObject get(PySlice... slices)
+  {
+    return _get(BuiltIn.tuple(slices));
+  }
 
-    /**
-     * Set an item by index.
-     *
-     * Equivalent to setitem(obj, index).
-     *
-     * @param index
-     * @param value
-     */
-    void set(int index, Object value);
+  /**
+   * Set an item by index.
+   *
+   * Equivalent to setitem(obj, index).
+   *
+   * @param index
+   * @param value
+   */
+  void set(int index, Object value);
 
-    /**
-     * Delete an item by index.
-     *
-     * Equivalent to delitem(obj, index).
-     *
-     * @param index
-     */
-    void remove(int index);
+  /**
+   * Delete an item by index.
+   *
+   * Equivalent to delitem(obj, index).
+   *
+   * @param index
+   */
+  void remove(int index);
 
-    /**
-     * Delete an item by index.
-     *
-     * Equivalent to len(obj).
-     *
-     * @return
-     */
-    int size();
+  /**
+   * Delete an item by index.
+   *
+   * Equivalent to len(obj).
+   *
+   * @return
+   */
+  int size();
 
-    PyObject _get(Object object);
+  PyObject _get(Object object);
 }

@@ -46,7 +46,7 @@ public class ClassDescriptor
   public int methodCounter = 0;
   public long[] fields;
   public long anonymous;
-  public int functional_interface_parameter_count; 
+  public int functional_interface_parameter_count;
 
   ClassDescriptor(Class cls, long classPtr, Method method)
   {

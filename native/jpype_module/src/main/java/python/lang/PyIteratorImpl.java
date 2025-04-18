@@ -31,39 +31,39 @@ import org.jpype.bridge.BuiltIn;
 class PyIteratorImpl implements Iterator<PyObject>
 {
 
-    private final PyIterator iter;
-    private PyObject yield;
-    private boolean done = false;
-    private boolean check = false;
+  private final PyIterator iter;
+  private PyObject yield;
+  private boolean done = false;
+  private boolean check = false;
 
-    public PyIteratorImpl(PyIterator iter)
-    {
-        this.iter = iter;
-    }
+  public PyIteratorImpl(PyIterator iter)
+  {
+    this.iter = iter;
+  }
 
-    @Override
-    public boolean hasNext()
-    {
-        if (done)
-            return false;
-        if (check)
-            return !done;
-        check = true;
-        if (yield == null)
-            yield = BuiltIn.next(iter, Interpreter.stop);
-        done = (yield == Interpreter.stop);
-        return !done;
-    }
+  @Override
+  public boolean hasNext()
+  {
+    if (done)
+      return false;
+    if (check)
+      return !done;
+    check = true;
+    if (yield == null)
+      yield = BuiltIn.next(iter, Interpreter.stop);
+    done = (yield == Interpreter.stop);
+    return !done;
+  }
 
-    @Override
-    public PyObject next() throws NoSuchElementException
-    {
-        if (!check)
-            hasNext();
-        if (done)
-            throw new NoSuchElementException();
-        check = false;
-        return yield;
-    }
+  @Override
+  public PyObject next() throws NoSuchElementException
+  {
+    if (!check)
+      hasNext();
+    if (done)
+      throw new NoSuchElementException();
+    check = false;
+    return yield;
+  }
 
 }

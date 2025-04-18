@@ -23,9 +23,9 @@ import org.jpype.bridge.BuiltIn;
 public interface PyMemoryView extends PyObject
 {
 
-    static PyType type()
-    {
-        return (PyType) BuiltIn.eval("memoryview", null, null);
-    }
+  static PyType type()
+  {
+    return (PyType) BuiltIn.eval("memoryview", null, null);
+  }
 
 }

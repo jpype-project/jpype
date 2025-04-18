@@ -29,48 +29,48 @@ import python.lang.PyObject;
 public interface PyMapping extends PyProtocol, Map<Object, PyObject>
 {
 
-    @Override
-    void clear();
+  @Override
+  void clear();
 
-    @Override
-    boolean containsKey(Object key);
+  @Override
+  boolean containsKey(Object key);
 
-    @Override
-    boolean containsValue(Object value);
+  @Override
+  boolean containsValue(Object value);
 
-    @Override
-    default Set<Entry<Object, PyObject>> entrySet()
-    {
-        return new PyMappingEntrySet(this, Interpreter.getBackend().items(this.asObject()));
-    }
+  @Override
+  default Set<Entry<Object, PyObject>> entrySet()
+  {
+    return new PyMappingEntrySet(this, Interpreter.getBackend().items(this.asObject()));
+  }
 
-    default boolean isEmpty()
-    {
-        return size() == 0;
-    }
+  default boolean isEmpty()
+  {
+    return size() == 0;
+  }
 
-    @Override
-    default Set<Object> keySet()
-    {
-        return new PyMappingKeySet(this);
-    }
+  @Override
+  default Set<Object> keySet()
+  {
+    return new PyMappingKeySet(this);
+  }
 
-    @Override
-    PyObject put(Object key, PyObject value);
+  @Override
+  PyObject put(Object key, PyObject value);
 
-    @Override
-    void putAll(Map<? extends Object, ? extends PyObject> m);
+  @Override
+  void putAll(Map<? extends Object, ? extends PyObject> m);
 
-    @Override
-    PyObject remove(Object key);
+  @Override
+  PyObject remove(Object key);
 
-    @Override
-    int size();
+  @Override
+  int size();
 
-    @Override
-    default Collection<PyObject> values()
-    {
-        return new PyMappingValues(this, Interpreter.getBackend().values(this.asObject()));
-    }
+  @Override
+  default Collection<PyObject> values()
+  {
+    return new PyMappingValues(this, Interpreter.getBackend().values(this.asObject()));
+  }
 
 }

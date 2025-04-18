@@ -23,10 +23,11 @@ import python.lang.PyObject;
  */
 public interface PyProtocol
 {
-    /** 
-     * Return the base object protocol.
-     * 
-     * @return the object this protocol represents. 
-     */
-    PyObject asObject();
+
+  /**
+   * Return the base object protocol.
+   *
+   * @return the object this protocol represents.
+   */
+  PyObject asObject();
 }

@@ -28,39 +28,39 @@ import python.lang.PyObject;
 public interface PyAttributes extends PyProtocol
 {
 
-    /**
-     * Check if an attribute exists.
-     *
-     * Equivalent of hasattr(obj, key).
-     *
-     * @param key
-     * @return true if the attribute exists.
-     */
-    boolean has(String key);
+  /**
+   * Check if an attribute exists.
+   *
+   * Equivalent of hasattr(obj, key).
+   *
+   * @param key
+   * @return true if the attribute exists.
+   */
+  boolean has(String key);
 
-    /**
-     * Get the value of an attribute.
-     *
-     * Equivalent of getattr(obj, key).
-     *
-     * @param key
-     * @return
-     */
-    PyObject get(String key);
+  /**
+   * Get the value of an attribute.
+   *
+   * Equivalent of getattr(obj, key).
+   *
+   * @param key
+   * @return
+   */
+  PyObject get(String key);
 
-    /**
-     * Set the value of an attribute.
-     *
-     * Equivalent of setattr(obj, key, value).
-     *
-     * @param key
-     * @return
-     */
-    void set(String key, Object obj);
+  /**
+   * Set the value of an attribute.
+   *
+   * Equivalent of setattr(obj, key, value).
+   *
+   * @param key
+   * @return
+   */
+  void set(String key, Object obj);
 
-    void del(String key);
+  void del(String key);
 
-    PyList dir();
-    
-    PyDict dict();
+  PyList dir();
+
+  PyDict dict();
 }

@@ -29,86 +29,86 @@ import python.protocol.PySequence;
 public class PyJavaObject implements PyObject
 {
 
-    Object obj_;
+  Object obj_;
 
-    public PyJavaObject(Object obj)
-    {
-        this.obj_ = obj;
-    }
+  public PyJavaObject(Object obj)
+  {
+    this.obj_ = obj;
+  }
 
-    @Override
-    public PyAttributes asAttributes()
-    {
-        // Java objects don't support Python attributes directly.
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public PyAttributes asAttributes()
+  {
+    // Java objects don't support Python attributes directly.
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public PyCallable asCallable()
-    {
-        // Java objects don't act as Python functions.
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public PyCallable asCallable()
+  {
+    // Java objects don't act as Python functions.
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public PyMapping asMapping()
-    {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public PyMapping asMapping()
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public PyNumber asNumber()
-    {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public PyNumber asNumber()
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public PySequence asSequence()
-    {
-        // Java objects don't act as Python sequences
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public PySequence asSequence()
+  {
+    // Java objects don't act as Python sequences
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public PyObject bytes()
-    {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public PyObject bytes()
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    public Object get()
-    {
-        return obj_;
-    }
+  public Object get()
+  {
+    return obj_;
+  }
 
-    @Override
-    public PyType getType()
-    {
-        return Context.type(obj_);
-    }
+  @Override
+  public PyType getType()
+  {
+    return Context.type(obj_);
+  }
 
-    @Override
-    public int hashCode()
-    {
-        return obj_.hashCode();
-    }
+  @Override
+  public int hashCode()
+  {
+    return obj_.hashCode();
+  }
 
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        final PyJavaObject other = (PyJavaObject) obj;
-        return Objects.equals(this.obj_, other.obj_);
-    }
+  @Override
+  public boolean equals(Object obj)
+  {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    final PyJavaObject other = (PyJavaObject) obj;
+    return Objects.equals(this.obj_, other.obj_);
+  }
 
-    @Override
-    public boolean isInstance(PyObject cls)
-    {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public boolean isInstance(PyObject cls)
+  {
+    throw new UnsupportedOperationException();
+  }
 
 }

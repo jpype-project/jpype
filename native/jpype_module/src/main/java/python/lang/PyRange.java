@@ -23,9 +23,9 @@ import org.jpype.bridge.BuiltIn;
 public interface PyRange extends PyGenerator
 {
 
-    static PyType type()
-    {
-        return (PyType) BuiltIn.eval("range", null, null);
-    }
+  static PyType type()
+  {
+    return (PyType) BuiltIn.eval("range", null, null);
+  }
 
 }

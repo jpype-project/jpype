@@ -7,7 +7,8 @@ public class Reflector0 implements JPypeReflector
 {
 
   public Reflector0()
-  {}
+  {
+  }
 
   /**
    * Call a method using reflection.

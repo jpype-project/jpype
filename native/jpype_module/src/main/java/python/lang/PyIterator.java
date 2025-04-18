@@ -28,44 +28,44 @@ import python.protocol.PyCallable;
 public interface PyIterator extends PyObject
 {
 
-    PyIterator filter(PyCallable callable);
+  PyIterator filter(PyCallable callable);
 
-    /**
-     * Converts the Python iterator into a Java iterator.
-     *
-     * @return
-     */
-    default Iterator<PyObject> iterator()
-    {
-        return new PyIteratorImpl(Interpreter.getBackend().tee(this));
-    }
+  /**
+   * Converts the Python iterator into a Java iterator.
+   *
+   * @return
+   */
+  default Iterator<PyObject> iterator()
+  {
+    return new PyIteratorImpl(Interpreter.getBackend().tee(this));
+  }
 
-    /**
-     * Get the next item.
-     *
-     * FIXME This throws StopIteration, we need to figure out how to convert and
-     * catch it.
-     *
-     * @return the next element in the series.
-     */
-    default PyObject next()
-    {
-        PyObject out = Interpreter.getBackend().next(this, Interpreter.stop);
-        if (out.equals(Interpreter.stop))
-            throw new NoSuchElementException();
-        return out;
-    }
+  /**
+   * Get the next item.
+   *
+   * FIXME This throws StopIteration, we need to figure out how to convert and
+   * catch it.
+   *
+   * @return the next element in the series.
+   */
+  default PyObject next()
+  {
+    PyObject out = Interpreter.getBackend().next(this, Interpreter.stop);
+    if (out.equals(Interpreter.stop))
+      throw new NoSuchElementException();
+    return out;
+  }
 
-    /**
-     * Get the next item.
-     *
-     * @param defaults is the element to return if there is no additional
-     * elements.
-     * @return the next element in the series.
-     */
-    default PyObject next(PyObject defaults)
-    {
-        return Interpreter.getBackend().next(this, defaults);
-    }
+  /**
+   * Get the next item.
+   *
+   * @param defaults is the element to return if there is no additional
+   * elements.
+   * @return the next element in the series.
+   */
+  default PyObject next(PyObject defaults)
+  {
+    return Interpreter.getBackend().next(this, defaults);
+  }
 
 }

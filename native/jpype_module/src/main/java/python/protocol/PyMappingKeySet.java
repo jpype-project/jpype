@@ -21,105 +21,105 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- *  Representation of a KeySet of Python Mappings.
+ * Representation of a KeySet of Python Mappings.
  */
 class PyMappingKeySet implements Set<Object>
 {
 
-    final PyMapping map;
-    
-    public PyMappingKeySet(PyMapping mapping)
-    {
-        this.map = mapping;
-    }
+  final PyMapping map;
 
-    @Override
-    public int size()
-    {
-        return map.size();
-    }
+  public PyMappingKeySet(PyMapping mapping)
+  {
+    this.map = mapping;
+  }
 
-    @Override
-    public boolean isEmpty()
-    {
-        return map.isEmpty();
-    }
+  @Override
+  public int size()
+  {
+    return map.size();
+  }
 
-    @Override
-    public boolean contains(Object o)
-    {
-        return map.containsKey(o);
-    }
+  @Override
+  public boolean isEmpty()
+  {
+    return map.isEmpty();
+  }
 
-    @Override
-    public Iterator<Object> iterator()
-    {
-        // FIXME this one is required
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
+  @Override
+  public boolean contains(Object o)
+  {
+    return map.containsKey(o);
+  }
 
-    @Override
-    public Object[] toArray()
-    {
-        return new ArrayList(this).toArray();
-    }
+  @Override
+  public Iterator<Object> iterator()
+  {
+    // FIXME this one is required
+    throw new UnsupportedOperationException("Not supported yet.");
+  }
 
-    @Override
-    public <T> T[] toArray(T[] a)
-    {
-        return (T[]) new ArrayList(this).toArray(a);
-    }
+  @Override
+  public Object[] toArray()
+  {
+    return new ArrayList(this).toArray();
+  }
 
-    @Override
-    public boolean add(Object e)
-    {
-        throw new UnsupportedOperationException(); 
-    }
+  @Override
+  public <T> T[] toArray(T[] a)
+  {
+    return (T[]) new ArrayList(this).toArray(a);
+  }
 
-    @Override
-    public boolean remove(Object o)
-    {
-        return map.remove(o) != null;
-    }
+  @Override
+  public boolean add(Object e)
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public boolean containsAll(Collection<?> c)
-    {
-        for (var x : c)
-        {
-            if (!map.containsKey(c))
-                return false;
-        }
-        return true;
-    }
+  @Override
+  public boolean remove(Object o)
+  {
+    return map.remove(o) != null;
+  }
 
-    @Override
-    public boolean addAll(Collection<? extends Object> c)
+  @Override
+  public boolean containsAll(Collection<?> c)
+  {
+    for (var x : c)
     {
-        throw new UnsupportedOperationException(); 
+      if (!map.containsKey(c))
+        return false;
     }
+    return true;
+  }
 
-    @Override
-    public boolean retainAll(Collection<?> c)
-    {
-        throw new UnsupportedOperationException(); 
-    }
+  @Override
+  public boolean addAll(Collection<? extends Object> c)
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public boolean removeAll(Collection<?> c)
-    {
-        boolean y = true;
-        for (var x : c)
-        {
-            y &= this.remove(x);
-        }
-        return y;
-    }
+  @Override
+  public boolean retainAll(Collection<?> c)
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public void clear()
+  @Override
+  public boolean removeAll(Collection<?> c)
+  {
+    boolean y = true;
+    for (var x : c)
     {
-        map.clear();
+      y &= this.remove(x);
     }
+    return y;
+  }
+
+  @Override
+  public void clear()
+  {
+    map.clear();
+  }
 
 }

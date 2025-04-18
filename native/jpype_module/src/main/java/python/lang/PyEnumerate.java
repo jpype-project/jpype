@@ -23,8 +23,8 @@ import org.jpype.bridge.BuiltIn;
 public interface PyEnumerate extends PyGenerator
 {
 
-    static PyType type()
-    {
-        return (PyType) BuiltIn.eval("enumerate", null, null);
-    }
+  static PyType type()
+  {
+    return (PyType) BuiltIn.eval("enumerate", null, null);
+  }
 }

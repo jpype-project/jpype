@@ -73,9 +73,7 @@ public class Html
   static
   {
     ClassLoader cl = ClassLoader.getSystemClassLoader();
-    try (InputStream is = cl.getResourceAsStream("org/jpype/html/entities.txt");
-            InputStreamReader isr = new InputStreamReader(is);
-            BufferedReader rd = new BufferedReader(isr))
+    try (InputStream is = cl.getResourceAsStream("org/jpype/html/entities.txt"); InputStreamReader isr = new InputStreamReader(is); BufferedReader rd = new BufferedReader(isr))
     {
       while (true)
       {

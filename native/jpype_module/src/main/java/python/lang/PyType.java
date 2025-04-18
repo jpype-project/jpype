@@ -23,6 +23,6 @@ import python.protocol.PyCallable;
 public interface PyType extends PyObject, PyCallable
 {
 
-    PyTuple mro();
+  PyTuple mro();
 
 }

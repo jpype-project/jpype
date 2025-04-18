@@ -229,7 +229,7 @@ public class JPypeContext
       // Inform Python no more calls are permitted
       onShutdown(this.context);
       Thread.yield();
-     
+
     } catch (Throwable th)
     {
     }

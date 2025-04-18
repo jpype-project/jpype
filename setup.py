@@ -43,10 +43,10 @@ jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
     ),
     platform=platform,
 ))
-jpyneLib = Extension(name='_jpyne', **setupext.platform.Platform(
+jpypeBootstrapLib = Extension(name='_jpypeb', **setupext.platform.Platform(
     include_dirs=[],
     sources=sorted(
-        list(Path('native', 'embedded').glob('*.cpp')) 
+        list(Path('native', 'bootstrap').glob('*.cpp')) 
     ),
     platform=platform,
 ))
@@ -80,5 +80,5 @@ setup(
         'sdist': setupext.sdist.BuildSourceDistribution,
     },
     zip_safe=False,
-    ext_modules=[jpyneLib, jpypeLib, jpypeJar],
+    ext_modules=[jpypeBootstrapLib, jpypeLib, jpypeJar],
 )

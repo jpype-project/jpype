@@ -23,10 +23,10 @@ import java.util.Iterator;
 public interface PyGenerator extends PyObject
 {
 
-    PyIterator iter();
+  PyIterator iter();
 
-    default Iterator<PyObject> iterator()
-    {
-        return iter().iterator();
-    }
+  default Iterator<PyObject> iterator()
+  {
+    return iter().iterator();
+  }
 }

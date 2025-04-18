@@ -30,80 +30,80 @@ import python.lang.PyObject;
 public class PyMappingEntrySetIterator implements Iterator<Map.Entry<Object, PyObject>>
 {
 
-    private final PyMapping map;
-    private final PyIterator iter;
-    private PyObject yield;
-    private boolean done = false;
-    private boolean check = false;
+  private final PyMapping map;
+  private final PyIterator iter;
+  private PyObject yield;
+  private boolean done = false;
+  private boolean check = false;
 
-    public PyMappingEntrySetIterator(PyMapping map, PyIterator iter)
+  public PyMappingEntrySetIterator(PyMapping map, PyIterator iter)
+  {
+    this.map = map;
+    this.iter = iter;
+  }
+
+  @Override
+  public boolean hasNext()
+  {
+    if (done)
+      return false;
+    if (check)
+      return !done;
+    check = true;
+    if (yield == null)
+      yield = BuiltIn.next(iter, Interpreter.stop);
+    done = (yield == Interpreter.stop);
+    return !done;
+  }
+
+  @Override
+  public Map.Entry<Object, PyObject> next() throws NoSuchElementException
+  {
+    if (!check)
+      hasNext();
+    if (done)
+      throw new NoSuchElementException();
+    check = false;
+    //The obbject has two members
+    PySequence tuple = yield.asSequence();
+    PyObject key = tuple.get(0);
+    PyObject value = tuple.get(1);
+    return new Entry(key, value);
+  }
+
+  class Entry implements Map.Entry<Object, PyObject>
+  {
+
+    private final PyObject key;
+    private PyObject value;
+
+    private Entry(PyObject key, PyObject value)
     {
-        this.map = map;
-        this.iter = iter;
+      this.key = key;
+      this.value = value;
     }
 
     @Override
-    public boolean hasNext()
+    public Object getKey()
     {
-        if (done)
-            return false;
-        if (check)
-            return !done;
-        check = true;
-        if (yield == null)
-            yield = BuiltIn.next(iter, Interpreter.stop);
-        done = (yield == Interpreter.stop);
-        return !done;
+      return key;
     }
 
     @Override
-    public Map.Entry<Object, PyObject> next() throws NoSuchElementException
+    public PyObject getValue()
     {
-        if (!check)
-            hasNext();
-        if (done)
-            throw new NoSuchElementException();
-        check = false;
-        //The obbject has two members
-        PySequence tuple = yield.asSequence();
-        PyObject key = tuple.get(0);
-        PyObject value = tuple.get(1);
-        return new Entry(key, value);
+      return value;
     }
 
-    class Entry implements Map.Entry<Object, PyObject>
+    @Override
+    public PyObject setValue(PyObject value)
     {
-
-        private final PyObject key;
-        private PyObject value;
-
-        private Entry(PyObject key, PyObject value)
-        {
-            this.key = key;
-            this.value = value;
-        }
-
-        @Override
-        public Object getKey()
-        {
-            return key;
-        }
-
-        @Override
-        public PyObject getValue()
-        {
-            return value;
-        }
-
-        @Override
-        public PyObject setValue(PyObject value)
-        {
-            PyObject prior = this.value;
-            map.put(key, value);
-            this.value = value;
-            return prior;
-        }
-
+      PyObject prior = this.value;
+      map.put(key, value);
+      this.value = value;
+      return prior;
     }
+
+  }
 
 }

@@ -28,96 +28,96 @@ import python.lang.PyObject;
 class PyMappingValues implements Collection<PyObject>
 {
 
-    private final PyMapping map;
-    private final PyObject values;
+  private final PyMapping map;
+  private final PyObject values;
 
-    public PyMappingValues(PyMapping map, PyObject values)
-    {
-        this.map = map;
-        this.values = values;
-    }
+  public PyMappingValues(PyMapping map, PyObject values)
+  {
+    this.map = map;
+    this.values = values;
+  }
 
-    @Override
-    public boolean add(PyObject e)
-    {
-        throw new UnsupportedOperationException(); 
-    }
+  @Override
+  public boolean add(PyObject e)
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public boolean addAll(Collection<? extends PyObject> c)
-    {
-        throw new UnsupportedOperationException(); 
-    }
+  @Override
+  public boolean addAll(Collection<? extends PyObject> c)
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public void clear()
-    {
-        this.map.clear();
-    }
+  @Override
+  public void clear()
+  {
+    this.map.clear();
+  }
 
-    @Override
-    public boolean contains(Object o)
-    {
-        return this.map.containsValue(o);
-    }
+  @Override
+  public boolean contains(Object o)
+  {
+    return this.map.containsValue(o);
+  }
 
-    @Override
-    public boolean containsAll(Collection<?> c)
+  @Override
+  public boolean containsAll(Collection<?> c)
+  {
+    for (var v : c)
     {
-        for (var v : c)
-        {
-            if (!this.map.containsValue(v))
-                return false;
-        }
-        return true;
+      if (!this.map.containsValue(v))
+        return false;
     }
+    return true;
+  }
 
-    @Override
-    public boolean isEmpty()
-    {
-        return this.map.isEmpty();
-    }
+  @Override
+  public boolean isEmpty()
+  {
+    return this.map.isEmpty();
+  }
 
-    @Override
-    public Iterator<PyObject> iterator()
-    {
-        return BuiltIn.iter(this.values).iterator();
-    }
+  @Override
+  public Iterator<PyObject> iterator()
+  {
+    return BuiltIn.iter(this.values).iterator();
+  }
 
-    @Override
-    public boolean remove(Object o)
-    {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public boolean remove(Object o)
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public boolean removeAll(Collection<?> c)
-    {
-        throw new UnsupportedOperationException(); 
-    }
+  @Override
+  public boolean removeAll(Collection<?> c)
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public boolean retainAll(Collection<?> c)
-    {
-        throw new UnsupportedOperationException(); 
-    }
+  @Override
+  public boolean retainAll(Collection<?> c)
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public int size()
-    {
-        return this.map.size();
-    }
+  @Override
+  public int size()
+  {
+    return this.map.size();
+  }
 
-    @Override
-    public Object[] toArray()
-    {
-        return new ArrayList(this).toArray();
-    }
+  @Override
+  public Object[] toArray()
+  {
+    return new ArrayList(this).toArray();
+  }
 
-    @Override
-    public <T> T[] toArray(T[] a)
-    {
-        return (T[]) new ArrayList(this).toArray(a);
-    }
+  @Override
+  public <T> T[] toArray(T[] a)
+  {
+    return (T[]) new ArrayList(this).toArray(a);
+  }
 
 }

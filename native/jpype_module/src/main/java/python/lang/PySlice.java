@@ -23,16 +23,16 @@ import org.jpype.bridge.BuiltIn;
 public interface PySlice extends PyObject
 {
 
-    static PyType type()
-    {
-        return (PyType) BuiltIn.eval("slice", null, null);
-    }
+  static PyType type()
+  {
+    return (PyType) BuiltIn.eval("slice", null, null);
+  }
 
-    Integer start();
+  Integer start();
 
-    Integer stop();
+  Integer stop();
 
-    Integer step();
+  Integer step();
 
-    PyTuple indices(int i);
+  PyTuple indices(int i);
 }

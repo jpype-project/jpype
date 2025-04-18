@@ -26,8 +26,8 @@ import python.protocol.PyMapping;
 public interface PyDict extends PyObject, PyMapping
 {
 
-    static PyType type()
-    {
-        return (PyType) BuiltIn.eval("dict", null, null);
-    }
+  static PyType type()
+  {
+    return (PyType) BuiltIn.eval("dict", null, null);
+  }
 }

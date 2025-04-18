@@ -24,17 +24,17 @@ import org.jpype.bridge.BuiltIn;
 public interface PyBytes extends PyObject
 {
 
-    static PyType type()
-    {
-        return (PyType) BuiltIn.eval("bytes", null, null);
-    }
+  static PyType type()
+  {
+    return (PyType) BuiltIn.eval("bytes", null, null);
+  }
 
-    static PyBytes fromHex(CharSequence str)
-    {
-        return Interpreter.getBackend().bytes_fromhex(str);
-    }
+  static PyBytes fromHex(CharSequence str)
+  {
+    return Interpreter.getBackend().bytes_fromhex(str);
+  }
 
-    PyObject decode(PyObject encoding, PyObject delete);
+  PyObject decode(PyObject encoding, PyObject delete);
 
-    PyObject translate(PyObject table);
+  PyObject translate(PyObject table);
 }

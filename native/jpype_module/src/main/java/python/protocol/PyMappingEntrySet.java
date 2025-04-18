@@ -30,94 +30,94 @@ import python.lang.PyObject;
 public class PyMappingEntrySet implements Set<Map.Entry<Object, PyObject>>
 {
 
-    private final PyObject items;
-    private PyMapping map;
+  private final PyObject items;
+  private PyMapping map;
 
-    PyMappingEntrySet(PyMapping map, PyObject items)
-    {
-        this.map = map;
-        this.items = items;
-    }
+  PyMappingEntrySet(PyMapping map, PyObject items)
+  {
+    this.map = map;
+    this.items = items;
+  }
 
-    @Override
-    public boolean add(Map.Entry<Object, PyObject> e)
-    {
-        this.map.put(e.getKey(), e.getValue());
-        return true;
-    }
+  @Override
+  public boolean add(Map.Entry<Object, PyObject> e)
+  {
+    this.map.put(e.getKey(), e.getValue());
+    return true;
+  }
 
-    @Override
-    public boolean addAll(Collection<? extends Map.Entry<Object, PyObject>> c)
-    {
-        for (var v : c)
-            this.add(v);
-        return true;
-    }
+  @Override
+  public boolean addAll(Collection<? extends Map.Entry<Object, PyObject>> c)
+  {
+    for (var v : c)
+      this.add(v);
+    return true;
+  }
 
-    @Override
-    public void clear()
-    {
-        this.map.clear();
-    }
+  @Override
+  public void clear()
+  {
+    this.map.clear();
+  }
 
-    @Override
-    public boolean contains(Object o)
-    {
-        return false;
-    }
+  @Override
+  public boolean contains(Object o)
+  {
+    return false;
+  }
 
-    @Override
-    public boolean containsAll(Collection<?> c)
-    {
-        return false;
-    }
+  @Override
+  public boolean containsAll(Collection<?> c)
+  {
+    return false;
+  }
 
-    @Override
-    public boolean isEmpty()
-    {
-        return map.isEmpty();
-    }
+  @Override
+  public boolean isEmpty()
+  {
+    return map.isEmpty();
+  }
 
-    @Override
-    public Iterator<Map.Entry<Object, PyObject>> iterator()
-    {
-        return new PyMappingEntrySetIterator(map, BuiltIn.iter(this.items));
-    }
+  @Override
+  public Iterator<Map.Entry<Object, PyObject>> iterator()
+  {
+    return new PyMappingEntrySetIterator(map, BuiltIn.iter(this.items));
+  }
 
-    @Override
-    public boolean remove(Object o)
-    {
-        return false;
-    }
+  @Override
+  public boolean remove(Object o)
+  {
+    return false;
+  }
 
-    @Override
-    public boolean removeAll(Collection<?> c)
-    {
-        return false;
-    }
+  @Override
+  public boolean removeAll(Collection<?> c)
+  {
+    return false;
+  }
 
-    @Override
-    public boolean retainAll(Collection<?> c)
-    {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public boolean retainAll(Collection<?> c)
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public int size()
-    {
-        return this.map.size();
-    }
+  @Override
+  public int size()
+  {
+    return this.map.size();
+  }
 
-    @Override
-    public Object[] toArray()
-    {
-        return new ArrayList(this).toArray();
-    }
+  @Override
+  public Object[] toArray()
+  {
+    return new ArrayList(this).toArray();
+  }
 
-    @Override
-    public <T> T[] toArray(T[] a)
-    {
-        return (T[]) new ArrayList(this).toArray(a);
-    }
+  @Override
+  public <T> T[] toArray(T[] a)
+  {
+    return (T[]) new ArrayList(this).toArray(a);
+  }
 
 }

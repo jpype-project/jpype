@@ -32,12 +32,11 @@ import python.lang.PyObject;
 
 /**
  * Frontend for the Python intepreter.
- * 
- * This is a singleton the is created once to connect to Python.
- * To start the interpreter, set up all the configuration variables.
- * Then call start.
- * 
- * 
+ *
+ * This is a singleton the is created once to connect to Python. To start the
+ * interpreter, set up all the configuration variables. Then call start.
+ *
+ *
  */
 public class Interpreter
 {
@@ -47,13 +46,12 @@ public class Interpreter
   private String jpypeLibrary;
   private String pythonLibrary;
   private String jpypeVersion;
-  private boolean isWindows = checkWindows();
+  private final boolean isWindows = checkWindows();
   static Backend backend = null;
   public static PyObject stop = null;
   private boolean active = false;
-  private List<String> modulePaths = new ArrayList<>();
+  private final List<String> modulePaths = new ArrayList<>();
 
-  
   static final String WINDOWS_PROBE = ""
           + "import sysconfig\n"
           + "import os\n"
@@ -99,16 +97,17 @@ public class Interpreter
   }
 
   /**
-   * Start the interpreter.Any configuration actions must have been completed before the interpreter
- is started.
+   * Start the interpreter.Any configuration actions must have been completed
+   * before the interpreter is started.
    *
    * Many configuration variables may be adjusted with Java System properties.
+   *
    * @param args
    */
   public void start(String[] args)
   {
     // Once builtin is set internally then we can't call create again.
-    if (this.backend != null)
+    if (Interpreter.backend != null)
       return;
     active = true;
     // Get the _jpype extension library
@@ -157,20 +156,20 @@ public class Interpreter
     boolean verbose = Boolean.parseBoolean(System.getProperty("python.config.verbose", "false"));
     boolean site_import = Boolean.parseBoolean(System.getProperty("python.config.site_import ", "true"));
     boolean user_site = Boolean.parseBoolean(System.getProperty("python.config.user_site_directory ", "true"));
-    boolean bytecode = Boolean.parseBoolean(System.getProperty("python.config.write_bytecode", "false"));
-    
+    boolean bytecode = Boolean.parseBoolean(System.getProperty("python.config.write_bytecode", "true"));
+
     // Start interpreter
     Natives.start(paths, args,
             program_name, prefix, home, exec_prefix, executable,
             isolated, fault_handler, quiet, verbose,
             site_import, user_site, bytecode);
   }
-  
+
   public void interactive()
   {
     Natives.interactive();
   }
-  
+
   /**
    * Get the method used to start the interpreter.
    *
@@ -178,7 +177,7 @@ public class Interpreter
    * started from Java side we clean up resources differently, becuase Python
    * shuts down before Java in that case.
    *
-   * @returns true if the interpreter was started from Java.
+   * @return true if the interpreter was started from Java.
    */
   public boolean isJava()
   {

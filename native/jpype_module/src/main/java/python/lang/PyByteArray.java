@@ -24,18 +24,18 @@ import org.jpype.bridge.BuiltIn;
 public interface PyByteArray extends PyObject
 {
 
-    static PyType type()
-    {
-        return (PyType) BuiltIn.eval("bytearray", null, null);
-    }
+  static PyType type()
+  {
+    return (PyType) BuiltIn.eval("bytearray", null, null);
+  }
 
-    static PyByteArray fromHex(CharSequence str)
-    {
-        return Interpreter.getBackend().bytearray_fromhex(str);
-    }
+  static PyByteArray fromHex(CharSequence str)
+  {
+    return Interpreter.getBackend().bytearray_fromhex(str);
+  }
 
-    PyObject decode(PyObject encoding, PyObject delete);
+  PyObject decode(PyObject encoding, PyObject delete);
 
-    PyObject translate(PyObject table);
+  PyObject translate(PyObject table);
 
 }

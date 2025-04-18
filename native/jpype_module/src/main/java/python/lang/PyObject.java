@@ -33,67 +33,67 @@ import python.protocol.PyNumber;
 public interface PyObject
 {
 
-    static PyType type()
-    {
-        return (PyType) BuiltIn.eval("object", null, null);
-    }
+  static PyType type()
+  {
+    return (PyType) BuiltIn.eval("object", null, null);
+  }
 
-    /**
-     * Get the type of this object.
-     *
-     * Equivalent of type(obj).
-     *
-     * @return the object type.
-     */
-    PyType getType();
+  /**
+   * Get the type of this object.
+   *
+   * Equivalent of type(obj).
+   *
+   * @return the object type.
+   */
+  PyType getType();
 
-    boolean isInstance(PyObject cls);
+  boolean isInstance(PyObject cls);
 
-    /**
-     * Apply the attributes protocol to this object.
-     *
-     * This method never fails.
-     *
-     * @return an attribute protocol.
-     */
-    PyAttributes asAttributes();
+  /**
+   * Apply the attributes protocol to this object.
+   *
+   * This method never fails.
+   *
+   * @return an attribute protocol.
+   */
+  PyAttributes asAttributes();
 
-    /**
-     * Apply the callable protocol to this object.
-     *
-     * The object must be callable for this to succeed.
-     *
-     * @return a callable protocol.
-     */
-    PyCallable asCallable();
+  /**
+   * Apply the callable protocol to this object.
+   *
+   * The object must be callable for this to succeed.
+   *
+   * @return a callable protocol.
+   */
+  PyCallable asCallable();
 
-    /**
-     * Apply the sequence protocol to this object.
-     *
-     * @return a sequence protocol.
-     */
-    PySequence asSequence();
+  /**
+   * Apply the sequence protocol to this object.
+   *
+   * @return a sequence protocol.
+   */
+  PySequence asSequence();
 
-    /**
-     * Apply the mapping protocol to this object.
-     *
-     * @return a mapping protocol.
-     */
-    PyMapping asMapping();
+  /**
+   * Apply the mapping protocol to this object.
+   *
+   * @return a mapping protocol.
+   */
+  PyMapping asMapping();
 
-    /**
-     * Apply the number protocol to this object.
-     *
-     * @return a number protocol.
-     */
-    PyNumber asNumber();
+  /**
+   * Apply the number protocol to this object.
+   *
+   * @return a number protocol.
+   */
+  PyNumber asNumber();
 
-    PyObject bytes();
+  PyObject bytes();
 
-    @Override
-    int hashCode();
+  @Override
+  int hashCode();
 
-    @Override
-    boolean equals(Object obj);
+  @Override
+  boolean equals(Object obj);
 
 }

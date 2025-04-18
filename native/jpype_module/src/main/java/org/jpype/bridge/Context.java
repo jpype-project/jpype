@@ -17,6 +17,7 @@ package org.jpype.bridge;
 
 import python.lang.PyDict;
 import python.lang.PyObject;
+import python.protocol.PyMapping;
 
 /**
  * Represents an scope of variables in the Python interpreter.
@@ -33,25 +34,40 @@ public class Context extends BuiltIn
 {
 
   public final PyDict globalsDict;
-  public final PyDict localsDict;
+  public final PyMapping localsDict;
 
   public Context()
   {
+    if (!Interpreter.getInstance().isJava())
+      throw new IllegalStateException("Java bridge must be active");
     this.globalsDict = Interpreter.backend.dict();
     this.localsDict = globalsDict;
   }
 
-  public Context(PyDict globals, PyDict locals)
+  public Context(PyDict globals, PyMapping locals)
   {
+    if (!Interpreter.getInstance().isJava())
+      throw new IllegalStateException("Java bridge must be active");
     this.globalsDict = globals;
     this.localsDict = locals;
   }
 
+  /**
+   * Evaluate a single statement in this context.
+   *
+   * @param source is a single Python statement.
+   * @return the result of the evaluation.
+   */
   public PyObject eval(String source)
   {
     return Interpreter.backend.eval(source, globalsDict, localsDict);
   }
 
+  /**
+   * Execute a block of code in this context.
+   *
+   * @param source
+   */
   public void exec(String source)
   {
     Interpreter.backend.exec(source, globalsDict, localsDict);
@@ -67,22 +83,22 @@ public class Context extends BuiltIn
     Interpreter.backend.exec(String.format("import %s as %s", module, as), globalsDict, localsDict);
   }
 
-  public PyObject get(String key)
-  {
-    return Interpreter.backend.getitem(globalsDict, key);
-  }
-
-  public void set(String key, Object value)
-  {
-    Interpreter.backend.setitem(globalsDict, key, value);
-  }
-
+  /**
+   * Get the globals dictionary.
+   *
+   * @return
+   */
   PyDict globals()
   {
     return globalsDict;
   }
 
-  PyDict locals()
+  /**
+   * Get the locals mapping.
+   *
+   * @return
+   */
+  PyMapping locals()
   {
     return localsDict;
   }

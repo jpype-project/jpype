@@ -25,97 +25,97 @@ import java.util.NoSuchElementException;
 public class PyListIterator implements ListIterator<PyObject>
 {
 
-    PyList list;
-    int index;
-    boolean forward = false;
-    boolean reverse = false;
+  PyList list;
+  int index;
+  boolean forward = false;
+  boolean reverse = false;
 
-    PyListIterator(PyList list, int index)
-    {
-        this.list = list;
-        this.index = index;
-    }
+  PyListIterator(PyList list, int index)
+  {
+    this.list = list;
+    this.index = index;
+  }
 
-    @Override
-    public void add(PyObject e)
-    {
-        list.insert(index, list);
-        forward = false;
-        reverse = false;
-    }
+  @Override
+  public void add(PyObject e)
+  {
+    list.insert(index, list);
+    forward = false;
+    reverse = false;
+  }
 
-    @Override
-    public boolean hasNext()
-    {
-        return index < list.size();
-    }
+  @Override
+  public boolean hasNext()
+  {
+    return index < list.size();
+  }
 
-    @Override
-    public boolean hasPrevious()
-    {
-        return index > 0;
-    }
+  @Override
+  public boolean hasPrevious()
+  {
+    return index > 0;
+  }
 
-    @Override
-    public PyObject next()
-    {
-        if (!hasNext())
-            throw new NoSuchElementException();
-        PyObject out = list.get(index);
-        index++;
-        forward = true;
-        reverse = false;
-        return out;
-    }
+  @Override
+  public PyObject next()
+  {
+    if (!hasNext())
+      throw new NoSuchElementException();
+    PyObject out = list.get(index);
+    index++;
+    forward = true;
+    reverse = false;
+    return out;
+  }
 
-    @Override
-    public int nextIndex()
-    {
-        return index;
-    }
+  @Override
+  public int nextIndex()
+  {
+    return index;
+  }
 
-    @Override
-    public PyObject previous()
-    {
-        if (!hasPrevious())
-            throw new NoSuchElementException();
-        index--;
-        PyObject out = list.get(index);
-        forward = false;
-        reverse = true;
-        return out;
-    }
+  @Override
+  public PyObject previous()
+  {
+    if (!hasPrevious())
+      throw new NoSuchElementException();
+    index--;
+    PyObject out = list.get(index);
+    forward = false;
+    reverse = true;
+    return out;
+  }
 
-    @Override
-    public int previousIndex()
-    {
-        return index--;
-    }
+  @Override
+  public int previousIndex()
+  {
+    return index--;
+  }
 
-    @Override
-    public void remove()
-    {
-        if (!forward && !reverse)
-            throw new IllegalStateException();
+  @Override
+  public void remove()
+  {
+    if (!forward && !reverse)
+      throw new IllegalStateException();
 
-        if (forward)
-            list.remove(index - 1);
-        if (reverse)
-            list.remove(index);
-        forward = false;
-        reverse = false;
-    }
+    if (forward)
+      list.remove(index - 1);
+    if (reverse)
+      list.remove(index);
+    forward = false;
+    reverse = false;
+  }
 
-    @Override
-    public void set(PyObject e)
-    {
-        if (!forward && !reverse)
-            throw new IllegalStateException();
+  @Override
+  public void set(PyObject e)
+  {
+    if (!forward && !reverse)
+      throw new IllegalStateException();
 
-        if (forward)
-            list.set(index - 1, e);
-        if (reverse)
-            list.set(index, e);
-    }
+    if (forward)
+      list.set(index - 1, e);
+    if (reverse)
+      list.set(index, e);
+  }
 
 }

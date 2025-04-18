@@ -25,81 +25,81 @@ import java.util.NoSuchElementException;
 class PyTupleIterator implements ListIterator<PyObject>
 {
 
-    PyTuple tuple;
-    int index;
-    boolean forward = false;
-    boolean reverse = false;
+  PyTuple tuple;
+  int index;
+  boolean forward = false;
+  boolean reverse = false;
 
-    PyTupleIterator(PyTuple list, int index)
-    {
-        this.tuple = list;
-        this.index = index;
-    }
+  PyTupleIterator(PyTuple list, int index)
+  {
+    this.tuple = list;
+    this.index = index;
+  }
 
-    @Override
-    public void add(PyObject e)
-    {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public void add(PyObject e)
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public boolean hasNext()
-    {
-        return index < tuple.size();
-    }
+  @Override
+  public boolean hasNext()
+  {
+    return index < tuple.size();
+  }
 
-    @Override
-    public boolean hasPrevious()
-    {
-        return index > 0;
-    }
+  @Override
+  public boolean hasPrevious()
+  {
+    return index > 0;
+  }
 
-    @Override
-    public PyObject next()
-    {
-        if (!hasNext())
-            throw new NoSuchElementException();
-        PyObject out = tuple.get(index);
-        index++;
-        forward = true;
-        reverse = false;
-        return out;
-    }
+  @Override
+  public PyObject next()
+  {
+    if (!hasNext())
+      throw new NoSuchElementException();
+    PyObject out = tuple.get(index);
+    index++;
+    forward = true;
+    reverse = false;
+    return out;
+  }
 
-    @Override
-    public int nextIndex()
-    {
-        return index;
-    }
+  @Override
+  public int nextIndex()
+  {
+    return index;
+  }
 
-    @Override
-    public PyObject previous()
-    {
-        if (!hasPrevious())
-            throw new NoSuchElementException();
-        index--;
-        PyObject out = tuple.get(index);
-        forward = false;
-        reverse = true;
-        return out;
-    }
+  @Override
+  public PyObject previous()
+  {
+    if (!hasPrevious())
+      throw new NoSuchElementException();
+    index--;
+    PyObject out = tuple.get(index);
+    forward = false;
+    reverse = true;
+    return out;
+  }
 
-    @Override
-    public int previousIndex()
-    {
-        return index--;
-    }
+  @Override
+  public int previousIndex()
+  {
+    return index--;
+  }
 
-    @Override
-    public void remove()
-    {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public void remove()
+  {
+    throw new UnsupportedOperationException();
+  }
 
-    @Override
-    public void set(PyObject e)
-    {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public void set(PyObject e)
+  {
+    throw new UnsupportedOperationException();
+  }
 
 }
