@@ -122,7 +122,7 @@ final public class JPypeReferenceQueue extends ReferenceQueue
     }
 
     // Empty the queue.
-    if (!Interpreter.getInstance().isActive())
+    if (!Interpreter.getInstance().isJava())
       hostReferences.flush();
   }
 

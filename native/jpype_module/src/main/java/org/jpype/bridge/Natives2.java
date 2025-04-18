@@ -25,6 +25,9 @@ package org.jpype.bridge;
 public class Natives2
 {
 
-  native static void start();
+  native static void start(String[] modulePaths, String[] args, 
+          String name, String prefix, String home, String exec_prefix, String executable,
+          boolean isolated, boolean fault_handler);
+  native static void interactive();
 
 }

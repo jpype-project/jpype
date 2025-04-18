@@ -74,7 +74,8 @@ class Makefile:
         self.compile_pre = pre
         self.compile_post = post
         self.includes = includes
-        self.sources.append(x[i1 + 1])
+        if not "embedded" in x[i1 + 1]:
+            self.sources.append(x[i1 + 1])
 
     def captureLink(self, x):
         self.link_command = x[0]

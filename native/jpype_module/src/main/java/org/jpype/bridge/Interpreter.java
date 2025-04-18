@@ -24,6 +24,8 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import python.lang.PyObject;
 
@@ -43,7 +45,8 @@ public class Interpreter
   static Backend backend = null;
   public static PyObject stop = null;
   private boolean active = false;
-  
+  private List<String> modulePaths;
+  private String name = System.getProperty("python.programe.name");
 
   static final String WINDOWS_PROBE = ""
           + "import sysconfig\n"
@@ -62,28 +65,45 @@ public class Interpreter
           + "import _jpype\n"
           + "print(_jpype.__file__)\n"
           + "print(_jpype.__version__)\n";
+  
+  private Interpreter()
+  {
+      String paths = System.getProperty("python.module.path");
+      if (paths!=null)
+        this.modulePaths.addAll(Arrays.asList(paths.split(File.pathSeparator)));
+  }
 
   public static Interpreter getInstance()
   {
     return instance;
   }
-
-  public boolean isActive()
+  
+  /**
+   * Use this list to add search paths for the Python modules.
+   * 
+   * This can be used to limit the modules available for embedded
+   * applications.  If this list is not empty the default module
+   * path will not be used.  Instead this list will be the path.
+   * 
+   * @return 
+   */
+  public List<String> getModulePaths()
   {
-    return active;
+    return modulePaths;
   }
   
-  // FIXME we need a check point to prevent accidents.   
-  // There are two ways that we can get here.
-  // -  A bridge create from within Java
-  // -  bridge support initialized from Java via startJVM.
-  // Only those spawned from Java should attempt to load the resources.
+  public void setName(String name)
+  {
+    this.name = name;
+  }
+
+  
   /**
-   * Create a bridge from within Java.
-   *
-   * @return the bridge object.
+   * Start the interpreter.
+   * 
+   * Any configuration actions must have been completed before the interpreter is started.
    */
-  public void create()
+  public void start(String[] args)
   {
     // Once builtin is set internally then we can't call create again.
     if (this.backend != null)
@@ -91,41 +111,53 @@ public class Interpreter
     active = true;
     // Get the _jpype extension library
     resolveLibraries();
+    
+    // If we don't find the required libraries then we must fail.
     if (jpypeLibrary == null || pythonLibrary == null)
     {
       throw new RuntimeException("Unable to find _jpype module");
     }
 
-//        System.setProperty("java.library.path", Paths.get(".").toAbsolutePath().toString());
-    System.out.println("Library path " + System.getProperty("java.library.path"));
-
-    jpyneLibrary = jpypeLibrary.replace("jpype.c", "jpyne.c");
-
-    // First we need some native hooks from the dummy library
-    System.out.println("Load " + jpyneLibrary);
-    System.load(jpyneLibrary);
-
-    // Next load libpython as a global library
-    System.out.println("Load " + pythonLibrary);
-
-    // Finally load the Python module
-    Natives.loadLibrary(pythonLibrary);
-    System.out.println("Load " + jpypeLibrary);
-    System.load(jpypeLibrary);
-
-    System.out.println("found " + this.jpypeVersion);
-    System.out.println("required " + REQUIRED_VERSION);
+    // Make sure the JPype we found is compatible
     int[] version = parseVersion(this.jpypeVersion);
     int[] required = parseVersion(REQUIRED_VERSION);
     if (version[0] < required[0]
             || (version[0] == required[0] && version[1] < required[1]))
       throw new RuntimeException("JPype version is too old.  Found " + this.jpypeLibrary);
 
-    System.out.println("Start natives");
-    Natives2.start();
-    System.out.println("Done natives");
+    // We need our preload hooks to get starte.
+    jpyneLibrary = jpypeLibrary.replace("jpype.c", "jpyne.c");
+
+    // First, load the preload hooks
+    System.load(jpyneLibrary);
+
+    // Next, load libpython as a global library
+    Natives.loadLibrary(pythonLibrary);
+
+    // Finally, load the Python module
+    System.load(jpypeLibrary);
+
+    String[] paths = null;
+    if (!this.modulePaths.isEmpty())
+      paths = this.modulePaths.toArray(String[]::new);
+    Natives2.start(name, paths, args);
+  }
+  
+  /**
+   * Get the method used to start the interpreter.
+   * 
+   * The interpreter may have been started from either Java or Python.
+   * If started from Java side we clean up resources differently, becuase
+   * Python shuts down before Java in that case.
+   * 
+   * @returns true if the interpreter was started from Java.
+   */
+  public boolean isJava()
+  {
+    return active;
   }
 
+//<editor-fold desc="internal" defaultstate="collapsed">
   /**
    * Determine if this is windows system, because everything is different on
    * windows.
@@ -298,7 +330,7 @@ public class Interpreter
     }
   }
 
-  public String makeHash(String path)
+  private String makeHash(String path)
   {
     // No need to be cryptographic here.  We just need a unique key
     long hash = 0;
@@ -323,8 +355,6 @@ public class Interpreter
     String key = makeHash(pythonExecutable);
     if (checkCache(key))
       return;
-
-    System.out.println("Python exec " + pythonExecutable);
 
     // Probe the Python executeable for the values we need to start
     try
@@ -394,17 +424,10 @@ public class Interpreter
   {
     return backend;
   }
-
+//</editor-fold>
+  
   public static void main(String[] args)
   {
-    getInstance().create();
-    System.out.flush();
-    System.out.println(instance.jpypeVersion);
-    System.out.println(backend);
-    System.out.println(backend.tuple());
-    System.out.println(backend.list());
-    System.out.println(backend.str("Test"));
-    System.out.println("SUCCESS");
-    System.exit(0);
+    getInstance().start(args);
   }
 }

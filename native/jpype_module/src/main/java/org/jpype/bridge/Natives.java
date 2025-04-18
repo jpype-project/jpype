@@ -25,6 +25,4 @@ class Natives
 
   native static void loadLibrary(String library);
 
-  native static void dumpLibraries();
-
 }
