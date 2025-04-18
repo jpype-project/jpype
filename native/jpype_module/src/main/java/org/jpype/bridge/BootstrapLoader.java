@@ -16,19 +16,13 @@
 package org.jpype.bridge;
 
 /**
- *  Internal behaviors used by the binding.
- * 
- * Loaded by the _jpype module.
- * 
- * @author nelson85
+ * JPype Python Native Embedding.
+ *
+ * Loaded by _jpyne shared library.
  */
-public class Natives2
+class BootstrapLoader
 {
 
-  native static void start(String[] modulePaths, String[] args, 
-          String name, String prefix, String home, String exec_prefix, String executable,
-          boolean isolated, boolean fault_handler, boolean quiet, boolean verbose,
-          boolean site_import, boolean user_site, boolean bytecode);
-  native static void interactive();
+  native static void loadLibrary(String library);
 
 }

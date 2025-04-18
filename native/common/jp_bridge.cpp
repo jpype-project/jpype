@@ -52,7 +52,7 @@ static void convertException(JNIEnv *env, JPypeException& ex)
  * A list of module_search_paths so this can be used of limited/embedded deployments.
  * A list of command line arguments so we can execute command line functionality.
  */
-JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives2_start
+JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_start
 (JNIEnv *env, jclass cls, jobjectArray modulePath, jobjectArray args, 
 	jstring name, jstring prefix, jstring home, jstring exec_prefix, jstring executable,
 	jboolean isolated, jboolean faulthandler, jboolean quiet, jboolean verbose,
@@ -115,7 +115,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives2_start
 			cstr = env->GetStringUTFChars(prefix, &isCopy);
 			length = env->GetStringUTFLength(prefix);
 			str = transcribe(cstr, length, JPEncodingJavaUTF8(), JPEncodingUTF8());
-			env->ReleaseStringUTFChars(name, cstr);
+			env->ReleaseStringUTFChars(prefix, cstr);
 			wide_str = Py_DecodeLocale(str.c_str(), NULL);
 			config.prefix = wide_str;
 			resources.push_back(wide_str);
@@ -126,7 +126,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives2_start
 			cstr = env->GetStringUTFChars(home, &isCopy);
 			length = env->GetStringUTFLength(home);
 			str = transcribe(cstr, length, JPEncodingJavaUTF8(), JPEncodingUTF8());
-			env->ReleaseStringUTFChars(name, cstr);
+			env->ReleaseStringUTFChars(home, cstr);
 			wide_str = Py_DecodeLocale(str.c_str(), NULL);
 			config.home = wide_str;
 			resources.push_back(wide_str);
@@ -137,7 +137,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives2_start
 			cstr = env->GetStringUTFChars(exec_prefix, &isCopy);
 			length = env->GetStringUTFLength(exec_prefix);
 			str = transcribe(cstr, length, JPEncodingJavaUTF8(), JPEncodingUTF8());
-			env->ReleaseStringUTFChars(name, cstr);
+			env->ReleaseStringUTFChars(exec_prefix, cstr);
 			wide_str = Py_DecodeLocale(str.c_str(), NULL);
 			config.exec_prefix = wide_str;
 			resources.push_back(wide_str);
@@ -148,7 +148,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives2_start
 			cstr = env->GetStringUTFChars(executable, &isCopy);
 			length = env->GetStringUTFLength(executable);
 			str = transcribe(cstr, length, JPEncodingJavaUTF8(), JPEncodingUTF8());
-			env->ReleaseStringUTFChars(name, cstr);
+			env->ReleaseStringUTFChars(executable, cstr);
 			wide_str = Py_DecodeLocale(str.c_str(), NULL);
 			config.executable = wide_str;
 			resources.push_back(wide_str);
@@ -161,8 +161,10 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives2_start
 			for (jsize i = 0; i<items; ++i)
 			{
 				v = env->GetObjectArrayElement(modulePath, i);
+				if (v == nullptr)
+					continue;
 				cstr = env->GetStringUTFChars((jstring)v, &isCopy);
-				length = env->GetStringUTFLength(name);
+				length = env->GetStringUTFLength((jstring)v);
 				str = transcribe(cstr, length, JPEncodingJavaUTF8(), JPEncodingUTF8());
 				env->ReleaseStringUTFChars((jstring)v, cstr);
 				wide_str = Py_DecodeLocale(str.c_str(), NULL);
@@ -178,10 +180,13 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives2_start
 			for (jsize i = 0; i<items; ++i)
 			{
 				v = env->GetObjectArrayElement(args, i);
+				if (v == nullptr)
+					continue;
 				cstr = env->GetStringUTFChars((jstring)v, &isCopy);
-				length = env->GetStringUTFLength(name);
+				length = env->GetStringUTFLength((jstring)v);
 				str = transcribe(cstr, length, JPEncodingJavaUTF8(), JPEncodingUTF8());
 				env->ReleaseStringUTFChars((jstring)v, cstr);
+				wide_str = Py_DecodeLocale(str.c_str(), NULL);
 			 	PyWideStringList_Append(&config.argv, wide_str);
 				resources.push_back(wide_str);
 			}
@@ -190,7 +195,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives2_start
 		}
 
 		// Get Python started
-		PyImport_AppendInittab("_jpype", &PyInit__jpype);
+//		PyImport_AppendInittab("_jpype", &PyInit__jpype);
 		status = Py_InitializeFromConfig(&config);
 		if (PyStatus_Exception(status))
 			goto error_config;
@@ -206,8 +211,8 @@ error_config:
 
 success_config:
 		PyConfig_Clear(&config);
-		for (std::list<wchar_t*>::iterator iter = resources.begin(); iter!=resources.end(); ++iter)
-			PyMem_Free(*iter);
+//		for (std::list<wchar_t*>::iterator iter = resources.begin(); iter!=resources.end(); ++iter)
+//			PyMem_Free(*iter);
 #if  PY_VERSION_HEX<0x030a0000
 		PyEval_InitThreads();
 #endif
@@ -260,12 +265,22 @@ success_config:
 	}
 }
 
-JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives2_interactive
+JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_interactive
 (JNIEnv *env, jclass cls)
 {
 	JPPyCallAcquire callback;
 	PyRun_InteractiveLoop(stdin, "<stdin>");
 }
+
+JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_finish
+(JNIEnv *env, jclass cls)
+{
+	JPPyCallAcquire callback;
+	Py_Finalize();
+	// FIXME it is unclear if we will need to release the thread lock after this command
+}
+
+
 
 #ifdef __cplusplus
 }

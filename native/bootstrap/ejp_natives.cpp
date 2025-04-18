@@ -17,7 +17,7 @@ extern "C" {
    shared library with local flags.  We need a load which supports shared
    used with all Python modules.
 */
-JNIEXPORT jlong JNICALL Java_org_jpype_bridge_Natives_loadLibrary
+JNIEXPORT jlong JNICALL Java_org_jpype_bridge_BootstrapLoader_loadLibrary
 (JNIEnv *env, jclass clazz, jstring lib)
 {
     const char *cstr = env->GetStringUTFChars(lib, nullptr);

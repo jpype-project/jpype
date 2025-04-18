@@ -24,13 +24,20 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import python.lang.PyObject;
 
 /**
+ * Frontend for the Python intepreter.
+ * 
  * This is a singleton the is created once to connect to Python.
+ * To start the interpreter, set up all the configuration variables.
+ * Then call start.
+ * 
+ * 
  */
 public class Interpreter
 {
@@ -38,15 +45,15 @@ public class Interpreter
   static final String REQUIRED_VERSION = "1.6.0";
   static Interpreter instance = new Interpreter();
   private String jpypeLibrary;
-  private String jpyneLibrary;
   private String pythonLibrary;
   private String jpypeVersion;
   private boolean isWindows = checkWindows();
   static Backend backend = null;
   public static PyObject stop = null;
   private boolean active = false;
-  private List<String> modulePaths;
+  private List<String> modulePaths = new ArrayList<>();
 
+  
   static final String WINDOWS_PROBE = ""
           + "import sysconfig\n"
           + "import os\n"
@@ -121,13 +128,13 @@ public class Interpreter
       throw new RuntimeException("JPype version is too old.  Found " + this.jpypeLibrary);
 
     // We need our preload hooks to get starte.
-    jpyneLibrary = jpypeLibrary.replace("jpype.c", "jpyne.c");
+    String jpypeBootstrapLibrary = jpypeLibrary.replace("jpype.c", "jpypeb.c");
 
     // First, load the preload hooks
-    System.load(jpyneLibrary);
+    System.load(jpypeBootstrapLibrary);
 
     // Next, load libpython as a global library
-    Natives.loadLibrary(pythonLibrary);
+    BootstrapLoader.loadLibrary(pythonLibrary);
 
     // Finally, load the Python module
     System.load(jpypeLibrary);
@@ -148,16 +155,22 @@ public class Interpreter
     boolean fault_handler = Boolean.parseBoolean(System.getProperty("python.config.fault_handler", "false"));
     boolean quiet = Boolean.parseBoolean(System.getProperty("python.config.quiet", "false"));
     boolean verbose = Boolean.parseBoolean(System.getProperty("python.config.verbose", "false"));
-    boolean site_import = Boolean.parseBoolean(System.getProperty("python.config.site_import ", "false"));
-    boolean user_site = Boolean.parseBoolean(System.getProperty("python.config.user_site_directory ", "false"));
+    boolean site_import = Boolean.parseBoolean(System.getProperty("python.config.site_import ", "true"));
+    boolean user_site = Boolean.parseBoolean(System.getProperty("python.config.user_site_directory ", "true"));
     boolean bytecode = Boolean.parseBoolean(System.getProperty("python.config.write_bytecode", "false"));
     
-    Natives2.start(paths, args,
+    // Start interpreter
+    Natives.start(paths, args,
             program_name, prefix, home, exec_prefix, executable,
             isolated, fault_handler, quiet, verbose,
             site_import, user_site, bytecode);
   }
-
+  
+  public void interactive()
+  {
+    Natives.interactive();
+  }
+  
   /**
    * Get the method used to start the interpreter.
    *
@@ -443,6 +456,10 @@ public class Interpreter
 
   public static void main(String[] args)
   {
-    getInstance().start(args);
+    // Start the interpreter
+    Interpreter interpreter = getInstance();
+    interpreter.start(args);
+    interpreter.interactive();
+    System.out.println("done");
   }
 }
