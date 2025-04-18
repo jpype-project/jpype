@@ -53,7 +53,10 @@ static void convertException(JNIEnv *env, JPypeException& ex)
  * A list of command line arguments so we can execute command line functionality.
  */
 JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives2_start
-(JNIEnv *env, jclass cls, jstring name, jobjectArray modulePath, jobjectArray args)
+(JNIEnv *env, jclass cls, jobjectArray modulePath, jobjectArray args, 
+	jstring name, jstring prefix, jstring home, jstring exec_prefix, jstring executable,
+	jboolean isolated, jboolean faulthandler, jboolean quiet, jboolean verbose,
+	jboolean site_import, jboolean user_site, jboolean bytecode)
 {
 
 	PyObject* jpype = nullptr;
@@ -77,15 +80,24 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives2_start
 
 	try
 	{
+		if (isolated)
+		{
+			PyConfig_InitIsolatedConfig(&config);
+		}
+		else
+		{
+			PyConfig_InitPythonConfig(&config);
+			status = PyConfig_Read(&config);
+			if (PyStatus_Exception(status))
+				goto error_config;
+		}
 
-		PyConfig_InitPythonConfig(&config);
-
-		status = PyConfig_Read(&config);
-		if (PyStatus_Exception(status))
-			goto error_config;
-
-		if (PyStatus_Exception(status))
-			goto error_config;
+		config.faulthandler = faulthandler;
+		config.quiet = quiet;
+		config.site_import = site_import;
+		config.user_site_directory = user_site;
+		config.write_bytecode = bytecode;
+		config.verbose = verbose;
 
 		if (name != nullptr)
 		{
@@ -95,6 +107,50 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives2_start
 			env->ReleaseStringUTFChars(name, cstr);
 			wide_str = Py_DecodeLocale(str.c_str(), NULL);
 			config.program_name = wide_str;
+			resources.push_back(wide_str);
+		}
+
+		if (prefix != nullptr)
+		{
+			cstr = env->GetStringUTFChars(prefix, &isCopy);
+			length = env->GetStringUTFLength(prefix);
+			str = transcribe(cstr, length, JPEncodingJavaUTF8(), JPEncodingUTF8());
+			env->ReleaseStringUTFChars(name, cstr);
+			wide_str = Py_DecodeLocale(str.c_str(), NULL);
+			config.prefix = wide_str;
+			resources.push_back(wide_str);
+		}
+
+		if (home != nullptr)
+		{
+			cstr = env->GetStringUTFChars(home, &isCopy);
+			length = env->GetStringUTFLength(home);
+			str = transcribe(cstr, length, JPEncodingJavaUTF8(), JPEncodingUTF8());
+			env->ReleaseStringUTFChars(name, cstr);
+			wide_str = Py_DecodeLocale(str.c_str(), NULL);
+			config.home = wide_str;
+			resources.push_back(wide_str);
+		}
+
+		if (exec_prefix != nullptr)
+		{
+			cstr = env->GetStringUTFChars(exec_prefix, &isCopy);
+			length = env->GetStringUTFLength(exec_prefix);
+			str = transcribe(cstr, length, JPEncodingJavaUTF8(), JPEncodingUTF8());
+			env->ReleaseStringUTFChars(name, cstr);
+			wide_str = Py_DecodeLocale(str.c_str(), NULL);
+			config.exec_prefix = wide_str;
+			resources.push_back(wide_str);
+		}
+
+		if (executable != nullptr)
+		{
+			cstr = env->GetStringUTFChars(executable, &isCopy);
+			length = env->GetStringUTFLength(executable);
+			str = transcribe(cstr, length, JPEncodingJavaUTF8(), JPEncodingUTF8());
+			env->ReleaseStringUTFChars(name, cstr);
+			wide_str = Py_DecodeLocale(str.c_str(), NULL);
+			config.executable = wide_str;
 			resources.push_back(wide_str);
 		}
 

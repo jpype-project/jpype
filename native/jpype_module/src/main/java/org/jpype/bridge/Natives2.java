@@ -27,7 +27,8 @@ public class Natives2
 
   native static void start(String[] modulePaths, String[] args, 
           String name, String prefix, String home, String exec_prefix, String executable,
-          boolean isolated, boolean fault_handler);
+          boolean isolated, boolean fault_handler, boolean quiet, boolean verbose,
+          boolean site_import, boolean user_site, boolean bytecode);
   native static void interactive();
 
 }

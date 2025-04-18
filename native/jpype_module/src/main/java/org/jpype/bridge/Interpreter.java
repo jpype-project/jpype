@@ -46,7 +46,6 @@ public class Interpreter
   public static PyObject stop = null;
   private boolean active = false;
   private List<String> modulePaths;
-  private String name = System.getProperty("python.programe.name");
 
   static final String WINDOWS_PROBE = ""
           + "import sysconfig\n"
@@ -65,43 +64,39 @@ public class Interpreter
           + "import _jpype\n"
           + "print(_jpype.__file__)\n"
           + "print(_jpype.__version__)\n";
-  
+
   private Interpreter()
   {
-      String paths = System.getProperty("python.module.path");
-      if (paths!=null)
-        this.modulePaths.addAll(Arrays.asList(paths.split(File.pathSeparator)));
+    String paths = System.getProperty("python.module.path");
+    if (paths != null)
+      this.modulePaths.addAll(Arrays.asList(paths.split(File.pathSeparator)));
   }
 
   public static Interpreter getInstance()
   {
     return instance;
   }
-  
+
   /**
    * Use this list to add search paths for the Python modules.
-   * 
-   * This can be used to limit the modules available for embedded
-   * applications.  If this list is not empty the default module
-   * path will not be used.  Instead this list will be the path.
-   * 
-   * @return 
+   *
+   * This can be used to limit the modules available for embedded applications.
+   * If this list is not empty the default module path will not be used. Instead
+   * this list will be the path.
+   *
+   * @return
    */
   public List<String> getModulePaths()
   {
     return modulePaths;
   }
-  
-  public void setName(String name)
-  {
-    this.name = name;
-  }
 
-  
   /**
-   * Start the interpreter.
-   * 
-   * Any configuration actions must have been completed before the interpreter is started.
+   * Start the interpreter.Any configuration actions must have been completed before the interpreter
+ is started.
+   *
+   * Many configuration variables may be adjusted with Java System properties.
+   * @param args
    */
   public void start(String[] args)
   {
@@ -111,7 +106,7 @@ public class Interpreter
     active = true;
     // Get the _jpype extension library
     resolveLibraries();
-    
+
     // If we don't find the required libraries then we must fail.
     if (jpypeLibrary == null || pythonLibrary == null)
     {
@@ -140,16 +135,36 @@ public class Interpreter
     String[] paths = null;
     if (!this.modulePaths.isEmpty())
       paths = this.modulePaths.toArray(String[]::new);
-    Natives2.start(name, paths, args);
+
+    // There is a large pile of configuration variables to Python.
+    //   I am not sure what will be important for different modes of operation.
+    //   Best to pass most of them in from system properties.
+    String program_name = System.getProperty("python.config.program_name");
+    String prefix = System.getProperty("python.config.prefix");
+    String home = System.getProperty("python.config.home");
+    String exec_prefix = System.getProperty("python.config.exec_prefix");
+    String executable = System.getProperty("python.config.executable");
+    boolean isolated = Boolean.parseBoolean(System.getProperty("python.config.isolated", "false"));
+    boolean fault_handler = Boolean.parseBoolean(System.getProperty("python.config.fault_handler", "false"));
+    boolean quiet = Boolean.parseBoolean(System.getProperty("python.config.quiet", "false"));
+    boolean verbose = Boolean.parseBoolean(System.getProperty("python.config.verbose", "false"));
+    boolean site_import = Boolean.parseBoolean(System.getProperty("python.config.site_import ", "false"));
+    boolean user_site = Boolean.parseBoolean(System.getProperty("python.config.user_site_directory ", "false"));
+    boolean bytecode = Boolean.parseBoolean(System.getProperty("python.config.write_bytecode", "false"));
+    
+    Natives2.start(paths, args,
+            program_name, prefix, home, exec_prefix, executable,
+            isolated, fault_handler, quiet, verbose,
+            site_import, user_site, bytecode);
   }
-  
+
   /**
    * Get the method used to start the interpreter.
-   * 
-   * The interpreter may have been started from either Java or Python.
-   * If started from Java side we clean up resources differently, becuase
-   * Python shuts down before Java in that case.
-   * 
+   *
+   * The interpreter may have been started from either Java or Python. If
+   * started from Java side we clean up resources differently, becuase Python
+   * shuts down before Java in that case.
+   *
    * @returns true if the interpreter was started from Java.
    */
   public boolean isJava()
@@ -425,7 +440,7 @@ public class Interpreter
     return backend;
   }
 //</editor-fold>
-  
+
   public static void main(String[] args)
   {
     getInstance().start(args);
