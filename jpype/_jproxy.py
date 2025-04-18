@@ -225,13 +225,14 @@ class JProxy(_jpype._JProxy):
         # Convert the interfaces
         actualIntf = _convertInterfaces([intf])
 
-        # Verify that one of the options has been selected
-        #if dict is not None and inst is not None:
-        #    raise TypeError("Specify only one of dict and inst")
-
+        # Create an interface by dictionary.  If instance is given
+        # it will be passed as self.  Its presence in Python when 
+        # returned will be given by convert.
         if dict is not None:
             return _jpype._JProxy(inst, _JFromDict(dict), actualIntf, convert)
 
+        # (obsolete) Use a Python object with the same methods as the interface.
+        # This form as mostly be replaced by @JImplements form.
         if inst is not None:
             return _jpype._JProxy.__new__(cls, inst, inst, actualIntf, convert)
 
