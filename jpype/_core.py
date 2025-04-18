@@ -464,7 +464,6 @@ def initializeResources():
 
     # Everything succeeded so started is now true.
     _JVM_started = True
-    print("STARTED")
 
 
 def shutdownJVM():

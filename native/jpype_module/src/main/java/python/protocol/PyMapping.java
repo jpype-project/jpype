@@ -18,7 +18,7 @@ package python.protocol;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import org.jpype.bridge.Bridge;
+import org.jpype.bridge.Interpreter;
 import org.jpype.bridge.BuiltIn;
 import python.lang.PyObject;
 
@@ -41,7 +41,7 @@ public interface PyMapping extends PyProtocol, Map<Object, PyObject>
     @Override
     default Set<Entry<Object, PyObject>> entrySet()
     {
-        return new PyMappingEntrySet(this, Bridge.getBackend().items(this.asObject()));
+        return new PyMappingEntrySet(this, Interpreter.getBackend().items(this.asObject()));
     }
 
     default boolean isEmpty()
@@ -70,7 +70,7 @@ public interface PyMapping extends PyProtocol, Map<Object, PyObject>
     @Override
     default Collection<PyObject> values()
     {
-        return new PyMappingValues(this, Bridge.getBackend().values(this.asObject()));
+        return new PyMappingValues(this, Interpreter.getBackend().values(this.asObject()));
     }
 
 }

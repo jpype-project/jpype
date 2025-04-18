@@ -37,7 +37,7 @@ public class Context extends BuiltIn
 
   public Context()
   {
-    this.globalsDict = Bridge.backend.dict();
+    this.globalsDict = Interpreter.backend.dict();
     this.localsDict = globalsDict;
   }
 
@@ -49,32 +49,32 @@ public class Context extends BuiltIn
 
   public PyObject eval(String source)
   {
-    return Bridge.backend.eval(source, globalsDict, localsDict);
+    return Interpreter.backend.eval(source, globalsDict, localsDict);
   }
 
   public void exec(String source)
   {
-    Bridge.backend.exec(source, globalsDict, localsDict);
+    Interpreter.backend.exec(source, globalsDict, localsDict);
   }
 
   public void importModule(String module)
   {
-    Bridge.backend.exec(String.format("import %s", module), globalsDict, localsDict);
+    Interpreter.backend.exec(String.format("import %s", module), globalsDict, localsDict);
   }
 
   public void importModule(String module, String as)
   {
-    Bridge.backend.exec(String.format("import %s as %s", module, as), globalsDict, localsDict);
+    Interpreter.backend.exec(String.format("import %s as %s", module, as), globalsDict, localsDict);
   }
 
   public PyObject get(String key)
   {
-    return Bridge.backend.getitem(globalsDict, key);
+    return Interpreter.backend.getitem(globalsDict, key);
   }
 
   public void set(String key, Object value)
   {
-    Bridge.backend.setitem(globalsDict, key, value);
+    Interpreter.backend.setitem(globalsDict, key, value);
   }
 
   PyDict globals()

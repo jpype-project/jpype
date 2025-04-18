@@ -47,57 +47,57 @@ public class BuiltIn
    */
   public static PyBytes bytes(Object obj)
   {
-    return Bridge.backend.bytes(obj);
+    return Interpreter.backend.bytes(obj);
   }
 
   public static PyObject call(PyCallable obj, PyTuple args, PyDict kwargs)
   {
-    return Bridge.backend.call(obj, args, kwargs);
+    return Interpreter.backend.call(obj, args, kwargs);
   }
 
   public static PyList dir(PyObject obj)
   {
-    return Bridge.backend.dir(obj);
+    return Interpreter.backend.dir(obj);
   }
 
   public static void delattr(PyObject obj, CharSequence key)
   {
-    Bridge.backend.delattr(obj, key);
+    Interpreter.backend.delattr(obj, key);
   }
 
   public static PyObject next(PyIterator iter, PyObject stop)
   {
-    return Bridge.backend.next(iter, stop);
+    return Interpreter.backend.next(iter, stop);
   }
 
   public static PyEnumerate enumerate(PyObject obj)
   {
-    return Bridge.backend.enumerate(obj);
+    return Interpreter.backend.enumerate(obj);
   }
 
   public static PyEnumerate enumerate(Iterable obj)
   {
-    return Bridge.backend.enumerate(obj);
+    return Interpreter.backend.enumerate(obj);
   }
 
   public static PyObject eval(CharSequence statement, PyDict globals, PyMapping locals)
   {
-    return Bridge.backend.eval(statement, globals, locals);
+    return Interpreter.backend.eval(statement, globals, locals);
   }
 
   public static void exec(CharSequence statement, PyDict globals, PyMapping locals)
   {
-    Bridge.backend.eval(statement, globals, locals);
+    Interpreter.backend.eval(statement, globals, locals);
   }
 
   public static PyObject getattr(PyObject obj, CharSequence key)
   {
-    return Bridge.backend.getattr(obj, key);
+    return Interpreter.backend.getattr(obj, key);
   }
 
   public static boolean hasattr(PyObject obj, CharSequence key)
   {
-    return Bridge.backend.hasattr(obj, key);
+    return Interpreter.backend.hasattr(obj, key);
   }
 
   /**
@@ -109,22 +109,22 @@ public class BuiltIn
    */
   public static boolean isinstance(Object obj, PyObject... types)
   {
-    return Bridge.backend.isinstance(obj, types);
+    return Interpreter.backend.isinstance(obj, types);
   }
 
   public static PyIterator iter(Object obj)
   {
-    return Bridge.backend.iter(obj);
+    return Interpreter.backend.iter(obj);
   }
 
   public static PyList list(Iterable<Object> objects)
   {
-    return Bridge.backend.list(objects);
+    return Interpreter.backend.list(objects);
   }
 
   public static PyObject list(Object... objects)
   {
-    return Bridge.backend.list(objects);
+    return Interpreter.backend.list(objects);
   }
 
   /**
@@ -135,7 +135,7 @@ public class BuiltIn
    */
   public static PyMemoryView memoryview(Object obj)
   {
-    return Bridge.backend.memoryview(obj);
+    return Interpreter.backend.memoryview(obj);
   }
 
   /**
@@ -146,7 +146,7 @@ public class BuiltIn
    */
   public static PyRange range(int stop)
   {
-    return Bridge.backend.range(stop);
+    return Interpreter.backend.range(stop);
   }
 
   /**
@@ -158,7 +158,7 @@ public class BuiltIn
    */
   public static PyRange range(int start, int stop)
   {
-    return Bridge.backend.range(start, stop);
+    return Interpreter.backend.range(start, stop);
   }
 
   /**
@@ -171,17 +171,17 @@ public class BuiltIn
    */
   public static PyRange range(int start, int stop, int step)
   {
-    return Bridge.backend.range(start, stop, step);
+    return Interpreter.backend.range(start, stop, step);
   }
 
   public static PyString repr(Object obj)
   {
-    return Bridge.backend.repr(obj);
+    return Interpreter.backend.repr(obj);
   }
 
   public static void setattr(PyObject obj, CharSequence key, Object value)
   {
-    Bridge.backend.setattr(obj, key, value);
+    Interpreter.backend.setattr(obj, key, value);
   }
 
   /**
@@ -194,7 +194,7 @@ public class BuiltIn
    */
   public static PySlice slice(int start)
   {
-    return Bridge.backend.slice(start, start + 1, null);
+    return Interpreter.backend.slice(start, start + 1, null);
   }
 
   /**
@@ -213,7 +213,7 @@ public class BuiltIn
    */
   public static PySlice slice(Integer start, Integer stop)
   {
-    return Bridge.backend.slice(start, stop, null);
+    return Interpreter.backend.slice(start, stop, null);
   }
 
   /**
@@ -234,27 +234,27 @@ public class BuiltIn
    */
   public static PySlice slice(Integer start, Integer stop, Integer step)
   {
-    return Bridge.backend.slice(start, stop, step);
+    return Interpreter.backend.slice(start, stop, step);
   }
 
   public static PyString str(Object obj)
   {
-    return Bridge.backend.str(obj);
+    return Interpreter.backend.str(obj);
   }
 
   public static <T> PyTuple tuple(T... args)
   {
-    return Bridge.backend.tuple(args);
+    return Interpreter.backend.tuple(args);
   }
 
   public static <T> PyTuple tuple(Iterable<T>... args)
   {
-    return Bridge.backend.tuple(args);
+    return Interpreter.backend.tuple(args);
   }
 
   public static PyType type(Object obj)
   {
-    return Bridge.backend.type(obj);
+    return Interpreter.backend.type(obj);
   }
 
   /**
@@ -265,7 +265,7 @@ public class BuiltIn
    */
   public static PyZip zip(PyObject... objects)
   {
-    return Bridge.backend.zip(objects);
+    return Interpreter.backend.zip(objects);
   }
 
 }

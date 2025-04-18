@@ -16,10 +16,9 @@
 package org.jpype.bridge;
 
 /**
- * Internal behaviors used by the binding.
+ * JPype Python Native Embedding.
  *
- * These correspond to JNI function held in the JPype shared library. No user
- * interactions are allowed.
+ * Loaded by _jpyne shared library.
  */
 class Natives
 {

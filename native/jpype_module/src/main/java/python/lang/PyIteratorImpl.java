@@ -17,7 +17,7 @@ package python.lang;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import org.jpype.bridge.Bridge;
+import org.jpype.bridge.Interpreter;
 import org.jpype.bridge.BuiltIn;
 
 /**
@@ -50,8 +50,8 @@ class PyIteratorImpl implements Iterator<PyObject>
             return !done;
         check = true;
         if (yield == null)
-            yield = BuiltIn.next(iter, Bridge.stop);
-        done = (yield == Bridge.stop);
+            yield = BuiltIn.next(iter, Interpreter.stop);
+        done = (yield == Interpreter.stop);
         return !done;
     }
 

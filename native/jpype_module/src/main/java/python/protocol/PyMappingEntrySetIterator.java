@@ -18,7 +18,7 @@ package python.protocol;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import org.jpype.bridge.Bridge;
+import org.jpype.bridge.Interpreter;
 import org.jpype.bridge.BuiltIn;
 import python.lang.PyIterator;
 import python.lang.PyObject;
@@ -51,8 +51,8 @@ public class PyMappingEntrySetIterator implements Iterator<Map.Entry<Object, PyO
             return !done;
         check = true;
         if (yield == null)
-            yield = BuiltIn.next(iter, Bridge.stop);
-        done = (yield == Bridge.stop);
+            yield = BuiltIn.next(iter, Interpreter.stop);
+        done = (yield == Interpreter.stop);
         return !done;
     }
 

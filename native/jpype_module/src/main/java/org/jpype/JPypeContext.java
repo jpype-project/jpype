@@ -172,7 +172,6 @@ public class JPypeContext
           })
   private void shutdown()
   {
-    System.out.print("shutdown");
     try
     {
       // Try to yield in case there is a race condition.  The user
@@ -194,7 +193,6 @@ public class JPypeContext
         }
       }
 
-      System.out.print("A");
       // Execute any used defined shutdown hooks registered with JPype.
       if (!this.shutdownHooks.isEmpty())
       {
@@ -213,7 +211,6 @@ public class JPypeContext
         }
       }
 
-      System.out.print("B");
       // Disable all future calls to proxies
       this.shutdownFlag.incrementAndGet();
 
@@ -230,11 +227,9 @@ public class JPypeContext
       }
 
       // Inform Python no more calls are permitted
-      System.out.println("C");
       onShutdown(this.context);
       Thread.yield();
-      System.out.println("D");
-
+     
     } catch (Throwable th)
     {
     }
@@ -244,7 +239,6 @@ public class JPypeContext
       // Release all Python references
       try
       {
-        System.out.println("D1");
         JPypeReferenceQueue.getInstance().stop();
       } catch (Throwable th)
       {
@@ -253,13 +247,11 @@ public class JPypeContext
       // Release any C++ resources
       try
       {
-        System.out.println("D2");
         this.typeManager.shutdown();
       } catch (Throwable th)
       {
       }
     }
-    System.out.println("E");
 
     // Execute post hooks
     for (Runnable run : this.postHooks)
@@ -273,7 +265,6 @@ public class JPypeContext
     {
       // ignored
     }
-    System.out.println("F");
 
   }
 

@@ -24,20 +24,17 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import python.lang.PyObject;
 
 /**
  * This is a singleton the is created once to connect to Python.
  */
-public class Bridge
+public class Interpreter
 {
 
   static final String REQUIRED_VERSION = "1.6.0";
-  static Bridge instance = new Bridge();
+  static Interpreter instance = new Interpreter();
   private String jpypeLibrary;
   private String jpyneLibrary;
   private String pythonLibrary;
@@ -45,6 +42,8 @@ public class Bridge
   private boolean isWindows = checkWindows();
   static Backend backend = null;
   public static PyObject stop = null;
+  private boolean active = false;
+  
 
   static final String WINDOWS_PROBE = ""
           + "import sysconfig\n"
@@ -64,11 +63,16 @@ public class Bridge
           + "print(_jpype.__file__)\n"
           + "print(_jpype.__version__)\n";
 
-  public static Bridge getInstance()
+  public static Interpreter getInstance()
   {
     return instance;
   }
 
+  public boolean isActive()
+  {
+    return active;
+  }
+  
   // FIXME we need a check point to prevent accidents.   
   // There are two ways that we can get here.
   // -  A bridge create from within Java
@@ -84,6 +88,7 @@ public class Bridge
     // Once builtin is set internally then we can't call create again.
     if (this.backend != null)
       return;
+    active = true;
     // Get the _jpype extension library
     resolveLibraries();
     if (jpypeLibrary == null || pythonLibrary == null)

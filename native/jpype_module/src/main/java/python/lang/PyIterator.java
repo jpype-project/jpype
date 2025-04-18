@@ -17,7 +17,7 @@ package python.lang;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import org.jpype.bridge.Bridge;
+import org.jpype.bridge.Interpreter;
 import python.protocol.PyCallable;
 
 /**
@@ -37,7 +37,7 @@ public interface PyIterator extends PyObject
      */
     default Iterator<PyObject> iterator()
     {
-        return new PyIteratorImpl(Bridge.getBackend().tee(this));
+        return new PyIteratorImpl(Interpreter.getBackend().tee(this));
     }
 
     /**
@@ -50,8 +50,8 @@ public interface PyIterator extends PyObject
      */
     default PyObject next()
     {
-        PyObject out = Bridge.getBackend().next(this, Bridge.stop);
-        if (out.equals(Bridge.stop))
+        PyObject out = Interpreter.getBackend().next(this, Interpreter.stop);
+        if (out.equals(Interpreter.stop))
             throw new NoSuchElementException();
         return out;
     }
@@ -65,7 +65,7 @@ public interface PyIterator extends PyObject
      */
     default PyObject next(PyObject defaults)
     {
-        return Bridge.getBackend().next(this, defaults);
+        return Interpreter.getBackend().next(this, defaults);
     }
 
 }

@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
-import org.jpype.bridge.Bridge;
+import org.jpype.bridge.Interpreter;
 import org.jpype.bridge.BuiltIn;
 
 /**
@@ -44,7 +44,7 @@ public interface PySet extends PyObject, Set<PyObject>
      */
     public static PySet create(Iterable c)
     {
-        return Bridge.getBackend().newSet(c);
+        return Interpreter.getBackend().newSet(c);
     }
 
     @Override
@@ -99,7 +99,7 @@ public interface PySet extends PyObject, Set<PyObject>
     @Override
     default Iterator<PyObject> iterator()
     {
-        return Bridge.getBackend().iter(this).iterator();
+        return Interpreter.getBackend().iter(this).iterator();
     }
 
     PyObject pop();

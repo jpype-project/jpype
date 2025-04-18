@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import org.jpype.bridge.Bridge;
+import org.jpype.bridge.Interpreter;
 import org.jpype.bridge.BuiltIn;
 
 /**
@@ -122,14 +122,14 @@ public interface PyList extends List<PyObject>, PyIterable
     @Override
     default boolean remove(Object o)
     {
-        return Bridge.getBackend().delindex(this, this.indexOf(o));
+        return Interpreter.getBackend().delindex(this, this.indexOf(o));
     }
 
     @Override
     default PyObject remove(int index)
     {
         PyObject out = this.get(index);
-        Bridge.getBackend().delindex(this, index);
+        Interpreter.getBackend().delindex(this, index);
         return out;
     }
 

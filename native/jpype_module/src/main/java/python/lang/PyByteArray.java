@@ -15,7 +15,7 @@
  */
 package python.lang;
 
-import org.jpype.bridge.Bridge;
+import org.jpype.bridge.Interpreter;
 import org.jpype.bridge.BuiltIn;
 
 /**
@@ -31,7 +31,7 @@ public interface PyByteArray extends PyObject
 
     static PyByteArray fromHex(CharSequence str)
     {
-        return Bridge.getBackend().bytearray_fromhex(str);
+        return Interpreter.getBackend().bytearray_fromhex(str);
     }
 
     PyObject decode(PyObject encoding, PyObject delete);
