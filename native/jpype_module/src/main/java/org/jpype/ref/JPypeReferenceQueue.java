@@ -17,7 +17,6 @@ package org.jpype.ref;
 
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
-import org.jpype.bridge.Interpreter;
 
 /**
  * Reference queue holds the life of python objects to be as long as java items.
@@ -122,8 +121,7 @@ final public class JPypeReferenceQueue extends ReferenceQueue
     }
 
     // Empty the queue.
-    if (!Interpreter.getInstance().isJava())
-      hostReferences.flush();
+    hostReferences.flush();
   }
 
   /**
