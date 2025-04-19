@@ -10,6 +10,8 @@ Latest Changes:
   
   - JArray is now registered as a Sequence.
 
+  - Fixed conversion of float16 for subnormal numbers.
+
   - Fixed bugs with java.util.List concat and repeat methods.
 
 - **1.5.2 - 2025-01-20**
