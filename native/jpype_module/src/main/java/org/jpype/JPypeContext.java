@@ -119,7 +119,7 @@ public class JPypeContext
               | InstantiationException | IllegalAccessException
               | IllegalArgumentException | InvocationTargetException ex)
       {
-        throw new RuntimeException("Unable to create reflector "+ ex.getMessage(), ex);
+        throw new RuntimeException("Unable to create reflector " + ex.getMessage(), ex);
       }
 
       scanExistingJars();
@@ -230,31 +230,6 @@ public class JPypeContext
       onShutdown(this.context);
       Thread.yield();
 
-      // Wait for any unregistered proxies to finish so that we don't yank
-      // the rug out from under them result in a segfault.
-//      while (this.proxyCount.get() > 0)
-//      {
-//        try
-//        {
-//          Thread.sleep(10);
-//        } catch (InterruptedException ex)
-//        {
-//        }
-//      }
-//      // Check to see if who is alive
-//      threads = Thread.getAllStackTraces();
-//      System.out.println("Check for remaining");
-//      for (Thread t : threads.keySet())
-//      {
-//        // Daemon threads don't count for shutdown so skip them.
-//        if (t.isDaemon())
-//          continue;
-//        System.out.println("  " + t.getName() + " " + t.getState() + " " + t.isDaemon());
-//        for (StackTraceElement e : t.getStackTrace())
-//        {
-//          System.out.println("    " + e.getClassName());
-//        }
-//      }
     } catch (Throwable th)
     {
     }
@@ -290,7 +265,6 @@ public class JPypeContext
     {
       // ignored
     }
-    
 
   }
 
@@ -323,6 +297,8 @@ public class JPypeContext
 
   public ClassLoader getClassLoader()
   {
+    if (this.classLoader == null)
+      this.classLoader = new JPypeClassLoader(ClassLoader.getSystemClassLoader());
     return this.classLoader;
   }
 

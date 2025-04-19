@@ -36,17 +36,18 @@ else:
 
 jpypeLib = Extension(name='_jpype', **setupext.platform.Platform(
     include_dirs=[Path('native', 'common', 'include'),
-                  Path('native', 'python', 'include'),
-                  Path('native', 'embedded', 'include')],
+                  Path('native', 'python', 'include')],
     sources=sorted(
         list(Path('native', 'common').glob('*.cpp')) +
-        list(Path('native', 'python').glob('*.cpp')) +
-        list(Path('native', 'embedded').glob('*.cpp'))
+        list(Path('native', 'python').glob('*.cpp')) 
     ),
     platform=platform,
 ))
+
+p = [ i for i in Path("native", "jpype_module", "src", "main", "java").glob("**/*.java")]
+javaSrc = [i for i in p if not "exclude" in str(i)]
 jpypeJar = Extension(name="org.jpype",
-                     sources=sorted(map(str, Path("native", "java").glob("**/*.java"))),
+                     sources=sorted(map(str, javaSrc)),
                      language="java",
                      libraries=["lib/asm-8.0.1.jar"]
                      )
@@ -72,5 +73,5 @@ setup(
         'sdist': setupext.sdist.BuildSourceDistribution,
     },
     zip_safe=False,
-    ext_modules=[jpypeJar, jpypeLib, ],
+    ext_modules=[jpypeLib, jpypeJar],
 )

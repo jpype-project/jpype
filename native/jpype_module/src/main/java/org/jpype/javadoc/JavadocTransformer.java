@@ -97,8 +97,9 @@ public class JavadocTransformer
     {
       data.hr = true;
       parent.removeChild(node);
-    } else if (name.equals("pre") || // Javadoc pre-17
-        (name.equals("div") && e.getAttribute("class").equals("type-signature"))) // Javadoc 17+
+    } else if (name.equals("pre")
+            || // Javadoc pre-17
+            (name.equals("div") && e.getAttribute("class").equals("type-signature"))) // Javadoc 17+
     {
       DomUtilities.removeWhitespace(node);
       doc.renameNode(node, null, "signature");
@@ -128,8 +129,9 @@ public class JavadocTransformer
     if (name.equals("h4") || name.equals("h3")) // h4 for Javadoc pre-17, h3 for Javadoc 17+
     {
       doc.renameNode(node, null, "title");
-    } else if (name.equals("pre") || // Javadoc pre-17
-          (name.equals("div") && (e.getAttribute("class").equals("member-signature")))) // Javadoc 17+
+    } else if (name.equals("pre")
+            || // Javadoc pre-17
+            (name.equals("div") && (e.getAttribute("class").equals("member-signature")))) // Javadoc 17+
     {
       doc.renameNode(node, null, "signature");
       DomUtilities.traverseDFS(node, this::pass1, Node.ELEMENT_NODE, ws);

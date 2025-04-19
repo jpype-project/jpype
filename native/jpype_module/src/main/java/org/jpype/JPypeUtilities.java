@@ -13,14 +13,14 @@ import java.util.function.Predicate;
 
 public class JPypeUtilities
 {
-  
+
   // a functional interface can only re-declare a public non-final method from Object
   // this should end up being an array of equals, hashCode and toString
-  private static final Method[] OBJECT_METHODS =
-    Arrays.stream(Object.class.getMethods())
-      .filter(m -> !Modifier.isFinal(m.getModifiers()))
-      .toArray(Method[]::new);
-  
+  private static final Method[] OBJECT_METHODS
+          = Arrays.stream(Object.class.getMethods())
+                  .filter(m -> !Modifier.isFinal(m.getModifiers()))
+                  .toArray(Method[]::new);
+
   private static final Predicate<Class> isSealed;
 
   static
@@ -67,7 +67,7 @@ public class JPypeUtilities
       {
         if (isObjectMethodOverride(m))
           continue;
-        
+
         if (result != null && !equals(m, result))
           return null;
 
@@ -87,7 +87,7 @@ public class JPypeUtilities
     }
     return false;
   }
-  
+
   private static boolean equals(Method a, Method b)
   {
     // this should be the fastest possible short circuit
@@ -106,5 +106,5 @@ public class JPypeUtilities
     // if it did compile then it is an override
     return true;
   }
-  
+
 }
