@@ -151,12 +151,18 @@ public:
 		return m_Type;
 	}
 
+	jthrowable getThrowable()
+	{
+		return m_Throwable.get();
+	}
+
 private:
 	JPContext* m_Context{};
 	int m_Type;
 	JPErrorUnion m_Error{};
 	JPStackTrace m_Trace;
 	JPThrowableRef m_Throwable;
+	std::string m_Message;
 };
 
 #endif
