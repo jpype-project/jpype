@@ -351,9 +351,17 @@ class ProxyTestCase(common.JPypeTestCase):
         t = ProxyTriggers()
         self.assertTrue(t.testEquals(b))
 
-    def testProxyFail(self):
-        with self.assertRaises(TypeError):
-            JProxy(inst=object(), dict={}, intf="java.io.Serializable")
+    def testProxyBoth(self):
+        myobj = object()
+        def myimpl(x):
+            self.assertEqual(myobj, x)
+            return 33
+        d = {
+            'testMethod1': myimpl,
+        }
+        itf1 = self.package.TestInterface1
+        jobj = itf1@JProxy(inst=myobj, dict=d, intf=itf1)
+        self.assertEqual(jobj.testMethod1(), 33)
 
     def testValid(self):
         @JImplements("java.util.Comparator")

@@ -12,6 +12,13 @@ Latest Changes:
 
   - Fixed bugs with java.util.List concat and repeat methods.
 
+  - Enhancement to JProxy to handle wrapping an existing Python object with a Java
+    interface.  
+
+  - Fixed bug in which using an interface the derived from Map with JProxy failed.
+
+  - Fixed a bug in which JPype did not respect a JConversion between two Java classes.
+
 - **1.5.2 - 2025-01-20**
 
   - Roll back agent change due to misbehaving JVM installs.

@@ -70,7 +70,7 @@ def _createJProxyDeferred(cls, *intf):
         if actualIntf is None:
             actualIntf = _prepareInterfaces(cls, intf)
             tp.__jpype_interfaces__ = actualIntf
-        return _jpype._JProxy.__new__(tp, None, actualIntf)
+        return _jpype._JProxy.__new__(tp, None, None, actualIntf)
 
     members = {'__new__': new}
     # Return the augmented class
@@ -88,7 +88,7 @@ def _createJProxy(cls, *intf):
     actualIntf = _prepareInterfaces(cls, intf)
 
     def new(tp, *args, **kwargs):
-        self = _jpype._JProxy.__new__(tp, None, actualIntf)
+        self = _jpype._JProxy.__new__(tp, None, None, actualIntf)
         tp.__init__(self, *args, **kwargs)
         return self
 
@@ -152,7 +152,9 @@ def _convertInterfaces(intf):
     # Flatten the list
     intflist = []
     for item in intf:
-        if isinstance(item, str) or not hasattr(item, '__iter__'):
+        if isinstance(item, _jpype.JClass):
+            intflist.append(item)
+        elif isinstance(item, str) or not hasattr(item, '__iter__'):
             intflist.append(item)
         else:
             intflist.extend(item)
@@ -198,7 +200,7 @@ class JProxy(_jpype._JProxy):
 
     This is an older style JPype proxy interface that uses either a
     dictionary or an object instance to implement methods defined
-    in java.  The python object can be held by java and its lifespan
+    in Java.  The Python object can be held by Java and its lifespan
     will continue as long as java holds a reference to the object
     instance.  New code should use ``@JImplements`` annotation as
     it will support improved type safety and error handling.
@@ -213,23 +215,26 @@ class JProxy(_jpype._JProxy):
             proxy,
         dict (dict[string, callable], optional): specifies a dictionary
             containing the methods to be called when executing the
-            java interface methods.
+            Java interface methods.
         inst (object, optional): specifies an object with methods
-            whose names matches the java interfaces methods.
+            whose names matches the Java interfaces methods.
+        convert (bool, optional): if True the proxy is unwrapped
+            to a Python object.
     """
     def __new__(cls, intf, dict=None, inst=None, convert=False):
         # Convert the interfaces
         actualIntf = _convertInterfaces([intf])
 
-        # Verify that one of the options has been selected
-        if dict is not None and inst is not None:
-            raise TypeError("Specify only one of dict and inst")
-
+        # Create an interface by dictionary.  If instance is given
+        # it will be passed as self.  Its presence in Python when 
+        # returned will be given by convert.
         if dict is not None:
-            return _jpype._JProxy(_JFromDict(dict), actualIntf, convert)
+            return _jpype._JProxy(inst, _JFromDict(dict), actualIntf, convert)
 
+        # (obsolete) Use a Python object with the same methods as the interface.
+        # This form as mostly be replaced by @JImplements form.
         if inst is not None:
-            return _jpype._JProxy.__new__(cls, inst, actualIntf, convert)
+            return _jpype._JProxy.__new__(cls, inst, inst, actualIntf, convert)
 
         raise TypeError("a dict or inst must be specified")
 
