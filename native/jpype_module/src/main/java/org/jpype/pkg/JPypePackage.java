@@ -51,7 +51,7 @@ public class JPypePackage
   {
     this.pkg = pkg;
     this.contents = JPypePackageManager.getContentMap(pkg);
-    this.classLoader = ((JPypeClassLoader)(JPypeContext.getInstance().getClassLoader()));
+    this.classLoader = ((JPypeClassLoader) (JPypeContext.getInstance().getClassLoader()));
     this.code = classLoader.getCode();
   }
 
@@ -87,7 +87,7 @@ public class JPypePackage
       {
         return basename;
       }
-      
+
       // Else probe for a class.
       Class<?> cls = Class.forName(basename, false, JPypeContext.getInstance().getClassLoader());
       if (Modifier.isPublic(cls.getModifiers()))
@@ -222,7 +222,7 @@ public class JPypePackage
       return false; // If anything goes wrong then it won't be considered a public class.
     }
   }
-  
+
   void checkCache()
   {
     int current = classLoader.getCode();

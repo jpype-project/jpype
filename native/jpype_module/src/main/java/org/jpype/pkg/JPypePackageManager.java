@@ -403,7 +403,7 @@ public class JPypePackageManager
             collectContents(out, path3);
           }
         }
-        
+
         Path path2 = getPath(resource);
         collectContents(out, path2);
       }
@@ -463,24 +463,26 @@ public class JPypePackageManager
   {
     URI uri = path.toUri();
 
-    try {
+    try
+    {
       // Java 8 bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8131067
       // Zip file system provider returns doubly % encoded URIs. We resolve this
       // by re-encoding the URI after decoding it.
       uri = new URI(
-        uri.getScheme(),
-        URLDecoder.decode(uri.getSchemeSpecificPart()),
-        uri.getFragment()
+              uri.getScheme(),
+              URLDecoder.decode(uri.getSchemeSpecificPart()),
+              uri.getFragment()
       );
 
-    // `toASCIIString` ensures the URI is URL encoded with only ascii
-    // characters. This avoids issues in `sun.nio.fs.UnixUriUtils.fromUri` that
-    // naively uses `uri.getRawPath()` despite the possibility that it contains
-    // non-ascii characters that will cause errors. By using `toASCIIString` and
-    // re-wrapping it in a URI object we ensure that the URI is properly
-    // encoded. See: https://github.com/jpype-project/jpype/issues/1194
+      // `toASCIIString` ensures the URI is URL encoded with only ascii
+      // characters. This avoids issues in `sun.nio.fs.UnixUriUtils.fromUri` that
+      // naively uses `uri.getRawPath()` despite the possibility that it contains
+      // non-ascii characters that will cause errors. By using `toASCIIString` and
+      // re-wrapping it in a URI object we ensure that the URI is properly
+      // encoded. See: https://github.com/jpype-project/jpype/issues/1194
       return new URI(uri.toASCIIString());
-    } catch (Exception e) {
+    } catch (Exception e)
+    {
       // This exception *should* never occur as we are re-encoding a valid URI.
       // Throwing a runtime exception avoids java exception handling boilerplate
       // for a situation that *should* never occur.

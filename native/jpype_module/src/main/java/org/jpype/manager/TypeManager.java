@@ -292,10 +292,12 @@ public class TypeManager
   }
 
   /**
-   * Returns the number of arguments an interface only unimplemented method accept.
+   * Returns the number of arguments an interface only unimplemented method
+   * accept.
    *
    * @param interfaceClass The class of the interface
-   * @return the number of arguments the only unimplemented method of the interface accept.
+   * @return the number of arguments the only unimplemented method of the
+   * interface accept.
    */
   public int interfaceParameterCount(Class<?> interfaceClass)
   {

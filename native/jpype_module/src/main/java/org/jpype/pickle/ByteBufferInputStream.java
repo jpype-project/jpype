@@ -20,10 +20,13 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 
-public class ByteBufferInputStream extends InputStream {
+public class ByteBufferInputStream extends InputStream
+{
+
   private LinkedList<ByteBuffer> buffers = new LinkedList<>();
 
-  public void put(byte[] bytes) {
+  public void put(byte[] bytes)
+  {
     // We can just wrap the buffer instead of copying it, since the buffer is
     // wrapped we don't need to write the bytes to it. Wrapping the bytes relies
     // on the array not being changed before being read.
@@ -32,12 +35,14 @@ public class ByteBufferInputStream extends InputStream {
   }
 
   @Override
-  public int read() throws IOException {
+  public int read() throws IOException
+  {
     if (buffers.isEmpty())
       return -1;
 
     ByteBuffer b = buffers.getFirst();
-    while (b.remaining() == 0) {
+    while (b.remaining() == 0)
+    {
       buffers.removeFirst();
       if (buffers.isEmpty())
         return -1; // EOF
@@ -47,12 +52,14 @@ public class ByteBufferInputStream extends InputStream {
   }
 
   @Override
-  public int read(byte[] arg0) throws IOException {
+  public int read(byte[] arg0) throws IOException
+  {
     return read(arg0, 0, arg0.length);
   }
 
   @Override
-  public int read(byte[] buffer, int offset, int len) throws IOException {
+  public int read(byte[] buffer, int offset, int len) throws IOException
+  {
     if (buffer == null)
       throw new NullPointerException("Buffer cannot be null");
     if (offset < 0 || len < 0 || len > buffer.length - offset)
@@ -61,10 +68,12 @@ public class ByteBufferInputStream extends InputStream {
       return 0;
 
     int total = 0;
-    while (len > 0 && !buffers.isEmpty()) {
+    while (len > 0 && !buffers.isEmpty())
+    {
       ByteBuffer b = buffers.getFirst();
       int remaining = b.remaining();
-      if (remaining == 0) {
+      if (remaining == 0)
+      {
         buffers.removeFirst();
         continue;
       }
@@ -79,7 +88,8 @@ public class ByteBufferInputStream extends InputStream {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() throws IOException
+  {
     buffers.clear();
   }
 }
