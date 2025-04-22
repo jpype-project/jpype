@@ -15,6 +15,8 @@
  */
 package python.lang;
 
+import python.protocol.PyGenerator;
+
 /**
  * Java front end for concrete Python zip.
  */

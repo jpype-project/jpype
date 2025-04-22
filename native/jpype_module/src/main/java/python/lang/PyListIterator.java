@@ -22,7 +22,7 @@ import java.util.NoSuchElementException;
  *
  * @author nelson85
  */
-public class PyListIterator implements ListIterator<PyObject>
+class PyListIterator implements ListIterator<PyObject>
 {
 
   PyList list;

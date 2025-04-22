@@ -13,20 +13,43 @@
  * 
  *  See NOTICE file for details.
  */
-package python.lang;
+package python.protocol;
 
 import java.util.Iterator;
+import python.lang.PyIterator;
+import python.lang.PyObject;
 
 /**
- * Java front end for abstract concept of a generator.
+ *
+ * Java front end for abstract concept of Python iterable.
+ *
+ * FIXME reversed removed because of contract conflict with List.
+ *
+ * @author nelson85
  */
-public interface PyGenerator extends PyObject
+public interface PyIterable extends PyObject, Iterable<PyObject>
 {
 
-  PyIterator iter();
+  boolean all();
 
+  boolean any();
+
+  PyIter iter();
+
+  @Override
   default Iterator<PyObject> iterator()
   {
-    return iter().iterator();
+    return new PyIterator(this.iter());
   }
+
+  PyObject map(PyCallable callable);
+
+  PyObject max();
+
+  PyObject min();
+
+  PyObject sorted();
+
+  PyObject sum();
+
 }

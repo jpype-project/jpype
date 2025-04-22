@@ -310,7 +310,7 @@ _PyAttributesMethods: MutableMapping[str, Callable]= {
     "asObject": _identity,
     "get": _getattr,
     "set": _setattr,
-    "del": _delattr,
+    "remove": _delattr,
     "has": _hasattr,
     "dir": dir,
     "dict": _getdict
@@ -373,11 +373,11 @@ _PyIterableMethods: MutableMapping[str, Callable] = {
 }
 _PyIterableMethods.update(_PyObjectMethods)
 
-_PyIteratorMethods: MutableMapping[str, Callable] = {
+_PyIterMethods: MutableMapping[str, Callable] = {
     "filter": _filter,
     "next": next,
 }
-_PyIterableMethods.update(_PyObjectMethods)
+_PyIterMethods.update(_PyObjectMethods)
 
 ## Concrete types
 
@@ -411,6 +411,11 @@ _PyDictMethods: MutableMapping[str, Callable] = {
     "putAll": _putall,
 }
 _PyDictMethods.update(_PyObjectMethods)
+
+_PyExcMethods: MutableMapping[str, Callable] = {
+    "getMessage": str,
+}
+_PyExcMethods.update(_PyObjectMethods)
 
 # enumerate, zip, range
 _PyGeneratorMethods: MutableMapping[str, Callable] = {
@@ -546,9 +551,6 @@ def initialize():
     _PyComplex = JClass("python.lang.PyComplex")
     _PyDict = JClass("python.lang.PyDict")
     _PyEnumerate = JClass("python.lang.PyEnumerate")
-    _PyGenerator = JClass("python.lang.PyGenerator")
-    _PyIterable = JClass("python.lang.PyIterable")
-    _PyIterator = JClass("python.lang.PyIterator")
     _PyJavaObject = JClass("python.lang.PyJavaObject")
     _PyList = JClass("python.lang.PyList")
     _PyMemoryView = JClass("python.lang.PyMemoryView")
@@ -560,10 +562,14 @@ def initialize():
     _PyTuple = JClass("python.lang.PyTuple")
     _PyType = JClass("python.lang.PyType")
     _PyZip = JClass("python.lang.PyZip")
+    _PyExc = JClass("python.exception.PyExc")
 
-    # Protocolos
+    # Protocols
     _PyAttributes = JClass("python.protocol.PyAttributes")
     _PyCallable = JClass("python.protocol.PyCallable")
+    _PyGenerator = JClass("python.protocol.PyGenerator")
+    _PyIterable = JClass("python.protocol.PyIterable")
+    _PyIter = JClass("python.protocol.PyIter")
     _PyMapping = JClass("python.protocol.PyMapping")
     _PyNumber = JClass("python.protocol.PyNumber")
     _PySequence = JClass("python.protocol.PySequence")
@@ -578,7 +584,7 @@ def initialize():
     _PyEnumerate._methods = _PyGeneratorMethods
     _PyGenerator._methods = _PyGeneratorMethods
     _PyIterable._methods = _PyIterableMethods
-    _PyIterator._methods = _PyIteratorMethods
+    _PyIter._methods = _PyIterMethods
     _PyList._methods = _PyListMethods
     _PyMemoryView._methods = _PyMemoryViewMethods
     _PyObject._methods = _PyObjectMethods
@@ -610,6 +616,7 @@ def initialize():
     @JConversion(_PyComplex, instanceof=complex)
     @JConversion(_PyDict, instanceof=dict)
     @JConversion(_PyEnumerate, instanceof=enumerate)
+    @JConversion(_PyExc, instanceof=BaseException)
     @JConversion(_PyList, instanceof=list)
     @JConversion(_PyMemoryView, instanceof=memoryview)
     @JConversion(_PyRange, instanceof=range)
@@ -621,7 +628,7 @@ def initialize():
     @JConversion(_PyZip, instanceof=zip)
     # Bind dunder
     @JConversion(_PyIterable, attribute="__iter__")
-    @JConversion(_PyIterator, attribute="__next__")
+    @JConversion(_PyIter, attribute="__next__")
     # Bind the protocols
     @JConversion(_PyAttributes, instanceof=object)
     @JConversion(_PyCallable, instanceof=object)

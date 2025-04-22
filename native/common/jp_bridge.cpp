@@ -8,7 +8,6 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include <list>
-#include <link.h>
 #include <iostream>
 
 #ifdef __cplusplus
@@ -241,7 +240,7 @@ success_config:
 		// Then attach the private module to the JVM
 		context = JPContext_global;
 		context->attachJVM(env);
-		JPJavaFrame frame = JPJavaFrame::external(context, env);
+		JPJavaFrame frame = JPJavaFrame::external(env);
 		
 		// Initialize the resources in the jpype module
 		obj = PyObject_GetAttrString(jpype, "_core");
@@ -277,7 +276,6 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_finish
 {
 	JPPyCallAcquire callback;
 	Py_Finalize();
-	// FIXME it is unclear if we will need to release the thread lock after this command
 }
 
 

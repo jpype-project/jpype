@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import org.jpype.bridge.Interpreter;
 import org.jpype.bridge.BuiltIn;
-import python.lang.PyIterator;
 import python.lang.PyObject;
 
 /**
@@ -31,12 +30,12 @@ public class PyMappingEntrySetIterator implements Iterator<Map.Entry<Object, PyO
 {
 
   private final PyMapping map;
-  private final PyIterator iter;
+  private final PyIter iter;
   private PyObject yield;
   private boolean done = false;
   private boolean check = false;
 
-  public PyMappingEntrySetIterator(PyMapping map, PyIterator iter)
+  public PyMappingEntrySetIterator(PyMapping map, PyIter iter)
   {
     this.map = map;
     this.iter = iter;

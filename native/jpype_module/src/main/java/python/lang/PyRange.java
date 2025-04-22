@@ -15,6 +15,7 @@
  */
 package python.lang;
 
+import python.protocol.PyGenerator;
 import org.jpype.bridge.BuiltIn;
 
 /**

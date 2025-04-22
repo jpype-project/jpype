@@ -15,6 +15,7 @@
  */
 package python.lang;
 
+import python.protocol.PyIterable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -96,7 +97,7 @@ public interface PyTuple extends PyIterable, List<PyObject>
   @Override
   default Iterator<PyObject> iterator()
   {
-    return new PyIteratorImpl(this.iter());
+    return new PyIterator(this.iter());
   }
 
   @Override

@@ -21,7 +21,6 @@ import python.lang.PyBytes;
 import python.lang.PyComplex;
 import python.lang.PyDict;
 import python.lang.PyEnumerate;
-import python.lang.PyIterator;
 import python.lang.PyList;
 import python.lang.PyMemoryView;
 import python.lang.PyObject;
@@ -34,6 +33,7 @@ import python.lang.PyType;
 import python.lang.PyZip;
 import python.protocol.PyCallable;
 import python.protocol.PyMapping;
+import python.protocol.PyIter;
 
 /**
  * Backend for all Python entry points.
@@ -90,7 +90,7 @@ public interface Backend
 
   boolean isinstance(Object obj, Object[] types);
 
-  PyIterator iter(Object obj);
+  PyIter iter(Object obj);
 
   <T> PyList list(Iterable<T> list);
 
@@ -102,7 +102,7 @@ public interface Backend
 
   public PySet newSet(Iterable c);
 
-  PyObject next(PyIterator iter, PyObject stop);
+  PyObject next(PyIter iter, PyObject stop);
 
   PyObject object();
 
@@ -124,7 +124,7 @@ public interface Backend
 
   PyString str(Object str);
 
-  PyIterator tee(PyIterator iter);
+  PyIter tee(PyIter iter);
 
   <T> PyList tuple(Iterable<T> list);
 

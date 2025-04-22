@@ -44,6 +44,7 @@ public interface PyMapping extends PyProtocol, Map<Object, PyObject>
     return new PyMappingEntrySet(this, Interpreter.getBackend().items(this.asObject()));
   }
 
+  @Override
   default boolean isEmpty()
   {
     return size() == 0;

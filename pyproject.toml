@@ -17,6 +17,8 @@ maintainers = [
 description = "A Python to Java bridge"
 readme = "README.rst"
 requires-python = ">=3.8"
+# Not currently possible to support both 3.8 and versions going forward with deprecation warning
+# https://github.com/pypa/setuptools/issues/4903
 license = {text = "License :: OSI Approved :: Apache Software License"}
 classifiers = [
     'Programming Language :: Python :: 3',

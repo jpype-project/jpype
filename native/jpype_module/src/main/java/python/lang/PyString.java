@@ -15,6 +15,7 @@
  */
 package python.lang;
 
+import python.protocol.PyIterable;
 import org.jpype.bridge.BuiltIn;
 import python.protocol.PyMapping;
 import python.protocol.PySequence;

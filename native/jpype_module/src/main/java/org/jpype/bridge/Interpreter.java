@@ -52,6 +52,8 @@ public class Interpreter
   private boolean active = false;
   private final List<String> modulePaths = new ArrayList<>();
 
+  // Probe pattern for windows which will retrieve the Python library location,
+  // _jpype module location, and the version number.
   static final String WINDOWS_PROBE = ""
           + "import sysconfig\n"
           + "import os\n"
@@ -61,6 +63,8 @@ public class Interpreter
           + "print(_jpype.__file__)\n"
           + "print(_jpype.__version__)\n";
 
+  // Probe pattern for unix which will retrieve the Python library location,
+  // _jpype module location, and the version number.
   static final String UNIX_PROBE = ""
           + "import sysconfig\n"
           + "import os\n"
@@ -126,14 +130,27 @@ public class Interpreter
             || (version[0] == required[0] && version[1] < required[1]))
       throw new RuntimeException("JPype version is too old.  Found " + this.jpypeLibrary);
 
-    // We need our preload hooks to get starte.
-    String jpypeBootstrapLibrary = jpypeLibrary.replace("jpype.c", "jpypeb.c");
+    if (!isWindows)
+    {
+      // We need our preload hooks to get started.
+      // On linux System.load() loads all symbols with RLTD_LOCAL which 
+      // means they are not available for librarys to link against.  That
+      // breaks the Python module loading system.  Thus on Linux or any
+      // system that is similar we will need to load a bootstrap class which 
+      // forces loading Python with global linkage prior to loading the 
+      // first Python module.
+      String jpypeBootstrapLibrary = jpypeLibrary.replace("jpype.c", "jpypeb.c");
 
-    // First, load the preload hooks
-    System.load(jpypeBootstrapLibrary);
+      // First, load the preload hooks
+      System.load(jpypeBootstrapLibrary);
 
-    // Next, load libpython as a global library
-    BootstrapLoader.loadLibrary(pythonLibrary);
+      // Next, load libpython as a global library
+      BootstrapLoader.loadLibrary(pythonLibrary);
+    } else
+    {
+      // If no bootstrap is required we will simply preload the Python library.
+      System.load(pythonLibrary);
+    }
 
     // Finally, load the Python module
     System.load(jpypeLibrary);
@@ -199,11 +216,16 @@ public class Interpreter
   {
     String[] parts = version.split("\\.");
     int[] out = new int[3];
-    for (int i = 0; i < parts.length; ++i)
+    try
     {
-      if (i == 3)
-        break;
-      out[i] = Integer.parseInt(parts[i]);
+      for (int i = 0; i < parts.length; ++i)
+      {
+        if (i == 3)
+          break;
+        out[i] = Integer.parseInt(parts[i]);
+      }
+    } catch (NumberFormatException ex)
+    {
     }
     return out;
   }
@@ -407,6 +429,8 @@ public class Interpreter
         System.err.println(e);
         e = err.readLine();
       }
+      out.close();
+      err.close();
 
       // Failed to run Python
       if (rc != 0)

@@ -18,7 +18,6 @@ package org.jpype.bridge;
 import python.lang.PyBytes;
 import python.lang.PyDict;
 import python.lang.PyEnumerate;
-import python.lang.PyIterator;
 import python.lang.PyList;
 import python.lang.PyMemoryView;
 import python.lang.PyObject;
@@ -30,6 +29,7 @@ import python.lang.PyType;
 import python.lang.PyZip;
 import python.protocol.PyCallable;
 import python.protocol.PyMapping;
+import python.protocol.PyIter;
 
 /**
  * Collection of static methods available in Python.
@@ -65,7 +65,7 @@ public class BuiltIn
     Interpreter.backend.delattr(obj, key);
   }
 
-  public static PyObject next(PyIterator iter, PyObject stop)
+  public static PyObject next(PyIter iter, PyObject stop)
   {
     return Interpreter.backend.next(iter, stop);
   }
@@ -112,7 +112,7 @@ public class BuiltIn
     return Interpreter.backend.isinstance(obj, types);
   }
 
-  public static PyIterator iter(Object obj)
+  public static PyIter iter(Object obj)
   {
     return Interpreter.backend.iter(obj);
   }

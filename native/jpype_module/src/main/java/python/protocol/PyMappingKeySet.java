@@ -87,7 +87,7 @@ class PyMappingKeySet implements Set<Object>
   {
     for (var x : c)
     {
-      if (!map.containsKey(c))
+      if (!map.containsKey(x))
         return false;
     }
     return true;

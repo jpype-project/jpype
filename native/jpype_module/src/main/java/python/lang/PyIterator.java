@@ -18,54 +18,53 @@ package python.lang;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import org.jpype.bridge.Interpreter;
-import python.protocol.PyCallable;
+import org.jpype.bridge.BuiltIn;
+import python.protocol.PyIter;
 
 /**
- * Python concept of an iterator.
+ * Conversion of a Python iterator to Java.
  *
- * This can be converted to a Java iterator by calling iterator().
+ * This is a private class used under the hood.
+ *
+ * Python and Java iterators don't share similar design philosophies, so we will
+ * need to keep some state on the Java side to manage the conversion.
  */
-public interface PyIterator extends PyObject
+public class PyIterator implements Iterator<PyObject>
 {
 
-  PyIterator filter(PyCallable callable);
+  private final PyIter iter;
+  private PyObject yield;
+  private boolean done = false;
+  private boolean check = false;
 
-  /**
-   * Converts the Python iterator into a Java iterator.
-   *
-   * @return
-   */
-  default Iterator<PyObject> iterator()
+  public PyIterator(PyIter iter)
   {
-    return new PyIteratorImpl(Interpreter.getBackend().tee(this));
+    this.iter = iter;
   }
 
-  /**
-   * Get the next item.
-   *
-   * FIXME This throws StopIteration, we need to figure out how to convert and
-   * catch it.
-   *
-   * @return the next element in the series.
-   */
-  default PyObject next()
+  @Override
+  public boolean hasNext()
   {
-    PyObject out = Interpreter.getBackend().next(this, Interpreter.stop);
-    if (out.equals(Interpreter.stop))
+    if (done)
+      return false;
+    if (check)
+      return !done;
+    check = true;
+    if (yield == null)
+      yield = BuiltIn.next(iter, Interpreter.stop);
+    done = (yield == Interpreter.stop);
+    return !done;
+  }
+
+  @Override
+  public PyObject next() throws NoSuchElementException
+  {
+    if (!check)
+      hasNext();
+    if (done)
       throw new NoSuchElementException();
-    return out;
-  }
-
-  /**
-   * Get the next item.
-   *
-   * @param defaults is the element to return if there is no additional
-   * elements.
-   * @return the next element in the series.
-   */
-  default PyObject next(PyObject defaults)
-  {
-    return Interpreter.getBackend().next(this, defaults);
+    check = false;
+    return yield;
   }
 
 }

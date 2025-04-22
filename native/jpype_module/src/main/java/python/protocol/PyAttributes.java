@@ -58,7 +58,7 @@ public interface PyAttributes extends PyProtocol
    */
   void set(String key, Object obj);
 
-  void del(String key);
+  void remove(String key);
 
   PyList dir();
 
