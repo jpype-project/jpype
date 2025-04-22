@@ -77,6 +77,13 @@ PyObject* _JMethodCode = nullptr;
 PyObject* _JObjectKey = nullptr;
 PyObject* _JVMNotRunning = nullptr;
 
+static PyObject *_concreteDict = nullptr;
+static PyObject *_protocolDict = nullptr;
+static PyObject *_cacheDict = nullptr;
+static PyObject *_interfaceDict = nullptr;
+static PyObject *_methodsDict = nullptr;
+
+
 void PyJPModule_loadResources(PyObject* module)
 {
 	// Note that if any resource is missing the user will get
@@ -124,6 +131,22 @@ void PyJPModule_loadResources(PyObject* module)
 		_JMethodCode = PyObject_GetAttrString(module, "getMethodCode");
 		JP_PY_CHECK();
 		Py_INCREF(_JMethodCode);
+
+		_concreteDict= PyObject_GetAttrString(module, "_bridge_concrete");
+		JP_PY_CHECK();
+		Py_INCREF(_concreteDict);
+		_protocolDict = PyObject_GetAttrString(module, "_bridge_protocol");
+		JP_PY_CHECK();
+		Py_INCREF(_protocolDict);
+		_cacheDict = PyObject_GetAttrString(module, "_bridge_cache");
+		JP_PY_CHECK();
+		Py_INCREF(_cacheDict);
+		_interfaceDict = PyObject_GetAttrString(module, "_bridge_interfaces");
+		JP_PY_CHECK();
+		Py_INCREF(_interfaceDict);
+		_methodsDict = PyObject_GetAttrString(module, "_bridge_methods");
+		JP_PY_CHECK();
+		Py_INCREF(_methodsDict);
 
 		_JObjectKey = PyCapsule_New(module, "constructor key", nullptr);
 
@@ -600,6 +623,115 @@ static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
+/** Code to determine what interfaces are required based on the 
+ * dunder methods.
+ */
+PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
+{
+	JP_PY_TRY("probe");
+	int ret = 0;
+	PyTypeObject *type;
+	if (PyType_Check(other))
+		type = (PyTypeObject*) other;
+	else
+		type = Py_TYPE(other);
+
+	// We would start by checking the cache here
+	PyObject *cached = PyObject_GetItem(_cacheDict, (PyObject*) type); // new reference
+	if (cached != nullptr)
+	{
+		printf("Cached\n");
+		Py_DECREF(cached);
+	}
+	PyErr_Clear();
+
+	printf("======\n");
+	PyObject *interfaces = PySet_New(nullptr);
+	printf("  Concrete: %s\n", type->tp_name);
+	PyObject *mro = type->tp_mro;
+	Py_ssize_t sz = PyTuple_Size(mro);
+
+	// We always add PyObject methods
+	printf("    PyObject\n");
+	PyObject *object = PyDict_GetItem(_concreteDict, (PyObject*) &PyBaseObject_Type); // borrowed
+	if (object != nullptr)
+		PySet_Add(interfaces, object);
+
+	// We look to see if there is a concrete method
+	if (sz > 1)
+	{
+		PyObject *primary = PyTuple_GetItem(mro, sz-2); // borrowed
+		PyObject *concrete = PyDict_GetItem(_concreteDict, primary); // borrowed
+		if (concrete != nullptr)
+			printf("    Found\n");
+	}
+
+	printf("  Protocol: %s\n", type->tp_name);
+	// Probe for dunder methods
+	if (type->tp_call != nullptr)
+	{
+		printf("    PyCallable\n");
+	}
+
+	if (type->tp_as_buffer != nullptr)
+	{
+		printf("    PyBuffer\n");
+	}
+
+	if (type->tp_iter != nullptr && type->tp_iternext)
+	{
+		printf("    PyGenerator\n");
+	}
+	else if (type->tp_iter != nullptr)
+	{
+		printf("    PyIterable\n");
+	}
+	else if (type->tp_iternext != nullptr)
+	{
+		printf("    PyIterator\n");
+	}
+
+	if (type->tp_as_sequence != nullptr)
+	{
+		if (type->tp_as_sequence->sq_item != nullptr && type->tp_as_sequence->sq_ass_item)
+		{
+			printf("    PySequence\n");
+		}
+	}
+	if (type->tp_as_mapping != nullptr)
+	{
+		if (type->tp_as_mapping->mp_subscript != nullptr && type->tp_as_mapping->mp_ass_subscript)
+		{
+			printf("    PyMapping\n");
+		}
+	}
+	if (type->tp_as_number != nullptr)
+	{
+		if (type->tp_as_number->nb_int != nullptr && type->tp_as_number->nb_float)
+		{
+			printf("    PyFloatLike\n");
+		}
+		else if (type->tp_as_number->nb_int != nullptr)
+		{
+			printf("    PyIntLike\n");
+		}
+		else if (type->tp_as_number->nb_float != nullptr)
+		{
+			printf("    PyFloatLike?\n");
+		}
+		if (type->tp_as_number->nb_and != nullptr || type->tp_as_number->nb_or != nullptr || type->tp_as_number->nb_xor != nullptr)
+		{
+			printf("    PyLogical?\n");
+		}
+		if (type->tp_as_number->nb_matrix_multiply != nullptr)
+		{
+			printf("    PyMatrixLike?\n");
+		}
+	}
+	Py_DECREF(interfaces);
+	return PyBool_FromLong(ret);
+	JP_PY_CATCH(nullptr);
+}
 
 #if 1
 // GCOVR_EXCL_START
@@ -728,6 +860,7 @@ static PyMethodDef moduleMethods[] = {
 	{"fault", (PyCFunction) PyJPModule_fault, METH_O, ""},
 #endif
 	{"examine", (PyCFunction) examine, METH_O, ""},
+	{"probe", (PyCFunction) PyJPModule_probe, METH_O, ""},
 
 	// sentinel
 	{nullptr}
@@ -921,6 +1054,7 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 	}
 	return pcls->newMultiArray(frame, buffer, subs, base, (jobject) jdims);
 }
+
 
 #ifdef JP_INSTRUMENTATION
 

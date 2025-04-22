@@ -22,6 +22,7 @@ import os
 from pathlib import Path
 import sys
 import typing
+import weakref
 
 import _jpype
 from . import types as _jtypes
@@ -600,3 +601,14 @@ class _JRuntime(object):
 
 
 _jpype.JVMNotRunning = JVMNotRunning
+
+# Dictionary of Python types to Java Interfaces
+_jpype._bridge_concrete = {}
+# Dictionary of String to Java Interfaces
+_jpype._bridge_protocol = {}
+# Dictionary of Type to Tuple(Interface[], Dict)
+_jpype._bridge_cache = weakref.WeakKeyDictionary()
+# Dictionary of Tuple(Interface[]) to Tuple(Interface[])
+_jpype._bridge_interfaces = {}
+# Dictionary of Tuple(Interface[]) to Dict
+_jpype._bridge_methods = {}

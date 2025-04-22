@@ -16,6 +16,7 @@
 package python.exception;
 
 import java.util.HashMap;
+import python.lang.PyExc;
 
 /**
  *

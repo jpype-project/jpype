@@ -1,5 +1,7 @@
 package python.exception;
 
+import python.lang.PyExc;
+
 public class PyBufferError extends PyException
 {
 
