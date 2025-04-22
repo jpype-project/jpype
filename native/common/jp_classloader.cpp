@@ -26,7 +26,6 @@ jobject JPClassLoader::getBootLoader()
 JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 {
 	JP_TRACE_IN("JPClassLoader::JPClassLoader");
-	m_Context = frame.getContext();
 
 	// Define the class loader
 	m_ClassClass = JPClassRef(frame, frame.FindClass("java/lang/Class"));

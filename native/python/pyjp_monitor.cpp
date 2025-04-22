@@ -34,7 +34,7 @@ static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 	JP_PY_TRY("PyJPMonitor_init");
 	self->m_Monitor = nullptr;
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 
 	PyObject* value;
 
@@ -66,7 +66,7 @@ static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 		return -1;
 	}
 
-	self->m_Monitor = new JPMonitor(context, v1->getValue().l);
+	self->m_Monitor = new JPMonitor(v1->getValue().l);
 	return 0;
 	JP_PY_CATCH(-1);
 }
@@ -89,8 +89,7 @@ static PyObject *PyJPMonitor_str(PyJPMonitor *self)
 static PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_enter");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	self->m_Monitor->enter();
 	Py_RETURN_NONE;
 	JP_PY_CATCH(nullptr);
@@ -99,8 +98,7 @@ static PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
 static PyObject *PyJPMonitor_exit(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_exit");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	self->m_Monitor->exit();
 	Py_RETURN_NONE;
 	JP_PY_CATCH(nullptr);

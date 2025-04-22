@@ -26,7 +26,7 @@ protected:
 public:
 	bool isPrimitive() const override;
 
-	virtual JPClass* getBoxedClass(JPContext *context) const = 0;
+	virtual JPClass* getBoxedClass(JPJavaFrame& frame) const = 0;
 
 	virtual char getTypeCode() = 0;
 	virtual jlong getAsLong(jvalue v) = 0;
@@ -34,7 +34,6 @@ public:
 
 	void setClass(JPJavaFrame& frame, jclass o)
 	{
-		m_Context = frame.getContext();
 		m_Class = JPClassRef(frame, o);
 	}
 

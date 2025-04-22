@@ -36,15 +36,11 @@ public:
 		return v.z;
 	}
 
-	JPClass* getBoxedClass(JPContext *context) const override
-	{
-		return context->_java_lang_Boolean;
-	}
-
-	JPMatch::Type findJavaConversion(JPMatch& match) override;
+	JPClass* getBoxedClass(JPJavaFrame& frame) const override;
+	JPMatch::Type findJavaConversion(JPMatch &match) override;
 	void getConversionInfo(JPConversionInfo &info) override;
 	JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
-	JPValue     getValueFromObject(const JPValue& obj) override;
+	JPValue     getValueFromObject(JPJavaFrame& frame, const JPValue& obj) override;
 
 	JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -72,12 +68,12 @@ public:
 
 	jlong getAsLong(jvalue v) override
 	{
-		return field(v);
+		return (jlong) field(v);  // GCOVR_EXCL_LINE
 	}
 
 	jdouble getAsDouble(jvalue v) override
 	{
-		return field(v);
+		return (jdouble) field(v);
 	}
 	// GCOVR_EXCL_STOP
 

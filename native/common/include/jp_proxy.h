@@ -24,7 +24,7 @@ class JPProxy
 {
 public:
 	friend class JPProxyType;
-	JPProxy(JPContext* context, PyJPProxy* inst, JPClassList& intf);
+	JPProxy(PyJPProxy* inst, JPClassList& intf);
 	virtual ~JPProxy();
 
 	const JPClassList& getInterfaces() const
@@ -47,7 +47,6 @@ public:
 		return m_Instance;
 	}
 
-	JPContext*    m_Context;
 	PyJPProxy*    m_Instance;
 	JPObjectRef   m_Proxy;
 	JPClassList   m_InterfaceClasses;
@@ -57,7 +56,7 @@ public:
 class JPProxyDirect : public JPProxy
 {
 public:
-	JPProxyDirect(JPContext* context, PyJPProxy* inst, JPClassList& intf);
+	JPProxyDirect(PyJPProxy* inst, JPClassList& intf);
 	~JPProxyDirect() override;
 	JPPyObject getCallable(const string& cname, int& addSelf) override;
 } ;
@@ -65,7 +64,7 @@ public:
 class JPProxyIndirect : public JPProxy
 {
 public:
-	JPProxyIndirect(JPContext* context, PyJPProxy* inst, JPClassList& intf);
+	JPProxyIndirect(PyJPProxy* inst, JPClassList& intf);
 	~JPProxyIndirect() override;
 	JPPyObject getCallable(const string& cname, int& addSelf) override;
 } ;
@@ -73,7 +72,7 @@ public:
 class JPProxyFunctional : public JPProxy
 {
 public:
-	JPProxyFunctional(JPContext* context, PyJPProxy* inst, JPClassList& intf);
+	JPProxyFunctional(PyJPProxy* inst, JPClassList& intf);
 	~JPProxyFunctional() override;
 	JPPyObject getCallable(const string& cname, int& addSelf) override;
 private:

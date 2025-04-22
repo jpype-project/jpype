@@ -53,8 +53,7 @@ static void PyJPBuffer_releaseBuffer(PyJPBuffer *self, Py_buffer *view)
 int PyJPBuffer_getBuffer(PyJPBuffer *self, Py_buffer *view, int flags)
 {
 	JP_PY_TRY("PyJPBufferPrimitive_getBuffer");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	if (self->m_Buffer == nullptr)
 		JP_RAISE(PyExc_ValueError, "Null buffer"); // GCOVR_EXCL_LINE
 	try
