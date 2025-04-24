@@ -20,6 +20,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
@@ -470,7 +471,7 @@ public class JPypePackageManager
       // by re-encoding the URI after decoding it.
       uri = new URI(
               uri.getScheme(),
-              URLDecoder.decode(uri.getSchemeSpecificPart()),
+              URLDecoder.decode(uri.getSchemeSpecificPart(), StandardCharsets.UTF_8),
               uri.getFragment()
       );
 
