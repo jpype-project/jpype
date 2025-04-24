@@ -30,15 +30,17 @@ public class JPypeSignal
 
   static Thread main;
 
-  static Object getSignalHandler(Class signalHandlerClazz, int signal) throws ClassNotFoundException {
+  static Object getSignalHandler(Class signalHandlerClazz, int signal) throws ClassNotFoundException
+  {
     return Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), new Class[]
-            {
-                    signalHandlerClazz
-            }, (proxy, method, args) -> {
-              main.interrupt();
-              interruptPy(signal);
-              return null;
-            });
+    {
+      signalHandlerClazz
+    }, (proxy, method, args) ->
+    {
+      main.interrupt();
+      interruptPy(signal);
+      return null;
+    });
   }
 
   static void installHandlers()

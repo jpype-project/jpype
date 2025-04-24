@@ -196,30 +196,30 @@ public class MethodResolution
     {
       int n1 = param1.size();
       int n2 = param2.size();
-      
+
       // Last element is an array
       Class<?> cls = param1.get(n1 - 1);
       Class<?> cls2 = cls.getComponentType();
-      
+
       // Less arguments, chop the list 
       if (n1 - 1 == n2)
         return isMoreSpecificThan(param1.subList(0, n2), param2);
-      
+
       // Same arguments
       if (n1 == n2)
       {
         List<Class<?>> q = new ArrayList<>(param1);
         q.set(n1 - 1, cls2);
-        
+
         // Check both ways
         boolean isMoreSpecific = isMoreSpecificThan(param1, param2) || isMoreSpecificThan(q, param2);
 
-	// If the varargs array is of the single-variable's type (or they are primitive-equivalent),
-	// the single-variable signature should win specificity
-	Class<?> svCls = param2.get(n2-1);
+        // If the varargs array is of the single-variable's type (or they are primitive-equivalent),
+        // the single-variable signature should win specificity
+        Class<?> svCls = param2.get(n2 - 1);
         return isMoreSpecific && !(isAssignableTo(cls2, svCls) && isAssignableTo(svCls, cls2));
       }
-      
+
       // More arguments
       if (n1 < n2)
       {
@@ -236,25 +236,25 @@ public class MethodResolution
     {
       int n1 = param1.size();
       int n2 = param2.size();
-      
+
       // Last element is an array
       Class<?> cls = param2.get(n2 - 1);
       Class<?> cls2 = cls.getComponentType();
-      
+
       // Less arguments, chop the list
       if (n2 - 1 == n1)
         return isMoreSpecificThan(param1, param2.subList(0, n2));
-      
+
       // Same arguments
       if (n1 == n2)
       {
         List<Class<?>> q = new ArrayList<>(param2);
         q.set(n2 - 1, cls2);
-        
+
         // Compare both ways
         return isMoreSpecificThan(param1, param2) || isMoreSpecificThan(param1, q);
       }
-      
+
       // More arguments
       if (n2 < n1)
       {

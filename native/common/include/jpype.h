@@ -70,7 +70,7 @@ using std::string;
 using std::vector;
 
 #ifdef JP_INSTRUMENTATION
-
+#include <cstdint>
 template <size_t i>
 constexpr uint32_t _hash(const char *q, uint32_t v)
 {

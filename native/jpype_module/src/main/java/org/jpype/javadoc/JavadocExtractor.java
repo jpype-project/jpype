@@ -117,10 +117,12 @@ public class JavadocExtractor
       XPath xPath = XPathFactory.newInstance().newXPath();
       // Javadoc 8-13
       Node n = (Node) xPath.compile("//div[@class='description']/ul/li").evaluate(doc, XPathConstants.NODE);
-      if (n == null) { // Javadoc 14+
+      if (n == null)
+      { // Javadoc 14+
         n = (Node) xPath.compile("//section[@class='description']").evaluate(doc, XPathConstants.NODE);
       }
-      if (n == null) { // Javadoc 17+
+      if (n == null)
+      { // Javadoc 17+
         n = (Node) xPath.compile("//section[@class='class-description']").evaluate(doc, XPathConstants.NODE);
       }
       Node description = toFragment(n);
@@ -135,7 +137,8 @@ public class JavadocExtractor
 
       Node ctorRoot = ((Node) xPath.compile("//li/a[@name='constructor.detail' or @id='constructor.detail']") // Javadoc before 17
               .evaluate(doc, XPathConstants.NODE));
-      if (ctorRoot == null) { // Javadoc 17+
+      if (ctorRoot == null)
+      { // Javadoc 17+
         ctorRoot = ((Node) xPath.compile("//section[@class='constructor-details']/ul")
                 .evaluate(doc, XPathConstants.NODE));
       }
@@ -143,9 +146,10 @@ public class JavadocExtractor
       {
         List<Node> set = convertNodes((NodeList) xPath.compile("./li/section") // Javadoc 17+
                 .evaluate(ctorRoot, XPathConstants.NODESET));
-        if (set.isEmpty()) {  // Javadoc before 17
+        if (set.isEmpty())
+        {  // Javadoc before 17
           set = convertNodes((NodeList) xPath.compile("./ul/li")
-                .evaluate(ctorRoot.getParentNode(), XPathConstants.NODESET));
+                  .evaluate(ctorRoot.getParentNode(), XPathConstants.NODESET));
         }
         documentation.ctorsNode = set;
         StringBuilder sb = new StringBuilder();
@@ -161,7 +165,8 @@ public class JavadocExtractor
 
       Node methodRoot = ((Node) xPath.compile("//li/a[@name='method.detail' or  @id='method.detail']") // Javadoc before 17
               .evaluate(doc, XPathConstants.NODE));
-      if (methodRoot == null) { // Javadoc 17+
+      if (methodRoot == null)
+      { // Javadoc 17+
         methodRoot = ((Node) xPath.compile("//section[@class='method-details']/ul")
                 .evaluate(doc, XPathConstants.NODE));
       }
@@ -169,7 +174,8 @@ public class JavadocExtractor
       {
         List<Node> set = convertNodes((NodeList) xPath.compile("./li/section") // Javadoc 17+
                 .evaluate(methodRoot, XPathConstants.NODESET));
-        if (set.isEmpty()) {  // Javadoc before 17
+        if (set.isEmpty())
+        {  // Javadoc before 17
           set = convertNodes((NodeList) xPath.compile("./ul/li")
                   .evaluate(methodRoot.getParentNode(), XPathConstants.NODESET));
         }
@@ -200,7 +206,8 @@ public class JavadocExtractor
 //      }
       Node fieldRoot = ((Node) xPath.compile("//li/a[@name='field.detail' or @id='field.detail']") // Javadoc before 17
               .evaluate(doc, XPathConstants.NODE));
-      if (fieldRoot == null) { // Javadoc 17+
+      if (fieldRoot == null)
+      { // Javadoc 17+
         fieldRoot = ((Node) xPath.compile("//section[@class='field-details']/ul")
                 .evaluate(doc, XPathConstants.NODE));
       }
@@ -208,7 +215,8 @@ public class JavadocExtractor
       {
         List<Node> set = convertNodes((NodeList) xPath.compile("./li/section") // Javadoc 17+
                 .evaluate(fieldRoot, XPathConstants.NODESET));
-        if (set.isEmpty()) {  // Javadoc before 17
+        if (set.isEmpty())
+        {  // Javadoc before 17
           set = convertNodes((NodeList) xPath.compile("./ul/li")
                   .evaluate(fieldRoot.getParentNode(), XPathConstants.NODESET));
         }
