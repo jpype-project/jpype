@@ -886,7 +886,6 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 		auto *array = (PyJPArray*) other;
 		if (array->m_Array->isSlice())
 		{
-			JPJavaFrame frame = JPJavaFrame::outer();
 			jvalue v;
 			v.l = array->m_Array->clone(frame, other);
 			return type->convertToPythonObject(frame, v, true).keep();
