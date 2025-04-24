@@ -21,7 +21,7 @@ import org.jpype.bridge.BuiltIn;
 /**
  * Java front end for concrete Python range.
  */
-public interface PyRange extends PyGenerator
+public interface PyRange extends PyObject, PyGenerator
 {
 
   static PyType type()

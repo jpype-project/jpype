@@ -23,7 +23,27 @@ import org.jpype.bridge.BuiltIn;
  */
 public interface PyBytes extends PyObject
 {
+  /** 
+   * Create a new ByteArray with a fixed length.
+   * 
+   * @param length
+   * @return 
+   */
+  static PyBytes of(int length)
+  {
+     return Interpreter.getBackend().newBytes(length);
+  }
+  
+  static PyByteArray of(Iterable<PyObject> iter )
+  {
+     return Interpreter.getBackend().newBytes(iter);
+  }
 
+  static PyByteArray of(PyByteArray bytes)
+  {
+     return Interpreter.getBackend().newBytes(bytes);
+  }
+  
   static PyType type()
   {
     return (PyType) BuiltIn.eval("bytes", null, null);
@@ -31,7 +51,7 @@ public interface PyBytes extends PyObject
 
   static PyBytes fromHex(CharSequence str)
   {
-    return Interpreter.getBackend().bytes_fromhex(str);
+    return Interpreter.getBackend().bytesFromHex(str);
   }
 
   PyObject decode(PyObject encoding, PyObject delete);

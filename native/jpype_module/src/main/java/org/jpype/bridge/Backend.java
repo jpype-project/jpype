@@ -21,6 +21,8 @@ import python.lang.PyBytes;
 import python.lang.PyComplex;
 import python.lang.PyDict;
 import python.lang.PyEnumerate;
+import python.lang.PyFloat;
+import python.lang.PyFrozenSet;
 import python.lang.PyList;
 import python.lang.PyMemoryView;
 import python.lang.PyObject;
@@ -34,6 +36,7 @@ import python.lang.PyZip;
 import python.protocol.PyCallable;
 import python.protocol.PyMapping;
 import python.protocol.PyIter;
+import python.protocol.PyIterable;
 
 /**
  * Backend for all Python entry points.
@@ -56,11 +59,11 @@ public interface Backend
 
   PyByteArray bytearray(Object obj);
 
-  PyByteArray bytearray_fromhex(CharSequence str);
+  PyByteArray bytearrayFromHex(CharSequence str);
 
   PyBytes bytes(Object obj);
 
-  PyBytes bytes_fromhex(CharSequence str);
+  PyBytes bytesFromHex(CharSequence str);
 
   PyObject call(PyCallable obj, PyTuple args, PyDict kwargs);
 
@@ -68,7 +71,7 @@ public interface Backend
 
   void delattr(Object obj, CharSequence str);
 
-  public boolean delindex(PyList aThis, int indexOf);
+  boolean delindex(PyList aThis, int indexOf);
 
   PyDict dict();
 
@@ -98,7 +101,7 @@ public interface Backend
 
   PyMemoryView memoryview(Object obj);
 
-  PyDict newDict(Map<Object, Object> map);
+  PyDict newDict(Map map);
 
   public PySet newSet(Iterable c);
 
@@ -183,5 +186,33 @@ public interface Backend
 //print()
 //staticmethod()
 //super()
+
+  public PyObject sequenceGetItem(PyObject obj);
+
+  public PyFrozenSet newFrozenSet(Iterable c);
+
+  public PyComplex newComplex(double real, double imag);
+
+  public PyByteArray newByteArray();
+
+  public PyByteArray newByteArray(int i);
+
+  public PyByteArray newByteArray(Iterable iter);
+
+  public PyEnumerate newEnumerate(Iterable iterable);
+
+  public PyByteArray newByteArray(PyBytes bytes);
+
+  public PyBytes newBytes(int length);
+
+  public PyByteArray newBytes(Iterable<PyObject> iter);
+
+  public PyByteArray newBytes(PyByteArray bytes);
+
+  public PyFloat newInt(long value);
+
+  public PyFloat newDouble(double value);
+
+  public PyFloat newZip(PyIterable[] items);
 
 }

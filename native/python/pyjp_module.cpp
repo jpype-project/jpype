@@ -666,68 +666,45 @@ PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
 			printf("    Found\n");
 	}
 
+	PyObject *typing = PyImport_AddModule("typing");
+	JPPyObject sequence = JPPyObject::call(PyObject_GetAttrString(typing, "Sequence"));
+	JPPyObject mapping = JPPyObject::call(PyObject_GetAttrString(typing, "Mapping"));
+
 	printf("  Protocol: %s\n", type->tp_name);
+	bool callable = (type->tp_call != nullptr);
+	bool buffer = (type->tp_as_buffer != nullptr);
+	bool generator = false;
+	bool iterable = false;
+	bool iterator = false;
+	bool seq_get = (type->tp_as_sequence != nullptr) && (type->tp_as_sequence->sq_item != nullptr);
+	bool seq_set = (type->tp_as_sequence != nullptr) && (type->tp_as_sequence->sq_ass_item != nullptr);
+	bool map_get = (type->tp_as_mapping != nullptr) && (type->tp_as_mapping->mp_subscript != nullptr);
+	bool map_set = (type->tp_as_mapping != nullptr) && (type->tp_as_mapping->mp_ass_subscript != nullptr);
+	bool as_float = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_float != nullptr);
+	bool as_int = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_int != nullptr);
+	bool logical = (type->tp_as_number != nullptr) && ((type->tp_as_number->nb_and != nullptr) 
+		|| (type->tp_as_number->nb_or != nullptr) 
+		|| (type->tp_as_number->nb_xor != nullptr));
+	bool as_matrix = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_int != nullptr);
+	bool resource = (PyObject_HasAttrString((PyObject*)type, "__enter__")!=0);
+	bool as_index = (PyObject_HasAttrString((PyObject*)type, "__index__")!=0);
+	bool is_sequence = (PyObject_IsSubclass((PyObject*)type, sequence.get())!=0);
+	bool is_mapping = (PyObject_IsSubclass((PyObject*)type, mapping.get())!=0);
+
 	// Probe for dunder methods
-	if (type->tp_call != nullptr)
-	{
-		printf("    PyCallable\n");
-	}
-
-	if (type->tp_as_buffer != nullptr)
-	{
-		printf("    PyBuffer\n");
-	}
-
 	if (type->tp_iter != nullptr && type->tp_iternext)
-	{
-		printf("    PyGenerator\n");
-	}
+		generator = true;
 	else if (type->tp_iter != nullptr)
-	{
-		printf("    PyIterable\n");
-	}
+		iterable = true;
 	else if (type->tp_iternext != nullptr)
-	{
-		printf("    PyIterator\n");
-	}
+		iterator = true;
 
-	if (type->tp_as_sequence != nullptr)
-	{
-		if (type->tp_as_sequence->sq_item != nullptr && type->tp_as_sequence->sq_ass_item)
-		{
-			printf("    PySequence\n");
-		}
-	}
-	if (type->tp_as_mapping != nullptr)
-	{
-		if (type->tp_as_mapping->mp_subscript != nullptr && type->tp_as_mapping->mp_ass_subscript)
-		{
-			printf("    PyMapping\n");
-		}
-	}
-	if (type->tp_as_number != nullptr)
-	{
-		if (type->tp_as_number->nb_int != nullptr && type->tp_as_number->nb_float)
-		{
-			printf("    PyFloatLike\n");
-		}
-		else if (type->tp_as_number->nb_int != nullptr)
-		{
-			printf("    PyIntLike\n");
-		}
-		else if (type->tp_as_number->nb_float != nullptr)
-		{
-			printf("    PyFloatLike?\n");
-		}
-		if (type->tp_as_number->nb_and != nullptr || type->tp_as_number->nb_or != nullptr || type->tp_as_number->nb_xor != nullptr)
-		{
-			printf("    PyLogical?\n");
-		}
-		if (type->tp_as_number->nb_matrix_multiply != nullptr)
-		{
-			printf("    PyMatrixLike?\n");
-		}
-	}
+	printf("    callable=%d  buffer=%d resource=%d\n", callable, buffer, resource);
+	printf("    generator=%d  iterable=%d iterator=%d\n", generator, iterable, iterator);
+	printf("    is_seq=%d  seq_get=%d  seq_set=%d\n", is_sequence, seq_get, seq_set);
+    printf("    is_map=%d  map_get=%d  map_set=%d\n", is_mapping, map_get, map_set);
+	printf("    index=%d int=%d float=%d logical=%d  matrix=%d\n", as_index, as_int, as_float, logical, as_matrix);
+	
 	Py_DECREF(interfaces);
 	return PyBool_FromLong(ret);
 	JP_PY_CATCH(nullptr);

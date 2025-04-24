@@ -15,6 +15,7 @@
  */
 package python.lang;
 
+import python.protocol.PyIterator;
 import python.protocol.PyIterable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,7 +29,7 @@ import org.jpype.bridge.BuiltIn;
  *
  * FIXME add the List contract.
  */
-public interface PyTuple extends PyIterable, List<PyObject>
+public interface PyTuple extends PyObject, PyIterable, List<PyObject>
 {
 
   public static PyTuple create(Object... values)

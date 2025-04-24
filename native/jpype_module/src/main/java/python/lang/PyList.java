@@ -15,6 +15,7 @@
  */
 package python.lang;
 
+import python.protocol.PyIterator;
 import python.protocol.PyIterable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,7 +30,7 @@ import org.jpype.bridge.BuiltIn;
  *
  * This mostly obeys the Java contract for List.
  */
-public interface PyList extends List<PyObject>, PyIterable
+public interface PyList extends PyObject, List<PyObject>, PyIterable
 {
 
   static PyType type()

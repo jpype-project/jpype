@@ -16,11 +16,12 @@
 package python.lang;
 
 import org.jpype.bridge.BuiltIn;
+import python.protocol.PyIndex;
 
 /**
  * Java front end for concrete Python slice.
  */
-public interface PySlice extends PyObject
+public interface PySlice extends PyObject, PyIndex
 {
 
   static PyType type()

@@ -16,14 +16,19 @@
 package python.lang;
 
 import org.jpype.bridge.BuiltIn;
+import org.jpype.bridge.Interpreter;
 import python.protocol.PyNumber;
 
 /**
  * Java front end for concrete Python complex.
  */
-public interface PyComplex extends PyNumber, PyObject
+public interface PyComplex extends PyObject, PyNumber
 {
-
+  static PyComplex of(double real, double imag)
+  {
+    return Interpreter.getBackend().newComplex(real, imag);
+  }
+          
   static PyType type()
   {
     return (PyType) BuiltIn.eval("complex", null, null);

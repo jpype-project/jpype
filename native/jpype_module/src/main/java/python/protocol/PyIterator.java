@@ -13,13 +13,13 @@
  * 
  *  See NOTICE file for details.
  */
-package python.lang;
+package python.protocol;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import org.jpype.bridge.Interpreter;
 import org.jpype.bridge.BuiltIn;
-import python.protocol.PyIter;
+import python.lang.PyObject;
 
 /**
  * Conversion of a Python iterator to Java.

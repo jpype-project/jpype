@@ -15,6 +15,7 @@
  */
 package python.lang;
 
+import org.jpype.bridge.BuiltIn;
 import python.protocol.PyCallable;
 
 /**
@@ -23,6 +24,11 @@ import python.protocol.PyCallable;
 public interface PyType extends PyObject, PyCallable
 {
 
+  static PyType type()
+  {
+    return (PyType) BuiltIn.eval("zip", null, null);
+  }
+  
   String getName();
   PyTuple mro();
 

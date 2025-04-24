@@ -15,7 +15,9 @@
  */
 package python.lang;
 
+import java.util.Map;
 import org.jpype.bridge.BuiltIn;
+import org.jpype.bridge.Interpreter;
 import python.protocol.PyMapping;
 
 /**
@@ -25,6 +27,10 @@ import python.protocol.PyMapping;
  */
 public interface PyDict extends PyObject, PyMapping
 {
+  static PyDict of(Map<Object, PyObject> map)
+  {
+    return Interpreter.getBackend().newDict(map);
+  }
 
   static PyType type()
   {

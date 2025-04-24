@@ -16,7 +16,6 @@
 package python.protocol;
 
 import java.util.Iterator;
-import python.lang.PyIterator;
 import python.lang.PyObject;
 
 /**
@@ -27,7 +26,7 @@ import python.lang.PyObject;
  *
  * @author nelson85
  */
-public interface PyIterable extends PyObject, Iterable<PyObject>
+public interface PyIterable extends PyProtocol, Iterable<PyObject>
 {
 
   boolean all();

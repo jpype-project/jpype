@@ -1,6 +1,7 @@
 import jpype
 import _jpype
 import numpy as np
+import weakref
 
 jpype.startJVM()
 
@@ -22,12 +23,17 @@ _jpype._bridge_concrete[tuple] = "PyType"
 _jpype._bridge_concrete[type] = "PyType"
 _jpype._bridge_concrete[zip] = "PyType"
 
-_jpype.probe(object)
-_jpype.probe(slice)
+#_jpype.probe(object)
+#_jpype.probe(slice)
 _jpype.probe(list)
 _jpype.probe(tuple)
+_jpype.probe(set)
 _jpype.probe({})
-_jpype.probe(iter([]))
-_jpype.probe(enumerate)
+_jpype.probe(weakref.WeakKeyDictionary)
+#_jpype.probe(iter([]))
+#_jpype.probe(enumerate)
 _jpype.probe(np.array([]))
-
+_jpype.probe(int)
+_jpype.probe(np.int32)
+_jpype.probe(float)
+_jpype.probe(np.float32)

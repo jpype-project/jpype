@@ -17,12 +17,19 @@ package python.lang;
 
 import python.protocol.PyGenerator;
 import org.jpype.bridge.BuiltIn;
+import org.jpype.bridge.Interpreter;
+import python.protocol.PyIterable;
 
 /**
  * Java front end for concrete Python enumerate.
  */
 public interface PyEnumerate extends PyGenerator
 {
+
+  static PyEnumerate of(Iterable<PyObject> iterable)
+  {
+    return Interpreter.getBackend().newEnumerate(iterable);
+  }
 
   static PyType type()
   {

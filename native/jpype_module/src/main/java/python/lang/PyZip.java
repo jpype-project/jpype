@@ -15,7 +15,10 @@
  */
 package python.lang;
 
+import org.jpype.bridge.BuiltIn;
+import org.jpype.bridge.Interpreter;
 import python.protocol.PyGenerator;
+import python.protocol.PyIterable;
 
 /**
  * Java front end for concrete Python zip.
@@ -23,4 +26,14 @@ import python.protocol.PyGenerator;
 public interface PyZip extends PyGenerator
 {
 
+  
+    static PyFloat of(PyIterable... items)
+  {
+     return Interpreter.getBackend().newZip(items);
+  }
+  
+  static PyType type()
+  {
+    return (PyType) BuiltIn.eval("zip", null, null);
+  }
 }

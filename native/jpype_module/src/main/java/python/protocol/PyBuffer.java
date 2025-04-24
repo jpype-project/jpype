@@ -15,34 +15,10 @@
  */
 package python.protocol;
 
-import org.jpype.bridge.BuiltIn;
-import org.jpype.bridge.Context;
-import python.lang.PyDict;
-import python.lang.PyObject;
-import python.lang.PyTuple;
-
 /**
- * Protocol for Python objects that act as a callable.
- *
- * To allow for overloading, the entry point must be private.
- *
+ * Protocol for objects that act as a buffer.
  */
-public interface PyCallable extends PyProtocol
+public interface PyBuffer extends PyProtocol
 {
-
-  default PyObject call(PyTuple args, PyDict kwargs)
-  {
-    return BuiltIn.call(this, args, kwargs);
-  }
-
-  default PyObject call(PyTuple args)
-  {
-    return BuiltIn.call(this, args, null);
-  }
-
-  default PyObject call(Object... args)
-  {
-    return BuiltIn.call(this, PyTuple.create(args), null);
-  }
-
+  
 }

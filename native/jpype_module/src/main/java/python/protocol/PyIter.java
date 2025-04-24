@@ -15,7 +15,6 @@
  */
 package python.protocol;
 
-import python.lang.PyIterator;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import org.jpype.bridge.Interpreter;
@@ -26,7 +25,7 @@ import python.lang.PyObject;
  *
  * This can be converted to a Java iterator by calling iterator().
  */
-public interface PyIter extends PyObject
+public interface PyIter extends PyProtocol
 {
 
   PyIter filter(PyCallable callable);

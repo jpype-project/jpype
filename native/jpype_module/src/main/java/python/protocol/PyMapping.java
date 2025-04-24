@@ -19,12 +19,10 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import org.jpype.bridge.Interpreter;
-import org.jpype.bridge.BuiltIn;
 import python.lang.PyObject;
 
-/**
- *
- * @author nelson85
+ /**
+ * Protocol for those classes registered as Python type.Mapping.
  */
 public interface PyMapping extends PyProtocol, Map<Object, PyObject>
 {

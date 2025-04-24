@@ -13,36 +13,25 @@
  * 
  *  See NOTICE file for details.
  */
-package python.protocol;
+package python.lang;
 
 import org.jpype.bridge.BuiltIn;
-import org.jpype.bridge.Context;
-import python.lang.PyDict;
-import python.lang.PyObject;
-import python.lang.PyTuple;
+import org.jpype.bridge.Interpreter;
+import python.protocol.PyNumber;
 
 /**
- * Protocol for Python objects that act as a callable.
  *
- * To allow for overloading, the entry point must be private.
- *
+ * @author nelson85
  */
-public interface PyCallable extends PyProtocol
+public interface PyInt extends PyObject, PyNumber
 {
-
-  default PyObject call(PyTuple args, PyDict kwargs)
+    static PyFloat of(long value)
   {
-    return BuiltIn.call(this, args, kwargs);
+     return Interpreter.getBackend().newInt(value);
   }
-
-  default PyObject call(PyTuple args)
+  
+  static PyType type()
   {
-    return BuiltIn.call(this, args, null);
+    return (PyType) BuiltIn.eval("int", null, null);
   }
-
-  default PyObject call(Object... args)
-  {
-    return BuiltIn.call(this, PyTuple.create(args), null);
-  }
-
 }

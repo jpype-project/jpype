@@ -15,14 +15,15 @@
  */
 package python.protocol;
 
+import java.util.List;
 import org.jpype.bridge.BuiltIn;
+import org.jpype.bridge.Interpreter;
 import python.lang.PyObject;
-import python.lang.PySlice;
 
 /**
  * Interface for objects that act as sequences.
  */
-public interface PySequence extends PyProtocol
+public interface PySequence extends PyProtocol, List<PyObject>
 {
 
   /**
@@ -33,22 +34,23 @@ public interface PySequence extends PyProtocol
    * @param index
    * @return
    */
+  @Override
   default PyObject get(int index)
   {
-    return _get(index);
+    return BuiltIn.sequence_getitem(index);
   }
 
   /**
-   * Get a slice.
+   * Get a slice or by index.
    *
    * Equivalent to obj[slice].
    *
-   * @param slice
+   * @param index
    * @return
    */
-  default PyObject get(PySlice slice)
+  default PyObject get(PyIndex index)
   {
-    return _get(slice);
+    return BuiltIn.sequence_getitem(index.asObject());
   }
 
   /**
@@ -60,9 +62,9 @@ public interface PySequence extends PyProtocol
    * @param slices
    * @return
    */
-  default PyObject get(PySlice... slices)
+  default PyObject get(PyIndex... indices)
   {
-    return _get(BuiltIn.tuple(slices));
+    return Interpreter.getBackend().sequenceGetItem(BuiltIn.tuple(indices));
   }
 
   /**
@@ -73,7 +75,8 @@ public interface PySequence extends PyProtocol
    * @param index
    * @param value
    */
-  void set(int index, Object value);
+  @Override
+  PyObject set(int index, PyObject value);
 
   /**
    * Delete an item by index.
@@ -82,7 +85,8 @@ public interface PySequence extends PyProtocol
    *
    * @param index
    */
-  void remove(int index);
+  @Override
+  PyObject remove(int index);
 
   /**
    * Delete an item by index.
@@ -91,7 +95,6 @@ public interface PySequence extends PyProtocol
    *
    * @return
    */
+  @Override
   int size();
-
-  PyObject _get(Object object);
 }

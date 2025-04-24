@@ -23,6 +23,30 @@ import org.jpype.bridge.BuiltIn;
  */
 public interface PyByteArray extends PyObject
 {
+  /** 
+   * Create a new ByteArray with a fixed length.
+   * 
+   * @param length
+   * @return 
+   */
+  static PyByteArray of(int length)
+  {
+     return Interpreter.getBackend().newByteArray(length);
+  }
+  
+  static PyByteArray of(Iterable<PyObject> iter )
+  {
+     return Interpreter.getBackend().newByteArray(iter);
+  }
+
+  static PyByteArray of(PyBytes bytes)
+  {
+     return Interpreter.getBackend().newByteArray(bytes);
+  }
+  
+ 
+  // FIXME also needs ByteLike (Bytes, ByteArray, String)
+  
 
   static PyType type()
   {
@@ -31,7 +55,7 @@ public interface PyByteArray extends PyObject
 
   static PyByteArray fromHex(CharSequence str)
   {
-    return Interpreter.getBackend().bytearray_fromhex(str);
+    return Interpreter.getBackend().bytearrayFromHex(str);
   }
 
   PyObject decode(PyObject encoding, PyObject delete);

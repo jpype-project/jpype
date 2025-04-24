@@ -28,6 +28,7 @@ import python.lang.PyTuple;
 import python.lang.PyType;
 import python.lang.PyZip;
 import python.protocol.PyCallable;
+import python.protocol.PyIndex;
 import python.protocol.PyMapping;
 import python.protocol.PyIter;
 
@@ -64,7 +65,7 @@ public class BuiltIn
   {
     Interpreter.backend.delattr(obj, key);
   }
-
+ 
   public static PyObject next(PyIter iter, PyObject stop)
   {
     return Interpreter.backend.next(iter, stop);
@@ -181,6 +182,10 @@ public class BuiltIn
 
   public static void setattr(PyObject obj, CharSequence key, Object value)
   {
+    // FIXME we may want special handling for String and Boxed types to 
+    // ensure the type that appears is a Python one rather than a 
+    // Java one especially on setattr in which the object is to be 
+    // held in Python.
     Interpreter.backend.setattr(obj, key, value);
   }
 
@@ -266,6 +271,16 @@ public class BuiltIn
   public static PyZip zip(PyObject... objects)
   {
     return Interpreter.backend.zip(objects);
+  }
+
+  public static PyInt $int(long value)
+  {
+    return Interpreter.backend.newInt(value);
+  }
+  
+  public static PyFloat $float(long value)
+  {
+    return Interpreter.backend.newFloat(value);
   }
 
 }

@@ -21,9 +21,14 @@ import python.lang.PyObject;
 /**
  * Java front end for abstract concept of a generator.
  */
-public interface PyGenerator extends PyObject
+public interface PyGenerator extends PyProtocol
 {
 
+  /**
+   * Get a Python iterator from this object.
+   *
+   * @return
+   */
   PyIter iter();
 
   default Iterator<PyObject> iterator()
