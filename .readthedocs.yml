@@ -24,6 +24,6 @@ build:
     python: "3.8"
   os: ubuntu-22.04
   apt_packages:
-    - openjdk-8-jdk
+    - openjdk-11-jdk
 
 
