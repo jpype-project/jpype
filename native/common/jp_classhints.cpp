@@ -87,7 +87,7 @@ JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool ca
 JPConversion::~JPConversion() = default;
 JPClassHints::JPClassHints()
 {
-	convertJava = false;
+	m_ConvertJava = false;
 }
 
 JPClassHints::~JPClassHints()
@@ -301,7 +301,7 @@ void JPClassHints::addTypeConversion(PyObject *type, PyObject *method, bool exac
 {
 	JP_TRACE_IN("JPClassHints::addTypeConversion", this);
 	if (PyJPClass_Check(type))
-		convertJava = true;
+		m_ConvertJava = true;
 	conversions.push_back(new JPTypeConversion(type, method, exact));
 	JP_TRACE_OUT;
 }
@@ -640,7 +640,7 @@ public:
 		{
 			auto *pyhints = (PyJPClassHints*) cls->getHints();
 			JPClassHints *hints = pyhints->m_Hints;
-			if (hints->convertJava)
+			if (hints->m_ConvertJava)
 				return match.type;
 		}
 

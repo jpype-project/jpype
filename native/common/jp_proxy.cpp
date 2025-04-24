@@ -23,7 +23,7 @@
 #include "jp_functional.h"
 
 JPPyObject getArgs(JPContext* context, jlongArray parameterTypePtrs,
-		jobjectArray args, PyObject* self, bool addSelf)
+		jobjectArray args, PyObject* self, int addSelf)
 {
 	JP_TRACE_IN("JProxy::getArgs");
 	JPJavaFrame frame = JPJavaFrame::outer(context);
@@ -87,7 +87,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 			JP_TRACE("Get callable for", cname);
 
 			// Get the callable object
-			bool addSelf = false;
+			int addSelf = 0;
 			JPProxy* proxy = (JPProxy*) hostObj;
 			JPPyObject callable(proxy->getCallable(cname, addSelf));
 
@@ -285,7 +285,7 @@ JPProxyDirect::JPProxyDirect(JPContext* context, PyJPProxy* inst, JPClassList& i
 JPProxyDirect::~JPProxyDirect()
 = default;
 
-JPPyObject JPProxyDirect::getCallable(const string& cname, bool& addSelf)
+JPPyObject JPProxyDirect::getCallable(const string& cname, int& addSelf)
 {
 	return JPPyObject::accept(PyObject_GetAttrString((PyObject*) m_Instance, cname.c_str()));
 }
@@ -298,7 +298,7 @@ JPProxyIndirect::JPProxyIndirect(JPContext* context, PyJPProxy* inst, JPClassLis
 JPProxyIndirect::~JPProxyIndirect()
 = default;
 
-JPPyObject JPProxyIndirect::getCallable(const string& cname, bool& addSelf)
+JPPyObject JPProxyIndirect::getCallable(const string& cname, int& addSelf)
 {
 	JPPyObject out = JPPyObject::accept(PyObject_GetAttrString(m_Instance->m_Dispatch, cname.c_str()));
 	if (!out.isNull())
@@ -318,7 +318,7 @@ JPProxyFunctional::JPProxyFunctional(JPContext* context, PyJPProxy* inst, JPClas
 JPProxyFunctional::~JPProxyFunctional()
 = default;
 
-JPPyObject JPProxyFunctional::getCallable(const string& cname, bool& addSelf)
+JPPyObject JPProxyFunctional::getCallable(const string& cname, int& addSelf)
 {
 	if (cname == m_Functional->getMethod())
 		return JPPyObject::accept(PyObject_GetAttrString(m_Instance->m_Dispatch, "__call__"));

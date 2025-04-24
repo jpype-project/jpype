@@ -19,6 +19,7 @@ import contextlib
 import sys
 
 from jpype import *
+import _jpype
 import common
 import subrun
 
@@ -544,6 +545,14 @@ class ProxyTestCase(common.JPypeTestCase):
                 def run(self):
                     pass
 
+    def testInternal(self):
+        with self.assertRaises(TypeError):
+            _jpype._JProxy(None, None, None)
+        with self.assertRaises(TypeError):
+            _jpype._JProxy(None, None, [])
+        with self.assertRaises(TypeError):
+            _jpype._JProxy(None, None, [type])
+
 
 @subrun.TestCase(individual=True)
 class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):
@@ -596,5 +605,4 @@ class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):
 
         startJVM()
         assert isinstance(MyImpl(), MyImpl)
-
     
