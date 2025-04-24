@@ -462,8 +462,6 @@ JNIEnv* JPContext::getEnv()
 		res = m_JavaVM->AttachCurrentThreadAsDaemon((void**) &env, nullptr);
 		if (res != JNI_OK)
 		{
-			int *i = 0;
-			*i = 0;
 			JP_RAISE(PyExc_RuntimeError, "Unable to attach to local thread");
 		}
 	}

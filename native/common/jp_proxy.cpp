@@ -22,7 +22,7 @@
 #include "jp_boxedtype.h"
 #include "jp_functional.h"
 
-JPPyObject getArgs(JPContext* context, jlongArray parameterTypePtrs,
+JPPyObject getArgs(jlongArray parameterTypePtrs,
 		jobjectArray args, PyObject* self, int addSelf)
 {
 	JP_TRACE_IN("JProxy::getArgs");

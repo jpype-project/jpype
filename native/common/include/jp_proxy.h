@@ -34,11 +34,6 @@ public:
 
 	jvalue getProxy();
 
-	JPContext* getContext()
-	{
-		return m_Context;
-	}
-
 	virtual JPPyObject getCallable(const string& cname, int& addSelf) = 0;
 	static void releaseProxyPython(void* host);
 
