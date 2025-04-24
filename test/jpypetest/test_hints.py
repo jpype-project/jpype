@@ -17,7 +17,9 @@
 # *****************************************************************************
 import _jpype
 import jpype
+from jpype import java
 from jpype.types import *
+from jpype import JConversion
 import common
 import jpype.protocol as proto
 
@@ -456,3 +458,12 @@ class HintsTestCase(common.JPypeTestCase):
             cls._hints._excludeConversion(object())
         with self.assertRaisesRegex(TypeError, "type or protocol is required, not 'object'"):
             cls._hints._excludeConversion((object(),))
+
+    def testClassToClass(self):
+        fixture = JClass("jpype.common.Fixture")()
+        @JConversion(JByte[:], instanceof=java.lang.String)
+        def ToByteArray(cls, obj):
+            return obj.getBytes()
+        obj1 = java.lang.String("hello")    
+        fixture.callByteArray(obj1)
+ 

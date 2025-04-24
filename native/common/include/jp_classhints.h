@@ -98,6 +98,7 @@ public:
 
 	void getInfo(JPClass *cls, JPConversionInfo &info);
 
+	bool m_ConvertJava;
 private:
 	std::list<JPConversion*> conversions;
 } ;
