@@ -19,87 +19,161 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
 /**
+ * An iterator for traversing a PyTuple object in both forward and reverse
+ * directions.
  *
- * @author nelson85
+ * This class implements the {@link ListIterator} interface to provide
+ * bidirectional iteration over a PyTuple, which is assumed to behave like a
+ * Python tuple.
+ *
+ * Modifications to the PyTuple (e.g., adding or removing elements) are not
+ * supported by this iterator.
  */
 class PyTupleIterator implements ListIterator<PyObject>
 {
 
-  PyTuple tuple;
-  int index;
-  boolean forward = false;
-  boolean reverse = false;
+  /**
+   * The PyTuple being iterated over.
+   */
+  private final PyTuple tuple;
 
-  PyTupleIterator(PyTuple list, int index)
+  /**
+   * The current index of the iterator.
+   */
+  private int index;
+
+  /**
+   * Constructs a PyTupleIterator starting at the specified index.
+   *
+   * @param tuple The PyTuple to iterate over.
+   * @param index The initial index of the iterator.
+   */
+  PyTupleIterator(PyTuple tuple, int index)
   {
-    this.tuple = list;
+    if (index < 0 || index > tuple.size())
+    {
+      throw new IndexOutOfBoundsException("Index out of bounds for PyTuple.");
+    }
+    this.tuple = tuple;
     this.index = index;
   }
 
+  /**
+   * Unsupported operation: Adding elements is not allowed for PyTupleIterator.
+   *
+   * @param e The element to add (ignored).
+   * @throws UnsupportedOperationException Always thrown.
+   */
   @Override
   public void add(PyObject e)
   {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("PyTupleIterator does not support add operation.");
   }
 
+  /**
+   * Checks if there are more elements when iterating forward.
+   *
+   * @return True if there is a next element, false otherwise.
+   */
   @Override
   public boolean hasNext()
   {
     return index < tuple.size();
   }
 
+  /**
+   * Checks if there are more elements when iterating backward.
+   *
+   * @return True if there is a previous element, false otherwise.
+   */
   @Override
   public boolean hasPrevious()
   {
     return index > 0;
   }
 
+  /**
+   * Returns the next element in the iteration and advances the cursor forward.
+   *
+   * @return The next PyObject in the tuple.
+   * @throws NoSuchElementException If there is no next element.
+   */
   @Override
   public PyObject next()
   {
     if (!hasNext())
-      throw new NoSuchElementException();
+    {
+      throw new NoSuchElementException("No next element.");
+    }
     PyObject out = tuple.get(index);
     index++;
-    forward = true;
-    reverse = false;
     return out;
   }
 
+  /**
+   * Returns the index of the element that would be returned by a subsequent
+   * call to {@link #next()}.
+   *
+   * @return The index of the next element.
+   */
   @Override
   public int nextIndex()
   {
     return index;
   }
 
+  /**
+   * Returns the previous element in the iteration and moves the cursor
+   * backward.
+   *
+   * @return The previous PyObject in the tuple.
+   * @throws NoSuchElementException If there is no previous element.
+   */
   @Override
   public PyObject previous()
   {
     if (!hasPrevious())
-      throw new NoSuchElementException();
+    {
+      throw new NoSuchElementException("No previous element in PyTuple.");
+    }
     index--;
     PyObject out = tuple.get(index);
-    forward = false;
-    reverse = true;
     return out;
   }
 
+  /**
+   * Returns the index of the element that would be returned by a subsequent
+   * call to {@link #previous()}.
+   *
+   * @return The index of the previous element.
+   */
   @Override
   public int previousIndex()
   {
-    return index--;
+    return index - 1;
   }
 
+  /**
+   * Unsupported operation: Removing elements is not allowed for
+   * PyTupleIterator.
+   *
+   * @throws UnsupportedOperationException Always thrown.
+   */
   @Override
   public void remove()
   {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("PyTupleIterator does not support remove operation.");
   }
 
+  /**
+   * Unsupported operation: Setting elements is not allowed for PyTupleIterator.
+   *
+   * @param e The element to set (ignored).
+   * @throws UnsupportedOperationException Always thrown.
+   */
   @Override
   public void set(PyObject e)
   {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("PyTupleIterator does not support set operation.");
   }
-
 }

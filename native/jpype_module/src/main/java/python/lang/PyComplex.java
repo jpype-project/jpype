@@ -20,23 +20,58 @@ import org.jpype.bridge.Interpreter;
 import python.protocol.PyNumber;
 
 /**
- * Java front end for concrete Python complex.
+ * Java front-end interface for the Python `complex` type.
+ *
+ * This interface provides methods for creating and manipulating Python
+ * `complex` numbers in a Java environment.
  */
 public interface PyComplex extends PyObject, PyNumber
 {
+
+  /**
+   * Creates a new Python `complex` number with the specified real and imaginary
+   * parts.
+   *
+   * @param real the real part of the complex number.
+   * @param imag the imaginary part of the complex number.
+   * @return a new {@link PyComplex} instance representing the complex number.
+   */
   static PyComplex of(double real, double imag)
   {
     return Interpreter.getBackend().newComplex(real, imag);
   }
-          
+
+  /**
+   * Retrieves the Python type object for `complex`. This is equivalent to
+   * evaluating `type(complex)` in Python.
+   *
+   * @return the {@link PyType} instance representing the Python `complex` type.
+   */
   static PyType type()
   {
     return (PyType) BuiltIn.eval("complex", null, null);
   }
 
+  /**
+   * Returns the real part of the complex number.
+   *
+   * @return the real part as a {@code double}.
+   */
   double real();
 
+  /**
+   * Returns the imaginary part of the complex number.
+   *
+   * @return the imaginary part as a {@code double}.
+   */
   double imag();
 
+  /**
+   * Computes the complex conjugate of the current complex number. The conjugate
+   * of a complex number is obtained by negating its imaginary part.
+   *
+   * @return a new {@link PyComplex} instance representing the conjugate of the
+   * current complex number.
+   */
   PyComplex conjugate();
 }

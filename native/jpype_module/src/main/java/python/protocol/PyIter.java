@@ -35,7 +35,7 @@ public interface PyIter extends PyProtocol
    *
    * @return
    */
-  default Iterator<PyObject> iterator()
+  default Iterator<? extends PyObject> iterator()
   {
     // It is not clear if we should tee the iterator here or not.
     //   return new PyIterator(Interpreter.getBackend().tee(this));    

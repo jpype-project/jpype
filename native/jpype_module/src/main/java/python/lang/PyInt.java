@@ -20,16 +20,40 @@ import org.jpype.bridge.Interpreter;
 import python.protocol.PyNumber;
 
 /**
+ * Java front-end interface for the Python `int` type.
  *
- * @author nelson85
+ * This interface provides functionality for creating and interacting with
+ * Python `int` objects in a Java environment, mimicking Python's built-in
+ * integer type.
+ *
+ * <p>
+ * The Python `int` type represents arbitrary-precision integers and supports
+ * operations defined for Python numeric types. This interface allows Java
+ * developers to work seamlessly with Python `int` objects, bridging the gap
+ * between Java's {@code long} type and Python's `int`.
  */
 public interface PyInt extends PyObject, PyNumber
 {
-    static PyFloat of(long value)
+
+  /**
+   * Creates a new Python `int` object from the specified Java {@code long}
+   * value. The resulting {@link PyInt} object represents the Python equivalent
+   * of the given integer.
+   *
+   * @param value the {@code long} value to be converted into a Python `int`.
+   * @return a new {@link PyInt} instance representing the Python `int` object.
+   */
+  static PyInt of(long value)
   {
-     return Interpreter.getBackend().newInt(value);
+    return Interpreter.getBackend().newInt(value);
   }
-  
+
+  /**
+   * Retrieves the Python type object for `int`. This is equivalent to
+   * evaluating `type(int)` in Python.
+   *
+   * @return the {@link PyType} instance representing the Python `int` type.
+   */
   static PyType type()
   {
     return (PyType) BuiltIn.eval("int", null, null);

@@ -15,19 +15,30 @@
  */
 package python.protocol;
 
+import java.util.Iterator;
 import python.lang.PyObject;
 
 /**
  *
  * @author nelson85
  */
-public interface PyProtocol extends PyObject
+class PyMappingValuesIterator implements Iterator<PyObject>
 {
 
-  /**
-   * Return the base object protocol.
-   *
-   * @return the object this protocol represents.
-   */
-  PyObject asObject();
+  public PyMappingValuesIterator(PyMapping map)
+  {
+  }
+
+  @Override
+  public boolean hasNext()
+  {
+    throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+  }
+
+  @Override
+  public PyObject next()
+  {
+    throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+  }
+  
 }

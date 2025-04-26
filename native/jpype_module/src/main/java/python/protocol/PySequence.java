@@ -21,80 +21,96 @@ import org.jpype.bridge.Interpreter;
 import python.lang.PyObject;
 
 /**
- * Interface for objects that act as sequences.
+ * Interface for Python-like objects that act as sequences.
+ *
+ * This interface extends {@link PyProtocol} and {@link List}, providing methods
+ * for accessing, modifying, and deleting elements in a sequence. It also
+ * supports Python-style slicing and indexing operations.
+ *
+ * Methods in this interface are designed to mimic Python's sequence protocol,
+ * including operations such as `getitem`, `setitem`, and `delitem`.
  */
 public interface PySequence extends PyProtocol, List<PyObject>
 {
 
   /**
-   * Get the item by index.
+   * Retrieves an item from the sequence by its index.
    *
-   * Equivalent to getitem(obj, index).
+   * This method is equivalent to Python's `getitem(obj, index)` operation.
    *
-   * @param index
-   * @return
+   * @param index the index of the item to retrieve
+   * @return the item at the specified index as a {@link PyObject}
    */
   @Override
   default PyObject get(int index)
   {
-    return BuiltIn.sequence_getitem(index);
+    return Interpreter.getBackend().getitemSequence(this, index);
   }
 
   /**
-   * Get a slice or by index.
+   * Retrieves an item or slice from the sequence using a {@link PyIndex}.
    *
-   * Equivalent to obj[slice].
+   * This method is equivalent to Python's `obj[index]` operation, where the
+   * index may represent a single item or a slice.
    *
-   * @param index
-   * @return
+   * @param index the {@link PyIndex} representing the item or slice to retrieve
+   * @return the item or slice as a {@link PyObject}
    */
   default PyObject get(PyIndex index)
   {
-    return BuiltIn.sequence_getitem(index.asObject());
+    return Interpreter.getBackend().getitemMappingObject(this, index);
   }
 
   /**
-   * Get slices.
+   * Retrieves a slice or multiple slices from the sequence using an array of
+   * {@link PyIndex}.
    *
-   * Equivalent to obj[slice, slice].
+   * This method is equivalent to Python's `obj[slice, slice]` operation,
+   * supporting multidimensional slicing.
    *
-   *
-   * @param slices
-   * @return
+   * @param indices an array of {@link PyIndex} objects representing the slices
+   * to retrieve
+   * @return the resulting slice(s) as a {@link PyObject}
    */
   default PyObject get(PyIndex... indices)
   {
-    return Interpreter.getBackend().sequenceGetItem(BuiltIn.tuple(indices));
+    return Interpreter.getBackend().getitemMappingObject(this, BuiltIn.indices(indices));
   }
 
   /**
-   * Set an item by index.
+   * Sets an item in the sequence at the specified index.
    *
-   * Equivalent to setitem(obj, index).
+   * This method is equivalent to Python's `setitem(obj, index, value)`
+   * operation.
    *
-   * @param index
-   * @param value
+   * @param index the index of the item to set
+   * @param value the value to assign to the specified index
+   * @return the previous value at the specified index as a {@link PyObject}
    */
   @Override
   PyObject set(int index, PyObject value);
 
   /**
-   * Delete an item by index.
+   * Removes an item from the sequence at the specified index.
    *
-   * Equivalent to delitem(obj, index).
+   * This method is equivalent to Python's `delitem(obj, index)` operation.
    *
-   * @param index
+   * @param index the index of the item to remove
+   * @return the removed item as a {@link PyObject}
    */
   @Override
   PyObject remove(int index);
 
   /**
-   * Delete an item by index.
+   * Returns the size of the sequence.
    *
-   * Equivalent to len(obj).
+   * This method is equivalent to Python's `len(obj)` operation.
    *
-   * @return
+   * @return the number of items in the sequence
    */
   @Override
-  int size();
+  default int size()
+  {
+        return Interpreter.getBackend().len(this);
+  }
 }

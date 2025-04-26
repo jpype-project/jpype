@@ -56,7 +56,6 @@ import python.exception.PyZeroDivisionError;
 
 /**
  *
- * @author nelson85
  */
 class PyExceptionFactory
 {

@@ -15,6 +15,12 @@
  */
 package python.protocol;
 
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+import org.jpype.bridge.Backend;
+import org.jpype.bridge.BuiltIn;
+import org.jpype.bridge.Interpreter;
 import python.lang.PyDict;
 import python.lang.PyList;
 import python.lang.PyObject;
@@ -25,18 +31,60 @@ import python.lang.PyObject;
  *
  * @author nelson85
  */
-public interface PyAttributes extends PyProtocol
+public class PyAttributes implements Map<CharSequence, PyObject>
 {
 
-  /**
-   * Check if an attribute exists.
-   *
-   * Equivalent of hasattr(obj, key).
-   *
-   * @param key
-   * @return true if the attribute exists.
-   */
-  boolean has(String key);
+  private final Backend backend;
+  PyDict dict;
+  private final PyObject obj;
+
+  PyAttributes(PyObject obj)
+  {
+    this.obj = obj;
+    this.backend = Interpreter.getBackend();
+  }
+  public PyDict asDict()
+  {
+    if (this.dict == null)
+      this.dict = BuiltIn.vars(this);
+    return this.dict;
+  }
+
+  @Override
+  public void clear()
+  {
+    asDict().clear();
+  }
+
+  @Override
+  public boolean containsKey(Object key)
+  {
+    return asDict().containsKey(key);
+  }
+
+  @Override
+  public boolean containsValue(Object value)
+  {
+    return BuiltIn.vars(this).containsValue(value);
+  }
+
+
+  public PyList dir()
+  {
+    return BuiltIn.dir(obj);
+  }
+
+  @Override
+  public Set<Entry<CharSequence, PyObject>> entrySet()
+  {
+    throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+  }
+
+  @Override
+  public PyObject get(Object key)
+  {
+    return BuiltIn.getattr(obj, key);
+  }
 
   /**
    * Get the value of an attribute.
@@ -46,21 +94,70 @@ public interface PyAttributes extends PyProtocol
    * @param key
    * @return
    */
-  PyObject get(String key);
+  public PyObject get(CharSequence key)
+  {
+    return BuiltIn.getattr(obj, key);
+  }
+
+  @Override
+  public PyObject getOrDefault(Object key, PyObject defaultValue)
+  {
+    return BuiltIn.getattrDefault(obj, key, defaultValue);
+  }
 
   /**
-   * Set the value of an attribute.
+   * Check if an attribute exists.
    *
-   * Equivalent of setattr(obj, key, value).
+   * Equivalent of hasattr(obj, key).
    *
    * @param key
-   * @return
+   * @return true if the attribute exists.
    */
-  void set(String key, Object obj);
+  public boolean contains(CharSequence key)
+  {
+    return BuiltIn.hasattr(obj, key);
+  }
 
-  void remove(String key);
+  @Override
+  public boolean isEmpty()
+  {
+    return asDict().isEmpty();
+  }
 
-  PyList dir();
+  @Override
+  public Set<CharSequence> keySet()
+  {
+    throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+  }
 
-  PyDict dict();
+  @Override
+  public PyObject put(CharSequence key, PyObject value)
+  {
+    return backend.setattrReturn(obj, key, value);
+  }
+
+  @Override
+  public void putAll(Map<? extends CharSequence, ? extends PyObject> m)
+  {
+    throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+  }
+ 
+  @Override
+  public PyObject remove(Object key)
+  {
+    throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+  }
+
+  @Override
+  public int size()
+  {
+    return asDict().size();
+  }
+
+  @Override
+  public Collection<PyObject> values()
+  {
+    return asDict().values();
+  }
+
 }

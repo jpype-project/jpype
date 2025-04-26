@@ -18,6 +18,7 @@ package python.protocol;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.function.BiFunction;
 import org.jpype.bridge.Interpreter;
 import org.jpype.bridge.BuiltIn;
 import python.lang.PyObject;
@@ -26,7 +27,7 @@ import python.lang.PyObject;
  *
  * @author nelson85
  */
-public class PyMappingEntrySetIterator implements Iterator<Map.Entry<Object, PyObject>>
+public class PyMappingEntrySetIterator<K,V> implements Iterator<Map.Entry<K, V>>
 {
 
   private final PyMapping map;
@@ -34,11 +35,20 @@ public class PyMappingEntrySetIterator implements Iterator<Map.Entry<Object, PyO
   private PyObject yield;
   private boolean done = false;
   private boolean check = false;
+  private final BiFunction<Object, PyObject, PyObject> setter;
 
   public PyMappingEntrySetIterator(PyMapping map, PyIter iter)
   {
     this.map = map;
     this.iter = iter;
+    this.setter = this::set;
+  }
+
+  private PyObject set(Object key, PyObject value)
+  {
+    PyObject out = map.get(key);
+    map.put(key, value);
+    return out;
   }
 
   @Override
@@ -56,7 +66,7 @@ public class PyMappingEntrySetIterator implements Iterator<Map.Entry<Object, PyO
   }
 
   @Override
-  public Map.Entry<Object, PyObject> next() throws NoSuchElementException
+  public Map.Entry<K, V> next() throws NoSuchElementException
   {
     if (!check)
       hasNext();
@@ -67,42 +77,7 @@ public class PyMappingEntrySetIterator implements Iterator<Map.Entry<Object, PyO
     PySequence tuple = yield.asSequence();
     PyObject key = tuple.get(0);
     PyObject value = tuple.get(1);
-    return new Entry(key, value);
-  }
-
-  class Entry implements Map.Entry<Object, PyObject>
-  {
-
-    private final PyObject key;
-    private PyObject value;
-
-    private Entry(PyObject key, PyObject value)
-    {
-      this.key = key;
-      this.value = value;
-    }
-
-    @Override
-    public Object getKey()
-    {
-      return key;
-    }
-
-    @Override
-    public PyObject getValue()
-    {
-      return value;
-    }
-
-    @Override
-    public PyObject setValue(PyObject value)
-    {
-      PyObject prior = this.value;
-      map.put(key, value);
-      this.value = value;
-      return prior;
-    }
-
+    return new Utility.MapEntryWithSet(key, value, setter);
   }
 
 }

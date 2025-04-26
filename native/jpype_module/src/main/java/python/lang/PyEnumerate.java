@@ -15,22 +15,47 @@
  */
 package python.lang;
 
-import python.protocol.PyGenerator;
 import org.jpype.bridge.BuiltIn;
 import org.jpype.bridge.Interpreter;
-import python.protocol.PyIterable;
+import python.protocol.PyIter;
 
 /**
- * Java front end for concrete Python enumerate.
+ * Java front-end interface for the Python `enumerate` type.
+ *
+ * This interface provides functionality for working with Python's `enumerate`
+ * objects in a Java environment, mimicking the behavior of Python's built-in
+ * `enumerate` function.
+ *
+ * <p>
+ * The Python `enumerate` type is a generator that yields pairs of an index and
+ * the corresponding element from an iterable. This interface allows Java
+ * developers to interact with Python `enumerate` objects seamlessly.
  */
-public interface PyEnumerate extends PyGenerator
+public interface PyEnumerate extends PyIter
 {
 
-  static PyEnumerate of(Iterable<PyObject> iterable)
+  /**
+   * Creates a new Python `enumerate` object from the specified Java
+   * {@link Iterable}. The resulting `PyEnumerate` object will yield pairs of an
+   * index (starting from 0) and the corresponding element from the iterable,
+   * similar to Python's `enumerate` function.
+   *
+   * @param iterable the {@link Iterable} whose elements will be enumerated.
+   * @return a new {@link PyEnumerate} instance representing the Python
+   * `enumerate` object.
+   */
+  static PyEnumerate of(Iterable iterable)
   {
     return Interpreter.getBackend().newEnumerate(iterable);
   }
 
+  /**
+   * Retrieves the Python type object for `enumerate`. This is equivalent to
+   * evaluating `type(enumerate)` in Python.
+   *
+   * @return the {@link PyType} instance representing the Python `enumerate`
+   * type.
+   */
   static PyType type()
   {
     return (PyType) BuiltIn.eval("enumerate", null, null);

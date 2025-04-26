@@ -20,7 +20,6 @@ import java.util.NoSuchElementException;
 
 /**
  *
- * @author nelson85
  */
 class PyListIterator implements ListIterator<PyObject>
 {

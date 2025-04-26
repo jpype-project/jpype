@@ -26,8 +26,6 @@ import static python.lang.PyExceptionFactory.LOOKUP;
  * Native version of a Python exception.
  *
  * This will be the type that is unwrapped to in Python.
- *
- * @author nelson85
  */
 public interface PyExc extends PyObject
 {

@@ -40,7 +40,7 @@ public class Context extends BuiltIn
   {
     if (!Interpreter.getInstance().isJava())
       throw new IllegalStateException("Java bridge must be active");
-    this.globalsDict = Interpreter.backend.dict();
+    this.globalsDict = Interpreter.backend.newDict();
     this.localsDict = globalsDict;
   }
 

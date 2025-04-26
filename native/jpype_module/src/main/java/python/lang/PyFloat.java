@@ -20,18 +20,44 @@ import org.jpype.bridge.Interpreter;
 import python.protocol.PyNumber;
 
 /**
+ * Java front-end interface for the Python `float` type.
  *
+ * This interface provides functionality for creating and interacting with
+ * Python `float` objects in a Java environment, mimicking Python's built-in
+ * `float` type.
+ *
+ * <p>
+ * The Python `float` type represents floating-point numbers and supports
+ * operations defined for Python numeric types. This interface allows Java
+ * developers to work seamlessly with Python `float` objects, bridging the gap
+ * between Java's {@code double} type and Python's `float`.
  */
-public interface PyFloat extends PyObject, PyNumber 
+public interface PyFloat extends PyObject, PyNumber
 {
-    static PyFloat of(double value)
+
+  /**
+   * Creates a new Python `float` object from the specified Java {@code double}
+   * value. The resulting {@link PyFloat} object represents the Python
+   * equivalent of the given floating-point number.
+   *
+   * @param value the {@code double} value to be converted into a Python
+   * `float`.
+   * @return a new {@link PyFloat} instance representing the Python `float`
+   * object.
+   */
+  static PyFloat of(double value)
   {
-     return Interpreter.getBackend().newDouble(value);
+    return Interpreter.getBackend().newFloat(value);
   }
-  
+
+  /**
+   * Retrieves the Python type object for `float`. This is equivalent to
+   * evaluating `type(float)` in Python.
+   *
+   * @return the {@link PyType} instance representing the Python `float` type.
+   */
   static PyType type()
   {
     return (PyType) BuiltIn.eval("float", null, null);
   }
-
 }

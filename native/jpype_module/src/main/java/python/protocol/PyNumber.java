@@ -18,74 +18,332 @@ package python.protocol;
 import python.lang.PyObject;
 
 /**
+ * Interface representing Python numeric operations.
+ *
+ * This interface provides methods to perform arithmetic operations, type
+ * conversions, and other behaviors that mimic Python's numeric protocol. It is
+ * designed to facilitate interoperability between Java and Python numeric
+ * types, enabling seamless integration of Python-like numeric behavior in Java
+ * applications.
+ *
+ * Each method corresponds to a Python numeric operation (e.g., addition,
+ * subtraction, multiplication) and supports operations with Python objects,
+ * primitive types, and in-place modifications.
  *
  * @author nelson85
  */
-public interface PyNumber extends PyProtocol
+public interface PyNumber extends PyProtocol, Comparable<Number>
 {
 
-  PyObject add(PyObject o);
+  // Addition operations
+  /**
+   * Adds the given PyObject to this object.
+   *
+   * @param other The PyObject to add.
+   * @return A new PyObject representing the result of the addition.
+   */
+  PyObject add(PyObject other);
 
-  PyObject add(long o);
+  /**
+   * Adds the given long value to this object.
+   *
+   * @param value The long value to add.
+   * @return A new PyObject representing the result of the addition.
+   */
+  PyObject add(long value);
 
-  PyObject add(double o);
+  /**
+   * Adds the given double value to this object.
+   *
+   * @param value The double value to add.
+   * @return A new PyObject representing the result of the addition.
+   */
+  PyObject add(double value);
 
-  PyObject addAssign(PyObject o);
+  /**
+   * Performs in-place addition with the given PyObject.
+   *
+   * @param other The PyObject to add.
+   * @return The updated PyObject after in-place addition.
+   */
+  PyObject addInPlace(PyObject other);
 
-  PyObject addAssign(long o);
+  /**
+   * Performs in-place addition with the given long value.
+   *
+   * @param value The long value to add.
+   * @return The updated PyObject after in-place addition.
+   */
+  PyObject addInPlace(long value);
 
-  PyObject addAssign(double o);
+  /**
+   * Performs in-place addition with the given double value.
+   *
+   * @param value The double value to add.
+   * @return The updated PyObject after in-place addition.
+   */
+  PyObject addInPlace(double value);
 
-  PyObject div(PyObject o);
+  // Division operations
+  /**
+   * Divides this object by the given PyObject.
+   *
+   * @param other The PyObject to divide by.
+   * @return A new PyObject representing the result of the division.
+   */
+  PyObject divide(PyObject other);
 
-  PyObject div(long o);
+  /**
+   * Divides this object by the given long value.
+   *
+   * @param value The long value to divide by.
+   * @return A new PyObject representing the result of the division.
+   */
+  PyObject divide(long value);
 
-  PyObject div(double o);
+  /**
+   * Divides this object by the given double value.
+   *
+   * @param value The double value to divide by.
+   * @return A new PyObject representing the result of the division.
+   */
+  PyObject divide(double value);
 
-  PyObject divAssign(PyObject o);
+  /**
+   * Performs in-place division by the given PyObject.
+   *
+   * @param other The PyObject to divide by.
+   * @return The updated PyObject after in-place division.
+   */
+  PyObject divideInPlace(PyObject other);
 
-  PyObject divAssign(long o);
+  /**
+   * Performs in-place division by the given long value.
+   *
+   * @param value The long value to divide by.
+   * @return The updated PyObject after in-place division.
+   */
+  PyObject divideInPlace(long value);
 
-  PyObject divAssign(double o);
+  /**
+   * Performs in-place division by the given double value.
+   *
+   * @param value The double value to divide by.
+   * @return The updated PyObject after in-place division.
+   */
+  PyObject divideInPlace(double value);
 
-  PyObject divMod(PyObject o);
+  // Division with remainder (modulus)
+  /**
+   * Performs division with remainder (divmod) operation with the given
+   * PyObject.
+   *
+   * @param other The PyObject to divide by.
+   * @return A PyObject representing the result of the divmod operation.
+   */
+  PyObject divideWithRemainder(PyObject other);
 
-  PyObject matMult(PyObject o);
+  // Matrix multiplication
+  /**
+   * Performs matrix multiplication with the given PyObject.
+   *
+   * @param other The PyObject to multiply with.
+   * @return A PyObject representing the result of the matrix multiplication.
+   */
+  PyObject matrixMultiply(PyObject other);
 
-  PyObject mult(PyObject o);
+  // Multiplication operations
+  /**
+   * Multiplies this object by the given PyObject.
+   *
+   * @param other The PyObject to multiply with.
+   * @return A new PyObject representing the result of the multiplication.
+   */
+  PyObject multiply(PyObject other);
 
-  PyObject mult(long o);
+  /**
+   * Multiplies this object by the given long value.
+   *
+   * @param value The long value to multiply with.
+   * @return A new PyObject representing the result of the multiplication.
+   */
+  PyObject multiply(long value);
 
-  PyObject mult(double o);
+  /**
+   * Multiplies this object by the given double value.
+   *
+   * @param value The double value to multiply with.
+   * @return A new PyObject representing the result of the multiplication.
+   */
+  PyObject multiply(double value);
 
-  PyObject multAssign(PyObject o);
+  /**
+   * Performs in-place multiplication with the given PyObject.
+   *
+   * @param other The PyObject to multiply with.
+   * @return The updated PyObject after in-place multiplication.
+   */
+  PyObject multiplyInPlace(PyObject other);
 
-  PyObject multAssign(long o);
+  /**
+   * Performs in-place multiplication with the given long value.
+   *
+   * @param value The long value to multiply with.
+   * @return The updated PyObject after in-place multiplication.
+   */
+  PyObject multiplyInPlace(long value);
 
-  PyObject multAssign(double o);
+  /**
+   * Performs in-place multiplication with the given double value.
+   *
+   * @param value The double value to multiply with.
+   * @return The updated PyObject after in-place multiplication.
+   */
+  PyObject multiplyInPlace(double value);
 
-  boolean not();
+  // Logical negation
+  /**
+   * Performs logical negation (NOT operation) on this object.
+   *
+   * @return A boolean representing the negated value.
+   */
+  boolean negate();
 
-  PyObject pow(PyObject o);
+  // Exponentiation
+  /**
+   * Raises this object to the power of the given PyObject.
+   *
+   * @param exponent The PyObject representing the exponent.
+   * @return A PyObject representing the result of the exponentiation.
+   */
+  PyObject power(PyObject exponent);
 
-  PyObject remainder(PyObject o);
+  // Remainder (modulus)
+  /**
+   * Computes the remainder (modulus) of this object divided by the given
+   * PyObject.
+   *
+   * @param other The PyObject to divide by.
+   * @return A PyObject representing the result of the modulus operation.
+   */
+  PyObject modulus(PyObject other);
 
-  PyObject sub(PyObject o);
+  // Subtraction operations
+  /**
+   * Subtracts the given PyObject from this object.
+   *
+   * @param other The PyObject to subtract.
+   * @return A new PyObject representing the result of the subtraction.
+   */
+  PyObject subtract(PyObject other);
 
-  PyObject sub(long o);
+  /**
+   * Subtracts the given long value from this object.
+   *
+   * @param value The long value to subtract.
+   * @return A new PyObject representing the result of the subtraction.
+   */
+  PyObject subtract(long value);
 
-  PyObject sub(double o);
+  /**
+   * Subtracts the given double value from this object.
+   *
+   * @param value The double value to subtract.
+   * @return A new PyObject representing the result of the subtraction.
+   */
+  PyObject subtract(double value);
 
-  PyObject subAssign(PyObject o);
+  /**
+   * Performs in-place subtraction with the given PyObject.
+   *
+   * @param other The PyObject to subtract.
+   * @return The updated PyObject after in-place subtraction.
+   */
+  PyObject subtractInPlace(PyObject other);
 
-  PyObject subAssign(long o);
+  /**
+   * Performs in-place subtraction with the given long value.
+   *
+   * @param value The long value to subtract.
+   * @return The updated PyObject after in-place subtraction.
+   */
+  PyObject subtractInPlace(long value);
 
-  PyObject subAssign(double o);
+  /**
+   * Performs in-place subtraction with the given double value.
+   *
+   * @param value The double value to subtract.
+   * @return The updated PyObject after in-place subtraction.
+   */
+  PyObject subtractInPlace(double value);
 
-  boolean toBool();
+  // Conversion methods
+  /**
+   * Converts this object to a boolean value.
+   *
+   * @return A boolean representation of this object.
+   */
+  boolean toBoolean();
 
-  double toFloat();
+  /**
+   * Converts this object to a double value.
+   *
+   * @return A double representation of this object.
+   */
+  double toDouble();
 
-  int toInt();
+  /**
+   * Converts this object to an integer value.
+   *
+   * @return An integer representation of this object.
+   */
+  int toInteger();
 
+  /**
+   * Computes the absolute value of this object.
+   *
+   * @return A PyObject representing the absolute value.
+   */
+  PyObject abs();
+
+  /**
+   * Computes the negation (unary minus) of this object.
+   *
+   * @return A PyObject representing the negated value.
+   */
+  PyObject negateValue();
+
+  /**
+   * Computes the positive value (unary plus) of this object.
+   *
+   * @return A PyObject representing the positive value.
+   */
+  PyObject positive();
+
+  /**
+   * Performs floor division with the given PyObject.
+   *
+   * @param other The PyObject to divide by.
+   * @return A PyObject representing the result of the floor division.
+   */
+  PyObject floorDivide(PyObject other);
+
+  /**
+   * Performs floor division with the given long value.
+   *
+   * @param value The long value to divide by.
+   * @return A PyObject representing the result of the floor division.
+   */
+  PyObject floorDivide(long value);
+
+  /**
+   * Performs floor division with the given double value.
+   *
+   * @param value The double value to divide by.
+   * @return A PyObject representing the result of the floor division.
+   */
+  PyObject floorDivide(double value);
+
+  @Override
+  int compareTo(Number o);
 }

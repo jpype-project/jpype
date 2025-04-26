@@ -19,7 +19,6 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import org.jpype.bridge.Interpreter;
 import org.jpype.bridge.BuiltIn;
-import python.lang.PyObject;
 
 /**
  * Conversion of a Python iterator to Java.
@@ -29,11 +28,11 @@ import python.lang.PyObject;
  * Python and Java iterators don't share similar design philosophies, so we will
  * need to keep some state on the Java side to manage the conversion.
  */
-public class PyIterator implements Iterator<PyObject>
+public class PyIterator<T> implements Iterator<T>
 {
 
   private final PyIter iter;
-  private PyObject yield;
+  private T yield;
   private boolean done = false;
   private boolean check = false;
 
@@ -51,13 +50,13 @@ public class PyIterator implements Iterator<PyObject>
       return !done;
     check = true;
     if (yield == null)
-      yield = BuiltIn.next(iter, Interpreter.stop);
+      yield = (T) BuiltIn.next(iter, Interpreter.stop);
     done = (yield == Interpreter.stop);
     return !done;
   }
 
   @Override
-  public PyObject next() throws NoSuchElementException
+  public T next() throws NoSuchElementException
   {
     if (!check)
       hasNext();

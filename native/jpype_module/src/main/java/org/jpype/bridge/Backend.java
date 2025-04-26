@@ -15,7 +15,9 @@
  */
 package org.jpype.bridge;
 
+import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.Future;
 import python.lang.PyByteArray;
 import python.lang.PyBytes;
 import python.lang.PyComplex;
@@ -23,6 +25,7 @@ import python.lang.PyDict;
 import python.lang.PyEnumerate;
 import python.lang.PyFloat;
 import python.lang.PyFrozenSet;
+import python.lang.PyInt;
 import python.lang.PyList;
 import python.lang.PyMemoryView;
 import python.lang.PyObject;
@@ -33,10 +36,12 @@ import python.lang.PyString;
 import python.lang.PyTuple;
 import python.lang.PyType;
 import python.lang.PyZip;
+import python.protocol.PyBuffer;
 import python.protocol.PyCallable;
 import python.protocol.PyMapping;
 import python.protocol.PyIter;
 import python.protocol.PyIterable;
+import python.protocol.PyMappingValues;
 
 /**
  * Backend for all Python entry points.
@@ -46,173 +51,243 @@ import python.protocol.PyIterable;
  * behavior.
  *
  * The user should not call these directly. The user interface is located on
- * Context.
+ * BuiltIn and Context.
  *
  * Parameters are the most generic type possible so that they can be used
  * universally throughout the bridge. Return types are the most specific.
  *
  * CharSequence will be used rather than the usual Java String as it allows both
  * Python str and Java String through the same interface.
+ *
+ * Generally these methods should not be overloaded as we may need use different
+ * implementations depending on the arguments.
  */
 public interface Backend
 {
 
+  // Create a Python `bytearray` from the given object.
   PyByteArray bytearray(Object obj);
 
+  // Create a Python `bytearray` from a hex-encoded string.
   PyByteArray bytearrayFromHex(CharSequence str);
 
+  // Create a Python `bytes` object from the given object.
   PyBytes bytes(Object obj);
 
+  // Create a Python `bytes` object from a hex-encoded string.
   PyBytes bytesFromHex(CharSequence str);
 
+  // Call a Python callable with arguments and keyword arguments.
   PyObject call(PyCallable obj, PyTuple args, PyDict kwargs);
 
-  PyComplex complex(double r, double i);
+  // Call a Python callable asynchronously with arguments and keyword arguments.
+  Future<PyObject> callAsync(PyCallable aThis, PyTuple args, PyDict kwargs);
 
-  void delattr(Object obj, CharSequence str);
+  // Call a Python callable asynchronously with a timeout.
+  Future<PyObject> callAsyncWithTimeout(PyCallable aThis, PyTuple args, PyDict kwargs, long timeout);
 
-  boolean delindex(PyList aThis, int indexOf);
+  // Delete an attribute from a Python object.
+  void delattrString(Object obj, CharSequence arg);
 
-  PyDict dict();
+  // Delete an item from a Python object by index.
+  boolean delByIndex(Object obj, int index);
 
+  // Get a list of attributes for a Python object (`dir`).
   PyList dir(Object obj);
 
+  // Create a Python `enumerate` object from the given iterable.
   PyEnumerate enumerate(Object obj);
 
-  PyObject eval(CharSequence source, PyDict globalsDict, PyMapping localsDict);
+  // Evaluate a Python expression with optional globals and locals.
+  PyObject eval(CharSequence source, PyDict globals, PyMapping locals);
 
-  void exec(CharSequence source, PyDict globalsDict, PyMapping localsDict);
+  // Execute a Python statement with optional globals and locals.
+  void exec(CharSequence source, PyDict globals, PyMapping locals);
 
+  // Get the type of a Python callable as a string.
+  String getCallableType(PyCallable obj);
+
+  // Get the `__dict__` attribute of a Python object.
   PyDict getDict(Object obj);
 
-  PyObject getattr(Object obj, CharSequence str);
+  // Get the docstring of a Python callable.
+  String getDocString(PyCallable obj);
 
-  public PyObject getitem(PyDict globalsDict, CharSequence key);
+  // Get the signature of a Python callable.
+  PyObject getSignature(PyCallable obj);
 
-  boolean hasattr(Object obj, CharSequence str);
+  public PyObject getattrObject(PyObject obj, Object key);
 
-  boolean isinstance(Object obj, Object[] types);
+  // Get an attribute from a Python object by name.
+  PyObject getattrString(Object obj, CharSequence str);
 
-  PyIter iter(Object obj);
+  // Get an item from a Python mapping object by key.
+  PyObject getitemMappingObject(PyObject obj, PyObject key);
 
-  <T> PyList list(Iterable<T> list);
+  // Get an item from a Python mapping object by string key.
+  PyObject getitemMappingString(PyObject obj, CharSequence key);
 
-  PyList list(Object... list);
+  // Get an item from a Python sequence by index.
+  PyObject getitemSequence(PyObject obj, int index);
 
-  PyMemoryView memoryview(Object obj);
+  // Check if a Python object has a specific attribute.
+  boolean hasattrString(Object obj, CharSequence key);
 
-  PyDict newDict(Map map);
+  // Check if a Python callable is callable.
+  public boolean isCallable(PyCallable obj);
 
-  public PySet newSet(Iterable c);
+  // Check if a Python object is an instance of any of the specified types.
+  boolean isinstanceFromArray(Object obj, Object[] types);
 
-  PyObject next(PyIter iter, PyObject stop);
-
-  PyObject object();
-
-  PyRange range(int stop);
-
-  PyRange range(int start, int stop);
-
-  PyRange range(int start, int stop, int step);
-
-  PyString repr(Object str);
-
-  PySet set();
-
-  void setattr(Object obj, CharSequence str, Object value);
-
-  public void setitem(PyDict globalsDict, CharSequence key, Object value);
-
-  PySlice slice(Integer start, Integer stop, Integer step);
-
-  PyString str(Object str);
-
-  PyIter tee(PyIter iter);
-
-  <T> PyList tuple(Iterable<T> list);
-
-  <T> PyTuple tuple(T... obj);
-
-  PyType type(Object obj);
-
+  // Get the items of a Python mapping object.
   PyObject items(PyObject obj);
 
-  PyObject values(PyObject obj);
+  // Create a Python iterator from the given object.
+  PyIter iter(Object obj);
 
+  // Get the length of a Python object (`len`).
+  public int len(Object aThis);
+
+  public void mappingClear();
+
+  public void mappingClear(PyMapping aThis);
+
+  public boolean mappingContainsAllValues(PyMappingValues aThis, Collection<?> c);
+
+  public boolean mappingContainsAllValues(PyMapping map, Collection<?> c);
+
+  public boolean mappingContainsValue(Object value);
+
+  public boolean mappingContainsValue(PyMapping aThis, Object value);
+
+  public boolean mappingRemoveAllKeys(PyMapping map, Collection<?> collection);
+
+  public boolean mappingRemoveAllValue(PyMapping map, Collection<?> collection);
+
+  public boolean mappingRemoveValue(PyMapping map, Object value);
+
+  public boolean mappingRetainAllKeys(PyMapping map, Collection<?> collection);
+
+  public boolean mappingRetainAllValue(PyMapping map, Collection<?> collection);
+
+  // Create a Python `memoryview` from the given object.
+  PyMemoryView memoryview(Object obj);
+
+  // Create an empty Python `bytearray`.
+  PyByteArray newByteArray();
+
+  // Create a Python `bytearray` from a buffer.
+  PyByteArray newByteArrayFromBuffer(PyBuffer bytes);
+
+  // Create a Python `bytearray` from an iterable.
+  PyByteArray newByteArrayFromIterable(Iterable iter);
+
+  // Create a Python `bytearray` with a specified size.
+  PyByteArray newByteArrayOfSize(int i);
+
+  // Create a Python `bytes` object from a buffer.
+  PyByteArray newBytesFromBuffer(PyBuffer bytes);
+
+  // Create a Python `bytes` object from an iterator.
+  PyByteArray newBytesFromIterator(Iterable<PyObject> iter);
+
+  // Create a Python `bytes` object with a specified size.
+  PyBytes newBytesOfSize(int length);
+
+  // Create a Python `complex` number with real and imaginary parts.
+  PyComplex newComplex(double real, double imag);
+
+  // Create an empty Python `dict`.
+  PyDict newDict();
+
+  // Create a Python `dict` from a Java `Map`.
+  PyDict newDict(Map map);
+
+  // Create a Python `dict` from an iterable of key-value pairs.
+  public PyDict newDictFromIterable(Iterable map);
+
+  // Create a Python `enumerate` object from an iterable.
+  PyEnumerate newEnumerate(Iterable iterable);
+
+  // Create a Python `float` from a double value.
+  PyFloat newFloat(double value);
+
+  // Create a Python `frozenset` from an iterable.
+  PyFrozenSet newFrozenSet(Iterable c);
+
+  // Create a Python `int` from a long value.
+  PyInt newInt(long value);
+
+  // Create a Python `list` from an array of objects.
+  PyList newListFromArray(Object... list);
+
+  // Create a Python `list` from an iterable.
+  <T> PyList newListFromIterable(Iterable<T> list);
+
+  // Create a Python `set` from an iterable.
+  PySet newSet(Iterable c);
+
+  // Create a Python `tuple` from an array of objects.
+  <T> PyTuple newTupleFromArray(T... obj);
+
+  // Create a Python `tuple` from an iterable.
+  <T> PyList newTupleFromIterator(Iterable<T> list);
+
+  // Create a Python `zip` object from multiple iterables.
+  PyFloat newZip(PyIterable[] items);
+
+  // Get the next item from a Python iterator, with a stop value.
+  PyObject next(Object iter, Object stop);
+
+  // Create a generic Python object.
+  PyObject object();
+
+  // Create a Python `range` object with a stop value.
+  PyRange range(int stop);
+
+  // Create a Python `range` object with start and stop values.
+  PyRange range(int start, int stop);
+
+  // Create a Python `range` object with start, stop, and step values.
+  PyRange range(int start, int stop, int step);
+
+  // Get the string representation of an object (`repr`).
+  PyString repr(Object str);
+
+  // Create an empty Python `set`.
+  PySet set();
+
+  // Perform a union operation on two Python sets.
+  PySet setUnionIterable(PySet set1, PySet set2);
+
+  // Perform a union operation on multiple Python sets.
+  PySet setUnionMultiple(PySet set1, PySet[] sets);
+
+  // Set an attribute on a Python object.
+  void setattr(Object obj, CharSequence str, Object value);
+
+  public PyObject setattrReturn(PyObject obj, CharSequence key, PyObject value);
+
+  // Set an item in a Python dictionary.
+  void setitem(PyDict globalsDict, CharSequence key, Object value);
+
+  // Create a Python `slice` object.
+  PySlice slice(Integer start, Integer stop, Integer step);
+
+  // Convert an object to a Python `str`.
+  PyString str(Object str);
+
+  // Create a Python `tee` iterator.
+  PyIter teeIterator(PyIter iter);
+
+  // Get the type of a Python object.
+  PyType type(Object obj);
+
+  // Get the values of a Python mapping object.
+  PyObject values(Object obj);
+
+  public PyDict vars(Object obj);
+
+  // Create a Python `zip` object from multiple objects.
   <T> PyZip zip(T... objects);
-// It is okay if not everything is exposed as the user can always evaluate
-// statements if something is missing.
-//Creation
-//   open()
-//   property()
-//Casting? 
-// These take one argument they act on so they could be considered object method
-// place on PyOject?
-//   ascii()
-//   int()
-//   classmethod()
-//   float()
-// Int only methods?
-//   bin()
-//   hex()
-//   oct()
-// Methods?  move to PyObject
-//   id()
-//   issubclass()
-//   vars()
-// Belong on scopes?
-//   compile()
-//   eval()
-//   exec()
-//   globals()
-//   locals()
-// Math
-//   abs()
-//   pow()
-//   divmod()
-//   chr()
-//   ord()
-//   round()
-// Method for iterator
-//  filter()
-//aiter()
-//anext()
-//breakpoint()
-//format()
-//frozenset()
-//help()
-//input()
-//object()
-//print()
-//staticmethod()
-//super()
-
-  public PyObject sequenceGetItem(PyObject obj);
-
-  public PyFrozenSet newFrozenSet(Iterable c);
-
-  public PyComplex newComplex(double real, double imag);
-
-  public PyByteArray newByteArray();
-
-  public PyByteArray newByteArray(int i);
-
-  public PyByteArray newByteArray(Iterable iter);
-
-  public PyEnumerate newEnumerate(Iterable iterable);
-
-  public PyByteArray newByteArray(PyBytes bytes);
-
-  public PyBytes newBytes(int length);
-
-  public PyByteArray newBytes(Iterable<PyObject> iter);
-
-  public PyByteArray newBytes(PyByteArray bytes);
-
-  public PyFloat newInt(long value);
-
-  public PyFloat newDouble(double value);
-
-  public PyFloat newZip(PyIterable[] items);
-
 }
