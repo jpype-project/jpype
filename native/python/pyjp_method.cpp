@@ -90,8 +90,7 @@ static PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)
 static PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPMethod_call");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	JP_TRACE(self->m_Method->getName());
 	// Clear any pending interrupts if we are on the main thread
 	if (hasInterrupt())
@@ -113,8 +112,7 @@ static PyObject *PyJPMethod_call(PyJPMethod *self, PyObject *args, PyObject *kwa
 static PyObject *PyJPMethod_matches(PyJPMethod *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPMethod_matches");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	JP_TRACE(self->m_Method->getName());
 	if (self->m_Instance == nullptr)
 	{
@@ -131,8 +129,7 @@ static PyObject *PyJPMethod_matches(PyJPMethod *self, PyObject *args, PyObject *
 static PyObject *PyJPMethod_str(PyJPMethod *self)
 {
 	JP_PY_TRY("PyJPMethod_str");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	return PyUnicode_FromFormat("%s.%s",
 			self->m_Method->getClass()->getCanonicalName().c_str(),
 			self->m_Method->getName().c_str());
@@ -188,7 +185,7 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getDoc");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	if (self->m_Doc)
 	{
 		Py_INCREF(self->m_Doc);
@@ -239,7 +236,7 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getAnnotations");
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	if (self->m_Annotations)
 	{
 		Py_INCREF(self->m_Annotations);

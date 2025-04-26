@@ -28,7 +28,6 @@ public:
 	~JPArrayView();
 	void reference();
 	bool unreference();
-	JPContext *getContext() const;
 public:
 	JPArray *m_Array;
 	void *m_Memory{};

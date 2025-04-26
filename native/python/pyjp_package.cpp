@@ -58,13 +58,14 @@ static PyObject *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject *k
 
 static void dtor(PyObject *self)
 {
+	// No need for exception if JVM is not running.
 	JPContext *context = JPContext_global;
 	if (context == nullptr || !context->isRunning())
 		return;
 	auto jo = (jobject) PyCapsule_GetPointer(self, nullptr);
 	if (jo == nullptr)
 		return;
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	frame.DeleteGlobalRef(jo);
 }
 
@@ -135,6 +136,7 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 	if (attrName.compare(0, 2, "__") == 0)
 		return PyObject_GenericGetAttr((PyObject*) self, attr);
 
+	// Check for JVM running first
 	JPContext* context = JPContext_global;
 	if (!context->isRunning())
 	{
@@ -143,7 +145,7 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 				PyModule_GetName(self), attr);
 		return nullptr;
 	}
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	jobject pkg = getPackage(frame, self);
 	if (pkg == nullptr)
 		return nullptr;
@@ -248,8 +250,7 @@ static PyObject *PyJPPackage_path(PyObject *self)
 static PyObject *PyJPPackage_dir(PyObject *self)
 {
 	JP_PY_TRY("PyJPPackage_dir");
-	JPContext* context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	jobject pkg = getPackage(frame, self);
 	if (pkg == nullptr)
 		return nullptr;

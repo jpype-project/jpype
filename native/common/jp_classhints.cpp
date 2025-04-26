@@ -358,7 +358,7 @@ public:
 		JP_TRACE_IN("JPConversionCharArray::matches");
 		auto* acls = dynamic_cast<JPArrayClass*>( cls);
 		if (match.frame == nullptr  || !JPPyString::check(match.object) ||
-				acls->getComponentType() != match.getContext()->_char)
+				acls->getComponentType() != JPContext_global->_char)
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		return match.type = JPMatch::_implicit;
@@ -368,7 +368,7 @@ public:
 	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		auto* acls = dynamic_cast<JPArrayClass*>( cls);
-		if (acls->getComponentType() != cls->getContext()->_char)
+		if (acls->getComponentType() != JPContext_global->_char)
 			return;
 		PyList_Append(info.implicit, (PyObject*) & PyUnicode_Type);
 	}
@@ -400,7 +400,7 @@ public:
 		JP_TRACE_IN("JPConversionByteArray::matches");
 		auto* acls = dynamic_cast<JPArrayClass*>( cls);
 		if (match.frame == nullptr  || !PyBytes_Check(match.object) ||
-				acls->getComponentType() != match.frame->getContext()->_byte)
+				acls->getComponentType() != JPContext_global->_byte)
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		return match.type = JPMatch::_implicit;
@@ -410,7 +410,7 @@ public:
 	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		auto* acls = dynamic_cast<JPArrayClass*>( cls);
-		if (acls->getComponentType() != cls->getContext()->_byte)
+		if (acls->getComponentType() != JPContext_global->_byte)
 			return;
 		PyList_Append(info.implicit, (PyObject*) & PyBytes_Type);
 	}
@@ -534,7 +534,7 @@ public:
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "Sequence"));
 		PyList_Append(info.implicit, proto.get());
 		auto* acls = dynamic_cast<JPArrayClass*>( cls);
-		if (acls->getComponentType() == cls->getContext()->_char)
+		if (acls->getComponentType() == JPContext_global->_char)
 			return;
 		PyList_Append(info.none, (PyObject*) & PyUnicode_Type);
 	}
@@ -599,7 +599,7 @@ public:
 
 	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
+		JPJavaFrame frame = JPJavaFrame::outer();
 		PyList_Append(info.implicit, (PyObject*) PyJPClass_Type);
 	}
 
@@ -654,7 +654,7 @@ public:
 
 	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
+		JPJavaFrame frame = JPJavaFrame::outer();
 		PyList_Append(info.exact, PyJPClass_create(frame, cls).get());
 	}
 
@@ -680,7 +680,7 @@ JPMatch::Type JPConversionJavaValue::matches(JPClass *cls, JPMatch &match)
 
 void JPConversionJavaValue::getInfo(JPClass *cls, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
+	JPJavaFrame frame = JPJavaFrame::outer();
 	PyList_Append(info.exact, PyJPClass_create(frame, cls).get());
 }
 
@@ -702,7 +702,7 @@ public:
 		if (match.frame == nullptr || !JPPyString::check(match.object))
 			return match.type = JPMatch::_none;
 		match.conversion = this;
-		if (cls == match.getContext()->_java_lang_String)
+		if (cls == JPContext_global->_java_lang_String)
 			return match.type = JPMatch::_exact;
 		return match.type = JPMatch::_implicit;
 		JP_TRACE_OUT;
@@ -747,7 +747,7 @@ public:
 		if (!PyBool_Check(match.object))
 			return match.type = JPMatch::_none;
 		match.conversion = this;
-		match.closure = match.frame->getContext()->_java_lang_Boolean;
+		match.closure = JPContext_global->_java_lang_Boolean;
 		return match.type = JPMatch::_implicit;
 		JP_TRACE_OUT;
 	}
@@ -787,18 +787,17 @@ public:
 	jvalue convert(JPMatch &match) override
 	{
 		PyTypeObject* type = Py_TYPE(match.object);
-		JPJavaFrame *frame = match.frame;
 		const char *name = type->tp_name;
-		match.closure = frame->getContext()->_java_lang_Long;
+		match.closure = JPContext_global->_java_lang_Long;
 		if (strncmp(name, "numpy", 5) == 0)
 		{
 			// We only handle specific sized types, all others go to long.
 			if (strcmp(&name[5], ".int8") == 0)
-				match.closure = frame->getContext()->_java_lang_Byte;
+				match.closure = JPContext_global->_java_lang_Byte;
 			else if (strcmp(&name[5], ".int16") == 0)
-				match.closure = frame->getContext()->_java_lang_Short;
+				match.closure = JPContext_global->_java_lang_Short;
 			else if (strcmp(&name[5], ".int32") == 0)
-				match.closure = frame->getContext()->_java_lang_Integer;
+				match.closure = JPContext_global->_java_lang_Integer;
 		}
 		return JPConversionBox::convert(match);
 	}
@@ -831,15 +830,14 @@ public:
 
 	jvalue convert(JPMatch &match) override
 	{
-		JPJavaFrame *frame = match.frame;
 		PyTypeObject* type = Py_TYPE(match.object);
 		const char *name = type->tp_name;
-		match.closure = frame->getContext()->_java_lang_Double;
+		match.closure = JPContext_global->_java_lang_Double;
 		if (strncmp(name, "numpy", 5) == 0)
 		{
 			// We only handle specific sized types, all others go to double.
 			if (strcmp(&name[5], ".float32") == 0)
-				match.closure = frame->getContext()->_java_lang_Float;
+				match.closure = JPContext_global->_java_lang_Float;
 		}
 		return JPConversionBox::convert(match);
 	}
@@ -868,8 +866,8 @@ public:
 
 	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
-		PyList_Append(info.implicit, PyJPClass_create(frame, cls->getContext()->_java_lang_Object).get());
+		JPJavaFrame frame = JPJavaFrame::outer();
+		PyList_Append(info.implicit, PyJPClass_create(frame, JPContext_global->_java_lang_Object).get());
 	}
 
 	jvalue convert(JPMatch &match) override
@@ -885,7 +883,7 @@ public:
 		{
 			// Okay we need to box it.
 			auto* type = dynamic_cast<JPPrimitiveType*> (value->getClass());
-			match.closure = type->getBoxedClass(frame->getContext());
+			match.closure = type->getBoxedClass(*frame);
 			res = JPConversionBox::convert(match);
 			return res;
 		}
@@ -899,7 +897,7 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JP_TRACE_IN("JPConversionJavaNumberAny::matches");
-		JPContext *context = match.getContext();
+		JPContext *context = JPContext_global;
 		JPValue *value = match.getJavaSlot();
 		// This converter only works for number types, thus boolean and char
 		// are excluded.
@@ -935,12 +933,12 @@ public:
 
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
-		JPContext *context = match.getContext();
+		JPContext *context = JPContext_global;
 		if (context == nullptr)
 			return match.type = JPMatch::_none;
 		JPValue *slot = match.slot;
 		auto *pcls = dynamic_cast<JPPrimitiveType*>( cls);
-		if (slot->getClass() != pcls->getBoxedClass(context))
+		if (slot->getClass() != pcls->getBoxedClass(*match.frame))
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		match.closure = cls;
@@ -949,18 +947,17 @@ public:
 
 	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame = JPJavaFrame::outer(cls->getContext());
+		JPJavaFrame frame = JPJavaFrame::outer();
 		auto *pcls = dynamic_cast<JPPrimitiveType*>( cls);
-		JPContext *context = cls->getContext();
 		PyList_Append(info.implicit,
-				PyJPClass_create(frame, pcls->getBoxedClass(context)).get());
+				PyJPClass_create(frame, pcls->getBoxedClass(frame)).get());
 	}
 
 	jvalue convert(JPMatch &match) override
 	{
 		JPValue* value = match.getJavaSlot();
 		auto *cls = (JPClass*) match.closure;
-		return cls->getValueFromObject(*value);
+		return cls->getValueFromObject(*match.frame, *value);
 	}
 } _unboxConversion;
 

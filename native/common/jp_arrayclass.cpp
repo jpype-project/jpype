@@ -52,7 +52,7 @@ JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
 
 void JPArrayClass::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	objectConversion->getInfo(this, info);
 	charArrayConversion->getInfo(this, info);
 	byteArrayConversion->getInfo(this, info);

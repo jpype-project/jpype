@@ -37,8 +37,7 @@ static void PyJPField_dealloc(PyJPField *self)
 static PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 {
 	JP_PY_TRY("PyJPField_get");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	// Clear any pending interrupts if we are on the main thread.
 	if (hasInterrupt())
 		frame.clearInterrupt(false);
@@ -57,8 +56,7 @@ static PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 static int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 {
 	JP_PY_TRY("PyJPField_set");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	if (self->m_Field->isFinal())
 	{
 		PyErr_SetString(PyExc_AttributeError, "Field is final");
@@ -88,8 +86,7 @@ static int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 static PyObject *PyJPField_repr(PyJPField *self)
 {
 	JP_PY_TRY("PyJPField_repr");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	return PyUnicode_FromFormat("<java field '%s' of '%s'>",
 			self->m_Field->getName().c_str(),
 			self->m_Field->getClass()->getCanonicalName().c_str()

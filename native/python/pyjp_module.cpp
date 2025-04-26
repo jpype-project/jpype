@@ -387,8 +387,7 @@ static void releaseView(void* view)
 static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* src)
 {
 	JP_PY_TRY("PyJPModule_convertToDirectByteBuffer");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 
 	if (PyObject_CheckBuffer(src))
 	{
@@ -419,8 +418,7 @@ static PyObject* PyJPModule_enableStacktraces(PyObject* self, PyObject* src)
 PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 {
 	JP_PY_TRY("PyJPModule_newArrayType");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 
 	PyObject *type, *dims;
 	if (!PyArg_ParseTuple(args, "OO", &type, &dims))
@@ -446,8 +444,8 @@ PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 PyObject *PyJPModule_getClass(PyObject* module, PyObject *obj)
 {
 	JP_PY_TRY("PyJPModule_getClass");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
+	JPContext *context = frame.getContext();
 
 	JPClass* cls;
 	if (JPPyString::check(obj))
@@ -485,8 +483,7 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 	JP_PY_TRY("PyJPModule_hasClass");
 	if (!JPContext_global->isRunning())
 		Py_RETURN_FALSE; // GCOVR_EXCL_LINE
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 
 	JPClass* cls;
 	if (JPPyString::check(obj))
@@ -598,8 +595,7 @@ static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 		PyErr_Format(PyExc_TypeError, "isPackage required unicode");
 		return nullptr;
 	}
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	return PyBool_FromLong(frame.isPackage(JPPyString::asStringUTF8(pkg)));
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
@@ -823,7 +819,7 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 {
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	Py_buffer& view = buffer.getView();
 
 	// Okay two possibilities here.  We have a valid dtype specified,

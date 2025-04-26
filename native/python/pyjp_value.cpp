@@ -163,10 +163,14 @@ void PyJPValue_finalize(void* obj)
 	JPValue* value = PyJPValue_getJavaSlot((PyObject*) obj);
 	if (value == nullptr)
 		return;
+
+	// We can skip if the JVM is stopped.  No need for an exception here.
 	JPContext *context = JPContext_global;
 	if (context == nullptr || !context->isRunning())
 		return;
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+
+	// JVM is running so set up the frame.
+	JPJavaFrame frame = JPJavaFrame::outer();
 	JPClass* cls = value->getClass();
 	// This one can't check for initialized because we may need to delete a stale
 	// resource after shutdown.
@@ -185,7 +189,7 @@ PyObject* PyJPValue_str(PyObject* self)
 {
 	JP_PY_TRY("PyJPValue_str", self);
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	JPValue* value = PyJPValue_getJavaSlot(self);
 	if (value == nullptr)
 	{
