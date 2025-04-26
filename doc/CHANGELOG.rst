@@ -21,6 +21,8 @@ Latest Changes:
 
   - Fixed a bug in which JPype did not respect a JConversion between two Java classes.
 
+  - Support for minimum_version on startJVM
+
 - **1.5.2 - 2025-01-20**
 
   - Roll back agent change due to misbehaving JVM installs.
