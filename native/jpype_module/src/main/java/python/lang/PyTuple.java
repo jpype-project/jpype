@@ -63,14 +63,24 @@ import org.jpype.bridge.Interpreter;
  * Note: This interface assumes the existence of supporting classes such as
  * {@code BuiltIn}, {@code PyObject}, {@code PyIterable}, {@code PySet}, and
  * {@code PyIterator}.
+ * 
+ * <p>
+ * <b>Important Note:</b></p>
+ * <p>
+ * Python collections are asymmetric in their handling of Java objects. A Java
+ * object added to a Python collection will appear as a {@code PyJavaObject}.
+ * Developers should exercise caution to avoid reference loops when placing Java
+ * objects into Python collections, as this may lead to unintended
+ * behaviors.</p>
+ * 
  */
 public interface PyTuple extends PyObject, PyIterable, List<PyObject>
 {
 
-  /** 
+  /**
    * Create a new empty tuple.
-   * 
-   * @return 
+   *
+   * @return
    */
   public static PyTuple empty()
   {

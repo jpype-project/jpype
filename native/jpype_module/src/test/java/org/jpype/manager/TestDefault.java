@@ -20,7 +20,6 @@ import java.util.EnumSet;
 
 /**
  *
- * @author nelson85
  */
 public class TestDefault
 {

@@ -276,6 +276,17 @@ public class BuiltIn
   }
 
   /**
+   * Calls Python list on an object.
+   *
+   * @param object is the object to be converted.
+   * @return a new {@link PyObject} representing the Python list.
+   */
+  public static PyList list(Object object)
+  {
+    return Interpreter.backend.list(object);
+  }
+
+  /**
    * Creates a Python list from a variable-length array of objects.
    *
    * @param objects the objects to include in the list.
@@ -371,7 +382,7 @@ public class BuiltIn
     // ensure the type that appears is a Python one rather than a 
     // Java one especially on setattr in which the object is to be 
     // held in Python.
-    Interpreter.backend.setattr(obj, key, value);
+    Interpreter.backend.setattrString(obj, key, value);
   }
 
   /**
@@ -471,6 +482,19 @@ public class BuiltIn
     return Interpreter.backend.type(obj);
   }
 
+  /**
+   * Get the `__dict__` attribute of the specified Python object.
+   *
+   * <p>
+   * This method retrieves the `__dict__` attribute, which contains the
+   * namespace of the given Python object. The `__dict__` is a mapping object
+   * that stores the object's attributes.</p>
+   *
+   * @param obj the Python object whose `__dict__` attribute is to be retrieved
+   * @return a {@link PyDict} representing the `__dict__` attribute of the
+   * specified object
+   * @throws NullPointerException if the provided object is {@code null}
+   */
   public static PyDict vars(Object obj)
   {
     return Interpreter.backend.vars(obj);

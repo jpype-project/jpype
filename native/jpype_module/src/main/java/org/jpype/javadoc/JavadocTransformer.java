@@ -34,7 +34,6 @@ import org.w3c.dom.Text;
  * The goal of this is to convert all inline markup into rst and leave markup by
  * section, paragraph to be used by the renderer.
  *
- * @author nelson85
  */
 public class JavadocTransformer
 {

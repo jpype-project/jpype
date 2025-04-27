@@ -23,17 +23,28 @@ import org.jpype.bridge.Interpreter;
 import python.protocol.PyMapping;
 
 /**
- * Java front-end interface for the Python `dict` type. This interface provides
- * methods for creating and interacting with Python dictionaries in a Java
- * environment, mimicking Python's `dict` functionality.
+ * Java front-end interface for the Python `dict` type.
+ *
+ * This interface provides methods for creating and interacting with Python
+ * dictionaries in a Java environment, mimicking Python's `dict` functionality.
  *
  * <p>
  * While this interface primarily adheres to the Java {@link Map} contract, it
  * also incorporates Python-specific behaviors that may differ from standard
  * Java maps.
+ *
+ * <p>
+ * <b>Important Note:</b></p>
+ * <p>
+ * Python collections are asymmetric in their handling of Java objects. A Java
+ * object added to a Python collection will appear as a {@code PyJavaObject}.
+ * Developers should exercise caution to avoid reference loops when placing Java
+ * objects into Python collections, as this may lead to unintended
+ * behaviors.</p>
  */
 public interface PyDict extends PyObject, PyMapping
 {
+
   /**
    * Creates a new Python `dict` object from the specified Java {@link Map}.
    *
@@ -49,10 +60,12 @@ public interface PyDict extends PyObject, PyMapping
   {
     return Interpreter.getBackend().newDict(map);
   }
+
   static PyDict of(Iterable<Map.Entry<Object, ? extends PyObject>> map)
   {
     return Interpreter.getBackend().newDictFromIterable(map);
   }
+
   /**
    * Retrieves the Python type object for `dict`.
    *
@@ -64,19 +77,25 @@ public interface PyDict extends PyObject, PyMapping
   {
     return (PyType) BuiltIn.eval("dict", null, null);
   }
+
   @Override
   public void clear();
+
   @Override
   public boolean containsKey(Object key);
+
   @Override
   public boolean containsValue(Object value);
 
-
   @Override
-  public Set<Entry<Object, PyObject>> entrySet();
+  default Set<Map.Entry<Object, PyObject>> entrySet()
+  {
+    return new PyDictItems(this);
+  }
 
   @Override
   public PyObject get(Object key);
+
   /**
    * Retrieves the value associated with the given key, or returns the default
    * value if the key is not present.
@@ -86,35 +105,46 @@ public interface PyDict extends PyObject, PyMapping
    * @return The value associated with the key, or the default value.
    */
   @Override
-          PyObject getOrDefault(Object key, PyObject defaultValue);
-          @Override
-          public boolean isEmpty();
-          @Override
-          public Set<Object> keySet();
-          /**
-           * Removes the key and returns its associated value, or returns the default
-           * value if the key is not present.
-           *
-           * @param key The key to remove.
-           * @param defaultValue The default value to return if the key is not found.
-           * @return The value associated with the key, or the default value.
-           */
-          PyObject pop(Object key, PyObject defaultValue);
-          /**
-           * Removes and returns an arbitrary key-value pair from the mapping.
-           *
-           * @return An entry representing the removed key-value pair.
-           * @throws NoSuchElementException If the mapping is empty.
-           */
-          Entry<Object, PyObject> popItem();
-          @Override
-          public PyObject put(Object key, PyObject value);
-          @Override
-          public void putAll(Map<? extends Object, ? extends PyObject> m);
-          @Override
-          public PyObject remove(Object key);
-          @Override
-          public boolean remove(Object key, Object value);
+  PyObject getOrDefault(Object key, PyObject defaultValue);
+
+  @Override
+  public boolean isEmpty();
+
+  @Override
+  default Set<Object> keySet()
+  {
+    return new PyDictKeySet(this);
+  }
+
+  /**
+   * Removes the key and returns its associated value, or returns the default
+   * value if the key is not present.
+   *
+   * @param key The key to remove.
+   * @param defaultValue The default value to return if the key is not found.
+   * @return The value associated with the key, or the default value.
+   */
+  PyObject pop(Object key, PyObject defaultValue);
+
+  /**
+   * Removes and returns an arbitrary key-value pair from the mapping.
+   *
+   * @return An entry representing the removed key-value pair.
+   * @throws NoSuchElementException If the mapping is empty.
+   */
+  Map.Entry<Object, PyObject> popItem();
+
+  @Override
+  public PyObject put(Object key, PyObject value);
+
+  @Override
+  public void putAll(Map<? extends Object, ? extends PyObject> m);
+
+  @Override
+  public PyObject remove(Object key);
+
+  @Override
+  public boolean remove(Object key, Object value);
 
   /**
    * If the key is not present in the mapping, inserts it with the given default
@@ -126,8 +156,10 @@ public interface PyDict extends PyObject, PyMapping
    * inserted).
    */
   PyObject setDefault(Object key, PyObject defaultValue);
+
   @Override
   public int size();
+
   /**
    * Updates the mapping with key-value pairs from the given map. If keys
    * already exist, their values will be overwritten.
@@ -135,13 +167,18 @@ public interface PyDict extends PyObject, PyMapping
    * @param m The map containing key-value pairs to add or update.
    */
   void update(Map<? extends Object, ? extends PyObject> m);
+
   /**
    * Updates the mapping with key-value pairs from the given iterable. Each
    * element in the iterable must be a key-value pair (e.g., a tuple or array).
    *
    * @param iterable The iterable containing key-value pairs to add or update.
    */
-  void update(Iterable<Entry<Object, PyObject>> iterable);
+  void update(Iterable<Map.Entry<Object, PyObject>> iterable);
+
   @Override
-  public Collection<PyObject> values();
+  default Collection<PyObject> values()
+  {
+    return new PyDictValues(this);
+  }
 }

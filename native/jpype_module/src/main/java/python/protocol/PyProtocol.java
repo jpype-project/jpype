@@ -19,7 +19,6 @@ import python.lang.PyObject;
 
 /**
  *
- * @author nelson85
  */
 public interface PyProtocol extends PyObject
 {

@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jpype.bridge.Interpreter;
 import org.jpype.bridge.BuiltIn;
+import python.protocol.PyIterator;
 
 /**
  * Represents a Python set in the Java environment.
@@ -48,6 +49,15 @@ import org.jpype.bridge.BuiltIn;
  * All methods in this interface are designed to work seamlessly with Python
  * objects ({@link PyObject}) and provide a consistent API for interacting with
  * Python sets.</p>
+ *
+ * <p>
+ * <b>Important Note:</b></p>
+ * <p>
+ * Python collections are asymmetric in their handling of Java objects. A Java
+ * object added to a Python collection will appear as a {@code PyJavaObject}.
+ * Developers should exercise caution to avoid reference loops when placing Java
+ * objects into Python collections, as this may lead to unintended
+ * behaviors.</p>
  */
 public interface PySet extends PyObject, Set<PyObject>
 {
@@ -84,18 +94,20 @@ public interface PySet extends PyObject, Set<PyObject>
   @Override
   boolean add(PyObject e);
 
+  void addAny(Object o);
+
   /**
    * Adds all elements from the specified collection to the set.
    *
-   * @param c the collection containing elements to be added
+   * @param collection the collection containing elements to be added
    * @return {@code true} if the set was modified as a result of this operation,
    * {@code false} otherwise
    */
   @Override
-  default boolean addAll(Collection<? extends PyObject> c)
+  default boolean addAll(Collection<? extends PyObject> collection)
   {
     int l1 = this.size();
-    this.update(of(c));
+    this.update(of(collection));
     int l2 = this.size();
     return l1 != l2;
   }
@@ -119,14 +131,14 @@ public interface PySet extends PyObject, Set<PyObject>
   /**
    * Checks if the set contains all elements from the specified collection.
    *
-   * @param c the collection of elements to check
+   * @param collection the collection of elements to check
    * @return {@code true} if the set contains all elements, {@code false}
    * otherwise
    */
   @Override
-  default boolean containsAll(Collection<?> c)
+  default boolean containsAll(Collection<?> collection)
   {
-    PySet set2 = of(c);
+    PySet set2 = of(collection);
     return set2.isSubset(this);
   }
 
@@ -144,7 +156,7 @@ public interface PySet extends PyObject, Set<PyObject>
    * @param set the sets to subtract from this set
    * @return a new {@code PySet} containing the difference
    */
-  PySet difference(PySet... set);
+  PySet difference(Collection... set);
 
   /**
    * Updates this set to contain the difference between itself and the specified
@@ -152,7 +164,7 @@ public interface PySet extends PyObject, Set<PyObject>
    *
    * @param set the sets to subtract from this set
    */
-  void differenceUpdate(PySet... set);
+  void differenceUpdate(Collection... set);
 
   /**
    * Removes the specified element from the set, if it exists.
@@ -185,7 +197,7 @@ public interface PySet extends PyObject, Set<PyObject>
    * @param set the sets to intersect with this set
    * @return a new {@code PySet} containing the intersection
    */
-  PySet intersect(PySet... set);
+  PySet intersect(Collection... set);
 
   /**
    * Updates this set to contain the intersection of itself and the specified
@@ -193,7 +205,7 @@ public interface PySet extends PyObject, Set<PyObject>
    *
    * @param set the sets to intersect with this set
    */
-  void intersectionUpdate(PySet... set);
+  void intersectionUpdate(Collection... set);
 
   /**
    * Checks if this set is disjoint with the specified set.
@@ -201,7 +213,8 @@ public interface PySet extends PyObject, Set<PyObject>
    * @param set the set to compare with
    * @return {@code true} if the sets are disjoint, {@code false} otherwise
    */
-  boolean isDisjoint(PySet set);
+  boolean isDisjoint(Collection set);
+
   /**
    * Checks if the set is empty.
    *
@@ -220,7 +233,7 @@ public interface PySet extends PyObject, Set<PyObject>
    * @param set the set to compare with
    * @return {@code true} if this set is a subset, {@code false} otherwise
    */
-  boolean isSubset(PySet set);
+  boolean isSubset(Collection set);
 
   /**
    * Checks if this set is a superset of the specified set.
@@ -228,7 +241,7 @@ public interface PySet extends PyObject, Set<PyObject>
    * @param set the set to compare with
    * @return {@code true} if this set is a superset, {@code false} otherwise
    */
-  boolean isSuperset(PySet set);
+  boolean isSuperset(Collection set);
 
   /**
    * Returns an iterator over the elements in this set.
@@ -238,8 +251,9 @@ public interface PySet extends PyObject, Set<PyObject>
   @Override
   default Iterator<PyObject> iterator()
   {
-    return Interpreter.getBackend().iter(this).iterator();
+    return new PyIterator(Interpreter.getBackend().iter(this));
   }
+
   /**
    * Returns a parallel {@link Stream} of the elements in this set.
    *
@@ -272,19 +286,18 @@ public interface PySet extends PyObject, Set<PyObject>
     return this.size() != initialSize;
   }
 
-
   /**
    * Removes all elements in the specified collection from this set.
    *
-   * @param c the collection of elements to remove
+   * @param collection the collection of elements to remove
    * @return {@code true} if the set was modified as a result of this operation,
    * {@code false} otherwise
    */
   @Override
-  default boolean removeAll(Collection<?> c)
+  default boolean removeAll(Collection<?> collection)
   {
     int initialSize = this.size();
-    PySet delta = this.difference(of(c));
+    PySet delta = this.difference(of(collection));
     this.clear();
     this.update(delta);
     return this.size() != initialSize;
@@ -294,15 +307,15 @@ public interface PySet extends PyObject, Set<PyObject>
    * Retains only the elements in this set that are contained in the specified
    * collection.
    *
-   * @param c the collection of elements to retain
+   * @param collection the collection of elements to retain
    * @return {@code true} if the set was modified as a result of this operation,
    * {@code false} otherwise
    */
   @Override
-  default boolean retainAll(Collection<?> c)
+  default boolean retainAll(Collection<?> collection)
   {
     int initialSize = this.size();
-    PySet delta = this.intersect(of(c));
+    PySet delta = this.intersect(of(collection));
     this.clear();
     this.update(delta);
     return this.size() != initialSize;
@@ -345,7 +358,7 @@ public interface PySet extends PyObject, Set<PyObject>
    * @param set the sets to compute the symmetric difference with
    * @return a new {@code PySet} containing the symmetric difference
    */
-  PySet symmetricDifference(PySet... set);
+  PySet symmetricDifference(Collection... set);
 
   /**
    * Updates this set to contain the symmetric difference between itself and the
@@ -353,7 +366,7 @@ public interface PySet extends PyObject, Set<PyObject>
    *
    * @param set the set to compute the symmetric difference with
    */
-  void symmetricDifferenceUpdate(PySet set);
+  void symmetricDifferenceUpdate(Collection set);
 
   /**
    * Returns an array containing all elements in this set.
@@ -389,33 +402,19 @@ public interface PySet extends PyObject, Set<PyObject>
   List<PyObject> toPythonList();
 
   /**
-   * Returns a new set containing the union of this set and the specified set.
-   *
-   * @param set the set to compute the union with
-   * @return a new {@code PySet} containing the union
-   */
-  default PySet union(PySet set)
-  {
-    return Interpreter.getBackend().setUnionIterable(this, set);
-  }
-
-  /**
    * Returns a new set containing the union of this set and the specified sets.
    *
    * @param set the sets to compute the union with
    * @return a new {@code PySet} containing the union
    */
-  default PySet union(PySet... set)
-  {
-    return Interpreter.getBackend().setUnionMultiple(this, set);
-  }
+  PySet union(Collection... set);
 
   /**
    * Updates this set to contain the union of itself and the specified sets.
    *
    * @param set the sets to compute the union with
    */
-  void unionUpdate(PySet... set);
+  void unionUpdate(Collection... set);
 
   /**
    * Updates this set to include all elements from the specified iterable.

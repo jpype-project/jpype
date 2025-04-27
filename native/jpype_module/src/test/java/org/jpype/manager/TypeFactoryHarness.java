@@ -27,8 +27,6 @@ import java.util.HashSet;
  * <p>
  * This harness operates like JPype C++ layer with checks for problems and
  * inconsistencies that may indicate a problem with the TypeManager.
- *
- * @author nelson85
  */
 public class TypeFactoryHarness implements TypeFactory, TypeAudit
 {

@@ -44,7 +44,7 @@ import python.protocol.PyIterator;
  * <p>
  * Example usage:
  * <pre>
- * PyRange range = ...; // Obtain a PyRange instance
+ * PyRange range = BuiltIn.range(1,5); // Obtain a PyRange instance
  * int length = range.getLength(); // Get the number of elements in the range
  * int first = range.getItem(0); // Get the first item in the range
  * PyRange slice = range.getSlice(1, 5); // Get a slice of the range
@@ -167,7 +167,7 @@ public interface PyRange extends PyIter
    */
   PyList toList();
 
-    // FIXME MOVE TO PyIter
+  // FIXME MOVE TO PyIter
   /**
    * Returns an iterator for the range object.
    * <p>

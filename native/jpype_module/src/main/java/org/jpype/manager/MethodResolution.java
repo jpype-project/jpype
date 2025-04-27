@@ -32,7 +32,6 @@ import java.util.List;
  * are more general. If two or more methods match and one is not more specific
  * than the other.
  *
- * @author nelson85
  */
 public class MethodResolution
 {

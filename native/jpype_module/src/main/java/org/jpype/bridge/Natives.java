@@ -20,7 +20,6 @@ package org.jpype.bridge;
  *
  * Loaded by the _jpype module.
  *
- * @author nelson85
  */
 public class Natives
 {

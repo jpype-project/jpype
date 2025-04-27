@@ -15,6 +15,7 @@
  */
 package python.protocol;
 
+import org.jpype.bridge.Utility;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;

@@ -23,8 +23,6 @@ import java.util.HashMap;
 
 /**
  * Render a node as ReStructured Text.
- *
- * @author nelson85
  */
 public class JavadocRenderer
 {

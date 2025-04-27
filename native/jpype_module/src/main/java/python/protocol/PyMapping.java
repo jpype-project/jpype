@@ -77,10 +77,9 @@ public interface PyMapping extends PyProtocol, Map<Object, PyObject>
   boolean containsKey(Object key);
 
   /**
-   * Checks if the specified value exists in this mapping. 
-   * 
-   * Equivalent to
-   * Python's `value in mapping.values()` syntax.
+   * Checks if the specified value exists in this mapping.
+   *
+   * Equivalent to Python's `value in mapping.values()` syntax.
    *
    * @param value The value to check for existence.
    * @return True if the value exists, false otherwise.
@@ -88,7 +87,7 @@ public interface PyMapping extends PyProtocol, Map<Object, PyObject>
   @Override
   default boolean containsValue(Object value)
   {
-    return Interpreter.getBackend().mappingContainsValue(this, value);    
+    return Interpreter.getBackend().mappingContainsValue(this, value);
   }
 
   /**
@@ -100,7 +99,10 @@ public interface PyMapping extends PyProtocol, Map<Object, PyObject>
    * present.
    */
   @Override
-  PyObject get(Object key);
+  default PyObject get(Object key)
+  {
+    return Interpreter.getBackend().getitemMappingObject(this, key);
+  }
 
   /**
    * Returns a set view of the key-value pairs contained in this mapping.
@@ -111,7 +113,7 @@ public interface PyMapping extends PyProtocol, Map<Object, PyObject>
   @Override
   default Set<Entry<Object, PyObject>> entrySet()
   {
-    
+
     return new PyMappingEntrySet(this, Interpreter.getBackend().items(this.asObject()));
   }
 
@@ -150,7 +152,15 @@ public interface PyMapping extends PyProtocol, Map<Object, PyObject>
    * mapping for the key.
    */
   @Override
-  PyObject put(Object key, PyObject value);
+  default PyObject put(Object key, PyObject value)
+  {
+    return Interpreter.getBackend().setitemFromObject(this, key, value);
+  }
+
+  default PyObject putAny(Object key, Object value)
+  {
+    return Interpreter.getBackend().setitemFromObject(this, key, value);
+  }
 
   /**
    * Copies all key-value pairs from the specified map to this mapping.
@@ -162,18 +172,6 @@ public interface PyMapping extends PyProtocol, Map<Object, PyObject>
   void putAll(Map<? extends Object, ? extends PyObject> m);
 
   /**
-   * Removes the key-value pair associated with the specified key and value from
-   * this mapping. Equivalent to Python's `mapping.pop(key, value)` if both key
-   * and value match.
-   *
-   * @param key The key whose mapping is to be removed.
-   * @param value The value to match for removal.
-   * @return True if the key-value pair was removed, false otherwise.
-   */
-  @Override
-  boolean remove(Object key, Object value);
-
-  /**
    * Removes the key-value pair associated with the specified key from this
    * mapping. Equivalent to Python's `del mapping[key]`.
    *
@@ -182,7 +180,10 @@ public interface PyMapping extends PyProtocol, Map<Object, PyObject>
    * not present.
    */
   @Override
-  PyObject remove(Object key);
+  default PyObject remove(Object key)
+  {
+    return Interpreter.getBackend().delByObject(this, key);
+  }
 
   /**
    * Returns the number of key-value pairs in this mapping. Equivalent to

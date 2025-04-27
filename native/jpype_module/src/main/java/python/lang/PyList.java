@@ -26,34 +26,55 @@ import org.jpype.bridge.BuiltIn;
 
 /**
  * Java front-end interface for the Python `list` type.
+ *
  * <p>
  * This interface represents a concrete Python `list` object and provides
  * methods that closely align with both the Python `list` API and the Java
- * {@link List} contract. It enables seamless integration between Python's
- * dynamic list behavior and Java's type-safe collections framework.
- * </p>
+ * {@link List} contract. It facilitates seamless integration between Python's
+ * dynamic, mutable list behavior and Java's type-safe collections
+ * framework.</p>
  *
  * <p>
- * The {@code PyList} interface extends {@link PyObject}, {@link List}, and
- * {@link PyIterable}, allowing it to behave as both a Python object and a Java
- * collection. It provides additional methods specific to Python's list
- * functionality, such as {@code extend}, {@code insert}, and {@code addAny},
- * while implementing standard Java {@link List} methods.
- * </p>
+ * <b>Key Features:</b></p>
+ * <ul>
+ * <li>Extends {@link PyObject}, {@link List}, and {@link PyIterable}, enabling
+ * it to function as both a Python object and a Java collection.</li>
+ * <li>Implements standard Java {@link List} methods for compatibility with
+ * Java's collections.</li>
+ * <li>Provides additional Python-specific methods such as {@code extend},
+ * {@code insert}, and {@code addAny} to support Python's list
+ * functionality.</li>
+ * </ul>
  *
  * <p>
- * Python lists are dynamic, mutable, and can contain heterogeneous types. This
- * interface bridges the gap between Python's flexible data structures and
+ * <b>Python List Characteristics:</b></p>
+ * <ul>
+ * <li>Dynamic: Python lists can grow or shrink in size as needed.</li>
+ * <li>Mutable: Elements in a Python list can be modified after creation.</li>
+ * <li>Heterogeneous: Python lists can contain elements of varying types.</li>
+ * </ul>
+ *
+ * <p>
+ * This interface bridges the gap between Python's flexible data structures and
  * Java's statically typed collections, enabling developers to work with Python
- * lists in a Java environment.
- * </p>
+ * lists directly in a Java environment.</p>
+ *
+ * <p>
+ * <b>Important Note:</b></p>
+ * <p>
+ * Python collections are asymmetric in their handling of Java objects. A Java
+ * object added to a Python collection will appear as a {@code PyJavaObject}.
+ * Developers should exercise caution to avoid reference loops when placing Java
+ * objects into Python collections, as this may lead to unintended
+ * behaviors.</p>
  */
 public interface PyList extends PyObject, List<PyObject>, PyIterable
 {
 
   /**
-   * Creates a new Python `list` object from the given {@link Iterable}. The
-   * elements of the provided iterable will be added to the Python list.
+   * Creates a new Python `list` object from the given {@link Iterable}.
+   *
+   * The elements of the provided iterable will be added to the Python list.
    *
    * @param c the {@link Iterable} whose elements will populate the new Python
    * list.

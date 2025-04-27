@@ -42,8 +42,9 @@ public interface PyComplex extends PyObject, PyNumber
   }
 
   /**
-   * Retrieves the Python type object for `complex`. This is equivalent to
-   * evaluating `type(complex)` in Python.
+   * Retrieves the Python type object for `complex`.
+   *
+   * This is equivalent to evaluating `type(complex)` in Python.
    *
    * @return the {@link PyType} instance representing the Python `complex` type.
    */

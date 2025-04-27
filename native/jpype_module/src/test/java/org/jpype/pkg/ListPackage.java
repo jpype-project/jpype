@@ -17,7 +17,6 @@ package org.jpype.pkg;
 
 /**
  *
- * @author nelson85
  */
 public class ListPackage
 {

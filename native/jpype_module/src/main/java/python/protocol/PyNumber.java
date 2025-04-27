@@ -29,8 +29,6 @@ import python.lang.PyObject;
  * Each method corresponds to a Python numeric operation (e.g., addition,
  * subtraction, multiplication) and supports operations with Python objects,
  * primitive types, and in-place modifications.
- *
- * @author nelson85
  */
 public interface PyNumber extends PyProtocol, Comparable<Number>
 {

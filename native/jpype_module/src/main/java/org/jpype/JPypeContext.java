@@ -64,8 +64,6 @@ import org.jpype.ref.JPypeReferenceQueue;
  * contents of JPJni.
  *
  *
- *
- * @author nelson85
  */
 public class JPypeContext
 {

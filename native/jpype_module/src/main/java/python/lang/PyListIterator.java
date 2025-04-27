@@ -19,16 +19,27 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 
 /**
+ * A custom implementation of {@link ListIterator} for iterating over a
+ * {@link PyList}.
  *
+ * This iterator supports forward and backward traversal, as well as
+ * modification of the list.
  */
 class PyListIterator implements ListIterator<PyObject>
 {
 
-  PyList list;
-  int index;
-  boolean forward = false;
-  boolean reverse = false;
+  private final PyList list; // The list being iterated
+  private int index; // Current position in the list
+  private boolean forward = false; // Flag indicating if the last operation was forward traversal
+  private boolean reverse = false; // Flag indicating if the last operation was reverse traversal
 
+  /**
+   * Constructs a new {@code PyListIterator} for the specified list starting at
+   * the given index.
+   *
+   * @param list The {@link PyList} to iterate over.
+   * @param index The starting index for iteration.
+   */
   PyListIterator(PyList list, int index)
   {
     this.list = list;
@@ -38,7 +49,8 @@ class PyListIterator implements ListIterator<PyObject>
   @Override
   public void add(PyObject e)
   {
-    list.insert(index, list);
+    list.add(index, e); // Insert the element at the current index
+    index++; // Increment index to reflect the added element
     forward = false;
     reverse = false;
   }
@@ -59,7 +71,9 @@ class PyListIterator implements ListIterator<PyObject>
   public PyObject next()
   {
     if (!hasNext())
+    {
       throw new NoSuchElementException();
+    }
     PyObject out = list.get(index);
     index++;
     forward = true;
@@ -77,7 +91,9 @@ class PyListIterator implements ListIterator<PyObject>
   public PyObject previous()
   {
     if (!hasPrevious())
+    {
       throw new NoSuchElementException();
+    }
     index--;
     PyObject out = list.get(index);
     forward = false;
@@ -88,19 +104,24 @@ class PyListIterator implements ListIterator<PyObject>
   @Override
   public int previousIndex()
   {
-    return index--;
+    return index - 1;
   }
 
   @Override
   public void remove()
   {
     if (!forward && !reverse)
-      throw new IllegalStateException();
-
+    {
+      throw new IllegalStateException("Cannot remove element without a valid traversal.");
+    }
     if (forward)
-      list.remove(index - 1);
-    if (reverse)
-      list.remove(index);
+    {
+      list.remove(index - 1); // Remove the last element traversed in the forward direction
+      index--; // Adjust index to reflect the removal
+    } else if (reverse)
+    {
+      list.remove(index); // Remove the last element traversed in the reverse direction
+    }
     forward = false;
     reverse = false;
   }
@@ -109,12 +130,15 @@ class PyListIterator implements ListIterator<PyObject>
   public void set(PyObject e)
   {
     if (!forward && !reverse)
-      throw new IllegalStateException();
-
+    {
+      throw new IllegalStateException("Cannot set element without a valid traversal.");
+    }
     if (forward)
-      list.set(index - 1, e);
-    if (reverse)
-      list.set(index, e);
+    {
+      list.set(index - 1, e); // Replace the last element traversed in the forward direction
+    } else if (reverse)
+    {
+      list.set(index, e); // Replace the last element traversed in the reverse direction
+    }
   }
-
 }

@@ -42,6 +42,7 @@ public interface PyBytes extends PyObject
 
   /**
    * Creates a new Python `bytes` object from an iterable of Python objects.
+   *
    * Each object in the iterable must be convertible to a byte.
    *
    * @param iterable the iterable containing {@link PyObject} instances to
@@ -51,12 +52,13 @@ public interface PyBytes extends PyObject
    */
   static PyByteArray of(Iterable<PyObject> iterable)
   {
-    return Interpreter.getBackend().newBytesFromIterator(iterable);
+    return Interpreter.getBackend().newByteArrayFromIterator(iterable);
   }
 
   /**
-   * Creates a new Python `bytes` object from a {@link PyBuffer}. The buffer's
-   * contents will be used to initialize the `bytes` object.
+   * Creates a new Python `bytes` object from a {@link PyBuffer}.
+   *
+   * The buffer's contents will be used to initialize the `bytes` object.
    *
    * @param buffer the {@link PyBuffer} containing the data to populate the
    * `bytes` object.
@@ -65,12 +67,13 @@ public interface PyBytes extends PyObject
    */
   static PyByteArray of(PyBuffer buffer)
   {
-    return Interpreter.getBackend().newBytesFromBuffer(buffer);
+    return Interpreter.getBackend().newByteArrayFromBuffer(buffer);
   }
 
   /**
-   * Retrieves the Python type object for `bytes`. This is equivalent to
-   * evaluating `type(bytes)` in Python.
+   * Retrieves the Python type object for `bytes`.
+   *
+   * This is equivalent to evaluating `type(bytes)` in Python.
    *
    * @return the {@link PyType} instance representing the Python `bytes` type.
    */
@@ -81,6 +84,7 @@ public interface PyBytes extends PyObject
 
   /**
    * Decodes the contents of the `bytes` object using the specified encoding.
+   * 
    * Optionally, specific bytes can be deleted during decoding.
    *
    * @param encoding the encoding to use for decoding (e.g., "utf-8").
@@ -97,6 +101,7 @@ public interface PyBytes extends PyObject
 
   /**
    * Translates the contents of the `bytes` object using a translation table.
+   * 
    * The translation table maps byte values to their replacements.
    *
    * @param table the translation table as a {@link PyObject}, where each byte

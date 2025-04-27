@@ -15,6 +15,7 @@
  */
 package python.protocol;
 
+import org.jpype.bridge.Utility;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -24,19 +25,76 @@ import org.jpype.bridge.BuiltIn;
 import python.lang.PyObject;
 
 /**
+ * Iterator implementation for iterating over the entries of a Python mapping.
  *
- * @author nelson85
+ * The {@code PyMappingEntrySetIterator} class provides an iterator for Python
+ * mappings, allowing Java code to traverse the key-value pairs of a Python map.
+ * This iterator is designed to work seamlessly with Python's iteration
+ * protocols and integrates with the JPype library's Python-to-Java bridge.
+ *
+ * <p>
+ * Key features:
+ * <ul>
+ * <li>Supports iteration over Python mapping entries as {@link Map.Entry}
+ * objects</li>
+ * <li>Provides a mechanism for updating mapping entries via a custom
+ * setter</li>
+ * <li>Handles Python iteration semantics, including stop iteration</li>
+ * </ul>
+ *
+ * <p>
+ * Usage Example:
+ * <pre>
+ * PyMapping map = BuiltIn.dict();  // Python mapping object
+ * Iterator&lt;Object, PyObject&gt; iterator = map.iterator();
+ * while (iterator.hasNext()) {
+ *     Map.Entry&lt&Object, PyObject&gt; entry = iterator.next();
+ *     System.out.println("Key: " + entry.getKey() + ", Value: " + entry.getValue());
+ * }
+ * </pre>
+ *
+ * @param <K> The type of keys in the mapping.
+ * @param <V> The type of values in the mapping.
  */
-public class PyMappingEntrySetIterator<K,V> implements Iterator<Map.Entry<K, V>>
+class PyMappingEntrySetIterator<K, V> implements Iterator<Map.Entry<K, V>>
 {
 
+  /**
+   * The Python mapping object being iterated over.
+   */
   private final PyMapping map;
+
+  /**
+   * The Python iterator for the mapping entries.
+   */
   private final PyIter iter;
+
+  /**
+   * The current value yielded by the Python iterator.
+   */
   private PyObject yield;
+
+  /**
+   * Indicates whether the iteration is complete.
+   */
   private boolean done = false;
+
+  /**
+   * Tracks whether the next element has been checked.
+   */
   private boolean check = false;
+
+  /**
+   * A custom setter function used to update mapping entries.
+   */
   private final BiFunction<Object, PyObject, PyObject> setter;
 
+  /**
+   * Constructs a new {@code PyMappingEntrySetIterator}.
+   *
+   * @param map The Python mapping object to iterate over.
+   * @param iter The Python iterator for the mapping entries.
+   */
   public PyMappingEntrySetIterator(PyMapping map, PyIter iter)
   {
     this.map = map;
@@ -44,6 +102,16 @@ public class PyMappingEntrySetIterator<K,V> implements Iterator<Map.Entry<K, V>>
     this.setter = this::set;
   }
 
+  /**
+   * Updates the value of a mapping entry and returns the previous value.
+   *
+   * This method is used as the setter function for
+   * {@link Utility.MapEntryWithSet}.
+   *
+   * @param key The key of the mapping entry to update.
+   * @param value The new value to associate with the key.
+   * @return The previous value associated with the key.
+   */
   private PyObject set(Object key, PyObject value)
   {
     PyObject out = map.get(key);
@@ -51,6 +119,16 @@ public class PyMappingEntrySetIterator<K,V> implements Iterator<Map.Entry<K, V>>
     return out;
   }
 
+  /**
+   * Checks whether there are more elements to iterate over.
+   *
+   * This method determines if the Python iterator has more entries. It handles
+   * Python's stop iteration semantics and ensures proper integration with
+   * Java's {@link Iterator} interface.
+   *
+   * @return {@code true} if there are more elements to iterate over,
+   * {@code false} otherwise.
+   */
   @Override
   public boolean hasNext()
   {
@@ -65,6 +143,17 @@ public class PyMappingEntrySetIterator<K,V> implements Iterator<Map.Entry<K, V>>
     return !done;
   }
 
+  /**
+   * Returns the next mapping entry in the iteration.
+   *
+   * This method retrieves the next key-value pair from the Python iterator and
+   * wraps it in a {@link Map.Entry} object. If the iteration is complete, it
+   * throws a {@link NoSuchElementException}.
+   *
+   * @return The next mapping entry as a {@link Map.Entry} object.
+   * @throws NoSuchElementException If there are no more elements to iterate
+   * over.
+   */
   @Override
   public Map.Entry<K, V> next() throws NoSuchElementException
   {
@@ -73,11 +162,10 @@ public class PyMappingEntrySetIterator<K,V> implements Iterator<Map.Entry<K, V>>
     if (done)
       throw new NoSuchElementException();
     check = false;
-    //The obbject has two members
+    // The yielded object has two members: key and value
     PySequence tuple = yield.asSequence();
     PyObject key = tuple.get(0);
     PyObject value = tuple.get(1);
     return new Utility.MapEntryWithSet(key, value, setter);
   }
-
 }

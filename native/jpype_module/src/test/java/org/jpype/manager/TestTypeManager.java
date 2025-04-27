@@ -20,7 +20,6 @@ import org.jpype.manager.TypeFactoryHarness.Resource;
 
 /**
  *
- * @author nelson85
  */
 public class TestTypeManager
 {

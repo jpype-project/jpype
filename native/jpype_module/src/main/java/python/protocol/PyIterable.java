@@ -31,7 +31,6 @@ import python.lang.PyObject;
  * Note: The `reversed` method was removed due to contract conflicts with
  * {@link List}.
  *
- * @author nelson85
  */
 public interface PyIterable extends PyProtocol, Iterable<PyObject>
 {

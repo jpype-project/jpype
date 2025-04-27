@@ -25,7 +25,6 @@ import org.testng.annotations.Test;
 
 /**
  *
- * @author nelson85
  */
 public class JPypePackageNGTest
 {

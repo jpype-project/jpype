@@ -56,7 +56,10 @@ public interface PyObject
    *
    * @return an attribute protocol.
    */
-  PyAttributes asAttributes();
+  default PyAttributes asAttributes()
+  {
+    return new PyAttributes(this);
+  }
 
   /**
    * Apply the callable protocol to this object.

@@ -19,7 +19,6 @@ import java.util.ArrayList;
 
 /**
  *
- * @author nelson85
  */
 public class JPypeReferenceSet
 {

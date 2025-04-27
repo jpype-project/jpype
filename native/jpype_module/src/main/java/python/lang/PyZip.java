@@ -17,7 +17,6 @@ package python.lang;
 
 import org.jpype.bridge.BuiltIn;
 import org.jpype.bridge.Interpreter;
-import python.protocol.PyGenerator;
 import python.protocol.PyIter;
 import python.protocol.PyIterable;
 
@@ -33,7 +32,7 @@ public interface PyZip extends PyIter
    * @param items The iterables to zip together.
    * @return A PyZip object representing the zipped iterables.
    */
-  static PyFloat of(PyIterable... items)
+  static PyZip of(Iterable... items)
   {
     return Interpreter.getBackend().newZip(items);
   }

@@ -67,13 +67,11 @@ import python.lang.PyObject;
  * entrySet.clear();
  * </pre>
  *
- * @author nelson85
- * @version 1.0
  * @see PyMapping
  * @see Map.Entry
  * @see Set
  */
-public class PyMappingEntrySet<K,V> implements Set<Map.Entry<K, V>>
+public class PyMappingEntrySet<K, V> implements Set<Map.Entry<K, V>>
 {
 
   /**
@@ -103,13 +101,16 @@ public class PyMappingEntrySet<K,V> implements Set<Map.Entry<K, V>>
    * Adds the specified entry to the mapping.
    *
    * @param e the entry to add
-   * @return {@code true} if the entry was added successfully
+   * @return {@code true} if the entry was added successfully, meaning the key
+   * did not previously exist in the mapping; {@code false} if the key already
+   * existed and its value was updated.
    */
   @Override
   public boolean add(Map.Entry<K, V> e)
   {
-    this.map.put(e.getKey(), e.getValue());
-    return true;
+    boolean previous = this.map.containsKey(e.getKey());
+    this.map.putAny(e.getKey(), e.getValue());
+    return !previous;
   }
 
   /**
