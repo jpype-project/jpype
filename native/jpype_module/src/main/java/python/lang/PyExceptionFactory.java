@@ -59,7 +59,7 @@ import python.exception.PyZeroDivisionError;
  */
 class PyExceptionFactory
 {
-  
+
   final static HashMap<String, Class> LOOKUP = new HashMap<>();
 
   static

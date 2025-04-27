@@ -16,17 +16,7 @@
 package python.lang;
 
 import org.jpype.bridge.Interpreter;
-import static org.testng.Assert.*;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-import python.protocol.PyAttributes;
-import python.protocol.PyCallable;
-import python.protocol.PyMapping;
-import python.protocol.PyNumber;
-import python.protocol.PySequence;
 
 /**
  *

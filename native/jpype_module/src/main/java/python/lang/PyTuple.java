@@ -75,6 +75,7 @@ import org.jpype.bridge.Interpreter;
  */
 public interface PyTuple extends PyObject, PyIterable, List<PyObject>
 {
+
   /**
    * Creates a new {@code PyTuple} from a variable number of elements.
    *

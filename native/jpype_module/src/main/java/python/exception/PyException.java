@@ -23,6 +23,7 @@ import python.lang.PyExc;
  */
 public class PyException extends RuntimeException
 {
+
   private final PyExc base;
 
   public PyException(PyExc base)

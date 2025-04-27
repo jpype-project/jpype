@@ -67,7 +67,6 @@ public class JPypeReferenceNative
    * @param m The {@link Method} object representing the method to associate
    * with the object.
    *
-   *
    */
   public static native void init(Object self, Method m);
 }

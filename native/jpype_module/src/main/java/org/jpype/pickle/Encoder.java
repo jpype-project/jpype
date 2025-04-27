@@ -20,8 +20,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 /**
- *
- * @author Karl Einar Nelson
+ * Support class for the Python JPickler class.
  */
 public class Encoder
 {

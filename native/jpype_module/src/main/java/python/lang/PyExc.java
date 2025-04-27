@@ -31,11 +31,11 @@ import static python.lang.PyBuiltIn.*;
 public interface PyExc extends PyObject
 {
 
-  /** 
+  /**
    * Wraps a Python exception with the appropriate Java wrapper type.
-   * 
+   *
    * @param base
-   * @return 
+   * @return
    */
   static Exception of(PyExc base)
   {
@@ -62,15 +62,15 @@ public interface PyExc extends PyObject
       return new RuntimeException("Unable to find Python error type " + name);
     }
   }
-  
-  /** 
+
+  /**
    * Used to pass an exception through the Python stack.
-   * 
+   *
    * @param th
-   * @return 
+   * @return
    */
   static public PyExc unwrap(Throwable th)
-  {    
+  {
     if (th instanceof PyException)
       return ((PyException) th).get();
     return null;

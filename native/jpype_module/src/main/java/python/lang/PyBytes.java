@@ -135,11 +135,11 @@ public interface PyBytes extends PyObject, PyBuffer
    */
   PyString decode(CharSequence encoding, CharSequence errors);
 
-/**
- * Gets the length of a bytearray object in bytes.
- * 
- * @return the length of the bytearray object, measured in bytes.
- */
+  /**
+   * Gets the length of a bytearray object in bytes.
+   *
+   * @return the length of the bytearray object, measured in bytes.
+   */
   default int size()
   {
     return Interpreter.getBackend().len(this);

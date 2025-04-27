@@ -43,7 +43,6 @@ public class PyJavaObject implements PyObject
     return obj_;
   }
 
-
   @Override
   public int hashCode()
   {

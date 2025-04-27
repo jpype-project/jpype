@@ -92,7 +92,6 @@ public interface PyList extends PyObject, List<PyObject>, PyIterable
    * @param items is an array whose elements will populate the new Python list.
    * @return a new {@link PyList} instance containing the elements.
    */
-
   public static PyList of(Object... items)
   {
     return Interpreter.getBackend().newListFromArray(items);

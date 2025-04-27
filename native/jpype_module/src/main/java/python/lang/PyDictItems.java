@@ -43,7 +43,7 @@ import python.protocol.PyIterator;
  * does not allow direct removal of items.</li>
  * </ul>
  */
-public class PyDictItems<K,V> implements Set<Map.Entry<K, V>>
+public class PyDictItems<K, V> implements Set<Map.Entry<K, V>>
 {
 
   /**

@@ -20,20 +20,47 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 
+/**
+ * A specialized {@link InputStream} implementation backed by multiple
+ * {@link ByteBuffer} objects.
+ *
+ * <p>
+ * This class allows for efficient reading of data from multiple byte buffers,
+ * treating them as a single continuous stream. It provides methods to add byte
+ * arrays to the stream and overrides standard {@link InputStream} methods for
+ * reading data.</p>
+ */
 public class ByteBufferInputStream extends InputStream
 {
 
   private LinkedList<ByteBuffer> buffers = new LinkedList<>();
 
+  /**
+   * Adds a byte array to the stream by wrapping it in a {@link ByteBuffer}.
+   *
+   * <p>
+   * The byte array is wrapped directly without copying, so changes to the array
+   * after it is added will affect the data in the stream.</p>
+   *
+   * @param bytes The byte array to add to the stream.
+   */
   public void put(byte[] bytes)
   {
-    // We can just wrap the buffer instead of copying it, since the buffer is
-    // wrapped we don't need to write the bytes to it. Wrapping the bytes relies
-    // on the array not being changed before being read.
     ByteBuffer buffer = ByteBuffer.wrap(bytes);
     buffers.add(buffer);
   }
 
+  /**
+   * Reads the next byte of data from the stream.
+   *
+   * <p>
+   * If the stream is empty or the end of the stream is reached, this method
+   * returns -1.</p>
+   *
+   * @return The next byte of data as an integer in the range 0 to 255, or -1 if
+   * the end of the stream is reached.
+   * @throws IOException If an I/O error occurs.
+   */
   @Override
   public int read() throws IOException
   {
@@ -51,12 +78,43 @@ public class ByteBufferInputStream extends InputStream
     return b.get() & 0xFF; // Mask with 0xFF to convert signed byte to int (range 0-255)
   }
 
+  /**
+   * Reads up to {@code buffer.length} bytes of data from the stream into the
+   * specified byte array.
+   *
+   * <p>
+   * This method is a convenience wrapper for
+   * {@link #read(byte[], int, int)}.</p>
+   *
+   * @param buffer The byte array into which data is read.
+   * @return The number of bytes read, or -1 if the end of the stream is
+   * reached.
+   * @throws IOException If an I/O error occurs.
+   */
   @Override
-  public int read(byte[] arg0) throws IOException
+  public int read(byte[] buffer) throws IOException
   {
-    return read(arg0, 0, arg0.length);
+    return read(buffer, 0, buffer.length);
   }
 
+  /**
+   * Reads up to {@code len} bytes of data from the stream into the specified
+   * byte array starting at {@code offset}.
+   *
+   * <p>
+   * This method reads data from the stream into the provided buffer, starting
+   * at the specified offset and reading up to the specified length.</p>
+   *
+   * @param buffer The byte array into which data is read.
+   * @param offset The starting offset in the byte array.
+   * @param len The maximum number of bytes to read.
+   * @return The number of bytes read, or -1 if the end of the stream is
+   * reached.
+   * @throws IOException If an I/O error occurs.
+   * @throws NullPointerException If {@code buffer} is null.
+   * @throws IndexOutOfBoundsException If {@code offset} or {@code len} are
+   * invalid.
+   */
   @Override
   public int read(byte[] buffer, int offset, int len) throws IOException
   {
@@ -87,6 +145,14 @@ public class ByteBufferInputStream extends InputStream
     return (total == 0) ? -1 : total;
   }
 
+  /**
+   * Closes the stream and releases all resources.
+   *
+   * <p>
+   * This method clears all {@link ByteBuffer} objects from the stream.</p>
+   *
+   * @throws IOException If an I/O error occurs.
+   */
   @Override
   public void close() throws IOException
   {

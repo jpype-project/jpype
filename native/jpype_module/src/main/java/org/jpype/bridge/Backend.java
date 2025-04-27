@@ -40,7 +40,6 @@ import python.protocol.PyBuffer;
 import python.protocol.PyCallable;
 import python.protocol.PyMapping;
 import python.protocol.PyIter;
-import python.protocol.PyIterable;
 
 /**
  * Backend for all Python entry points.
@@ -289,14 +288,15 @@ public interface Backend
   // Create an empty Python `set`.
   PySet set();
 
-
   // Set an attribute on a Python object and return the updated object.
   PyObject setattrReturn(PyObject obj, CharSequence attrName, PyObject value);
+
   // Set an attribute on a Python object.
   void setattrString(Object obj, CharSequence attrName, Object value);
 
   // Set an item in a Python mapping object by object key.
   PyObject setitemFromObject(Object obj, Object key, Object value);
+
   // Set an item in a Python mapping object by string key.
   void setitemFromString(Object obj, CharSequence key, Object value);
 

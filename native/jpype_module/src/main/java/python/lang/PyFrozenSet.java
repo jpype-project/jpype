@@ -37,7 +37,7 @@ import python.protocol.PyIterator;
  * Note: While this interface mostly adheres to Java's contract for sets, some
  * operations (e.g., {@code add}, {@code update}) may behave differently due to
  * the immutable nature of Python's `frozenset`.
- * 
+ *
  * <p>
  * <b>Important Note:</b></p>
  * <p>
@@ -152,8 +152,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    * Computes the union of this `frozenset` with one or more other sets. The
    * union contains all elements from all sets.
    *
-   * @param set one or more {@link Set} instances to combine with this
-   * set.
+   * @param set one or more {@link Set} instances to combine with this set.
    * @return a new {@link PyFrozenSet} containing the union of all sets.
    */
   PyFrozenSet union(Collection... set);

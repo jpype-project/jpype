@@ -111,6 +111,6 @@ public interface PySequence extends PyProtocol, List<PyObject>
   @Override
   default int size()
   {
-        return Interpreter.getBackend().len(this);
+    return Interpreter.getBackend().len(this);
   }
 }
