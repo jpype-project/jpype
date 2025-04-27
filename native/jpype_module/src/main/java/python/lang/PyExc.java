@@ -21,6 +21,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import python.exception.PyException;
 import static python.lang.PyExceptionFactory.LOOKUP;
+import static python.lang.PyBuiltIn.*;
 
 /**
  * Native version of a Python exception.
@@ -38,10 +39,8 @@ public interface PyExc extends PyObject
    */
   static Exception of(PyExc base)
   {
-System.out.println("PyExc.of");
-    PyType type = base.getType();
+    PyType type = type(base);
     String name = type.getName();
-System.out.println("PyExc.of "+name);
     Class cls = LOOKUP.get(name);
     if (cls == null)
     {

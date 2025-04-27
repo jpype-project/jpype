@@ -23,6 +23,7 @@ import java.util.function.BiFunction;
 import org.jpype.bridge.Interpreter;
 import python.lang.PyBuiltIn;
 import python.lang.PyObject;
+import python.lang.PyTuple;
 
 /**
  * Iterator implementation for iterating over the entries of a Python mapping.
@@ -163,7 +164,7 @@ class PyMappingEntrySetIterator<K, V> implements Iterator<Map.Entry<K, V>>
       throw new NoSuchElementException();
     check = false;
     // The yielded object has two members: key and value
-    PySequence tuple = yield.asSequence();
+    PyTuple tuple = (PyTuple) yield;
     PyObject key = tuple.get(0);
     PyObject value = tuple.get(1);
     return new Utility.MapEntryWithSet(key, value, setter);

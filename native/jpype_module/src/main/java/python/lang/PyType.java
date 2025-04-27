@@ -103,7 +103,6 @@ public interface PyType extends PyObject, PyCallable
    * @param obj The object to check.
    * @return True if the object is an instance of this type, false otherwise.
    */
-  @Override
   boolean isInstance(PyObject obj);
 
   /**

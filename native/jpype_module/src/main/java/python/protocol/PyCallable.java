@@ -211,7 +211,7 @@ public interface PyCallable extends PyProtocol
      * @param values is the arguments to add.
      * @return this {@link CallBuilder} instance for chaining.
      */
-    public CallBuilder arg(Object... values)
+    public CallBuilder args(Object... values)
     {
       jargs.addAll(Arrays.asList(values));
       return this;

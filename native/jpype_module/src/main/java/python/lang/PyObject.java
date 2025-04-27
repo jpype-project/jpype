@@ -15,18 +15,15 @@
  */
 package python.lang;
 
-import python.protocol.PyCallable;
-import python.protocol.PySequence;
 import python.protocol.PyAttributes;
-import python.protocol.PyMapping;
-import python.protocol.PyNumber;
 
 /**
  * PyObject is a representation of a generic object in Python.
  *
- * PyObjects are very generic and thus must be converted to a protocol using the
- * "as" methods. Specific Java like behaviors are implemented on the protocols
- * where applicable.
+ * PyObject when created inherit from multiple Java interfaces called protocols
+ * based on their duck type behavior. Use `instanceof` and casting to access the
+ * available behaviors. Specific Java like behaviors are implemented on the
+ * protocols where applicable.
  *
  */
 public interface PyObject
@@ -38,59 +35,16 @@ public interface PyObject
   }
 
   /**
-   * Get the type of this object.
-   *
-   * Equivalent of type(obj).
-   *
-   * @return the object type.
-   */
-  PyType getType();
-
-  boolean isInstance(PyObject cls);
-
-  /**
    * Apply the attributes protocol to this object.
    *
    * This method never fails.
    *
    * @return an attribute protocol.
    */
-  default PyAttributes asAttributes()
+  default PyAttributes getAttributes()
   {
     return new PyAttributes(this);
   }
-
-  /**
-   * Apply the callable protocol to this object.
-   *
-   * The object must be callable for this to succeed.
-   *
-   * @return a callable protocol.
-   */
-  PyCallable asCallable();
-
-  /**
-   * Apply the sequence protocol to this object.
-   *
-   * @return a sequence protocol.
-   */
-  PySequence asSequence();
-
-  /**
-   * Apply the mapping protocol to this object.
-   *
-   * @return a mapping protocol.
-   */
-  PyMapping asMapping();
-
-  /**
-   * Apply the number protocol to this object.
-   *
-   * @return a number protocol.
-   */
-  PyNumber asNumber();
-
-  PyObject bytes();
 
   @Override
   int hashCode();

@@ -16,12 +16,7 @@
 package python.lang;
 
 import java.util.Objects;
-import org.jpype.bridge.Context;
 import python.protocol.PyAttributes;
-import python.protocol.PyCallable;
-import python.protocol.PyMapping;
-import python.protocol.PyNumber;
-import python.protocol.PySequence;
 
 /**
  * Java front end for a Python wrapped Java object.
@@ -37,41 +32,9 @@ public class PyJavaObject implements PyObject
   }
 
   @Override
-  public PyAttributes asAttributes()
+  public PyAttributes getAttributes()
   {
     // Java objects don't support Python attributes directly.
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public PyCallable asCallable()
-  {
-    // Java objects don't act as Python functions.
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public PyMapping asMapping()
-  {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public PyNumber asNumber()
-  {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public PySequence asSequence()
-  {
-    // Java objects don't act as Python sequences
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public PyObject bytes()
-  {
     throw new UnsupportedOperationException();
   }
 
@@ -80,11 +43,6 @@ public class PyJavaObject implements PyObject
     return obj_;
   }
 
-  @Override
-  public PyType getType()
-  {
-    return Context.type(obj_);
-  }
 
   @Override
   public int hashCode()
@@ -103,12 +61,6 @@ public class PyJavaObject implements PyObject
       return false;
     final PyJavaObject other = (PyJavaObject) obj;
     return Objects.equals(this.obj_, other.obj_);
-  }
-
-  @Override
-  public boolean isInstance(PyObject cls)
-  {
-    throw new UnsupportedOperationException();
   }
 
 }

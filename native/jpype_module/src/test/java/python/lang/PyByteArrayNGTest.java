@@ -21,7 +21,7 @@ import static org.testng.Assert.*;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 import python.protocol.PyBuffer;
-import python.lang.PyBuiltIn;
+import static python.lang.PyBuiltIn.*;
 /**
  *
  * @author nelson85
@@ -52,7 +52,7 @@ public class PyByteArrayNGTest
     assertNotNull(instance, "PyByteArray object should not be null");
 
     // Optionally, verify the size of the bytearray (if accessible)
-    int len2 = PyBuiltIn.len(instance);
+    int len2 = len(instance);
     assertEquals(len2, length, "PyByteArray size should match the specified length");
   }
 
@@ -143,7 +143,7 @@ public class PyByteArrayNGTest
     PyByteArray instance = PyByteArray.create(10);
 
     // Assert that the size of the PyByteArray matches the specified length
-    int len2 = PyBuiltIn.len(instance);
+    int len2 = len(instance);
     assertEquals(len2, 10, "PyByteArray size should match the specified length");
   }
 

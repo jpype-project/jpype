@@ -20,6 +20,7 @@ import org.jpype.bridge.Interpreter;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 import org.testng.annotations.BeforeClass;
+import static python.lang.PyBuiltIn.*;
 
 /**
  *
@@ -70,7 +71,7 @@ public class PyTypeNGTest
   public void testIsInstance()
   {
     PyObject obj = PyString.from("test");
-    PyType type = obj.getType();
+    PyType type = type(obj);
     assertTrue(type.isInstance(obj));
     assertFalse(type.isInstance(PyDict.type()));
   }
@@ -88,7 +89,7 @@ public class PyTypeNGTest
     Context context = new Context();
     context.importModule("collections");
     PyObject obj = context.eval("collections.abc.Mapping");
-    PyType type = obj.getType();
+    PyType type = type(obj);
     assertTrue(type.isAbstract());
     PyType concreteType = PyDict.type();
     assertFalse(concreteType.isAbstract());

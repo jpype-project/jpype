@@ -25,6 +25,7 @@ import org.jpype.bridge.Interpreter;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 import org.testng.annotations.BeforeClass;
+import static python.lang.PyBuiltIn.*;
 
 /**
  *
@@ -42,10 +43,10 @@ public class PyDictNGTest
   @Test
   public void testPutAndGet()
   {
-    PyDict dict = PyDict.create();
+    PyDict obj = dict();
     PyObject value = PyString.from("value1");
-    dict.put("key1", value);
-    assertEquals(dict.get("key1"), value);
+    obj.put("key1", value);
+    assertEquals(obj.get("key1"), value);
   }
 
   @Test
