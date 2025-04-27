@@ -191,18 +191,6 @@ public class PyBuiltIn
    * @param key the name of the attribute to retrieve.
    * @return the value of the attribute as a {@link PyObject}.
    */
-  public static PyObject getattr(PyObject obj, CharSequence key)
-  {
-    return backend().getattrString(obj, key);
-  }
-
-  /**
-   * Retrieves the value of an attribute from a Python object.
-   *
-   * @param obj the Python object to inspect.
-   * @param key the name of the attribute to retrieve.
-   * @return the value of the attribute as a {@link PyObject}.
-   */
   public static PyObject getattr(PyObject obj, Object key)
   {
     return backend().getattrObject(obj, key);
@@ -210,7 +198,7 @@ public class PyBuiltIn
 
   public static PyObject getattrDefault(PyObject obj, Object key, PyObject defaultValue)
   {
-    return backend().getattrDefault(obj, key);
+    return backend().getattrDefault(obj, key, defaultValue);
   }
 
   /**
@@ -472,13 +460,13 @@ public class PyBuiltIn
   /**
    * Creates a Python tuple from a variable-length array of arguments.
    *
-   * @param args the objects to include in the tuple.
+   * @param items the objects to include in the tuple.
    * @param <T> the type of the objects.
    * @return a new {@link PyTuple} instance containing the objects.
    */
-  public static <T> PyTuple tuple(T... args)
+  public static <T> PyTuple tuple(T... items)
   {
-    return backend().newTupleFromArray(args);
+    return backend().newTupleFromArray(items);
   }
 
   /**

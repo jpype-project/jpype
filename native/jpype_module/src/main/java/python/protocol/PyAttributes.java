@@ -23,6 +23,7 @@ import python.lang.PyBuiltIn;
 import org.jpype.bridge.Interpreter;
 import python.lang.PyDict;
 import python.lang.PyDictItems;
+import python.lang.PyDictKeySet;
 import python.lang.PyList;
 import python.lang.PyObject;
 
@@ -65,8 +66,6 @@ import python.lang.PyObject;
  * attributes.clear();
  * </pre>
  *
- * @param <CharSequence> The type of keys used for attribute names.
- * @param <PyObject> The type of values stored in the attributes.
  */
 public class PyAttributes implements Map<CharSequence, PyObject>
 {
@@ -170,7 +169,7 @@ public class PyAttributes implements Map<CharSequence, PyObject>
 
   @Override
   public Set<Entry<CharSequence, PyObject>> entrySet()
-  {  
+  {
     return new PyDictItems(this.asDict());
   }
 
@@ -238,7 +237,7 @@ public class PyAttributes implements Map<CharSequence, PyObject>
   @Override
   public Set<CharSequence> keySet()
   {
-    throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    return new PyDictKeySet(asDict());
   }
 
   /**
@@ -261,7 +260,7 @@ public class PyAttributes implements Map<CharSequence, PyObject>
   /**
    * Unsupported operation for adding multiple attributes.
    *
-   * @param collection The map of attributes to add.
+   * @param map is the map of attributes to add.
    * @throws UnsupportedOperationException Always thrown.
    */
   @Override

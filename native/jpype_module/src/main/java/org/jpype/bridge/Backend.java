@@ -124,7 +124,7 @@ public interface Backend
   // Get the signature of a Python callable.
   PyObject getSignature(PyCallable obj);
 
-  PyObject getattrDefault(PyObject obj, Object key);
+  PyObject getattrDefault(PyObject obj, Object key, PyObject defaultValue);
 
   // Get an attribute from a Python object by key.
   PyObject getattrObject(PyObject obj, Object key);
@@ -289,17 +289,16 @@ public interface Backend
   // Create an empty Python `set`.
   PySet set();
 
-  // Set an attribute on a Python object.
-  void setattrString(Object obj, CharSequence attrName, Object value);
 
   // Set an attribute on a Python object and return the updated object.
   PyObject setattrReturn(PyObject obj, CharSequence attrName, PyObject value);
-
-  // Set an item in a Python mapping object by string key.
-  void setitemFromString(Object obj, CharSequence key, Object value);
+  // Set an attribute on a Python object.
+  void setattrString(Object obj, CharSequence attrName, Object value);
 
   // Set an item in a Python mapping object by object key.
   PyObject setitemFromObject(Object obj, Object key, Object value);
+  // Set an item in a Python mapping object by string key.
+  void setitemFromString(Object obj, CharSequence key, Object value);
 
   // Create a Python `slice` object.
   PySlice slice(Integer start, Integer stop, Integer step);
@@ -319,9 +318,7 @@ public interface Backend
   // Get the `__dict__` attribute of a Python object.
   PyDict vars(Object obj);
 
-  public PyZip zipFromArray(PyObject[] objects);
-
-  public PyZip zipFromArray(Object[] objects);
+  PyZip zipFromArray(Object[] objects);
 
   // Create a Python `zip` object from multiple objects.
   <T> PyZip zipFromIterable(T... objects);

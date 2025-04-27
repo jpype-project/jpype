@@ -75,6 +75,7 @@ public class PyTupleNGTest
   }
 
   @Test
+  @SuppressWarnings("element-type-mismatch")
   public void testContains()
   {
     PyTuple tuple = PyTuple.of("a", "b");

@@ -94,21 +94,49 @@ public interface PyByteArray extends PyObject, PyBuffer
   }
 
   /**
-   * Decodes the contents of the bytearray using the specified encoding.
-   * Optionally, specific bytes can be deleted during decoding.
+   * Decodes a bytearray object into a Python string.
    *
-   * @param encoding the encoding to use for decoding (e.g., "utf-8").
-   * @param delete the bytes to delete during decoding, or {@code null} for no
-   * deletion.
-   * @return a {@link PyObject} representing the decoded string.
+   * <p>
+   * Values for encoding include:</p>
+   * <ul>
+   * <li>"utf-8" (default)</li>
+   * <li>"ascii"</li>
+   * <li>"latin-1"</li>
+   * <li>"utf-16"</li>
+   * <li>"utf-32"</li>
+   * <li>"cp1252" (Windows encoding)</li>
+   * </ul>
+   *
+   * <p>
+   * Values for errors include:</p>
+   * <ul>
+   * <li>"strict" (default): Raises a UnicodeDecodeError for invalid data.</li>
+   * <li>"ignore": Ignores invalid characters.</li>
+   * <li>"replace": Replaces invalid characters with a replacement character
+   * (e.g., ? or �).</li>
+   * <li>"backslashreplace": Replaces invalid characters with Python-style
+   * escape sequences (e.g., \xNN).</li>
+   * <li>"namereplace": Replaces invalid characters with \N{name} escape
+   * sequences.</li>
+   * <li>"surrogateescape": Uses special surrogate code points for invalid
+   * bytes.</li>
+   * </ul>
+   *
+   * @param encoding The character encoding to use for decoding the bytes
+   * object. Common values include "utf-8", "ascii", "latin-1", etc or null if
+   * not applicable.
+   * @param errors An optional argument to specify how to handle errors during
+   * decoding. Can be "strict", "ignore", "replace", etc., or null if not
+   * applicable.
+   * @return A new string resulting from decoding the bytearray object.
    */
-  PyObject decode(PyObject encoding, PyObject delete);
+  PyObject decode(PyObject encoding, PyObject errors);
 
   default int size()
   {
     return Interpreter.getBackend().len(this);
   }
-  
+
   /**
    * Translates the contents of the bytearray using a translation table. The
    * translation table maps byte values to their replacements.

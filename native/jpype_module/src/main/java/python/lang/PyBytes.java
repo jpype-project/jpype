@@ -96,8 +96,50 @@ public interface PyBytes extends PyObject, PyBuffer
     return (PyType) PyBuiltIn.eval("bytes", null, null);
   }
 
-  PyObject decode(PyObject string, PyObject encoding);
+  /**
+   * Decodes a bytes object into a Python string.
+   *
+   * <p>
+   * Values for encoding include:</p>
+   * <ul>
+   * <li>"utf-8" (default)</li>
+   * <li>"ascii"</li>
+   * <li>"latin-1"</li>
+   * <li>"utf-16"</li>
+   * <li>"utf-32"</li>
+   * <li>"cp1252" (Windows encoding)</li>
+   * </ul>
+   *
+   * <p>
+   * Values for errors include:</p>
+   * <ul>
+   * <li>"strict" (default): Raises a UnicodeDecodeError for invalid data.</li>
+   * <li>"ignore": Ignores invalid characters.</li>
+   * <li>"replace": Replaces invalid characters with a replacement character
+   * (e.g., ? or �).</li>
+   * <li>"backslashreplace": Replaces invalid characters with Python-style
+   * escape sequences (e.g., \xNN).</li>
+   * <li>"namereplace": Replaces invalid characters with \N{name} escape
+   * sequences.</li>
+   * <li>"surrogateescape": Uses special surrogate code points for invalid
+   * bytes.</li>
+   * </ul>
+   *
+   * @param encoding The character encoding to use for decoding the bytes
+   * object. Common values include "utf-8", "ascii", "latin-1", etc or null if
+   * not applicable.
+   * @param errors An optional argument to specify how to handle errors during
+   * decoding. Can be "strict", "ignore", "replace", etc., or null if not
+   * applicable.
+   * @return a new string resulting from decoding the bytes object.
+   */
+  PyString decode(CharSequence encoding, CharSequence errors);
 
+/**
+ * Gets the length of a bytearray object in bytes.
+ * 
+ * @return the length of the bytearray object, measured in bytes.
+ */
   default int size()
   {
     return Interpreter.getBackend().len(this);

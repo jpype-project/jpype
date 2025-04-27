@@ -196,24 +196,24 @@ public interface PyCallable extends PyProtocol
     /**
      * Adds a single positional argument to the call sequence.
      *
-     * @param arg the argument to add
-     * @return this {@link CallBuilder} instance for chaining
+     * @param value is the argument to add.
+     * @return this {@link CallBuilder} instance for chaining.
      */
-    public CallBuilder arg(Object arg)
+    public CallBuilder arg(Object value)
     {
-      jargs.add(arg);
+      jargs.add(value);
       return this;
     }
 
     /**
      * Adds multiple positional arguments to the call sequence.
      *
-     * @param args the arguments to add
-     * @return this {@link CallBuilder} instance for chaining
+     * @param values is the arguments to add.
+     * @return this {@link CallBuilder} instance for chaining.
      */
-    public CallBuilder arg(Object... args)
+    public CallBuilder arg(Object... values)
     {
-      jargs.addAll(Arrays.asList(args));
+      jargs.addAll(Arrays.asList(values));
       return this;
     }
 

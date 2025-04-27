@@ -21,6 +21,7 @@ import python.protocol.PyIterable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import org.jpype.bridge.Interpreter;
 
 /**
@@ -71,18 +72,6 @@ public interface PyList extends PyObject, List<PyObject>, PyIterable
 {
 
   /**
-   * Creates a new Python `list` object from the given a list of objects.
-   *
-   * @param items is an array whose elements will populate the new Python list.
-   * @return a new {@link PyList} instance containing the elements.
-   */
-
-  public static PyList of(Object... items)
-  {
-    return Interpreter.getBackend().newListFromArray(items);
-  }
-
-  /**
    * Creates a new Python `list` object from the given {@link Iterable}.
    *
    * The elements of the provided iterable will be added to the Python list.
@@ -95,6 +84,18 @@ public interface PyList extends PyObject, List<PyObject>, PyIterable
   public static PyList fromItems(Iterable c)
   {
     return Interpreter.getBackend().newListFromIterable(c);
+  }
+
+  /**
+   * Creates a new Python `list` object from the given a list of objects.
+   *
+   * @param items is an array whose elements will populate the new Python list.
+   * @return a new {@link PyList} instance containing the elements.
+   */
+
+  public static PyList of(Object... items)
+  {
+    return Interpreter.getBackend().newListFromArray(items);
   }
 
   /**
@@ -253,6 +254,35 @@ public interface PyList extends PyObject, List<PyObject>, PyIterable
   }
 
   /**
+   * Returns a list iterator over the elements in the tuple.
+   *
+   * @return a list iterator starting at the beginning of the tuple
+   */
+  @Override
+  default ListIterator<PyObject> listIterator()
+  {
+    return new PyListIterator(this, 0);
+  }
+
+  /**
+   * Returns a list iterator over the elements in the tuple, starting at the
+   * specified index.
+   *
+   * @param index the starting index for the iterator
+   * @return a list iterator starting at the specified index
+   * @throws IndexOutOfBoundsException if the index is out of range
+   */
+  @Override
+  default ListIterator<PyObject> listIterator(int index)
+  {
+    if (index < 0 || index > size())
+    {
+      throw new IndexOutOfBoundsException();
+    }
+    return new PyListIterator(this, index);
+  }
+
+  /**
    * Removes the first occurrence of the specified object from the list.
    *
    * @param o the object to remove.
@@ -402,4 +432,5 @@ public interface PyList extends PyObject, List<PyObject>, PyIterable
   {
     return (T[]) new ArrayList<>(this).toArray(a);
   }
+
 }
