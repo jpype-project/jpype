@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import org.jpype.bridge.Interpreter;
-import org.jpype.bridge.BuiltIn;
 import python.protocol.PyIterator;
 
 /**
@@ -60,7 +59,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("frozenset", null, null);
+    return (PyType) PyBuiltIn.eval("frozenset", null, null);
   }
 
   /**

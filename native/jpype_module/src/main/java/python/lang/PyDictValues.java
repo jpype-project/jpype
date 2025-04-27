@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import org.jpype.bridge.Backend;
-import org.jpype.bridge.BuiltIn;
 import org.jpype.bridge.Interpreter;
 
 /**
@@ -171,7 +170,7 @@ public class PyDictValues implements Collection<PyObject>
   @Override
   public Iterator<PyObject> iterator()
   {
-    return (Iterator<PyObject>) BuiltIn.iter(values).iterator();
+    return (Iterator<PyObject>) PyBuiltIn.iter(values).iterator();
   }
 
   /**
@@ -229,7 +228,7 @@ public class PyDictValues implements Collection<PyObject>
   @Override
   public Object[] toArray()
   {
-    return new ArrayList(BuiltIn.list(values)).toArray();
+    return new ArrayList(PyBuiltIn.list(values)).toArray();
   }
 
   /**
@@ -241,6 +240,6 @@ public class PyDictValues implements Collection<PyObject>
   @Override
   public <T> T[] toArray(T[] a)
   {
-    return (T[]) new ArrayList(BuiltIn.list(values)).toArray(a);
+    return (T[]) new ArrayList(PyBuiltIn.list(values)).toArray(a);
   }
 }

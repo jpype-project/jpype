@@ -100,6 +100,11 @@ public class Interpreter
     return modulePaths;
   }
 
+  public boolean isStarted()
+  {
+    return backend!=null;
+  }
+
   /**
    * Start the interpreter.Any configuration actions must have been completed
    * before the interpreter is started.
@@ -108,7 +113,7 @@ public class Interpreter
    *
    * @param args
    */
-  public void start(String[] args)
+  public void start(String... args)
   {
     // Once builtin is set internally then we can't call create again.
     if (Interpreter.backend != null)

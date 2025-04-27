@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import org.jpype.bridge.Interpreter;
-import org.jpype.bridge.BuiltIn;
 
 /**
  * Java front-end interface for the Python `list` type.
@@ -72,6 +71,18 @@ public interface PyList extends PyObject, List<PyObject>, PyIterable
 {
 
   /**
+   * Creates a new Python `list` object from the given a list of objects.
+   *
+   * @param items is an array whose elements will populate the new Python list.
+   * @return a new {@link PyList} instance containing the elements.
+   */
+
+  public static PyList of(Object... items)
+  {
+    return Interpreter.getBackend().newListFromArray(items);
+  }
+
+  /**
    * Creates a new Python `list` object from the given {@link Iterable}.
    *
    * The elements of the provided iterable will be added to the Python list.
@@ -81,9 +92,9 @@ public interface PyList extends PyObject, List<PyObject>, PyIterable
    * @return a new {@link PyList} instance containing the elements of the
    * iterable.
    */
-  public static PyList of(Iterable c)
+  public static PyList fromItems(Iterable c)
   {
-    return BuiltIn.list(c);
+    return Interpreter.getBackend().newListFromIterable(c);
   }
 
   /**
@@ -94,7 +105,7 @@ public interface PyList extends PyObject, List<PyObject>, PyIterable
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("list", null, null);
+    return (PyType) PyBuiltIn.eval("list", null, null);
   }
 
   /**

@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import org.jpype.bridge.Backend;
-import org.jpype.bridge.BuiltIn;
 import org.jpype.bridge.Interpreter;
 import python.protocol.PyIterator;
 
@@ -230,7 +229,7 @@ public class PyDictKeySet<T> implements Set<T>
   @Override
   public Object[] toArray()
   {
-    return new ArrayList(BuiltIn.list(keys)).toArray();
+    return new ArrayList(PyBuiltIn.list(keys)).toArray();
   }
 
   /**
@@ -242,6 +241,6 @@ public class PyDictKeySet<T> implements Set<T>
   @Override
   public <T> T[] toArray(T[] a)
   {
-    return (T[]) new ArrayList(BuiltIn.list(keys)).toArray(a);
+    return (T[]) new ArrayList(PyBuiltIn.list(keys)).toArray(a);
   }
 }

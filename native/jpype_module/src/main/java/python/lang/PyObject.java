@@ -15,7 +15,6 @@
  */
 package python.lang;
 
-import org.jpype.bridge.BuiltIn;
 import python.protocol.PyCallable;
 import python.protocol.PySequence;
 import python.protocol.PyAttributes;
@@ -35,7 +34,7 @@ public interface PyObject
 
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("object", null, null);
+    return (PyType) PyBuiltIn.eval("object", null, null);
   }
 
   /**

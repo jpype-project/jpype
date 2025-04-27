@@ -16,7 +16,7 @@
 package python.protocol;
 
 import java.util.List;
-import org.jpype.bridge.BuiltIn;
+import python.lang.PyBuiltIn;
 import org.jpype.bridge.Interpreter;
 import python.lang.PyObject;
 
@@ -74,7 +74,7 @@ public interface PySequence extends PyProtocol, List<PyObject>
    */
   default PyObject get(PyIndex... indices)
   {
-    return Interpreter.getBackend().getitemMappingObject(this, BuiltIn.indices(indices));
+    return Interpreter.getBackend().getitemMappingObject(this, PyBuiltIn.indices(indices));
   }
 
   /**

@@ -21,7 +21,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import org.jpype.bridge.Backend;
-import org.jpype.bridge.BuiltIn;
 import org.jpype.bridge.Interpreter;
 import python.protocol.PyIterator;
 
@@ -225,7 +224,7 @@ public class PyDictItems<K,V> implements Set<Map.Entry<K, V>>
   @Override
   public Object[] toArray()
   {
-    return new ArrayList(BuiltIn.list(items)).toArray();
+    return new ArrayList(PyBuiltIn.list(items)).toArray();
   }
 
   /**
@@ -237,6 +236,6 @@ public class PyDictItems<K,V> implements Set<Map.Entry<K, V>>
   @Override
   public <T> T[] toArray(T[] a)
   {
-    return (T[]) new ArrayList(BuiltIn.list(items)).toArray(a);
+    return (T[]) new ArrayList(PyBuiltIn.list(items)).toArray(a);
   }
 }

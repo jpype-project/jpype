@@ -16,7 +16,6 @@
 package python.lang;
 
 import org.jpype.bridge.Interpreter;
-import org.jpype.bridge.BuiltIn;
 import python.protocol.PyBuffer;
 
 /**
@@ -26,7 +25,7 @@ import python.protocol.PyBuffer;
  * bytearrays in a Java environment, mimicking Python's `bytearray`
  * functionality.
  */
-public interface PyByteArray extends PyObject
+public interface PyByteArray extends PyObject, PyBuffer
 {
 
   /**
@@ -78,7 +77,7 @@ public interface PyByteArray extends PyObject
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("bytearray", null, null);
+    return (PyType) PyBuiltIn.eval("bytearray", null, null);
   }
 
   /**
@@ -105,6 +104,11 @@ public interface PyByteArray extends PyObject
    */
   PyObject decode(PyObject encoding, PyObject delete);
 
+  default int size()
+  {
+    return Interpreter.getBackend().len(this);
+  }
+  
   /**
    * Translates the contents of the bytearray using a translation table. The
    * translation table maps byte values to their replacements.

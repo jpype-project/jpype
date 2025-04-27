@@ -123,7 +123,7 @@ public interface PyCallable extends PyProtocol
    */
   default PyObject callWithKwargs(PyDict kwargs)
   {
-    return Interpreter.getBackend().call(this, PyTuple.empty(), kwargs);
+    return Interpreter.getBackend().call(this, PyTuple.of(), kwargs);
   }
 
   /**

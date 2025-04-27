@@ -16,7 +16,7 @@
 package python.protocol;
 
 import java.util.Iterator;
-import org.jpype.bridge.BuiltIn;
+import python.lang.PyBuiltIn;
 import python.lang.PyObject;
 
 /**
@@ -57,7 +57,7 @@ public interface PyIterable extends PyProtocol, Iterable<PyObject>
    */
   default PyIter iter()
   {
-    return BuiltIn.iter(this);
+    return PyBuiltIn.iter(this);
   }
 
   /**

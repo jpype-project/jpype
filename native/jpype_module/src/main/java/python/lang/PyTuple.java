@@ -25,7 +25,6 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import org.jpype.bridge.BuiltIn;
 import org.jpype.bridge.Interpreter;
 
 /**
@@ -63,7 +62,7 @@ import org.jpype.bridge.Interpreter;
  * Note: This interface assumes the existence of supporting classes such as
  * {@code BuiltIn}, {@code PyObject}, {@code PyIterable}, {@code PySet}, and
  * {@code PyIterator}.
- * 
+ *
  * <p>
  * <b>Important Note:</b></p>
  * <p>
@@ -72,21 +71,10 @@ import org.jpype.bridge.Interpreter;
  * Developers should exercise caution to avoid reference loops when placing Java
  * objects into Python collections, as this may lead to unintended
  * behaviors.</p>
- * 
+ *
  */
 public interface PyTuple extends PyObject, PyIterable, List<PyObject>
 {
-
-  /**
-   * Create a new empty tuple.
-   *
-   * @return
-   */
-  public static PyTuple empty()
-  {
-    return Interpreter.getBackend().newTupleFromArray();
-  }
-
   /**
    * Creates a new {@code PyTuple} from a variable number of elements.
    *
@@ -95,19 +83,19 @@ public interface PyTuple extends PyObject, PyIterable, List<PyObject>
    */
   public static PyTuple of(Object... values)
   {
-    return BuiltIn.tuple(values);
+    return PyBuiltIn.tuple(values);
   }
 
   /**
-   * Creates a new {@code PyTuple} from an {@link Iterator}.
+   * Creates a new {@code PyTuple} from an {@link Iterable}.
    *
    * @param values an iterator providing the elements to include in the tuple
    * @param <T> the type of elements in the iterator
    * @return a new {@code PyTuple} containing the elements from the iterator
    */
-  public static <T> PyTuple of(Iterator<T> values)
+  public static <T> PyTuple fromItems(Iterable<T> values)
   {
-    return BuiltIn.tuple(values);
+    return PyBuiltIn.tuple(values);
   }
 
   /**
@@ -117,7 +105,7 @@ public interface PyTuple extends PyObject, PyIterable, List<PyObject>
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("tuple", null, null);
+    return (PyType) PyBuiltIn.eval("tuple", null, null);
   }
 
   // --- Mutating methods (throw UnsupportedOperationException) ---

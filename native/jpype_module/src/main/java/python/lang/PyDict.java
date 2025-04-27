@@ -18,7 +18,6 @@ package python.lang;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import org.jpype.bridge.BuiltIn;
 import org.jpype.bridge.Interpreter;
 import python.protocol.PyMapping;
 
@@ -46,6 +45,23 @@ public interface PyDict extends PyObject, PyMapping
 {
 
   /**
+   * Creates a new, empty Python `dict` object.
+   *
+   * <p>
+   * This method provides a way to create an empty Python dictionary, which can
+   * then be populated with key-value pairs. The resulting {@link PyDict} object
+   * behaves like a Python `dict` and supports Python-specific dictionary
+   * operations.
+   * </p>
+   *
+   * @return a new {@link PyDict} instance representing an empty Python `dict`.
+   */
+  static public PyDict create()
+  {
+    return Interpreter.getBackend().newDict();
+  }
+
+  /**
    * Creates a new Python `dict` object from the specified Java {@link Map}.
    *
    * The keys in the provided map are converted to Python objects, and the
@@ -56,12 +72,12 @@ public interface PyDict extends PyObject, PyMapping
    * {@link PyObject}.
    * @return a new {@link PyDict} instance representing the Python dictionary.
    */
-  static PyDict of(Map<Object, ? extends PyObject> map)
+  public static PyDict of(Map<Object, ? extends PyObject> map)
   {
     return Interpreter.getBackend().newDict(map);
   }
 
-  static PyDict of(Iterable<Map.Entry<Object, ? extends PyObject>> map)
+  public static PyDict of(Iterable<Map.Entry<Object, ? extends PyObject>> map)
   {
     return Interpreter.getBackend().newDictFromIterable(map);
   }
@@ -75,7 +91,7 @@ public interface PyDict extends PyObject, PyMapping
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("dict", null, null);
+    return (PyType) PyBuiltIn.eval("dict", null, null);
   }
 
   @Override

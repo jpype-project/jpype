@@ -25,7 +25,6 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jpype.bridge.Interpreter;
-import org.jpype.bridge.BuiltIn;
 import python.protocol.PyIterator;
 
 /**
@@ -71,7 +70,7 @@ public interface PySet extends PyObject, Set<PyObject>
    */
   public static <T> PySet of(Iterable<T> c)
   {
-    return Interpreter.getBackend().newSet(c);
+    return Interpreter.getBackend().newSetFromIterable(c);
   }
 
   /**
@@ -81,7 +80,7 @@ public interface PySet extends PyObject, Set<PyObject>
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("set", null, null);
+    return (PyType) PyBuiltIn.eval("set", null, null);
   }
 
   /**

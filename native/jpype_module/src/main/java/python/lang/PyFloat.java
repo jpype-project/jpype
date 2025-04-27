@@ -15,7 +15,6 @@
  */
 package python.lang;
 
-import org.jpype.bridge.BuiltIn;
 import org.jpype.bridge.Interpreter;
 import python.protocol.PyNumber;
 
@@ -58,6 +57,6 @@ public interface PyFloat extends PyObject, PyNumber
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("float", null, null);
+    return (PyType) PyBuiltIn.eval("float", null, null);
   }
 }

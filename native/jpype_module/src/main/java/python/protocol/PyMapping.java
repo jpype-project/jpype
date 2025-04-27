@@ -18,7 +18,7 @@ package python.protocol;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import org.jpype.bridge.BuiltIn;
+import python.lang.PyBuiltIn;
 import org.jpype.bridge.Interpreter;
 import python.lang.PyObject;
 
@@ -194,7 +194,7 @@ public interface PyMapping extends PyProtocol, Map<Object, PyObject>
   @Override
   default int size()
   {
-    return BuiltIn.len(this);
+    return PyBuiltIn.len(this);
   }
 
   /**

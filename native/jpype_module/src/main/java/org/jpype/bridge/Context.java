@@ -15,6 +15,7 @@
  */
 package org.jpype.bridge;
 
+import python.lang.PyBuiltIn;
 import python.lang.PyDict;
 import python.lang.PyObject;
 import python.protocol.PyMapping;
@@ -30,7 +31,7 @@ import python.protocol.PyMapping;
  * private scope object.
  *
  */
-public class Context extends BuiltIn
+public class Context extends PyBuiltIn
 {
 
   public final PyDict globalsDict;

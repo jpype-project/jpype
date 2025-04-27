@@ -15,7 +15,6 @@
  */
 package python.lang;
 
-import org.jpype.bridge.BuiltIn;
 import python.protocol.PyBuffer;
 
 /**
@@ -64,7 +63,7 @@ public interface PyMemoryView extends PyObject
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("memoryview", null, null);
+    return (PyType) PyBuiltIn.eval("memoryview", null, null);
   }
 
   /**

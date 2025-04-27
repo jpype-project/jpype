@@ -15,7 +15,6 @@
  */
 package python.lang;
 
-import org.jpype.bridge.BuiltIn;
 import org.jpype.bridge.Interpreter;
 import python.protocol.PyIter;
 import python.protocol.PyIterable;
@@ -44,7 +43,7 @@ public interface PyZip extends PyIter
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("zip", null, null);
+    return (PyType) PyBuiltIn.eval("zip", null, null);
   }
 
   /**

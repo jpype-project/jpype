@@ -15,7 +15,6 @@
  */
 package python.lang;
 
-import org.jpype.bridge.BuiltIn;
 import org.jpype.bridge.Interpreter;
 import python.protocol.PyNumber;
 
@@ -50,7 +49,7 @@ public interface PyComplex extends PyObject, PyNumber
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("complex", null, null);
+    return (PyType) PyBuiltIn.eval("complex", null, null);
   }
 
   /**

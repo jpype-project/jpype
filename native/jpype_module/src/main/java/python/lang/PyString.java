@@ -16,7 +16,6 @@
 package python.lang;
 
 import python.protocol.PyIterable;
-import org.jpype.bridge.BuiltIn;
 import python.protocol.PyMapping;
 import python.protocol.PySequence;
 
@@ -44,7 +43,7 @@ public interface PyString extends PyObject, CharSequence
    */
   public static PyString from(CharSequence sequence)
   {
-    return BuiltIn.str(sequence);
+    return PyBuiltIn.str(sequence);
   }
 
   /**
@@ -54,7 +53,7 @@ public interface PyString extends PyObject, CharSequence
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("str", null, null);
+    return (PyType) PyBuiltIn.eval("str", null, null);
   }
 
   /**

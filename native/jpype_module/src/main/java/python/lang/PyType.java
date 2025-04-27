@@ -15,7 +15,6 @@
  */
 package python.lang;
 
-import org.jpype.bridge.BuiltIn;
 import python.protocol.PyCallable;
 
 /**
@@ -40,7 +39,7 @@ public interface PyType extends PyObject, PyCallable
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("zip", null, null);
+    return (PyType) PyBuiltIn.eval("zip", null, null);
   }
 
   /**
@@ -82,16 +81,6 @@ public interface PyType extends PyObject, PyCallable
    * @return A PyTuple containing the base classes of the type.
    */
   PyTuple getBases();
-
-  /**
-   * Retrieves the dictionary of attributes and methods defined for the type.
-   *
-   * This corresponds to the Python `__dict__` attribute, which contains the
-   * attributes and methods defined on the type.
-   *
-   * @return A PyDict containing the attributes and methods of the type.
-   */
-  PyDict getAttributes();
 
   /**
    * Checks if the current type is a subclass of the specified type.

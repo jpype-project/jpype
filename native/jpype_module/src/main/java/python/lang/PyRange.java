@@ -16,7 +16,6 @@
 package python.lang;
 
 import python.protocol.PyGenerator;
-import org.jpype.bridge.BuiltIn;
 import python.protocol.PyIter;
 import python.protocol.PyIterator;
 
@@ -67,7 +66,7 @@ public interface PyRange extends PyIter
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("range", null, null);
+    return (PyType) PyBuiltIn.eval("range", null, null);
   }
 
   /**

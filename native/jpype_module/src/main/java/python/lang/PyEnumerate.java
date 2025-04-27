@@ -15,7 +15,6 @@
  */
 package python.lang;
 
-import org.jpype.bridge.BuiltIn;
 import org.jpype.bridge.Interpreter;
 import python.protocol.PyIter;
 
@@ -58,6 +57,6 @@ public interface PyEnumerate extends PyIter
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("enumerate", null, null);
+    return (PyType) PyBuiltIn.eval("enumerate", null, null);
   }
 }

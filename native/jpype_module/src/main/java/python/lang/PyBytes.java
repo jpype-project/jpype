@@ -16,7 +16,6 @@
 package python.lang;
 
 import org.jpype.bridge.Interpreter;
-import org.jpype.bridge.BuiltIn;
 import python.protocol.PyBuffer;
 
 /**
@@ -25,7 +24,7 @@ import python.protocol.PyBuffer;
  * This interface provides methods for creating and manipulating Python `bytes`
  * objects in a Java environment, mimicking Python's `bytes` functionality.
  */
-public interface PyBytes extends PyObject
+public interface PyBytes extends PyObject, PyBuffer
 {
 
   /**
@@ -38,6 +37,21 @@ public interface PyBytes extends PyObject
   static PyBytes create(int length)
   {
     return Interpreter.getBackend().newBytesOfSize(length);
+  }
+
+  /**
+   * Decodes the contents of the `bytes` object using the specified encoding.
+   *
+   * Optionally, specific bytes can be deleted during decoding.
+   *
+   * @param encoding the encoding to use for decoding (e.g., "utf-8").
+   * @param delete the bytes to delete during decoding, or {@code null} for no
+   * deletion.
+   * @return a {@link PyObject} representing the decoded string.
+   */
+  static PyBytes fromHex(CharSequence str)
+  {
+    return Interpreter.getBackend().bytesFromHex(str);
   }
 
   /**
@@ -79,29 +93,19 @@ public interface PyBytes extends PyObject
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("bytes", null, null);
+    return (PyType) PyBuiltIn.eval("bytes", null, null);
   }
 
-  /**
-   * Decodes the contents of the `bytes` object using the specified encoding.
-   * 
-   * Optionally, specific bytes can be deleted during decoding.
-   *
-   * @param encoding the encoding to use for decoding (e.g., "utf-8").
-   * @param delete the bytes to delete during decoding, or {@code null} for no
-   * deletion.
-   * @return a {@link PyObject} representing the decoded string.
-   */
-  static PyBytes fromHex(CharSequence str)
+  PyObject decode(PyObject string, PyObject encoding);
+
+  default int size()
   {
-    return Interpreter.getBackend().bytesFromHex(str);
+    return Interpreter.getBackend().len(this);
   }
-
-  PyObject decode(PyObject encoding, PyObject delete);
 
   /**
    * Translates the contents of the `bytes` object using a translation table.
-   * 
+   *
    * The translation table maps byte values to their replacements.
    *
    * @param table the translation table as a {@link PyObject}, where each byte

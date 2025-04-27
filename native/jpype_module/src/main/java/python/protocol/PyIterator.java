@@ -18,7 +18,7 @@ package python.protocol;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import org.jpype.bridge.Interpreter;
-import org.jpype.bridge.BuiltIn;
+import python.lang.PyBuiltIn;
 
 /**
  * Conversion of a Python iterator to Java.
@@ -50,7 +50,7 @@ public class PyIterator<T> implements Iterator<T>
       return !done;
     check = true;
     if (yield == null)
-      yield = (T) BuiltIn.next(iter, Interpreter.stop);
+      yield = (T) PyBuiltIn.next(iter, Interpreter.stop);
     done = (yield == Interpreter.stop);
     return !done;
   }

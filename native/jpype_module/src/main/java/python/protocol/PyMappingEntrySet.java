@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import org.jpype.bridge.BuiltIn;
+import python.lang.PyBuiltIn;
 import python.lang.PyObject;
 
 /**
@@ -187,7 +187,7 @@ public class PyMappingEntrySet<K, V> implements Set<Map.Entry<K, V>>
   @Override
   public Iterator<Map.Entry<K, V>> iterator()
   {
-    return new PyMappingEntrySetIterator(map, BuiltIn.iter(this.items));
+    return new PyMappingEntrySetIterator(map, PyBuiltIn.iter(this.items));
   }
 
   /**

@@ -15,7 +15,6 @@
  */
 package python.lang;
 
-import org.jpype.bridge.BuiltIn;
 import org.jpype.bridge.Interpreter;
 import python.protocol.PyNumber;
 
@@ -56,6 +55,6 @@ public interface PyInt extends PyObject, PyNumber
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("int", null, null);
+    return (PyType) PyBuiltIn.eval("int", null, null);
   }
 }

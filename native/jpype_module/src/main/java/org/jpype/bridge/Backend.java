@@ -95,7 +95,7 @@ public interface Backend
   // Delete an item from a Python mapping object by key.
   PyObject delByObject(PyMapping obj, Object key);
 
-  public PyObject delattrReturn(PyObject obj, Object key);
+  PyObject delattrReturn(PyObject obj, Object key);
 
   // Delete an attribute from a Python object by name.
   void delattrString(Object obj, CharSequence attrName);
@@ -123,6 +123,8 @@ public interface Backend
 
   // Get the signature of a Python callable.
   PyObject getSignature(PyCallable obj);
+
+  PyObject getattrDefault(PyObject obj, Object key);
 
   // Get an attribute from a Python object by key.
   PyObject getattrObject(PyObject obj, Object key);
@@ -240,14 +242,22 @@ public interface Backend
   // Create a Python `int` from a long value.
   PyInt newInt(long value);
 
+  // Create an empty Python `list`.
+  PyList newList();
+
   // Create a Python `list` from an array of objects.
   PyList newListFromArray(Object... elements);
 
   // Create a Python `list` from an iterable.
   <T> PyList newListFromIterable(Iterable<T> iterable);
 
+  // Create an empty Python `set`.
+  PySet newSet();
+
   // Create a Python `set` from an iterable.
-  PySet newSet(Iterable<?> iterable);
+  PySet newSetFromIterable(Iterable<?> iterable);
+
+  public PyTuple newTuple();
 
   // Create a Python `tuple` from an array of objects.
   <T> PyTuple newTupleFromArray(T... elements);
@@ -309,6 +319,10 @@ public interface Backend
   // Get the `__dict__` attribute of a Python object.
   PyDict vars(Object obj);
 
+  public PyZip zipFromArray(PyObject[] objects);
+
+  public PyZip zipFromArray(Object[] objects);
+
   // Create a Python `zip` object from multiple objects.
-  <T> PyZip zip(T... objects);
+  <T> PyZip zipFromIterable(T... objects);
 }

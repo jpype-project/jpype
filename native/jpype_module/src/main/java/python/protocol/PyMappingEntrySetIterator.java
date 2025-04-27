@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import org.jpype.bridge.Interpreter;
-import org.jpype.bridge.BuiltIn;
+import python.lang.PyBuiltIn;
 import python.lang.PyObject;
 
 /**
@@ -138,7 +138,7 @@ class PyMappingEntrySetIterator<K, V> implements Iterator<Map.Entry<K, V>>
       return !done;
     check = true;
     if (yield == null)
-      yield = BuiltIn.next(iter, Interpreter.stop);
+      yield = PyBuiltIn.next(iter, Interpreter.stop);
     done = (yield == Interpreter.stop);
     return !done;
   }

@@ -13,22 +13,10 @@
  * 
  *  See NOTICE file for details.
  */
-package org.jpype.bridge;
+package python.lang;
 
-import python.lang.PyBytes;
-import python.lang.PyDict;
-import python.lang.PyEnumerate;
-import python.lang.PyFloat;
-import python.lang.PyInt;
-import python.lang.PyList;
-import python.lang.PyMemoryView;
-import python.lang.PyObject;
-import python.lang.PyRange;
-import python.lang.PySlice;
-import python.lang.PyString;
-import python.lang.PyTuple;
-import python.lang.PyType;
-import python.lang.PyZip;
+import org.jpype.bridge.Backend;
+import org.jpype.bridge.Interpreter;
 import python.protocol.PyCallable;
 import python.protocol.PyIndex;
 import python.protocol.PyMapping;
@@ -40,8 +28,10 @@ import python.protocol.PyIter;
  *
  * In general these are set as widely as possible. Many will accept Java objects
  */
-public class BuiltIn
+public class PyBuiltIn
 {
+
+  static Backend instance;
 
   /**
    * Creates a new Python float object.
@@ -51,7 +41,7 @@ public class BuiltIn
    */
   public static PyFloat $float(double value)
   {
-    return Interpreter.backend.newFloat(value);
+    return backend().newFloat(value);
   }
 
   /**
@@ -62,7 +52,36 @@ public class BuiltIn
    */
   public static PyInt $int(long value)
   {
-    return Interpreter.backend.newInt(value);
+    return backend().newInt(value);
+  }
+
+  /**
+   * Utility method to retrieve the active backend instance or throw an
+   * exception if the interpreter is not started.
+   *
+   * <p>
+   * This method ensures that the backend instance is properly initialized and
+   * active before returning it. If the interpreter has not been started, an
+   * {@link IllegalStateException} is thrown to indicate that the backend cannot
+   * be accessed.
+   * </p>
+   *
+   * <p>
+   * The method also caches the backend instance for future use, avoiding
+   * redundant calls to {@link Interpreter#getBackend()}.
+   * </p>
+   *
+   * @return The active {@link Backend} instance.
+   * @throws IllegalStateException If the interpreter is not started.
+   */
+  private static Backend backend()
+  {
+    if (instance != null)
+      return instance;
+    if (!Interpreter.getInstance().isStarted())
+      throw new IllegalStateException("interpreter is not started");
+    instance = Interpreter.getBackend();
+    return instance;
   }
 
   /**
@@ -74,11 +93,11 @@ public class BuiltIn
    */
   public static PyBytes bytes(Object obj)
   {
-    return Interpreter.backend.bytes(obj);
+    return backend().bytes(obj);
   }
 
   /**
-   * Calls a Python callable object with the specified arguments and keyword
+   * Invoke a Python callable object with the specified arguments and keyword
    * arguments.
    *
    * @param obj the callable object to invoke.
@@ -88,7 +107,7 @@ public class BuiltIn
    */
   public static PyObject call(PyCallable obj, PyTuple args, PyDict kwargs)
   {
-    return Interpreter.backend.call(obj, args, kwargs);
+    return backend().call(obj, args, kwargs);
   }
 
   /**
@@ -99,7 +118,12 @@ public class BuiltIn
    */
   public static void delattr(PyObject obj, CharSequence key)
   {
-    Interpreter.backend.delattrString(obj, key);
+    backend().delattrString(obj, key);
+  }
+
+  public static PyDict dict()
+  {
+    return backend().newDict();
   }
 
   /**
@@ -110,7 +134,7 @@ public class BuiltIn
    */
   public static PyList dir(PyObject obj)
   {
-    return Interpreter.backend.dir(obj);
+    return backend().dir(obj);
   }
 
   /**
@@ -121,7 +145,7 @@ public class BuiltIn
    */
   public static PyEnumerate enumerate(PyObject obj)
   {
-    return Interpreter.backend.enumerate(obj);
+    return backend().enumerate(obj);
   }
 
   /**
@@ -132,7 +156,7 @@ public class BuiltIn
    */
   public static PyEnumerate enumerate(Iterable obj)
   {
-    return Interpreter.backend.enumerate(obj);
+    return backend().enumerate(obj);
   }
 
   /**
@@ -145,7 +169,7 @@ public class BuiltIn
    */
   public static PyObject eval(CharSequence statement, PyDict globals, PyMapping locals)
   {
-    return Interpreter.backend.eval(statement, globals, locals);
+    return backend().eval(statement, globals, locals);
   }
 
   /**
@@ -157,7 +181,7 @@ public class BuiltIn
    */
   public static void exec(CharSequence statement, PyDict globals, PyMapping locals)
   {
-    Interpreter.backend.eval(statement, globals, locals);
+    backend().eval(statement, globals, locals);
   }
 
   /**
@@ -169,7 +193,7 @@ public class BuiltIn
    */
   public static PyObject getattr(PyObject obj, CharSequence key)
   {
-    return Interpreter.backend.getattrString(obj, key);
+    return backend().getattrString(obj, key);
   }
 
   /**
@@ -181,12 +205,12 @@ public class BuiltIn
    */
   public static PyObject getattr(PyObject obj, Object key)
   {
-    return Interpreter.backend.getattrObject(obj, key);
+    return backend().getattrObject(obj, key);
   }
 
   public static PyObject getattrDefault(PyObject obj, Object key, PyObject defaultValue)
   {
-    throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    return backend().getattrDefault(obj, key);
   }
 
   /**
@@ -198,7 +222,7 @@ public class BuiltIn
    */
   public static boolean hasattr(PyObject obj, CharSequence key)
   {
-    return Interpreter.backend.hasattrString(obj, key);
+    return backend().hasattrString(obj, key);
   }
 
   /**
@@ -210,7 +234,7 @@ public class BuiltIn
    */
   public static PyTuple indices(PyIndex[] indices)
   {
-    return Interpreter.backend.newTupleFromArray(indices);
+    return backend().newTupleFromArray(indices);
   }
 
   /**
@@ -224,7 +248,7 @@ public class BuiltIn
    */
   public static boolean isinstance(Object obj, PyObject... types)
   {
-    return Interpreter.backend.isinstanceFromArray(obj, types);
+    return backend().isinstanceFromArray(obj, types);
   }
 
   /**
@@ -235,7 +259,7 @@ public class BuiltIn
    */
   public static PyIter iter(Object obj)
   {
-    return Interpreter.backend.iter(obj);
+    return backend().iter(obj);
   }
 
   /**
@@ -260,41 +284,23 @@ public class BuiltIn
    */
   public static int len(PyObject obj)
   {
-    return Interpreter.backend.len(obj);
+    return backend().len(obj);
   }
 
-  /**
-   * Creates a Python list from a Java iterable.
-   *
-   * @param objects the iterable containing objects to include in the list.
-   * @return a new {@link PyList} instance containing the elements of the
-   * iterable.
-   */
-  public static PyList list(Iterable<Object> objects)
+  public static PyList list()
   {
-    return Interpreter.backend.newListFromIterable(objects);
+    return backend().newList();
   }
 
   /**
-   * Calls Python list on an object.
+   * Invoke Python list on an object.
    *
    * @param object is the object to be converted.
    * @return a new {@link PyObject} representing the Python list.
    */
   public static PyList list(Object object)
   {
-    return Interpreter.backend.list(object);
-  }
-
-  /**
-   * Creates a Python list from a variable-length array of objects.
-   *
-   * @param objects the objects to include in the list.
-   * @return a new {@link PyObject} representing the Python list.
-   */
-  public static PyObject list(Object... objects)
-  {
-    return Interpreter.backend.newListFromArray(objects);
+    return backend().list(object);
   }
 
   /**
@@ -305,7 +311,7 @@ public class BuiltIn
    */
   public static PyMemoryView memoryview(Object obj)
   {
-    return Interpreter.backend.memoryview(obj);
+    return backend().memoryview(obj);
   }
 
   /**
@@ -318,7 +324,7 @@ public class BuiltIn
    */
   public static PyObject next(PyIter iter, PyObject stop)
   {
-    return Interpreter.backend.next(iter, stop);
+    return backend().next(iter, stop);
   }
 
   /**
@@ -329,7 +335,7 @@ public class BuiltIn
    */
   public static PyRange range(int stop)
   {
-    return Interpreter.backend.range(stop);
+    return backend().range(stop);
   }
 
   /**
@@ -341,7 +347,7 @@ public class BuiltIn
    */
   public static PyRange range(int start, int stop)
   {
-    return Interpreter.backend.range(start, stop);
+    return backend().range(start, stop);
   }
 
   /**
@@ -354,7 +360,7 @@ public class BuiltIn
    */
   public static PyRange range(int start, int stop, int step)
   {
-    return Interpreter.backend.range(start, stop, step);
+    return backend().range(start, stop, step);
   }
 
   /**
@@ -366,7 +372,12 @@ public class BuiltIn
    */
   public static PyString repr(Object obj)
   {
-    return Interpreter.backend.repr(obj);
+    return backend().repr(obj);
+  }
+
+  public static PySet set()
+  {
+    return backend().newSet();
   }
 
   /**
@@ -382,7 +393,7 @@ public class BuiltIn
     // ensure the type that appears is a Python one rather than a 
     // Java one especially on setattr in which the object is to be 
     // held in Python.
-    Interpreter.backend.setattrString(obj, key, value);
+    backend().setattrString(obj, key, value);
   }
 
   /**
@@ -395,7 +406,7 @@ public class BuiltIn
    */
   public static PySlice slice(int start)
   {
-    return Interpreter.backend.slice(start, start + 1, null);
+    return backend().slice(start, start + 1, null);
   }
 
   /**
@@ -411,7 +422,7 @@ public class BuiltIn
    */
   public static PySlice slice(Integer start, Integer stop)
   {
-    return Interpreter.backend.slice(start, stop, null);
+    return backend().slice(start, stop, null);
   }
 
   /**
@@ -429,7 +440,7 @@ public class BuiltIn
    */
   public static PySlice slice(Integer start, Integer stop, Integer step)
   {
-    return Interpreter.backend.slice(start, stop, step);
+    return backend().slice(start, stop, step);
   }
 
   /**
@@ -443,7 +454,19 @@ public class BuiltIn
    */
   public static PyString str(Object obj)
   {
-    return Interpreter.backend.str(obj);
+    return backend().str(obj);
+  }
+
+  /**
+   * Creates an empty Python tuple.
+   *
+   * @param args the objects to include in the tuple.
+   * @param <T> the type of the objects.
+   * @return a new {@link PyTuple} instance containing the objects.
+   */
+  public static <T> PyTuple tuple()
+  {
+    return backend().newTuple();
   }
 
   /**
@@ -455,20 +478,7 @@ public class BuiltIn
    */
   public static <T> PyTuple tuple(T... args)
   {
-    return Interpreter.backend.newTupleFromArray(args);
-  }
-
-  /**
-   * Creates a Python tuple from one or more Java iterables.
-   *
-   * @param args the iterables to include in the tuple.
-   * @param <T> the type of the objects within the iterables.
-   * @return a new {@link PyTuple} instance containing the objects from the
-   * iterables.
-   */
-  public static <T> PyTuple tuple(Iterable<T>... args)
-  {
-    return Interpreter.backend.newTupleFromArray(args);
+    return backend().newTupleFromArray(args);
   }
 
   /**
@@ -479,7 +489,7 @@ public class BuiltIn
    */
   public static PyType type(Object obj)
   {
-    return Interpreter.backend.type(obj);
+    return backend().type(obj);
   }
 
   /**
@@ -497,7 +507,7 @@ public class BuiltIn
    */
   public static PyDict vars(Object obj)
   {
-    return Interpreter.backend.vars(obj);
+    return backend().vars(obj);
   }
 
   /**
@@ -508,9 +518,8 @@ public class BuiltIn
    * @param objects the iterable objects to zip.
    * @return a new {@link PyZip} instance representing the zipped generator.
    */
-  public static PyZip zip(PyObject... objects)
+  public static PyZip zip(Iterable... objects)
   {
-    return Interpreter.backend.zip(objects);
+    return backend().zipFromIterable(objects);
   }
-
 }

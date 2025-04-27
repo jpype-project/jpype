@@ -19,7 +19,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import org.jpype.bridge.Backend;
-import org.jpype.bridge.BuiltIn;
+import python.lang.PyBuiltIn;
 import org.jpype.bridge.Interpreter;
 import python.lang.PyDict;
 import python.lang.PyDictItems;
@@ -112,7 +112,7 @@ public class PyAttributes implements Map<CharSequence, PyObject>
   {
     if (this.dict == null)
     {
-      this.dict = BuiltIn.vars(this);
+      this.dict = PyBuiltIn.vars(this);
     }
     return this.dict;
   }
@@ -151,7 +151,7 @@ public class PyAttributes implements Map<CharSequence, PyObject>
   @Override
   public boolean containsValue(Object value)
   {
-    return BuiltIn.vars(this).containsValue(value);
+    return PyBuiltIn.vars(this).containsValue(value);
   }
 
   /**
@@ -165,7 +165,7 @@ public class PyAttributes implements Map<CharSequence, PyObject>
    */
   public PyList dir()
   {
-    return BuiltIn.dir(obj);
+    return PyBuiltIn.dir(obj);
   }
 
   @Override
@@ -186,7 +186,7 @@ public class PyAttributes implements Map<CharSequence, PyObject>
   @Override
   public PyObject get(Object key)
   {
-    return BuiltIn.getattr(obj, key);
+    return PyBuiltIn.getattr(obj, key);
   }
 
   /**
@@ -206,7 +206,7 @@ public class PyAttributes implements Map<CharSequence, PyObject>
   @Override
   public PyObject getOrDefault(Object key, PyObject defaultValue)
   {
-    return BuiltIn.getattrDefault(obj, key, defaultValue);
+    return PyBuiltIn.getattrDefault(obj, key, defaultValue);
   }
 
   /**
@@ -220,7 +220,7 @@ public class PyAttributes implements Map<CharSequence, PyObject>
    */
   public boolean contains(CharSequence key)
   {
-    return BuiltIn.hasattr(obj, key);
+    return PyBuiltIn.hasattr(obj, key);
   }
 
   /**

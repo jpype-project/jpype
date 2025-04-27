@@ -15,7 +15,6 @@
  */
 package python.lang;
 
-import org.jpype.bridge.BuiltIn;
 import python.protocol.PyIndex;
 import python.protocol.PySequence;
 
@@ -65,7 +64,7 @@ public interface PySlice extends PyObject, PyIndex
    */
   static PyType type()
   {
-    return (PyType) BuiltIn.eval("slice", null, null);
+    return (PyType) PyBuiltIn.eval("slice", null, null);
   }
 
   /**
