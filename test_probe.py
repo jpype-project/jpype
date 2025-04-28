@@ -864,7 +864,7 @@ _jpype._methods[PySized] ={} # No Java methods
 # Testing probe API
 #_jpype.probe(object)
 #_jpype.probe(slice)
-_jpype.probe(list)
+print(_jpype.probe(list))
 _jpype.probe(tuple)
 _jpype.probe(set)
 _jpype.probe({})

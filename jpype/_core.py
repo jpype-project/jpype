@@ -610,6 +610,7 @@ _jpype._protocol = {}
 # Dictionary of Type to Tuple(Interface[], Dict)
 _jpype._cache = weakref.WeakKeyDictionary()
 # Dictionary of Tuple(Interface[]) to Tuple(Interface[])
-_jpype._interfaces = {}
-# Dictionary of Tuple(Interface[]) to Dict
+_jpype._cache_interfaces = {}
+_jpype._cache_methods = {}
+# Dictionary of Tuple(Interface) to Dict
 _jpype._methods = {}

@@ -537,6 +537,7 @@ _PyTypeMethods.update(_PyObjectMethods)
 
 
 def initialize():
+    return
     # Install the handler
     bridge = JClass("org.jpype.bridge.Interpreter").getInstance()
     Backend = JClass("org.jpype.bridge.Backend")
