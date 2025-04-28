@@ -56,7 +56,7 @@ import org.jpype.JPypeKeywords;
 public class JPypePackageManager
 {
 
-  final static List<FileSystem> bases = new ArrayList();
+  final static List<FileSystem> bases = new ArrayList<>();
   final static List<ModuleDirectory> modules = getModules();
   final static FileSystemProvider jfsp = getFileSystemProvider("jar");
   final static Map<String, String> env = new HashMap<>();

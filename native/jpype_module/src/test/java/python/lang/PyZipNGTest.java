@@ -74,14 +74,6 @@ public class PyZipNGTest
   }
 
   @Test
-  public void testStaticTypeMethod()
-  {
-    // Test the static `type` method
-    PyType pyType = PyZip.type();
-    assertEquals(pyType.toString(), "zip");
-  }
-
-  @Test
   public void testToListMethod()
   {
     // Create test iterables

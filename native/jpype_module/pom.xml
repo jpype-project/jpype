@@ -46,6 +46,11 @@
                         </configuration>
                     </execution>
                 </executions>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-Xlint</arg>
+                    </compilerArgs>
+                </configuration>
             </plugin>
         </plugins>
     </build>

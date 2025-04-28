@@ -15,7 +15,7 @@
  */
 package python.protocol;
 
-import org.jpype.bridge.Utility;
+import org.jpype.internal.Utility;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -26,10 +26,11 @@ import python.lang.PyObject;
 import python.lang.PyTuple;
 
 /**
- * Iterator implementation for iterating over the entries of a Python mapping.
+ * Iterator implementation for iterating over the entries of a Python
+ * mapping.The {@code PyMappingEntrySetIterator} class provides an iterator for
+ * Python mappings, allowing Java code to traverse the key-value pairs of a
+ * Python map.
  *
- * The {@code PyMappingEntrySetIterator} class provides an iterator for Python
- * mappings, allowing Java code to traverse the key-value pairs of a Python map.
  * This iterator is designed to work seamlessly with Python's iteration
  * protocols and integrates with the JPype library's Python-to-Java bridge.
  *
@@ -54,21 +55,21 @@ import python.lang.PyTuple;
  * }
  * </pre>
  *
- * @param <K> The type of keys in the mapping.
- * @param <V> The type of values in the mapping.
+ * @param <K> The getType of keys in the mapping.
+ * @param <V> The getType of values in the mapping.
  */
-class PyMappingEntrySetIterator<K, V> implements Iterator<Map.Entry<K, V>>
+class PyMappingEntrySetIterator<K extends PyObject, V extends PyObject> implements Iterator<Map.Entry<K, V>>
 {
 
   /**
    * The Python mapping object being iterated over.
    */
-  private final PyMapping map;
+  private final PyMapping<K, V> map;
 
   /**
    * The Python iterator for the mapping entries.
    */
-  private final PyIter iter;
+  private final PyIter<K> iter;
 
   /**
    * The current value yielded by the Python iterator.
@@ -88,7 +89,7 @@ class PyMappingEntrySetIterator<K, V> implements Iterator<Map.Entry<K, V>>
   /**
    * A custom setter function used to update mapping entries.
    */
-  private final BiFunction<Object, PyObject, PyObject> setter;
+  private final BiFunction<K, V, V> setter;
 
   /**
    * Constructs a new {@code PyMappingEntrySetIterator}.
@@ -96,7 +97,7 @@ class PyMappingEntrySetIterator<K, V> implements Iterator<Map.Entry<K, V>>
    * @param map The Python mapping object to iterate over.
    * @param iter The Python iterator for the mapping entries.
    */
-  public PyMappingEntrySetIterator(PyMapping map, PyIter iter)
+  public PyMappingEntrySetIterator(PyMapping<K, V> map, PyIter<K> iter)
   {
     this.map = map;
     this.iter = iter;
@@ -113,10 +114,11 @@ class PyMappingEntrySetIterator<K, V> implements Iterator<Map.Entry<K, V>>
    * @param value The new value to associate with the key.
    * @return The previous value associated with the key.
    */
-  private PyObject set(Object key, PyObject value)
+  private V set(K key, V value)
   {
-    PyObject out = map.get(key);
-    map.put(key, value);
+    @SuppressWarnings("element-type-mismatch")
+    var out = map.get(key);
+    map.putAny(key, value);
     return out;
   }
 
@@ -156,6 +158,7 @@ class PyMappingEntrySetIterator<K, V> implements Iterator<Map.Entry<K, V>>
    * over.
    */
   @Override
+  @SuppressWarnings("unchecked")
   public Map.Entry<K, V> next() throws NoSuchElementException
   {
     if (!check)

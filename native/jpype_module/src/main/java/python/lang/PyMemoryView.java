@@ -16,6 +16,8 @@
 package python.lang;
 
 import python.protocol.PyBuffer;
+import python.protocol.PySequence;
+import python.protocol.PySized;
 
 /**
  * Java front-end interface for the Python `memoryview` type.
@@ -45,84 +47,23 @@ import python.protocol.PyBuffer;
  * <pre>
  * PyMemoryView memoryView = ...; // Obtain a PyMemoryView instance
  * int length = memoryView.getLength(); // Get the size of the memory buffer
- * byte[] slice = memoryView.getSlice(0, 10); // Get a slice of the memory buffer
+ * byte[] slice = memoryView.sublist(0, 10); // Get a slice of the memory buffer
  * </pre>
  * </p>
  */
-public interface PyMemoryView extends PyObject
+public interface PyMemoryView extends PySequence<PyInt>
 {
 
   /**
-   * Returns the Python type object for `memoryview`.
+   * Retrieves the underlying buffer as a {@link PyBuffer}.
    * <p>
-   * This method retrieves the Python `type` object corresponding to the
-   * `memoryview` type.
+   * This method provides access to the raw memory buffer represented by the
+   * {@code PyMemoryView} object.
    * </p>
    *
-   * @return the {@link PyType} representing the Python `memoryview` type.
+   * @return the underlying {@link PyBuffer} object.
    */
-  static PyType type()
-  {
-    return (PyType) PyBuiltIn.eval("memoryview", null, null);
-  }
-
-  /**
-   * Returns the size of the memory buffer.
-   * <p>
-   * This method retrieves the length of the memory buffer represented by the
-   * Python `memoryview` object.
-   * </p>
-   *
-   * @return the size of the memory buffer.
-   */
-  int getLength();
-
-  /**
-   * Retrieves the item at the specified index in the memory buffer.
-   * <p>
-   * This method enables direct access to a specific element in the memory
-   * buffer using its index.
-   * </p>
-   *
-   * @param index the index of the item to retrieve.
-   * @return the item at the specified index.
-   */
-  int getItem(int index);
-
-  /**
-   * Returns a slice of the memory buffer between the specified indices.
-   * <p>
-   * This method creates a new {@code PyMemoryView} object representing a subset
-   * of the memory buffer.
-   * </p>
-   *
-   * @param start the starting index of the slice.
-   * @param end the ending index of the slice.
-   * @return a {@code PyMemoryView} representing the slice of the memory buffer.
-   */
-  PyMemoryView getSlice(int start, int end);
-
-  /**
-   * Releases the memory buffer.
-   * <p>
-   * This method releases the underlying memory buffer, making the
-   * {@code PyMemoryView} object unusable. Equivalent to Python's
-   * {@code memoryview.release()} method.
-   * </p>
-   */
-  void release();
-
-  /**
-   * Checks if the memory buffer is read-only.
-   * <p>
-   * This method determines whether the memory buffer is read-only. Equivalent
-   * to Python's {@code memoryview.readonly} attribute.
-   * </p>
-   *
-   * @return {@code true} if the memory buffer is read-only; {@code false}
-   * otherwise.
-   */
-  boolean isReadOnly();
+  PyBuffer getBuffer();
 
   /**
    * Returns the format of the elements stored in the memory buffer.
@@ -146,6 +87,16 @@ public interface PyMemoryView extends PyObject
    * @return a {@link PyTuple} representing the shape of the memory buffer.
    */
   PyTuple getShape();
+
+  /**
+   * Returns a slice of the memory buffer between the specified indices as a
+   * view.
+   *
+   * @param start the starting index of the slice.
+   * @param end the ending index of the slice.
+   * @return a {@code PyMemoryView} representing slice of the memory buffer.
+   */
+  PyMemoryView getSlice(int start, int end);
 
   /**
    * Returns the strides of the memory buffer.
@@ -172,14 +123,25 @@ public interface PyMemoryView extends PyObject
   PyTuple getSubOffsets();
 
   /**
-   * Retrieves the underlying buffer as a {@link PyBuffer}.
+   * Checks if the memory buffer is read-only.
    * <p>
-   * This method provides access to the raw memory buffer represented by the
-   * {@code PyMemoryView} object.
+   * This method determines whether the memory buffer is read-only. Equivalent
+   * to Python's {@code memoryview.readonly} attribute.
    * </p>
    *
-   * @return the underlying {@link PyBuffer} object.
+   * @return {@code true} if the memory buffer is read-only; {@code false}
+   * otherwise.
    */
-  PyBuffer getBuffer();
+  boolean isReadOnly();
+
+  /**
+   * Releases the memory buffer.
+   * <p>
+   * This method releases the underlying memory buffer, making the
+   * {@code PyMemoryView} object unusable. Equivalent to Python's
+   * {@code memoryview.release()} method.
+   * </p>
+   */
+  void release();
 
 }

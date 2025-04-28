@@ -67,14 +67,6 @@ public class PyTupleNGTest
   }
 
   @Test
-  public void testType()
-  {
-    PyType tupleType = PyTuple.type();
-    assertNotNull(tupleType, "Tuple type should not be null.");
-    assertEquals(tupleType.toString(), "tuple", "Tuple type should be 'tuple'.");
-  }
-
-  @Test
   @SuppressWarnings("element-type-mismatch")
   public void testContains()
   {

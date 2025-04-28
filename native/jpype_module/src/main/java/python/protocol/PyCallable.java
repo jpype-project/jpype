@@ -35,7 +35,7 @@ import python.lang.PyTuple;
  * To allow for method overloading, the entry point for calls must remain
  * private.
  */
-public interface PyCallable extends PyProtocol
+public interface PyCallable extends PyObject
 {
 
   /**
@@ -159,9 +159,9 @@ public interface PyCallable extends PyProtocol
   }
 
   /**
-   * Retrieves the type or category of the callable Python object.
+   * Retrieves the getType or category of the callable Python object.
    *
-   * @return a {@link String} representing the callable's type
+   * @return a {@link String} representing the callable's getType
    */
   default String getCallableType()
   {
@@ -181,7 +181,7 @@ public interface PyCallable extends PyProtocol
 
     final PyCallable callable;
     final ArrayList<Object> jargs = new ArrayList<>();
-    final ArrayList<Map.Entry<Object, ? extends PyObject>> jkwargs = new ArrayList<>();
+    final ArrayList<Map.Entry<Object, Object>> jkwargs = new ArrayList<>();
 
     /**
      * Creates a new {@link CallBuilder} for the specified {@link PyCallable}.
@@ -226,7 +226,7 @@ public interface PyCallable extends PyProtocol
      */
     public CallBuilder kwarg(CharSequence name, Object value)
     {
-      jkwargs.add(new CallBuilderEntry(name, value));
+      jkwargs.add(new CallBuilderEntry<Object,Object>(name, value));
       return this;
     }
 
@@ -265,7 +265,7 @@ public interface PyCallable extends PyProtocol
      */
     public PyObject execute()
     {
-      return callable.call(PyTuple.of(jargs), PyDict.of(jkwargs));
+      return callable.call(PyTuple.fromItems(jargs), PyDict.fromItems(jkwargs));
     }
 
     /**
@@ -276,7 +276,7 @@ public interface PyCallable extends PyProtocol
      */
     public Future<PyObject> executeAsync()
     {
-      return callable.callAsync(PyTuple.of(jargs), PyDict.of(jkwargs));
+      return callable.callAsync(PyTuple.fromItems(jargs), PyDict.fromItems(jkwargs));
     }
 
     /**
@@ -288,18 +288,18 @@ public interface PyCallable extends PyProtocol
      */
     public Future<PyObject> executeAsync(long timeout)
     {
-      return callable.callAsyncWithTimeout(PyTuple.of(jargs), PyDict.of(jkwargs), timeout);
+      return callable.callAsyncWithTimeout(PyTuple.of(jargs), PyDict.fromItems(jkwargs), timeout);
     }
   }
 
   /**
    * Represents a single entry in the keyword arguments for a call.
    */
-  public static class CallBuilderEntry implements Map.Entry
+  public static class CallBuilderEntry<K,V> implements Map.Entry<K,V>
   {
 
-    private final Object key;
-    private final Object value;
+    private final K key;
+    private final V value;
 
     /**
      * Creates a new immutable entry for a keyword argument.
@@ -307,26 +307,26 @@ public interface PyCallable extends PyProtocol
      * @param key the key of the keyword argument
      * @param value the value of the keyword argument
      */
-    public CallBuilderEntry(Object key, Object value)
+    public CallBuilderEntry(K key, V value)
     {
       this.key = key;
       this.value = value;
     }
 
     @Override
-    public Object getKey()
+    public K getKey()
     {
       return key;
     }
 
     @Override
-    public Object getValue()
+    public V getValue()
     {
       return value;
     }
 
     @Override
-    public PyObject setValue(Object value)
+    public V setValue(V value)
     {
       throw new UnsupportedOperationException("Entry is immutable");
     }

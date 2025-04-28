@@ -17,33 +17,22 @@ package python.lang;
 
 import org.jpype.bridge.Interpreter;
 import python.protocol.PyIter;
-import python.protocol.PyIterable;
 
 /**
  * Java front end for concrete Python zip.
  */
-public interface PyZip extends PyIter
+public interface PyZip extends PyIter<PyTuple>
 {
 
   /**
    * Creates a new PyZip object by zipping the provided iterables.
    *
    * @param items The iterables to zip together.
-   * @return A PyZip object representing the zipped iterables.
+   * @return a PyZip object representing the zipped iterables.
    */
   static PyZip of(Iterable... items)
   {
     return Interpreter.getBackend().newZip(items);
-  }
-
-  /**
-   * Returns the Python type object for the "zip" built-in function.
-   *
-   * @return The PyType object corresponding to the "zip" function.
-   */
-  static PyType type()
-  {
-    return (PyType) PyBuiltIn.eval("zip", null, null);
   }
 
   /**
@@ -52,7 +41,7 @@ public interface PyZip extends PyIter
    * This method collects all remaining tuples from the iterator and returns
    * them in a PyList, similar to Python's `list(zip(...))`.
    *
-   * @return A PyList containing all remaining tuples from the zipped iterables.
+   * @return a PyList containing all remaining tuples from the zipped iterables.
    */
   PyList toList();
 

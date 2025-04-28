@@ -29,13 +29,10 @@ import python.protocol.PyAttributes;
 public interface PyObject
 {
 
-  static PyType type()
-  {
-    return (PyType) PyBuiltIn.eval("object", null, null);
-  }
-
   /**
    * Apply the attributes protocol to this object.
+   * 
+   * The PyAttributes provides access to getattr, setattr, and delattr.
    *
    * This method never fails.
    *
@@ -52,4 +49,16 @@ public interface PyObject
   @Override
   boolean equals(Object obj);
 
+    /**
+   * Returns a string representation of the object.
+   * <p>
+   * This method generates a string representation of the object, equivalent to
+   * Python's {@code str(object)} operation.
+   * </p>
+   *
+   * @return a string representation of the slice.
+   */
+  @Override
+  String toString();
+  
 }

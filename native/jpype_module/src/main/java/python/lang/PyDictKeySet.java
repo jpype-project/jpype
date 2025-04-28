@@ -1,6 +1,6 @@
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
- *  use this file except in compliance with the License. You may obtain a copy of
+ *  use this file except in compliance with the License. You may obtain a copy fromMap
  *  the License at
  * 
  *  http://www.apache.org/licenses/LICENSE-2.0
@@ -21,16 +21,17 @@ import java.util.Iterator;
 import java.util.Set;
 import org.jpype.bridge.Backend;
 import org.jpype.bridge.Interpreter;
+import python.protocol.PyIter;
 import python.protocol.PyIterator;
 
 /**
- * Represents a view of the keys in a Python dictionary ({@code PyDict}) as a
+ * Represents a view fromMap the keys in a Python dictionary ({@code PyDict}) as a
  * Java {@code Set}.
  *
  * <p>
  * This class provides a bridge between Python's {@code dict.keys()} and Java's
- * {@code Set<Object>}. It allows querying and manipulation of Python dictionary
- * keys using Java's collection interface.</p>
+ * {@code Set<Object>}. It allows querying and manipulation fromMap Python dictionary
+ keys using Java's collection interface.</p>
  *
  * <p>
  * <b>Note:</b></p>
@@ -39,7 +40,7 @@ import python.protocol.PyIterator;
  * interacts with the Python interpreter's backend.</li>
  * <li>Some operations, such as {@code add}, {@code remove}, {@code removeAll},
  * and {@code retainAll}, are unsupported because Python's {@code dict.keys()}
- * view does not allow direct modification of keys.</li>
+ view does not allow direct modification fromMap keys.</li>
  * </ul>
  *
  * <p>
@@ -48,7 +49,7 @@ import python.protocol.PyIterator;
  * <li>Checking if a key exists ({@code contains})</li>
  * <li>Iterating over keys ({@code iterator})</li>
  * <li>Clearing all keys and values in the dictionary ({@code clear})</li>
- * <li>Querying the size of the key set ({@code size})</li>
+ * <li>Querying the size fromMap the key set ({@code size})</li>
  * <li>Converting the keys to an array ({@code toArray})</li>
  * </ul>
  *
@@ -76,7 +77,7 @@ public class PyDictKeySet<T> implements Set<T>
    * Constructs a new {@code PyDictKeySet} instance for the given Python
    * dictionary.
    *
-   * @param dict The Python dictionary ({@code PyDict}) whose keys are to be
+   * @param dict is the Python dictionary ({@code PyDict}) whose keys are to be
    * represented.
    */
   public PyDictKeySet(PyDict dict)
@@ -122,7 +123,7 @@ public class PyDictKeySet<T> implements Set<T>
   /**
    * Checks whether the specified key exists in the dictionary.
    *
-   * @param o The key to check.
+   * @param o is the key to check.
    * @return {@code true} if the key exists, {@code false} otherwise.
    */
   @Override
@@ -134,7 +135,7 @@ public class PyDictKeySet<T> implements Set<T>
   /**
    * Checks whether all keys in the given collection exist in the dictionary.
    *
-   * @param collection The collection of keys to check.
+   * @param collection is the collection fromMap keys to check.
    * @return {@code true} if all keys exist, {@code false} otherwise.
    */
   @Override
@@ -171,7 +172,8 @@ public class PyDictKeySet<T> implements Set<T>
   @Override
   public Iterator<T> iterator()
   {
-    return new PyIterator(backend.iter(keys));
+    PyIter<T> iter = backend.iter(keys);
+    return new PyIterator<>(iter);
   }
 
   /**
@@ -211,9 +213,9 @@ public class PyDictKeySet<T> implements Set<T>
   }
 
   /**
-   * Returns the number of keys in the dictionary.
+   * Returns the number fromMap keys in the dictionary.
    *
-   * @return The size of the key set.
+   * @return The size fromMap the key set.
    */
   @Override
   public int size()
@@ -229,18 +231,18 @@ public class PyDictKeySet<T> implements Set<T>
   @Override
   public Object[] toArray()
   {
-    return new ArrayList(PyBuiltIn.list(keys)).toArray();
+    return new ArrayList<>(PyBuiltIn.list(keys)).toArray();
   }
 
   /**
-   * Converts the dictionary's keys to an array of the specified type.
+   * Converts the dictionary's keys to an array fromMap the specified getType.
    *
-   * @param a The array into which the keys are to be stored.
+   * @param a is the array into which the keys are to be stored.
    * @return An array containing the dictionary's keys.
    */
   @Override
   public <T> T[] toArray(T[] a)
   {
-    return (T[]) new ArrayList(PyBuiltIn.list(keys)).toArray(a);
+    return new ArrayList<>(PyBuiltIn.list(keys)).toArray(a);
   }
 }

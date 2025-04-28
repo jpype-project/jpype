@@ -15,7 +15,7 @@
  */
 package python.protocol;
 
-import org.jpype.bridge.Utility;
+import org.jpype.internal.Utility;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -47,11 +47,11 @@ import python.lang.PyObject;
  * @see PyMapping
  * @see Backend
  */
-class PyMappingValues implements Collection<PyObject>
+class PyMappingValues<K extends PyObject,V extends PyObject> implements Collection<V>
 {
 
   private final Backend backend;
-  private final PyMapping map;
+  private final PyMapping<K, V> map;
 
   /**
    * Constructs a {@code PyMappingValues} instance for the given Python mapping.
@@ -59,7 +59,7 @@ class PyMappingValues implements Collection<PyObject>
    * @param map the Python mapping whose values are to be exposed as a Java
    * {@link Collection}
    */
-  public PyMappingValues(PyMapping map)
+  public PyMappingValues(PyMapping<K, V> map)
   {
     this.map = map;
     this.backend = Interpreter.getBackend();
@@ -77,7 +77,7 @@ class PyMappingValues implements Collection<PyObject>
    * @throws UnsupportedOperationException always thrown
    */
   @Override
-  public boolean add(PyObject e)
+  public boolean add(V e)
   {
     throw new UnsupportedOperationException("Adding values directly is not supported.");
   }
@@ -94,7 +94,7 @@ class PyMappingValues implements Collection<PyObject>
    * @throws UnsupportedOperationException always thrown
    */
   @Override
-  public boolean addAll(Collection<? extends PyObject> collection)
+  public boolean addAll(Collection<? extends V> collection)
   {
     throw new UnsupportedOperationException("Adding collections of values directly is not supported.");
   }
@@ -156,9 +156,10 @@ class PyMappingValues implements Collection<PyObject>
    * @return an iterator over the values of the mapping
    */
   @Override
-  public Iterator<PyObject> iterator()
+  public Iterator<V> iterator()
   {
-    Function<Object, PyObject> function = p -> this.map.get(p);
+    Function<K, V> function = p -> this.map.get(p);
+    Iterator<?> iter = this.map.keySet().iterator();
     return Utility.mapIterator(this.map.keySet().iterator(), function);
   }
 

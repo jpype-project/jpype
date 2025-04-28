@@ -47,14 +47,4 @@ public interface PyInt extends PyObject, PyNumber
     return Interpreter.getBackend().newInt(value);
   }
 
-  /**
-   * Retrieves the Python type object for `int`. This is equivalent to
-   * evaluating `type(int)` in Python.
-   *
-   * @return the {@link PyType} instance representing the Python `int` type.
-   */
-  static PyType type()
-  {
-    return (PyType) PyBuiltIn.eval("int", null, null);
-  }
 }

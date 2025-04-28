@@ -35,7 +35,7 @@ public class Context extends PyBuiltIn
 {
 
   public final PyDict globalsDict;
-  public final PyMapping localsDict;
+  public final PyObject localsDict;
 
   public Context()
   {
@@ -45,7 +45,7 @@ public class Context extends PyBuiltIn
     this.localsDict = globalsDict;
   }
 
-  public Context(PyDict globals, PyMapping locals)
+  public Context(PyDict globals, PyObject locals)
   {
     if (!Interpreter.getInstance().isJava())
       throw new IllegalStateException("Java bridge must be active");
@@ -99,7 +99,7 @@ public class Context extends PyBuiltIn
    *
    * @return
    */
-  PyMapping locals()
+  PyObject locals()
   {
     return localsDict;
   }

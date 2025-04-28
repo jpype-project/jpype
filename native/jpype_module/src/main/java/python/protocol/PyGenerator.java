@@ -22,7 +22,7 @@ import python.lang.PyObject;
  * Represents a Python generator in the Java environment.
  *
  * This interface provides a Java front end for the abstract concept of a Python
- * generator, which adheres to the Python {@code types.GeneratorType} contract.
+ * generator, which adheres to the Python {@code collections.abc.Generator} contract.
  * Generators are used to produce values lazily and support iteration, making
  * them suitable for handling sequences of data efficiently.
  *
@@ -39,9 +39,9 @@ import python.lang.PyObject;
  * functionality to bridge Python generators with Java's iteration
  * mechanisms.</p>
  */
-public interface PyGenerator extends PyProtocol
+public interface PyGenerator<T extends PyObject> extends PyIter<T>
 {
-
+  
   /**
    * Returns a Python iterator for this generator.
    *
@@ -53,7 +53,7 @@ public interface PyGenerator extends PyProtocol
    * @return a {@link PyIter} representing the Python iterator for this
    * generator
    */
-  PyIter iter();
+  PyIter<T> iter();
 
   /**
    * Returns a Java {@link Iterator} for this generator.
@@ -65,8 +65,9 @@ public interface PyGenerator extends PyProtocol
    *
    * @return a {@link Iterator} for iterating over the elements of the generator
    */
-  default Iterator<PyObject> iterator()
+  @Override
+  default Iterator<T> iterator()
   {
-    return (Iterator<PyObject>) iter().iterator();
+    return  iter().iterator();
   }
 }

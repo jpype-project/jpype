@@ -48,15 +48,5 @@ public class PyEnumerateNGTest
     assertEquals(result, expResult);
     fail("The test case is a prototype.");
   }
-
-  @Test
-  public void testType()
-  {
-    System.out.println("type");
-    PyType expResult = null;
-    PyType result = PyEnumerate.type();
-    assertEquals(result, expResult);
-    fail("The test case is a prototype.");
-  }
   
 }

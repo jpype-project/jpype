@@ -71,13 +71,13 @@ import python.lang.PyObject;
  * @see Map.Entry
  * @see Set
  */
-public class PyMappingEntrySet<K, V> implements Set<Map.Entry<K, V>>
+public class PyMappingEntrySet<K extends PyObject, V extends PyObject> implements Set<Map.Entry<K, V>>
 {
 
   /**
    * The Python mapping whose entries are represented by this set.
    */
-  private final PyMapping map;
+  private final PyMapping<K,V> map;
 
   /**
    * The Python object representing the items view of the mapping.
@@ -91,7 +91,7 @@ public class PyMappingEntrySet<K, V> implements Set<Map.Entry<K, V>>
    * @param map the Python mapping whose entries will be represented as a set
    * @param items the Python object representing the items view of the mapping
    */
-  PyMappingEntrySet(PyMapping map, PyObject items)
+  PyMappingEntrySet(PyMapping<K,V> map, PyObject items)
   {
     this.map = map;
     this.items = items;
@@ -187,7 +187,7 @@ public class PyMappingEntrySet<K, V> implements Set<Map.Entry<K, V>>
   @Override
   public Iterator<Map.Entry<K, V>> iterator()
   {
-    return new PyMappingEntrySetIterator(map, PyBuiltIn.iter(this.items));
+    return new PyMappingEntrySetIterator<>(map, PyBuiltIn.iter(this.items));
   }
 
   /**

@@ -17,6 +17,8 @@ package python.lang;
 
 import org.jpype.bridge.Interpreter;
 import python.protocol.PyBuffer;
+import python.protocol.PyIndex;
+import python.protocol.PySequence;
 
 /**
  * Java front-end interface for the concrete Python `bytes` type.
@@ -24,7 +26,7 @@ import python.protocol.PyBuffer;
  * This interface provides methods for creating and manipulating Python `bytes`
  * objects in a Java environment, mimicking Python's `bytes` functionality.
  */
-public interface PyBytes extends PyObject, PyBuffer
+public interface PyBytes extends PyObject, PyBuffer, PySequence<PyInt>
 {
 
   /**
@@ -85,18 +87,6 @@ public interface PyBytes extends PyObject, PyBuffer
   }
 
   /**
-   * Retrieves the Python type object for `bytes`.
-   *
-   * This is equivalent to evaluating `type(bytes)` in Python.
-   *
-   * @return the {@link PyType} instance representing the Python `bytes` type.
-   */
-  static PyType type()
-  {
-    return (PyType) PyBuiltIn.eval("bytes", null, null);
-  }
-
-  /**
    * Decodes a bytes object into a Python string.
    *
    * <p>
@@ -135,11 +125,30 @@ public interface PyBytes extends PyObject, PyBuffer
    */
   PyString decode(CharSequence encoding, CharSequence errors);
 
+  @Override
+  default PyInt get(int index)
+  {
+    return (PyInt) PyBuiltIn.backend().getitemSequence(this, index);
+  }
+
+  @Override
+  default PyInt remove(int index)
+  {
+    throw new UnsupportedOperationException("bytes object does not support removal");
+  }
+
+  @Override
+  default PyInt set(int index, PyInt value)
+  {
+    throw new UnsupportedOperationException("bytes object does not support assignment");
+  }
+
   /**
    * Gets the length of a bytearray object in bytes.
    *
    * @return the length of the bytearray object, measured in bytes.
    */
+  @Override
   default int size()
   {
     return Interpreter.getBackend().len(this);

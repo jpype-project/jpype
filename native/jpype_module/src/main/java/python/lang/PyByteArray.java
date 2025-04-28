@@ -17,6 +17,8 @@ package python.lang;
 
 import org.jpype.bridge.Interpreter;
 import python.protocol.PyBuffer;
+import python.protocol.PyIndex;
+import python.protocol.PySequence;
 
 /**
  * Java front-end interface for the concrete Python `bytearray` type.
@@ -25,12 +27,13 @@ import python.protocol.PyBuffer;
  * bytearrays in a Java environment, mimicking Python's `bytearray`
  * functionality.
  */
-public interface PyByteArray extends PyObject, PyBuffer
+public interface PyByteArray extends PyObject, PyBuffer, PySequence<PyInt>
 {
 
   /**
-   * Creates a new Python bytearray with a fixed length. The bytearray will be
-   * initialized with zero bytes.
+   * Creates a new Python bytearray with a fixed length.
+   *
+   * The bytearray will be initialized with zero bytes.
    *
    * @param length the length of the bytearray to create.
    * @return a new {@link PyByteArray} instance with the specified length.
@@ -38,6 +41,19 @@ public interface PyByteArray extends PyObject, PyBuffer
   static PyByteArray create(int length)
   {
     return Interpreter.getBackend().newByteArrayOfSize(length);
+  }
+
+  /**
+   * Creates a new Python bytearray from a hexadecimal string. The input string
+   * must contain valid hexadecimal characters.
+   *
+   * @param str the hexadecimal string to convert into a bytearray.
+   * @return a new {@link PyByteArray} instance containing the bytes represented
+   * by the hex string.
+   */
+  static PyByteArray fromHex(CharSequence str)
+  {
+    return Interpreter.getBackend().bytearrayFromHex(str);
   }
 
   /**
@@ -69,31 +85,6 @@ public interface PyByteArray extends PyObject, PyBuffer
   }
 
   /**
-   * Retrieves the Python type object for `bytearray`. This is equivalent to
-   * evaluating `type(bytearray)` in Python.
-   *
-   * @return the {@link PyType} instance representing the Python `bytearray`
-   * type.
-   */
-  static PyType type()
-  {
-    return (PyType) PyBuiltIn.eval("bytearray", null, null);
-  }
-
-  /**
-   * Creates a new Python bytearray from a hexadecimal string. The input string
-   * must contain valid hexadecimal characters.
-   *
-   * @param str the hexadecimal string to convert into a bytearray.
-   * @return a new {@link PyByteArray} instance containing the bytes represented
-   * by the hex string.
-   */
-  static PyByteArray fromHex(CharSequence str)
-  {
-    return Interpreter.getBackend().bytearrayFromHex(str);
-  }
-
-  /**
    * Decodes a bytearray object into a Python string.
    *
    * <p>
@@ -122,16 +113,51 @@ public interface PyByteArray extends PyObject, PyBuffer
    * bytes.</li>
    * </ul>
    *
-   * @param encoding The character encoding to use for decoding the bytes
+   * @param encoding is the character encoding to use for decoding the bytes
    * object. Common values include "utf-8", "ascii", "latin-1", etc or null if
    * not applicable.
-   * @param errors An optional argument to specify how to handle errors during
-   * decoding. Can be "strict", "ignore", "replace", etc., or null if not
+   * @param errors is an optional argument to specify how to handle errors
+   * during decoding. Can be "strict", "ignore", "replace", etc., or null if not
    * applicable.
-   * @return A new string resulting from decoding the bytearray object.
+   * @return a new string resulting from decoding the bytearray object.
    */
   PyObject decode(PyObject encoding, PyObject errors);
 
+  @Override
+  default PyInt get(PyIndex... indices)
+  {
+    throw new IllegalArgumentException("bytearray does not support tuple assignment");
+  }
+
+  @Override
+  default PyInt get(PyIndex index)
+  {
+    return (PyInt) PyBuiltIn.backend().getitemMappingObject(this, index);
+  }
+
+  @Override
+  default PyInt get(int index)
+  {
+    return (PyInt) PyBuiltIn.backend().getitemSequence(this, index);
+  }
+
+  @Override
+  PyInt remove(int index);
+
+  void remove(PyIndex index);
+
+  @Override
+  default PyInt set(int index, PyInt value)
+  {
+    return (PyInt) PyBuiltIn.backend().setitemSequence(this, index, value);
+  }
+
+  default void set(PyIndex index, PyObject values)
+  {
+    PyBuiltIn.backend().setitemMapping(this, index, values);
+  }
+
+  @Override
   default int size()
   {
     return Interpreter.getBackend().len(this);

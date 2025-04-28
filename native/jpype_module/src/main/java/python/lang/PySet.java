@@ -26,6 +26,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jpype.bridge.Interpreter;
 import python.protocol.PyIterator;
+import python.protocol.PyAbstractSet;
 
 /**
  * Represents a Python set in the Java environment.
@@ -58,29 +59,19 @@ import python.protocol.PyIterator;
  * objects into Python collections, as this may lead to unintended
  * behaviors.</p>
  */
-public interface PySet extends PyObject, Set<PyObject>
+public interface PySet extends PyAbstractSet<PyObject>
 {
 
   /**
    * Creates a new Python set from the elements of the given {@link Iterable}.
    *
    * @param c an iterable providing elements for the set
-   * @param <T> the type of elements in the iterable
+   * @param <T> the getType of elements in the iterable
    * @return a new {@code PySet} containing the elements from the iterable
    */
   public static <T> PySet of(Iterable<T> c)
   {
     return Interpreter.getBackend().newSetFromIterable(c);
-  }
-
-  /**
-   * Returns the Python type object representing the {@code set} type.
-   *
-   * @return the Python type object for sets
-   */
-  static PyType type()
-  {
-    return (PyType) PyBuiltIn.eval("set", null, null);
   }
 
   /**
@@ -155,7 +146,7 @@ public interface PySet extends PyObject, Set<PyObject>
    * @param set the sets to subtract from this set
    * @return a new {@code PySet} containing the difference
    */
-  PySet difference(Collection... set);
+  PySet difference(Collection<?>... set);
 
   /**
    * Updates this set to contain the difference between itself and the specified
@@ -163,7 +154,7 @@ public interface PySet extends PyObject, Set<PyObject>
    *
    * @param set the sets to subtract from this set
    */
-  void differenceUpdate(Collection... set);
+  void differenceUpdate(Collection<?>... set);
 
   /**
    * Removes the specified element from the set, if it exists.
@@ -196,7 +187,7 @@ public interface PySet extends PyObject, Set<PyObject>
    * @param set the sets to intersect with this set
    * @return a new {@code PySet} containing the intersection
    */
-  PySet intersect(Collection... set);
+  PySet intersect(Collection<?>... set);
 
   /**
    * Updates this set to contain the intersection of itself and the specified
@@ -204,7 +195,7 @@ public interface PySet extends PyObject, Set<PyObject>
    *
    * @param set the sets to intersect with this set
    */
-  void intersectionUpdate(Collection... set);
+  void intersectionUpdate(Collection<?>... set);
 
   /**
    * Checks if this set is disjoint with the specified set.
@@ -212,7 +203,7 @@ public interface PySet extends PyObject, Set<PyObject>
    * @param set the set to compare with
    * @return {@code true} if the sets are disjoint, {@code false} otherwise
    */
-  boolean isDisjoint(Collection set);
+  boolean isDisjoint(Collection<?> set);
 
   /**
    * Checks if the set is empty.
@@ -232,7 +223,7 @@ public interface PySet extends PyObject, Set<PyObject>
    * @param set the set to compare with
    * @return {@code true} if this set is a subset, {@code false} otherwise
    */
-  boolean isSubset(Collection set);
+  boolean isSubset(Collection<?> set);
 
   /**
    * Checks if this set is a superset of the specified set.
@@ -240,7 +231,7 @@ public interface PySet extends PyObject, Set<PyObject>
    * @param set the set to compare with
    * @return {@code true} if this set is a superset, {@code false} otherwise
    */
-  boolean isSuperset(Collection set);
+  boolean isSuperset(Collection<?> set);
 
   /**
    * Returns an iterator over the elements in this set.
@@ -250,7 +241,7 @@ public interface PySet extends PyObject, Set<PyObject>
   @Override
   default Iterator<PyObject> iterator()
   {
-    return new PyIterator(Interpreter.getBackend().iter(this));
+    return new PyIterator<>(Interpreter.getBackend().iterSet(this));
   }
 
   /**
@@ -357,7 +348,7 @@ public interface PySet extends PyObject, Set<PyObject>
    * @param set the sets to compute the symmetric difference with
    * @return a new {@code PySet} containing the symmetric difference
    */
-  PySet symmetricDifference(Collection... set);
+  PySet symmetricDifference(Collection<?>... set);
 
   /**
    * Updates this set to contain the symmetric difference between itself and the
@@ -365,7 +356,7 @@ public interface PySet extends PyObject, Set<PyObject>
    *
    * @param set the set to compute the symmetric difference with
    */
-  void symmetricDifferenceUpdate(Collection set);
+  void symmetricDifferenceUpdate(Collection<?> set);
 
   /**
    * Returns an array containing all elements in this set.
@@ -383,13 +374,13 @@ public interface PySet extends PyObject, Set<PyObject>
    * array as the target.
    *
    * @param a the array into which the elements of the set are to be stored
-   * @param <T> the type of the array elements
+   * @param <T> the getType of the array elements
    * @return an array containing the set's elements
    */
   @Override
   default <T> T[] toArray(T[] a)
   {
-    return (T[]) new ArrayList<>(this).toArray(a);
+    return new ArrayList<>(this).toArray(a);
   }
 
   /**
@@ -398,7 +389,7 @@ public interface PySet extends PyObject, Set<PyObject>
    *
    * @return a Python-style list containing the set's elements
    */
-  List<PyObject> toPythonList();
+  List<PyObject> toList();
 
   /**
    * Returns a new set containing the union of this set and the specified sets.
@@ -406,20 +397,20 @@ public interface PySet extends PyObject, Set<PyObject>
    * @param set the sets to compute the union with
    * @return a new {@code PySet} containing the union
    */
-  PySet union(Collection... set);
+  PySet union(Collection<?>... set);
 
   /**
    * Updates this set to contain the union of itself and the specified sets.
    *
    * @param set the sets to compute the union with
    */
-  void unionUpdate(Collection... set);
+  void unionUpdate(Collection<?>... set);
 
   /**
    * Updates this set to include all elements from the specified iterable.
    *
    * @param other the iterable providing elements to add to the set
    */
-  void update(Iterable<? extends PyObject> other);
+  void update(Iterable<?> other);
 
 }

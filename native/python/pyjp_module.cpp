@@ -132,19 +132,19 @@ void PyJPModule_loadResources(PyObject* module)
 		JP_PY_CHECK();
 		Py_INCREF(_JMethodCode);
 
-		_concreteDict= PyObject_GetAttrString(module, "_bridge_concrete");
+		_concreteDict= PyObject_GetAttrString(module, "_concrete");
 		JP_PY_CHECK();
 		Py_INCREF(_concreteDict);
-		_protocolDict = PyObject_GetAttrString(module, "_bridge_protocol");
+		_protocolDict = PyObject_GetAttrString(module, "_protocol");
 		JP_PY_CHECK();
 		Py_INCREF(_protocolDict);
-		_cacheDict = PyObject_GetAttrString(module, "_bridge_cache");
+		_cacheDict = PyObject_GetAttrString(module, "_cache");
 		JP_PY_CHECK();
 		Py_INCREF(_cacheDict);
-		_interfaceDict = PyObject_GetAttrString(module, "_bridge_interfaces");
+		_interfaceDict = PyObject_GetAttrString(module, "_interfaces");
 		JP_PY_CHECK();
 		Py_INCREF(_interfaceDict);
-		_methodsDict = PyObject_GetAttrString(module, "_bridge_methods");
+		_methodsDict = PyObject_GetAttrString(module, "_methods");
 		JP_PY_CHECK();
 		Py_INCREF(_methodsDict);
 
@@ -657,6 +657,58 @@ PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
 	if (object != nullptr)
 		PySet_Add(interfaces, object);
 
+	PyObject *abc = PyImport_AddModule("collections.abc");
+	JPPyObject abc_sequence = JPPyObject::call(PyObject_GetAttrString(abc, "Sequence"));
+	JPPyObject abc_mapping = JPPyObject::call(PyObject_GetAttrString(abc, "Mapping"));
+	JPPyObject abc_generator = JPPyObject::call(PyObject_GetAttrString(abc, "Generator"));
+	JPPyObject abc_iterator = JPPyObject::call(PyObject_GetAttrString(abc, "Iterator"));
+	JPPyObject abc_iterable = JPPyObject::call(PyObject_GetAttrString(abc, "Iterable"));
+	JPPyObject abc_coroutine = JPPyObject::call(PyObject_GetAttrString(abc, "Coroutine"));
+	JPPyObject abc_awaitable = JPPyObject::call(PyObject_GetAttrString(abc, "Awaitable"));
+	JPPyObject abc_set = JPPyObject::call(PyObject_GetAttrString(abc, "Set"));
+	JPPyObject abc_collection = JPPyObject::call(PyObject_GetAttrString(abc, "Collection"));
+	JPPyObject abc_container = JPPyObject::call(PyObject_GetAttrString(abc, "Container"));
+	PyObject *typing = PyImport_AddModule("typing");
+	// Buffer appears in 3.12 so will probe dunder instead
+
+	printf("  Protocol: %s\n", type->tp_name);
+	bool is_callable = (type->tp_call != nullptr);
+	bool is_buffer = (type->tp_as_buffer != nullptr);
+
+	bool seq_get = (type->tp_as_sequence != nullptr) && (type->tp_as_sequence->sq_item != nullptr);
+	bool seq_set = (type->tp_as_sequence != nullptr) && (type->tp_as_sequence->sq_ass_item != nullptr);
+	bool map_get = (type->tp_as_mapping != nullptr) && (type->tp_as_mapping->mp_subscript != nullptr);
+	bool map_set = (type->tp_as_mapping != nullptr) && (type->tp_as_mapping->mp_ass_subscript != nullptr);
+
+	bool as_float = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_float != nullptr);
+	bool as_int = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_int != nullptr);
+	bool logical = (type->tp_as_number != nullptr) && ((type->tp_as_number->nb_and != nullptr) 
+		|| (type->tp_as_number->nb_or != nullptr) 
+		|| (type->tp_as_number->nb_xor != nullptr));
+	bool as_matrix = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_int != nullptr);
+
+	bool as_resource = (PyObject_HasAttrString((PyObject*)type, "__enter__")!=0);
+	bool as_index = (PyObject_HasAttrString((PyObject*)type, "__index__")!=0);
+
+	bool is_collection = (PyObject_IsSubclass((PyObject*)type, abc_collection.get())!=0);
+	bool is_container = (PyObject_IsSubclass((PyObject*)type, abc_container.get())!=0);
+	bool is_sequence = (PyObject_IsSubclass((PyObject*)type, abc_sequence.get())!=0);
+	bool is_mapping = (PyObject_IsSubclass((PyObject*)type, abc_mapping.get())!=0);
+	bool is_set = (PyObject_IsSubclass((PyObject*)type, abc_set.get())!=0);
+	bool is_generator = (PyObject_IsSubclass((PyObject*)type, abc_generator.get())!=0);
+	bool is_iterable = (PyObject_IsSubclass((PyObject*)type, abc_iterable.get())!=0);
+	bool is_iterator = (PyObject_IsSubclass((PyObject*)type, abc_iterator.get())!=0);
+	bool is_awaitable = (PyObject_IsSubclass((PyObject*)type, abc_awaitable.get())!=0);
+	bool is_coroutine = (PyObject_IsSubclass((PyObject*)type, abc_coroutine.get())!=0);
+
+	printf("    is_callable=%d  is_buffer=%d resource=%d\n", is_callable, is_buffer, as_resource);
+	printf("    is_generator=%d  is_iterable=%d is_iterator=%d\n", is_generator, is_iterable, is_iterator);
+	printf("    is_seq=%d  seq_get=%d  seq_set=%d\n", is_sequence, seq_get, seq_set);
+    printf("    is_map=%d  map_get=%d  map_set=%d\n", is_mapping, map_get, map_set);
+    printf("    is_set=%d is_collection=%d is_container=%d\n", is_set, is_collection, is_container);
+	printf("    index=%d int=%d float=%d logical=%d  matrix=%d\n", as_index, as_int, as_float, logical, as_matrix);
+	printf("    is_awaitable=%d is_coroutine=%d\n", is_awaitable, is_coroutine);
+	
 	// We look to see if there is a concrete method
 	if (sz > 1)
 	{
@@ -666,45 +718,7 @@ PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
 			printf("    Found\n");
 	}
 
-	PyObject *typing = PyImport_AddModule("typing");
-	JPPyObject sequence = JPPyObject::call(PyObject_GetAttrString(typing, "Sequence"));
-	JPPyObject mapping = JPPyObject::call(PyObject_GetAttrString(typing, "Mapping"));
 
-	printf("  Protocol: %s\n", type->tp_name);
-	bool callable = (type->tp_call != nullptr);
-	bool buffer = (type->tp_as_buffer != nullptr);
-	bool generator = false;
-	bool iterable = false;
-	bool iterator = false;
-	bool seq_get = (type->tp_as_sequence != nullptr) && (type->tp_as_sequence->sq_item != nullptr);
-	bool seq_set = (type->tp_as_sequence != nullptr) && (type->tp_as_sequence->sq_ass_item != nullptr);
-	bool map_get = (type->tp_as_mapping != nullptr) && (type->tp_as_mapping->mp_subscript != nullptr);
-	bool map_set = (type->tp_as_mapping != nullptr) && (type->tp_as_mapping->mp_ass_subscript != nullptr);
-	bool as_float = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_float != nullptr);
-	bool as_int = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_int != nullptr);
-	bool logical = (type->tp_as_number != nullptr) && ((type->tp_as_number->nb_and != nullptr) 
-		|| (type->tp_as_number->nb_or != nullptr) 
-		|| (type->tp_as_number->nb_xor != nullptr));
-	bool as_matrix = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_int != nullptr);
-	bool resource = (PyObject_HasAttrString((PyObject*)type, "__enter__")!=0);
-	bool as_index = (PyObject_HasAttrString((PyObject*)type, "__index__")!=0);
-	bool is_sequence = (PyObject_IsSubclass((PyObject*)type, sequence.get())!=0);
-	bool is_mapping = (PyObject_IsSubclass((PyObject*)type, mapping.get())!=0);
-
-	// Probe for dunder methods
-	if (type->tp_iter != nullptr && type->tp_iternext)
-		generator = true;
-	else if (type->tp_iter != nullptr)
-		iterable = true;
-	else if (type->tp_iternext != nullptr)
-		iterator = true;
-
-	printf("    callable=%d  buffer=%d resource=%d\n", callable, buffer, resource);
-	printf("    generator=%d  iterable=%d iterator=%d\n", generator, iterable, iterator);
-	printf("    is_seq=%d  seq_get=%d  seq_set=%d\n", is_sequence, seq_get, seq_set);
-    printf("    is_map=%d  map_get=%d  map_set=%d\n", is_mapping, map_get, map_set);
-	printf("    index=%d int=%d float=%d logical=%d  matrix=%d\n", as_index, as_int, as_float, logical, as_matrix);
-	
 	Py_DECREF(interfaces);
 	return PyBool_FromLong(ret);
 	JP_PY_CATCH(nullptr);

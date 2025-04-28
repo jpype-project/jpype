@@ -52,22 +52,8 @@ import python.protocol.PyIterator;
  * </pre>
  * </p>
  */
-public interface PyRange extends PyIter
+public interface PyRange extends PyIter<PyInt>
 {
-
-  /**
-   * Returns the Python type object for `range`.
-   * <p>
-   * This method retrieves the Python {@code type} object corresponding to the
-   * `range` type.
-   * </p>
-   *
-   * @return the {@link PyType} representing the Python `range` type.
-   */
-  static PyType type()
-  {
-    return (PyType) PyBuiltIn.eval("range", null, null);
-  }
 
   /**
    * Returns the starting value of the range.
@@ -177,6 +163,9 @@ public interface PyRange extends PyIter
    * @return a {@link PyIterator} for the range object.
    */
   @Override
-  PyIterator iterator();
+  default PyIterator<PyInt> iterator()
+  {
+    return new PyIterator<>(this);
+  }
 
 }

@@ -24,13 +24,12 @@ import python.protocol.PyIter;
  * This interface provides functionality for working with Python's `enumerate`
  * objects in a Java environment, mimicking the behavior of Python's built-in
  * `enumerate` function.
- *
  * <p>
- * The Python `enumerate` type is a generator that yields pairs of an index and
- * the corresponding element from an iterable. This interface allows Java
+ * The Python `enumerate` getType is a generator that yields pairs of an index
+ * and the corresponding element from an iterable. This interface allows Java
  * developers to interact with Python `enumerate` objects seamlessly.
  */
-public interface PyEnumerate extends PyIter
+public interface PyEnumerate extends PyIter<PyTuple>
 {
 
   /**
@@ -43,20 +42,9 @@ public interface PyEnumerate extends PyIter
    * @return a new {@link PyEnumerate} instance representing the Python
    * `enumerate` object.
    */
-  static PyEnumerate of(Iterable iterable)
+  static PyEnumerate of(Iterable<?> iterable)
   {
     return Interpreter.getBackend().newEnumerate(iterable);
   }
 
-  /**
-   * Retrieves the Python type object for `enumerate`. This is equivalent to
-   * evaluating `type(enumerate)` in Python.
-   *
-   * @return the {@link PyType} instance representing the Python `enumerate`
-   * type.
-   */
-  static PyType type()
-  {
-    return (PyType) PyBuiltIn.eval("enumerate", null, null);
-  }
 }

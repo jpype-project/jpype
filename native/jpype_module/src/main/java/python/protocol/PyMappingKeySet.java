@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.Set;
 import org.jpype.bridge.Backend;
 import org.jpype.bridge.Interpreter;
+import python.lang.PyObject;
 
 /**
  * A representation of the key set of a Python mapping, implementing the
@@ -69,21 +70,21 @@ import org.jpype.bridge.Interpreter;
  * @see PyMapping
  * @see Set
  */
-public class PyMappingKeySet<V> implements Set<V>
+public class PyMappingKeySet<K extends PyObject, V extends PyObject> implements Set<K>
 {
 
   private final Backend backend;
   /**
    * The underlying Python mapping whose keys are represented by this set.
    */
-  final PyMapping map;
+  final PyMapping<K, V> map;
 
   /**
    * Constructs a {@code PyMappingKeySet} for the given Python mapping.
    *
    * @param mapping the Python mapping whose keys will be represented as a set
    */
-  public PyMappingKeySet(PyMapping mapping)
+  public PyMappingKeySet(PyMapping<K, V> mapping)
   {
     this.map = mapping;
     this.backend = Interpreter.getBackend();
@@ -96,7 +97,7 @@ public class PyMappingKeySet<V> implements Set<V>
    * @throws UnsupportedOperationException always thrown
    */
   @Override
-  public boolean add(Object e)
+  public boolean add(PyObject e)
   {
     throw new UnsupportedOperationException();
   }
@@ -108,7 +109,7 @@ public class PyMappingKeySet<V> implements Set<V>
    * @throws UnsupportedOperationException always thrown
    */
   @Override
-  public boolean addAll(Collection<? extends V> c)
+  public boolean addAll(Collection<? extends K> c)
   {
     throw new UnsupportedOperationException();
   }
@@ -129,6 +130,7 @@ public class PyMappingKeySet<V> implements Set<V>
    * @return {@code true} if the key exists, otherwise {@code false}
    */
   @Override
+  @SuppressWarnings("element-type-mismatch")
   public boolean contains(Object o)
   {
     return map.containsKey(o);
@@ -170,9 +172,11 @@ public class PyMappingKeySet<V> implements Set<V>
    * @return an iterator for the key set
    */
   @Override
-  public Iterator<V> iterator()
+  @SuppressWarnings("unchecked")
+  public Iterator<K> iterator()
   {
-    return new PyIterator(backend.iter(map));
+    PyIter<K> iter = backend.iterMap(map);
+    return new PyIterator<>(iter);
   }
 
   /**

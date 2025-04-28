@@ -1,6 +1,6 @@
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
- *  use this file except in compliance with the License. You may obtain a copy of
+ *  use this file except in compliance with the License. You may obtain a copy fromMap
  *  the License at
  * 
  *  http://www.apache.org/licenses/LICENSE-2.0
@@ -26,40 +26,24 @@ import python.protocol.PyMapping;
  *
  * This interface provides methods for creating and interacting with Python
  * dictionaries in a Java environment, mimicking Python's `dict` functionality.
- *
  * <p>
  * While this interface primarily adheres to the Java {@link Map} contract, it
  * also incorporates Python-specific behaviors that may differ from standard
  * Java maps.
  *
+ * To create an empty dict use `PyBuiltin.dict()`.
+ *
  * <p>
  * <b>Important Note:</b></p>
  * <p>
- * Python collections are asymmetric in their handling of Java objects. A Java
- * object added to a Python collection will appear as a {@code PyJavaObject}.
- * Developers should exercise caution to avoid reference loops when placing Java
- * objects into Python collections, as this may lead to unintended
- * behaviors.</p>
+ * Python collections are asymmetric in their handling fromMap Java objects. A
+ * Java object added to a Python collection will appear as a
+ * {@code PyJavaObject}. Developers should exercise caution to avoid reference
+ * loops when placing Java objects into Python collections, as this may lead to
+ * unintended behaviors.</p>
  */
-public interface PyDict extends PyObject, PyMapping
+public interface PyDict extends PyObject, PyMapping<PyObject, PyObject>
 {
-
-  /**
-   * Creates a new, empty Python `dict` object.
-   *
-   * <p>
-   * This method provides a way to create an empty Python dictionary, which can
-   * then be populated with key-value pairs. The resulting {@link PyDict} object
-   * behaves like a Python `dict` and supports Python-specific dictionary
-   * operations.
-   * </p>
-   *
-   * @return a new {@link PyDict} instance representing an empty Python `dict`.
-   */
-  static public PyDict create()
-  {
-    return Interpreter.getBackend().newDict();
-  }
 
   /**
    * Creates a new Python `dict` object from the specified Java {@link Map}.
@@ -72,26 +56,14 @@ public interface PyDict extends PyObject, PyMapping
    * {@link PyObject}.
    * @return a new {@link PyDict} instance representing the Python dictionary.
    */
-  public static PyDict of(Map<Object, ? extends PyObject> map)
+  public static PyDict fromMap(Map<? extends Object, ? extends Object> map)
   {
     return Interpreter.getBackend().newDict(map);
   }
 
-  public static PyDict of(Iterable<Map.Entry<Object, ? extends PyObject>> map)
+  public static PyDict fromItems(Iterable<? extends Map.Entry<?,?>> map)
   {
     return Interpreter.getBackend().newDictFromIterable(map);
-  }
-
-  /**
-   * Retrieves the Python type object for `dict`.
-   *
-   * This is equivalent to evaluating `type(dict)` in Python.
-   *
-   * @return the {@link PyType} instance representing the Python `dict` type.
-   */
-  static PyType type()
-  {
-    return (PyType) PyBuiltIn.eval("dict", null, null);
   }
 
   @Override
@@ -104,11 +76,31 @@ public interface PyDict extends PyObject, PyMapping
   public boolean containsValue(Object value);
 
   @Override
-  default Set<Map.Entry<Object, PyObject>> entrySet()
+  default Set<Map.Entry<PyObject, PyObject>> entrySet()
   {
     return new PyDictItems(this);
   }
 
+      /**
+     * Returns the value to which the specified key is mapped,
+     * or {@code null} if this map contains no mapping for the key.
+     *
+     * <p>More formally, if this map contains a mapping from a key
+     * {@code k} to a value {@code v} such that
+     * {@code Objects.equals(key, k)},
+     * then this method returns {@code v}; otherwise
+     * it returns {@code null}.  (There can be at most one such mapping.)
+     *
+     * <p>If this map permits null values, then a return value of
+     * {@code null} does not <i>necessarily</i> indicate that the map
+     * contains no mapping for the key; it's also possible that the map
+     * explicitly maps the key to {@code null}.  The {@link #containsKey
+     * containsKey} operation may be used to distinguish these two cases.
+     *
+     * @param key the key whose associated value is to be returned
+     * @return the value to which the specified key is mapped, or
+     *         {@code null} if this map contains no mapping for the key
+     */
   @Override
   public PyObject get(Object key);
 
@@ -116,7 +108,7 @@ public interface PyDict extends PyObject, PyMapping
    * Retrieves the value associated with the given key, or returns the default
    * value if the key is not present.
    *
-   * @param key The key to look up.
+   * @param key is the key to look up.
    * @param defaultValue The default value to return if the key is not found.
    * @return The value associated with the key, or the default value.
    */
@@ -124,19 +116,22 @@ public interface PyDict extends PyObject, PyMapping
   PyObject getOrDefault(Object key, PyObject defaultValue);
 
   @Override
-  public boolean isEmpty();
+  default boolean isEmpty()
+  {
+    return size() == 0;
+  }
 
   @Override
-  default Set<Object> keySet()
+  default Set<PyObject> keySet()
   {
-    return new PyDictKeySet(this);
+    return new PyDictKeySet<>(this);
   }
 
   /**
    * Removes the key and returns its associated value, or returns the default
    * value if the key is not present.
    *
-   * @param key The key to remove.
+   * @param key is the key to remove.
    * @param defaultValue The default value to return if the key is not found.
    * @return The value associated with the key, or the default value.
    */
@@ -151,22 +146,43 @@ public interface PyDict extends PyObject, PyMapping
   Map.Entry<Object, PyObject> popItem();
 
   @Override
-  public PyObject put(Object key, PyObject value);
+  PyObject put(PyObject key, PyObject value);
 
   @Override
-  public void putAll(Map<? extends Object, ? extends PyObject> m);
+  PyObject putAny(Object key, Object value);
 
   @Override
-  public PyObject remove(Object key);
+  void putAll(Map<? extends PyObject, ? extends PyObject> m);
 
+  /**
+   * Removes the key-value pair associated with the specified key from this
+   * dict.
+   *
+   * Equivalent to Python's `del obj[key]`.
+   *
+   * @param key The key whose mapping is to be removed.
+   * @return The value that was associated with the key, or null if the key was
+   * not present.
+   */
   @Override
-  public boolean remove(Object key, Object value);
+  PyObject remove(Object key);
+
+  /**
+   * Removes the entry for the specified key only if it is currently mapped to
+   * the specified value.
+   *
+   * @param key key with which the specified value is associated
+   * @param value value expected to be associated with the specified key
+   * @return {@code true} if the value was removed
+   */
+  @Override
+  boolean remove(Object key, Object value);
 
   /**
    * If the key is not present in the mapping, inserts it with the given default
    * value.
    *
-   * @param key The key to check or insert.
+   * @param key is the key to check or insert.
    * @param defaultValue The value to insert if the key is not present.
    * @return The value associated with the key (either existing or newly
    * inserted).
@@ -174,13 +190,17 @@ public interface PyDict extends PyObject, PyMapping
   PyObject setDefault(Object key, PyObject defaultValue);
 
   @Override
-  public int size();
+  default int size()
+  {
+    return PyBuiltIn.len(this);
+  }
+
 
   /**
    * Updates the mapping with key-value pairs from the given map. If keys
    * already exist, their values will be overwritten.
    *
-   * @param m The map containing key-value pairs to add or update.
+   * @param m is the map containing key-value pairs to add or update.
    */
   void update(Map<? extends Object, ? extends PyObject> m);
 
@@ -188,13 +208,14 @@ public interface PyDict extends PyObject, PyMapping
    * Updates the mapping with key-value pairs from the given iterable. Each
    * element in the iterable must be a key-value pair (e.g., a tuple or array).
    *
-   * @param iterable The iterable containing key-value pairs to add or update.
+   * @param iterable is the iterable containing key-value pairs to add or
+   * update.
    */
   void update(Iterable<Map.Entry<Object, PyObject>> iterable);
 
   @Override
   default Collection<PyObject> values()
   {
-    return new PyDictValues(this);
+    return new PyDictValues<>(this);
   }
 }

@@ -20,7 +20,7 @@ import org.jpype.bridge.Interpreter;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 import org.testng.annotations.BeforeClass;
-import static python.lang.PyBuiltIn.*;
+import python.lang.PyBuiltIn;
 
 /**
  *
@@ -28,24 +28,31 @@ import static python.lang.PyBuiltIn.*;
  */
 public class PyTypeNGTest
 {
-
-  @BeforeClass
+ static PyType objectType;
+ static PyType dictType;
+ static PyType rangeType;
+ @BeforeClass
   public static void setUpClass() throws Exception
   {
- Interpreter.getInstance().start(new String[0]);
+    Interpreter interpreter = Interpreter.getInstance();
+    interpreter.start(new String[0]);
+    Context context = new Context();
+    objectType = (PyType) context.eval("type(object)");
+    dictType = (PyType) context.eval("type(dict)");
+    rangeType = (PyType) context.eval("type(range)");
   }
-  
+
   @Test
   public void testGetName()
   {
-    PyType type = PyDict.type();
+    PyType type = dictType;
     assertEquals(type.getName(), "dict");
   }
 
   @Test
   public void testGetBase()
   {
-    PyType type = PyDict.type();
+    PyType type = dictType;
 
     assertEquals(type.getBase().getName(), "object");
   }
@@ -53,8 +60,8 @@ public class PyTypeNGTest
   @Test
   public void testGetBases()
   {
-    PyType baseType1 = PyObject.type();
-    PyType type = PyDict.type();
+    PyType baseType1 = objectType;
+    PyType type = dictType;
     assertEquals(type.getBases().size(), 1);
     assertTrue(type.getBases().contains(baseType1));
   }
@@ -62,24 +69,24 @@ public class PyTypeNGTest
   @Test
   public void testIsSubclassOf()
   {
-    PyType type = PyDict.type();
-    assertTrue(type.isSubclassOf(PyObject.type()));
-    assertFalse(type.isSubclassOf(PyRange.type()));
+    PyType type = dictType;
+    assertTrue(type.isSubclassOf(objectType));
+    assertFalse(type.isSubclassOf(rangeType));
   }
 
   @Test
   public void testIsInstance()
   {
     PyObject obj = PyString.from("test");
-    PyType type = type(obj);
+    PyType type = PyBuiltIn.type(obj);
     assertTrue(type.isInstance(obj));
-    assertFalse(type.isInstance(PyDict.type()));
+    assertFalse(type.isInstance(dictType));
   }
 
   @Test
   public void testGetMethod()
   {
-    PyType type = PyDict.type();
+    PyType type = dictType;
     assertNotNull(type.getMethod("keys"));
   }
 
@@ -89,16 +96,16 @@ public class PyTypeNGTest
     Context context = new Context();
     context.importModule("collections");
     PyObject obj = context.eval("collections.abc.Mapping");
-    PyType type = type(obj);
+    PyType type = PyBuiltIn.type(obj);
     assertTrue(type.isAbstract());
-    PyType concreteType = PyDict.type();
+    PyType concreteType = dictType;
     assertFalse(concreteType.isAbstract());
   }
 
   @Test
   public void testGetSubclasses()
   {
-    PyType type = PyDict.type();
+    PyType type = dictType;
     assertEquals(((PyType) type.getSubclasses().get(0)).getName(), "<class 'collections.OrderedDict'>");
   }
 

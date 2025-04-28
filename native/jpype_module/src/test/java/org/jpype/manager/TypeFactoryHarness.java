@@ -52,7 +52,8 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
       throw new RuntimeException("Incorrect resource type " + id
               + "  expected: " + cls.getName()
               + "  found: " + resource.getClass().getName());
-    return (T) resource;
+    // Use Class.cast() to safely cast the resource
+    return cls.cast(resource);
   }
 
 //<editor-fold desc="class" defaultstate="collapsed">

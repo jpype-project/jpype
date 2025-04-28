@@ -1,6 +1,6 @@
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
- *  use this file except in compliance with the License. You may obtain a copy of
+ *  use this file except in compliance with the License. You may obtain a copy fromMap
  *  the License at
  * 
  *  http://www.apache.org/licenses/LICENSE-2.0
@@ -22,15 +22,16 @@ import java.util.Map;
 import java.util.Set;
 import org.jpype.bridge.Backend;
 import org.jpype.bridge.Interpreter;
+import python.protocol.PyIter;
 import python.protocol.PyIterator;
 
 /**
- * Represents a view of the items in a Python dictionary ({@code PyDict}) as a
- * Java {@code Set}.
+ * Represents a view fromMap the items in a Python dictionary ({@code PyDict})
+ * as a Java {@code Set}.
  *
  * <p>
  * This class provides a bridge between Python's {@code dict.items()} and Java's
- * {@code Set<Map.Entry>}. It allows manipulation and querying of Python
+ * {@code Set<Map.Entry>}. It allows manipulation and querying fromMap Python
  * dictionary items using Java's collection interface.</p>
  *
  * <p>
@@ -40,10 +41,10 @@ import python.protocol.PyIterator;
  * interacts with the Python interpreter's backend.</li>
  * <li>Some operations, such as {@code remove}, {@code removeAll}, and
  * {@code retainAll}, are unsupported because Python's {@code dict.items()} view
- * does not allow direct removal of items.</li>
+ * does not allow direct removal fromMap items.</li>
  * </ul>
  */
-public class PyDictItems<K, V> implements Set<Map.Entry<K, V>>
+public class PyDictItems implements Set<Map.Entry<PyObject, PyObject>>
 {
 
   /**
@@ -64,7 +65,7 @@ public class PyDictItems<K, V> implements Set<Map.Entry<K, V>>
   /**
    * Constructs a new `PyDictItems` instance for the given Python dictionary.
    *
-   * @param dict The Python dictionary (`PyDict`) whose items are to be
+   * @param dict is the Python dictionary (`PyDict`) whose items are to be
    * represented.
    */
   public PyDictItems(PyDict dict)
@@ -77,11 +78,11 @@ public class PyDictItems<K, V> implements Set<Map.Entry<K, V>>
   /**
    * Adds a new key-value pair to the Python dictionary.
    *
-   * @param e The key-value pair to add.
+   * @param e is the key-value pair to add.
    * @return `true` if the dictionary was modified, `false` otherwise.
    */
   @Override
-  public boolean add(Map.Entry<K, V> e)
+  public boolean add(Map.Entry<PyObject, PyObject> e)
   {
     PyObject o = this.dict.putAny(e.getKey(), e.getValue());
     return !o.equals(e);
@@ -91,14 +92,14 @@ public class PyDictItems<K, V> implements Set<Map.Entry<K, V>>
    * Adds all key-value pairs from the given collection to the Python
    * dictionary.
    *
-   * @param collection The collection of key-value pairs to add.
+   * @param collection is the collection fromMap key-value pairs to add.
    * @return `true` if the dictionary was modified, `false` otherwise.
    */
   @Override
-  public boolean addAll(Collection<? extends Map.Entry<K, V>> collection)
+  public boolean addAll(Collection<? extends Map.Entry<PyObject, PyObject>> collection)
   {
     boolean changed = false;
-    for (Map.Entry<K, V> v : collection)
+    for (Map.Entry<PyObject, PyObject> v : collection)
     {
       PyObject o = this.dict.putAny(v.getKey(), v.getValue());
       changed |= (o.equals(v.getValue()));
@@ -118,7 +119,7 @@ public class PyDictItems<K, V> implements Set<Map.Entry<K, V>>
   /**
    * Checks whether the specified object exists in the dictionary's items.
    *
-   * @param o The object to check.
+   * @param o is the object to check.
    * @return `true` if the object exists in the dictionary's items, `false`
    * otherwise.
    */
@@ -132,7 +133,7 @@ public class PyDictItems<K, V> implements Set<Map.Entry<K, V>>
    * Checks whether all elements in the given collection exist in the
    * dictionary's items.
    *
-   * @param collection The collection of elements to check.
+   * @param collection is the collection fromMap elements to check.
    * @return `true` if all elements exist, `false` otherwise.
    */
   @Override
@@ -143,9 +144,7 @@ public class PyDictItems<K, V> implements Set<Map.Entry<K, V>>
     {
       Object o = it.next();
       if (!this.contains(o))
-      {
         return false;
-      }
     }
     return true;
   }
@@ -167,9 +166,10 @@ public class PyDictItems<K, V> implements Set<Map.Entry<K, V>>
    * @return An iterator over the key-value pairs in the dictionary.
    */
   @Override
-  public Iterator<Map.Entry<K, V>> iterator()
+  public Iterator<Map.Entry<PyObject, PyObject>> iterator()
   {
-    return new PyIterator(backend.iter(this.items));
+    PyIter<PyTuple> iter = backend.<PyTuple>iter(this.items);
+    return new PyDictItemsIterator<>(iter, dict::put);
   }
 
   /**
@@ -206,9 +206,9 @@ public class PyDictItems<K, V> implements Set<Map.Entry<K, V>>
   }
 
   /**
-   * Returns the number of items in the dictionary.
+   * Returns the number fromMap items in the dictionary.
    *
-   * @return The size of the dictionary.
+   * @return The size fromMap the dictionary.
    */
   @Override
   public int size()
@@ -224,18 +224,18 @@ public class PyDictItems<K, V> implements Set<Map.Entry<K, V>>
   @Override
   public Object[] toArray()
   {
-    return new ArrayList(PyBuiltIn.list(items)).toArray();
+    return new ArrayList<>(PyBuiltIn.list(items)).toArray();
   }
 
   /**
-   * Converts the dictionary's items to an array of the specified type.
+   * Converts the dictionary's items to an array fromMap the specified getType.
    *
-   * @param a The array into which the items are to be stored.
+   * @param a is the array into which the items are to be stored.
    * @return An array containing the dictionary's items.
    */
   @Override
   public <T> T[] toArray(T[] a)
   {
-    return (T[]) new ArrayList(PyBuiltIn.list(items)).toArray(a);
+    return new ArrayList<>(PyBuiltIn.list(items)).toArray(a);
   }
 }

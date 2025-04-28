@@ -13,33 +13,32 @@
  * 
  *  See NOTICE file for details.
  */
-package python.protocol;
+package python.lang;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.function.BiFunction;
 import org.jpype.bridge.Interpreter;
-import python.lang.PyBuiltIn;
-import python.lang.PyObject;
+import org.jpype.internal.Utility;
+import python.protocol.PyIter;
 
 /**
- * Conversion of a Python iterator to Java.
  *
- * This is a private class used under the hood.
- *
- * Python and Java iterators don't share similar design philosophies, so we will
- * need to keep some state on the Java side to manage the conversion.
+ * @author nelson85
  */
-public class PyIterator<T> implements Iterator<T>
+public class PyDictItemsIterator<K,V> implements Iterator<Map.Entry<K, V>>
 {
-
-  private final PyIter<T> iter;
-  private T yield;
+  private final PyIter<PyTuple> iter;
+  private PyTuple yield;
   private boolean done = false;
   private boolean check = false;
-
-  public PyIterator(PyIter<T> iter)
+  private final BiFunction<K, V, V> setter;
+  
+  public PyDictItemsIterator(PyIter<PyTuple> iter,  BiFunction<K, V, V> setter)
   {
-    this.iter = iter;
+    this.iter =iter;
+    this.setter = setter;
   }
 
   @Override
@@ -52,20 +51,24 @@ public class PyIterator<T> implements Iterator<T>
       return !done;
     check = true;
     if (yield == null)
-      yield = (T) PyBuiltIn.next(iter, Interpreter.stop);
+      yield = (PyTuple) PyBuiltIn.next(iter, Interpreter.stop);
     done = (yield == Interpreter.stop);
     return !done;
   }
 
+     @SuppressWarnings("unchecked")
   @Override
-  public T next() throws NoSuchElementException
+  public Map.Entry<K, V> next() throws NoSuchElementException
   {
     if (!check)
       hasNext();
     if (done)
       throw new NoSuchElementException();
     check = false;
-    return yield;
+    
+    K key = (K) yield.get(0);
+    V value = (V) yield.get(1);
+    return new Utility.MapEntryWithSet<>(key, value, setter);
   }
-
+  
 }

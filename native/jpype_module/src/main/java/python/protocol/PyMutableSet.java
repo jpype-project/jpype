@@ -15,18 +15,25 @@
  */
 package python.protocol;
 
+import org.jpype.bridge.Interpreter;
+import python.lang.PyBuiltIn;
 import python.lang.PyObject;
 
 /**
  *
  */
-public interface PyProtocol extends PyObject
+public interface PyMutableSet<T extends PyObject> extends PyAbstractSet<T>
 {
 
-  /**
-   * Return the base object protocol.
-   *
-   * @return the object this protocol represents.
-   */
-  PyObject asObject();
+  @Override
+  default boolean contains(Object obj)
+  {
+    return Interpreter.getBackend().contains(this, obj);
+  }
+
+  @Override
+  default int size()
+  {
+    return PyBuiltIn.len(this);
+  }
 }

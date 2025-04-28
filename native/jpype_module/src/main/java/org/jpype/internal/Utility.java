@@ -13,7 +13,7 @@
  * 
  *  See NOTICE file for details.
  */
-package org.jpype.bridge;
+package org.jpype.internal;
 
 import java.util.Iterator;
 import java.util.Map;

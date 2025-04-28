@@ -32,7 +32,7 @@ import python.lang.PyObject;
  * {@link List}.
  *
  */
-public interface PyIterable extends PyProtocol, Iterable<PyObject>
+public interface PyIterable<T extends PyObject> extends PyObject, Iterable<T>
 {
 
   /**
@@ -55,7 +55,7 @@ public interface PyIterable extends PyProtocol, Iterable<PyObject>
    *
    * @return a {@link PyIter} instance for this iterable
    */
-  default PyIter iter()
+  default PyIter<T> iter()
   {
     return PyBuiltIn.iter(this);
   }
@@ -66,9 +66,9 @@ public interface PyIterable extends PyProtocol, Iterable<PyObject>
    * @return a Java iterator for this iterable
    */
   @Override
-  default Iterator<PyObject> iterator()
+  default Iterator<T> iterator()
   {
-    return new PyIterator(this.iter());
+    return new PyIterator<>(this.iter());
   }
 
   /**

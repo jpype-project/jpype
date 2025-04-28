@@ -42,17 +42,9 @@ public class PyFloatNGTest
   {
     // Arrange
     double value = 42.5;
-
     PyFloat pyFloat = PyFloat.of(value);
     assertNotNull(pyFloat, "The PyFloat instance should not be null");
     assertEquals(pyFloat.toString(), "42.5", "The PyFloat instance should represent the correct value");
   }
 
-  @Test
-  public void testType()
-  {
-    PyType pyType = PyFloat.type();
-    assertNotNull(pyType, "The PyType instance should not be null");
-    assertEquals(pyType.toString(), "float", "The PyType instance should represent the Python 'float' type");
-  }
 }

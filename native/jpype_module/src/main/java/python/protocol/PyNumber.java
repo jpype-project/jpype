@@ -30,7 +30,7 @@ import python.lang.PyObject;
  * subtraction, multiplication) and supports operations with Python objects,
  * primitive types, and in-place modifications.
  */
-public interface PyNumber extends PyProtocol, Comparable<Number>
+public interface PyNumber extends PyObject, Comparable<Number>
 {
 
   // Addition operations

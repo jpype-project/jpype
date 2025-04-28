@@ -25,21 +25,21 @@ import python.lang.PyObject;
  *
  * This can be converted to a Java iterator by calling iterator().
  */
-public interface PyIter extends PyProtocol
+public interface PyIter<T> extends PyObject
 {
 
-  PyIter filter(PyCallable callable);
+  PyIter<T> filter(PyCallable callable);
 
   /**
    * Converts the Python iterator into a Java iterator.
    *
    * @return
    */
-  default Iterator<? extends PyObject> iterator()
+  default Iterator<T> iterator()
   {
     // It is not clear if we should tee the iterator here or not.
     //   return new PyIterator(Interpreter.getBackend().tee(this));    
-    return new PyIterator(this);
+    return new PyIterator<>(this);
   }
 
   /**
@@ -50,12 +50,13 @@ public interface PyIter extends PyProtocol
    *
    * @return the next element in the series.
    */
-  default PyObject next()
+  @SuppressWarnings("unchecked")
+  default T next()
   {
     PyObject out = Interpreter.getBackend().next(this, Interpreter.stop);
     if (out.equals(Interpreter.stop))
       throw new NoSuchElementException();
-    return out;
+    return (T) out;
   }
 
   /**
@@ -65,9 +66,10 @@ public interface PyIter extends PyProtocol
    * elements.
    * @return the next element in the series.
    */
-  default PyObject next(PyObject defaults)
+  @SuppressWarnings("unchecked")
+  default T next(PyObject defaults)
   {
-    return Interpreter.getBackend().next(this, defaults);
+    return (T) Interpreter.getBackend().next(this, defaults);
   }
 
 }

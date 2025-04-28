@@ -15,11 +15,23 @@
  */
 package python.protocol;
 
+import python.lang.PyBuiltIn;
 import python.lang.PyObject;
 
 /**
- * Protocol for objects that act as a buffer.
+ * Protocol for Python objects are sized.
  */
-public interface PyBuffer extends PyObject
+public interface PySized extends PyObject
 {
+
+  default int size()
+  {
+    return PyBuiltIn.len(this);
+  }
+
+  default boolean isEmpty()
+  {
+    return size() == 0;
+  }
+
 }

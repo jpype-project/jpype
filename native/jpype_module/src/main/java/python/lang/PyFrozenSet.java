@@ -23,13 +23,14 @@ import org.jpype.bridge.Interpreter;
 import python.protocol.PyIterator;
 
 /**
- * Java front-end interface for the Python `frozenset` type. This interface
- * provides functionality for creating and interacting with Python `frozenset`
- * objects in a Java environment, mimicking Python's immutable set type.
+ * Java front-end interface for the Python `frozenset` type.
  *
- * <p>
- * The Python `frozenset` type represents an immutable, hashable collection of
- * unique elements, similar to Java's {@link Set} interface. This interface
+ * This interface provides functionality for creating and interacting with
+ * Python `frozenset` objects in a Java environment, mimicking Python's
+ * immutable set type.<p>
+ *
+ * The Python `frozenset` getType represents an immutable, hashable collection
+ * of unique elements, similar to Java's {@link Set} interface. This interface
  * extends {@link PyObject} and {@link Set}, offering methods to perform set
  * operations such as union, intersection, difference, and more.
  *
@@ -49,19 +50,6 @@ import python.protocol.PyIterator;
  */
 public interface PyFrozenSet extends PyObject, Set<PyObject>
 {
-
-  /**
-   * Retrieves the Python type object for `frozenset`. This is equivalent to
-   * evaluating `type(frozenset)` in Python.
-   *
-   * @return the {@link PyType} instance representing the Python `frozenset`
-   * type.
-   */
-  static PyType type()
-  {
-    return (PyType) PyBuiltIn.eval("frozenset", null, null);
-  }
-
   /**
    * Creates a new Python `frozenset` object from the specified
    * {@link Iterable}.
@@ -71,7 +59,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    * @return a new {@link PyFrozenSet} instance representing the Python
    * `frozenset` object.
    */
-  static PyFrozenSet of(Iterable c)
+  static PyFrozenSet of(Iterable<?> c)
   {
     return Interpreter.getBackend().newFrozenSet(c);
   }
@@ -93,7 +81,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    * @return a new {@link PyFrozenSet} containing elements in this set but not
    * in the specified sets.
    */
-  PyFrozenSet difference(Collection... set);
+  PyFrozenSet difference(Collection<?>... set);
 
   /**
    * Computes the intersection of this `frozenset` with one or more other sets.
@@ -102,7 +90,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    * set.
    * @return a new {@link PyFrozenSet} containing elements common to all sets.
    */
-  PyFrozenSet intersect(Collection... set);
+  PyFrozenSet intersect(Collection<?>... set);
 
   /**
    * Checks whether this `frozenset` and the specified set are disjoint. Two
@@ -111,7 +99,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    * @param set the {@link Collection} to compare with.
    * @return {@code true} if the sets are disjoint, {@code false} otherwise.
    */
-  boolean isDisjoint(Collection set);
+  boolean isDisjoint(Collection<?> set);
 
   /**
    * Checks whether this `frozenset` is a subset of the specified set.
@@ -120,7 +108,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    * @return {@code true} if this set is a subset of the specified set,
    * {@code false} otherwise.
    */
-  boolean isSubset(Collection set);
+  boolean isSubset(Collection<?> set);
 
   /**
    * Checks whether this `frozenset` is a superset of the specified set.
@@ -129,14 +117,17 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    * @return {@code true} if this set is a superset of the specified set,
    * {@code false} otherwise.
    */
-  boolean isSuperset(Collection set);
+  boolean isSuperset(Collection<?> set);
 
   /**
    * Removes and returns an arbitrary element from this `frozenset`.
    *
    * @return the removed {@link PyObject}.
    */
-  PyObject pop();
+  default PyObject pop()
+  {
+    throw new UnsupportedOperationException("Frozenset does not support modification");
+  }
 
   /**
    * Computes the symmetric difference between this `frozenset` and one or more
@@ -146,7 +137,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    * @param set one or more {@link Set} instances to compare with.
    * @return a new {@link PyFrozenSet} containing the symmetric difference.
    */
-  PyFrozenSet symmetricDifference(Collection... set);
+  PyFrozenSet symmetricDifference(Collection<?>... set);
 
   /**
    * Computes the union of this `frozenset` with one or more other sets. The
@@ -155,7 +146,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    * @param set one or more {@link Set} instances to combine with this set.
    * @return a new {@link PyFrozenSet} containing the union of all sets.
    */
-  PyFrozenSet union(Collection... set);
+  PyFrozenSet union(Collection<?>... set);
 
   /**
    * Returns an iterator over the elements in this `frozenset`.
@@ -165,7 +156,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
   @Override
   default Iterator<PyObject> iterator()
   {
-    return new PyIterator(Interpreter.getBackend().iter(this));
+    return new PyIterator<>(Interpreter.getBackend().iterSet(this));
   }
 
   /**
@@ -180,16 +171,16 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
   }
 
   /**
-   * Converts this `frozenset` into an array of the specified type.
+   * Converts this `frozenset` into an array of the specified getType.
    *
-   * @param a the array into which the elements of this set will be stored.
-   * @param <T> the type of the array elements.
+   * @param reference the array into which the elements of this set will be stored.
+   * @param <T> the getType of the array elements.
    * @return an array containing all elements in this set.
    */
   @Override
-  default <T> T[] toArray(T[] a)
+  default <T> T[] toArray(T[] reference)
   {
-    return (T[]) new ArrayList<>(this).toArray(a);
+    return new ArrayList<>(this).toArray(reference);
   }
 
 }

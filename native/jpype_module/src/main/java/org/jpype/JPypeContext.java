@@ -325,7 +325,7 @@ public class JPypeContext
   /**
    * Helper function for collect rectangular,
    */
-  private static boolean collect(List l, Object o, int q, int[] shape, int d)
+  private static boolean collect(List<Object> l, Object o, int q, int[] shape, int d)
   {
     if (Array.getLength(o) != shape[q])
       return false;

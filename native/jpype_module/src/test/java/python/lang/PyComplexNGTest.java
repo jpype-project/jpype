@@ -47,15 +47,6 @@ public class PyComplexNGTest
     assertEquals(pyComplex.imag(), imag, "Imaginary part should match the input value");
   }
 
-  @Test
-  public void testType()
-  {
-    PyType pyType = PyComplex.type();
-
-    // Assert that the PyType object is not null
-    assertNotNull(pyType, "PyType object should not be null");
-    assertEquals(pyType.getName(), "complex");
-  }
 
   @Test
   public void testRealPart()

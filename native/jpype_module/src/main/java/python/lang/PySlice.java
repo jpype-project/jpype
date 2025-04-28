@@ -16,7 +16,6 @@
 package python.lang;
 
 import python.protocol.PyIndex;
-import python.protocol.PySequence;
 
 /**
  * Java front-end interface for the Python `slice` type.
@@ -52,20 +51,6 @@ import python.protocol.PySequence;
  */
 public interface PySlice extends PyObject, PyIndex
 {
-
-  /**
-   * Returns the Python type object for `slice`.
-   * <p>
-   * This method retrieves the Python {@code type} object corresponding to the
-   * `slice` type.
-   * </p>
-   *
-   * @return the {@link PyType} representing the Python `slice` type.
-   */
-  static PyType type()
-  {
-    return (PyType) PyBuiltIn.eval("slice", null, null);
-  }
 
   /**
    * Returns the starting index of the slice.
@@ -126,46 +111,5 @@ public interface PySlice extends PyObject, PyIndex
    * otherwise.
    */
   boolean isValid();
-
-  /**
-   * Applies the slice to a given sequence and returns the resulting
-   * subsequence.
-   * <p>
-   * This method slices the specified {@link PySequence} according to the
-   * {@code start}, {@code stop}, and {@code step} parameters, equivalent to
-   * Python's slicing operation {@code sequence[start:stop:step]}.
-   * </p>
-   *
-   * @param sequence the sequence to apply the slice to.
-   * @return a {@link PySequence} representing the sliced subsequence.
-   * @throws IllegalArgumentException if the slice parameters are invalid.
-   */
-  PySequence apply(PySequence sequence);
-
-  /**
-   * Calculates the number of elements in the resulting slice for a given
-   * sequence.
-   * <p>
-   * This method computes the length of the subsequence that would result from
-   * applying the slice to the specified {@link PySequence}, equivalent to
-   * {@code len(range(start, stop, step))} in Python.
-   * </p>
-   *
-   * @param sequence the sequence to calculate the slice length for.
-   * @return the number of elements in the resulting slice.
-   */
-  int getSliceLength(PySequence sequence);
-
-  /**
-   * Returns a string representation of the slice.
-   * <p>
-   * This method generates a string representation of the slice, equivalent to
-   * Python's {@code str(slice)} operation.
-   * </p>
-   *
-   * @return a string representation of the slice.
-   */
-  @Override
-  String toString();
 
 }

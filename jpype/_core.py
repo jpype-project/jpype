@@ -602,13 +602,14 @@ class _JRuntime(object):
 
 _jpype.JVMNotRunning = JVMNotRunning
 
+# Support for Java bridge code
 # Dictionary of Python types to Java Interfaces
-_jpype._bridge_concrete = {}
+_jpype._concrete = {}
 # Dictionary of String to Java Interfaces
-_jpype._bridge_protocol = {}
+_jpype._protocol = {}
 # Dictionary of Type to Tuple(Interface[], Dict)
-_jpype._bridge_cache = weakref.WeakKeyDictionary()
+_jpype._cache = weakref.WeakKeyDictionary()
 # Dictionary of Tuple(Interface[]) to Tuple(Interface[])
-_jpype._bridge_interfaces = {}
+_jpype._interfaces = {}
 # Dictionary of Tuple(Interface[]) to Dict
-_jpype._bridge_methods = {}
+_jpype._methods = {}

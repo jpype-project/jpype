@@ -18,8 +18,9 @@ package python.protocol;
 import python.lang.PyObject;
 
 /**
- * Protocol for objects that act as a buffer.
+ * Protocol for objects that are awaitable.
  */
-public interface PyBuffer extends PyObject
+public interface PyAwaitable extends PyObject
 {
+  
 }

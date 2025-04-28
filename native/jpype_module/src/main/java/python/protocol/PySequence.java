@@ -15,6 +15,7 @@
  */
 package python.protocol;
 
+import java.util.Iterator;
 import java.util.List;
 import python.lang.PyBuiltIn;
 import org.jpype.bridge.Interpreter;
@@ -30,8 +31,14 @@ import python.lang.PyObject;
  * Methods in this interface are designed to mimic Python's sequence protocol,
  * including operations such as `getitem`, `setitem`, and `delitem`.
  */
-public interface PySequence extends PyProtocol, List<PyObject>
+public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
 {
+
+  @Override
+  default boolean contains(Object obj)
+  {
+    return Interpreter.getBackend().contains(this, obj);
+  }
 
   /**
    * Retrieves an item from the sequence by its index.
@@ -42,9 +49,10 @@ public interface PySequence extends PyProtocol, List<PyObject>
    * @return the item at the specified index as a {@link PyObject}
    */
   @Override
-  default PyObject get(int index)
+  @SuppressWarnings("unchecked")
+  default T get(int index)
   {
-    return Interpreter.getBackend().getitemSequence(this, index);
+    return (T) Interpreter.getBackend().getitemSequence(this, index);
   }
 
   /**
@@ -71,11 +79,35 @@ public interface PySequence extends PyProtocol, List<PyObject>
    * @param indices an array of {@link PyIndex} objects representing the slices
    * to retrieve
    * @return the resulting slice(s) as a {@link PyObject}
+   * @throws IllegalArgumentException if the type does not support tuple assignment.
    */
   default PyObject get(PyIndex... indices)
   {
     return Interpreter.getBackend().getitemMappingObject(this, PyBuiltIn.indices(indices));
   }
+
+  @Override
+  default boolean isEmpty()
+  {
+    return size() == 0;
+  }
+
+  @Override
+  default Iterator<T> iterator()
+  {
+    return new PyIterator<>(this.iter());
+  }
+
+  /**
+   * Removes an item from the sequence at the specified index.
+   *
+   * This method is equivalent to Python's `delitem(obj, index)` operation.
+   *
+   * @param index the index of the item to remove
+   * @return the removed item as a {@link PyObject}
+   */
+  @Override
+  T remove(int index);
 
   /**
    * Sets an item in the sequence at the specified index.
@@ -88,19 +120,10 @@ public interface PySequence extends PyProtocol, List<PyObject>
    * @return the previous value at the specified index as a {@link PyObject}
    */
   @Override
-  PyObject set(int index, PyObject value);
-
-  /**
-   * Removes an item from the sequence at the specified index.
-   *
-   * This method is equivalent to Python's `delitem(obj, index)` operation.
-   *
-   * @param index the index of the item to remove
-   * @return the removed item as a {@link PyObject}
-   */
-  @Override
-  PyObject remove(int index);
-
+  T set(int index, T value);
+  
+  void setAny(Object index, Object values);
+  
   /**
    * Returns the size of the sequence.
    *

@@ -74,7 +74,7 @@ public class PyBuiltIn
    * @return The active {@link Backend} instance.
    * @throws IllegalStateException If the interpreter is not started.
    */
-  private static Backend backend()
+  static Backend backend()
   {
     if (instance != null)
       return instance;
@@ -164,10 +164,10 @@ public class PyBuiltIn
    *
    * @param statement the Python expression to evaluate.
    * @param globals the global namespace as a {@link PyDict}.
-   * @param locals the local namespace as a {@link PyMapping}.
+   * @param locals the local namespace as a {@link PyObject}.
    * @return the result of the evaluation as a {@link PyObject}.
    */
-  public static PyObject eval(CharSequence statement, PyDict globals, PyMapping locals)
+  public static PyObject eval(CharSequence statement, PyDict globals, PyObject locals)
   {
     return backend().eval(statement, globals, locals);
   }
@@ -245,9 +245,11 @@ public class PyBuiltIn
    * @param obj the object to convert into an iterator. Must be iterable.
    * @return a new {@link PyIter} instance representing the iterator.
    */
-  public static PyIter iter(Object obj)
+  @SuppressWarnings("unchecked")
+  public static <T extends PyObject> PyIter<T> iter(Object obj)
   {
-    return backend().iter(obj);
+    PyIter<? extends PyObject> out = backend().iter(obj);
+    return (PyIter<T>) out;
   }
 
   /**
@@ -464,7 +466,7 @@ public class PyBuiltIn
    * @param <T> the type of the objects.
    * @return a new {@link PyTuple} instance containing the objects.
    */
-  public static <T> PyTuple tuple(T... items)
+  public static PyTuple tuple(Object... items)
   {
     return backend().newTupleFromArray(items);
   }

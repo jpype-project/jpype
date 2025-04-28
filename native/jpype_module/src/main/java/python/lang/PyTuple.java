@@ -16,7 +16,6 @@
 package python.lang;
 
 import python.protocol.PyIterator;
-import python.protocol.PyIterable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -26,6 +25,7 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jpype.bridge.Interpreter;
+import python.protocol.PySequence;
 
 /**
  * Represents a Java front-end for a concrete Python tuple.
@@ -73,7 +73,7 @@ import org.jpype.bridge.Interpreter;
  * behaviors.</p>
  *
  */
-public interface PyTuple extends PyObject, PyIterable, List<PyObject>
+public interface PyTuple extends PySequence<PyObject>
 {
 
   /**
@@ -91,7 +91,7 @@ public interface PyTuple extends PyObject, PyIterable, List<PyObject>
    * Creates a new {@code PyTuple} from an {@link Iterable}.
    *
    * @param values an iterator providing the elements to include in the tuple
-   * @param <T> the type of elements in the iterator
+   * @param <T> the getType of elements in the iterator
    * @return a new {@code PyTuple} containing the elements from the iterator
    */
   public static <T> PyTuple fromItems(Iterable<T> values)
@@ -100,11 +100,11 @@ public interface PyTuple extends PyObject, PyIterable, List<PyObject>
   }
 
   /**
-   * Returns the Python type object for tuples.
+   * Returns the Python getType object for tuples.
    *
-   * @return the Python type object representing {@code tuple}
+   * @return the Python getType object representing {@code tuple}
    */
-  static PyType type()
+  static PyType getType()
   {
     return (PyType) PyBuiltIn.eval("tuple", null, null);
   }
@@ -169,7 +169,10 @@ public interface PyTuple extends PyObject, PyIterable, List<PyObject>
    * otherwise
    */
   @Override
-  public boolean contains(Object o);
+  default boolean contains(Object obj)
+  {
+    return Interpreter.getBackend().contains(this, obj);
+  }
 
   /**
    * Checks if the tuple contains all elements in the specified collection.
@@ -189,8 +192,8 @@ public interface PyTuple extends PyObject, PyIterable, List<PyObject>
   /**
    * Returns the element at the specified index.
    *
-   * @param index the index of the element to retrieve
-   * @return the element at the specified index
+   * @param index the index of the element to retrieve.
+   * @return the element at the specified index.
    * @throws IndexOutOfBoundsException if the index is out of range
    */
   @Override
@@ -226,7 +229,7 @@ public interface PyTuple extends PyObject, PyIterable, List<PyObject>
   @Override
   default Iterator<PyObject> iterator()
   {
-    return new PyIterator(this.iter());
+    return new PyIterator<>(this.iter());
   }
 
   /**
@@ -264,7 +267,10 @@ public interface PyTuple extends PyObject, PyIterable, List<PyObject>
    * @return the number of elements in the tuple
    */
   @Override
-  int size();
+  default int size()
+  {
+    return Interpreter.getBackend().len(this);
+  }
 
   /**
    * Returns a sublist view of the tuple between the specified indices.

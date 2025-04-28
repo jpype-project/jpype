@@ -15,6 +15,8 @@
  */
 package python.protocol;
 
+import python.lang.PyObject;
+
 /**
  * Represents objects that can be used to index arrays or sequences in
  * Python-like operations.
@@ -53,6 +55,6 @@ package python.protocol;
  * @see PySlice
  * @see PyProtocol
  */
-public interface PyIndex extends PyProtocol
+public interface PyIndex extends PyObject
 {
 }

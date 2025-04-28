@@ -15,7 +15,6 @@
  */
 package python.lang;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,7 +31,7 @@ public interface PyExc extends PyObject
 {
 
   /**
-   * Wraps a Python exception with the appropriate Java wrapper type.
+   * Wraps a Python exception with the appropriate Java wrapper getType.
    *
    * @param base
    * @return
@@ -41,21 +40,21 @@ public interface PyExc extends PyObject
   {
     PyType type = type(base);
     String name = type.getName();
-    Class cls = LOOKUP.get(name);
+    Class<?> cls = LOOKUP.get(name);
     if (cls == null)
     {
       PyTuple mro = type.mro();
       int sz = mro.size();
       for (int i = 0; i < sz; ++i)
       {
-        mro.get(i); // FIXME we have the wrong wrapper type here until we fix the probe method
+        mro.get(i); // FIXME we have the wrong wrapper getType here until we fix the probe method
       }
       cls = PyException.class;
     }
     try
     {
-      Constructor<? extends PyException> ctor = cls.getDeclaredConstructor(PyExc.class);
-      return ctor.newInstance(base);
+      var ctor = cls.getDeclaredConstructor(PyExc.class);
+      return (Exception) ctor.newInstance(base);
     } catch (NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex)
     {
       Logger.getLogger(PyExc.class.getName()).log(Level.SEVERE, null, ex);

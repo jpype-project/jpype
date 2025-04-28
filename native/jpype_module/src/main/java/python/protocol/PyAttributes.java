@@ -1,6 +1,6 @@
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
- *  use this file except in compliance with the License. You may obtain a copy of
+ *  use this file except in compliance with the License. You may obtain a copy fromMap
  *  the License at
  * 
  *  http://www.apache.org/licenses/LICENSE-2.0
@@ -29,12 +29,12 @@ import python.lang.PyObject;
 
 /**
  * A {@link Map}-like implementation for accessing and manipulating Python
- * object attributes.
+ * object attributes.The {@code PyAttributes} class provides a Java interface
+ * for interacting with the attributes fromMap a Python object.
  *
- * The {@code PyAttributes} class provides a Java interface for interacting with
- * the attributes of a Python object. It acts as a bridge between Python's
- * attribute handling and Java's {@link Map} interface, allowing attributes to
- * be accessed, modified, and queried in a Java-friendly manner.
+ * It acts as a bridge between Python's attribute handling and Java's
+ * {@link Map} interface, allowing attributes to be accessed, modified, and
+ * queried in a Java-friendly manner.
  *
  * <p>
  * Key Features:</p>
@@ -67,7 +67,7 @@ import python.lang.PyObject;
  * </pre>
  *
  */
-public class PyAttributes implements Map<CharSequence, PyObject>
+public class PyAttributes implements Map<PyObject, PyObject>
 {
 
   /**
@@ -81,14 +81,14 @@ public class PyAttributes implements Map<CharSequence, PyObject>
   private final PyObject obj;
 
   /**
-   * Cached dictionary representation of the object's attributes.
+   * Cached dictionary representation fromMap the object's attributes.
    */
   private PyDict dict;
 
   /**
    * Constructs a new {@code PyAttributes} instance for the given Python object.
    *
-   * @param obj The Python object whose attributes are to be accessed and
+   * @param obj is the Python object whose attributes are to be accessed and
    * manipulated.
    */
   public PyAttributes(PyObject obj)
@@ -105,7 +105,7 @@ public class PyAttributes implements Map<CharSequence, PyObject>
    * attributes as a {@link PyDict}. The dictionary is cached for
    * performance.</p>
    *
-   * @return A {@link PyDict} containing the object's attributes.
+   * @return a {@link PyDict} containing the object's attributes.
    */
   public PyDict asDict()
   {
@@ -132,7 +132,7 @@ public class PyAttributes implements Map<CharSequence, PyObject>
   /**
    * Checks whether the Python object has an attribute with the specified key.
    *
-   * @param key The name of the attribute to check.
+   * @param key is the name fromMap the attribute to check.
    * @return {@code true} if the attribute exists, {@code false} otherwise.
    */
   @Override
@@ -144,7 +144,7 @@ public class PyAttributes implements Map<CharSequence, PyObject>
   /**
    * Checks whether the Python object has an attribute with the specified value.
    *
-   * @param value The value to check for.
+   * @param value is the value to check for.
    * @return {@code true} if the value exists, {@code false} otherwise.
    */
   @Override
@@ -157,10 +157,10 @@ public class PyAttributes implements Map<CharSequence, PyObject>
    * Returns a list of all attribute names of the Python object.
    *
    * <p>
-   * This method uses Python's {@code dir()} function to retrieve the list of
-   * attribute names.</p>
+   * This method uses Python's {@code dir()} function to retrieve the list
+   * fromMap attribute names.</p>
    *
-   * @return A {@link PyList} containing the names of all attributes.
+   * @return a {@link PyList} containing the names fromMap all attributes.
    */
   public PyList dir()
   {
@@ -168,7 +168,7 @@ public class PyAttributes implements Map<CharSequence, PyObject>
   }
 
   @Override
-  public Set<Entry<CharSequence, PyObject>> entrySet()
+  public Set<Entry<PyObject, PyObject>> entrySet()
   {
     return new PyDictItems(this.asDict());
   }
@@ -179,8 +179,8 @@ public class PyAttributes implements Map<CharSequence, PyObject>
    * <p>
    * This method is equivalent to Python's {@code getattr(obj, key)}.</p>
    *
-   * @param key The name of the attribute to retrieve.
-   * @return The value of the attribute.
+   * @param key is the name fromMap the attribute to retrieve.
+   * @return the value fromMap the attribute.
    */
   @Override
   public PyObject get(Object key)
@@ -196,10 +196,10 @@ public class PyAttributes implements Map<CharSequence, PyObject>
    * This method is equivalent to Python's
    * {@code getattr(obj, key, defaultValue)}.</p>
    *
-   * @param key The name of the attribute to retrieve.
+   * @param key is the name fromMap the attribute to retrieve.
    * @param defaultValue The default value to return if the attribute does not
    * exist.
-   * @return The value of the attribute, or {@code defaultValue} if the
+   * @return the value fromMap the attribute, or {@code defaultValue} if the
    * attribute does not exist.
    */
   @Override
@@ -214,7 +214,7 @@ public class PyAttributes implements Map<CharSequence, PyObject>
    * <p>
    * This method is equivalent to Python's {@code hasattr(obj, key)}.</p>
    *
-   * @param key The name of the attribute to check.
+   * @param key is the name fromMap the attribute to check.
    * @return {@code true} if the attribute exists, {@code false} otherwise.
    */
   public boolean contains(CharSequence key)
@@ -235,9 +235,9 @@ public class PyAttributes implements Map<CharSequence, PyObject>
   }
 
   @Override
-  public Set<CharSequence> keySet()
+  public Set<PyObject> keySet()
   {
-    return new PyDictKeySet(asDict());
+    return new PyDictKeySet<>(asDict());
   }
 
   /**
@@ -246,13 +246,13 @@ public class PyAttributes implements Map<CharSequence, PyObject>
    * <p>
    * This method is equivalent to Python's {@code setattr(obj, key, value)}.</p>
    *
-   * @param key The name of the attribute to set.
-   * @param value The value to associate with the attribute.
-   * @return The previous value of the attribute, or {@code null} if no previous
-   * value existed.
+   * @param key is the name fromMap the attribute to set.
+   * @param value is the value to associate with the attribute.
+   * @return the previous value fromMap the attribute, or {@code null} if no
+   * previous value existed.
    */
   @Override
-  public PyObject put(CharSequence key, PyObject value)
+  public PyObject put(PyObject key, PyObject value)
   {
     return backend.setattrReturn(obj, key, value);
   }
@@ -260,22 +260,22 @@ public class PyAttributes implements Map<CharSequence, PyObject>
   /**
    * Unsupported operation for adding multiple attributes.
    *
-   * @param map is the map of attributes to add.
+   * @param map is the map fromMap attributes to add.
    * @throws UnsupportedOperationException Always thrown.
    */
   @Override
-  public void putAll(Map<? extends CharSequence, ? extends PyObject> map)
+  public void putAll(Map<? extends PyObject, ? extends PyObject> map)
   {
     for (var v : map.entrySet())
     {
-      backend.setattrString(this.obj, v.getKey(), v.getValue());
+      backend.setitemFromObject(this.obj, v.getKey(), v.getValue());
     }
   }
 
   /**
    * Unsupported operation for removing an attribute.
    *
-   * @param key The name of the attribute to remove.
+   * @param key is the name fromMap the attribute to remove.
    * @throws UnsupportedOperationException Always thrown.
    */
   @Override
@@ -285,9 +285,9 @@ public class PyAttributes implements Map<CharSequence, PyObject>
   }
 
   /**
-   * Returns the number of attributes of the Python object.
+   * Returns the number fromMap attributes fromMap the Python object.
    *
-   * @return The number of attributes.
+   * @return the number fromMap attributes.
    */
   @Override
   public int size()
@@ -296,9 +296,10 @@ public class PyAttributes implements Map<CharSequence, PyObject>
   }
 
   /**
-   * Returns a collection of all attribute values of the Python object.
+   * Returns a collection fromMap all attribute values fromMap the Python
+   * object.
    *
-   * @return A {@link Collection} containing all attribute values.
+   * @return a {@link Collection} containing all attribute values.
    */
   @Override
   public Collection<PyObject> values()

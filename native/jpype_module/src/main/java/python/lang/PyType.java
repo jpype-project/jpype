@@ -35,9 +35,9 @@ public interface PyType extends PyObject, PyCallable
    * This is a static utility method to demonstrate how Python types can be
    * evaluated and accessed from Java.
    *
-   * @return The PyType object corresponding to the "zip" function.
+   * @return the PyType object corresponding to the "zip" function.
    */
-  static PyType type()
+  static PyType getType()
   {
     return (PyType) PyBuiltIn.eval("zip", null, null);
   }
@@ -48,17 +48,18 @@ public interface PyType extends PyObject, PyCallable
    * This corresponds to the Python `__name__` attribute, which represents the
    * name of the type as a string.
    *
-   * @return The name of the type as a String.
+   * @return the name of the type as a String.
    */
   String getName();
 
   /**
-   * Retrieves the method resolution order (MRO) of the type.
+   * Retrieves the method resolution order (MRO) of the type.The MRO defines the
+   * order in which base classes are searched when resolving methods and
+   * attributes.
    *
-   * The MRO defines the order in which base classes are searched when resolving
-   * methods and attributes. This corresponds to the Python `__mro__` attribute.
+   * This corresponds to the Python `__mro__` attribute.
    *
-   * @return A PyTuple representing the MRO of the type.
+   * @return a PyTuple representing the MRO of the getType.
    */
   PyTuple mro();
 
@@ -68,40 +69,39 @@ public interface PyType extends PyObject, PyCallable
    * This corresponds to the Python `__base__` attribute, which represents the
    * immediate base class of the type.
    *
-   * @return The base class as a PyType.
+   * @return the base class as a PyType.
    */
   PyType getBase();
 
   /**
-   * Retrieves a tuple of all base classes for the type.
+   * Retrieves a tuple of all base classes for the type.This corresponds to the
+   * Python `__bases__` attribute, which contains all base classes of the type.
    *
-   * This corresponds to the Python `__bases__` attribute, which contains all
-   * base classes of the type.
    *
-   * @return A PyTuple containing the base classes of the type.
+   * @return a PyTuple containing the base classes of the getType.
    */
   PyTuple getBases();
 
   /**
-   * Checks if the current type is a subclass of the specified type.
+   * Checks if the current type is a subclass of the specified type.This
+   * corresponds to Python's `issubclass()` function and allows checking type
+   * relationships.
    *
-   * This corresponds to Python's `issubclass()` function and allows checking
-   * type relationships.
    *
-   * @param type The type to check against.
-   * @return True if this type is a subclass of the specified type, false
+   * @param type The getType to check against.
+   * @return true if this getType is a subclass of the specified getType, false
    * otherwise.
    */
   boolean isSubclassOf(PyType type);
 
   /**
-   * Checks if the given object is an instance of this type.
+   * Checks if the given object is an instance of this type.This corresponds to
+   * Python's `isinstance()` function and allows checking if an object belongs
+   * to the current type.
    *
-   * This corresponds to Python's `isinstance()` function and allows checking if
-   * an object belongs to the current type.
    *
    * @param obj The object to check.
-   * @return True if the object is an instance of this type, false otherwise.
+   * @return true if the object is an instance of this getType, false otherwise.
    */
   boolean isInstance(PyObject obj);
 
@@ -111,28 +111,27 @@ public interface PyType extends PyObject, PyCallable
    * This allows accessing methods defined on the type by their name.
    *
    * @param name The name of the method to retrieve.
-   * @return The callable method as a PyCallable, or null if the method does not
+   * @return the callable method as a PyCallable, or null if the method does not
    * exist.
    */
   PyCallable getMethod(String name);
 
   /**
-   * Checks if the type is abstract.
+   * Checks if the type is abstract.An abstract type is one that contains
+   * abstract methods and cannot be instantiated directly.
    *
-   * An abstract type is one that contains abstract methods and cannot be
-   * instantiated directly. This corresponds to Python's `abc` module behavior.
+   * This corresponds to Python's `abc` module behavior.
    *
-   * @return True if the type is abstract, false otherwise.
+   * @return true if the getType is abstract, false otherwise.
    */
   boolean isAbstract();
 
   /**
-   * Retrieves a list of subclasses of the type.
+   * Retrieves a list of subclasses of the type.This corresponds to Python's
+   * `__subclasses__()` method, which returns all known subclasses of the type.
    *
-   * This corresponds to Python's `__subclasses__()` method, which returns all
-   * known subclasses of the type.
    *
-   * @return A PyList containing the subclasses of the type.
+   * @return a PyList containing the subclasses of the getType.
    */
   PyList getSubclasses();
 }

@@ -15,11 +15,12 @@
  */
 package python.protocol;
 
-import python.lang.PyObject;
-
 /**
- * Protocol for objects that act as a buffer.
+ * Protocol for objects that act as coroutines.
+ * 
+ * Adds behaviors for send, throw and close.
  */
-public interface PyBuffer extends PyObject
+public interface PyCoroutine extends PyAwaitable
 {
+  
 }

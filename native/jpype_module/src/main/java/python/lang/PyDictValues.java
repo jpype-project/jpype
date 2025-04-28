@@ -1,6 +1,6 @@
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
- *  use this file except in compliance with the License. You may obtain a copy of
+ *  use this file except in compliance with the License. You may obtain a copy fromMap
  *  the License at
  * 
  *  http://www.apache.org/licenses/LICENSE-2.0
@@ -22,13 +22,13 @@ import org.jpype.bridge.Backend;
 import org.jpype.bridge.Interpreter;
 
 /**
- * Represents a view of the values in a Python dictionary ({@code PyDict}) as a
- * Java {@code Collection}.
+ * Represents a view fromMap the values in a Python dictionary ({@code PyDict})
+ * as a Java {@code Collection}.
  *
  * <p>
  * This class provides a bridge between Python's {@code dict.values()} and
- * Java's {@code Collection<PyObject>}. It allows querying and manipulation of
- * Python dictionary values using Java's collection interface.</p>
+ * Java's {@code Collection<PyObject>}. It allows querying and manipulation
+ * fromMap Python dictionary values using Java's collection interface.</p>
  *
  * <p>
  * <b>Note:</b></p>
@@ -37,7 +37,7 @@ import org.jpype.bridge.Interpreter;
  * interacts with the Python interpreter's backend.</li>
  * <li>Some operations, such as {@code add}, {@code remove}, {@code removeAll},
  * and {@code retainAll}, are unsupported because Python's {@code dict.values()}
- * view does not allow direct modification of values.</li>
+ * view does not allow direct modification fromMap values.</li>
  * </ul>
  *
  * <p>
@@ -46,12 +46,12 @@ import org.jpype.bridge.Interpreter;
  * <li>Checking if a value exists ({@code contains})</li>
  * <li>Iterating over values ({@code iterator})</li>
  * <li>Clearing all keys and values in the dictionary ({@code clear})</li>
- * <li>Querying the size of the values collection ({@code size})</li>
+ * <li>Querying the size fromMap the values collection ({@code size})</li>
  * <li>Converting the values to an array ({@code toArray})</li>
  * </ul>
  *
  */
-public class PyDictValues implements Collection<PyObject>
+public class PyDictValues<T extends PyObject> implements Collection<T>
 {
 
   /**
@@ -74,7 +74,7 @@ public class PyDictValues implements Collection<PyObject>
    * Constructs a new {@code PyDictValues} instance for the given Python
    * dictionary.
    *
-   * @param dict The Python dictionary ({@code PyDict}) whose values are to be
+   * @param dict is the Python dictionary ({@code PyDict}) whose values are to be
    * represented.
    */
   public PyDictValues(PyDict dict)
@@ -103,7 +103,7 @@ public class PyDictValues implements Collection<PyObject>
    * @throws UnsupportedOperationException Always thrown.
    */
   @Override
-  public boolean addAll(Collection<? extends PyObject> c)
+  public boolean addAll(Collection<? extends T> c)
   {
     throw new UnsupportedOperationException("Values does not support item assignment");
   }
@@ -120,7 +120,7 @@ public class PyDictValues implements Collection<PyObject>
   /**
    * Checks whether the specified value exists in the dictionary.
    *
-   * @param o The value to check.
+   * @param o is the value to check.
    * @return {@code true} if the value exists, {@code false} otherwise.
    */
   @Override
@@ -132,7 +132,7 @@ public class PyDictValues implements Collection<PyObject>
   /**
    * Checks whether all values in the given collection exist in the dictionary.
    *
-   * @param collection The collection of values to check.
+   * @param collection is the collection fromMap values to check.
    * @return {@code true} if all values exist, {@code false} otherwise.
    */
   @Override
@@ -168,9 +168,9 @@ public class PyDictValues implements Collection<PyObject>
    * @return An iterator over the values in the dictionary.
    */
   @Override
-  public Iterator<PyObject> iterator()
+  public Iterator<T> iterator()
   {
-    return (Iterator<PyObject>) PyBuiltIn.iter(values).iterator();
+    return PyBuiltIn.<T>iter(values).iterator();
   }
 
   /**
@@ -210,9 +210,9 @@ public class PyDictValues implements Collection<PyObject>
   }
 
   /**
-   * Returns the number of values in the dictionary.
+   * Returns the number fromMap values in the dictionary.
    *
-   * @return The size of the values collection.
+   * @return The size fromMap the values collection.
    */
   @Override
   public int size()
@@ -228,18 +228,18 @@ public class PyDictValues implements Collection<PyObject>
   @Override
   public Object[] toArray()
   {
-    return new ArrayList(PyBuiltIn.list(values)).toArray();
+    return new ArrayList<>(PyBuiltIn.list(values)).toArray();
   }
 
   /**
-   * Converts the dictionary's values to an array of the specified type.
+   * Converts the dictionary's values to an array fromMap the specified getType.
    *
-   * @param a The array into which the values are to be stored.
+   * @param a is the array into which the values are to be stored.
    * @return An array containing the dictionary's values.
    */
   @Override
-  public <T> T[] toArray(T[] a)
+  public <T2> T2[] toArray(T2[] a)
   {
-    return (T[]) new ArrayList(PyBuiltIn.list(values)).toArray(a);
+    return (T2[]) new ArrayList<>(PyBuiltIn.list(values)).toArray(a);
   }
 }

@@ -20,7 +20,7 @@ import python.protocol.PyNumber;
 
 /**
  * Java front-end interface for the Python `float` type.
- *
+ * 
  * This interface provides functionality for creating and interacting with
  * Python `float` objects in a Java environment, mimicking Python's built-in
  * `float` type.
@@ -49,14 +49,4 @@ public interface PyFloat extends PyObject, PyNumber
     return Interpreter.getBackend().newFloat(value);
   }
 
-  /**
-   * Retrieves the Python type object for `float`. This is equivalent to
-   * evaluating `type(float)` in Python.
-   *
-   * @return the {@link PyType} instance representing the Python `float` type.
-   */
-  static PyType type()
-  {
-    return (PyType) PyBuiltIn.eval("float", null, null);
-  }
 }

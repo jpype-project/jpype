@@ -17,6 +17,7 @@ package org.jpype.bridge;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.Future;
 import python.lang.PyByteArray;
 import python.lang.PyBytes;
@@ -38,6 +39,7 @@ import python.lang.PyType;
 import python.lang.PyZip;
 import python.protocol.PyBuffer;
 import python.protocol.PyCallable;
+import python.protocol.PyIndex;
 import python.protocol.PyMapping;
 import python.protocol.PyIter;
 
@@ -153,7 +155,11 @@ public interface Backend
   PyObject items(PyObject obj);
 
   // Create a Python iterator from the specified object.
-  PyIter iter(Object obj);
+  <T> PyIter<T> iter(Object obj);
+
+  <T> PyIter<T> iterSet(Set<T> obj);
+
+  <T, V> PyIter<T> iterMap(Map<T, V> obj);
 
   // Get the keys of a Python mapping object.
   PyObject keys(Object dict);
@@ -256,13 +262,13 @@ public interface Backend
   // Create a Python `set` from an iterable.
   PySet newSetFromIterable(Iterable<?> iterable);
 
-  public PyTuple newTuple();
+  PyTuple newTuple();
 
   // Create a Python `tuple` from an array of objects.
-  <T> PyTuple newTupleFromArray(T... elements);
+  PyTuple newTupleFromArray(Object... elements);
 
   // Create a Python `tuple` from an iterable.
-  <T> PyTuple newTupleFromIterator(Iterable<T> iterable);
+  PyTuple newTupleFromIterator(Iterable<?> iterable);
 
   // Create a Python `zip` object from multiple iterables.
   PyZip newZip(Object[] iterables);
@@ -289,7 +295,7 @@ public interface Backend
   PySet set();
 
   // Set an attribute on a Python object and return the updated object.
-  PyObject setattrReturn(PyObject obj, CharSequence attrName, PyObject value);
+  PyObject setattrReturn(PyObject obj, Object attrName, Object value);
 
   // Set an attribute on a Python object.
   void setattrString(Object obj, CharSequence attrName, Object value);
@@ -299,6 +305,10 @@ public interface Backend
 
   // Set an item in a Python mapping object by string key.
   void setitemFromString(Object obj, CharSequence key, Object value);
+
+  void setitemMapping(Object obj, Object index, Object values);
+
+  PyObject setitemSequence(Object obj, int index, Object value);
 
   // Create a Python `slice` object.
   PySlice slice(Integer start, Integer stop, Integer step);
@@ -321,5 +331,5 @@ public interface Backend
   PyZip zipFromArray(Object[] objects);
 
   // Create a Python `zip` object from multiple objects.
-  <T> PyZip zipFromIterable(T... objects);
+  PyZip zipFromIterable(Object... objects);
 }
