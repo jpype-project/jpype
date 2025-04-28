@@ -13,13 +13,18 @@
  * 
  *  See NOTICE file for details.
  */
-package python.protocol;
+package python.lang;
 
+import org.jpype.bridge.Interpreter;
 import python.lang.PyObject;
 
 /**
- * Protocol for objects that act as a buffer.
+ * Protocol for Python objects that have a `__contains__` method.
  */
-public interface PyBuffer extends PyObject
+public interface PyContainer<T extends PyObject> extends PyObject
 {
+  default boolean contains(Object obj)
+  {
+    return Interpreter.getBackend().contains(this, obj);
+  }
 }

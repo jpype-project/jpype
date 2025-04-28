@@ -15,10 +15,6 @@
  */
 package python.lang;
 
-import python.protocol.PyBuffer;
-import python.protocol.PySequence;
-import python.protocol.PySized;
-
 /**
  * Java front-end interface for the Python `memoryview` type.
  * <p>

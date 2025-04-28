@@ -13,14 +13,27 @@
  * 
  *  See NOTICE file for details.
  */
-package python.protocol;
+package python.lang;
+
+import org.jpype.bridge.Interpreter;
+import python.lang.PyBuiltIn;
+import python.lang.PyObject;
 
 /**
- * Protocol for objects that act as coroutines.
- * 
- * Adds behaviors for send, throw and close.
+ *
  */
-public interface PyCoroutine extends PyAwaitable
+public interface PyMutableSet<T extends PyObject> extends PyAbstractSet<T>
 {
-  
+
+  @Override
+  default boolean contains(Object obj)
+  {
+    return Interpreter.getBackend().contains(this, obj);
+  }
+
+  @Override
+  default int size()
+  {
+    return PyBuiltIn.len(this);
+  }
 }

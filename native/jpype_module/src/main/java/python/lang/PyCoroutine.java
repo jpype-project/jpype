@@ -13,18 +13,14 @@
  * 
  *  See NOTICE file for details.
  */
-package python.protocol;
-
-import org.jpype.bridge.Interpreter;
-import python.lang.PyObject;
+package python.lang;
 
 /**
- * Protocol for Python objects that have a `__contains__` method.
+ * Protocol for objects that act as coroutines.
+ * 
+ * Adds behaviors for send, throw and close.
  */
-public interface PyContainer<T extends PyObject> extends PyObject
+public interface PyCoroutine extends PyAwaitable
 {
-  default boolean contains(Object obj)
-  {
-    return Interpreter.getBackend().contains(this, obj);
-  }
+  
 }

@@ -16,9 +16,6 @@
 package python.lang;
 
 import org.jpype.bridge.Interpreter;
-import python.protocol.PyBuffer;
-import python.protocol.PyIndex;
-import python.protocol.PySequence;
 
 /**
  * Java front-end interface for the concrete Python `bytes` type.

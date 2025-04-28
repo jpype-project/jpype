@@ -16,7 +16,6 @@
 package python.lang;
 
 import org.jpype.bridge.Interpreter;
-import python.protocol.PyIter;
 
 /**
  * Java front-end interface for the Python `enumerate` type.

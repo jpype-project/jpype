@@ -15,8 +15,6 @@
  */
 package python.lang;
 
-import python.protocol.PyIndex;
-
 /**
  * Java front-end interface for the Python `slice` type.
  * <p>

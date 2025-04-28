@@ -13,27 +13,13 @@
  * 
  *  See NOTICE file for details.
  */
-package python.protocol;
+package python.lang;
 
-import org.jpype.bridge.Interpreter;
-import python.lang.PyBuiltIn;
 import python.lang.PyObject;
 
 /**
- *
+ * Protocol for objects that act as a buffer.
  */
-public interface PyMutableSet<T extends PyObject> extends PyAbstractSet<T>
+public interface PyBuffer extends PyObject
 {
-
-  @Override
-  default boolean contains(Object obj)
-  {
-    return Interpreter.getBackend().contains(this, obj);
-  }
-
-  @Override
-  default int size()
-  {
-    return PyBuiltIn.len(this);
-  }
 }

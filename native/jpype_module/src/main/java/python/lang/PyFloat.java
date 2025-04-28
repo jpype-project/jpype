@@ -16,7 +16,6 @@
 package python.lang;
 
 import org.jpype.bridge.Interpreter;
-import python.protocol.PyNumber;
 
 /**
  * Java front-end interface for the Python `float` type.

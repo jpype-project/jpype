@@ -15,8 +15,6 @@
  */
 package python.lang;
 
-import python.protocol.PyCallable;
-
 /**
  * Represents a Java front-end for a concrete Python type.
  *

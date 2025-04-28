@@ -15,10 +15,6 @@
  */
 package python.lang;
 
-import python.protocol.PyIterable;
-import python.protocol.PyMapping;
-import python.protocol.PySequence;
-
 /**
  * Interface for Python objects acting as strings.
  *

@@ -25,8 +25,6 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jpype.bridge.Interpreter;
-import python.protocol.PyIterator;
-import python.protocol.PyAbstractSet;
 
 /**
  * Represents a Python set in the Java environment.

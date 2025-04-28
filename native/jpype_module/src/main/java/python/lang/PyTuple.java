@@ -15,7 +15,6 @@
  */
 package python.lang;
 
-import python.protocol.PyIterator;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -25,7 +24,6 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jpype.bridge.Interpreter;
-import python.protocol.PySequence;
 
 /**
  * Represents a Java front-end for a concrete Python tuple.

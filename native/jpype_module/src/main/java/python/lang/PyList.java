@@ -16,14 +16,11 @@
 package python.lang;
 
 import java.util.ArrayList;
-import python.protocol.PyIterator;
-import python.protocol.PyIterable;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import org.jpype.bridge.Interpreter;
-import python.protocol.PySequence;
 
 /**
  * Java front-end interface for the Python `list` type.

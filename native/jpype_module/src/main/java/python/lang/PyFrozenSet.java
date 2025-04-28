@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import org.jpype.bridge.Interpreter;
-import python.protocol.PyIterator;
 
 /**
  * Java front-end interface for the Python `frozenset` type.

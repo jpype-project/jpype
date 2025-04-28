@@ -30,6 +30,5 @@ module jpype {
   exports org.jpype.proxy;
   exports org.jpype.ref;
   exports python.lang;
-  exports python.protocol;
   exports python.exception;
 }

@@ -17,10 +17,6 @@ package python.lang;
 
 import org.jpype.bridge.Backend;
 import org.jpype.bridge.Interpreter;
-import python.protocol.PyCallable;
-import python.protocol.PyIndex;
-import python.protocol.PyMapping;
-import python.protocol.PyIter;
 
 /**
  * Utility class providing built-in functions similar to Python's built-in

@@ -13,14 +13,25 @@
  * 
  *  See NOTICE file for details.
  */
-package python.protocol;
+package python.lang;
 
+import python.lang.PyBuiltIn;
 import python.lang.PyObject;
 
 /**
- * Protocol for objects that are awaitable.
+ * Protocol for Python objects are sized.
  */
-public interface PyAwaitable extends PyObject
+public interface PySized extends PyObject
 {
-  
+
+  default int size()
+  {
+    return PyBuiltIn.len(this);
+  }
+
+  default boolean isEmpty()
+  {
+    return size() == 0;
+  }
+
 }

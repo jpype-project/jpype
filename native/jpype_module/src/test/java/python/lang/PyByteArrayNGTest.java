@@ -20,7 +20,6 @@ import org.jpype.bridge.Interpreter;
 import static org.testng.Assert.*;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import python.protocol.PyBuffer;
 import python.lang.PyBuiltIn;
 
 /**

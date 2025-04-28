@@ -15,10 +15,6 @@
  */
 package python.lang;
 
-import python.protocol.PyGenerator;
-import python.protocol.PyIter;
-import python.protocol.PyIterator;
-
 /**
  * Java front-end interface for the Python `range` type.
  * <p>

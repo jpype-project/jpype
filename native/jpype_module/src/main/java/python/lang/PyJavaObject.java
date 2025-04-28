@@ -16,7 +16,6 @@
 package python.lang;
 
 import java.util.Objects;
-import python.protocol.PyAttributes;
 
 /**
  * Java front end for a Python wrapped Java object.

@@ -21,8 +21,6 @@ import java.util.Iterator;
 import java.util.Set;
 import org.jpype.bridge.Backend;
 import org.jpype.bridge.Interpreter;
-import python.protocol.PyIter;
-import python.protocol.PyIterator;
 
 /**
  * Represents a view fromMap the keys in a Python dictionary ({@code PyDict}) as a

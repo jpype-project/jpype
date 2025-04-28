@@ -37,11 +37,11 @@ import python.lang.PyString;
 import python.lang.PyTuple;
 import python.lang.PyType;
 import python.lang.PyZip;
-import python.protocol.PyBuffer;
-import python.protocol.PyCallable;
-import python.protocol.PyIndex;
-import python.protocol.PyMapping;
-import python.protocol.PyIter;
+import python.lang.PyBuffer;
+import python.lang.PyCallable;
+import python.lang.PyIndex;
+import python.lang.PyMapping;
+import python.lang.PyIter;
 
 /**
  * Backend for all Python entry points.

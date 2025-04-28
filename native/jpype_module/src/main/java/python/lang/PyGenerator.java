@@ -13,7 +13,7 @@
  * 
  *  See NOTICE file for details.
  */
-package python.protocol;
+package python.lang;
 
 import java.util.Iterator;
 import python.lang.PyObject;

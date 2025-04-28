@@ -21,7 +21,6 @@ import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import org.jpype.bridge.Interpreter;
 import org.jpype.internal.Utility;
-import python.protocol.PyIter;
 
 /**
  *

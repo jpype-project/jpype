@@ -15,8 +15,6 @@
  */
 package python.lang;
 
-import python.protocol.PyAttributes;
-
 /**
  * PyObject is a representation of a generic object in Python.
  *
