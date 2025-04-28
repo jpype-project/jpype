@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.Set;
 import org.jpype.bridge.Backend;
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Represents a view fromMap the keys in a Python dictionary ({@code PyDict}) as a
@@ -81,7 +82,7 @@ public class PyDictKeySet<T> implements Set<T>
   public PyDictKeySet(PyDict dict)
   {
     this.dict = dict;
-    this.backend = Interpreter.getBackend();
+    this.backend = backend();
     this.keys = this.backend.keys(dict);
   }
 

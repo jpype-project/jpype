@@ -15,9 +15,7 @@
  */
 package python.lang;
 
-import org.jpype.bridge.Interpreter;
-import python.lang.PyBuiltIn;
-import python.lang.PyObject;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  *
@@ -28,7 +26,7 @@ public interface PyMutableSet<T extends PyObject> extends PyAbstractSet<T>
   @Override
   default boolean contains(Object obj)
   {
-    return Interpreter.getBackend().contains(this, obj);
+    return backend().contains(this, obj);
   }
 
   @Override

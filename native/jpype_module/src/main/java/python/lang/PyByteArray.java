@@ -16,6 +16,7 @@
 package python.lang;
 
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Java front-end interface for the concrete Python `bytearray` type.
@@ -37,7 +38,7 @@ public interface PyByteArray extends PyObject, PyBuffer, PySequence<PyInt>
    */
   static PyByteArray create(int length)
   {
-    return Interpreter.getBackend().newByteArrayOfSize(length);
+    return backend().newByteArrayOfSize(length);
   }
 
   /**
@@ -50,7 +51,7 @@ public interface PyByteArray extends PyObject, PyBuffer, PySequence<PyInt>
    */
   static PyByteArray fromHex(CharSequence str)
   {
-    return Interpreter.getBackend().bytearrayFromHex(str);
+    return backend().bytearrayFromHex(str);
   }
 
   /**
@@ -64,7 +65,7 @@ public interface PyByteArray extends PyObject, PyBuffer, PySequence<PyInt>
    */
   static PyByteArray of(Iterable<PyObject> iter)
   {
-    return Interpreter.getBackend().newByteArrayFromIterable(iter);
+    return backend().newByteArrayFromIterable(iter);
   }
 
   /**
@@ -78,7 +79,7 @@ public interface PyByteArray extends PyObject, PyBuffer, PySequence<PyInt>
    */
   static PyByteArray of(PyBuffer bytes)
   {
-    return Interpreter.getBackend().newByteArrayFromBuffer(bytes);
+    return backend().newByteArrayFromBuffer(bytes);
   }
 
   /**
@@ -157,7 +158,7 @@ public interface PyByteArray extends PyObject, PyBuffer, PySequence<PyInt>
   @Override
   default int size()
   {
-    return Interpreter.getBackend().len(this);
+    return backend().len(this);
   }
 
   /**

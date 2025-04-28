@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import org.jpype.bridge.Backend;
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Represents a view fromMap the values in a Python dictionary ({@code PyDict})
@@ -80,7 +81,7 @@ public class PyDictValues<T extends PyObject> implements Collection<T>
   public PyDictValues(PyDict dict)
   {
     this.dict = dict;
-    this.backend = Interpreter.getBackend();
+    this.backend = backend();
     this.values = backend.values(dict);
   }
 

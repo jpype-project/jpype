@@ -24,6 +24,7 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Represents a Java front-end for a concrete Python tuple.
@@ -169,7 +170,7 @@ public interface PyTuple extends PySequence<PyObject>
   @Override
   default boolean contains(Object obj)
   {
-    return Interpreter.getBackend().contains(this, obj);
+    return backend().contains(this, obj);
   }
 
   /**
@@ -267,7 +268,7 @@ public interface PyTuple extends PySequence<PyObject>
   @Override
   default int size()
   {
-    return Interpreter.getBackend().len(this);
+    return backend().len(this);
   }
 
   /**

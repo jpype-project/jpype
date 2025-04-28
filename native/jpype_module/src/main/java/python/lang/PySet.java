@@ -25,6 +25,7 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Represents a Python set in the Java environment.
@@ -69,7 +70,7 @@ public interface PySet extends PyAbstractSet<PyObject>
    */
   public static <T> PySet of(Iterable<T> c)
   {
-    return Interpreter.getBackend().newSetFromIterable(c);
+    return backend().newSetFromIterable(c);
   }
 
   /**
@@ -239,7 +240,7 @@ public interface PySet extends PyAbstractSet<PyObject>
   @Override
   default Iterator<PyObject> iterator()
   {
-    return new PyIterator<>(Interpreter.getBackend().iterSet(this));
+    return new PyIterator<>(backend().iterSet(this));
   }
 
   /**

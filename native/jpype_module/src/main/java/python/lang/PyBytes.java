@@ -15,7 +15,7 @@
  */
 package python.lang;
 
-import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Java front-end interface for the concrete Python `bytes` type.
@@ -35,7 +35,7 @@ public interface PyBytes extends PyObject, PyBuffer, PySequence<PyInt>
    */
   static PyBytes create(int length)
   {
-    return Interpreter.getBackend().newBytesOfSize(length);
+    return backend().newBytesOfSize(length);
   }
 
   /**
@@ -50,7 +50,7 @@ public interface PyBytes extends PyObject, PyBuffer, PySequence<PyInt>
    */
   static PyBytes fromHex(CharSequence str)
   {
-    return Interpreter.getBackend().bytesFromHex(str);
+    return backend().bytesFromHex(str);
   }
 
   /**
@@ -65,7 +65,7 @@ public interface PyBytes extends PyObject, PyBuffer, PySequence<PyInt>
    */
   static PyByteArray of(Iterable<PyObject> iterable)
   {
-    return Interpreter.getBackend().newByteArrayFromIterator(iterable);
+    return backend().newByteArrayFromIterator(iterable);
   }
 
   /**
@@ -80,7 +80,7 @@ public interface PyBytes extends PyObject, PyBuffer, PySequence<PyInt>
    */
   static PyByteArray of(PyBuffer buffer)
   {
-    return Interpreter.getBackend().newByteArrayFromBuffer(buffer);
+    return backend().newByteArrayFromBuffer(buffer);
   }
 
   /**
@@ -148,7 +148,7 @@ public interface PyBytes extends PyObject, PyBuffer, PySequence<PyInt>
   @Override
   default int size()
   {
-    return Interpreter.getBackend().len(this);
+    return backend().len(this);
   }
 
   /**

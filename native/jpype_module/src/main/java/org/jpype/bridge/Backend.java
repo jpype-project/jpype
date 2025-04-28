@@ -16,6 +16,7 @@
 package org.jpype.bridge;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
@@ -39,8 +40,6 @@ import python.lang.PyType;
 import python.lang.PyZip;
 import python.lang.PyBuffer;
 import python.lang.PyCallable;
-import python.lang.PyIndex;
-import python.lang.PyMapping;
 import python.lang.PyIter;
 
 /**
@@ -91,12 +90,11 @@ public interface Backend
   boolean contains(Object obj, Object value);
 
   // Delete an item from a Python sequence by index.
-  boolean delByIndex(Object obj, int index);
+  void delitemByIndex(Object obj, int index);
 
-  // Delete an item from a Python mapping object by key.
-  PyObject delByObject(PyMapping obj, Object key);
+  void delitemByObject(Object obj, Object index);
 
-  PyObject delattrReturn(PyObject obj, Object key);
+  PyObject delattrReturn(Object obj, Object key);
 
   // Delete an attribute from a Python object by name.
   void delattrString(Object obj, CharSequence attrName);
@@ -112,9 +110,6 @@ public interface Backend
 
   // Execute a Python statement with optional global and local variables.
   void exec(CharSequence source, PyDict globals, PyObject locals);
-
-  // Get the type of a Python callable as a string.
-  String getCallableType(PyCallable obj);
 
   // Get the `__dict__` attribute of a Python object.
   PyDict getDict(Object obj);
@@ -209,7 +204,7 @@ public interface Backend
   // Create a Python `bytearray` from an iterable.
   PyByteArray newByteArrayFromIterable(Iterable<?> iter);
 
-  public PyByteArray newByteArrayFromIterator(Iterable<PyObject> iterable);
+  PyByteArray newByteArrayFromIterator(Iterable<PyObject> iterable);
 
   // Create a Python `bytearray` with a specified size.
   PyByteArray newByteArrayOfSize(int size);
@@ -265,7 +260,7 @@ public interface Backend
   PyTuple newTuple();
 
   // Create a Python `tuple` from an array of objects.
-  PyTuple newTupleFromArray(Object... elements);
+  PyTuple newTupleFromArray(List<?> elements);
 
   // Create a Python `tuple` from an iterable.
   PyTuple newTupleFromIterator(Iterable<?> iterable);
@@ -317,7 +312,7 @@ public interface Backend
   PyString str(Object obj);
 
   // Create a Python `tee` iterator.
-  PyIter teeIterator(PyIter iterator);
+  <T> PyIter<T> teeIterator(PyIter<T> iterator);
 
   // Get the type of a Python object.
   PyType type(Object obj);
@@ -331,5 +326,5 @@ public interface Backend
   PyZip zipFromArray(Object[] objects);
 
   // Create a Python `zip` object from multiple objects.
-  PyZip zipFromIterable(Object... objects);
+  PyZip zipFromIterable(Iterable<?> objects);
 }

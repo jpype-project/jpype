@@ -19,9 +19,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import python.lang.PyBuiltIn;
-import org.jpype.bridge.Interpreter;
-import python.lang.PyObject;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Represents a protocol for classes registered as Python
@@ -65,7 +63,7 @@ public interface PyMapping<K extends PyObject, V extends PyObject> extends PyCol
   @Override
   default boolean contains(Object obj)
   {
-    return Interpreter.getBackend().contains(this, obj);
+    return backend().contains(this, obj);
   }
 
   @Override
@@ -81,7 +79,7 @@ public interface PyMapping<K extends PyObject, V extends PyObject> extends PyCol
   @Override
   default void clear()
   {
-    Interpreter.getBackend().mappingClear(this);
+    backend().mappingClear(this);
   }
 
   /**
@@ -117,7 +115,7 @@ public interface PyMapping<K extends PyObject, V extends PyObject> extends PyCol
   @SuppressWarnings("unchecked")
   default V get(Object key)
   {
-    return (V) Interpreter.getBackend().getitemMappingObject(this, key);
+    return (V) backend().getitemMappingObject(this, key);
   }
 
   /**
@@ -129,7 +127,7 @@ public interface PyMapping<K extends PyObject, V extends PyObject> extends PyCol
   @Override
   default Set<Entry<K, V>> entrySet()
   {
-    return new PyMappingEntrySet<>(this, Interpreter.getBackend().items(this));
+    return new PyMappingEntrySet<>(this, backend().items(this));
   }
 
   /**
@@ -171,12 +169,12 @@ public interface PyMapping<K extends PyObject, V extends PyObject> extends PyCol
   @SuppressWarnings("unchecked")
   default V put(K key, V value)
   {
-    return (V) Interpreter.getBackend().setitemFromObject(this, key, value);
+    return (V) backend().setitemFromObject(this, key, value);
   }
 
   default PyObject putAny(Object key, Object value)
   {
-    return Interpreter.getBackend().setitemFromObject(this, key, value);
+    return backend().setitemFromObject(this, key, value);
   }
 
   /**

@@ -18,7 +18,6 @@ package org.jpype.bridge;
 import python.lang.PyBuiltIn;
 import python.lang.PyDict;
 import python.lang.PyObject;
-import python.lang.PyMapping;
 
 /**
  * Represents an scope of variables in the Python interpreter.

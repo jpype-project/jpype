@@ -16,6 +16,7 @@
 package python.lang;
 
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Java front-end interface for the Python `complex` type.
@@ -36,7 +37,7 @@ public interface PyComplex extends PyObject, PyNumber
    */
   static PyComplex of(double real, double imag)
   {
-    return Interpreter.getBackend().newComplex(real, imag);
+    return backend().newComplex(real, imag);
   }
 
   /**

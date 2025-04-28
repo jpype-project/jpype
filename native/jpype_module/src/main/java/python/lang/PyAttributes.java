@@ -19,13 +19,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import org.jpype.bridge.Backend;
-import python.lang.PyBuiltIn;
-import org.jpype.bridge.Interpreter;
-import python.lang.PyDict;
-import python.lang.PyDictItems;
-import python.lang.PyDictKeySet;
-import python.lang.PyList;
-import python.lang.PyObject;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * A {@link Map}-like implementation for accessing and manipulating Python
@@ -94,7 +88,7 @@ public class PyAttributes implements Map<PyObject, PyObject>
   public PyAttributes(PyObject obj)
   {
     this.obj = obj;
-    this.backend = Interpreter.getBackend();
+    this.backend = backend();
   }
 
   /**

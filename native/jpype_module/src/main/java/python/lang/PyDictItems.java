@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Set;
 import org.jpype.bridge.Backend;
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Represents a view fromMap the items in a Python dictionary ({@code PyDict})
@@ -69,7 +70,7 @@ public class PyDictItems implements Set<Map.Entry<PyObject, PyObject>>
   public PyDictItems(PyDict dict)
   {
     this.dict = dict;
-    this.backend = Interpreter.getBackend();
+    this.backend = backend();
     this.items = this.backend.items(dict);
   }
 

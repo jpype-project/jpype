@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Java front-end interface for the Python `list` type.
@@ -29,8 +30,8 @@ import org.jpype.bridge.Interpreter;
  * This interface represents a concrete Python `list` object and provides
  * methods that closely align with both the Python `list` API and the Java
  * {@link List} contract. It facilitates seamless integration between Python's
- dynamic, mutable list behavior and Java's getType-safe collections
- framework.</p>
+ * dynamic, mutable list behavior and Java's getType-safe collections
+ * framework.</p>
  *
  * <p>
  * <b>Key Features:</b></p>
@@ -81,7 +82,7 @@ public interface PyList extends PySequence<PyObject>
    */
   public static PyList fromItems(Iterable<? extends Object> c)
   {
-    return Interpreter.getBackend().newListFromIterable(c);
+    return backend().newListFromIterable(c);
   }
 
   /**
@@ -92,7 +93,7 @@ public interface PyList extends PySequence<PyObject>
    */
   public static PyList of(Object... items)
   {
-    return Interpreter.getBackend().newListFromArray(items);
+    return backend().newListFromArray(items);
   }
 
   /**
@@ -277,7 +278,7 @@ public interface PyList extends PySequence<PyObject>
   @Override
   default boolean remove(Object o)
   {
-    return Interpreter.getBackend().delByIndex(this, this.indexOf(o));
+    return backend().delattrReturn(this, this.indexOf(o)) != null;
   }
 
   /**
@@ -290,7 +291,7 @@ public interface PyList extends PySequence<PyObject>
   default PyObject remove(int index)
   {
     PyObject out = this.get(index);
-    Interpreter.getBackend().delByIndex(this, index);
+    backend().delitemByIndex(this, index);
     return out;
   }
 
@@ -340,9 +341,9 @@ public interface PyList extends PySequence<PyObject>
    * Replaces the element at the specified position in the list with an
    * arbitrary object.
    * <p>
- The object will be converted to a Python-compatible getType before being
- stored.
- </p>
+   * The object will be converted to a Python-compatible getType before being
+   * stored.
+   * </p>
    *
    * @param index the position of the element to replace.
    * @param obj the object to be stored at the specified position.
@@ -399,18 +400,18 @@ public interface PyList extends PySequence<PyObject>
    * Returns an array containing all elements in the list in proper sequence,
    * using the runtime type of the specified array.
    * <p>
- If the list fits in the specified array, it is returned therein. Otherwise,
- a new array is allocated with the runtime getType of the specified array and
- the size of the list.
- </p>
+   * If the list fits in the specified array, it is returned therein. Otherwise,
+   * a new array is allocated with the runtime getType of the specified array
+   * and the size of the list.
+   * </p>
    *
    * @param a the array into which the elements of the list are to be stored, if
- it is large enough; otherwise, a new array of the same runtime getType is
- allocated for this purpose.
+   * it is large enough; otherwise, a new array of the same runtime getType is
+   * allocated for this purpose.
    * @param <T> the runtime getType of the array.
    * @return an array containing all elements in the list.
-   * @throws ArrayStoreException if the runtime getType of the specified array is
- not a supertype of the runtime getType of every element in the list.
+   * @throws ArrayStoreException if the runtime getType of the specified array
+   * is not a supertype of the runtime getType of every element in the list.
    * @throws NullPointerException if the specified array is {@code null}.
    */
   @Override

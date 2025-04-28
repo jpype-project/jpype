@@ -18,7 +18,7 @@ package python.lang;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import org.jpype.bridge.Interpreter;
-import python.lang.PyObject;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Python concept of an iterator.
@@ -38,7 +38,7 @@ public interface PyIter<T> extends PyObject
   default Iterator<T> iterator()
   {
     // It is not clear if we should tee the iterator here or not.
-    //   return new PyIterator(Interpreter.getBackend().tee(this));    
+    //   return new PyIterator(backend().tee(this));    
     return new PyIterator<>(this);
   }
 
@@ -53,7 +53,7 @@ public interface PyIter<T> extends PyObject
   @SuppressWarnings("unchecked")
   default T next()
   {
-    PyObject out = Interpreter.getBackend().next(this, Interpreter.stop);
+    PyObject out = backend().next(this, Interpreter.stop);
     if (out.equals(Interpreter.stop))
       throw new NoSuchElementException();
     return (T) out;
@@ -69,7 +69,7 @@ public interface PyIter<T> extends PyObject
   @SuppressWarnings("unchecked")
   default T next(PyObject defaults)
   {
-    return (T) Interpreter.getBackend().next(this, defaults);
+    return (T) backend().next(this, defaults);
   }
 
 }

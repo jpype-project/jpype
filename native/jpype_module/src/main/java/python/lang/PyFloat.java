@@ -16,6 +16,7 @@
 package python.lang;
 
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Java front-end interface for the Python `float` type.
@@ -45,7 +46,7 @@ public interface PyFloat extends PyObject, PyNumber
    */
   static PyFloat of(double value)
   {
-    return Interpreter.getBackend().newFloat(value);
+    return backend().newFloat(value);
   }
 
 }

@@ -15,6 +15,7 @@
  */
 package python.lang;
 
+import java.util.Arrays;
 import org.jpype.bridge.Backend;
 import org.jpype.bridge.Interpreter;
 
@@ -28,6 +29,10 @@ public class PyBuiltIn
 {
 
   static Backend instance;
+
+  protected PyBuiltIn()
+  {
+  }
 
   /**
    * Creates a new Python float object.
@@ -60,11 +65,6 @@ public class PyBuiltIn
    * active before returning it. If the interpreter has not been started, an
    * {@link IllegalStateException} is thrown to indicate that the backend cannot
    * be accessed.
-   * </p>
-   *
-   * <p>
-   * The method also caches the backend instance for future use, avoiding
-   * redundant calls to {@link Interpreter#getBackend()}.
    * </p>
    *
    * @return The active {@link Backend} instance.
@@ -216,9 +216,9 @@ public class PyBuiltIn
    * indices.
    * @return a new {@link PyTuple} instance containing the indices.
    */
-  public static PyTuple indices(PyIndex[] indices)
+  public static PyTuple indices(PyIndex... indices)
   {
-    return backend().newTupleFromArray(indices);
+    return backend().newTupleFromArray(Arrays.asList(indices));
   }
 
   /**
@@ -464,7 +464,7 @@ public class PyBuiltIn
    */
   public static PyTuple tuple(Object... items)
   {
-    return backend().newTupleFromArray(items);
+    return backend().newTupleFromArray(Arrays.asList(items));
   }
 
   /**
@@ -506,6 +506,6 @@ public class PyBuiltIn
    */
   public static PyZip zip(Iterable... objects)
   {
-    return backend().zipFromIterable(objects);
+    return backend().zipFromIterable(Arrays.asList(objects));
   }
 }

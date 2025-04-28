@@ -17,10 +17,7 @@ package python.lang;
 
 import java.util.Iterator;
 import java.util.Set;
-import org.jpype.bridge.Interpreter;
-import python.lang.PyBuiltIn;
-import python.lang.PyObject;
-import python.lang.PySet;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Represents a protocol for Python classes that act as sets.
@@ -55,7 +52,7 @@ public interface PyAbstractSet<T extends PyObject> extends PyCollection<T>, Set<
   @Override
   default boolean contains(Object obj)
   {
-    return Interpreter.getBackend().contains(this, obj);
+    return backend().contains(this, obj);
   }
 
   /**
@@ -71,7 +68,7 @@ public interface PyAbstractSet<T extends PyObject> extends PyCollection<T>, Set<
    */
   static <T> PySet of(Iterable<T> c)
   {
-    return Interpreter.getBackend().newSetFromIterable(c);
+    return backend().newSetFromIterable(c);
   }
 
   /**

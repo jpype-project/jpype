@@ -16,6 +16,7 @@
 package python.lang;
 
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Java front-end interface for the Python `int` type.
@@ -43,7 +44,7 @@ public interface PyInt extends PyObject, PyNumber
    */
   static PyInt of(long value)
   {
-    return Interpreter.getBackend().newInt(value);
+    return backend().newInt(value);
   }
 
 }

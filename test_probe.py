@@ -2,6 +2,7 @@ import jpype
 import _jpype
 import numpy as np
 import weakref
+import inspect
 from jpype import JClass
 
 jpype.startJVM()
@@ -29,65 +30,65 @@ PyTuple = JClass("python.lang.PyTuple")
 PyType =  JClass("python.lang.PyType")
 PyZip = JClass("python.lang.PyZip")
 
-PyAbstractSet = JClass("python.protocol.PyAbstractSet")
-PyAwaitable = JClass("python.protocol.PyAwaitable")
-PyBuffer = JClass("python.protocol.PyBuffer")
-PyCallable = JClass("python.protocol.PyCallable")
-PyCollection = JClass("python.protocol.PyCollection")
-PyContainer = JClass("python.protocol.PyContainer")
-PyCoroutine = JClass("python.protocol.PyCoroutine")
-PyGenerator = JClass("python.protocol.PyGenerator")
-PyIndex = JClass("python.protocol.PyIndex")
-PyIter = JClass("python.protocol.PyIter")
-PyIterable = JClass("python.protocol.PyIterable")
-PyMapping = JClass("python.protocol.PyMapping")
-PyMutableSet = JClass("python.protocol.PyMutableSet")
-PyNumber = JClass("python.protocol.PyNumber")
-PySequence = JClass("python.protocol.PySequence")
-PySized = JClass("python.protocol.PySized")
+PyAbstractSet = JClass("python.lang.PyAbstractSet")
+PyAwaitable = JClass("python.lang.PyAwaitable")
+PyBuffer = JClass("python.lang.PyBuffer")
+PyCallable = JClass("python.lang.PyCallable")
+PyCollection = JClass("python.lang.PyCollection")
+PyContainer = JClass("python.lang.PyContainer")
+PyCoroutine = JClass("python.lang.PyCoroutine")
+PyGenerator = JClass("python.lang.PyGenerator")
+PyIndex = JClass("python.lang.PyIndex")
+PyIter = JClass("python.lang.PyIter")
+PyIterable = JClass("python.lang.PyIterable")
+PyMapping = JClass("python.lang.PyMapping")
+PyMutableSet = JClass("python.lang.PyMutableSet")
+PyNumber = JClass("python.lang.PyNumber")
+PySequence = JClass("python.lang.PySequence")
+PySized = JClass("python.lang.PySized")
 
 
 #############################################################################
 # Add all of the concrete types to the _concrete interfaces list.
-_jpype._concrete[bytearray] = python.lang.PyByteArray
-_jpype._concrete[bytes] = python.lang.PyBytes
-_jpype._concrete[complex] = python.lang.PyComplex
-_jpype._concrete[dict] = python.lang.PyDict
-_jpype._concrete[enumerate] = python.lang.PyEnumerate
-_jpype._concrete[float] = python.lang.PyFloat
-_jpype._concrete[frozenset] = python.lang.PyFrozenSet
-_jpype._concrete[BaseException] = python.lang.PyExc
-_jpype._concrete[int] = python.lang.PyInt
-_jpype._concrete[list] = python.lang.PyList
-_jpype._concrete[memoryview] =  python.lang.PyMemoryView
-_jpype._concrete[object] = python.lang.PyObject
-_jpype._concrete[range] =  python.lang.PyList
-_jpype._concrete[set] =  python.lang.PySet
-_jpype._concrete[slice] = python.lang.PySlice
-_jpype._concrete[str] = python.lang.PyString
-_jpype._concrete[tuple] = python.lang.PyTuple
-_jpype._concrete[type] =  python.lang.PyType
-_jpype._concrete[zip] = python.lang.PyZip
+_jpype._concrete[bytearray] = PyByteArray
+_jpype._concrete[bytes] = PyBytes
+_jpype._concrete[complex] = PyComplex
+_jpype._concrete[dict] = PyDict
+_jpype._concrete[enumerate] = PyEnumerate
+_jpype._concrete[float] = PyFloat
+_jpype._concrete[frozenset] = PyFrozenSet
+_jpype._concrete[BaseException] = PyExc
+_jpype._concrete[int] = PyInt
+_jpype._concrete[list] = PyList
+_jpype._concrete[memoryview] =  PyMemoryView
+_jpype._concrete[object] = PyObject
+_jpype._concrete[range] =  PyList
+_jpype._concrete[set] =  PySet
+_jpype._concrete[slice] = PySlice
+_jpype._concrete[str] = PyString
+_jpype._concrete[tuple] = PyTuple
+_jpype._concrete[type] =  PyType
+_jpype._concrete[zip] = PyZip
 
 #############################################################################
 # Add all of the abstract types to the _protocol interfaces list
 # The key must be a string and the value a Java class
-_jpype._protocol["abstract_set"] = python.lang.PyAbstractSet
-_jpype._protocol["awaitable"] = python.lang.PyAwaitable
-_jpype._protocol["buffer"] = python.lang.PyBuffer
-_jpype._protocol["callable"] = python.lang.PyCallable
-_jpype._protocol["collection"] = python.lang.PyCollection
-_jpype._protocol["container"] = python.lang.PyContainer
-_jpype._protocol["coroutine"] = python.lang.PyCoroutine
-_jpype._protocol["generator"] = python.lang.PyGenerator
-_jpype._protocol["index"] = python.lang.PyIndex
-_jpype._protocol["iter"] = python.lang.PyIter
-_jpype._protocol["iterable"] = python.lang.PyIterable
-_jpype._protocol["mapping"] = python.lang.PyMapping
-_jpype._protocol["mutable_set"] = python.lang.PyMutableSet
-_jpype._protocol["number"] = python.lang.PyNumber
-_jpype._protocol["sequence"] = python.lang.PySequence
-_jpype._protocol["sized"] = python.lang.PySized
+_jpype._protocol["abstract_set"] = PyAbstractSet
+_jpype._protocol["awaitable"] = PyAwaitable
+_jpype._protocol["buffer"] = PyBuffer
+_jpype._protocol["callable"] = PyCallable
+_jpype._protocol["collection"] = PyCollection
+_jpype._protocol["container"] = PyContainer
+_jpype._protocol["coroutine"] = PyCoroutine
+_jpype._protocol["generator"] = PyGenerator
+_jpype._protocol["index"] = PyIndex
+_jpype._protocol["iter"] = PyIter
+_jpype._protocol["iterable"] = PyIterable
+_jpype._protocol["mapping"] = PyMapping
+_jpype._protocol["mutable_set"] = PyMutableSet
+_jpype._protocol["number"] = PyNumber
+_jpype._protocol["sequence"] = PySequence
+_jpype._protocol["sized"] = PySized
 
 #############################################################################
 # This section defines all of the functions required to implement the Java
@@ -172,7 +173,7 @@ def frozenset_symmetric_difference(self, *sets):
     return self.symmetric_difference(*sets)
 
 def iterable_map_elements(self, callable):
-    return map(callable, self))
+    return map(callable, self)
 
 def iter_filter(self, callable):
     return filter(callable, self)
@@ -355,7 +356,7 @@ def set_union_update(self, *sets):
     self.update(*sets)
 
 def sequence_get_slice(self, *indices):
-    retrun self[tuple(*indices)]
+    return self[tuple(*indices)]
 
 def slice_get_start(self):
     return self.start
@@ -483,7 +484,7 @@ def tuple_index_of(self, obj):
         return self.index(obj)
     except ValueError:
         return -1
-_
+
 def type_get_name(self):
     return self.__name__
 
@@ -511,6 +512,93 @@ def type_is_abstract(self):
 
 def type_get_subclasses(self):
     return self.__subclasses__()
+
+def _call(obj, args, kwargs):
+    if kwargs is not None:
+        return obj(*args, **kwargs)
+    return obj(*args)
+    
+def _delattr_return(obj, key):
+    return var(obj).pop(key, None)
+
+def _delattr(obj, key):
+    delattr(obj, key)
+
+def dict_keys(obj):
+    return obj.keys()
+
+def dict_values(obj):
+    return obj.keys()
+
+def dict_iterable(obj, iterable):
+    out = dict()
+    out.update(iterable)
+    return out
+
+def object_doc(obj):
+    return __doc__
+
+def callable_signature(obj):
+    return inspect.signature(obj)
+
+def type_isinstance(obj, types):
+    return isinstance(obj, tuple(types))
+
+def dict_items(self):
+    return self.items()
+
+backend_methods = {
+    "bytearray": bytearray,
+    "bytearrayFromHex": bytearray.fromhex,
+    "bytes": bytes,
+    "bytesFromHex": bytes.fromhex,
+    "call": _call,
+    "contains": _contains,
+    "delitemByIndex": _delitem,
+    "delitemByObject": _delitem,
+    "delattrReturn": _delattr_return,
+    "delattrString": delattr,
+    "dir": dir,
+    "enumerate": enumerate,
+    "eval": eval,
+    "exec": exec,
+    "getDict": vars,
+    "getDocString": object_doc,
+    "getSignature": callable_signature,
+    "getattrDefault": getattr,
+    "getattrObject": getattr,
+    "getattrString": getattr,
+    "getitemMappingObject": _getitem,
+    "getitemMappingString": _getitem,
+    "getitemSequence": _getitem,
+    "hasattrString": hasattr,
+    "isCallable": callable,
+    "isinstanceFromArray": type_isinstance,
+    "items": dict_items,
+    "keys": dict_keys,
+    "len": len,
+    "list": list,
+    "memoryview": memoryview,
+    "newByteArray": bytearray,
+    "newByteArrayFromBuffer": bytes,
+    "newByteArrayFromIterable": bytearray,
+    "newByteArrayOfSize": bytearray,
+    "newBytesOfSize": bytes,
+    "newComplex": complex,
+    "newDict": dict,
+    "newDictFromIterable": dict,
+    "newEnumerate": enumerate,
+    "newFloat": float,
+    "newFrozenSet": frozenset,
+    "newInt": int,
+    "newList": list,
+    "newListFromIterable": list,
+    "newSet": set,
+    "newSetFromIterable": set,
+    "newTuple": tuple,
+    "newTupleFromIterator": tuple,
+    "newZip": zip,
+}
 
 #############################################################################
 # This section builds dictionaries to map from the Java interfaces to the
@@ -542,17 +630,16 @@ _jpype._methods[PyDict] = {
     "clear": dict.clear,
     "containsKey": _contains,
     "containsValue": mapping_contains_value,
-    "entrySet": dict_entry_set,
+    "entrySet": dict_items,
     "get": mapping_get,
     "getOrDefault": mapping_get,
-    "keySet": dict_key_set,
+    "keySet": dict_keys,
     "pop": dict_pop,
     "popItem": dict_pop_item,
     "put": dict_put,
     "putAny": dict_put,
     "putAll": dict.update,
     "remove": dict_remove,
-    "remove": dict_remove_key_value,
     "setDefault": dict.setdefault,
     "update": dict.update,
     "updateIterable": dict_update_iterable,
@@ -566,12 +653,8 @@ _jpype._methods[PyFrozenSet] = {
     "isDisjoint": frozenset.isdisjoint,
     "isSubset": frozenset.issubset,
     "isSuperset": frozenset.issuperset,
-    "pop": frozenset_pop,
     "symmetricDifference": frozenset_symmetric_difference,
     "union": frozenset_union,
-    "iterator": frozenset_iterator,
-    "toArray": frozenset_to_array,
-    "toArrayWithType": frozenset_to_array_with_type,
 }
 _jpype._methods[PyExc] = {} # No java methods
 _jpype._methods[PyInt] = {} # No java methods
@@ -619,7 +702,7 @@ _jpype._methods[PyRange] = {
 _jpype._methods[PySet] = {
     "add": set_add,
     "addAny": set.add,
-    "clear": set_clear,
+    "clear": set.clear,
     "contains": _contains,
     "copy": set.copy,
     "difference": set_difference,
@@ -634,8 +717,8 @@ _jpype._methods[PySet] = {
     "isSuperset": set.issuperset,
     "pop": set.pop,
     "size": len,
-    "symmetricDifference": set_symmetric_difference,
-    "symmetricDifferenceUpdate": set.set_symmetric_difference,
+#    "symmetricDifference": set_symmetric_difference,
+#    "symmetricDifferenceUpdate": set.symmetric_difference,
     "toList": list,
     "union": set_union,
     "unionUpdate": set_union_update,
@@ -656,9 +739,9 @@ _jpype._methods[PyString] = {
     "expandTabs": str.expandtabs,
     "findLastSubstring": str_find_last_substring,
     "findSubstring": str_find_substring,
-    "formatUsingMapping": ste.format_map,
+    "formatUsingMapping": str.format_map,
     "formatWith": str_format_with,
-    "getCharacterAt": str_get_character_at,
+    "getCharacterAt": _getitem,
     "indexOfLastSubstring": str_index_of_last_substring,
     "indexOfSubstring": str_index_of_substring,
     "isAlphabetic": str.isalpha,
@@ -675,25 +758,24 @@ _jpype._methods[PyString] = {
     "isWhitespace": str.isspace,
     "join": str.join,
     "length": len,
-    "paddedCenter": pystring_padded_center,
     "removePrefix": str.removeprefix,
     "removeSuffix": str.removesuffix,
-    "replaceSubstring": pystring_replace_substring,
-    "splitInto": pystring_split_into,
-    "splitIntoLines": pystring_split_into_lines,
+    "replaceSubstring": str_replace_substring,
+    "splitInto": str_split_into,
+    "splitIntoLines": str_split_into_lines,
     "splitIntoPartition": str.partition,
-    "splitIntoReverse": pystring_split_into_reverse,
+    "splitIntoReverse": str_split_into_reverse,
     "splitIntoReversePartition": str.rpartition,
-    "startsWithPrefix": pystring_starts_with_prefix,
-    "stripCharacters": pystring_strip_characters,
-    "stripLeading": pystring_strip_leading,
-    "stripTrailing": pystring_strip_trailing,
+    "startsWithPrefix": str_starts_with_prefix,
+    "stripCharacters": str_strip_characters,
+    "stripLeading": str_strip_leading,
+    "stripTrailing": str_strip_trailing,
     "stripWhitespace": str.strip,
     "subSequence": _getitem_range,
     "swapCaseCharacters": str.swapcase,
     "toCapitalized": str.capitalize,
     "toCaseFolded": str.casefold,
-    "toEncoded": pystring_to_encoded,
+    "toEncoded": str_to_encoded,
     "toTitleCase": str.title,
     "toUppercase": str.upper,
     "translateUsingMapping": str.translate,
@@ -731,7 +813,7 @@ _jpype._methods[PyGenerator] ={
     "iter": iter,
 }
 _jpype._methods[PyIndex] ={} # No Java methods
-jpype._methods[PyIter] = {
+_jpype._methods[PyIter] = {
     "filter": iter_filter,
 }
 _jpype._methods[PyIterable] = {
@@ -771,8 +853,8 @@ _jpype._methods[PyNumber] = {
     "toInteger": int,
     "compareTo": number_compare_to,
 }
-jpype._methods[PySequence] = {
-    "remove": sequence_remove,
+_jpype._methods[PySequence] = {
+    "remove": _delitem_return,
     "set": _setitem_return,
     "setAny": _setitem,
 }

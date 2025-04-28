@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.Set;
 import org.jpype.bridge.Backend;
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 import python.lang.PyObject;
 
 /**
@@ -87,7 +88,7 @@ public class PyMappingKeySet<K extends PyObject, V extends PyObject> implements 
   public PyMappingKeySet(PyMapping<K, V> mapping)
   {
     this.map = mapping;
-    this.backend = Interpreter.getBackend();
+    this.backend = backend();
   }
 
   /**

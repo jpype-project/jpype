@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.Future;
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 import python.lang.PyDict;
 import python.lang.PyObject;
 import python.lang.PyTuple;
@@ -62,7 +63,7 @@ public interface PyCallable extends PyObject
    */
   default PyObject call(PyTuple args, PyDict kwargs)
   {
-    return Interpreter.getBackend().call(this, args, kwargs);
+    return backend().call(this, args, kwargs);
   }
 
   /**
@@ -73,7 +74,7 @@ public interface PyCallable extends PyObject
    */
   default PyObject call(PyTuple args)
   {
-    return Interpreter.getBackend().call(this, args, null);
+    return backend().call(this, args, null);
   }
 
   /**
@@ -85,7 +86,7 @@ public interface PyCallable extends PyObject
    */
   default PyObject call(Object... args)
   {
-    return Interpreter.getBackend().call(this, PyTuple.of(args), null);
+    return backend().call(this, PyTuple.of(args), null);
   }
 
   /**
@@ -98,7 +99,7 @@ public interface PyCallable extends PyObject
    */
   default Future<PyObject> callAsync(PyTuple args, PyDict kwargs)
   {
-    return Interpreter.getBackend().callAsync(this, args, kwargs);
+    return backend().callAsync(this, args, kwargs);
   }
 
   /**
@@ -112,7 +113,7 @@ public interface PyCallable extends PyObject
    */
   default Future<PyObject> callAsyncWithTimeout(PyTuple args, PyDict kwargs, long timeout)
   {
-    return Interpreter.getBackend().callAsyncWithTimeout(this, args, kwargs, timeout);
+    return backend().callAsyncWithTimeout(this, args, kwargs, timeout);
   }
 
   /**
@@ -123,7 +124,7 @@ public interface PyCallable extends PyObject
    */
   default PyObject callWithKwargs(PyDict kwargs)
   {
-    return Interpreter.getBackend().call(this, PyTuple.of(), kwargs);
+    return backend().call(this, PyTuple.of(), kwargs);
   }
 
   /**
@@ -135,7 +136,7 @@ public interface PyCallable extends PyObject
    */
   default String getDocString()
   {
-    return Interpreter.getBackend().getDocString(this);
+    return backend().getDocString(this);
   }
 
   /**
@@ -145,7 +146,7 @@ public interface PyCallable extends PyObject
    */
   default PyObject getSignature()
   {
-    return Interpreter.getBackend().getSignature(this);
+    return backend().getSignature(this);
   }
 
   /**
@@ -155,17 +156,7 @@ public interface PyCallable extends PyObject
    */
   default boolean isCallable()
   {
-    return Interpreter.getBackend().isCallable(this);
-  }
-
-  /**
-   * Retrieves the getType or category of the callable Python object.
-   *
-   * @return a {@link String} representing the callable's getType
-   */
-  default String getCallableType()
-  {
-    return Interpreter.getBackend().getCallableType(this);
+    return backend().isCallable(this);
   }
 
   // Nested CallBuilder class documentation

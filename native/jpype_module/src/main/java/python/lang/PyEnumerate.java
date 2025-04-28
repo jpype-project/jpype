@@ -16,6 +16,7 @@
 package python.lang;
 
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Java front-end interface for the Python `enumerate` type.
@@ -43,7 +44,7 @@ public interface PyEnumerate extends PyIter<PyTuple>
    */
   static PyEnumerate of(Iterable<?> iterable)
   {
-    return Interpreter.getBackend().newEnumerate(iterable);
+    return backend().newEnumerate(iterable);
   }
 
 }

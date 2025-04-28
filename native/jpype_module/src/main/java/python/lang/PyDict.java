@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Java front-end interface for the Python `dict` type.
@@ -57,12 +58,12 @@ public interface PyDict extends PyObject, PyMapping<PyObject, PyObject>
    */
   public static PyDict fromMap(Map<? extends Object, ? extends Object> map)
   {
-    return Interpreter.getBackend().newDict(map);
+    return backend().newDict(map);
   }
 
   public static PyDict fromItems(Iterable<? extends Map.Entry<?,?>> map)
   {
-    return Interpreter.getBackend().newDictFromIterable(map);
+    return backend().newDictFromIterable(map);
   }
 
   @Override

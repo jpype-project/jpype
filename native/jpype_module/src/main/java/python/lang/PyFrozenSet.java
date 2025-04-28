@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Java front-end interface for the Python `frozenset` type.
@@ -60,7 +61,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    */
   static PyFrozenSet of(Iterable<?> c)
   {
-    return Interpreter.getBackend().newFrozenSet(c);
+    return backend().newFrozenSet(c);
   }
 
   /**
@@ -155,7 +156,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
   @Override
   default Iterator<PyObject> iterator()
   {
-    return new PyIterator<>(Interpreter.getBackend().iterSet(this));
+    return new PyIterator<>(backend().iterSet(this));
   }
 
   /**

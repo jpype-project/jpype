@@ -15,8 +15,7 @@
  */
 package python.lang;
 
-import org.jpype.bridge.Interpreter;
-import python.lang.PyObject;
+import static python.lang.PyBuiltIn.backend;
 
 /**
  * Protocol for Python objects that have a `__contains__` method.
@@ -25,6 +24,6 @@ public interface PyContainer<T extends PyObject> extends PyObject
 {
   default boolean contains(Object obj)
   {
-    return Interpreter.getBackend().contains(this, obj);
+    return backend().contains(this, obj);
   }
 }

@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 import python.lang.PyBuiltIn;
 import org.jpype.bridge.Interpreter;
+import static python.lang.PyBuiltIn.backend;
 import python.lang.PyObject;
 
 /**
@@ -37,7 +38,7 @@ public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
   @Override
   default boolean contains(Object obj)
   {
-    return Interpreter.getBackend().contains(this, obj);
+    return backend().contains(this, obj);
   }
 
   /**
@@ -52,7 +53,7 @@ public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
   @SuppressWarnings("unchecked")
   default T get(int index)
   {
-    return (T) Interpreter.getBackend().getitemSequence(this, index);
+    return (T) backend().getitemSequence(this, index);
   }
 
   /**
@@ -66,7 +67,7 @@ public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
    */
   default PyObject get(PyIndex index)
   {
-    return Interpreter.getBackend().getitemMappingObject(this, index);
+    return backend().getitemMappingObject(this, index);
   }
 
   /**
@@ -83,7 +84,7 @@ public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
    */
   default PyObject get(PyIndex... indices)
   {
-    return Interpreter.getBackend().getitemMappingObject(this, PyBuiltIn.indices(indices));
+    return backend().getitemMappingObject(this, PyBuiltIn.indices(indices));
   }
 
   @Override
@@ -134,6 +135,6 @@ public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
   @Override
   default int size()
   {
-    return Interpreter.getBackend().len(this);
+    return backend().len(this);
   }
 }

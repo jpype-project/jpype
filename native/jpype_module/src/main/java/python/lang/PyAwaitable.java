@@ -15,8 +15,6 @@
  */
 package python.lang;
 
-import python.lang.PyObject;
-
 /**
  * Protocol for objects that are awaitable.
  */
