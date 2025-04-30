@@ -5,15 +5,169 @@ JPype User Guide
 .. toctree::
    :maxdepth: 2
 
-JPype Introduction
-******************
-JPype is a Python module to provide full access to Java from within Python.
-Unlike Jython, JPype does not achieve this by re-implementing Python, but
-instead by interfacing both virtual machines at the native level. This
-shared memory based approach achieves good computing performance, while
-providing the access to the entirety of CPython and Java libraries.
-This approach allows direct memory access between the two machines,
-implementation of Java interfaces in Python, and even use of Java threading.
+.. _introduction:
+
+Introduction
+************
+
+.. _introduction_jpype_the_python_to_java_bridge:
+
+JPype the Python to Java bridge
+===============================
+JPype is a Python module that provides seamless
+access to Java libraries from Python. Unlike Jython, which reimplements Python
+on the Java Virtual Machine (JVM), JPype bridges Python and Java at the native
+level using the Java Native Interface (JNI). This approach enables:
+
+- Direct interaction between Python and Java objects.
+- Access to the full range of Java libraries and APIs.
+- High performance through shared memory between Python and Java.
+
+JPype is ideal for Python developers who need to leverage Java libraries or
+Java developers who want to use Python for scripting, debugging, or
+visualization.
+
+.. _introduction_why_use_jpype?:
+
+Why Use JPype?
+--------------
+JPype makes it easy to integrate Python and Java, enabling developers to:
+
+1. Access Java libraries directly from Python code.
+2. Debug Java data structures interactively using Python tools.
+3. Use Python's flexibility for scientific computing while leveraging Java's
+   robustness for enterprise applications.
+
+.. _introduction_prerequisites:
+
+Prerequisites
+-------------
+Before using JPype, ensure the following:
+
+1. **Python**: JPype requires Python 3.8 or later. Check your Python version by
+   running::
+
+       python --version
+
+2. **Java**: JPype requires a Java Runtime Environment (JRE) or Java Development
+   Kit (JDK) version 11 or later. Check your Java version by running::
+
+       java -version
+
+3. **Architecture Compatibility**: Ensure the Python interpreter and JVM have
+   matching architectures (e.g., both 64-bit or both 32-bit).
+
+.. _introduction_installation:
+
+Installation
+------------
+JPype can be installed using either `pip` or `conda`.
+
+.. _introduction_using_pip:
+
+Using pip
+~~~~~~~~~
+To install JPype via `pip`, run::
+
+    pip install JPype1
+
+
+Using conda
+~~~~~~~~~~~
+To install JPype via `conda`, use::
+
+    conda install -c conda-forge jpype1
+
+
+Verifying Installation
+~~~~~~~~~~~~~~~~~~~~~~
+After installation, verify that JPype is installed correctly by running::
+
+    import jpype
+    print("JPype installed successfully!")
+
+
+Your First JPype Program
+------------------------
+Follow these steps to write and run your first JPype program:
+
+
+Step 1: Start the JVM
+~~~~~~~~~~~~~~~~~~~~~
+JPype requires the JVM to be started before interacting with Java. Use the
+`jpype.startJVM()` function to start the JVM::
+
+    import jpype
+
+    # Start the JVM
+    jpype.startJVM(classpath=[], convertStrings=False)
+
+Step 2: Access Java Classes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+JPype allows you to import and use Java classes directly. For example, import
+Java's `java.lang.String` class::
+
+    from java.lang import String
+
+Step 3: Use Java Objects
+~~~~~~~~~~~~~~~~~~~~~~~~
+Create and manipulate Java objects just like Python objects::
+
+    java_string = String("Hello from Java!")
+    print(java_string.toUpperCase())  # Output: HELLO FROM JAVA!
+
+Step 4: Shut Down the JVM
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Once the program is complete the JVM will exit when Python does.
+
+
+Complete Example
+~~~~~~~~~~~~~~~~
+Save the following code in a file named `hello_jpype.py`::
+
+    import jpype
+    import jpype.imports
+
+    # Start the JVM
+    jpype.startJVM(classpath=[], convertStrings=False)
+
+    # Import Java classes
+    from java.lang import String
+
+    # Use the Java String class
+    java_string = String("Hello from Java!")
+    print(java_string.toUpperCase())  # Output: HELLO FROM JAVA!
+
+Run the script using Python::
+
+    python hello_jpype.py
+
+You should see the output::
+
+    HELLO FROM JAVA!
+
+
+Next Steps
+----------
+Once you've successfully set up JPype, explore the following topics:
+
+1. **Accessing Java Libraries**: Learn how to use JPype to interact with third-
+   party Java libraries.
+2. **Working with Java Collections**: Discover how JPype integrates Java
+   collections with Python's `collections` module.
+3. **Implementing Java Interfaces in Python**: Use JPype's proxy functionality
+   to implement Java interfaces in Python.
+4. **Debugging Java Code**: Use JPype as an interactive shell for debugging
+   Java programs.
+
+
+Summary of JPype
+----------------
+JPype bridges Python and Java, enabling seamless integration between the two
+languages. With JPype, you can access Java libraries, implement Java
+interfaces, and debug Java code—all from the comfort of Python. Happy coding!
+
+
 
 JPype Use Cases
 ===============
@@ -26,6 +180,7 @@ Here are three typical reasons to use JPype.
   programming.
 
 Let's explore each of these options.
+
 
 Case 1: Access to a Java library
 --------------------------------
@@ -100,6 +255,8 @@ set the class path, start the JVM, remove all the type declarations, and you are
 
 Launch it in the interactive window.  You can get back to programming in Python
 once you get a good night sleep.
+
+
 
 
 Case 2: Visualization of Java structures
@@ -180,6 +337,7 @@ A graph appears on the screen.  Meaning that NumPy has not issue dealing with
 Java arrays.  It looks like ever 4th element in the array is zero.
 It must be the PR the new guy put in.  And off you go back to the wonderful
 world of Java back to the safety of curly braces and semicolons.
+
 
 Case 3: Interactive Java
 ------------------------
@@ -274,223 +432,447 @@ was talking about back in March.  That sounds like real fun.
 `Code completion`_)
 
 
-The JPype Philosophy
-====================
+The JPype Philosophy 
+=====================
 
-JPype is designed to allow the user to exercise Java as fluidly as
-possible from within Python.  We can break this down into a few specific
-design goals.
+JPype is designed to provide seamless integration between Python and Java,
+allowing developers to use Java libraries and features as naturally as possible
+within Python. To achieve this, JPype adheres to several core design
+principles:
 
-- Make Java appear Pythonic.  Make it so a Python programmer feels
-  comfortable making use of Java concepts.  This means making use of Python
-  concepts to create very Python looking code and at times bending Python
-  concepts to conform to Java's expectations.
+1. **Make Java appear Pythonic**:
 
-- Make Python appear like Java.  Present concepts from Java with a syntax
-  that resembles Java so that Java users can work with Python without a huge
-  learning curve.
+   - JPype strives to make Java concepts feel familiar to Python programmers.
+     This involves adapting Java syntax and behaviors to align with Python's
+     conventions wherever possible.
+   - For example, Java methods are mapped to Python methods, and Java
+     collections are customized to behave like Python collections.
 
-- Present everything that Java has to offer to Python.  Every
-  library, package, and Java feature if possible should be accessible.
-  The goal of bridge is to open up places and not to restrict flow.
+2. **Make Python appear like Java**:
 
-- Keep the design as simple as possible. Mixing languages is already complex
-  enough so don't required the user to learn a huge arsenal of unique methods.
-  Instead keep it simple with well defined rules and reuse
-  these concepts.  For example, all array types originate from JArray, and
-  thus using one can also use isinstance to check if a class is an array
-  type.  Rather than introducing factory that does a similar job to an
-  existing one, instead use a keyword argument on the current factory.
+   - JPype ensures that Java developers can work with Python without a steep
+     learning curve. This includes presenting Python constructs in a way that
+     resembles Java syntax and behavior.
+   - For instance, Python classes can implement Java interfaces, and Java
+     objects can be manipulated using Python's object-oriented features.
 
-- Favor clarity over performance.  This doesn't mean not trying to optimize
-  paths, but just as premature optimization is the bane of programmers,
-  requiring writing to maximize speed is a poor long term choice, especially
-  in a language such as Python where weak typing can promote bit rot.
+3. **Expose all of Java to Python**:
 
-- If a new method has to be introduced, make it look familiar.
-  Java programmers look to a method named "of" to convert to a type on
-  factories such as a Stream, thus ``JArray.of`` converts a Python NumPy array
-  to Java.  Python programmers expect that memory backed objects can be converted
-  into bytes for rapid transfer using a memory view, thus
-  ``memoryview(array)`` will perform that task.
+   - JPype aims to provide access to the entirety of the Java ecosystem,
+     including libraries, packages, and features. The goal is to act as a
+     bridge, enabling unrestricted interaction between the two languages.
+   - Whether it's Java threading, reflection, or advanced APIs, JPype ensures
+     that Python developers can leverage Java's full capabilities.
 
-- Provide an obvious way for both Python and Java programmers to perform tasks.
-  On this front JPype and Python disagree.  In Python's philosophy there should
-  be one -- and preferably only one -- obvious way to do things.  But we
-  are bridging two worlds and thus obviousness is in the eye of the beholder.
+4. **Keep the design simple**:
 
-The end result is that JPype has a small footprint while providing
-access to Java (and other JVM based languages) with a minimum of effort.
+   - Mixing two languages is inherently complex, so JPype minimizes additional
+     complexity by maintaining a simple and consistent design.
+   - For example, all Java array types originate from the `JArray` factory,
+     ensuring a unified approach to handling arrays.
 
-Languages other than Java
+5. **Favor clarity over performance**:
+
+   - While JPype optimizes critical paths for performance, clarity is
+     prioritized to ensure long-term maintainability and usability.
+   - For example, JPype avoids premature optimization that could complicate the
+     codebase or introduce unnecessary constraints.
+
+6. **Introduce familiar methods**:
+
+   - When new methods are added, JPype ensures they align with established
+     conventions in both Python and Java.
+   - For example, Python's `memoryview` is used to access Java-backed memory,
+     while Java's `Stream.of` inspired the `JArray.of` method for converting
+     NumPy arrays to Java arrays.
+
+7. **Provide obvious solutions for both Python and Java programmers**:
+
+   - JPype recognizes that "obviousness" varies between Python and Java
+     developers. Therefore, it provides solutions that feel natural to both 
+     audiences.
+
+   - For example, Python programmers can use list comprehensions with Java
+     collections, while Java programmers can use familiar methods like
+     `contains` or `hashCode`.
+
+
+**Balancing Two Worlds**
+
+JPype bridges two distinct programming paradigms: Python's dynamic and flexible
+nature versus Java's strongly-typed and structured approach. This balance
+requires careful mapping of concepts between the two languages:
+
+- **Types**:
+
+  - Python's weak typing allows variables to change types dynamically, while
+    Java's strong typing enforces strict type declarations. JPype accommodates
+    this difference by providing type factories (`JClass`, `JArray`) and casting
+    operators (`@`).
+
+- **Inheritance**:
+
+  - Java supports single inheritance with interfaces, while Python allows
+    multiple inheritance. JPype maps Java interfaces to Python classes using
+    decorators (`@JImplements`) to ensure compatibility.
+
+- **Collections**:
+
+  - Java collections (`List`, `Map`, `Set`) are customized to behave like
+    Python collections, enabling intuitive interaction for Python developers.
+
+- **Error Handling**:
+
+  - Java exceptions are mapped to Python exceptions, allowing developers to
+    handle errors seamlessly across both languages.
+
+
+**Philosophy in Practice**
+
+JPype's design philosophy ensures a small footprint while offering high levels
+of integration between Python and Java. Developers can use JPype to:
+
+- Access Java libraries for tasks that Python lacks native support for (e.g.,
+  advanced threading, enterprise APIs).
+- Use Python's interactive and visualization capabilities to debug or analyze
+  Java data structures.
+- Combine Python's flexibility with Java's robustness for scientific computing,
+  machine learning, and enterprise applications.
+
+By adhering to these principles, JPype provides a powerful yet accessible tool
+for bridging the Python and Java ecosystems.
+
+
+.. _introduction_languages_other_than_java:
+
+Languages Other Than Java
 =========================
 
-JPype is primarily focused on providing the best possible wrapper for Java
-in Python.  However, the Java Virtual Machine (JVM) is used for many popular
-languages such a Kotlin and Scala.  As such JPype can be used for any language
-which used the JVM.
+Although JPype is primarily designed to bridge Python with Java, its
+capabilities extend to other JVM-based languages such as Kotlin, Scala, Groovy,
+and Clojure. These languages share the same underlying Java Virtual Machine
+(JVM) infrastructure, allowing JPype to interact with them seamlessly. However,
+each language introduces unique features and paradigms that may require
+additional considerations when integrating with Python.
 
-That said, each language has its own special properties that tend to be
-represented in different ways.  If you would like JPype fully to operate on your
-particular language the following is required.
 
-- Set up a test bench for your language under the test directory.  Use ivy
-  to pull in the required jar files required to run it and exercise each of
-  the required language features that need to be exercised.
+Supported JVM-Based Languages
+-----------------------------
 
-- Write a language specific quick start guide for your language defining
-  how things should appear in both your language of choice and within Python
-  highlighting those things that are different from how Java.
+1. **Kotlin**:
 
-- Set up a test harness that exercises your language for each language feature
-  and place a setup script like ``test_java`` that builds the harness.
+   - Kotlin is a modern JVM-based language that emphasizes conciseness and
+     safety. JPype can interact with Kotlin libraries and classes just as it
+     does with Java.
 
+   - Kotlin's null safety and extension functions are fully compatible with
+     JPype, though developers may need to handle Kotlin's nullable types
+     explicitly when working in Python.
+
+   - Example: Using Kotlin's `List` class in Python via JPype.
+
+.. code-block:: python
+
+      from kotlin.collections import List
+      my_list = List.of("apple", "orange", "banana")
+      print(my_list.size())  # Access Kotlin methods
+
+2. **Scala**:
+
+   - Scala combines object-oriented and functional programming paradigms,
+     making it a popular choice for big data and distributed systems.
+
+   - JPype can interact with Scala libraries, including those built on
+     frameworks like Akka or Spark.
+
+   - Scala's collections and functional constructs (e.g., `map`, `flatMap`) can
+     be accessed directly from Python, though some functional idioms may
+     require adaptation.
+
+.. code-block:: python
+
+      from scala.collection.mutable import ArrayBuffer
+      buffer = ArrayBuffer()
+      buffer.append(1)
+      buffer.append(2)
+      print(buffer.mkString(", "))  # Outputs: "1, 2"
+
+3. **Groovy**:
+
+   - Groovy is a dynamic language for the JVM, often used for scripting and
+     lightweight application development.
+
+   - JPype can interact with Groovy scripts and libraries, enabling Python
+     developers to leverage Groovy's concise syntax and dynamic capabilities.
+
+   - Groovy's dynamic typing aligns well with Python, making integration
+     straightforward.
+
+.. code-block:: python
+
+      from groovy.util import Eval
+      result = Eval.me("3 + 5")
+      print(result)  # Outputs: 8
+
+4. **Clojure**:
+
+   - Clojure is a functional programming language that runs on the JVM. Its
+     emphasis on immutability and concurrency makes it ideal for certain types
+     of applications.
+
+   - JPype can interact with Clojure libraries, though developers may need to
+     adapt to Clojure's Lisp-like syntax and functional paradigms.
+
+.. code-block:: python
+
+      from clojure.lang import PersistentVector
+      vector = PersistentVector.create([1, 2, 3])
+      print(vector.nth(1))  # Access elements using Clojure methods
+
+
+Using JPype with Other JVM Languages 
+------------------------------------
+
+JPype can be used with any JVM-based language, but the following considerations
+apply:
+
+1. **Language-Specific Features**:
+
+   - Each language introduces unique features (e.g., Kotlin's null safety,
+     Scala's functional constructs, Groovy's dynamic typing). These may require
+     adaptation when working with Python.
+
+2. **Interoperability**:
+
+   - JPype relies on the JVM's native interoperability mechanisms, ensuring
+     seamless interaction with JVM-based languages. However, developers should
+     be aware of differences in naming conventions, type systems, and runtime
+     behavior.
+
+3. **Testing and Integration**:
+
+   - To fully support a JVM-based language, developers should set up a test
+     bench to exercise its features, write language-specific quick-start
+     guides, and ensure compatibility with JPype's existing API.
+
+
+Expanding JPype for Other JVM Languages 
+---------------------------------------
+
+If you wish to extend JPype's capabilities for a specific JVM-based language,
+the following steps are recommended:
+
+1. **Create a Test Bench**:
+
+   - Set up a test environment for your language under JPype's test directory.
+     Use Ivy or Maven to pull in the required JAR files and exercise the
+     language's unique features.
+
+2. **Write a Language-Specific Guide**:
+
+   - Document how your language interacts with JPype, highlighting differences
+     from Java and providing examples for common use cases.
+
+3. **Set Up a Test Harness**:
+
+   - Build a test harness to verify compatibility for each language feature.
+     Place the setup script (e.g., `test_kotlin`, `test_scala`) alongside
+     JPype's existing tests.
+
+Conclusion on Languages
+-----------------------
+
+JPype's ability to interact with JVM-based languages opens up exciting
+possibilities for Python developers. Whether you're working with Kotlin's
+modern syntax, Scala's functional paradigms, Groovy's dynamic scripting, or
+Clojure's immutability, JPype provides a powerful bridge to leverage the
+strengths of these languages within Python. By following the steps outlined
+above, you can ensure smooth integration and expand JPype's capabilities for
+your specific needs.
+
+
+.. _introduction_alternatives:
 
 Alternatives
 ============
+JPype is not the only Python module of its kind that acts as a bridge to Java.
+Depending on your programming requirements, one of the alternatives may be a
+better fit. Specifically, JPype is designed for clarity and high levels of
+integration between the Python and Java virtual machines. As such, it makes use
+of JNI and inherits all the benefits and limitations that JNI imposes. With
+JPype, both virtual machines run in the same process, sharing the same memory
+space and threads. JPype can intermingle Python and Java threads and exchange
+memory quickly. However, the JVM cannot be restarted within the same process,
+and if Python crashes, Java will also terminate since they share the same
+process.
 
-JPype is not the only Python module of its kind that acts as a bridge to
-Java.  Depending on your programming requirements, one of the alternatives
-may be a better fit.  Specifically JPype is designed for clarity and high
-levels of integration between the Python and Java virtual machine.  As such
-it makes use of JNI and thus inherits all of the benefits and limitations
-that JNI imposes.  With JPype, both virtual machines are running in the
-same process and are sharing the same memory space and threads.  JPype can
-thus intermingle Python and Java threads and exchange memory quickly.  But by
-extension you can't start and stop the JVM machine but instead must keep
-both machines throughout the lifespan of the program.  High integration means
-tightly coupled and thus it embodies the musketeers motto.  If Python crashes,
-so does Java as they only have one process to live in.
+Below is a comparison of JPype with other Python-to-Java bridging technologies.
+These alternatives may suit different use cases depending on the level of
+integration, performance requirements, or ease of use.
 
-A few alternatives with different philosophies and limitations are given in the
-following section.  Please take my review comments with the appropriate grain of
-salt.  When I was tasked with finding a replacement for Matlab Java integration
-for our project test bench, I evaluated a number of alternatives
-Python bridge codes.  I selected JPype primarily because it presented
-the most integrated API and documentation which would be suitable for getting
-physicists up to speed quickly.  Thus your criteria may yield a different
-selection.  JPype's underlying technology was underwhelming so I have had
-the pleasure of many hours reworking stuff under the hood.
+.. _introduction_py4j:
 
-For more details on what you can't do with JPype, please see Limitations_.
-
-`Jython <https://jython.org/>`_
--------------------------------
-
-Jython is a reimplementation of Python in Java.  As a result it has much lower
-costs to share data structures between Java and Python and potentially much
-higher level of integration.  Noted downsides of Jython are that it has lagged
-well behind the state of the art in Python; it has a limited selection of
-modules that can be used; and the Python object thrashing is not particularly
-well suited for the Java virtual machine, leading to some known performance issues.
-
-`Py4J <https://py4j.org/>`_
+Py4J
 ---------------------------
+`Py4J <https://py4j.org/>`_ is a Python library that enables communication
+with a JVM through a remote tunnel. Unlike JPype, which embeds the JVM directly
+into the Python process using JNI, Py4J operates the JVM as a separate process,
+allowing Python and Java to run independently. This separation introduces
+several unique advantages:
 
-Py4J uses a remote tunnel to operate the JVM.  This has the advantage that
-the remote JVM does not share the same memory space and multiple JVMs can
-be controlled.  It provides a fairly general API, but the overall integration
-to Python is as one would expect when operating a remote channel operating
-more like an RPC front-end.  It seems well documented and capable.  Although
-I haven't done benchmarking, a remote access JVM will have a
-transfer penalty when moving data.
+1. **Cross-Architecture Compatibility**: Py4J allows Python and Java to run on
+different architectures or platforms. For example, you can run Python on a
+64-bit architecture while connecting to a 32-bit JVM, or even run Python and
+Java on entirely different machines. This flexibility is particularly useful
+for distributed systems or environments where the Python and Java components
+have different hardware or software requirements.
 
-`Jep <https://github.com/ninia/jep>`_
--------------------------------------
+2. **Restartable Java Sessions**: Because Py4J operates the JVM as a separate
+process, it is possible to stop and restart the JVM without restarting the
+Python process. This is a feature frequently requested by JPype users but is
+not feasible with JPype due to its use of JNI, which tightly couples the Python
+and Java memory spaces. Py4J's ability to restart the JVM makes it suitable for
+applications requiring dynamic lifecycle management of the Java environment.
 
-Jep stands for Java embedded Python.  It is a mirror image of JPype.  Rather
-that focusing on accessing Java from within Python, this project is geared
-towards allowing Java to access Python as sub-interpreter.  The syntax for
-accessing Java resources from within the embedded Python is quite similar
-with support for imports.  Notable downsides are that although Python supports
-multiple interpreters many Python modules do not, thus some of the advantages
-of the use of Python many be hard to realize.  In addition, the documentation
-is a bit underwhelming thus it is difficult to see how capable it is from the
-limited examples.
+3. **Memory Isolation**: Since Python and Java run in separate processes, Py4J
+provides complete memory isolation between the two environments. This ensures
+that a crash in the JVM does not affect the Python process and vice versa. Such
+isolation can be critical for applications requiring high reliability and fault
+tolerance.
 
-`PyJnius <https://github.com/kivy/pyjnius>`_
---------------------------------------------
+4. **RPC-Style Communication**: Py4J operates more like a remote procedure call
+(RPC) framework, where Python sends commands to the JVM and receives responses.
+While this approach is less integrated than JPype's direct JNI-based
+interaction, it is well-suited for applications where tight coupling between
+Python and Java is not required.
 
-PyJnius is another Python to Java only bridge.  Syntax is somewhat similar to
-JPype in that classes can be loaded in and then have mostly Java native syntax.
-Like JPype, it provides an ability to customize Java classes so that they
-appear more like native classes.  PyJnius seems to be focused on Android.  It
-is written using Cython .pxi files for speed.  It does not include a method to
-represent primitive arrays, thus Python list must be converted whenever an
-array needs to be passed as an argument or a return.  This seems pretty
-prohibitive for scientific code.  PyJnius appears is still in active development.
+Despite these advantages, Py4J has some limitations compared to JPype:
 
-`Javabridge <https://github.com/CellProfiler/python-javabridge/>`_
-------------------------------------------------------------------
+- **Performance**: The remote communication introduces a transfer penalty when
+  moving data between Python and Java, making Py4J less suitable for
+  applications requiring high-performance data exchange.
 
-Javabridge is direct low level JNI control from Python. The integration level
-is quite low on this, but it does serve the purpose of providing the JNI API
-to Python rather than attempting to wrap Java in a Python skin.  The downside
-being of course you would really have to know a lot of JNI to make effective
-use of it.
+- **Integration**: Py4J does not provide the seamless integration of Java
+  objects into Python syntax that JPype offers. For example, Java collections
+  and arrays do not behave like native Python objects.
 
-`jpy <https://github.com/bcdev/jpy>`_
--------------------------------------
-
-This is the most similar package to JPype in terms of project goals.  They have
-achieved more capabilities in terms of a Java from Python than JPype which does
-not support any reverse capabilities.  It is currently unclear if this project
-is still active as the most recent release is dated 2014.  The integration
-level with Python is fairly low currently though what they do provide is a
-similar API to JPype.
-
-`JCC <https://lucene.apache.org/pylucene/jcc/>`_
-------------------------------------------------
-JCC is a C++ code generator that produces a C++ object interface wrapping a Java
-library via Java's Native Interface (JNI). JCC also generates C++ wrappers that
-conform to Python's C type system making the instances of Java classes directly
-available to a Python interpreter.  This may be handy if your goal is not
-to make use of all of Java but rather have a specific library exposed to Python.
-
-`VOC <https://beeware.org/project/projects/bridges/voc/>_`
-----------------------------------------------------------
-A transpiler that converts Python bytecode into Java bytecode part of the
-BeeWare project.  This may be useful if getting a smallish piece of
-Python code hooked into Java.  It currently list itself as early development.
-This is more in the reverse direction as its goals are making Python code
-available in Java rather providing interaction between the two.
-
-`p2j <https://github.com/chrishumphreys/p2j>`_
-----------------------------------------------
-
-This lists itself as "A (restricted) python to java source translator".
-Appears to try to convert Python code into Java.  Has not been actively
-maintained since 2013.  Like VOC this is primilarly for code translation rather
-that bridging.
+Py4J is a good choice for applications requiring cross-architecture
+compatibility, restartable JVM sessions, or memory isolation between Python and
+Java. However, for applications needing tight integration and high-performance
+data exchange, JPype may be a better fit.
 
 
-About this guide
+.. _introduction_jep:
+
+Jep
+-------
+`Jep <https://github.com/ninia/jep>`_ stands for Java embedded Python. It is
+designed to allow Java to access Python as a sub-interpreter. The syntax for
+accessing Java resources from within the embedded Python is similar to JPype,
+with support for imports.  However, Jep has limitations due to Python's
+sub-interpreter model, which restricts the use of many Python modules.
+Additionally, Jep's documentation is sparse, making it difficult to assess its
+full capabilities without experimentation. Jep is best suited for applications
+where Java needs to embed Python for scripting purposes.
+
+.. _introduction_pyjnius:
+
+PyJnius
+-------
+PyJnius <https://github.com/kivy/pyjnius>_ is another Python-to-Java bridge.
+Its syntax is somewhat similar to JPype, allowing classes to be loaded and
+accessed with Java-native syntax. PyJnius supports customization of Java
+classes to make them appear more Pythonic. However, PyJnius lacks support for
+primitive arrays, requiring Python lists to be converted manually whenever an
+array is passed as an argument or return value. This limitation makes PyJnius
+less suitable for scientific computing or applications requiring efficient
+array manipulation. PyJnius is actively developed and is particularly focused
+on Android development, making it a strong choice for mobile applications
+requiring Python-Java integration.
+
+.. _introduction_jython:
+
+Jython
+------
+Jython <https://www.jython.org/>_ is a reimplementation of Python in Java. It
+allows Python code to run directly on the JVM, providing seamless access to
+Java libraries. Jython, while limited to Python 2, played a significant role in 
+bridging Python and Java in earlier development eras. It may still be useful for
+legacy systems or environments where Python 2 compatibility is required. Its 
+development has largely stalled, and it lacks support for popular Python 
+libraries like NumPy and pandas, making it unsuitable for modern applications.
+
+.. _introduction_javabridge:
+
+Javabridge
+-----------
+`Javabridge <https://github.com/CellProfiler/python-javabridge/>`_  provides 
+direct low-level JNI control from Python. Its integration
+level is low, offering only the JNI API to Python rather than attempting to
+wrap Java in a Python-friendly interface. While Javabridge can be useful for
+advanced users familiar with JNI, it requires significant expertise to use
+effectively. Javabridge is best suited for applications needing fine-grained
+control over JNI interactions.
+
+.. _introduction_jcc:
+
+JCC
+---
+`JCC <https://lucene.apache.org/pylucene/jcc/>`_ is a C++ code generator that
+produces a C++ object interface wrapping a Java library via JNI. JCC also
+generates C++ wrappers conforming to Python's C type system, making instances
+of Java classes directly available to a Python interpreter. JCC is actively
+maintained as part of PyLucene and is useful for exposing specific Java
+libraries to Python rather than providing general Java access. It is best
+suited for applications requiring tight integration with libraries like Apache
+Lucene.  It is best suited for applications requiring tight integration with
+specific Java libraries.
+
+.. _introduction_about_this_guide:
+
+About this Guide
 ================
 
-The JPype User Guide is targeted toward programmers who are strong in either
-Python who wish to make use of Java or those who are strong with Java and are
-looking to use Python as a Java development tool.  As such we will compare and
-contrast the differences between the languages and provide examples suitable
-to help illustrate how to translate from one language to the other on the
-assumption that being strong in one language will allow you to easily grasp
-the corresponding relations in the other.  If you don't have a strong
-background in either language an appropriate language tutorial may be
-necessary.
+The JPype User Guide is designed for two primary audiences:
 
-JPype will hide virtually all of the JNI layer such that there is no direct
-access to JNI concepts.  As such attempting to use JNI knowledge will likely
-lead to incorrect assumptions such as incorrectly attempting to use JNI
-naming and method signatures in the JPype API.  Where JNI limitations do
-appear we will discuss the consequences imposed in programming.  No knowledge
-of JNI is required to use this guide or JPype.
+1. **Python Programmers**: Those who are proficient in Python and wish to
+  leverage Java libraries or integrate Java functionality into their Python
+  projects.  
+2. **Java Programmers**: Those who are experienced in Java and want
+  to use Python as a development tool for Java, particularly for tasks like
+  visualization, debugging, or scripting.
 
-JPype only works with Python 3, thus all examples will be using Python
-version 3 syntax and assume the use of the Python 3 new style object model.
-The naming conventions of JPype follow the Java rules rather than those of
-Python.  This is a deliberate choice as it would be dangerous to try to
-mangle Java method and field names into Python conventions and risk
-a name collision.  Thus if method must have Java conventions then the rest
-of the module should follow the same pattern for consistency.
+This guide aims to bridge the gap between these two languages by comparing and
+contrasting their differences, providing examples that illustrate how to
+translate concepts from one language to the other. It assumes that readers are
+proficient in at least one of the two languages. If you lack a strong
+background in either Python or Java, you may need to consult tutorials or
+introductory materials for the respective language before proceeding.
+
+Key Features of the Guide -------------------------
+
+- **No JNI Knowledge Required**: JPype abstracts away the complexities of the
+  Java Native Interface (JNI). Users do not need to understand JNI concepts or
+  its naming conventions to use JPype effectively. In fact, relying on JNI
+  knowledge may lead to incorrect assumptions about the JPype API. Where JNI
+  imposes limitations, the guide explains the consequences in practical
+  programming terms.
+
+- **Python 3 Compatibility**: JPype supports only Python 3. All examples in
+  this guide use Python 3 syntax and assume familiarity with Python's new-style
+  object model. If you're using an older version of Python, you will need to
+  upgrade to Python 3 to use JPype.
+
+- **Java Naming Conventions**: JPype adheres to Java's naming conventions for
+  methods and fields to ensure consistency and avoid potential name collisions.
+  While this may differ from Python's conventions, it is a deliberate choice to
+  maintain compatibility with Java libraries and APIs.
+
+By following this guide, you’ll learn how to use JPype to seamlessly integrate
+Python and Java, unlocking the strengths of both languages in your projects.
+
+
+.. _introduction_getting_jpype_started:
 
 Getting JPype started
 ---------------------
@@ -541,105 +923,137 @@ We will detail the starting process more later in the guide.  See
 `Starting the JVM`_.
 
 
+.. _introduction_jpype_concepts:
 
 JPype Concepts
-***************
+==============
 
-At its heart, JPype is about providing a bridge to use Java within Python.
-Depending on your perspective that can either be a means of accessing Java
-libraries from within Python or a way to use Java using Python syntax for
-interactivity and visualization.  This mean not only exposing a limited API but
-instead trying to provide the entirety of the Java language with Python.
+At its heart, JPype is about providing a bridge to use Java within Python. 
+Depending on your perspective, this can either be a means of accessing Java 
+libraries from within Python or a way to use Java with Python syntax for 
+interactivity and visualization. JPype aims to provide access to the entirety 
+of the Java language from Python, mapping Java concepts to their closest Python 
+equivalents wherever possible.
 
-To do this, JPype maps each of the Java concepts to the nearest concept in
-Python wherever they are similar enough to operate without confusion.  We have
-tried to keep this as Pythonic as possible, though it is never without some
-rough edges.
+Python and Java share many common concepts, such as types, classes, objects, 
+functions, methods, and members. However, there are significant differences 
+between the two languages. For example, Python lacks features like casting, 
+type declarations, and method overloading, which are central to Java's strongly 
+typed paradigm. JPype introduces these concepts into Python syntax while 
+striving to maintain Pythonic usability.
 
-Python and Java share many of the same concepts.  Types, class, objects,
-function, methods, and members.  But in other places they are rather different.
-Python lacks casting, type declarations, overloading, and many other features of
-a strongly typed language, thus we must expose those concepts into the Python
-syntax as best we can.  Java for instance has class annotation and Python
-have class decorators.  Both serve the purpose of augmenting a class with
-further information, but are very different in execution.
+This section breaks down JPype's core concepts into nine distinct categories. 
+These categories define how Java elements are mapped into Python and how they 
+can be used effectively.
 
-We have broken the mapping down in nine distinct concepts.  Some
-elements serve multiple functions.
+.. _introduction_core_concepts:
 
-Type Factories
-  These are meta classes that allow one to declare a particular
-  Java type in Python.  The result of type factories are wrapper classes.
-  (JClass_ and JArray_)  Factories also exist to implement Java classes
-  from within Python (JProxy_)
+Core Concepts
+-------------
 
-Meta Classes
-  These are classes to describe different properties of Java classes such as
-  to check if a class is an Interface. (JInterface_)
+1. **Type Factories**:
 
-Base Classes
-  These are JPype names for Java classes in Python that exist without importing
-  any specific Java class.  Concepts such as Object, String, and Exception are
-  defined and can be used in instance checks.  For example, to catch all Java
-  exceptions regardless of type, we would catch ``JException``.  These are mainly
-  for convenience though they do have some extra functionality.  Most of these
-  functions are being phased out in favor of Java syntax.  For example,
-  catching ``java.lang.Throwable`` will catch everything that ``JException``
-  will catch.  (Jarray_, JObject_, JString_, and JException_)
+   - Type factories allow you to declare specific Java types in Python. These 
+     factories produce wrapper classes for Java types.
 
-Wrapper Classes
-  These correspond to each Java class.  Thus can be used to access static
-  variables, static methods, cast, and construct object.  They are used
-  wherever a Java type would be used in the Java syntax such as creating an
-  array or accessing the class instance.  These class wrappers are customized in
-  Python to allow a direct mapping from Java concepts to Python one.  These
-  are all created dynamically corresponding to each Java class.  For most
-  of this document we will refer to these simply as a "class".
-  (`java.lang.Object`_, `java.lang.String`_, etc) Many wrappers
-  are customized to match Python abstract base classes ABC
-  (`java.util.List`_, `java.util.Map`_)
+   - Examples include `JClass` for Java classes and `JArray` for Java arrays.
 
-Object Instances
-  These are Java objects.  They operate just like Python objects with
-  Java public fields mapped to Python attributes and Java methods to
-  Python methods.  For this document we will refer to an object instance
-  simply as an "object".  The object instance is split into two halves.  The
-  Python portion is referred to as the "handle" that points the Java
-  "instance".  The lifetime of the "instance" is tied to the handle thus
-  Java objects do not disappear until the Python handle is disposed of.
-  Objects can be cast_ to match the required type and hold methods_ and
-  fields.
+   - Factories also exist for implementing Java classes from within Python 
+     using proxies (e.g., `JProxy`).
 
-`Primitive types`_
-  Each of the 8 Java primitive types are defined.  These are used to cast
-  to a Java type or to construct arrays.  (`JBoolean`_, `JChar`_, `JByte`_,
-  `JShort`_, `JInt`_, `JLong`_, `JFloat`_, and `JDouble`_)
+2. **Meta Classes**:
 
-Decorators
-  Java has a number of keywords such as extending a class or implementing an
-  interface.  Those pieces of meta data can't directly be expressed with the
-  Python syntax, but instead have been been expressed as annotations that
-  can be placed on classes or functions to augment them with Java specific
-  information. (`@JImplements`_, `@JOverride`_, `@JImplementationFor`_)
+   - Meta classes describe properties of Java classes, such as whether a class 
+     is an interface.
 
-Mapping Java syntax to Python
-  Many Java concepts like try with resources can be mapped into Python
-  directly (as the ``with`` statement), or Java try, throw, catch mapping to
-  Python try, raise, except.  Others such as synchronize do not have an exact
-  Python match.  Those have instead been mapped to special functions
-  that interact with Python syntax..
-  (synchronized_, `with`, `try`, import_)
+   - Example: `JInterface` can be used to check if a Java class is an interface.
 
-JVM control functions
-  The JVM requires specific actions corresponding to JNI functions in order
-  to start, shutdown, and define threading behavior.  These top level control
-  functions are held in the ``jpype`` module. (startJVM_, shutdownJVM_)
+3. **Base Classes**:
 
-We will detail each of these concepts in greater detail in the later sections.
+   - JPype provides base classes for common Java types, such as `Object`, 
+     `String`, and `Exception`.
 
+   - These classes can be used for convenience, such as catching all Java 
+     exceptions with `JException`.
+
+   - Example: `java.lang.Throwable` can be caught using `JException`.
+
+4. **Wrapper Classes**:
+
+   - Wrapper classes correspond to individual Java classes and are dynamically 
+     created by JPype.
+
+   - They allow access to static variables, static methods, constructors, and 
+     casting.
+
+   - Example: `java.lang.Object`, `java.lang.String`.
+
+5. **Object Instances**:
+
+   - These are Java objects created or accessed within Python. They behave like 
+     Python objects, with Java fields mapped to Python attributes and Java 
+     methods mapped to Python methods.
+
+   - Example: A Java `String` object can be accessed and manipulated like a 
+     Python string.
+
+6. **Primitive Types**:
+
+   - JPype maps Java's primitive types (e.g., `boolean`, `int`, `float`) into 
+     Python classes.
+
+   - Example: `JInt`, `JFloat`, `JBoolean`.
+
+7. **Decorators**:
+
+   - JPype provides decorators to augment Python classes and methods with 
+     Java-specific functionality.
+
+   - Examples include `@JImplements` for implementing Java interfaces and 
+     `@JOverride` for overriding Java methods.
+
+8. **Mapping Java Syntax to Python**:
+
+   - JPype maps Java syntax to Python wherever possible. For example:
+
+     - Java's `try`, `throw`, and `catch` are mapped to Python's `try`, `raise`, 
+       and `except`.
+
+     - Java's `synchronized` keyword is mapped to Python's `with` statement 
+       using `jpype.synchronized`.
+
+9. **JVM Control Functions**:
+
+   - JPype provides functions for controlling the JVM, such as starting and 
+     shutting it down.
+
+   - Examples: `jpype.startJVM()` and `jpype.shutdownJVM()`.
+
+.. _introduction_additional_details:
+
+Additional Details
+------------------
+
+- **Name Mangling**:
+
+  - JPype handles naming conflicts between Java and Python by appending an 
+    underscore (`_`) to conflicting names.
+
+  - Example: A Java method named `with` will appear as `with_` in Python.
+
+- **Lifetime Management**:
+
+  - Java objects remain alive as long as their corresponding Python handles 
+    exist. Once the Python handle is disposed, the Java object is eligible for 
+    garbage collection.
+
+By understanding these core concepts, you can effectively use JPype to 
+integrate Python and Java, leveraging the strengths of both languages.
+
+.. _introduction_name_mangling:
 
 Name mangling
-=============
+-------------
 
 When providing Java package, classes, methods, and fields to Python,
 there are occasionally naming conflicts.  For example, if one has a method
@@ -661,6 +1075,68 @@ The following Python words will trigger name mangling of a Java name:
 =========== =========== ============= =========== ==========
 
 
+.. _introduction_best_practices:
+
+Best Practices on JVM Startup
+-----------------------------
+
+To ensure smooth and efficient usage of JPype, follow these best practices:
+
+1. **Start the JVM Early**: Always start the JVM (`jpype.startJVM()`) at the
+beginning of your program to avoid issues with imports and initialization.
+Ensure the `classpath` and other arguments are properly configured.
+
+2. **Use Explicit Type Conversions**: When interacting with Java methods, use
+explicit type conversions (e.g., `JInt`, `JString`) to ensure the correct
+method overload is selected and avoid ambiguity.
+
+3. **Avoid Restarting the JVM**: JPype does not support restarting the JVM
+after it has been shut down. Design your application to start the JVM once and
+keep it running for the program's lifetime.
+
+4. **Optimize Data Transfers**: For large data transfers between Python and
+Java, use NumPy arrays or Java buffers to minimize overhead and improve
+performance.
+
+5. **Minimize Cross-Language Calls**: Reduce frequent back-and-forth calls
+between Python and Java, as each call incurs a performance cost. Cache Java
+objects in Python when possible.
+
+6. **Handle Exceptions Properly**: Always catch Java exceptions
+(`jpype.JException`) and handle them appropriately. Use the `stacktrace()`
+method to debug issues.
+
+7. **Use Proxies for Java Interfaces**: When implementing Java interfaces in
+Python, use the `@JImplements` decorator for better error checking and
+integration.
+
+8. **Avoid Reference Loops**: Ensure Python objects used in proxies do not hold
+references to Java containers to prevent memory leaks due to uncollectable
+reference loops.
+
+9. **Use `convertStrings` Setting Wisely**: Decide whether to enable or disable
+automatic string conversion (`convertStrings=False`) based on your
+application's needs. Disabling it is recommended for better control and
+performance.
+
+10. **Test with Multiple JVM Versions**: If your application targets different
+Java versions, test thoroughly to ensure compatibility with the required APIs
+and features.
+
+11. **Document Your Code**: Clearly document the usage of JPype in your
+codebase, especially for developers unfamiliar with Java-Python integration.
+
+12. **Monitor Memory Usage**: Be mindful of memory usage when working with
+large Java objects or arrays. Use Java's garbage collection hooks and Python's
+`gc` module to manage resources effectively.
+
+
+By adhering to these best practices, you can maximize the performance,
+reliability, and maintainability of your JPype-based applications.
+
+
+.. _jpype_types:
+
 JPype Types
 ***********
 
@@ -669,6 +1145,8 @@ object which has a defined type.  A type defines the data that the variable is
 currently holding and how that variable can be used.  In this chapter we will
 learn how Java and Python types relate to one another, how to create import
 types from Java, and how to use types to create Java objects.
+
+.. _jpype_types_stay_strong_in_a_weak_language:
 
 Stay strong in a weak language
 ==============================
@@ -682,7 +1160,7 @@ existing type to add new behaviors.  Python methods can in principle take any
 type of object as an argument, however if the interface is limited it will produce
 a TypeError to indicate a particular argument requires a specific type.  Python
 objects and classes are open.  Each class and object is basically a dictionary
-storing a set of key value pairs.  Types implemented in native C are often more
+storing a set of key-value pairs.  Types implemented in native C are often more
 closed and thus can't have their method dictionaries or data members altered
 arbitrarily.  But subject to a few restrictions based implementation, it is
 pretty much the wild west.
@@ -703,6 +1181,8 @@ Java norm and no standard mechanism exists.
 
 Thus we need to introduce a few Java terms to the Python vocabulary.  These are
 "conversion" and "cast".
+
+.. _jpype_types_java_conversions:
 
 Java conversions
 ----------------
@@ -823,6 +1303,7 @@ Type enforcement appears in three different places within JPype.  These are
 whenever a Java method is called, whenever a Java field is set, and whenever
 Python returns a value back to Java.
 
+
 .. _methods:
 
 Method resolution
@@ -845,6 +1326,8 @@ If no method is found that matches the provided arguments, the method dispatch
 will produce a ``TypeError``.  This is the exact same outcome that Python uses
 when enforcing type safety within a function.  If a type doesn't match a
 ``TypeError`` will be produced.
+
+.. _jpype_types_method_resolution_dispatch_example:
 
 Dispatch example
 ----------------
@@ -878,89 +1361,97 @@ the standard Java matching rules.  Types can implicitly grow to larger types
 but will not shrink without an explicit cast.
 
 
+.. _jpype_types_primitive_types:
+
 Primitive Types
 ===============
 
-Unlike Python, Java makes a distinction between objects and primitive data
-types.  Primitives represent the minimum data that can be manipulated by a
-computer.  These stand in contrast to objects which have the ability to contain any
-combination of data types and object within themselves, and can be inherited
-from.
+Unlike Python, Java makes a distinction between objects and primitive data types. 
+Primitives represent the minimum data that can be manipulated by a computer. These 
+stand in contrast to objects, which have the ability to contain any combination of 
+data types and objects within themselves, and can be inherited from.
 
-Java primitives come in three flavors.  The logical primitive ``boolean`` can
-only take the logical value true and false.  The textual primitive ``char``
-represents one character in a string.  Numerical primitives are intended for
-fixed point or floating point calculations.  Numerical primitives come in many
-sizes depending on how much storage is required.  In Java, integer numerical
-primitives are always signed and thus can only reach half their range in terms
-of bits up or down relative to their storage size.
+Java primitives come in three categories:
 
-JPype has mapped each of the primitive types into Python classes.  To avoid
-conflicts with Python, JPype has named each primitive with a capital letter
-``J`` followed by the primitive name starting with an upper case letter.
+- **Logical**: `boolean` (true/false values).
+- **Textual**: `char` (single Unicode character).
+- **Numerical**: Fixed-point or floating-point numbers of varying sizes.
 
-.. _JBoolean:
+JPype maps Java primitives to Python classes. To avoid naming conflicts with 
+Python, JPype prefixes each primitive type with `J` (e.g., `JBoolean`, `JInt`).
+
+.. _jpype_types_primitive_types_jboolean:
 
 JBoolean
-  A boolean is the logical primitive as it can only take values ``True`` and
-  ``False``.  It should properly be an extension of the Python concept ``bool``
-  but that type is not extendable.  Thus instead it must inherit from ``int``.
-  This type is rarely seen in JPype as the values ``True`` and ``False``
-  are considered an exact match to ``JBoolean`` argument.  Methods which
-  return a ``JBoolean`` will always return a Python ``bool`` rather than
-  a Java primitive type.
+--------
 
-.. _JChar:
+Represents a logical value (`True` or `False`). In JPype, `True` and `False` are 
+exact matches for `JBoolean`. Methods returning a `JBoolean` will always return a 
+Python `bool`.
+
+.. code-block:: python
+
+   # Example usage
+   java_boolean = JBoolean(True)
+   print(java_boolean)  # Output: True
+
+.. _jpype_types_primitive_types_jchar:
 
 JChar
-  A character is the textual primitive that corresponds to exactly one character
-  in a string.  Or at least that was the concept at the time.  Java characters
-  can only represent 16 bits.  But there are currently 143,924
-  defined characters in Unicode.  Thus, there are certain characters that
-  can only be represented as two Unicode characters.  The textual primitives
-  are not intended to perform numerical functions, but are instead encoded.
-  As per the old joke, what does `1` plus `1` equal?  Which of course the
-  correct answer is `b`.  As such characters should not be treated as just
-  another unsigned short.  Python has no concept of a textual only type.
-  Thus when returning a character type, we instead return a string length 1.
-  ``JChar`` supports the Java numerical operations, but just as in Java it will
-  automatically promote to a Python ``int`` when used in a numerical operation.
-  There are of course lots of useful mathematical operations that can be
-  performed on textual primitives, but doing so risks breaking the encoding
-  and can result in uninterpretable data.
+-----
 
-.. _JByte:
-.. _JShort:
-.. _JInt:
-.. _JLong:
+Represents a single character. Java `char` types are 16-bit Unicode characters, 
+but some Unicode characters require more than 16 bits. JPype maps `JChar` to 
+Python strings of length 1. While `JChar` supports numerical operations, modifying 
+characters numerically can corrupt their encoding.
 
-JByte, Short, Int, Long
-  These types represent fixed point quantities with ranges of 8, 16, 32, and
-  64 bits.  Each of these type inherit from a Python ``int`` type.  A method
-  or field returning an integer primitive will return a type derived from
-  ``int``.  Methods accepting an integer primitive will take either an
-  Java integer primitive or a Python ``int`` or anything that quacks like a
-  ``int`` so long as it can be converted into that primitive range without
-  truncation.
+.. code-block:: python
 
-.. _JFloat:
-.. _JDouble:
+   # Example usage
+   java_char = JChar('A')
+   print(java_char)  # Output: 'A'
+
+.. _jpype_types_primitive_types_jbyte,_jshort,_jint,_jlong:
+
+JByte, JShort, JInt, JLong
+--------------------------
+
+These types represent signed integers of varying sizes:
+
+- **JByte**: 8 bits
+- **JShort**: 16 bits
+- **JInt**: 32 bits
+- **JLong**: 64 bits
+
+JPype maps these types to Python's `int`. Methods returning integer primitives will 
+return Python `int` values. Methods accepting integer primitives will accept Python 
+integers or any object that can be converted into the appropriate range.
+
+.. code-block:: python
+
+   # Example usage
+   java_int = JInt(42)
+   print(java_int)  # Output: 42
+
 
 JFloat, JDouble
-  These two types hold floating point and correspond to either single point
-  (32 bit) or double point (64 bit) precision.  Python does not have a concept
-  of precision and thus both of these derive from the Python type ``float``.
-  As per Java rules numbers greater than the range correspond to the values
-  of positive and negative infinity.  Conversions from Python types are
-  ranged check and will produce a ``OverflowError`` if the value doesn't
-  fit into the request types.  If an overflow error is not desired, first
-  cast the value into the request size prior to calling.  Methods that return
-  a Java floating point primitive will always return a value derived from
-  ``float``.
+---------------
 
-The classes for Java primitives are closed and should not be extended.
-As with all Java values any information attached to the Python representation
-is lost when passing that value to Java.
+These types represent floating-point numbers:
+
+- **JFloat**: 32-bit precision
+- **JDouble**: 64-bit precision
+
+JPype maps these types to Python's `float`. Numbers exceeding the range of `JFloat` 
+or `JDouble` will result in positive or negative infinity. Range checks are 
+performed when converting Python types, and an `OverflowError` will be raised if 
+the value is out of bounds.
+
+.. code-block:: python
+
+   # Example usage
+   java_double = JDouble(3.14)
+   print(java_double)  # Output: 3.14
 
 
 Objects & Classes
@@ -1123,7 +1614,7 @@ an array instance with multiple dimensions we would use ``JInt[5,10]``
 which would create a rectangular array which was 5 by 10.   To create a
 jagged array we would substitute ``:`` for the final dimensions.  So
 ``JInt[5,:]`` is a length 5 array of an array of ``int[]``.  Multidimensional
-array types are specificed like ``JInt[:,:,:]`` would be a Java type
+array types are specificed like ``JInt[:,:,:]``, which would be a Java type
 ``int[][][]``.  This applied to both primitive and object types.
 
 JArray is an abstract base class for all Java classes that are produced.
@@ -1518,6 +2009,130 @@ following differences:
   received from Java code can be used without problem.
 
 
+Array Type Creation
+===================
+
+JPype provides seamless support for Java arrays. You can create array types for 
+any Java class or primitive type by appending `[:]` to the class or type. This 
+feature allows you to work with Java arrays directly in Python, including creating 
+new arrays, accessing elements, slicing, and transferring data.
+
+Creating Array Types
+--------------------
+
+To create an array type, append `[:]` to any Java class or primitive type. For 
+example:
+
+- `JInt[:]` creates a Java array type for integers.
+- `java.lang.Object[:]` creates a Java array type for objects.
+- `java.util.List[:]` creates a Java array type for lists.
+
+Once the array type is created, you can use it to construct arrays, cast Python 
+sequences to Java arrays, or define multidimensional arrays.
+
+.. code-block:: python
+
+   # Example: Creating array types
+   int_array_type = JInt[:]
+   object_array_type = java.lang.Object[:]
+
+   # Creating arrays
+   int_array = int_array_type([1, 2, 3])
+   object_array = object_array_type([None, "Hello", 42])
+
+   print(int_array)  # Output: [1, 2, 3]
+   print(object_array)  # Output: [null, Hello, 42]
+
+Multidimensional Arrays
+-----------------------
+
+JPype supports the creation of multi-dimensional arrays by appending additional 
+dimensions using `[:]`. For example:
+
+- `JInt[:, :]` creates a two-dimensional array type for integers.
+- `java.lang.Object[:, :]` creates a two-dimensional array type for objects.
+- `JDouble[:, :, :]` creates a three-dimensional array type for double-precision 
+  floating-point numbers.
+
+
+When creating multi-dimensional arrays, you can initialize them using nested 
+Python lists. JPype automatically converts nested lists into the appropriate 
+Java array structure.
+
+.. code-block:: python
+
+   # Example: Creating multidimensional arrays
+   int_2d_array_type = JInt[:, :]
+   int_2d_array = int_2d_array_type([[1, 2], [3, 4]])
+
+   print(int_2d_array[0][1])  # Output: 2
+
+   # Creating a 3D array
+   double_3d_array_type = JDouble[:, :, :]
+   double_3d_array = double_3d_array_type([[[1.1, 2.2], [3.3, 4.4]], [[5.5, 6.6], [7.7, 8.8]]])
+
+   print(double_3d_array[1][0][1])  # Output: 6.6
+
+Jagged Arrays
+-------------
+
+Java supports jagged arrays, which are arrays of arrays with varying lengths. To 
+create jagged arrays in JPype, replace the final dimension with `[:]`. For example:
+
+- `JInt[5, :]` creates a jagged array of integers with 5 rows.
+- `java.lang.Object[3, :]` creates a jagged array of objects with 3 rows.
+
+Jagged arrays can be initialized using nested Python lists with varying lengths.
+
+.. code-block:: python
+
+   # Example: Creating jagged arrays
+   jagged_int_array_type = JInt[3, :]
+   jagged_int_array = jagged_int_array_type([[1, 2], [3, 4, 5], [6]])
+
+   print(jagged_int_array[1][2])  # Output: 5
+
+Array Operations
+----------------
+
+JPype arrays support Python-style operations, including:
+
+- **Indexing**: Access individual elements using the `[]` operator.
+- **Slicing**: Create views of the array using slice notation (`start:stop:step`).
+- **Length**: Use `len(array)` to get the size of the array.
+- **Iteration**: Use Python `for` loops to iterate over array elements.
+
+.. code-block:: python
+
+   # Example: Array operations
+   int_array = JInt[:](5)  # Create an array of size 5
+   int_array[0] = 42       # Set the first element
+   print(len(int_array))   # Output: 5
+
+   for value in int_array:
+       print(value)        # Iterate over elements
+
+Buffer Transfers
+----------------
+
+JPype arrays support efficient buffer transfers for primitive types. You can use 
+Python's `memoryview` to access the underlying memory of a Java array, enabling 
+fast data exchange between Python and Java.
+
+.. code-block:: python
+
+   # Example: Buffer transfer
+   import numpy as np
+
+   int_array = JInt[:](5)
+   int_array[:] = [1, 2, 3, 4, 5]  # Transfer data to Java array
+
+   buffer = memoryview(int_array)
+   np_array = np.array(buffer)     # Convert to NumPy array
+
+   print(np_array)  # Output: [1, 2, 3, 4, 5]
+
+
 .. _import:
 
 Importing Java classes
@@ -1653,76 +2268,124 @@ dictionary
 Exception Handling
 ==================
 
-Error handling is an important part of any non-trivial program.  All Java
-exceptions occurring within Java code raise a ``jpype.JException`` which
-derives from Python Exception. These can be caught either using a specific Java
-exception or generically as a ``jpype.JException`` or ``java.lang.Throwable``.
-You can then use the ``stacktrace()``, ``str()``, and args to access extended
+Error handling is an important part of any non-trivial program. All Java
+exceptions occurring within Java code raise a `jpype.JException`, which derives
+from Python's `Exception`. These can be caught either using a specific Java
+exception or generically as a `jpype.JException` or `java.lang.Throwable`. You
+can then use the `stacktrace()`, `str()`, and `args` to access extended
 information.
 
-Here is an example:
+Catching a Specific Java Exception
+----------------------------------
+
+The following example demonstrates catching a specific Java exception:
 
 .. code-block:: python
 
-  try :
-      # Code that throws a java.lang.RuntimeException
-  except java.lang.RuntimeException as ex:
-      print("Caught the runtime exception : ", str(ex))
-      print(ex.stacktrace())
+    try:
+        # Code that throws a java.lang.RuntimeException
+    except java.lang.RuntimeException as ex:
+        print("Caught the runtime exception:", str(ex))
+        print(ex.stacktrace())
 
-Multiple java exceptions can be caught together or separately:
+Catching Multiple Java Exceptions
+---------------------------------
+
+Multiple Java exceptions can be caught together or separately:
 
 .. code-block:: python
 
-  try:
-      # ...
-  except (java.lang.ClassCastException, java.lang.NullPointerException) as ex:
-      print("Caught multiple exceptions : ", str(ex))
-      print(ex.stacktrace())
-  except java.lang.RuntimeException as ex:
-      print("Caught runtime exception : ", str(ex))
-      print(ex.stacktrace())
-  except jpype.JException as ex:
-      print("Caught base exception : ", str(ex))
-      print(ex.stacktrace())
-  except Exception as ex:
-      print("Caught python exception :", str(ex))
+    try:
+        # Code that may throw various exceptions
+    except (java.lang.ClassCastException, java.lang.NullPointerException) as ex:
+        print("Caught multiple exceptions:", str(ex))
+        print(ex.stacktrace())
+    except java.lang.RuntimeException as ex:
+        print("Caught runtime exception:", str(ex))
+        print(ex.stacktrace())
+    except jpype.JException as ex:
+        print("Caught base exception:", str(ex))
+        print(ex.stacktrace())
+    except Exception as ex:
+        print("Caught Python exception:", str(ex))
+
+Raising Exceptions from Python to Java
+--------------------------------------
 
 Exceptions can be raised in proxies to throw an exception back to Java.
-
 Exceptions within the JPype core are issued with the most appropriate Python
-exception type such as ``TypeError``, ``ValueError``, ``AttributeError``, or
-``OSError``.
+exception type, such as `TypeError`, `ValueError`, `AttributeError`, or
+`OSError`.
 
-Exception aliasing
+Raising Exceptions in Proxies
+-----------------------------
+
+JPype allows Python proxies to raise exceptions that are propagated back to
+Java. This is particularly useful when implementing Java interfaces in Python
+and handling invalid inputs or unexpected conditions.
+
+When an exception is raised in Python, it is wrapped in a `RuntimeException` in
+Java. If the exception propagates back to Python, it is unpacked to return the
+original Python exception.
+
+Example
+~~~~~~~
+
+The following example demonstrates raising a Python exception from a proxy:
+
+.. code-block:: python
+
+    import jpype
+    import jpype.imports
+
+    jpype.startJVM()
+
+    from java.util.function import Function
+
+    @jpype.JImplements(Function)
+    class MyFunction:
+        @jpype.JOverride
+        def apply(self, value):
+            if value is None:
+                raise ValueError("Invalid input: None is not allowed")
+            return value.upper()
+
+    try:
+        func = MyFunction()
+        result = func.apply(None)  # This will raise a ValueError
+    except ValueError as ex:
+        print("Caught Python exception:", str(ex))
+
+Exception Aliasing
 ------------------
 
-Certain exceptions in Java have a direct correspondence with existing
-Python exceptions.  Rather than forcing JPype to translate these exceptions,
-or forcing the user to handle Java exception types throughout the code,
-we have "derived" these exceptions from their Python counter parts.  Thus,
-rather than requiring special error handling for Java you can simple catch
-these exceptions using the standard Python exception types.
+Certain exceptions in Java have a direct correspondence with existing Python
+exceptions. Rather than forcing JPype to translate these exceptions or
+requiring the user to handle Java exception types throughout the code, these
+exceptions are "derived" from their Python counterparts. This allows the user
+to catch them using standard Python exception types.
 
-`java.lang.IndexOutOfBoundsException`
-  This exception is synonymous with the Python exception ``IndexError``.
-  As many slicing or array operations in Java can produce an
-  IndexOutOfBoundsException but the Python contract for slicing of an array
-  should raise an ``IndexError``, this type has been customized to consider
-  IndexError to be a base type.
+| Java Exception                      | Python Exception |
+|-------------------------------------|------------------|
+| `java.lang.IndexOutOfBoundsException` | `IndexError`     |
+| `java.lang.NullPointerException`      | `ValueError`     |
 
+Example
+~~~~~~~
 
-`java.lang.NullPointerException`
-  This exception is derived from the Python exception ``ValueError``.
-  Numerous Java calls produce a ``NullPointerException`` and in all cases this
-  would match a Python ``ValueError``.
+The following example demonstrates catching an aliased exception:
 
+.. code-block:: python
+
+    try:
+        # Code that throws a java.lang.IndexOutOfBoundsException
+    except IndexError as ex:
+        print("Caught IndexError:", str(ex))
 
 By deriving these exceptions from Python, the user is free to catch the
 exception either as a Java exception or as the more general Python exception.
 Remember that Python exceptions are evaluated in order from most specific to
 least.
-
 
 
 Controlling the JVM
@@ -1737,313 +2400,894 @@ needed are to start up and shutdown the JVM.
 Starting the JVM
 ================
 
-The first task is always to start the JVM.  The settings to the JVM
-are immutable over the lifespan of the JVM.  The user settings are:
-the JVM arguments, the class path used to find jars, and whether to
-convert Java strings to Python strings.
+JPype requires the Java Virtual Machine (JVM) to be started before interacting
+with Java. This section explains how to start the JVM, configure its options,
+and troubleshoot common issues.
 
-Class paths
------------
+Key Requirements
+----------------
+Before starting the JVM, ensure the following prerequisites are met:
 
-JPype supports two styles of classpaths.  The first is modeled after
-Matlab the second argument style uses a list to the ``startJVM`` function.
+1. **Java Installation**: A Java Runtime Environment (JRE) or Java Development
+   Kit (JDK) must be installed. JPype supports Java versions 11 and later.
 
-The Matlab style uses the functions ``jpype.addClassPath`` and
-``getClassPath``.  The first function adds a directory or jar file to the
-search path.  Wild cards are accepted in the search.  Once all of the paths are
-added to internal class path, they can be retrieved using ``getClassPath``
-which takes a keyword argument ``env`` which defaults to true.  When set to
-false, JPype will ignore the environment variable
-``CLASSPATH`` which is normally included in the default classpath.
+2. **Architecture Match**: The architecture of the Python interpreter (e.g.,
+   64-bit or 32-bit) must match the architecture of the installed JVM.
 
-To use the argument style, pass all of the class paths in a list as
-the keyword argument ``classpath`` to the ``startJVM``.  This classpath
-method does not include the environment ``CLASSPATH``, but it does provide
-a quick method to pull in a specific set of classes.  Wild cards are accepted
-as the end of the path to include all jars in a given directory.
+3. **Classpath Configuration**: Specify the paths to Java classes or JAR files
+   required by your application.
 
-One should note that the class path can only be set prior starting the JVM.
-Calls to set the class path after the JVM is started are silently ignored.
-If a jar must be loaded after the JVM is started, it may be loaded using
-``java.net.URLClassLoader``.  Classes loaded using a ``URLClassloader`` are
-not visible to JPype imports nor to JPackage.
+4. **Environment Variable**: Ensure the `JAVA_HOME` environment variable is set
+   to the directory containing the Java installation.
 
-String conversions
+How to Start the JVM
+--------------------
+To start the JVM, use the ``jpype.startJVM()`` function. This function
+initializes the JVM with the specified options. The key arguments are:
+
+- **``classpath``**: A list of paths to JAR files or directories containing
+  Java classes.
+- **``convertStrings``**: A boolean flag controlling whether Java strings are
+  automatically converted to Python strings.
+- **``ignoreUnrecognized``**: A flag that suppresses errors for unrecognized
+  JVM options.
+- **Additional JVM options**: Any valid JVM arguments (e.g., ``-Xmx`` for
+  memory allocation).
+
+.. _controlling_the_jvm_starting_the_jvm_how_to_start_the_jvm_example:_starting_the_jvm:
+Example: Starting the JVM
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Here is a typical example of starting the JVM:
+
+.. code-block:: python
+
+    import jpype
+
+    # Start the JVM with classpath and options
+    jpype.startJVM(
+        classpath=['lib/*', 'classes'],
+        convertStrings=False,
+        ignoreUnrecognized=True,
+        jvmOptions=["-ea"]  # Enable assertions
+    )
+
+Classpath Configuration
+-----------------------
+JPype supports two methods for specifying the classpath:
+
+1. **``classpath`` Argument**: Pass a list of paths directly to the
+   ``startJVM()`` function. Wildcards (``*``) are supported for JAR files in a
+   directory.
+
+.. code-block:: python
+
+    jpype.startJVM(classpath=['lib/*', 'classes'])
+
+2. **``addClassPath()`` Function**: Use ``jpype.addClassPath()`` to add paths
+   dynamically before starting the JVM.
+
+.. code-block:: python
+
+    jpype.addClassPath('lib/*')
+    jpype.addClassPath('classes')
+    jpype.startJVM()
+
+To debug classpath issues, print the effective classpath after starting the
+JVM:
+
+.. code-block:: python
+
+    print(java.lang.System.getProperty('java.class.path'))
+
+Handling JAR Files Compiled for Newer Java Versions
+---------------------------------------------------
+If a JAR file is compiled for a newer version of Java than the JVM being used,
+JPype will fail to load the classes from the JAR file, and the JVM will throw
+an ``UnsupportedClassVersionError``. This occurs because the JVM cannot
+interpret class files compiled for a newer version.
+
+
+Behavior
+~~~~~~~~
+When attempting to load a JAR file compiled for a newer version of Java, the
+JVM will throw an error similar to the following::
+
+    java.lang.UnsupportedClassVersionError: <class_name> has been compiled by a
+    more recent version of the Java Runtime (class file version X), this
+    version of the Java Runtime only recognizes class file versions up to Y.
+
+For example:
+
+- Java 11 corresponds to class file version 55.
+- Java 17 corresponds to class file version 61.
+
+If the JAR file contains class files compiled with a newer version than the
+JVM supports, the JVM cannot interpret them.
+
+.. _controlling_the_jvm_starting_the_jvm_handling_jar_files_compiled_for_newer_java_versions_steps_to_resolve:
+
+Steps to Resolve
+~~~~~~~~~~~~~~~~
+1. **Upgrade the JVM**:
+   Ensure the JVM version matches or exceeds the version used to compile the
+   JAR file. Use the following command to check the JVM version::
+
+       java -version
+
+2. **Recompile the JAR**:
+   If you have access to the source code, recompile the JAR with an older
+   version of Java using the ``--release`` flag. For example::
+
+       javac --release 11 -d output_directory source_files
+
+   This ensures compatibility with Java 11.
+
+3. **Check the Class File Version**:
+   Use the ``javap`` command to verify the class file version of the JAR::
+
+       javap -verbose <class_name>
+
+   Look for the ``major version`` field in the output.
+
+
+Best Practices
+~~~~~~~~~~~~~~
+- Always ensure the JVM version matches the requirements of the JAR files
+  being loaded.
+- If possible, use JAR files compiled for long-term support (LTS) versions of
+  Java, such as Java 11 or Java 17, to maximize compatibility.
+
+Automatic JVM Path Detection
+----------------------------
+JPype automatically detects the path to the JVM shared library using the
+``JAVA_HOME`` environment variable. If ``JAVA_HOME`` is not set, JPype searches
+common directories based on the platform. You can retrieve the detected path
+using:
+
+.. code-block:: python
+
+    print(jpype.getDefaultJVMPath())
+
+If the automatic detection fails, specify the JVM path manually as the first
+argument to ``startJVM()``:
+
+.. code-block:: python
+
+    jpype.startJVM('/path/to/libjvm.so', classpath=['lib/*'])
+
+
+Handling Non-ASCII Characters in the JVM Path
+----------------------------------------------
+JPype has been revised to handle JVM paths containing non-ASCII characters. Due
+to restrictions in Java, JPype must make a copy of the JVM shared library when
+the path includes non-ASCII characters. This ensures compatibility with the
+Java Virtual Machine.
+
+**Windows-Specific Behavior**:
+On Windows, the copied JVM shared library cannot be deleted after use due to
+file locking restrictions imposed by the operating system. As a result, the
+temporary file will remain on disk after the JVM is shut down.
+
+**Implications**:
+- The copied JVM shared library will occupy disk space until manually removed.
+- This behavior is specific to Windows and does not affect Linux or macOS.
+
+**Best Practices**:
+- Avoid using non-ASCII characters in the JVM path when running JPype on
+  Windows to prevent unnecessary file duplication.
+- If non-ASCII characters are unavoidable, ensure sufficient disk space is
+  available for temporary files.
+
+**Troubleshooting**:
+To locate the copied JVM shared library, check the directory where the JVM path
+is specified. The copied file will have the same name as the original shared
+library but may include additional identifiers.
+
+**Example**:
+If the original JVM path is:
+C:\Program Files\Java\jdk-11.0.7\bin\server\jvm.dll
+
+And it contains non-ASCII characters, JPype will create a copy in a temporary directory.
+
+This behavior is necessary to ensure compatibility with Java's handling of
+non-ASCII paths.
+
+
+Additional Flags for `startJVM()`
+---------------------------------
+JPype provides several optional flags for `startJVM()` to customize the JVM
+startup process:
+
+1. **`jvmOptions`**: A list of JVM options for memory, debugging, or garbage
+   collection tuning.
+   Example: ``jpype.startJVM(jvmOptions=["-Xmx512m", "-XX:+UseG1GC"])``
+
+2. **`ignoreUnrecognized`**: Suppresses errors for unrecognized JVM options.
+   Example: ``jpype.startJVM(ignoreUnrecognized=True)``
+
+3. **`convertStrings`**: Controls automatic conversion of Java strings to
+   Python strings.
+   Example: ``jpype.startJVM(convertStrings=False)``
+
+4. **`classpath`**: Specifies paths to JAR files and Java classes.
+   Example: ``jpype.startJVM(classpath=["lib/*", "classes"])``
+
+5. **`jvmPath`**: Specifies the path to the JVM shared library.
+   Example: ``jpype.startJVM(jvmPath="/path/to/libjvm.so")``
+
+6. **`attachThread`**: Automatically attaches Python threads to the JVM.
+   Example: ``jpype.startJVM(attachThread=True)``
+
+7. **`disableGC`**: Disables JPype's garbage collection hooks.
+   Example: ``jpype.startJVM(disableGC=True)``
+
+8. **`stackTrace`**: Enables detailed stack traces for Java exceptions.
+   Example: ``jpype.startJVM(stackTrace=True)``
+
+9. **`initializers`**: A list of Python functions executed during JVM startup.
+   Example: ``jpype.startJVM(initializers=[setup])``
+
+10. **`modulePath`**: Specifies the module path for Java modular applications.
+    Example: ``jpype.startJVM(modulePath=["modules/*"])``
+
+String Conversion Behavior
+--------------------------
+The ``convertStrings`` argument controls whether Java strings are automatically
+converted to Python strings. By default, this behavior is disabled
+(``convertStrings=False``) to preserve Java string methods and avoid
+unnecessary conversions.
+
+If enabled (``convertStrings=True``), Java strings are returned as Python
+strings, but this can impact performance and chaining of Java string methods.
+
+Best practice: Set ``convertStrings=False`` unless your application explicitly
+requires automatic conversion.
+
+
+Checking JVM State
 ------------------
+Use the following functions to check the status of the JVM:
 
-The ``convertStrings`` argument defines how strings are returned by JPype.
-Early in the life of this project return types were often converted to Python
-types without regard to preserving the type information.  Thus strings would
-automatically convert to a Python string effectively the data from Java to
-Python on each return.  This was a violation of the Python philosophy that
-explicit is better than implicit. This also prohibited chaining of Java string
-operations as each operation would lose the Java representation and have to be
-transferred back and forth.  The simple operation of trying to create a Java
-string was difficult as directly calling ``java.lang.String`` constructor would
-once again convert the result back to a Python string, hence the need to use
-the ``JString`` factory.  There was an option to turn off the conversion of
-strings, but it was never operable.  Therefore, all code written at the
-time would expect Java strings to convert to Python strings on return.
+- **``jpype.isJVMStarted()``**: Returns ``True`` if the JVM is running.
+- **``jpype.getJVMVersion()``**: Retrieves the version of the running JVM.
 
-Recognizing this is both a performance issue and that it made certain types of
-programming prohibitive, JPype switched to having a setting requiring
-applications to chose a policy at the start of operation.  This option
-is a keyword argument ``convertStrings``.  The default for 0.7 is to give
-the older broken behavior.  If specified as False, Java strings will act
-as ordinary classes and return a Java string instance.  This string instance
-can be converted by calling the Python ``str()`` function.
-Failure to specify a policy will issue a warning message.
-
-You are strongly encouraged to set convertStrings false especially when
-are writing reusable Python modules with JPype.  String in JPype 0.8,
-the default will to not convert strings.
-
-Path to the JVM
----------------
-
-In order the start the JVM, JPype requires the path to the Java shared library
-typically located in the JRE installation.  This can either be specified
-manually as the first argument to ``jpype.startJVM`` or by automatic search.
-
-The automatic search routine uses different mechanisms depending on the
-platform.  Typically the first mechanism is the use the environment variable
-``JAVA_HOME``.  If no suitable JVM is found there, it will then search common
-directories based on the platform.  On windows it will consult the registry.
-
-You can get the JVM found during the automatic search by calling
-``jpype.getDefaultJVMPath()``.
-
-In order to use the JVM, the architecture of the JVM must match the Python
-version.  A 64 bit Python can only use a 64 bit JVM.  If no suitable JVM can be
-found it should raise an error. In some cases so rare, it may lead to a crash
-depending on how the platform handles a failed shared library load.
-
-Launching the JVM
------------------
-
-Now that we have discussed the JVM options, lets show how to put it into
-practice.  Suppose that the Python script at the top level of your working
-director, with a subdirectory holding all your working jars ``./lib``, and a
-second directory with bare classes ``./classes``.  Java has been properly
-installed with the same architecture as Python (both 64 bit in this case).
-
-To start JPype we would execute the following:
+Example:
 
 .. code-block:: python
 
-  import jpype
-  jpype.startJVM("-ea", classpath=['lib/*', 'classes'], convertStrings=False)
+    if not jpype.isJVMStarted():
+        print("JVM is not running!")
+    else:
+        print("JVM version:", jpype.getJVMVersion())
 
-Arguments that begin with a dash are passed to the JVM.  Any
-unrecognized argument will raise an exception unless the keyword argument
-``ignoreUnrecognized`` is set to ``True``.  Details of available arguments can
-be found in the vendor JVM documentation.
+Common Issues and Troubleshooting
+---------------------------------
+1. **Classpath Errors**: Ensure that all required JAR files and directories are
+   included in the classpath. Use ``java.lang.System.getProperty('java.class.path')``
+   to verify the effective classpath.
 
-The most frequent problem encountered when starting JPype is the jars failing
-to be loaded.  Java is unforgiving when loading jar files.  To debug
-the failures, we will need to print the loaded classpath.
+2. **Architecture Mismatch**: Ensure the Python interpreter and JVM have
+   matching architectures (e.g., both 64-bit or both 32-bit). Running a 64-bit
+   Python interpreter with a 32-bit JVM will cause startup failures.
 
-Java has a method to retrieve the classpath that was used during the loading
-process.
+3. **Environment Variable Issues**: Verify that the ``JAVA_HOME`` environment
+   variable is set correctly. If necessary, set it manually:
+   - **Windows**: ``set JAVA_HOME=C:\Program Files\Java\jdk-<version>``
+   - **Linux/Mac**: ``export JAVA_HOME=/usr/lib/jvm/java-<version>``
+
+4. **Unrecognized JVM Options**: If you encounter errors for unrecognized JVM
+   options, use the ``ignoreUnrecognized=True`` flag to suppress them.
+
+5. **Memory Allocation Errors**: Ensure sufficient memory is allocated to the
+   JVM using the ``-Xmx`` option.
+
+6. **Debugging Startup Failures**: Enable stack traces for additional
+   diagnostics:
 
 .. code-block:: python
 
-   print(java.lang.System.getProperty('java.class.path'))
+    import _jpype
+    _jpype.enableStacktraces(True)
 
-This command will print the absolute path to each of the jars that will be used
-by the JVM.  Each of the jars are written out explicitly as
-the JVM does not permit wild-cards. JPype has expanded each of them using
-`glob`.  If an expected jar file is missing the list, then it will not be
-accessable.
 
-There is a flag to determine the current state of the JVM.  Calling
-``jpype.isJVMStarted()`` will return the current state of the JVM.
+Best Practices for JVM starting
+-------------------------------
+- **Start Early**: Start the JVM at the beginning of your program to avoid
+  issues with imports and initialization.
+- **Specify Classpath Explicitly**: Use the ``classpath`` argument to ensure
+  all required JAR files and directories are loaded.
+- **Disable String Conversion**: Set ``convertStrings=False`` for better
+  control and performance.
+- **Avoid Restarting the JVM**: JPype does not support restarting the JVM after
+  it has been shut down. Design your application to start the JVM once and keep
+  it running for the program's lifetime.
+- **Monitor Resource Usage**: If your application uses large Java objects,
+  monitor memory usage to avoid out-of-memory errors.
 
-Once the JVM is started, we can find out the version of the JVM.  The JVM can
-only load jars and classfiles compiled for the JVM version or older.  Newer jar
-files will invariably fail to load.  The JVM version can be determined using
-``jpype.getJVMVersion()``.
+.. _controlling_the_jvm_starting_the_jvm_summary:
+
+Summary of JVM starting
+-----------------------
+Starting the JVM is a critical step in using JPype to integrate Python with
+Java. By following the guidelines in this section, you can ensure a smooth
+startup process, avoid common pitfalls, and configure the JVM to meet your
+application's needs. Proper classpath configuration, architecture matching, and
+memory allocation are key to successful integration. Debugging tools and best
+practices are available to help troubleshoot issues and optimize performance.
 
 
 .. _shutdownJVM:
 
-Shutting down the JVM
-=====================
+Shutting Down the JVM
+======================
 
-At the other end of the process after all work has been performed, we will want
-to shutdown the JVM to terminate the program.  This will happen automatically
-and no user intervention is required.  If however, the user wants to continue
-execution of Python code after the JVM is finished they can explicitly call
-``jpype.shutdownJVM()``.  This can only be called from the main Python thread.
-Any other thread will raise an exception.
+At the end of your program, you may want to shut down the JVM to terminate the
+Java environment explicitly. While this is possible, it is generally not
+recommended unless absolutely necessary. JPype automatically shuts down the JVM
+when the Python process terminates, ensuring a clean exit without manual
+intervention.
 
-The shutdown procedure of JPype and Java is fairly complicated.
+Risks of Shutting Down the JVM
+------------------------------
 
-1) JPype requests that the JVM shutdown gracefully.
-2) Java waits until all non-daemon thread terminate. Thus if you did not
-   send a termination to each non-daemon threads the shutdown will wait here
-   until those threads complete their work.
-3) Once the all threads have completed except for the main thread, the JVM
-   will begin the shutdown sequence.  From this point on the JVM is in a
-   crippled state limited what can happen to spawning the shutdown threads
-   and completing them.
-4) The shutdown will first spawn the threads of cleanup routine that was
-   attached to the JVM shutdown hook in arbitrary order.  These routines
-   can call back to Python and perform additional tasks.
-5) Once the last of these threads are completed, JPype then shuts down the
-   reference queue which dereferences held all Python resources.
-6) Then JPype shuts down the type manager and frees all internal resources
-   in the JPype module.
-7) Last, it unloads the JVM shared library returning the memory used by the JVM.
-8) Once that is complete, control is returned to Python.
+Shutting down the JVM manually can lead to serious risks and instability,
+especially if there are lingering Java references or shared resources. Once the
+JVM is shut down, all Java objects become invalid, and any attempt to access
+them will result in errors. This includes:
 
-All Java objects are now considered dead and cannot be reactivated. Any attempt
-to access their data field will raise an exception.
+- **Lingering Java References**: Any Java objects held by Python will become
+  invalid after the JVM is shut down. Accessing these objects will raise
+  exceptions and could result in undefined behavior.
 
-Attaching a shutdown hook
--------------------------
+- **Shared Resources**: Shared resources such as buffers (e.g., memory mapped
+  from Java to NumPy) will become unstable. Accessing these buffers after the
+  JVM is shut down may cause crashes or memory corruption.
 
-If you have resources that need to be closed when the JVM is shutdown these
-should be attached to the Java Runtime object.  The following pattern is used:
+- **Proxies and Threads**: If Java threads or proxies are active when the JVM is
+  shut down, they will be terminated abruptly, potentially leaving the system in
+  an inconsistent state.
+
+- **Non-Daemon Threads**: All threads must be attached as daemon threads before
+  shutting down the JVM. Non-daemon threads will block the shutdown process,
+  causing it to hang indefinitely. Python threads that interact with Java are
+  automatically attached as daemon threads by JPype, but any custom threads
+  created in Java must also be marked as daemon.
+
+For most applications, it is safer to allow the JVM to shut down automatically
+when the Python process exits. This ensures that all resources are cleaned up
+properly and avoids the risks associated with manual shutdown.
+
+How JPype Shuts Down the JVM
+----------------------------
+
+JPype performs the following steps during JVM shutdown to ensure proper cleanup:
+
+1. **Request JVM Shutdown**: JPype requests the JVM to shut down gracefully.
+2. **Wait for Non-Daemon Threads**: The JVM waits for all non-daemon threads to
+   terminate. If you have active Java threads, ensure they are properly
+   terminated or marked as daemon before shutting down the JVM.
+3. **Execute Shutdown Hooks**: The JVM executes any registered shutdown hooks.
+   These hooks can be used to clean up resources before the JVM terminates.
+4. **Release JPype Reference Queue**: JPype shuts down its internal reference
+   queue, which is responsible for dereferencing Python resources tied to Java
+   objects.
+5. **Release JPype Type Manager**: JPype releases its type manager, which
+   handles mappings between Python and Java types.
+6. **Unload JVM Shared Library**: The JVM shared library is unloaded, freeing
+   memory used by the JVM.
+7. **Finalize Python Resources**: JPype cleans up any remaining Python handles
+   tied to Java objects, ensuring that no invalid references remain.
+
+Once the JVM is shut down, all Java objects are considered dead and cannot be
+reactivated. Any attempt to access their data field will raise an exception.
+
+Managing Threads During JVM Shutdown
+------------------------------------
+
+The JVM requires all threads to be attached as daemon threads during shutdown.
+Daemon threads are background threads that do not prevent the JVM from
+terminating. Non-daemon threads, on the other hand, will block the shutdown
+process, causing it to hang indefinitely until those threads terminate.
+
+JPype automatically attaches Python threads that interact with Java as daemon
+threads. However, if you create custom threads in Java, you must explicitly mark
+them as daemon threads to ensure they do not block the JVM shutdown.
+
+To mark a Java thread as a daemon, use the following pattern:
 
 .. code-block:: python
 
-    @JImplements(Runnable)
-    class MyShutdownHook:
-        @JOverride
-        def run(self):
-            # perform any required shutdown activities
+    import java.lang.Thread
 
-    java.lang.Runtime.getRuntime().addShutdownHook(Thread(MyShutdownHook()))
+    # Create a Java thread
+    thread = java.lang.Thread()
 
-This thread will be executed in a new thread once the main thread is
-the only one remaining alive.  Care should always be taken to complete
-work in a timely fashion and be aware the shutdown threads are inherently
-racing with each other to complete their work.  Thus try to avoid expensive
-operations on shutdown..
+    # Mark the thread as daemon
+    thread.setDaemon(True)
 
-Debugging shutdown
--------------------
+    # Start the thread
+    thread.start()
 
-The most common failure during shutdown is the failure of an attached thread
-to terminate.  There are specific patterns in Java that allow you to query
-for all currently attached threads.
+If you need to check whether a thread is a daemon, use the `isDaemon()` method:
+
+.. code-block:: python
+
+    print(f"Thread is daemon: {thread.isDaemon()}")
+
+Ensure that all non-daemon threads are properly terminated or marked as daemon
+before shutting down the JVM. Failure to do so may cause the shutdown process to
+hang indefinitely.
+
+How to Shut Down the JVM
+------------------------
+
+If you must shut down the JVM manually, you can use the `jpype.shutdownJVM()`
+function. This should only be called from the main Python thread. Calling it
+from any other thread will raise an exception.
+
+.. code-block:: python
+
+    import jpype
+
+    # Shut down the JVM
+    jpype.shutdownJVM()
+
+Debugging JVM Shutdown
+----------------------
+
+If the JVM shutdown process hangs or fails, it is often due to lingering threads
+or resources that were not properly terminated. Use the following techniques to
+debug shutdown issues:
+
+1. **Check Active Threads**: Before shutting down the JVM, check for active
+   non-daemon threads that may be preventing the shutdown. You can use the
+   following Java code to list all active threads:
+
+   .. code-block:: python
+
+       import java.lang.Thread
+
+       # Get all active threads
+       threads = java.lang.Thread.getAllStackTraces().keySet()
+       for thread in threads:
+           print(f"Thread: {thread.getName()}, Daemon: {thread.isDaemon()}")
+
+   Ensure that all non-daemon threads are terminated or marked as daemon before
+   calling `jpype.shutdownJVM()`.
+
+2. **Inspect Shutdown Hooks**: If you have attached shutdown hooks, verify that
+   they complete quickly and do not hang. Long-running shutdown hooks can delay
+   or block JVM termination.
+
+3. **Monitor Resource Usage**: If shared resources such as buffers are in use,
+   ensure that they are properly released before shutting down the JVM. For
+   example, copy buffer contents to a Python object to preserve data.
+
+4. **Enable Debugging Logs**: JPype can provide additional diagnostics during
+   the shutdown process. Use the following command to enable debugging logs:
+
+   .. code-block:: python
+
+       import _jpype
+       _jpype.enableStacktraces(True)
+
+   This will print detailed stack traces for exceptions that occur during the
+   shutdown process.
+
+5. **Handle Hanging Threads**: If the JVM shutdown hangs due to threads that
+   cannot terminate, you can forcefully terminate the Python process using
+   `os._exit()` or `java.lang.Runtime.exit()`. **However, note that calling
+   `exit` will bypass normal `atexit` routines in both Python and Java.** This
+   means that any cleanup tasks, such as writing logs (e.g., Jacoco coverage
+   reports) or flushing buffers, will not be executed. Use this approach only
+   as a last resort when all other debugging techniques fail.
+
+Best Practices for JVM Shutdown
+-------------------------------
+
+- **Avoid Manual Shutdown**: Whenever possible, allow the JVM to shut down
+  automatically when the Python process exits. This avoids the risks of lingering
+  references and shared resource instability.
+
+- **Terminate Threads Properly**: Ensure all non-daemon Java threads are
+  terminated or marked as daemon before shutting down the JVM. Failure to do so
+  may cause the shutdown process to hang indefinitely.
+
+- **Handle Buffers Carefully**: If you are using shared buffers (e.g., Java
+  direct buffers with NumPy), avoid accessing them after the JVM is shut down.
+  If you need to preserve data, copy the buffer contents to a Python object
+  before shutting down the JVM.
+
+- **Use Shutdown Hooks**: Attach shutdown hooks only when necessary to clean up
+  resources. Ensure that the hooks complete quickly to avoid delaying JVM
+  termination.
+
+- **Avoid Forceful Termination**: Avoid using `os._exit()` or `java.lang.Runtime.exit()`
+  unless absolutely necessary. These methods prevent normal cleanup routines from
+  executing, which can result in missing logs, incomplete resource cleanup, or
+  other unintended consequences.
 
 
+Summary of JVM Shutdown
+------------------------
+
+JPype's shutdown process is designed to ensure that resources are cleaned up
+properly and the JVM terminates gracefully. While shutting down the JVM manually
+is possible, it introduces risks that can lead to instability and crashes. For
+most applications, the JVM should be allowed to shut down automatically when the
+Python process exits. If manual shutdown is required, take precautions to ensure
+that all Java references and shared resources are properly cleaned up before
+shutting down the JVM. Avoid forceful termination unless absolutely necessary,
+as it bypasses critical cleanup routines in both Python and Java.
+
+
+.. _customization:
 
 Customization
 *************
 
-JPype supports three different types of customizations.
+JPype supports customization to enhance the integration between Java and Python.
+This allows users to modify Java classes and type conversions to better suit
+their needs, making Java APIs more Pythonic or enabling seamless interaction
+with Python data structures.
 
-The first is to adding a Python base class into a Java tree as was done with
-certain exceptions.  This type of customization required private calls in JPype
-and is not currently exposed to the user.
+There are two primary types of customizations available:
 
-Second a Python class can be used as a template when a Java class is first
-constructed to add additional functionality.  This type of customization can
-be used to make a Java class appear as a native Python class. Many
-of the Java collection classes have been customized to match Python
-collections.
-
-Last, Python class can be added to the implicit conversion list.  This
-customizer is used to make Python types compatable with Java without
-requiring the user to manually case over and over.
-
-All customization available to the users is done through class decorators
-added to Python classes or functions.
-
-
-.. _@JImplementationFor:
-.. _@JOverride:
+1. **Class Customizers**: Add Python methods and properties to Java classes to
+   make them behave like native Python classes.
+2. **Type Conversion Customizers**: Define implicit conversions between Python
+   types and Java types for seamless interoperability.
 
 Class Customizers
 =================
 
-Java wrappers can be customized to better match the expected behavior in
-Python.  Customizers are defined using decorators.  Applying the annotations
+Java wrappers can be customized to better match the expected behavior in Python.
+Customizers are defined using decorators. Applying the annotations
 ``@JImplementationFor`` and ``@JOverride`` to a regular Python class will
-transfer methods and properties to a Java class.  ``@JImplementationFor``
-requires the class name as a string, a Java class wrapper, or Java class
-instance.  Only a string can be used prior to starting the JVM.  ``@JOverride``
-when applied to a Python method will hide the Java implementationallowing the
-Python method to replace the Java implementation.  when a Java method is
-overridden, it is renamed with an proceeding underscore to appear as a private
-method.  Optional arguments to ``@JOverride`` can be used to control the
-renaming and force the method override to apply to all classes that derive
-from a base class ("sticky").
+transfer methods and properties to a Java class.
+
+``@JImplementationFor`` requires the class name as a string, a Java class
+wrapper, or Java class instance. Only a string can be used prior to starting the
+JVM. ``@JOverride`` when applied to a Python method will hide the Java
+implementation, allowing the Python method to replace the Java implementation.
+When a Java method is overridden, it is renamed with a preceding underscore to
+appear as a private method. Optional arguments to ``@JOverride`` can be used to
+control the renaming and force the method override to apply to all classes that
+derive from a base class ("sticky").
 
 Generally speaking, a customizer should be defined before the first instance of
 a given class is created so that the class wrapper and all instances will have
 the customization.
 
-Example taken from JPype ``java.util.Map`` customizer:
+Example: Customizing ``java.util.Map``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following example demonstrates how to customize the ``java.util.Map`` class
+to behave like a Python dictionary:
 
 .. code-block:: python
 
-  @_jcustomizer.JImplementationFor('java.util.Map')
-  class _JMap:
-      def __jclass_init__(self):
-          Mapping.register(self)
+   @_jcustomizer.JImplementationFor('java.util.Map')
+   class _JMap:
+       def __jclass_init__(self):
+           Mapping.register(self)
 
-      def __len__(self):
-          return self.size()
+       def __len__(self):
+           return self.size()
 
-      def __iter__(self):
-          return self.keySet().iterator()
+       def __iter__(self):
+           return self.keySet().iterator()
 
-      def __delitem__(self, i):
-          return self.remove(i)
+       def __delitem__(self, i):
+           return self.remove(i)
 
-
-The name of the class does not matter for the purposes of customizer though it
-should be a private class so that it does not get used accidentally.
+The name of the class does not matter for the purposes of the customizer,
+though it should be a private class so that it does not get used accidentally.
 The customizer code will steal from the prototype class rather than acting as a
-base class, thus, ensuring that the methods will appear on the most derived
-Python class and are not hidden by the java implementations. The customizer
-will copy methods, callable objects, ``__new__``, class member strings, and
-properties.
+base class, ensuring that the methods will appear on the most derived Python
+class and are not hidden by the Java implementations.
 
-.. _@JConversion:
+The customizer copies methods, callable objects, ``__new__``, class member
+strings, and properties.
 
 Type Conversion Customizers
 ===========================
 
-One can add a custom converter method which is called whenever a specified
-Python type is passed to a particular Java type.  To specify a conversion
-method add ``@JConversion`` to an ordinary Python function with the name of
-Java class to be converted to and one keyword of ``exact`` or ``instanceof``.
-The keyword controls how strictly the conversion will be applied.  ``exact`` is
-restricted to Python objects whose type exactly matches the specified type.
-``instanceof`` accepts anything that matches isinstance to the specified type
-or protocol.  In some cases, the existing protocol definition will be overly
-broad.  Adding the keyword argument ``excludes`` with a type or tuple of types
-can be used to prevent the conversion from being applied.  Exclusions always
-apply first.
+JPype allows users to define custom conversion methods that are called whenever
+a specified Python type is passed to a particular Java type. To specify a
+conversion method, add ``@JConversion`` to an ordinary Python function with the
+name of the Java class to be converted to and one keyword of ``exact`` or
+``instanceof``. The keyword controls how strictly the conversion will be
+applied:
 
-User supplied conversions are tested after all internal conversions have been
+- ``exact``: Restricted to Python objects whose type exactly matches the
+  specified type.
+- ``instanceof``: Accepts anything that matches ``isinstance`` to the specified
+  type or protocol.
+
+In some cases, the existing protocol definition will be overly broad. Adding
+the keyword argument ``excludes`` with a type or tuple of types can be used to
+prevent the conversion from being applied. Exclusions always apply first.
+
+User-supplied conversions are tested after all internal conversions have been
 exhausted and are always considered to be an implicit conversion.
+
+
+Example: Converting Python Sequences to Java Collections
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following example demonstrates how to convert Python sequences into Java
+collections:
 
 .. code-block:: python
 
-        @_jcustomizer.JConversion("java.util.Collection", instanceof=Sequence,
-          excludes=str)
-        def _JSequenceConvert(jcls, obj):
-            return _jclass.JClass('java.util.Arrays').asList(obj)
+   @JConversion("java.util.Collection", instanceof=Sequence,
+                             excludes=str)
+   def _JSequenceConvert(jcls, obj):
+       return _jclass.JClass('java.util.Arrays').asList(obj)
 
-JPype supplies customizers for certain Python classes.
+JPype supplies customizers for certain Python classes by default. These include:
 
-========================== ==============================
-Python class               Implicit Java Class
-========================== ==============================
-pathlib.Path               java.io.File
-pathlib.Path               java.nio.file.Path
-datetime.datetime          java.time.Instant
-collections.abc.Sequence   java.util.Collection
-collections.abs.Mapping    java.util.Map
-========================== ==============================
+========================= ==============================
+Python class              Implicit Java Class
+========================= ==============================
+pathlib.Path              java.io.File
+pathlib.Path              java.nio.file.Path
+datetime.datetime         java.time.Instant
+collections.abc.Sequence  java.util.Collection
+collections.abc.Mapping   java.util.Map
+========================= ==============================
+.. _customization_jpype_beans_module:
+JPype Beans Module
+==================
+
+Overview of JPype Beans
+-----------------------
+
+The `jpype.beans` module is an optional feature that converts Java Bean-style
+getter and setter methods into Python properties. This customization is
+particularly useful for interactive programming or when working with Java
+classes that follow the Bean pattern.
+
+However, this behavior is not enabled by default because it can lead to
+confusion about whether a class is exposing a variable or a property added by
+JPype. Additionally, it violates Python's principle of *"There should be one--
+and preferably only one --obvious way to do it."* and the C++ principle of
+*"You only pay for what you use."*
+
+If you find this feature useful, you can enable it explicitly by importing the
+`jpype.beans` module.
+
+Enabling Beans as Properties
+----------------------------
+
+To enable the `jpype.beans` module, simply import it into your Python program:
+
+.. code-block:: python
+
+  import jpype.beans
+
+Once enabled, the module applies globally to all Java classes that have already
+been loaded, as well as any classes loaded afterward. This behavior cannot be
+undone after the module is imported.
+
+How It JPype beans Works
+------------------------
+
+The `jpype.beans` module scans Java classes for methods that follow the Bean
+naming conventions:
+
+- **Getter methods**: Methods prefixed with `get` (e.g., `getName`) are treated
+  as property accessors.
+- **Setter methods**: Methods prefixed with `set` (e.g., `setName`) are treated
+  as property mutators.
+
+For example, a Java class with the following methods:
+
+.. code-block:: java
+
+  public class Person {
+      private String name;
+
+      public String getName() {
+          return name;
+      }
+
+      public void setName(String name) {
+          this.name = name;
+      }
+  }
+
+Will automatically expose the `name` field as a Python property:
+
+.. code-block:: python
+
+  import jpype
+  import jpype.beans
+
+  jpype.startJVM()
+
+  Person = jpype.JClass("Person")
+  person = Person()
+  person.name = "Alice"  # Calls setName("Alice")
+  print(person.name)     # Calls getName(), Output: Alice
+
+Implementation Details of JPype beans
+-------------------------------------
+
+The module works by:
+
+1. Identifying getter and setter methods in Java classes using the
+   `_isBeanAccessor()` and `_isBeanMutator()` methods.
+2. Creating Python properties for these methods.
+3. Adding the properties to the class dynamically.
+
+The customization applies retroactively to all classes currently loaded and
+globally to all future classes.
+
+Limitations of JPype beans
+--------------------------
+
+1. **Global Behavior**: Once enabled, the customization applies to all Java
+   classes globally. It cannot be undone.
+2. **Confusion with Existing Members**: If a Java class already has a Python
+   member with the same name as a property, the property will not be added to
+   avoid conflicts.
+3. **Ambiguity**: This feature can make it unclear whether a field is a true
+   Java variable or a property added by JPype.
+
+Best Practices for JPype beans
+------------------------------
+
+- Use this module only when working with Java classes that heavily rely on the
+  Bean pattern.
+- Avoid enabling this module in large projects unless absolutely necessary, as
+  the global behavior may lead to unintended consequences.
+- Document its usage clearly in your codebase to avoid confusion for other
+  developers.
+
+Summary of JPype beans
+----------------------
+
+The `jpype.beans` module provides a convenient way to work with Java Bean-style
+classes in Python by exposing getter and setter methods as Python properties.
+While useful in certain scenarios, it is an optional feature that must be
+explicitly enabled and should be used with caution due to its global and
+irreversible behavior.
+
+Resolving Method Name Conflicts with Customizers
+================================================
+
+Overview of conflict resolution
+-------------------------------
+
+When working with Java classes in Python, conflicts can arise between public
+fields and methods that share the same name. JPype provides tools to resolve
+these conflicts using customizers, allowing you to rename fields or methods
+dynamically and expose them in a Pythonic way.
+
+This section demonstrates how to use a customizer to resolve such conflicts by
+renaming fields or methods and exposing them as Python properties.
+
+Example: Renaming Conflicting Fields and Methods
+------------------------------------------------
+
+Consider a Java class with a field and a method that share the same name.
+Without customization, JPype will expose the method, and the field will be
+hidden. To resolve this, you can use a customizer to rename the conflicting
+field or method and expose it as a Python property.
+
+Here’s an example:
+
+.. code-block:: python
+
+    def asProperty(field):
+        def get(E):
+            return field.get(E)
+        def set(E, V):
+            field.set(E, V)
+        return property(get, set)
+
+    @jpype.JImplementationFor("java.lang.Object")  # Use your base class.
+    class MyCustomizer(object):
+
+        # This is applied to every class that derives from the type
+        def __jclass_init__(cls):
+            # Traverse the fields
+            for field in cls.class_.getDeclaredFields():
+                name = str(field.getName())
+                tp = type(cls.__dict__.get(str(field.getName()), None))
+
+                # Watch for private methods
+                if tp is type(None):
+                    continue
+
+                # Resolve conflicts between public fields and methods
+                if tp is jpype.JMethod:
+                    cls._customize("%s_" % name, asProperty(field))
+
+How It Conflict Resolution Works
+--------------------------------
+
+1. **Field Traversal**: The customizer iterates over all declared fields in the
+   class using `getDeclaredFields()`.
+2. **Conflict Detection**: For each field, it checks whether a public method
+   with the same name exists.
+3. **Renaming**: If a conflict is detected, the field is renamed by appending
+   an underscore (`_`) to its name.
+4. **Property Creation**: The renamed field is exposed as a Python property
+   using the `property()` function.
+
+Example Usage of Conflict Resolution
+------------------------------------
+
+Suppose you have a Java class `A` with a field `mean` and a method `mean`.
+Without customization, the field would be inaccessible. Using the customizer
+above, you can expose the field as `mean_`:
+
+.. code-block:: python
+
+    A = jpype.JClass("A")
+    a = A()
+    print(a.mean_)  # Access the renamed field
+    a.mean_ = 2      # Modify the field
+    print(a.mean_)   # Verify the updated value
+
+Notes on Global Customizers
+---------------------------
+
+- The customizer is applied globally to all classes that derive from the
+  specified base class (`java.lang.Object` in this example). You can replace
+  the base class with a more specific class to limit the scope of the
+  customization.
+- This approach is particularly useful for resolving conflicts in large Java
+  libraries or frameworks where method and field names overlap frequently.
+
+Best Practices Regarding Name Resolution Customizers
+----------------------------------------------------
+
+- Use meaningful naming conventions when renaming fields or methods to avoid
+  confusion.
+- Document customizations clearly in your codebase to help other developers
+  understand the changes.
+- Test the customizer thoroughly to ensure it behaves as expected across all
+  relevant classes.
+
+Summary of Naming Conflict Resolution
+-------------------------------------
+
+This example demonstrates how to use JPype customizers to resolve conflicts
+between fields and methods in Java classes. By renaming conflicting fields or
+methods and exposing them as Python properties, you can create a more Pythonic
+interface for interacting with Java classes.
 
 
+Best Practices For Class Customization
+======================================
+
+To ensure effective use of customizations, follow these best practices:
+
+1. **Define Customizers Early**: Always define customizers before the first
+   instance of the class is created to ensure proper initialization.
+
+2. **Test Customizations Thoroughly**: Verify that the customized behavior
+   works as expected, especially for complex or heavily-used classes.
+
+3. **Avoid Conflicts**: Ensure that customizers do not introduce conflicting
+   methods or properties, especially when customizing multiple interfaces.
+
+4. **Monitor Performance**: Be mindful of performance implications when adding
+   extensive customizations.
+
+5. **Document Customizations**: Clearly document the purpose and behavior of
+   customizations to assist other developers working on the codebase.
+
+By leveraging class and type conversion customizers, JPype users can create
+seamless integrations between Python and Java, making Java APIs feel native to
+Python programmers.
+
+
+.. _collections:
 
 Collections
 ***********
@@ -2059,24 +3303,29 @@ found in the previous chapter, Customization_.
 This section will detail the various customization that are to applied the Java
 collection classes.
 
-Iterable
-========
+.. _collections_specialized_collection_wrappers:
 
+Specialized Collection wrappers
+===============================
+
+We will now cover each of the individual customizations of Java collection classes.
+
+
+Iterable
+--------
 All Java classes that implement ``java.util.Iterable`` are customized
 to support Python iterator notation and thus can be used in Python for loops
 and in list comprehensions.
 
 Iterators
-=========
-
+---------
 All Java classes that implement ``java.util.Iterator`` act as Python iterators.
 
 Collection
-==========
-
+----------
 All Java classes that inherit from ``java.util.Collection`` have a defined
 length determined by the Python ``len(obj)`` function.  As they also inherit
-from Iterable, they have iterator, forech traversal, and list comprehension.
+from Iterable, they have iterator, foreach traversal, and list comprehension.
 
 In addition, methods that take a Java collection can convert a Python
 sequence into a collection implicitly if all of the elements have a
@@ -2085,12 +3334,14 @@ conversion into Java.  Otherwise a ``TypeError`` is raised.
 .. _java.util.List:
 
 Lists
-=====
-
+-----
 Java List classes such as ArrayList and LinkedList can be used in Python ``for``
 loops and list comprehensions directly.  A Java list can be converted to a
 Python list or the reverse by calling the requested type as a copy
 constructor.
+
+Example: Converting Between Python and Java Lists
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. code-block:: python
 
@@ -2116,8 +3367,8 @@ performance penalty for large lists.  Use of iteration is much for efficient.
 
 .. _java.util.Map:
 
-Map
-===
+Maps
+----
 
 A Java classes that implement ``java.util.Map`` inherit the Python
 collections.abc.Mapping interface.  As such they can be iterated, support
@@ -2143,168 +3394,691 @@ In addition, methods that take a Java map can implicitly convert a Python
 all of the map entries can be converted to Java.  Otherwise a ``TypeError`` is
 raised.
 
-MapEntry
-========
+Example: Using a Java Map
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   from java.util import HashMap
+
+   # Create a Java map
+   jmap = HashMap()
+   jmap.put("key1", "value1")
+   jmap.put("key2", "value2")
+
+   # Access elements using Python syntax
+   print(jmap["key1"])  # Output: value1
+
+   # Check if a key exists
+   print("key1" in jmap)  # Output: True
+
+   # Iterate over keys and values
+   for key, value in jmap.items():
+       print(f"{key}: {value}")
+
+Map Entries
+-----------
 
 Java map entries unpack into a two value tuple, thus supporting iterating
-through key value pairs.  Thus is useful when iterating map entries in a
+through key-value pairs.  This is useful when iterating map entries in a
 for loop by pairs.
 
-Set
-===
+Example: Iterating Over Map Entries
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   for key, value in jmap.items():
+       print(f"{key}: {value}")
+
+
+Sets
+----
 
 All Java classes that implement ``java.util.Set`` implement delitem as well
 as the Java collection customizations.
 
 Enumeration
-===========
+-----------
 
-All Java classes that implement ``java.util.Enumeration`` inherit Python
-iterator behavior and can be used in Python for loops and list comprehensions.
+All Java classes that implement `java.util.Enumeration` inherit Python iterator
+behavior and can be used in Python `for` loops and list comprehensions..
 
+Example: Using a Java Enumeration
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   from java.util import Vector
+
+   # Create a Java vector
+   jvector = Vector()
+   jvector.add("apple")
+   jvector.add("orange")
+
+   # Get an enumeration
+   enumeration = jvector.elements()
+
+   # Iterate using Python's for loop
+   for item in enumeration:
+       print(item)
+
+Integrating Pythonic Constructs with Java Collections
+======================================================
+
+JPype enables Python developers to interact with Java collections and streams
+while leveraging Python's idiomatic constructs, such as list comprehensions and
+generator expressions. This section explores how Pythonic constructs and Java
+methods can be used interchangeably or combined for efficient manipulation of
+data structures.
+
+Using Pythonic Constructs with Java Collections
+------------------------------------------------
+
+Python's list comprehensions and generator expressions provide a concise way to
+filter, map, and transform data. JPype customizes Java collections (`List`,
+`Set`, `Map`) to behave like Python collections, allowing Pythonic operations
+directly on Java objects.
+
+Example: Filtering and Mapping with List Comprehensions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   import jpype
+   import jpype.imports
+   jpype.startJVM()
+
+   from java.util import ArrayList
+
+   # Create a Java list
+   jlist = ArrayList()
+   jlist.add("apple")
+   jlist.add("orange")
+   jlist.add("banana")
+
+   # Pythonic filtering and mapping using list comprehension
+   filtered = [item.upper() for item in jlist if item.startswith("a")]
+   print(filtered)  # Output: ['APPLE']
+
+Advantages of Pythonic Constructs:
+- Concise and readable syntax.
+- Familiar to Python developers.
+- No need to learn Java-specific methods for simple operations.
+
+Using Java Streams for Functional Operations
+---------------------------------------------
+
+Java's `Stream` API provides powerful functional programming constructs, such
+as `filter`, `map`, and `reduce`. JPype allows Python developers to use these
+methods with Java collections, enabling them to leverage Java's robust
+libraries.
+
+Example: Filtering and Mapping with Java Streams
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   from java.util.stream import Collectors
+
+   # Use Java Stream API for filtering and mapping
+   filtered = jlist.stream().filter(lambda s: s.startswith("a")).map(
+       lambda s: s.upper()).collect(Collectors.toList())
+   print(filtered)  # Output: [APPLE]
+
+Advantages of Java Streams:
+- Integration with Java's enterprise libraries.
+- Parallel processing capabilities (e.g., `.parallelStream()`).
+- Type-safe operations with Java's generics.
+
+Comparison: Pythonic Constructs vs Java Methods
+------------------------------------------------
+
++---------------------------+---------------------------------------+
+| **Feature**               | **Pythonic Constructs**               |
+|                           | **(List Comprehensions)**             |
++---------------------------+---------------------------------------+
+| Syntax                    | Concise and readable                  |
++---------------------------+---------------------------------------+
+| Performance               | Python interpreter overhead           |
++---------------------------+---------------------------------------+
+| Parallel Processing       | Requires external libraries           |
+|                           | (e.g., `multiprocessing`)             |
++---------------------------+---------------------------------------+
+| Type Safety               | Dynamic typing                        |
++---------------------------+---------------------------------------+
+| Ease of Use               | Familiar to Python developers         |
++---------------------------+---------------------------------------+
+
+Combining Pythonic Constructs and Java Methods
+----------------------------------------------
+
+JPype allows developers to mix Pythonic constructs and Java methods for maximum
+flexibility. For example, you can use Java streams for complex operations and
+Pythonic constructs for post-processing.
+
+Example: Combining Streams and List Comprehensions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   # Use Java Stream API for filtering
+   filtered_stream = jlist.stream().filter(lambda s: s.startswith("a")).collect(
+       Collectors.toList())
+
+   # Use Pythonic list comprehension for further processing
+   final_result = [item.lower() for item in filtered_stream]
+   print(final_result)  # Output: ['apple']
+
+When to Use Each Approach
+-------------------------
+
++-------------------------------------------+---------------------------+
+| **Scenario**                              | **Recommended Approach**  |
++-------------------------------------------+---------------------------+
+| Simple filtering or mapping               | Pythonic constructs       |
+|                                           | (list comprehensions)     |
++-------------------------------------------+---------------------------+
+| Complex operations (e.g., grouping,       | Java Streams              |
+| reducing)                                 |                           |
++-------------------------------------------+---------------------------+
+| Integration with Java enterprise          | Java Streams              |
+| libraries                                 |                           |
++-------------------------------------------+---------------------------+
+| Quick prototyping or debugging            | Pythonic constructs       |
++-------------------------------------------+---------------------------+
+| Parallel processing                       | Java Streams              |
+|                                           | (`parallelStream`)        |
++-------------------------------------------+---------------------------+
+
+Best Practices for Collection Processing
+----------------------------------------
+
+1. **Choose the Right Tool for the Job**:
+   - Use Pythonic constructs for simplicity and readability.
+   - Use Java streams for performance-critical or enterprise applications.
+
+2. **Leverage JPype's Seamlessness**:
+   - Combine Pythonic constructs and Java methods to get the best of both worlds.
+
+3. **Optimize for Performance**:
+   - Avoid frequent back-and-forth calls between Python and Java. Cache results when possible.
+
+Conclusion on Collection Processing
+-----------------------------------
+
+JPype enables Python developers to work with Java collections using both
+Pythonic constructs and Java methods. Whether you prefer Python's simplicity or
+Java's robustness, JPype provides the flexibility to choose the paradigm that
+best fits your workflow.
+
+
+Serialization with JPickler
+***************************
+
+JPype provides the **JPickler** utility for serializing (`pickling`) Java objects
+into Python-compatible byte streams. This is particularly useful for saving Java
+objects to disk, transferring them between systems, or debugging their state.
+
+Why Use JPickler?
+=================
+
+When working with Java objects in Python, serialization is often required for:
+
+1. **Persistence**: Saving Java objects to files for later use.
+2. **Data Exchange**: Transferring Java objects between Python applications or
+   systems.
+3. **Debugging**: Capturing the state of Java objects during execution for
+   offline analysis.
+
+However, Python's default `pickle` module does not support Java objects.
+JPickler bridges this gap by encoding Java objects into a format compatible
+with Python's serialization tools.
+
+How JPickler Works
+------------------
+
+JPickler uses Java's `Serializable` interface to serialize Java objects into a
+byte stream that can be stored or transferred. It also provides a companion
+utility, **JUnpickler**, for deserializing these byte streams back into Java
+objects.
+
+Example 1: Basic Serialization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following example demonstrates how to serialize and deserialize Java
+objects using JPickler and JUnpickler.
+
+.. code-block:: python
+
+    import jpype
+    import jpype.imports
+    from jpype.pickle import JPickler, JUnpickler
+
+    # Start the JVM
+    jpype.startJVM()
+
+    # Create a Java object
+    java_list = jpype.java.util.ArrayList()
+    java_list.add("Hello")
+    java_list.add("World")
+
+    # Serialize the Java object to a file
+    with open("serialized_java_list.pkl", "wb") as f:
+        JPickler(f).dump(java_list)
+
+    print("Java object serialized successfully!")
+
+    # Deserialize the Java object from the file
+    with open("serialized_java_list.pkl", "rb") as f:
+        deserialized_list = JUnpickler(f).load()
+
+    print("Deserialized Java object:", deserialized_list)
+    # Output: [Hello, World]
+
+Example 2: Serializing Complex Java Objects
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+JPickler can handle any Java object that implements `java.io.Serializable`.
+Here's an example with a custom Java class:
+
+.. code-block:: java
+
+    // Save this as MySerializableClass.java and compile it
+    import java.io.Serializable;
+
+    public class MySerializableClass implements Serializable {
+        private String name;
+        private int value;
+
+        public MySerializableClass(String name, int value) {
+            this.name = name;
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return "MySerializableClass{name='" + name + "', value=" + value + "}";
+        }
+    }
+
+.. code-block:: python
+
+    import jpype
+    import jpype.imports
+    from jpype.pickle import JPickler, JUnpickler
+
+    # Start the JVM
+    jpype.startJVM(classpath=["."])
+
+    # Create an instance of the custom Java class
+    MySerializableClass = jpype.JClass("MySerializableClass")
+    java_object = MySerializableClass("TestObject", 42)
+
+    # Serialize the Java object to a file
+    with open("serialized_java_object.pkl", "wb") as f:
+        JPickler(f).dump(java_object)
+
+    print("Custom Java object serialized successfully!")
+
+    # Deserialize the Java object from the file
+    with open("serialized_java_object.pkl", "rb") as f:
+        deserialized_object = JUnpickler(f).load()
+
+    print("Deserialized Java object:", deserialized_object)
+    # Output: MySerializableClass{name='TestObject', value=42}
+
+Best Practices with JPicker
+===========================
+
+1. **Ensure Objects Are Serializable**:
+   - Only Java objects that implement `java.io.Serializable` can be serialized.
+     Ensure your custom Java classes implement this interface.
+
+2. **Validate Serialization**:
+   - Test serialization and deserialization to ensure data integrity.
+
+3. **Handle Non-Serializable Fields**:
+   - If a Java object contains non-serializable fields, mark them as `transient`
+     to exclude them during serialization.
+
+4. **Avoid Reference Loops**:
+   - Break reference loops between Python and Java objects to prevent memory
+     leaks.
+
+
+Limitations of JPickler
+=======================
+
+1. **Non-Serializable Objects**:
+   - Java objects that do not implement `java.io.Serializable` cannot be
+serialized with JPickler.
+
+2. **Cross-Version Compatibility**:
+   - Serialized Java objects may not be compatible across different JVM
+versions.
+
+3. **Performance**:
+   - Serialization and deserialization can be resource-intensive for large or
+complex objects.
+
+
+Use Cases of JPickler
+=====================
+
+1. **Persistence**:
+   - Save Java objects to disk for later use.
+   - Example: Storing application state or configuration.
+
+2. **Data Exchange**:
+   - Transfer Java objects between Python applications or systems.
+   - Example: Network communication or distributed systems.
+
+3. **Debugging**:
+   - Capture the state of Java objects during execution for offline analysis.
+   - Example: Serialize problematic objects for inspection after a crash.
+
+
+Conclusion for JPicker
+======================
+
+JPickler simplifies serialization of Java objects in Python, enabling seamless
+integration between the two ecosystems. By following best practices and
+understanding its limitations, you can use JPickler effectively for
+persistence, data exchange, and debugging tasks.
 
 
 Working with NumPy
 ******************
 
-As one of the primary focuses of JPype is working with numerical codes such as
-NumPy, there are a number of NumPy specific enhancements.  NumPy is a large
-binary package and therefore JPype cannot be compiled against NumPy directly
-without force it to be a requirement.  Instead of compiling against NumPy
-directly, JPype implements interfaces that NumPy can recognize and use.  The
-specific enhancements are the following: direct buffer transfers of primitive
-arrays and buffers, direct transfer of multi dimensional arrays, buffer backed
-NumPy arrays, and conversion of NumPy integer types to Java boxed types.
-
-Transfers to Java
-=================
-
-Memory from a NumPy array can be transferred to Java in bulk.  The transfer of
-a one dimensional NumPy array to Java can either be done at initialization
-or by use of the Python slice operator.
-
-Assuming we have a single dimensional NumPy array ``npa``, we can transfer
-it with initialization using
-
-.. code-block:: python
-
-   ja = JArray(JInt)(npa)
-
-Or we can transfer it to Java as a slice assignment.
-
-.. code-block:: python
-
-   ja[:] = npa
-
-The slice operator can transfer the entire array or just a portion of it.
+JPype provides seamless integration between Python's NumPy library and Java,
+enabling efficient data exchange and manipulation across both ecosystems. By
+leveraging JPype's ability to transfer arrays bidirectionally, users can combine
+NumPy's powerful numerical computing capabilities with Java's robust libraries
+for machine learning, scientific computing, and enterprise applications. Whether
+transferring data to NumPy for analysis or sending arrays to Java for processing,
+JPype ensures high performance and compatibility with minimal overhead. This
+integration is particularly useful for applications requiring large-scale
+numerical computations or interoperability between Python and Java-based systems.
 
 
-Multidimensional transfers to Java
-==================================
+Transferring Arrays Between Python and Java
+===========================================
 
-Multidimensional arrays can also be transferred at initialization time.
-To transfer a NumPy array to Java use the ``JArray.of`` function
+JPype supports bidirectional transfers of arrays between Python (NumPy) and Java.
+This allows seamless integration of numerical libraries with Java's ecosystem.
+
+Transferring Arrays to NumPy
+----------------------------
+
+Java arrays can be transferred into NumPy arrays using Python's `memoryview`.
+This enables efficient bulk data transfer for rectangular arrays.
+
+**Example: Transferring a Java Array to NumPy**
 
 .. code-block:: python
 
-    z = np.zeros((5,10,20))
-    ja = JArray.of(z)
+   import jpype
+   import numpy as np
 
-Transfers to NumPy
-==================
+   # Start the JVM
+   jpype.startJVM()
 
-Java arrays can be in two forms.  Java multidimensional arrays are not
-contiguous in memory.  If all of the arrays in each dimension are the same,
-then the array is rectangular.  If the size of the arrays within any dimension
-differ, then the array is jagged.  Jagged arrays are an array of arrays rather
-than a rectangular block of memory.
+   # Create a Java array
+   java_array = jpype.JDouble[:]([1.1, 2.2, 3.3])
 
-NumPy arrays only hold rectangular arrays as multidimensional arrays of
-primitives.  All other arrangements are a stored as a single dimensional array
-of objects.  JPype can automatically transfer a rectangular array to NumPy as a
-bulk transfer.  To do so JPype supports a ``memoryview`` on rectangular arrays.
-Whenever a memoryview is called on a multidimensional array of primitives,
-JPype verifies that it is rectangular and creates a buffer.  If it is jagged,
-a ``BufferError`` is raised.  When a Java array is used as an argument to
-initialize a NumPy array, it creates a ``memoryview`` so that all of the memory
-can be transferred in bulk.
+   # Transfer the Java array to NumPy
+   numpy_array = np.array(memoryview(java_array))
+
+   print(numpy_array)  # Output: [1.1 2.2 3.3]
+
+**Constraints**:
+- The Java array must be rectangular. Jagged arrays are not supported.
+- Only primitive types (e.g., `double`, `int`) are supported for direct transfer.
+
+Transferring Arrays to Java
+---------------------------
+
+NumPy arrays can be transferred to Java using the `JArray.of` function. This maps
+the structure of a NumPy array to a Java multidimensional array.
+
+**Example: Transferring a NumPy Array to Java**
+
+.. code-block:: python
+
+   import jpype
+   import numpy as np
+
+   # Start the JVM
+   jpype.startJVM()
+
+   # Create a NumPy array
+   numpy_array = np.zeros((5, 10, 20))  # 5x10x20 array filled with zeros
+
+   # Transfer the array to Java
+   java_array = jpype.JArray.of(numpy_array)
+
+   print(java_array[0][0][0])  # Output: 0.0
+
+**Constraints**:
+- The NumPy array must be rectangular. Jagged arrays are not supported.
+- Data types must be compatible with Java primitives (e.g., `np.float64` → `double`).
+
+Requirements and Constraints
+----------------------------
+
+1. **Rectangular Arrays**:
+   - Both NumPy and Java arrays must be rectangular for direct transfer.
+
+2. **Data Type Compatibility**:
+   - NumPy types must map to Java primitives (e.g., `np.int32` → `int`).
+
+3. **Error Handling**:
+   - Jagged arrays or incompatible types will raise a `TypeError`.
+
+Best Practices with NumPy
+-------------------------
+
+1. **Validate Array Structure**:
+   - Ensure arrays are rectangular before transferring.
+
+2. **Optimize Data Types**:
+   - Use NumPy types that map directly to Java primitives for efficiency.
+
+3. **Monitor Memory Usage**:
+   - Large arrays can consume significant memory. Monitor resources carefully.
+
+Summary of NumPy
+----------------
+
+JPype provides efficient bidirectional array transfers between Python and Java.
+By following the outlined constraints and best practices, users can achieve
+seamless integration for numerical and scientific applications.
 
 
-Buffer backed NumPy arrays
+Buffer Backed NumPy Arrays
 ==========================
 
-Java direct buffers provide access between foreign memory and Java.
-This access bypasses the JNI layer entirely, permitting Java and Python to
-operate on a memory space with native speed.  Java direct buffers are not under
-the control of the garbage collector and thus can result in memory leaks and
-memory exhaustion if not used carefully.  This is used with Java libraries that
-support direct buffers.  Direct buffers are part of the Java ``nio`` package
-and thus functionality for buffers is in ``jpype.nio``.
+Java direct buffers provide a mechanism for shared memory between Java and
+Python, enabling high-speed data exchange by bypassing the JNI layer. These
+buffers are particularly useful for applications requiring efficient handling
+of large datasets, such as scientific computing or memory-mapped files.
 
-To create a buffer backed NumPy array, the user must either create
-a direct memory buffer using the Java direct buffer API or create a
-Python ``bytearray`` and apply ``jpype.nio.convertToByteBuffer`` to map this
-memory into Java space.  NumPy can then convert the direct buffer into
-an array using ``asarray``.
+Direct buffers are part of the Java ``nio`` package and can be accessed using
+the ``jpype.nio`` module. NumPy arrays can be backed by Java direct buffers,
+allowing Python and Java to operate on the same memory space. However, direct
+buffers are not managed by the garbage collector, so improper use may lead to
+memory leaks or crashes.
 
-To originate a direct buffer from Java, use:
+Creating Buffer Backed Arrays
+-----------------------------
 
-.. code-block:: python
+To create a buffer-backed NumPy array, you can either originate the buffer in
+Java or Python. The following examples demonstrate both approaches:
 
-  jb = java.nio.ByteBuffer.allocateDirect(80)
-  db = jb.asDoubleBuffer()
-  a = np.asarray(db)
-
-To origate a direct buffer from Python, use:
+**Example 1: Creating a Buffer in Java**
 
 .. code-block:: python
 
-   bb = bytearray(80)
-   jb = jpype.nio.convertToDirectBuffer(bb)
-   db = jb.asDoubleBuffer()
-   a = np.asarray(db)
+   import jpype
+   import numpy as np
 
+   # Start the JVM
+   jpype.startJVM()
 
-Buffer backed arrays have one downside.  Python and by extension NumPy have
-no way to tell when a buffer becomes invalid.  Once the JVM is shutdown,
-all buffers become invalid and any access to NumPy arrays backed by Java
-risk crashing.  To avoid this fate, either create the memory for the buffer from
-within Python and pass it to Java.  Or use the Java ``java.lang.Runtime.exit``
-which will terminate both the Java and Python process without leaving any
-opportunity to access a dangling buffer.
+   # Allocate a direct buffer in Java
+   jb = java.nio.ByteBuffer.allocateDirect(80)  # Allocates 80 bytes
+   db = jb.asDoubleBuffer()                     # Converts to a double buffer
 
-Buffer backed memory is not limited to use with NumPy.  Buffer transfers are
-supported to provide shared memory between processes or memory mapped files.
-Anything that can be mapped to an address with as a flat array of primitives
-with machine native byte ordering can be mapped into Java.
+   # Convert the buffer to a NumPy array
+   np_array = np.asarray(db)                    # NumPy array backed by Java buffer
+   print(np_array)
+
+**Example 2: Creating a Buffer in Python**
+
+.. code-block:: python
+
+   import jpype
+   import numpy as np
+
+   # Start the JVM
+   jpype.startJVM()
+
+   # Create a Python bytearray
+   py_buffer = bytearray(80)                    # Allocates 80 bytes
+   jb = jpype.nio.convertToDirectBuffer(py_buffer)  # Maps the bytearray to Java
+   db = jb.asDoubleBuffer()                     # Converts to a double buffer
+
+   # Convert the buffer to a NumPy array
+   np_array = np.asarray(db)                    # NumPy array backed by Python buffer
+   print(np_array)
+
+Important Considerations for Buffer Backed Arrays
+-------------------------------------------------
+
+1. **Buffer Lifetime**:
+   - Python and NumPy cannot detect when a Java buffer becomes invalid. Once the
+     JVM is shut down, all buffers originating from Java become invalid, and any
+     access to them may result in crashes.
+   - To avoid this, create buffers in Python and pass them to Java, ensuring
+     Python retains control over the memory.
+
+2. **JVM Shutdown**:
+   - If buffers are created in Java, consider using ``java.lang.Runtime.exit``
+     to terminate both the Java and Python processes simultaneously. This
+     prevents accidental access to dangling buffers.
+
+3. **Applications**:
+   - Buffer-backed memory is not limited to NumPy. It can be used for shared
+     memory between processes, memory-mapped files, or any application requiring
+     efficient data exchange.
+
+Summary of Buffer Backed Arrays
+-------------------------------
+
+Buffer-backed NumPy arrays provide a powerful mechanism for high-speed data
+exchange between Python and Java. However, users must carefully manage buffer
+lifetimes and ensure proper handling during JVM shutdown to avoid crashes or
+memory leaks.
+
 
 NumPy Primitives
 ================
 
-When converting a Python type to a boxed Java type, there is the difficulty
-that Java has no way to know the size of a Python numerical value.  But when
-converting NumPy numerical types, this is not an issue.  The following
-conversions apply to NumPy primitive types.
+JPype provides seamless integration with NumPy, allowing efficient data
+transfers between Python and Java. NumPy arrays can be mapped to Java boxed
+types or primitive arrays. However, certain types, such as `np.float16`, are
+converted to compatible Java types during transfer.
 
-=========== =======================
-Numpy Type  Java Boxed Type
-=========== =======================
-np.int8     java.lang.Byte
-np.int16    java.lang.Short
-np.int32    java.lang.Integer
-np.int64    java.lang.Long
-np.float32  java.lang.Float
-np.float64  java.lang.Double
-=========== =======================
+Supported NumPy Types
+---------------------
 
-Further, these NumPy types obey Java type conversion rules so that they
-act as the equivalent of the Java primitive type.
+The following table summarizes how NumPy types are mapped to Java boxed types
+and primitive arrays:
+
+=================  ============================
+NumPy Type         Java Type (Boxed/Primitive)
+=================  ============================
+np.int8            java.lang.Byte / byte[]
+np.int16           java.lang.Short / short[]
+np.int32           java.lang.Integer / int[]
+np.int64           java.lang.Long / long[]
+np.float16         java.lang.Float / float[] (*)
+np.float32         java.lang.Float / float[]
+np.float64         java.lang.Double / double[]
+=================  ============================
+
+(*) `np.float16` will be automatically converted to `float32` (`java.lang.Float`
+or `float[]`) during the transfer to Java.
+
+.. note::
+   `np.float16` can be transferred to Java, but it will be automatically
+   converted to `float32` (`java.lang.Float` for boxed types or `float[]` for
+   primitive arrays) on the Java side. This is because Java does not natively
+   support `float16`. If precise handling of `float16` is required, consider
+   converting the data to `float32` or `float64` explicitly in Python before
+   transferring it.
+
+Examples
+--------
+
+The following examples demonstrate how to transfer `np.float16` data to Java
+as boxed types or primitive arrays.
+
+Example 1: Transferring `float16` to a Boxed Type
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   import jpype
+   import numpy as np
+
+   # Start the JVM
+   jpype.startJVM()
+
+   # Create a NumPy array with float16 data
+   float16_array = np.array([1.1, 2.2, 3.3], dtype=np.float16)
+
+   # Transfer the array to a Java boxed type (java.util.ArrayList)
+   java_list = jpype.java.util.ArrayList()
+   for value in float16_array:
+       java_list.add(jpype.JFloat(value))  # Automatically converted to float32
+
+   print(java_list)  # Output: [1.1, 2.2, 3.3] (as float32)
+
+Example 2: Transferring `float16` to a Primitive Array
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: python
+
+   import jpype
+   import numpy as np
+
+   # Start the JVM
+   jpype.startJVM()
+
+   # Create a NumPy array with float16 data
+   float16_array = np.array([1.1, 2.2, 3.3], dtype=np.float16)
+
+   # Transfer the array to a Java primitive array
+   java_primitive_array = jpype.JArray(jpype.JFloat)(float16_array)  # Converted
+                                                                     # to float32[]
+
+   print(java_primitive_array)  # Output: [1.1, 2.2, 3.3] (as float32[])
+
+Summary of NumPy Automatic Converstions
+---------------------------------------
+
+JPype supports transferring NumPy arrays to Java, with automatic conversions
+for certain types. While `np.float16` can be transferred, it is converted to
+`float32` on the Java side for compatibility. Users should be aware of this
+behavior and plan accordingly when working with `float16` data.
 
 
 .. _Proxies:
 
-Implementing Java interfaces
-****************************
+Calling Python code from Java
+*****************************
 
 Proxies in Java are foreign elements that pretend to implement a Java
 interface. We use this proxy API to allow Python to implement any Java
@@ -2315,15 +4089,107 @@ features, it is possible to build complete UIs without creating a single
 subclass.
 
 For those cases where sub-classing is absolutely necessary (i.e. using Java's
-SAXP classes), it is necessaryy to create an interface and a simple
+SAXP classes), it is necessary to create an interface and a simple
 subclass in Java that delegates the calls to that interface.  The interface
 can then be implemented in Python using a proxy.
 
-There are two APIs for supporting of Java proxies.  The new high-level
+There are three APIs for supporting of Java proxies. The direct method is to
+pass a Python function, method, bound method, or lambda to any Java method
+that accepts a FunctionInterface or other SAM.  If more complex behaviors 
+need to be exchanged Python can implement a Java interface. Implementation of an
 interface uses decorators which features strong error checking and easy
 notation.  The older low-level interface allows any Python object or dictionary
 to act as a proxy even if it does not provide the required methods for the
 interface.
+
+Passing Python Callables to Java Functional Interfaces
+=======================================================
+
+JPype supports passing Python functions, methods, and bound methods directly to
+Java methods or fields that implement `FunctionalInterface`. This allows Python
+code to seamlessly integrate with Java's functional programming constructs,
+such as lambdas and method references, without requiring a proxy or explicit
+implementation of the interface.
+
+### Supported Use Cases
+
+This feature works with any Java method or field that expects a
+`FunctionalInterface`. Common examples include:
+- Java Streams (`java.util.stream`)
+- Java Executors (`java.util.concurrent`)
+- Custom functional interfaces defined in Java code
+
+### Example: Passing a Python Function to a Java Method
+
+Suppose you have a Java method that expects a `java.util.function.Function`:
+
+.. code-block:: java 
+
+    import java.util.function.Function;
+
+    public class Example { 
+        public static String applyFunction(Function<String, String> func, String input) {
+         return func.apply(input); 
+        } 
+    }
+
+You can pass a Python function directly to this method:
+
+.. code-block:: python 
+
+    import jpype import jpype.imports
+    jpype.startJVM()
+
+    from java.util.function import Function from Example import Example
+
+    # Define a Python function
+    def to_uppercase(s): 
+        return s.upper()
+
+    # Pass the Python function to the Java method
+    result = Example.applyFunction(to_uppercase, "hello")
+    print(result)  #Output: HELLO
+
+### Example: Using a Lambda Expression
+
+Python lambdas can also be passed to Java methods:
+
+.. code-block:: python
+
+    # Pass a lambda expression
+    result = Example.applyFunction(lambda s: s[::-1], "hello") 
+    print(result)  #Output: olleh
+
+### Example: Using a Bound Method
+
+Bound methods of Python objects can be passed as well:
+
+.. code-block:: python 
+    
+    class StringManipulator: 
+        def reverse(self, s): 
+            return s[::-1]
+
+    manipulator = StringManipulator() 
+    result = Example.applyFunction(manipulator.reverse, "hello")
+    print(result)  # Output: olleh
+
+### Notes and Best Practices
+
+1. **Performance**: While using Python callables is convenient, it may not be
+as performant as implementing a full Java proxy for high-frequency calls. Use
+proxies for performance-critical applications.
+
+2. **Error Handling**: If an exception occurs within the Python callable, it
+will be wrapped in a `RuntimeException` when passed back to Java.
+
+3. **Type Matching**: Ensure that the Python callable returns a type compatible
+with the expected Java return type. Implicit conversions will be applied where
+possible.
+
+By leveraging this feature, you can simplify integration between Python and
+Java, especially when working with Java's functional programming APIs.
+
 
 .. _@JImplements:
 
@@ -2476,6 +4342,114 @@ or you can use a dictionary.
     d = { 'testMethod': _testMethod, 'testMethod2': _testMethod2, }
     proxy = JProxy("ITestInterface2", dict=d)
 
+Wrapping a Python instance with new behaviors for Java
+======================================================
+
+JPype allows a JProxy to implement Java interfaces using a combination of a
+dictionary (dict) and an object instance (inst). This feature enables arbitrary
+Python objects to dynamically define methods via a dictionary while also
+providing methods from the object's class. The combined approach is
+particularly useful for cases where some methods are predefined in a Python
+class and others need to be dynamically added or overridden.  This is useful when 
+the names and functionality of a Python object need to be made to conform to 
+Java's expected behaviors.
+
+Syntax
+------
+The JProxy factory supports both dict and inst as keyword arguments. When both are provided:
+
+ * Methods in the dictionary take precedence.
+ * The inst object is passed as the self argument to methods defined in the dictionary.
+ * If a method is not found in the dictionary, JPype will fall back to the default method implementation in Java.
+
+.. code-block:: python
+
+    JProxy(interface, dict=my_dict, inst=my_instance)
+
+Example: Combining dict and inst
+Suppose you have a Java interface:
+
+.. code-block:: java
+
+    public interface MyInterface {
+        String method1();
+        String method2();
+    }
+
+You can implement this interface using both a dictionary and an object instance:
+
+.. code-block:: python
+
+    public interface MyInterface {
+        String method1();
+        default String method2() {
+            return "hello";
+        }
+    }
+    You can implement this interface using both a dictionary and an object instance:
+
+    .. code-block:: python
+
+    from jpype import JProxy
+
+    class MyClass:
+        def __init__(self, name):
+            self.name = name
+
+    # Define a dictionary with methods
+    my_dict = {
+        "method1": lambda self: f"Hello, {self.name} from method1"
+    }
+
+    # Create an instance of the class
+    my_instance = MyClass("Alice")
+
+    # Combine the dictionary and instance in a JProxy
+    proxy = JProxy("MyInterface", dict=my_dict, inst=my_instance)
+
+    # Use the proxy in Java
+    print(proxy.method1())  # Output: Hello, Alice from method1
+    print(proxy.method2())  # Falls back to Java's default method implementation
+
+
+Notes and Best Practices
+------------------------
+Method Resolution:
+
+ * Methods in the dictionary take precedence over methods in the instance.  
+
+ * If a method is not found in the dictionary, JPype will attempt to resolve it in the
+   instance.  
+
+Error Handling:
+
+ * If neither the dictionary nor the instance provides the required method, a NotImplementedError will be raised.
+
+Flexibility:
+
+This approach allows dynamic addition or overriding of methods via the dictionary while retaining the benefits of object-oriented programming with the instance.
+
+Example: Dynamic Overrides
+You can dynamically override methods in the instance using the dictionary:
+
+.. code-block:: python
+
+    class MyClass:
+        def __init__(self, name):
+            self.name = name
+
+    # Define a dictionary to override methods
+    my_dict = {
+        "method1": lambda self: f"Overridden method1 for {self.name}"
+    }
+
+    my_instance = MyClass("Bob")
+
+    proxy = JProxy("MyInterface", dict=my_dict, inst=my_instance)
+
+    print(proxy.method1())  # Output: Overridden method1 for Bob
+    print(proxy.method2())  # Falls back to Java's default method implementation
+
 
 Proxying Python objects
 =======================
@@ -2574,12 +4548,16 @@ launches it from within Python.
 
 
 
+.. _concurrent_processing:
+
 Concurrent Processing
 *********************
 
 This chapter covers the topic of threading, synchronization, and multiprocess.
 Much of this material depends on the use of Proxies_ covered in the prior
 chapter.
+
+.. _concurrent_processing_threading:
 
 Threading
 =========
@@ -2597,6 +4575,8 @@ Python into Java to any user defined method.  Shorter defined calls such as
 to get a string name from from a class may not release the GIL.  Every time
 the GIL is released it is another opportunity for Python to switch to a different
 cooperative thread.
+
+.. _concurrent_processing_threading_python_threads:
 
 Python Threads
 --------------
@@ -2628,6 +4608,8 @@ whenever Java is no longer needed.  The thread will automatically reattach if
 Java is needed again.  There is a performance penalty each time a thread is
 attached and detached.
 
+.. _concurrent_processing_threading_java_threads:
+
 Java Threads
 ------------
 
@@ -2635,6 +4617,8 @@ To use Java threads, create a Java proxy implementins
 ``java.lang.Runnable``.  The Runnable can then be passed any Java threading
 mechanism to be executed.  Each time that Java threads transfer control
 back to Python, the GIL is reacquired.
+
+.. _concurrent_processing_threading_other_threads:
 
 Other Threads
 -------------
@@ -2644,6 +4628,121 @@ they interact with Java depends on their nature. As stated earlier, any OS-
 level threads will work without problem. Emulated threads, like microthreads,
 will appear as a single thread to Java, so special care will have to be taken
 for synchronization.
+
+
+Customizing java.lang.Thread
+============================
+
+Overview
+--------
+
+JPype automatically attaches Python threads to the JVM when they interact with
+Java resources. Threads are attached as daemon threads to ensure that they do
+not block JVM shutdown. While this behavior simplifies integration, it can lead
+to resource leaks in thread-heavy applications if threads are not properly
+detached when they terminate.
+
+To address this, JPype customizes `java.lang.Thread` with additional methods
+for managing thread attachment and detachment. These methods allow developers
+to explicitly detach threads, freeing resources in the JVM and preventing leaks.
+
+Customized Methods
+------------------
+
+The following methods are added to `java.lang.Thread` by JPype:
+
+.. method:: java.lang.Thread.attach()
+
+   Attaches the current thread to the JVM as a user thread.
+
+   User threads prevent the JVM from shutting down until they are terminated or
+   detached. This method can be used to convert a daemon thread to a user
+   thread.
+
+   **Raises**:
+     - `RuntimeError`: If the JVM is not running.
+
+.. method:: java.lang.Thread.attachAsDaemon()
+
+   Attaches the current thread to the JVM as a daemon thread.
+
+   Daemon threads act as background tasks and do not prevent the JVM from
+   shutting down. JPype automatically attaches threads as daemon threads when
+   they interact with Java resources. Use this method to explicitly attach a
+   thread as a daemon.
+
+   **Raises**:
+     - `RuntimeError`: If the JVM is not running.
+
+.. method:: java.lang.Thread.detach()
+
+   Detaches the current thread from the JVM.
+
+   This method frees the associated resources in the JVM for the current thread.
+   It is particularly important for thread-heavy applications to prevent leaks.
+   Detaching a thread does not interfere with its ability to reattach later.
+
+   **Notes**:
+     - This method cannot fail and is safe to call even if the JVM is not
+       running.
+     - There is no harm in calling this method multiple times or detaching
+       threads early.
+
+Examples with Java Thread
+-------------------------
+
+Here are examples of how to use the customized methods for `java.lang.Thread`:
+
+.. code-block:: python
+
+   import jpype
+   import jpype.imports
+
+   jpype.startJVM()
+
+   # Attach the thread as a user thread
+   java.lang.Thread.attach()
+   print("Thread attached as a user thread.")
+
+   # Perform Java operations here...
+
+   # Detach the thread after completing Java operations
+   java.lang.Thread.detach()
+   print("Thread detached from the JVM.")
+
+   # Attach the thread as a daemon thread
+   java.lang.Thread.attachAsDaemon()
+   print("Thread attached as a daemon thread.")
+
+Best Practices for Java Thread
+------------------------------
+
+- **Detach Threads When They End**: For thread-heavy applications, ensure that
+  Python threads detach themselves from the JVM before they terminate. This
+  prevents resource leaks and ensures efficient memory usage.
+
+- **Avoid Excessive Attachments**: While JPype automatically attaches threads,
+  excessive thread creation without proper detachment can lead to resource
+  exhaustion in the JVM.
+
+- **Detach Early**: Detaching threads early, after completing all Java
+  operations, is safe and does not interfere with reattachment later. This is
+  especially important for applications that spawn many short-lived threads.
+
+- **Monitor Resource Usage**: Regularly monitor JVM memory usage in
+  thread-heavy applications to identify potential leaks caused by lingering
+  thread attachments.
+
+Summary of Java Thread
+----------------------
+
+JPype customizes `java.lang.Thread` to provide additional methods for managing
+thread attachment and detachment to/from the JVM. While JPype automatically
+attaches threads as daemon threads, it is crucial to detach threads explicitly
+in thread-heavy applications to prevent resource leaks. By following best
+practices, developers can ensure efficient memory usage and smooth integration
+between Python and Java.
+
 
 .. _synchronized:
 
@@ -2687,6 +4786,7 @@ String as internal string representations may not be complete objects.
 For synchronization that does not have to be shared with Java code, use
 Python's support directly rather than Java's synchronization to avoid
 unnecessary overhead.
+
 
 Threading examples
 ==================
@@ -2761,14 +4861,244 @@ a Java object.  This can cause deadlocks when using multiprocessing IPC, thus
 wrapping any Queue is required.
 
 
+Managing Cross-Platform GUI Environments
+****************************************
+
+JPype provides utility functions, `setupGuiEnvironment` and 
+`shutdownGuiEnvironment`, to manage GUI environments across platforms, 
+ensuring compatibility with macOS, Linux, and Windows. These functions are 
+particularly useful for Swing and JavaFX-based applications, where macOS 
+imposes specific requirements for GUI event loops. Even on Linux and Windows, 
+using `setupGuiEnvironment` ensures consistent behavior and avoids potential 
+issues with threading and event loops.
+
+setupGuiEnvironment(cb)
+=======================
+
+**Description**:
+
+`setupGuiEnvironment` ensures that GUI applications can run correctly across 
+all platforms. It is specifically designed to address macOS's requirement for 
+the main thread to run the event loop, but it is also recommended for Swing 
+and JavaFX applications on Linux and Windows to maintain cross-platform 
+compatibility and proper threading behavior.
+
+**Parameters**:
+
+- **cb**: A callback function that initializes and launches the GUI application.
+
+**Behavior**:
+
+- **macOS**:
+  - Creates a Java thread using a `Runnable` proxy.
+  - Starts the macOS event loop using `PyObjCTools.AppHelper.runConsoleEventLoop()`.
+
+- **Other Platforms (Linux, Windows)**:
+  - Executes the callback function directly.
+
+**Why Use This Function for Swing and JavaFX Applications?**
+
+Swing and JavaFX applications often rely on proper threading and event loop 
+management to function correctly. While macOS has strict requirements for 
+running the event loop on the main thread, using `setupGuiEnvironment` on 
+Linux and Windows ensures consistent behavior and avoids potential threading 
+issues, such as race conditions or improper GUI updates.
+
+**Example**:
+
+.. code-block:: python
+
+    from jpype import setupGuiEnvironment
+    from javafx.application import Platform
+
+    def say_hello_later():
+        """Test function for scheduling a task on the JavaFX Application Thread."""
+        print("Hello from JavaFX!")
+
+    def launch_gui():
+        """Launch the GUI application."""
+        # Example: Schedule a task on the JavaFX Application Thread
+        Platform.runLater(say_hello_later)
+        print("GUI launched")
+
+    # Use setupGuiEnvironment to ensure cross-platform compatibility
+    setupGuiEnvironment(launch_gui)
+
+Reestablishing an Interactive Shell on Another Thread
+=====================================================
+
+When using `setupGuiEnvironment`, the main thread may be occupied by the GUI 
+event loop (particularly on macOS). To allow interactive debugging in Python, 
+you can launch an interactive shell (e.g., IPython) on a separate thread.
+
+**Steps**:
+
+1. Use `setupGuiEnvironment` to start the GUI application.
+2. Launch an interactive shell on a separate thread using Python's `threading` 
+   module.
+
+**Example**:
+
+.. code-block:: python
+
+    import threading
+    import IPython
+
+    def launch_interactive_shell():
+        """Launch an interactive shell on a separate thread."""
+        IPython.embed()
+
+    # Start the interactive shell on another thread
+    thread = threading.Thread(target=launch_interactive_shell)
+    thread.start()
+
+By combining this approach with `setupGuiEnvironment`, you can interact with 
+the Python environment while the GUI application is running.
+
+shutdownGuiEnvironment()
+========================
+
+**Description**:
+
+`shutdownGuiEnvironment` is used to cleanly terminate the macOS event loop. On 
+other platforms, it performs no action.
+
+**Behavior**:
+
+- **macOS**:
+  - Stops the macOS event loop using `PyObjCTools.AppHelper.stopEventLoop()`.
+
+- **Other Platforms (Linux, Windows)**:
+  - No action is taken.
+
+**Example**:
+
+.. code-block:: python
+
+    from jpype import shutdownGuiEnvironment
+
+    # Shutdown the GUI environment (macOS-specific)
+    shutdownGuiEnvironment()
+
+Best Practices on GUIs
+--------------------------
+
+- **Use `setupGuiEnvironment` for All Platforms**:
+  Even though macOS has specific requirements, using `setupGuiEnvironment` 
+  ensures consistent behavior across all platforms, particularly for Swing 
+  and JavaFX applications.
+
+- **Thread Safety**:
+  Always schedule GUI updates using JavaFX's `Platform.runLater` or Swing's 
+  `SwingUtilities.invokeLater` to ensure they occur on the appropriate thread.
+
+- **Interactive Debugging**:
+  Launch an interactive shell on a separate thread for debugging while the GUI 
+  application is running.
+
+- **Exception Handling**:
+  Wrap callback functions in `try-except` blocks to prevent unhandled 
+  exceptions from disrupting the GUI.
+
+- **Cross-Platform Testing**:
+  Test the application on macOS, Linux, and Windows to ensure compatibility.
+
+Summary of GUIs
+===============
+
+The `setupGuiEnvironment` function is a critical tool for managing GUI 
+environments across platforms, particularly for Swing and JavaFX-based 
+applications. It ensures compatibility with macOS's event loop requirements 
+while maintaining simplicity on other platforms. Combined with the ability to 
+launch an interactive shell on a separate thread, this approach provides a 
+robust solution for developing and debugging GUI applications in Python.
+
+
+.. _miscellaneous_topics:
 
 Miscellaneous topics
 ********************
 
 This chapter contains all the stuff that did not fit nicely into the narrative
-about JPype.  Topics include code completion, performance, debugging Java
-within JPype, debugging JNI and other JPype failures, how caller sensitive
+about JPype.  Topics include database interfacing, code completion, performance, 
+debugging Java within JPype, debugging JNI and other JPype failures, how caller sensitive
 methods are dealt with, and finally limitations of JPype.
+
+
+Database Access with `jpype.dbapi2`
+===================================
+
+JPype provides the `jpype.dbapi2` module, which allows Python applications to
+interact with Java-based database drivers using the Python Database API
+Specification (PEP 249). This module bridges Python and Java, enabling seamless
+access to databases that lack native Python drivers but provide JDBC drivers.
+
+Key Features of dbapi2
+----------------------
+- **PEP 249 Compliance**: Implements the Python Database API Specification for
+  standardized database interaction.
+- **JDBC Integration**: Uses Java's JDBC (Java Database Connectivity) to connect
+  to databases.
+- **Cross-Platform**: Supports any database with a JDBC driver, including
+  enterprise databases like Oracle, DB2, and SQL Server.
+
+Prerequisites for dbapi2
+------------------------
+- Ensure the JVM is started with the appropriate classpath for the JDBC driver.
+- Obtain the JDBC driver for the target database and include its path in the
+  `classpath`.
+
+Example Usage of dbapi2
+-----------------------
+.. code-block:: python
+
+    import jpype
+    import jpype.dbapi2 as dbapi2
+
+    # Start the JVM with the JDBC driver
+    jpype.startJVM(classpath=["path/to/jdbc/driver.jar"])
+
+    # Connect to the database
+    connection = dbapi2.connect(
+        "jdbc:database_url",  # JDBC URL for the database
+        {"user": "username", "password": "password"}  # Connection properties
+    )
+
+    # Create a cursor and execute a query
+    cursor = connection.cursor()
+    cursor.execute("SELECT * FROM my_table")
+
+    # Fetch and process results
+    results = cursor.fetchall()
+    for row in results:
+        print(row)
+
+    # Close the cursor and connection
+    cursor.close()
+    connection.close()
+
+    # Shut down the JVM
+    jpype.shutdownJVM()
+
+
+Benefits of dbapi2
+------------------
+- Access databases that lack native Python drivers but provide JDBC drivers.
+- Leverage advanced features of Java-based database drivers.
+- Maintain compatibility with Python's standard database API.
+
+
+Limitations of dbapi2
+----------------------
+- Requires a running JVM, which may introduce overhead compared to native Python
+  database drivers.
+- Performance may be slightly impacted due to Python-Java interaction.
+
+Use Cases of dbapi2
+-------------------
+- Connecting to enterprise databases like Oracle, SQL Server, or DB2.
+- Utilizing advanced capabilities of JDBC drivers within Python applications.
+
 
 Javadoc
 =======
@@ -2802,6 +5132,8 @@ with custom page layouts will likely not be extracted.
 If javadoc for a class cannot be located or extracted properly, default
 documentation will be generated using Java reflection.
 
+.. _miscellaneous_topics_autopep8:
+
 Autopep8
 ========
 
@@ -2833,6 +5165,8 @@ Result without ``--ignore E402``
         import jpype.imports
 
         jpype.startJVM()
+
+.. _miscellaneous_topics_performance:
 
 Performance
 ===========
@@ -2867,6 +5201,8 @@ Java counterpart, it has a good chance of being faster than the pure Python
 version of it. The JVM is a memory hog, but does a good job of optimizing
 code execution speeds.
 
+
+.. _miscellaneous_topics_code_completion:
 
 Code completion
 ===============
@@ -2903,6 +5239,8 @@ This will produce a list containing all method and field that begin with
 the letter "s".
 
 JPype has not been tested with other autocompletion engines such as Kite.
+
+.. _miscellaneous_topics_garbage_collection:
 
 Garbage collection
 ==================
@@ -2941,6 +5279,8 @@ The sizing on this is dynamic so it should scale to the memory use of
 a process.
 
 
+.. _miscellaneous_topics_using_jpype_for_debugging_java_code:
+
 Using JPype for debugging Java code
 ===================================
 
@@ -2955,6 +5295,8 @@ probe and plot the Java data structures interactively, these methods include:
 
 We will briefly discuss each of these methods.
 
+
+.. _miscellaneous_topics_using_jpype_for_debugging_java_code_attaching_a_debugger:
 
 Attaching a Debugger
 --------------------
@@ -2995,6 +5337,7 @@ a breakpoint is hit.
 
 .. image:: attach_debugger.png
 
+
 Attach data to an Exception
 ---------------------------
 
@@ -3006,6 +5349,7 @@ chained. Thus, it we create a dummy exception holding a ``java.util.Map`` and
 attach it to as the cause of the exception, it will be passed back down the
 call stack until it reaches Python. We can then use ``getCause()`` to retrieve
 the map containing the relevant data.
+
 
 Capturing the state
 -------------------
@@ -3026,160 +5370,131 @@ deserialize the state files to access the Java structures that have
 been recorded.
 
 
-Getting additional diagnostics
+Getting Additional Diagnostics
 ==============================
 
-For the most part JPype does what its told, but that does not mean that
-there are no bugs.  With some many different interactions between Python and Java
-there is always some untested edge-cases.
+For the most part, JPype operates as intended, but that does not mean there are 
+no bugs or edge cases. Given the complexity of interactions between Python and 
+Java, untested scenarios may occasionally arise. JPype provides several 
+diagnostic tools to assist in debugging these issues. These tools require 
+accessing private JPype symbols, which may change in future releases. As such, 
+they should not be used in production code.
 
-JPype has a few diagnostic tools to help deal with these sorts of problems
-but each of them require accessing a "private" JPype symbol which may be
-altered, removed, folded, spindled, or mutilated in any future release.
-Thus none of the following should be used in production code.
+.. _checking-type-cast:
 
-Checking the type of a cast
+Checking the Type of a Cast
 ---------------------------
 
-Sometimes it is difficult to understand why a particular method overload is being
-selected by the method dispatch.  To check the match type for a conversion
-call the private method ``Class._canConvertToJava``.  This will produce a string
-naming the type of conversion that will be performed as one of ``none``,
-``explicit``, ``implicit``, or ``exact``..
+Sometimes it is difficult to understand why a particular method overload is 
+selected by the method dispatch. To check the match type for a conversion, use 
+the private method ``Class._canConvertToJava``. This will return a string 
+indicating the type of conversion performed: ``none``, ``explicit``, 
+``implicit``, or ``exact``.
 
-To test the result of the conversion process, call ``Class._convertToJava``.
-Unlike an explicit cast, this just attempts to perform the conversion without
-bypassing all of the other logic involved in casting.  It replicates
-the exact process used when a method is called or a field is set.
+To test the result of the conversion process, call ``Class._convertToJava``. 
+Unlike an explicit cast, this method attempts to perform the conversion without 
+bypassing the logic involved in casting. It replicates the exact process used 
+when a method is called or a field is set.
+
+.. _cpp-exceptions:
 
 C++ Exceptions in JPype
------------------------
+------------------------
 
-Internally JPype can generate C++ exception which is converted into Python
-exceptions for the user.  To trace an error back to its C++ source, it
-is necessary to obtain the original C++ exception.  As
-all sensitive block have function names compiled in to the try catch blocks,
-these C++ exception stack frames can be extracted as the "cause" of a Python
-exception.  To enable C++ stack traces use the command
-``_jpype.enableStacktraces(True)``.  Once executed all C++ exceptions that
-fell through a C++ exception handling block will produce an augmented C++
-stack trace.  If the JPype source code is available to Python, it can even
-print out each line where the stack frame was caught.  This is usually at the
-end of each function that was executed.  JPype does not need to be recompiled
-to use this option.
+Internally, JPype can generate C++ exceptions, which are converted into Python 
+exceptions for the user. To trace an error back to its C++ source, you can 
+enable stack traces for C++ exceptions. Use the following command:
+
+.. code-block:: python
+
+   import _jpype
+   _jpype.enableStacktraces(True)
+
+Once enabled, all C++ exceptions that fall through a C++ exception handling 
+block will produce an augmented stack trace. If the JPype source code is 
+available, the stack trace can even include the corresponding lines of code 
+where the exceptions occurred. This can help identify the source of errors that 
+originate in C++ code but propagate to Python as exceptions.
+
+.. _tracing:
 
 Tracing
 -------
 
-To debug a problem that resulted from a stateful interaction of elements the use
-of the JPype tracing mode may helpful.  To enable tracing
-recompile JPype with the ``--enable-tracing`` mode set.  When code is executed
-with tracing, every JNI call along with the object addresses and exceptions will
-be printed to the console.  This is keyed to macros that appear at the start and end of each
-JPype function.  These macros correspond to a try catch block.
+Tracing mode logs every JNI call, along with object addresses and exceptions, 
+to the console. To enable tracing, JPype must be recompiled with the 
+``--enable-tracing`` option. 
 
-This will often produce very large and verbose tracing logs.  However, tracing
-is often the only way to observe a failure that originated in one JNI call but did
-not fail until many calls later.
+Tracing is useful for identifying failures that originate in one JNI call but 
+manifest later. However, this mode produces verbose logs and is recommended 
+only for advanced debugging.
+
+.. _instrumentation:
 
 Instrumentation
 ---------------
 
-In order to support coverage tools, JPype can be compiled with a special
-instrumentation mode in which the private module command ``_jpype.fault``
-can be used to trigger an error.  The argument to the fault must be a function
-name as given in the ``JP_TRACE_IN`` macro at the start of each JPype function
-or a special trigger point defined in the code.  When the fault point is
-encounter it will trigger a ``SystemError``.
-This mode of operation can be used to replicate the path
-that a particular call took and verify that the error handling from that point
-back to Java is safe.
+JPype supports an instrumentation mode for testing error-handling paths. This 
+mode allows you to simulate faults at designated points in JPype's execution 
+flow. To enable instrumentation, recompile JPype with the ``--enable-coverage`` 
+option.
 
-Because instrumentation uses the same control hooks as tracing, only one mode
-can be active at a time.  Enabling instrumentation requires recompiling the
-JPype module with ``--enable-coverage`` option.
+Once instrumentation is enabled, use the private module command 
+``_jpype.fault`` to trigger an error. The argument to the fault command must be 
+the name of a function or a predefined fault point. When the fault point is 
+encountered, a ``SystemError`` is raised. Instrumentation is primarily useful 
+for verifying the robustness of JPype's exception handling mechanisms.
 
-Using a debugger
+.. _using-debugger:
+
+Using a Debugger
 ----------------
 
-If there is a crash in the JPype module, it may be necessary to get a backtrace
-using a debugger. Unfortunately Java makes this task a bit complicated.  As
-part of its memory handling routine, Java takes over the segmentation fault
-handler.  Whenever the fault is triggered, Java checks to see if it was the
-result the growth of an internal structure.  If it was simply a need for
-additional space, Java handles the exception by allocating addition memory.  On
-the other hand, if a fault was triggered by some external source, Java
-constructs a JVM fault report and then transfers control back to the usual
-segmentation fault handler.  Java will often corrupt the stack frame.  Any
-debugger attempting to unpack the corrupted core file will instead get random
-function addresses.
+If JPype crashes, it may be necessary to use a debugger to obtain a backtrace. 
+However, debugging JPype can be challenging due to the JVM's handling of 
+segmentation faults. The JVM intercepts segmentation faults to allocate memory 
+or handle internal operations, which can corrupt stack frames.
 
-The alternative is for the user to start JPype with an interactive debugger and
-execute to the fault point.  But this option also presents challenges.  The
-first action after starting the JVM is a test to see if its segmentation fault
-handler was installed properly.  Thus it will trigger an intentional
-segmentation fault.  The debugger can not recognize the difference between an
-intentional test and an actual fault, so the test will stop the debugger.  To
-avoid this problem debuggers such as gdb must be set to ignore the first
-segmentation fault.  Further details on this can be found in the developer
-guide.
+To debug JPype using tools such as ``gdb`, you must configure the debugger to 
+ignore segmentation faults intentionally triggered by the JVM. For example, use 
+the following command to start ``gdb`` and ignore the first fault:
 
+.. code-block:: shell
+
+   gdb --args python script.py
+   (gdb) handle SIGSEGV nostop noprint pass
+
+This configuration allows the debugger to bypass JVM-related faults while 
+capturing legitimate errors. Additionally, disable Python's fault handler to 
+avoid interference with segmentation fault reporting.
 
 .. _caller sensitive:
 
-Caller sensitive methods
-========================
+Caller-Sensitive Methods
+-------------------------
 
-The Java security model tracks what caller requested the method as a means to
-determine the level of access to provide.  Internal callers are provided
-privileged access to perform unsafe operations and external callers are given
-safer and more restricted access.  To perform this task, the JVM seaches the
-call stack to obtain the calling methods module.
+Java's security model tracks the caller of certain methods to determine the 
+level of access. These methods, known as "caller-sensitive methods," require 
+special handling in JPype. Examples of caller-sensitive methods include 
+``Class.forName``, ``java.lang.ClassLoader`` methods, and certain methods in 
+``java.sql.DriverManager``.
 
-This presents a difficulty for method invoked from JNI.  A method called from
-JNI lacks any call stack to unravel.  Rather than relegating the call
-to a safer level of access, the security model would outright deny access to
-certain JPype calls.  This resulted in a number of strange
-behaviors over the years that were forced to be worked around.  This issue was
-finally solved with the release of Java 12 when they outright broken all calls
-to getMethod by throwing a NullPointer exception
-whenever the caller frame was not found.  This inadvertent clued us into
-why Java would act so strangely for certain calls such as constructing a
-SQL database or attempting to call ``Class.forName``.  By creating an actual
-test case to work around we were able to resolve this limitation.
-
-Once we identified the issue, the workaround is only call caller sensitive
-methods from within Java.  But given that we call methods through JNI and the
-JNI interface defines no way to specify an origin for the call, the means we
-needed to develop an alternative calling mechanism.  Instead of calling methods
-directly, we instead pass the method id and the list of desired arguments to
-the internal ``org.jpype`` Java package.  This package unpacks the request and
-executes the desired method from within Java.  The call stack will indicate the
-caller is an external jar and be given the safe and restricted level of access.
-The result is then passed back to through the JNI layer.
-
-This special calling mechanism is slower and more indirect than the normal
-calling procedure, so its use is limited to only those methods that really
-require a caller sensitive procedure.  The mechanism to determine which methods
-are caller sensitive depends on the internals of Java and have changed with
-Java versions.  Older Java versions did not directly mark the caller sensitive
-methods and we must instead blanket bomb all methods belonging to
-``java.lang.Class``, ``java.lang.ClassLoader``, and  ``java.sql.DriverManager``.
-Newer versions specifically annotate the methods requiring caller sensitive
-treatment, but for some reason this annotation is a package private and thus
-we must search through method annotations by name to find the
-caller sensitive annotation.  Fortunately, this process is only performed once
-when the class is created, and very few methods have a large number of
-annotations so this isn't a performance hit.
+To handle caller-sensitive methods, JPype routes calls through an internal 
+Java package, ``org.jpype``, which executes the method within the JVM. This 
+ensures proper security context and avoids access errors. Although this 
+mechanism introduces slight overhead, it is necessary for compatibility with 
+Java's security model.
 
 
-.. _limitations:
+.. _limitations_jvm:
 
 JPype Known limitations
 =======================
 
 This section lists those limitations that are unlikely to change, as they come
 from external sources.
+
+.. _miscellaneous_topics_jpype_known_limitations_annotations:
 
 Annotations
 -----------
@@ -3211,6 +5526,7 @@ annotations are unlikely to be useful. As such JPype will not be able to
 support class or method annotations.
 
 
+
 Restarting the JVM
 -------------------
 
@@ -3220,6 +5536,7 @@ resources.  If the JVM is restarted, those stale Python objects will be in a
 broken state and the new JVM instance will obtain the references to these
 resulting in a memory leak. Thus it is not possible to start the JVM after it
 has been shut down with the current implementation.
+
 
 Running multiple JVM
 --------------------
@@ -3254,6 +5571,8 @@ Difficulties that would need to be overcome to remove this limitation include:
 Thus it appears prohibitive to support multiple JVMs in the JPype
 class model.
 
+
+.. _miscellaneous_topics_jpype_known_limitations_errors_reported_by_python_fault_handler:
 
 Errors reported by Python fault handler
 ---------------------------------------
@@ -3311,17 +5630,33 @@ For example, absl installs faulthandlers in ``app.run``, thus the first call to
 main routine would need to disable faulthandlers to avoid potential crashes.
 
 
+
+Unsupported Java Versions
+-------------------------
+
+JPype now requires the use of the module API, which was introduced in **Java
+9**. As a result, the earliest version of Java supported by JPype is **Java
+11**, which is part of the Long-Term Support (LTS) release.
+
+If you need to use **Java 8**, you must use JPype version **1.5.2 or earlier**,
+as newer versions of JPype no longer support Java 8.
+
+
+
 Unsupported Python versions
 ---------------------------
 
-Python 3.4 and earlier
+
+Python 3.8 and earlier
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The oldest version of Python that we currently support is Python 3.5.  Before
 Python 3.5 there were a number of structural difficulties in the object model
 and the buffering API.  In principle, those features could be excised from
 JPype to extend support to older Python 3 series version, but that is unlikely
-to happen without a significant effort.
+to happen without a significant effort.  Recent changes in memory models
+require Python 3.8 or later.
+
 
 Python 2
 ~~~~~~~~
@@ -3334,6 +5669,7 @@ I like many others breathed a great sigh of relief and gladly cut out the
 Python 2 code.  Since that time JPype operating speed has improved anywhere
 from 300% to 10000% as we can now implement everything back in CPython rather
 than band-aiding it with interpreted Python code.
+
 
 PyPy
 ~~~~
@@ -3351,6 +5687,7 @@ broke some of the features that are different between CPython and PyPy.  The
 errors make absolutely no sense to me.  So unless a PyPy developer generously
 volunteering time for this project, this one is unlikely to happen.
 
+
 Jython Python
 ~~~~~~~~~~~~~
 
@@ -3362,17 +5699,20 @@ Python modules often mistake JPype for Jython at least up until the point
 that differences in the API triggers an error.
 
 
+
 Unsupported Java virtual machines
 ---------------------------------
 
 The open JVM implementations *Cacao* and *JamVM* are known not to work with
 JPype.
 
+
 Unsupported Platforms
 ---------------------
 
 Some platforms are problematic for JPype due to interactions between the
 Python libraries and the JVM implementation.
+
 
 Cygwin
 ~~~~~~
@@ -3394,3 +5734,173 @@ Freezing
 JPype supports freezing and deployment with
 `PyInstaller <https://pyinstaller.readthedocs.io/>`_.  The hook is included
 with JPype installations and no extra configuration should be needed.
+
+
+.. _miscellaneous_topics_glossary:
+
+Glossary
+========
+
+.. _miscellaneous_topics_glossary_b:
+
+B
+-
+
+**Boxed Types**  
+Immutable Java objects that wrap primitive types (e.g., `java.lang.Integer`
+for `int`). Used when primitives need to be treated as objects.
+
+.. _miscellaneous_topics_glossary_c:
+
+C
+-
+
+**Caller Sensitive Methods**  
+Java methods that determine the caller's access level based on the call stack.
+JPype uses special mechanisms to handle these methods safely.
+
+**Classpath**  
+A parameter specifying the location of Java classes or JAR files required by
+the JVM. It is essential for loading Java libraries.
+
+.. _miscellaneous_topics_glossary_d:
+
+D
+-
+
+**Deferred Proxy**  
+A proxy that is created before the JVM is started by specifying the interface
+as a string and using the `deferred=True` argument. The implementation is
+checked only when the proxy is first used.
+
+.. _miscellaneous_topics_glossary_e:
+
+E
+-
+
+**Exact Conversion**  
+A type conversion in JPype where the Python type matches the Java type
+exactly. Example: Python `int` to Java `int`.
+
+.. _miscellaneous_topics_glossary_f:
+
+F
+-
+
+**Functional Interface**  
+A Java interface with a single abstract method (SAM). JPype allows Python
+callables (e.g., functions, lambdas) to be passed directly to Java methods
+expecting a functional interface.
+
+.. _miscellaneous_topics_glossary_g:
+
+G
+-
+
+**Garbage Collection (GC)**  
+The process of automatically reclaiming memory occupied by unused objects.
+JPype links Python's and Java's garbage collectors to avoid memory issues.
+
+.. _miscellaneous_topics_glossary_i:
+
+I
+-
+
+**Implicit Conversion**  
+A type conversion in JPype where Python types are automatically converted to
+compatible Java types. Example: Python `int` to Java `long`.
+
+**Interface**  
+A Java construct that defines a set of methods without implementations. JPype
+allows Python classes to implement Java interfaces using proxies.
+
+
+.. _miscellaneous_topics_glossary_m:
+
+M
+-
+
+**Mapping**  
+A Python concept for key-value pairs. JPype customizes Java `Map` classes to
+behave like Python dictionaries.
+
+**Multidimensional Arrays**  
+Java arrays with multiple dimensions. JPype supports creating and working with
+these arrays using nested lists.
+
+.. _miscellaneous_topics_glossary_n:
+
+N
+-
+
+**NumPy Integration**  
+JPype's ability to efficiently transfer data between Java arrays and NumPy
+arrays using memory buffers.
+
+.. _miscellaneous_topics_glossary_o:
+
+O
+-
+
+**Object Instance**  
+A Java object created from a class. Example: `obj = MyClass()` creates an
+instance of `MyClass`.
+
+**Overloaded Methods**  
+Java methods with the same name but different parameter types or counts. JPype
+selects the appropriate overload based on the Python arguments provided.
+
+.. _miscellaneous_topics_glossary_p:
+
+P
+-
+
+**Primitive Types**  
+Basic data types in Java (e.g., `int`, `float`, `boolean`). JPype maps these
+types to Python equivalents (e.g., `JInt`, `JFloat`, `JBoolean`).
+
+**Proxy**  
+A mechanism in JPype for implementing Java interfaces using Python code.
+
+
+.. _miscellaneous_topics_glossary_s:
+
+S
+-
+
+**SAM (Single Abstract Method)**  
+A Java interface with a single abstract method. Used in functional programming
+and supported by JPype for Python callables.
+
+**Synchronized**  
+A Java keyword for thread-safe operations. JPype provides the
+`jpype.synchronized()` method for similar functionality in Python.
+
+.. _miscellaneous_topics_glossary_t:
+
+T
+-
+
+**Type Factory**  
+A JPype mechanism for creating Java types in Python. Examples include `JClass`
+for classes and `JArray` for arrays.
+
+.. _miscellaneous_topics_glossary_u:
+
+U
+-
+
+**UnsupportedClassVersionError**  
+A JVM error indicating that a JAR file was compiled for a newer Java version
+than the JVM being used.
+
+.. _miscellaneous_topics_glossary_w:
+
+W
+-
+
+**Wrapper**  
+An object used to represent an object from one programming language in another
+programming language.  In JPype, Java classes are presented to Python using
+wrapper classes. Similarly, proxies act as wrappers to present Python objects
+to Java.
