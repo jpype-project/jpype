@@ -89,7 +89,7 @@ def sync_labels(input_file, output_file):
         elif re.match(r"^-+$", line):
             # Process subheader
             current_subheader = sanitize_label(buffer.strip().lower().replace(" ", "_")) if buffer else None
-            label = f".. _{current_chapter}_sub_{current_subheader}:\n\n" if current_subheader else None
+            label = f".. _{current_chapter}_{current_subheader}:\n\n" if current_subheader else None
             if label and not line_count == 2:
                 print(f"Detected subheader: {current_subheader}, adding label: {label.strip()}")
                 output_lines.append(label)
@@ -100,7 +100,7 @@ def sync_labels(input_file, output_file):
         elif re.match(r"^~+$", line):
             # Process sub-subheader
             subsubheader_text = sanitize_label(buffer.strip().lower().replace(" ", "_")) if buffer else None
-            label = f".. _{current_chapter}_sub2_{subsubheader_text}:\n\n" if subsubheader_text else None
+            label = f".. _{current_chapter}_{subsubheader_text}:\n\n" if subsubheader_text else None
             if label and not line_count == 2:
                 print(f"Detected sub-subheader: {subsubheader_text}, adding label: {label.strip()}")
                 output_lines.append(label)
