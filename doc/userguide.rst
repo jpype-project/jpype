@@ -1256,9 +1256,9 @@ quality can improve to exact or derived depending on the cast type.
 Not every conversion is possible between Java types.  Types that cannot be
 converted are considerer to be conversion type "none".
 
+Details on how method overloads are resolved are given in `Method Resolution`_.
 Details on the standard conversions provided by JPype are given in the section
 `Type Matching`_.
-
 
 .. _cast:
 
@@ -1337,65 +1337,6 @@ Type enforcement appears in three different places within JPype.  These are
 whenever a Java method is called, whenever a Java field is set, and whenever
 Python returns a value back to Java.
 
-
-.. _methods:
-
-Method resolution
-=================
-
-Because Java supports method overloading and Python does not, JPype wraps Java
-methods as a "method dispatch".  The dispatch is a collection of all of the
-methods from class and all of its parents which share the same name.  The job
-of the dispatch is chose the method to call.
-
-Enforcement of the strong typing of Java must be performed at runtime within
-Python.  Each time a method is invoked, JPype must match against the list of
-all possible methods that the class implements and choose the best
-possible overload.  For this reason the methods that appear in a JPype class
-will not be the actual Java methods, but rather a "dispatch" whose job is
-deciding which method should be called based on the type of the provided
-arguments.
-
-If no method is found that matches the provided arguments, the method dispatch
-will produce a ``TypeError``.  This is the exact same outcome that Python uses
-when enforcing type safety within a function.  If a type doesn't match a
-``TypeError`` will be produced.
-
-.. _jpype_types_method_resolution_dispatch_example:
-
-Dispatch example
-----------------
-
-When JPype is unable to decide which overload of a method to call, the user
-must resolve the ambiguity.  This is where casting comes in.
-
-Take for example the ``java.io.PrintStream`` class. This class has a variant of
-the print and println methods!
-
-So for the following code:
-
-.. code-block:: python
-
-  java.lang.System.out.println(1)
-
-JPype will automatically choose the ``println(long)`` method, because the Python
-int matches exactly with the Java long, while all the other numerical types
-are only "implicit" matches. However, if that is not the version you
-wanted to call you must cast it.  In this case we will use a primitive
-type to construct the correct type.
-
-Changing the line thus:
-
-.. code-block:: python
-
-  java.lang.System.out.println(JByte(1)) # <--- wrap the 1 in a JByte
-
-This tells JPype to choose the byte version. When dealing with Java types, JPype follows
-the standard Java matching rules.  Types can implicitly grow to larger types
-but will not shrink without an explicit cast.
-
-
-.. _jpype_types_primitive_types:
 
 Primitive Types
 ===============
@@ -2207,7 +2148,9 @@ The following Python words will trigger name mangling of a Java name:
 =========== =========== ============= =========== ==========
 
 
+.. _methods:
 .. _jpype_types_method_resolution:
+
 
 Method Resolution
 =================
@@ -2269,15 +2212,36 @@ For example, consider the following code:
    jlist = java.util.ArrayList()
    [jlist.add(fruit) for fruit in fruits]  # Cached resolution for each iteration
 
-In this case, JPype caches the resolution of the ``add(String)`` method after
-the first call, and subsequent calls reuse the cached result. This optimization
-is particularly beneficial in loops and list comprehensions.
+In this case, JPype caches the resolution for ``add(str)`` to ``add(String)``
+method after the first call, and subsequent calls reuse the cached result. This
+optimization is particularly beneficial in loops and list comprehensions.  A
+call to ``add(int)`` would trigger a new resolution.  The next call to ``add(str)``
+will once again trigger a resolution request.
 
 **Note**: For an in-depth discussion on how this caching mechanism improves
 loop performance, particularly in list comprehensions, see the
 :ref:`Performance <miscellaneous_topics_performance>` section.
 
+Interactions of Custom Converters and Caching
+---------------------------------------------
 
+It is unwise to define very broad conversions as it can interact poorly with 
+caching. Suppose that one defined a convertion from all Python strings to the
+Java class for date under some condition. Or perhaps an even broader convserion
+was defined such as all Python classes that inherit from object.
+
+If such overly broad conversions are applied to a function
+for which both date and string were acceptable it were prefer the date
+conversion when method resolution starts.  As the type for the cache was string
+it would attempt the out of order resolution of date first.  If the 
+condition yield a fail it will fall back to normal method resolution, but
+an overly broad conversion specialization may end up being dispatched to the 
+previously defined conversion.
+
+Under normal operation of JPype the type conversions are narrowly defined such
+that the cache will always yield the proper resolution.  But user defined
+conversions may cause unexpected results.  In such a case, a cast operation to
+the Java type would be required to resolve the ambiguity.
 
 
 
@@ -5607,6 +5571,7 @@ Result without ``--ignore E402``
 
         jpype.startJVM()
 
+
 .. _miscellaneous_topics_performance:
 
 Performance
@@ -5627,8 +5592,8 @@ only those parts that need it in C.** Except this time, it's write the parts
 that need it in Java.
 
 Everytime an object is passed back and forth, it will incure a conversion
-cost.. In cases where a given object (be it a string, an object, an array, etc ...) is passed often
-into Java, the object should be converted once and cached.
+cost.. In cases where a given object (be it a string, an object, an array, etc
+...) is passed often into Java, the object should be converted once and cached.
 For most situations, this will address speed issues.
 
 To improve speed issues, JPype has converted all of the base classes into
@@ -5680,6 +5645,7 @@ This will produce a list containing all method and field that begin with
 the letter "s".
 
 JPype has not been tested with other autocompletion engines such as Kite.
+
 
 .. _miscellaneous_topics_garbage_collection:
 
@@ -5874,6 +5840,7 @@ Tracing is useful for identifying failures that originate in one JNI call but
 manifest later. However, this mode produces verbose logs and is recommended
 only for advanced debugging.
 
+
 .. _instrumentation:
 
 Instrumentation
@@ -5889,6 +5856,7 @@ Once instrumentation is enabled, use the private module command
 the name of a function or a predefined fault point. When the fault point is
 encountered, a ``SystemError`` is raised. Instrumentation is primarily useful
 for verifying the robustness of JPype's exception handling mechanisms.
+
 
 .. _using-debugger:
 
@@ -5912,6 +5880,7 @@ the following command to start ``gdb`` and ignore the first fault:
 This configuration allows the debugger to bypass JVM-related faults while
 capturing legitimate errors. Additionally, disable Python's fault handler to
 avoid interference with segmentation fault reporting.
+
 
 .. _caller sensitive:
 
@@ -5938,6 +5907,7 @@ JPype Known limitations
 
 This section lists those limitations that are unlikely to change, as they come
 from external sources.
+
 
 .. _miscellaneous_topics_jpype_known_limitations_annotations:
 
