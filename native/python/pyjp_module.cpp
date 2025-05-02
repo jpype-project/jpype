@@ -384,7 +384,7 @@ static void releaseView(void* view)
 	}
 }
 
-static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* src)
+static PyObject* convertToDirectByteBuffer(PyObject* self, PyObject* src, int flags)
 {
 	JP_PY_TRY("PyJPModule_convertToDirectByteBuffer");
 	JPJavaFrame frame = JPJavaFrame::outer();
@@ -392,12 +392,17 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 	if (PyObject_CheckBuffer(src))
 	{
 		JPViewWrapper vw;
-		if (PyObject_GetBuffer(src, vw.view, PyBUF_WRITABLE) == -1)
+		if (PyObject_GetBuffer(src, vw.view, flags) == -1)
 			return nullptr;
 
 		// Create a byte buffer
 		jvalue v;
 		v.l = frame.NewDirectByteBuffer(vw.view->buf, vw.view->len);
+
+        if (vw.view->readonly)
+        {
+            v.l = frame.asReadOnlyBuffer(v.l);
+        }
 
 		// Bind lifespan of the view to the java object.
 		frame.registerRef(v.l, vw.view, &releaseView);
@@ -407,6 +412,16 @@ static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* 
 	}
 	PyErr_SetString(PyExc_TypeError, "convertToDirectByteBuffer requires buffer support");
 	JP_PY_CATCH(nullptr);
+}
+
+static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* src)
+{
+    return convertToDirectByteBuffer(self, src, PyBUF_WRITABLE);
+}
+
+static PyObject* PyJPModule_convertToDirectByteBufferRO(PyObject* self, PyObject* src)
+{
+    return convertToDirectByteBuffer(self, src, 0);
 }
 
 static PyObject* PyJPModule_enableStacktraces(PyObject* self, PyObject* src)
@@ -720,6 +735,7 @@ static PyMethodDef moduleMethods[] = {
 	//{"dumpJVMStats", (PyCFunction) (&PyJPModule_dumpJVMStats), METH_NOARGS, ""},
 
 	{"convertToDirectBuffer", (PyCFunction) PyJPModule_convertToDirectByteBuffer, METH_O, ""},
+	{"convertToDirectBufferRO", (PyCFunction) PyJPModule_convertToDirectByteBufferRO, METH_O, ""},
 	{"arrayFromBuffer", (PyCFunction) PyJPModule_arrayFromBuffer, METH_VARARGS, ""},
 	{"enableStacktraces", (PyCFunction) PyJPModule_enableStacktraces, METH_O, ""},
 	{"isPackage", (PyCFunction) PyJPModule_isPackage, METH_O, ""},

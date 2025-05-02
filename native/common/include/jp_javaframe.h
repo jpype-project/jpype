@@ -368,6 +368,7 @@ public:
 	void* GetDirectBufferAddress(jobject obj);
 	jlong GetDirectBufferCapacity(jobject obj);
 	jboolean isBufferReadOnly(jobject obj);
+	jobject asReadOnlyBuffer(jobject obj);
 	jboolean orderBuffer(jobject obj);
 	jclass getClass(jobject obj);
 

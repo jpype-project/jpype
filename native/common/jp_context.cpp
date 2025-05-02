@@ -334,6 +334,10 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	m_Buffer_IsReadOnlyID = frame.GetMethodID(bufferClass, "isReadOnly",
 			"()Z");
 
+	jclass bytebufferClass = frame.FindClass("java/nio/ByteBuffer");
+	m_Buffer_AsReadOnlyID = frame.GetMethodID(bytebufferClass, "asReadOnlyBuffer",
+			"()Ljava/nio/ByteBuffer;");
+
 	jclass comparableClass = frame.FindClass("java/lang/Comparable");
 	m_CompareToID = frame.GetMethodID(comparableClass, "compareTo",
 			"(Ljava/lang/Object;)I");

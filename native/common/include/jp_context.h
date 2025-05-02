@@ -234,6 +234,7 @@ private:
 	jmethodID m_Context_ClearInterruptID{};
 	jmethodID m_CompareToID{};
 	jmethodID m_Buffer_IsReadOnlyID{};
+	jmethodID m_Buffer_AsReadOnlyID{};
 	jmethodID m_Context_OrderID{};
 	jmethodID m_Object_GetClassID{};
 	jmethodID m_Array_NewInstanceID{};

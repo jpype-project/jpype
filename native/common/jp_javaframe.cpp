@@ -1042,6 +1042,12 @@ jboolean JPJavaFrame::isBufferReadOnly(jobject obj)
 	return CallBooleanMethodA(obj, getContext()->m_Buffer_IsReadOnlyID, nullptr);
 }
 
+jobject JPJavaFrame::asReadOnlyBuffer(jobject obj)
+{
+	JAVA_RETURN_OBJ(jobject, "JPJavaFrame::asReadOnlyBuffer",
+			m_Env->CallObjectMethod(obj, getContext()->m_Buffer_AsReadOnlyID));
+}
+
 jboolean JPJavaFrame::orderBuffer(jobject obj)
 {
 	jvalue arg;

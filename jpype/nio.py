@@ -26,7 +26,6 @@ def convertToDirectBuffer(obj):
     memoryview_of_obj = memoryview(obj)
 
     if memoryview_of_obj.readonly:
-        raise ValueError(
-            "Memoryview must be writable for wrapping in a byte buffer")
+        return _jpype.convertToDirectBufferRO(memoryview_of_obj)
 
     return _jpype.convertToDirectBuffer(memoryview_of_obj)
