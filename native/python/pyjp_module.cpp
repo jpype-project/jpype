@@ -399,10 +399,10 @@ static PyObject* convertToDirectByteBuffer(PyObject* self, PyObject* src, int fl
 		jvalue v;
 		v.l = frame.NewDirectByteBuffer(vw.view->buf, vw.view->len);
 
-        if (vw.view->readonly)
-        {
-            v.l = frame.asReadOnlyBuffer(v.l);
-        }
+		if (vw.view->readonly)
+		{
+			v.l = frame.asReadOnlyBuffer(v.l);
+		}
 
 		// Bind lifespan of the view to the java object.
 		frame.registerRef(v.l, vw.view, &releaseView);
