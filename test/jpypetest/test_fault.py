@@ -1079,6 +1079,8 @@ class FaultTestCase(common.JPypeTestCase):
             _jpype.convertToDirectBuffer(1, False)
         with self.assertRaisesRegex(BufferError, "not writable"):
             _jpype.convertToDirectBuffer(bytes([1, 2, 3]), False)
+        with self.assertRaisesRegex(TypeError, "function takes exactly 2 arguments"):
+            _jpype.convertToDirectBuffer(bytes([1, 2, 3]))
 
     def testStartupBadArg(self):
         with self.assertRaisesRegex(TypeError, "takes exactly"):
