@@ -58,7 +58,7 @@ class ReferenceQueueTestCase(common.JPypeTestCase):
 
         # Force a direct byffer and then trash it
         b = bytearray([1, 2, 3])
-        _jpype.convertToDirectBuffer(b)
+        _jpype.convertToDirectBuffer(b, False)
 
         # Then force a GC to clean it up
         jpype.java.lang.System.gc()

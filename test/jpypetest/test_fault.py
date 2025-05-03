@@ -1072,13 +1072,13 @@ class FaultTestCase(common.JPypeTestCase):
     def testConvertToDirectBufferFault(self):
         _jpype.fault("PyJPModule_convertToDirectByteBuffer")
         with self.assertRaisesRegex(SystemError, "fault"):
-            _jpype.convertToDirectBuffer(1)
+            _jpype.convertToDirectBuffer(1, False)
 
     def testConvertToDirectBufferExc(self):
         with self.assertRaisesRegex(TypeError, "buffer support"):
-            _jpype.convertToDirectBuffer(1)
+            _jpype.convertToDirectBuffer(1, False)
         with self.assertRaisesRegex(BufferError, "not writable"):
-            _jpype.convertToDirectBuffer(bytes([1, 2, 3]))
+            _jpype.convertToDirectBuffer(bytes([1, 2, 3]), False)
 
     def testStartupBadArg(self):
         with self.assertRaisesRegex(TypeError, "takes exactly"):
