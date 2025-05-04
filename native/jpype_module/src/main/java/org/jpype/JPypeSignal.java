@@ -47,8 +47,8 @@ public class JPypeSignal
   {
     try
     {
-      Class Signal = Class.forName("sun.misc.Signal");
-      Class SignalHandler = Class.forName("sun.misc.SignalHandler");
+      Class<?> Signal = Class.forName("sun.misc.Signal");
+      Class<?> SignalHandler = Class.forName("sun.misc.SignalHandler");
       main = Thread.currentThread();
       Method method = Signal.getMethod("handle", Signal, SignalHandler);
       Object intr = Signal.getDeclaredConstructor(String.class).newInstance("INT");

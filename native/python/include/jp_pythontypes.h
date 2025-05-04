@@ -74,45 +74,72 @@ typedef _object PyObject;
  */
 class JPPyObject
 {
-	/** Create a new reference to a Python object.
-	 *
-	 * @param obj is the python object.
-	 */
+/**
+ * Creates a new reference to a Python object.
+ *
+ * This constructor takes ownership of the provided Python object reference.
+ * If the object is not null, the reference count is incremented to ensure
+ * the object remains valid for the lifetime of the `JPPyObject` instance.
+ *
+ * @param obj A pointer to the Python object (`PyObject*`). May be null.
+ */
 	explicit JPPyObject(PyObject* obj);
 
 public:
-
 	/**
-	 * This policy is used if we need to hold a reference to an existing
-	 * object for some duration.  The object may be null.
+	 * Creates a strong reference to an existing Python object for a limited duration.
 	 *
-	 * Increment reference count if not null, and decrement when done.
+	 * This policy is used when the caller needs to temporarily manage an existing
+	 * Python object. It can be applied to both existing references and "borrowed"
+	 * references returned by Python methods. 
+	 *
+	 * If the object is not null, its reference count is incremented upon creation
+	 * and decremented when the `JPPyObject` instance is destroyed.
+	 *
+	 * @param obj A pointer to the Python object (`PyObject*`). Must not be null.
+	 * @return A `JPPyObject` instance managing the provided reference.
+	 * @throws std::runtime_error if the object is null.
 	 */
 	static JPPyObject use(PyObject* obj);
 
 	/**
-	 * This policy is used when we are given a new reference that we must
-	 * destroy.  This will steal a reference.
+	 * Unconditionally takes ownership of a new Python object reference.
 	 *
-	 * claim reference, and decremented when done. Clears errors if NULL.
+	 * This policy is used when the caller is responsible for managing a new
+	 * Python object reference and transfers ownership to the `JPPyObject` instance.
+	 * If the object is null, any existing Python errors are cleared. The caller
+	 * must ensure the reference is valid before using this method.
+	 *
+	 * @param obj A pointer to the Python object (`PyObject*`). May be null.
+	 * @return A `JPPyObject` instance managing the provided reference.
 	 */
 	static JPPyObject accept(PyObject* obj);
 
 	/**
-	 * This policy is used when we are given a new reference that we must
-	 * destroy.  This will steal a reference.
+	 * Takes ownership of a new Python object reference, ensuring it is not null.
 	 *
-	 * Assert not null, claim reference, and decremented when done.
-	 * Will throw an exception in the object is null.
+	 * This policy is used when the caller is responsible for managing a new
+	 * Python object reference and transfers ownership to the `JPPyObject` instance.
+	 * If the object is null, an exception is thrown.
+	 *
+	 * @param obj A pointer to the Python object (`PyObject*`). Must not be null.
+	 * @return A `JPPyObject` instance managing the provided reference.
+	 * @throws std::runtime_error if the object is null.
 	 */
 	static JPPyObject claim(PyObject* obj);
 
 	/**
-	 * This policy is used when we are capturing an object returned from a python
-	 * call that we are responsible for.  This will steal a reference.
+	 * Captures and takes ownership of a Python object returned from a Python call.
 	 *
-	 * Check for errors, assert not null, then claim.
-	 * Will throw an exception an error occurs.
+	 * This policy is used when the caller is responsible for managing a Python
+	 * object returned from a Python call. Ownership of the reference is transferred
+	 * to the `JPPyObject` instance. Before claiming the reference, this method
+	 * first checks for Python errors and then ensures the object is not null.
+	 * If an error occurs or the object is null, an exception is thrown.
+	 *
+	 * @param obj A pointer to the Python object (`PyObject*`). Must not be null.
+	 * @return A `JPPyObject` instance managing the provided reference.
+	 * @throws std::runtime_error if the object is null or if a Python error occurs.
 	 */
 	static JPPyObject call(PyObject* obj);
 
@@ -127,13 +154,23 @@ public:
 	JPPyObject& operator=(const JPPyObject& o);
 
 	/**
-	 * Keep an object by creating a reference.
+	 * Transfers ownership of the Python object reference.
 	 *
-	 * This should only appear in the return statement in the cpython module.
-	 * The reference must not be null.  Keep invalidates this handle from any
-	 * further use as you were supposed to have called return.
+	 * This method is used to transfer control of an existing reference, such as:
+	 * - Returning a reference from a function.
+	 * - Passing a reference to a Python method that steals ownership of the reference.
 	 *
-	 * @return the pointer to the Python object.
+	 * Important Notes:
+	 * - The reference must not be null. If the reference is null, this method will raise
+	 *   a SystemError exception.
+	 * - Calling `keep()` invalidates this handle, meaning the `JPPyObject` instance
+	 *   should no longer be used after calling this method.
+	 * - This method does NOT increment the reference counter. Instead, it transfers
+	 *   ownership of the existing reference to the caller. The caller is responsible
+	 *   for managing the reference lifecycle (e.g., calling `Py_DECREF` when appropriate).
+	 *
+	 * @return A pointer to the Python object (`PyObject*`).
+	 * @throws PyExc_SystemError if the reference is null.
 	 */
 	PyObject* keep();
 
@@ -151,6 +188,15 @@ public:
 	PyObject* get()
 	{
 		return m_PyObject;
+	}
+
+	/** Determine if this python reference is valid.
+	 *
+	 * @returns true if is a valid reference.
+	 */
+	bool isValid() const
+	{
+		return m_PyObject != nullptr;
 	}
 
 	/** Determine if this python reference is null.

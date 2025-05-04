@@ -32,7 +32,6 @@ import java.util.List;
  * are more general. If two or more methods match and one is not more specific
  * than the other.
  *
- * @author nelson85
  */
 public class MethodResolution
 {
@@ -147,14 +146,14 @@ public class MethodResolution
             of(Boolean.TYPE, Boolean.class));
   }
 
-  static boolean isAssignableTo(Class c1, Class c2)
+  static boolean isAssignableTo(Class<?> c1, Class<?> c2)
   {
     if (!c1.isPrimitive())
       return c2.isAssignableFrom(c1);
-    Class[] cl = CONVERSION.get(c1);
+    Class<?>[] cl = CONVERSION.get(c1);
     if (cl == null)
       return false;
-    for (Class c3 : cl)
+    for (Class<?> c3 : cl)
       if (c2.equals(c3))
         return true;
     return false;

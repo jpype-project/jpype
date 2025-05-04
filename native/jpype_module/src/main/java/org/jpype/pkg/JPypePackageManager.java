@@ -40,22 +40,23 @@ import org.jpype.JPypeContext;
 import org.jpype.JPypeKeywords;
 
 /**
- * Manager for the contents of a package.
+ * Manages the contents of Java packages for JPype.
  *
- * This class uses a number of tricks to provide a way to determine what
- * packages are available in the class loader. It searches the jar path, the
- * boot path (Java 8), and the module path (Java 9+). It does not currently work
- * with alternative classloaders. This class was rumored to be unobtainium as
- * endless posts indicated that it wasn't possible to determine the contents of
- * a package in general nor to retrieve the package contents, but this appears
- * to be largely incorrect as the jar and jrt file system provide all the
- * required methods.
+ * <p>
+ * This class provides functionality to determine the availability of packages
+ * in the class loader and retrieve their contents. It searches through the jar
+ * path, boot path (Java 8), and module path (Java 9+). The class does not
+ * currently support alternative class loaders.</p>
  *
+ * <p>
+ * Although it was previously believed that determining package contents was
+ * impossible, this class leverages the jar and jrt file systems to provide the
+ * required methods for package inspection.</p>
  */
 public class JPypePackageManager
 {
 
-  final static List<FileSystem> bases = new ArrayList();
+  final static List<FileSystem> bases = new ArrayList<>();
   final static List<ModuleDirectory> modules = getModules();
   final static FileSystemProvider jfsp = getFileSystemProvider("jar");
   final static Map<String, String> env = new HashMap<>();
@@ -64,24 +65,32 @@ public class JPypePackageManager
   /**
    * Checks if a package exists.
    *
-   * @param name is the name of the package.
-   * @return true if this is a Java package either in a jar, module, or in the
-   * boot path.
+   * <p>
+   * Determines whether the specified package is available in a jar file,
+   * module, or boot path.</p>
+   *
+   * @param name The name of the package.
+   * @return {@code true} if the package exists; {@code false} otherwise.
    */
   public static boolean isPackage(String name)
   {
     if (name.indexOf('.') != -1)
+    {
       name = name.replace(".", "/");
-    if (isModulePackage(name) || isBasePackage(name) || isJarPackage(name))
-      return true;
-    return false;
+    }
+    return isModulePackage(name) || isBasePackage(name) || isJarPackage(name);
   }
 
   /**
-   * Get the list of the contents of a package.
+   * Retrieves the contents of a package.
    *
-   * @param packageName
-   * @return the list of all resources found.
+   * <p>
+   * Searches the jar path, base path, and module path to collect all resources
+   * within the specified package.</p>
+   *
+   * @param packageName The name of the package.
+   * @return A map containing the names of resources and their corresponding
+   * URIs.
    */
   public static Map<String, URI> getContentMap(String packageName)
   {
@@ -95,12 +104,16 @@ public class JPypePackageManager
   }
 
   /**
-   * Convert a URI into a path.
+   * Converts a URI into a {@link Path}.
    *
-   * This has special magic methods to deal with jar file systems.
+   * <p>
+   * This method handles special cases for jar file systems to ensure proper
+   * resolution of paths.</p>
    *
-   * @param uri is the location of the resource.
-   * @return the path to the uri resource.
+   * @param uri The URI of the resource.
+   * @return The {@link Path} corresponding to the URI.
+   * @throws FileSystemNotFoundException If the file system for the URI cannot
+   * be found.
    */
   static Path getPath(URI uri)
   {
@@ -109,6 +122,7 @@ public class JPypePackageManager
       return Paths.get(uri);
     } catch (java.nio.file.FileSystemNotFoundException ex)
     {
+      // Handle jar file system
     }
 
     if (uri.getScheme().equals("jar"))
@@ -118,31 +132,39 @@ public class JPypePackageManager
         // Limit the number of filesystems open at any one time
         fs.add(jfsp.newFileSystem(uri, env));
         if (fs.size() > 8)
+        {
           fs.removeFirst().close();
+        }
         return Paths.get(uri);
       } catch (IOException ex)
       {
+        // Handle IO exceptions
       }
     }
     throw new FileSystemNotFoundException("Unknown filesystem for " + uri);
   }
 
   /**
-   * Retrieve the Jar file system.
+   * Retrieves the file system provider for the specified scheme.
    *
-   * @return
+   * @param str The scheme name (e.g., "jar").
+   * @return The {@link FileSystemProvider} for the specified scheme.
+   * @throws FileSystemNotFoundException If no provider is found for the scheme.
    */
   private static FileSystemProvider getFileSystemProvider(String str)
   {
     for (FileSystemProvider fsp : FileSystemProvider.installedProviders())
     {
       if (fsp.getScheme().equals(str))
+      {
         return fsp;
+      }
     }
     throw new FileSystemNotFoundException("Unable to find filesystem for " + str);
   }
 
 //<editor-fold desc="java 8" defaultstate="collapsed">
+  //FIXME we are dropping Java 1.8 support so this code should be removed.
   /**
    * Older versions of Java do not have a file system for boot packages. Thus
    * rather working through the classloader, we will instead probe java to get

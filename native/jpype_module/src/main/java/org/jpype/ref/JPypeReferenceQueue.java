@@ -17,33 +17,83 @@ package org.jpype.ref;
 
 import java.lang.ref.PhantomReference;
 import java.lang.ref.ReferenceQueue;
+import org.jpype.bridge.Interpreter;
 
 /**
- * Reference queue holds the life of python objects to be as long as java items.
+ * A reference queue that binds the lifetime of Python objects to Java objects.
+ *
  * <p>
- * Any java class that holds a pointer into python needs to have a reference so
- * that python object does not go away if the references in python fall to zero.
- * JPype will add an extra reference to the object which is removed when the
- * python object dies.
+ * This class is used internally by JPype to manage the lifecycle of Python
+ * objects (`PyObject*`) that are referenced by Java objects. It ensures that
+ * Python objects do not get garbage collected prematurely when their references
+ * in Python fall to zero, as long as they are still referenced by Java.</p>
+ *
+ * <p>
+ * The {@code JPypeReferenceQueue} maintains a thread that monitors the queue
+ * for garbage-collected Java objects and performs cleanup operations on the
+ * associated Python objects. It uses phantom references to track the lifecycle
+ * of Java objects.</p>
+ *
+ * <p>
+ * This class is a singleton, and its instance can be accessed via
+ * {@link #getInstance()}.</p>
+ *
+ * <p>
+ * Note: This class is intended for internal use and should not be used directly
+ * by external code.</p>
  *
  * @author smenard
- *
  */
-final public class JPypeReferenceQueue extends ReferenceQueue
+public final class JPypeReferenceQueue extends ReferenceQueue<Object>
 {
 
+  /**
+   * Singleton instance of the {@code JPypeReferenceQueue}.
+   */
   private final static JPypeReferenceQueue INSTANCE = new JPypeReferenceQueue();
-  private JPypeReferenceSet hostReferences;
-  private boolean isStopped = false;
-  private Thread queueThread;
-  private Object queueStopMutex = new Object();
-  private PhantomReference sentinel = null;
 
+  /**
+   * A set of active references to Python objects.
+   */
+  private JPypeReferenceSet hostReferences;
+
+  /**
+   * Indicates whether the reference queue has been stopped.
+   */
+  private boolean isStopped = false;
+
+  /**
+   * The thread responsible for monitoring the reference queue.
+   */
+  private Thread queueThread;
+
+  /**
+   * Mutex used to synchronize stopping the queue thread.
+   */
+  private final Object queueStopMutex = new Object();
+
+  /**
+   * Sentinel reference used to wake up the queue thread periodically.
+   */
+  private PhantomReference<Object> sentinel = null;
+
+  /**
+   * Returns the singleton instance of the {@code JPypeReferenceQueue}.
+   *
+   * @return The singleton instance of the reference queue.
+   */
   public static JPypeReferenceQueue getInstance()
   {
     return INSTANCE;
   }
 
+  /**
+   * Private constructor to initialize the reference queue.
+   *
+   * <p>
+   * This constructor sets up the reference queue, initializes the native
+   * bindings, and adds a sentinel reference.</p>
+   */
   private JPypeReferenceQueue()
   {
     super();
@@ -60,20 +110,24 @@ final public class JPypeReferenceQueue extends ReferenceQueue
   }
 
   /**
-   * (internal) Binds the lifetime of a Python object to a Java object.
-   * <p>
-   * JPype adds an extra reference to a PyObject* and then calls this method to
-   * hold that reference until the Java object is garbage collected.
+   * Registers a reference to bind the lifetime of a Python object to a Java
+   * object.
    *
-   * @param javaObject is the object to bind the lifespan to.
-   * @param host is the pointer to the host object.
-   * @param cleanup is the pointer to the function to call to delete the
-   * resource.
+   * <p>
+   * This method adds an extra reference to a Python object (`PyObject*`) and
+   * holds it until the Java object is garbage collected. When the Java object
+   * is collected, the Python object is cleaned up.</p>
+   *
+   * @param javaObject The Java object to bind the lifetime to.
+   * @param host The pointer to the Python object.
+   * @param cleanup The pointer to the cleanup function for the Python object.
    */
   public void registerRef(Object javaObject, long host, long cleanup)
   {
     if (cleanup == 0)
+    {
       return;
+    }
     if (isStopped)
     {
       JPypeReferenceNative.removeHostReference(host, cleanup);
@@ -85,7 +139,11 @@ final public class JPypeReferenceQueue extends ReferenceQueue
   }
 
   /**
-   * Start the threading queue.
+   * Starts the reference queue thread.
+   *
+   * <p>
+   * This thread monitors the queue for garbage-collected Java objects and
+   * performs cleanup operations on the associated Python objects.</p>
    */
   public void start()
   {
@@ -96,9 +154,11 @@ final public class JPypeReferenceQueue extends ReferenceQueue
   }
 
   /**
-   * Stops the reference queue.
+   * Stops the reference queue thread.
+   *
    * <p>
-   * This is called by jpype when the jvm shuts down.
+   * This method is called when the JVM shuts down to stop the reference queue
+   * and perform any remaining cleanup operations.</p>
    */
   public void stop()
   {
@@ -112,22 +172,25 @@ final public class JPypeReferenceQueue extends ReferenceQueue
           queueThread.interrupt();
         }
 
-        // wait for the thread to finish ...
+        // Wait for the thread to finish
         queueStopMutex.wait(10000);
       }
     } catch (InterruptedException ex)
     {
-      // who cares ...
+      // Ignore interruptions
     }
 
-    // Empty the queue.
-    hostReferences.flush();
+    // Empty the queue
+    if (!Interpreter.getInstance().isJava())
+    {
+      hostReferences.flush();
+    }
   }
 
   /**
-   * Checks the status of the reference queue.
+   * Checks whether the reference queue is running.
    *
-   * @return true is the queue is running.
+   * @return {@code true} if the queue is running; {@code false} otherwise.
    */
   public boolean isRunning()
   {
@@ -135,18 +198,30 @@ final public class JPypeReferenceQueue extends ReferenceQueue
   }
 
   /**
-   * Get the number of items in the reference queue.
+   * Returns the number of items currently in the reference queue.
    *
-   * @return the number of python resources held.
+   * @return The number of Python resources held by the reference queue.
    */
   public int getQueueSize()
   {
     return this.hostReferences.size();
   }
 
-//<editor-fold desc="internal" defaultstate="collapsed">
   /**
-   * Thread to monitor the queue and delete resources.
+   * Adds a sentinel reference to the queue.
+   *
+   * <p>
+   * The sentinel reference is used to periodically wake up the queue
+   * thread.</p>
+   */
+  final void addSentinel()
+  {
+    sentinel = new JPypeReference(this, new byte[0], 0, 0);
+  }
+
+  /**
+   * Thread responsible for monitoring the reference queue and deleting
+   * resources.
    */
   private class Worker implements Runnable
   {
@@ -158,8 +233,7 @@ final public class JPypeReferenceQueue extends ReferenceQueue
       {
         try
         {
-          // Check if a ref has been queued. and check if the thread has been
-          // stopped every 0.25 seconds
+          // Check if a reference has been queued
           JPypeReference ref = (JPypeReference) remove(250);
           if (ref == sentinel)
           {
@@ -176,7 +250,7 @@ final public class JPypeReferenceQueue extends ReferenceQueue
           }
         } catch (InterruptedException ex)
         {
-          // don't know why ... don't really care ...
+          // Ignore interruptions
         }
       }
 
@@ -186,11 +260,4 @@ final public class JPypeReferenceQueue extends ReferenceQueue
       }
     }
   }
-
-  final void addSentinel()
-  {
-    sentinel = new JPypeReference(this, new byte[0], 0, 0);
-  }
-
-//</editor-fold>
 }
