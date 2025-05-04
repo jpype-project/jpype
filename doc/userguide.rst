@@ -165,7 +165,7 @@ Save the following code in a file named `hello_jpype.py`:
 
     # Use the Java String class
     java_string = String("Hello from Java!")
-    print(java_string.toUpperCase())  # Output: Hello from Java!
+    print(java_string.toUpperCase())  # Output: HELLO FROM JAVA!
 
 
 Run the script using Python::
@@ -174,7 +174,7 @@ Run the script using Python::
 
 You should see the output::
 
-    Hello from Java!
+    HELLO FROM JAVA!
 
 
 .. _introduction_next_steps:
