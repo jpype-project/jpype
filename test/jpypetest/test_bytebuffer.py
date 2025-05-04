@@ -28,6 +28,7 @@ class ByteBufferCase(common.JPypeTestCase):
         a = bytearray([0, 0, 0, 0])
         bb = jpype.nio.convertToDirectBuffer(a)
         self.assertIsInstance(bb, jpype.JClass("java.nio.DirectByteBuffer"))
+        self.assertFalse(bb.isReadOnly())
         bb.put(1)
         bb.put(2)
         bb.put(3)
@@ -36,10 +37,24 @@ class ByteBufferCase(common.JPypeTestCase):
         with self.assertRaises(jpype.JException):
             bb.put(5)
 
-    def testConvertToDirectBufferFail(self):
-        a = bytes([0, 0, 0, 0])
-        with self.assertRaises(ValueError):
-            bb = jpype.nio.convertToDirectBuffer(a)
+    def testConvertToReadonlyBuffer(self):
+        a = bytes([1, 2, 3, 4])
+        bb = jpype.nio.convertToDirectBuffer(a)
+        self.assertIsInstance(bb, jpype.JClass("java.nio.DirectByteBuffer"))
+        self.assertTrue(bb.isReadOnly())
+        self.assertEqual(a, bytearray([1, 2, 3, 4]))
+        with self.assertRaises(jpype.JException):
+            bb.put(0, 1)
+
+    def testConvertMemoryViewToReadonlyBuffer(self):
+        a = bytearray([1, 2, 3, 4])
+        a = memoryview(a).toreadonly()
+        bb = jpype.nio.convertToDirectBuffer(a)
+        self.assertIsInstance(bb, jpype.JClass("java.nio.DirectByteBuffer"))
+        self.assertTrue(bb.isReadOnly())
+        self.assertEqual(a, bytearray([1, 2, 3, 4]))
+        with self.assertRaises(jpype.JException):
+            bb.put(0, 1)
 
     def testRepr(self):
         a = bytearray([0, 0, 0, 0])

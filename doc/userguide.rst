@@ -2278,6 +2278,11 @@ supported to provide shared memory between processes or memory mapped files.
 Anything that can be mapped to an address with as a flat array of primitives
 with machine native byte ordering can be mapped into Java.
 
+Both Python and Java have a notion of readonly memory (bytes vs bytearray in
+Python). ConvertToDirectBuffer will honor the the writability of the passed
+object and return a readonly Java ByteBuffer if the source object is readonly.
+
+
 NumPy Primitives
 ================
 

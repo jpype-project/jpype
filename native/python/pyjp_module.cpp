@@ -384,20 +384,28 @@ static void releaseView(void* view)
 	}
 }
 
-static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* src)
+static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* args)
 {
 	JP_PY_TRY("PyJPModule_convertToDirectByteBuffer");
 	JPJavaFrame frame = JPJavaFrame::outer();
 
+	PyObject *src;
+	int ro;
+	if (!PyArg_ParseTuple(args, "Op", &src, &ro))
+		return nullptr;
+
 	if (PyObject_CheckBuffer(src))
 	{
 		JPViewWrapper vw;
-		if (PyObject_GetBuffer(src, vw.view, PyBUF_WRITABLE) == -1)
+		if (PyObject_GetBuffer(src, vw.view, ro ? 0 : PyBUF_WRITABLE) == -1)
 			return nullptr;
 
 		// Create a byte buffer
 		jvalue v;
 		v.l = frame.NewDirectByteBuffer(vw.view->buf, vw.view->len);
+
+		if (vw.view->readonly)
+			v.l = frame.asReadOnlyBuffer(v.l);
 
 		// Bind lifespan of the view to the java object.
 		frame.registerRef(v.l, vw.view, &releaseView);
@@ -719,7 +727,7 @@ static PyMethodDef moduleMethods[] = {
 
 	//{"dumpJVMStats", (PyCFunction) (&PyJPModule_dumpJVMStats), METH_NOARGS, ""},
 
-	{"convertToDirectBuffer", (PyCFunction) PyJPModule_convertToDirectByteBuffer, METH_O, ""},
+	{"convertToDirectBuffer", (PyCFunction) PyJPModule_convertToDirectByteBuffer, METH_VARARGS, ""},
 	{"arrayFromBuffer", (PyCFunction) PyJPModule_arrayFromBuffer, METH_VARARGS, ""},
 	{"enableStacktraces", (PyCFunction) PyJPModule_enableStacktraces, METH_O, ""},
 	{"isPackage", (PyCFunction) PyJPModule_isPackage, METH_O, ""},
