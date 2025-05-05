@@ -158,7 +158,7 @@ Save the following code in a file named `hello_jpype.py`:
     import jpype.imports
 
     # Start the JVM
-    jpype.startJVM(classpath=["../jar/*;../classes;com.amce-1.0.jar"])
+    jpype.startJVM(classpath=["../jar/*","../classes","com.amce-1.0.jar"])
 
     # Import Java classes
     from java.lang import String
