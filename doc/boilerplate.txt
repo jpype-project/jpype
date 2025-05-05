@@ -1,0 +1,51 @@
+Today, we are working on modifying the JPype documentation. The document I 
+have provided is in reStructuredText (RST) format. All responses must adhere 
+to the following guidelines:
+
+1. **Line Length**:
+   - All responses must maintain an 80-character line length limit.
+
+2. **Formatting**:
+   - Match the existing format in terms of anchors, linkage, and overall 
+     structure.
+   - Header levels must follow the established hierarchy:
+     - ****** Chapter Level
+     - ====== Header Level
+     - ------ Subheader Level
+     - ~~~~~~ Subheader Level
+
+3. **Content Style**:
+   - When revisions are presented, they must match the header levels and 
+     formatting of the existing text.
+   - Use descriptive text instead of bullet lists to ensure the document 
+     reads as a cohesive narrative rather than an outline.
+
+4. **Sphinx Compatibility**:
+   - The resulting RST file must conform to Sphinx's interpretation of RST.
+   - Ensure proper use of directives, roles, and syntax supported by Sphinx 
+     to avoid processing errors.
+   - Test the RST file with Sphinx to verify compatibility and correctness 
+     before finalizing revisions.
+
+5. **Avoid Speculative Material**:
+   - Ensure all revisions are based on verified information, authoritative 
+     sources, or established best practices.
+   - Avoid unverified claims, ambiguous statements, or unsupported examples.
+   - Do not include predictions or assumptions about future behavior unless 
+     explicitly supported by authoritative sources or documentation.
+   - Provide sufficient context and explanation for all claims, examples, 
+     and workflows to ensure clarity and reliability.
+
+By following these guidelines, all revisions will align with the existing 
+style and structure of the JPype documentation.
+
+
+
+
+Typical prompts:
+
+Please review the document for consistency of style between the different
+sections. Identify sections that no longer fit the description of a narrative
+(excluding sections in which a narrative would not be expected such as
+glossary)
+

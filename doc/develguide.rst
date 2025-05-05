@@ -104,7 +104,7 @@ can be created automatically as a result of a return type or exception
 thrown to the user.
 
 Because the classes are created dynamically, the class structure
-uses a lot of Python meta programming. 
+uses a lot of Python meta programming.
 Each class wrapper derives from the class wrappers of each of the
 wrappers corresponding to the Java classes that each class extends
 and implements. The key to this is to hacked ``mro``. The ``mro``
@@ -119,18 +119,18 @@ resource types
 
 JPype largely maps to the same concepts as Python with a few special elements.
 The key concept is that of a Factory which serves to create Java resources
-dynamically as requested.  For example there is no Python notation to 
+dynamically as requested.  For example there is no Python notation to
 create a ``int[][]`` as the concept of dimensions are fluid in Python.
 Thus a factory type creates the actual object instance type with
-``JArray(JInt,2)``  Like Python objects, Java objects derives from a 
-type object which is called ``JClass`` that serves as a meta type for 
-all Java derived resources.  Additional type like object ``JArray`` 
+``JArray(JInt,2)``  Like Python objects, Java objects derives from a
+type object which is called ``JClass`` that serves as a meta type for
+all Java derived resources.  Additional type like object ``JArray``
 and ``JInterface`` serve to probe the relationships between types.
 Java object instances are created by calling the Java class wrapper just
 like a normal Python class.  A number of pseudo classes serve as placeholders
 for Java types so that it is not necessary to create the type instance
-when using.  These aliased classes are ``JObject``, ``JString``, and 
-``JException``.   Underlying all Java instances is the concept of a 
+when using.  These aliased classes are ``JObject``, ``JString``, and
+``JException``.   Underlying all Java instances is the concept of a
 ``jvalue``.
 
 ``jvalue``
@@ -140,9 +140,9 @@ In the earlier design, wrappers, primitives and objects were all seperate
 concepts. At the JNI layer these are unified by a common element called
 jvalue. A ``jvalue`` is a union of all primitives with the jobject. The jobject
 can represent anything derived from Java object including the pseudo class
-jstring. 
+jstring.
 
-This has been replaced with a Java slot concept which holds an instance of 
+This has been replaced with a Java slot concept which holds an instance of
 ``JPValue`` which holds a pointer to the C++ Java type wrapper and a Java
 jvalue union.  We will discuss this object further in the CPython section.
 
@@ -159,7 +159,7 @@ construct the wrappers for ``java.lang.Object`` and ``java.lang.Class``. The key
 difficulty is that we need reflection to get methods from Java and those
 are part of ``java.lang.Class``, but class inherits from ``java.lang.Object``.
 Thus Object and the interfaces that Class inherits must all be created
-blindly.  The order of bootstrapping is controlled by specific sequence 
+blindly.  The order of bootstrapping is controlled by specific sequence
 of boot actions after the JVM is started in ``startJVM``.  The class instance
 ``class_`` may not be accessed until after all of the basic class, object,
 and exception types have been loaded.
@@ -268,7 +268,7 @@ an instance which will correspond to a Java resource such as class, array,
 method, or value.
 
 Jpype objects work with the inner layers by inheriting from a set of special
-``_jpype`` classes.  This class hiarachy is mantained by the meta class 
+``_jpype`` classes.  This class hiarachy is mantained by the meta class
 ``_jpype._JClass``.  The meta class does type hacking of the Python API
 to insert a reserved memory slot for the ``JPValue`` structure.  The meta
 class is used to define the Java base classes:
@@ -279,7 +279,7 @@ class is used to define the Java base classes:
  * ``_JObject`` - Base type of all Java object instances extending Python object.
  * ``_JNumberLong`` - Base type for integer style types extending Python int.
  * ``_JNumberFloat`` - Base type for float style types extending Python float.
- * ``_JNumberChar`` - Special wrapper type for JChar and java.lang.Character 
+ * ``_JNumberChar`` - Special wrapper type for JChar and java.lang.Character
    types extending Python float.
  * ``_JException`` - Base type for exceptions extending Python Exception.
  * ``_JValue`` - Generic capsule representing any Java type or instance.
@@ -288,7 +288,7 @@ These types are exposed to Python to implement Python functionality specific
 to the behavior expected by the Python type.  Under the hood these types are
 largely ignored.  Instead the internal calls for the Java slot to determine
 how to handle the type.  Therefore, internally often Python methods will be
-applied to the "wrong" type as the requirement for the method can be satisfied 
+applied to the "wrong" type as the requirement for the method can be satisfied
 by any object with a Java slot rather than a specific type.
 
 See the section regarding Java slots for details.
@@ -312,7 +312,7 @@ and any missing resource are reported as an error.
 ~~~~~~~~~~~~~~~~~~~
 
 The class wrappers have a metaclass ``_jpyep._JClass`` which serves as
-the guardian to ensure the slot is attached, provide for the inheritance 
+the guardian to ensure the slot is attached, provide for the inheritance
 checks, and control access to static fields and methods.  The slot holds
 a java.lang.Class instance but it does not have any of the methods normally
 associate with a Java class instance exposed.  A java.lang.Class instance
@@ -333,9 +333,9 @@ it tracing down errors. The beans methods are there just to support
 the old properties API.
 
 The naming on this class is a bit deceptive. It does not correspond
-to a single method but rather all the overloads with the same name.  
+to a single method but rather all the overloads with the same name.
 When called it passes to with the arguments to the C++ layer where
-it must be resolved to a specific overload. 
+it must be resolved to a specific overload.
 
 This class is stored directly in the class wrappers.
 
@@ -364,9 +364,9 @@ specialized implementations to allow for the Python buffer API.
 ~~~~~~~~~~~~~~~~~~~~~
 
 This class provides ``synchronized`` to JPype.  Instances of this
-class are created and held using ``with``.  It has two methods 
+class are created and held using ``with``.  It has two methods
 ``__enter__`` and ``__exit__`` which hook into the Python RAII
-system.  
+system.
 
 
 ``_JValue`` class
@@ -377,7 +377,7 @@ types.  These each have the Python functionality to be exposed and
 a Java slot.  The most generic of these is ``_JValue`` which is simply
 a capsule holding the Java C++ type wrapper and a Java jvalue union.
 CPython methods for the ``PyJPValue`` apply to all CPython objects
-that hold a Java slot.  
+that hold a Java slot.
 
 Specific implementation exist for object, numbers, characters, and
 exceptions.  But fundimentally all are treated the same internally
@@ -385,7 +385,7 @@ and thus the CPython type is effectively erased outside of Python.
 
 Unlike ``jvalue`` we hold the object type in the C++ ``JPValue``
 object.  The class reference is used to determine how to match the arguments
-to methods. The class may not correspond to the actual class of the 
+to methods. The class may not correspond to the actual class of the
 object. Using a class other than the actual class serves to allow
 an object to be cast and thus treated like another type for the purposes
 of overloading. This mechanism is what allows the ``JObject`` factory
@@ -404,11 +404,11 @@ within the type structure and by using a set of bit flags so that it can avoid c
 The reserved space in order by number and thus avoids the need to access the
 dictionary while the bit flags serve to determine the type without traversing
 the ``__mro__`` structure.  We had to implement the same effect which deriving
-from a wide variety for Python types including type, object, int, long, and 
-Exception.  Adding the slot directly to the type and objects base memory 
+from a wide variety for Python types including type, object, int, long, and
+Exception.  Adding the slot directly to the type and objects base memory
 does not work because these types all have different memory layouts.  We could
 have a table look up based on the type but because we must obey both the CPython
-and the Java object hierarchy at the same time it cannot be done within the 
+and the Java object hierarchy at the same time it cannot be done within the
 memory layout of Python objects.  Instead we have to think outside the box,
 or rather outside the memory footprint of Python objects.
 
@@ -422,9 +422,9 @@ all specialize static members and there is no provision for introducting
 user defined dynamic slots.
 
 Therefore, instead we will add extra memory outside the view of Python
-objects though the use of a custom allocator. We intercept the call to 
+objects though the use of a custom allocator. We intercept the call to
 create an object allocation and then call the regular Python allocators
-with the extra memory added to the request.  As our extrs slot has 
+with the extra memory added to the request.  As our extrs slot has
 resource in the form of Java global references associated with it, we
 must deallocate those resource regardless of the type that has been
 extended.  We perform this task by creating a custom finalize method to
@@ -443,7 +443,7 @@ effectively a slot as we can test and access with O(1).
 Accessing the slot requires testing if the slot exists for the object,
 then computing the sice of the object using the basesize and itemsize
 associate with the type and then offsetting the Python object pointer
-appropriately.  The overall cost is O(1), though is slightly more 
+appropriately.  The overall cost is O(1), though is slightly more
 heavy that directly accesssing an offset.
 
 
@@ -470,7 +470,7 @@ Java must have a ``try`` block around the contents of the function.
 
 We use a routine pattern of code to interact with Java to achieve this:
 
-.. code-block:: cpp 
+.. code-block:: cpp
 
     PyObject* dosomething(PyObject* self, PyObject* args)
     {
@@ -598,26 +598,26 @@ back to Java.
 Memory management
 ~~~~~~~~~~~~~~~~~
 
-Java provides built in memory management for controlling the lifespan of 
+Java provides built in memory management for controlling the lifespan of
 Java objects that are passed through JNI. When a Java object is created
 or returned from the JVM it returns a handle to object with a reference
 counter. To manage the lifespan of this reference counter a local frame
 is created. For the duration of this frame all local references will
 continue to exist. To extend the lifespan either a new global reference
 to the object needs to be created, or the object needs to be kept.  When
-the local frame is destroyed all local references are destroyed with 
-the exception of an optional specified local return reference.  
+the local frame is destroyed all local references are destroyed with
+the exception of an optional specified local return reference.
 
 We have wrapped the Java reference system with the wrapper ``JPLocalFrame``.
 This wrapper has three functions. It acts as a RAII (Resource acquisition
 is initialization) for the local frame. Further, as creating a local
 frame requires creating a Java env reference and all JNI calls require
 access to the env, the local frame acts as the front end to call all
-JNI calls. Finally as getting ahold of the env requires that the 
+JNI calls. Finally as getting ahold of the env requires that the
 thread be attached to Java, it also serves to automatically attach
 threads to the JVM. As accessing an unbound thread will cause a segmentation
 fault in JNI, we are now safe from any threads created from within
-Python even those created outside our knowledge.  (I am looking at 
+Python even those created outside our knowledge.  (I am looking at
 you spyder)
 
 Using this pattern makes the JPype core safe by design.  Forcing JNI
@@ -674,7 +674,7 @@ you always store only the global reference.
       // hold the resource longer.
       if (cond)
       {
-        // okay we need to keep this reference, so make a 
+        // okay we need to keep this reference, so make a
         // new global reference to it.
         global = frame.NewGlobalRef(value.l);
       }
@@ -684,7 +684,7 @@ But don't mistake this as an invitation to make global references everywhere.
 Global reference are global, thus will hold the member until the reference is
 destroyed. C++ exceptions can lead to missing the unreference, thus global
 references should only happen when you are placing the Java object into a class
-member variable or a global variable. 
+member variable or a global variable.
 
 To help manage global references, we have ``JPRef<>`` which holds a global
 reference for the duration of the C++ lifespace.  This is the base class for
@@ -709,7 +709,7 @@ than creating a new one.
         // Do the required work
         jobject obj = frame.CallObjectMethodA(globalObj, methodRef, params);
 
-        // We must not call keep here or we will terminate 
+        // We must not call keep here or we will terminate
         // a frame we do not own.
         return obj;
     }
@@ -726,13 +726,13 @@ best case is using the stale reference will crash and burn. Worse case, the
 reference will be a live reference to another object and it will produce an
 error which seems completely irrelevant to anything that was being called.
 Horrible case, the live object does not object to bad call and it all silently
-proceeds down the road another two miles before coming to flaming death. 
+proceeds down the road another two miles before coming to flaming death.
 
-Moral of the story, always create a local frame even if you are handling a global 
-reference. If passed or returned a reference of any kind, it is a borrowed reference 
+Moral of the story, always create a local frame even if you are handling a global
+reference. If passed or returned a reference of any kind, it is a borrowed reference
 belonging to the caller or being held by the current local frame. Thus it must
 be treated accordingly. If you have to hold a global use the appropraite ``JPRef``
-class to ensure it is exception and dtor safe. For further information 
+class to ensure it is exception and dtor safe. For further information
 read ``native/common/jp_javaframe.h``.
 
 
@@ -830,7 +830,7 @@ Currently this is backed by a C++ map of string to class wrappers.
 
 The typemanager provides a number lookup methods.
 
-.. code-block:: cpp 
+.. code-block:: cpp
 
   // Call from within Python
   JPClass* JPTypeManager::findClass(const string& name)
@@ -855,7 +855,7 @@ to support Java native methods appears in the C++ layer.
 Once started the reference queue is mostly transparent. registerRef is used
 to bind a Python object live span to a Java object.
 
-.. code-block:: cpp 
+.. code-block:: cpp
 
   void JPReferenceQueue::registerRef(jobject obj, PyObject* hostRef)
 
@@ -884,7 +884,7 @@ jar.
 The classloader is mostly transparent. It provides one method called findClass
 which loads a class from the internal jar.
 
-.. code-block:: cpp 
+.. code-block:: cpp
 
   jclass JPClassLoader::findClass(string name)
 
@@ -900,9 +900,9 @@ encoding such as UTF8, Java used UTF16 encoded in 8 bits which they dub
 Modified-UTF8. ``JPEncoding`` deals with converting this unusual encoding into
 something that Python can understand.
 
-The key method in this module is transcribe with signature 
+The key method in this module is transcribe with signature
 
-.. code-block:: cpp 
+.. code-block:: cpp
 
   std::string transcribe(const char* in, size_t len,
       const JPEncoding& sourceEncoding,
@@ -975,7 +975,7 @@ to turn to a general purpose tool like gdb or valgrind.  The JPype core is not
 easy to debug. Python can be difficult to properly monitor especially with
 tools like valgrind due to its memory handling. Java is also challenging to
 debug. Put them together and you have the mother of all debugging issues. There
-are a number of complicating factors. Let us start with how to debug with gdb. 
+are a number of complicating factors. Let us start with how to debug with gdb.
 
 Gdb runs into two major issues, both tied to the signal handler.
 First, Java installs its own signal handlers that take over the entire process
@@ -987,7 +987,7 @@ catching the segfault before Java catches it. This makes for a catch 22,
 you can't capture a meaningful non-interactively produced core file, and you
 can't get an interactive session to work.
 
-Fortunately there are solutions to the interactive session issue. By disabling 
+Fortunately there are solutions to the interactive session issue. By disabling
 the SIGSEGV handler, we can get past the initial failure and also we can catch
 the stack before it is altered by the JVM. ::
 
@@ -995,7 +995,7 @@ the stack before it is altered by the JVM. ::
 
 Thus far I have not found any good solutions to prevent the JVM from altering
 the stack frames when dumping the core. Thus interactive debugging appears
-to be the best option. 
+to be the best option.
 
 There are additional issues that one should be aware of. Open-JDK 1.8 has had a
 number of problems with the debugger. Starting JPype under gdb may trigger, may
@@ -1008,7 +1008,7 @@ Upgrading to Open-JDK 9 appears to fix the problem.
 
 Another complexity with debugging memory problems is that Python tends to
 hide the problem with its allocation pools. Rather than allocating memory
-when a new object is request, it will often recycle and existing object 
+when a new object is request, it will often recycle and existing object
 which was collect earlier. The result is that an object which turns out is
 still live becomes recycled as a new object with a new type. Thus suddenly
 a method which was expected to produce some result instead vectors into
@@ -1022,6 +1022,87 @@ code paths so we may not reach a similar state. If the core dump is vectoring
 off into code that just does not make sense it is likely caused by the memory
 pools. Starting Python 3, it is possible to select the memory allocation policy
 through an enviroment variable.  See the ``PYTHONMALLOC`` setting for details.
+
+
+Deliberate Crash for Debugging
+------------------------------
+
+JPype includes deliberate crashes in its exception handling for scenarios where
+multiple failures occur, making it impossible to deliver errors to either Python
+or Java. These crashes are designed to aid debugging in catastrophic situations
+and offer significant advantages over simple program termination (`terminate`).
+
+When debugging JPype, deliberate crashes (segmentation faults) provide the
+following benefits:
+
+1. **Stack Trace Availability**:
+   - Deliberate crashes generate a meaningful stack trace for tools like `gdb`.
+   - Termination does not produce a stack trace, making it harder to identify
+     the root cause of the problem.
+
+2. **Bypassing Signal Handlers**:
+   - Deliberate crashes bypass Java's signal handlers, ensuring the stack trace
+     remains intact.
+   - Termination may still be affected by Java's signal handling, corrupting
+     the debugging process.
+
+3. **Memory State Preservation**:
+   - Deliberate crashes halt execution immediately, preventing Python's memory
+     recycling from altering the program state.
+   - Termination allows Python to continue recycling memory, which can obscure
+     the root cause of memory-related bugs.
+
+4. **Interactive Debugging**:
+   - Deliberate crashes enable interactive debugging with `gdb`, allowing
+     developers to inspect the program state before corruption occurs.
+   - Termination does not provide this opportunity.
+
+For these reasons, deliberate crashes are preferred in catastrophic scenarios
+where debugging is required.
+
+### Implementation and Use Case
+
+In rare and catastrophic situations where all exception handling mechanisms
+fail—such as during startup or when critical resources are unavailable—JPype
+uses a deliberate crash mechanism to produce a meaningful stack trace for
+debugging. This situation most often occurs when JVM resources are not found
+during initialization, resulting in errors that cannot be recovered. Reordering
+the resource loading sequence in `jp_context.cpp` is the most likely source of
+such failures.
+
+The deliberate crash is implemented as follows:
+
+.. code-block:: cpp
+
+   int *i = nullptr;
+   *i = 0;  // Trigger deliberate crash for gdb backtrace
+
+This crash bypasses Java's signal handlers and Python's memory management,
+which can obscure debugging efforts. By triggering a segmentation fault, `gdb`
+can capture the stack trace at the point of failure, providing valuable insight
+into the issue.
+
+### Debugging with `gdb`
+
+To debug using `gdb`, follow these steps:
+
+1. Start Python with `gdb` and disable the SIGSEGV handler:
+
+.. code-block:: bash
+
+      gdb -ex 'handle SIGSEGV nostop noprint pass' python
+
+2. Run the program until the deliberate crash occurs.
+
+3. Use the `bt` command in `gdb` to view the backtrace and identify the source
+   of the problem.
+
+### Important Note
+
+This mechanism is intended exclusively for debugging and should never be
+triggered during normal operation. If you encounter this crash, it indicates a
+critical failure that requires opening an issue on GitHub.
+
 
 
 Future directions
@@ -1052,14 +1133,14 @@ is no reason the jpype can't support it. But we need loading routines for
 these JVMs to be developed if there are differences in getting the JVM
 launched.
 
-There is a project page on github shows what is being developed for the 
+There is a project page on github shows what is being developed for the
 next release. Series 0.6 was usable, but early versions had notable issues
 with threading and internal memory management concepts had to be redone for
-stability.  Series 0.7 is the first verion after rewrite for 
-simplication and hardening.  I consider 0.7 to be at the level of production 
-quality code suitable for most usage though still missing some needed 
+stability.  Series 0.7 is the first verion after rewrite for
+simplication and hardening.  I consider 0.7 to be at the level of production
+quality code suitable for most usage though still missing some needed
 features. Series 0.8 will deal with higher levels of Python/Java integration such as Java
 class extension and pickle support.  Series 0.9 will be dedicated to any
 additional hardening and edge cases in the core code as we should have complete
 integration.  Assuming everything is completed, we will one day become a
-real boy and have a 1.0 release. 
+real boy and have a 1.0 release.
