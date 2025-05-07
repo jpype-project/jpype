@@ -1100,6 +1100,8 @@ public:
 string JPJavaFrame::toString(jobject o)
 {
 	auto str = (jstring) CallObjectMethodA(o, getContext()->m_Object_ToStringID, nullptr);
+	if (str == nullptr)
+		return "null";
 	return toStringUTF8(str);
 }
 
