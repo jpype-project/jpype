@@ -181,3 +181,7 @@ class JStringTestCase(common.JPypeTestCase):
         self.assertEqual(s[:5], s2[:5])
         self.assertEqual(s[3:], s2[3:])
         self.assertEqual(s[::-1], s2[::-1])
+
+    def testBad(self):
+        bad = jpype.JClass("jpype.str.Bad")()
+        self.assertEqual(str(bad), "null")
