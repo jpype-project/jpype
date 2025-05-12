@@ -12,6 +12,8 @@ Latest Changes:
 
   - Fixed conversion of float16 for subnormal numbers.
 
+  - Fixed segmentation fault on null String.
+
   - Fixed bugs with java.util.List concat and repeat methods.
 
   - Enhancement to JProxy to handle wrapping an existing Python object with a Java
