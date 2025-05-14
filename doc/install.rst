@@ -10,7 +10,7 @@ Binary Install
 
 JPype can be installed as pre-compiled binary if you are using the `Anaconda
 <https://anaconda.org>`_ Python stack. Binaries are available for Linux, OSX,
-and windows on conda-forge.
+and Windows on conda-forge.
 
 1. Ensure you have installed Anaconda/Miniconda. Instructions can be found
    `here <http://conda.pydata.org/docs/install/quick.html>`__.
@@ -133,7 +133,7 @@ happens, preform the following steps:
 Platform Specific requirements
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-JPype is known to work on Linx, OSX, and Windows.  To make it easier to those
+JPype is known to work on Linux, OSX, and Windows.  To make it easier to those
 who have not built CPython modules before here are some helpful tips for
 different machines.
 
