@@ -29,14 +29,14 @@ public class HtmlGrammar implements Parser.Grammar
   }
 
   @Override
-  public void start(Parser p)
+  public void start(Parser<?> p)
   {
     p.state = State.FREE;
     ((HtmlParser) p).handler.startDocument();
   }
 
   @Override
-  public Object end(Parser p)
+  public Object end(Parser<?> p)
   {
     ((HtmlParser) p).handler.endDocument();
     return ((HtmlParser) p).handler.getResult();
@@ -50,15 +50,15 @@ public class HtmlGrammar implements Parser.Grammar
     StringBuilder sb = new StringBuilder(e.toString());
     e.value = sb;
     e.token = Token.TEXT;
-    return (StringBuilder) sb;
+    return sb;
   }
 
-  static HtmlGrammar getGrammar(Parser p)
+  static HtmlGrammar getGrammar(Parser<?> p)
   {
     return ((HtmlGrammar) p.grammar);
   }
 
-  static HtmlHandler getHandler(Parser p)
+  static HtmlHandler getHandler(Parser<?> p)
   {
     return ((HtmlParser) p).handler;
   }
@@ -271,7 +271,7 @@ public class HtmlGrammar implements Parser.Grammar
     }
 
     @Override
-    public void execute(Parser parser)
+    public void execute(Parser<?> parser)
     {
       LinkedList<Entity> stack = parser.stack;
       Entity e2 = stack.removeLast();
@@ -291,7 +291,7 @@ public class HtmlGrammar implements Parser.Grammar
     }
 
     @Override
-    public void execute(Parser parser)
+    public void execute(Parser<?> parser)
     {
       LinkedList<Entity> stack = parser.stack;
       Entity t2 = stack.removeLast();
@@ -306,7 +306,7 @@ public class HtmlGrammar implements Parser.Grammar
   {
 
     @Override
-    public boolean apply(Parser parser, Entity entity)
+    public boolean apply(Parser<?> parser, Entity entity)
     {
       if (entity.token != Token.LT)
         return false;
@@ -348,7 +348,7 @@ public class HtmlGrammar implements Parser.Grammar
     }
 
     @Override
-    public void execute(Parser parser)
+    public void execute(Parser<?> parser)
     {
       LinkedList<Entity> stack = parser.stack;
       stack.removeLast();
@@ -375,7 +375,7 @@ public class HtmlGrammar implements Parser.Grammar
     }
 
     @Override
-    public void execute(Parser parser)
+    public void execute(Parser<?> parser)
     {
       LinkedList<Entity> stack = parser.stack;
       stack.removeLast(); // >
@@ -410,7 +410,7 @@ public class HtmlGrammar implements Parser.Grammar
     }
 
     @Override
-    public void execute(Parser parser)
+    public void execute(Parser<?> parser)
     {
       LinkedList<Entity> stack = parser.stack;
       Entity e2 = stack.removeLast();
@@ -432,7 +432,7 @@ public class HtmlGrammar implements Parser.Grammar
     }
 
     @Override
-    public void execute(Parser parser)
+    public void execute(Parser<?> parser)
     {
       LinkedList<Entity> stack = parser.stack;
       Entity e2 = stack.removeLast();
@@ -452,7 +452,7 @@ public class HtmlGrammar implements Parser.Grammar
   {
 
     @Override
-    public boolean apply(Parser parser, Entity entity)
+    public boolean apply(Parser<?> parser, Entity entity)
     {
       if (entity.token == Token.LSB)
       {
@@ -475,7 +475,7 @@ public class HtmlGrammar implements Parser.Grammar
   {
 
     @Override
-    public boolean apply(Parser parser, Entity entity)
+    public boolean apply(Parser<?> parser, Entity entity)
     {
       if (entity.token != Token.TEXT)
         parser.error("Expected CDATA");
@@ -483,7 +483,7 @@ public class HtmlGrammar implements Parser.Grammar
       return true;
     }
 
-    public boolean next(Parser parser, Parser.Entity entity)
+    public boolean next(Parser<?> parser, Parser.Entity entity)
     {
       if (entity.token != Token.LSB)
         parser.error("Expected [");
@@ -503,7 +503,7 @@ public class HtmlGrammar implements Parser.Grammar
     }
 
     @Override
-    public void execute(Parser parser)
+    public void execute(Parser<?> parser)
     {
       LinkedList<Entity> stack = parser.stack;
       stack.removeLast(); // >
@@ -580,7 +580,7 @@ public class HtmlGrammar implements Parser.Grammar
     }
 
     @Override
-    public void execute(Parser parser)
+    public void execute(Parser<?> parser)
     {
       LinkedList<Entity> stack = parser.stack;
       stack.removeLast(); // >

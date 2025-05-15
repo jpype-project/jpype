@@ -18,6 +18,9 @@ package org.jpype.pickle;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
+/**
+ * Support class for the Python JPickler class.
+ */
 public class Decoder
 {
 

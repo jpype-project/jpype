@@ -146,7 +146,9 @@ mockModule._JException = TypeMock("_JException")
 mockModule._JPackage = _JPackage
 mockModule._JClassHints = _JClassHints
 mockModule._hasClass = lambda x: False
+del mockModule.bootstrap
 sys.modules['_jpype'] = mockModule
+
 import jpype
 import jpype.imports
 

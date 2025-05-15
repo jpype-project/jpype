@@ -28,6 +28,9 @@ import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.net.URLDecoder;
+import java.util.HashSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Class loader for JPype.
@@ -287,64 +290,67 @@ public class JPypeClassLoader extends URLClassLoader
   /**
    * Recreate missing directory entries for Jars that lack indexing.
    *
-   * Some jar files are missing the directory entries that prevents use from
+   * Some jar files are missing the directory entries that prevents us from
    * properly importing their contents. This procedure scans a jar file when
    * loaded to build missing directories.
    *
-   * @param path
+   * @param path Path to the jar file.
    */
   void scanJar(Path path)
   {
-    if (!Files.exists(path))
-      return;
-    if (Files.isDirectory(path))
+    // Validate the input path
+    if (path == null || !Files.exists(path) || Files.isDirectory(path))
       return;
 
-    try (JarFile jf = new JarFile(path.toFile()))
+    try (JarFile jarFile = new JarFile(path.toFile()))
     {
-      Enumeration<JarEntry> entries = jf.entries();
-      URI abs = path.toAbsolutePath().toUri();
-      Set urls = new java.util.HashSet();
+      Enumeration<JarEntry> entries = jarFile.entries();
+      URI absoluteUri = path.toAbsolutePath().toUri();
+      Set<String> directoryEntries = new HashSet<>();
+
       while (entries.hasMoreElements())
       {
-        JarEntry next = entries.nextElement();
-        String name = next.getName();
+        JarEntry entry = entries.nextElement();
+        String entryName = entry.getName();
 
-        // Skip over META-INF
-        if (name.startsWith("META-INF/"))
-          continue;
-
-        if (next.isDirectory())
+        // Skip META-INF directory
+        if (entryName.startsWith("META-INF/"))
         {
-          // If we find a directory entry then the jar has directories already
-          return;
+          continue;
         }
 
-        // Split on each separator in the name
-        int i = 0;
+        // If the jar already contains directory entries, exit early
+        if (entry.isDirectory())
+          return;
+
+        // Process the entry name to identify missing directories
+        int separatorIndex = 0;
         while (true)
         {
-          i = name.indexOf("/", i);
-          if (i == -1)
+          separatorIndex = entryName.indexOf("/", separatorIndex);
+          if (separatorIndex == -1)
             break;
-          String name2 = name.substring(0, i);
 
-          i++;
+          String directoryName = entryName.substring(0, separatorIndex);
+          separatorIndex++;
 
-          // Already have an entry no problem
-          if (urls.contains(name2))
+          // Skip if the directory is already processed
+          if (!directoryEntries.add(directoryName))
             continue;
 
-          // Add a new entry for the missing directory
-          String jar = "jar:" + abs + "!/" + name2 + "/";
-          urls.add(name2);
-          this.addResource(name2, new URL(jar));
+          // Construct the jar URL for the missing directory
+          URI jarUri = new URI("jar", absoluteUri + "!/" + directoryName + "/", null);
+          this.addResource(directoryName, jarUri.toURL());
         }
       }
-    } catch (IOException ex)
+    } catch (IOException | URISyntaxException ex)
     {
-      // Anything goes wrong skip it
+      // Log the exception for debugging purposes
+      System.err.println("Failed to process jar file: " + path);
+      ex.printStackTrace();
     }
+    // Log the exception for debugging purposes
+
   }
 
 }
