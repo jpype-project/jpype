@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-7 -*-
 # *****************************************************************************
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,7 +20,20 @@ import os
 import shutil
 from pathlib import Path
 from setuptools.command.sdist import sdist
-from setuptools import log
+
+# --- Logging compatibility shim ---
+try:
+    import distutils.log as _log
+    LOG_INFO = _log.INFO
+    LOG_WARN = _log.WARN
+    LOG_ERROR = _log.ERROR
+except ImportError:
+    import logging
+    class _log:
+        INFO = logging.INFO
+        WARN = logging.WARNING
+        ERROR = logging.ERROR
+# ----------------------------------
 
 class BuildSourceDistribution(sdist):
     """
@@ -31,7 +44,7 @@ class BuildSourceDistribution(sdist):
     def run(self):
         # Destination directory for the jar file(s)
         dest = Path('native') / 'jars'
-        self.announce(f"Preparing to build and package JPype jar files at {dest}", level=log.INFO)
+        self.announce(f"Preparing to build and package JPype jar files at {dest}", level=LOG_INFO)
 
         # Get the build_ext command object and set the jar build flag
         cmd = self.distribution.get_command_obj('build_ext')
@@ -56,7 +69,7 @@ class BuildSourceDistribution(sdist):
 
         # Check that the jar file exists
         if not jar_path.exists():
-            self.announce(f"Jar source file is missing: {jar_path}", level=log.ERROR)
+            self.announce(f"Jar source file is missing: {jar_path}", level=LOG_ERROR)
             raise RuntimeError(f"Error copying jar file: {jar_path}")
 
         # Ensure the destination directory exists
@@ -64,7 +77,7 @@ class BuildSourceDistribution(sdist):
 
         # Copy the jar file to the destination
         shutil.copy2(jar_path, dest / jar_basename)
-        self.announce(f"Copied {jar_path} to {dest}", level=log.INFO)
+        self.announce(f"Copied {jar_path} to {dest}", level=LOG_INFO)
 
         # Run the standard sdist process to package the source distribution
         super().run()
@@ -72,6 +85,6 @@ class BuildSourceDistribution(sdist):
         # Clean up: remove the jar cache directory after sdist is complete
         try:
             shutil.rmtree(dest)
-            self.announce(f"Cleaned up temporary jar directory: {dest}", level=log.INFO)
+            self.announce(f"Cleaned up temporary jar directory: {dest}", level=LOG_INFO)
         except Exception as cleanup_error:
-            self.announce(f"Failed to clean up {dest}: {cleanup_error}", level=log.WARN)
+            self.announce(f"Failed to clean up {dest}: {cleanup_error}", level=LOG_WARN)

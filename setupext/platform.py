@@ -21,10 +21,20 @@ import os
 from pathlib import Path
 import sys
 import sysconfig
-import distutils.log
 import ctypes.util
+import typing
 
-# This handles all the work to make our platform specific extension options.
+# --- Logging compatibility shim ---
+try:
+    import distutils.log as _log
+    def log_info(msg, *args): _log.info(msg, *args)
+    def log_warn(msg, *args): _log.warn(msg, *args)
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    def log_info(msg, *args): logging.info(msg, *args)
+    def log_warn(msg, *args): logging.warning(msg, *args)
+# ----------------------------------
 
 def find_python_shared_lib():
     # Get Python version (e.g., '3.11')
@@ -85,7 +95,7 @@ def config_windows(platform_specific, debug=False):
     Returns:
         str: JNI subdirectory name for Windows ('win32').
     """
-    distutils.log.info("Add windows settings")
+    log_info("Add windows settings")
     platform_specific['define_macros'] = [('WIN32', 1)]
     
     # Compile args for release build
@@ -112,7 +122,7 @@ def config_darwin(platform_specific):
     Returns:
         str: JNI subdirectory name for macOS ('darwin').
     """
-    distutils.log.info("Add darwin settings")
+    log_info("Add darwin settings")
     platform_specific['libraries'] = ['dl']
     platform_specific['define_macros'] = [('MACOSX', 1)]
     platform_specific['extra_compile_args'] = ['-g0', '-std=c++11', '-O2']
@@ -127,7 +137,7 @@ def config_linux(platform_specific):
     Returns:
         str: JNI subdirectory name for Linux ('linux').
     """
-    distutils.log.info("Add linux settings")
+    log_info("Add linux settings")
     platform_specific['libraries'] = ['dl']
     platform_specific['extra_compile_args'] = ['-g0', '-std=c++11', '-O2']
     return 'linux'
@@ -141,7 +151,7 @@ def config_aix7(platform_specific):
     Returns:
         str: JNI subdirectory name for AIX 7 ('aix7').
     """
-    distutils.log.info("Add aix settings")
+    log_info("Add aix settings")
     platform_specific['libraries'] = ['dl']
     platform_specific['extra_compile_args'] = ['-g0', '-std=c++11', '-O2']
     return 'aix7'
@@ -154,7 +164,7 @@ def config_freebsd(platform_specific):
     Returns:
         str: JNI subdirectory name for FreeBSD ('freebsd').
     """
-    distutils.log.info("Add freebsd settings")
+    log_info("Add freebsd settings")
     return 'freebsd'
 
 def config_openbsd(platform_specific):
@@ -165,7 +175,7 @@ def config_openbsd(platform_specific):
     Returns:
         str: JNI subdirectory name for OpenBSD ('openbsd').
     """
-    distutils.log.info("Add openbsd settings")
+    log_info("Add openbsd settings")
     return 'openbsd'
 
 def config_android(platform_specific):
@@ -178,7 +188,7 @@ def config_android(platform_specific):
     Returns:
         str: JNI subdirectory name for Android ('linux').
     """
-    distutils.log.info("Add android settings")
+    log_info("Add android settings")
     platform_specific['libraries'] = ['dl', 'c++_shared', 'SDL2']
     platform_specific['extra_compile_args'] = [
         '-g0', '-std=c++11', '-O2', '-fexceptions', '-frtti'
@@ -193,7 +203,7 @@ def config_zos(platform_specific):
     Returns:
         str: JNI subdirectory name for z/OS ('zos').
     """
-    distutils.log.info("Add zos settings")
+    log_info("Add zos settings")
     return 'zos'
 
 def config_sunos5(platform_specific):
@@ -204,7 +214,7 @@ def config_sunos5(platform_specific):
     Returns:
         str: JNI subdirectory name for Solaris ('solaris').
     """
-    distutils.log.info("Add solaris settings")
+    log_info("Add solaris settings")
     return 'solaris'
 
 def config_default(platform_specific):
@@ -215,7 +225,7 @@ def config_default(platform_specific):
     Returns:
         str: Empty string, since no JNI subdirectory is specified.
     """
-    distutils.log.warn("Your platform is not being handled explicitly. It may work or not!")
+    log_warn("Your platform is not being handled explicitly. It may work or not!")
     return ''
 
 # Map platform start strings to config functions
@@ -259,12 +269,12 @@ def Platform(*, include_dirs: typing.Sequence[Path], sources: typing.Sequence[Pa
         # Check if any of the include directories contains jni.h
         for d in platform_specific['include_dirs']:
             if os.path.exists(os.path.join(str(d), 'jni.h')):
-                distutils.log.info("Found native jni.h at %s", d)
+                log_info("Found native jni.h at %s", d)
                 found_jni = True
                 break
         # If JAVA_HOME/include does not contain jni.h, issue a warning and fall back
         if not found_jni:
-            distutils.log.warn(
+            log_warn(
                 'Falling back to provided JNI headers, since your provided JAVA_HOME "%s" does not provide jni.h',
                 java_home)
     # If JAVA_HOME is not set or jni.h was not found, use the fallback JNI headers
@@ -288,7 +298,7 @@ def Platform(*, include_dirs: typing.Sequence[Path], sources: typing.Sequence[Pa
     # If JAVA_HOME JNI headers were found, add the platform-specific subdirectory (e.g., 'linux', 'win32')
     if found_jni:
         jni_md_dir = os.path.join(java_home, 'include', jni_md_platform)
-        distutils.log.info("Add JNI directory %s" % jni_md_dir)
+        log_info("Add JNI directory %s", jni_md_dir)
         platform_specific['include_dirs'].append(jni_md_dir)
 
     # Return the fully populated platform-specific configuration dictionary
