@@ -1,16 +1,21 @@
 #!/bin/bash
 set -e -x
 
-# Collect the pythons
-pys=(/opt/python/cp*/bin)
+pys=()
+echo "Available Python bins:"
+ls /opt/python/cp*/bin
 
-# Exclude specific Pythons (3.6, 3.7)
-pys=(${pys[@]//*36*/})
-pys=(${pys[@]//*37*/})
-pys=(${pys[@]//*38*/})
-pys=(${pys[@]//*a*/})
-pys=(${pys[@]//*b*/})
-pys=(${pys[@]//*rc*/})
+for pybin in /opt/python/cp*/bin; do
+    # Exclude 3.6, 3.7, 3.8 and any alpha/beta/rc release
+    if [[ "$pybin" =~ cp36|cp37|cp38|_a[0-9]+|_b[0-9]+|_rc[0-9]+ ]]; then
+        continue
+    fi
+    pys+=("$pybin")
+done
+
+# Show what you found for debugging
+echo "Found Python bins:"
+printf '%s\n' "${pys[@]}"
 
 # Compile wheels
 for PYBIN in "${pys[@]}"; do
