@@ -3,11 +3,11 @@ set -e -x
 
 pys=()
 echo "Available Python bins:"
-ls /opt/python/cp*/bin
+ls -d /opt/python/cp*/bin 
 
 for pybin in /opt/python/cp*/bin; do
     # Exclude 3.6, 3.7, 3.8 and any alpha/beta/rc release
-    if [[ "$pybin" =~ cp36|cp37|cp38|_a[0-9]+|_b[0-9]+|_rc[0-9]+ ]]; then
+    if [[ "$dir" =~ ^cp3(6|7|8|9|14)-cp3(6|7|8|9|14)t?$ ]]; then
         continue
     fi
     pys+=("$pybin")
