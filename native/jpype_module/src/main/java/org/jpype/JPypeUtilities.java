@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
+@SuppressWarnings("unchecked")
 public class JPypeUtilities
 {
 
@@ -21,11 +22,11 @@ public class JPypeUtilities
                   .filter(m -> !Modifier.isFinal(m.getModifiers()))
                   .toArray(Method[]::new);
 
-  private static final Predicate<Class> isSealed;
+  private static final Predicate<Class<?>> isSealed;
 
   static
   {
-    Predicate<Class> result = null;
+    Predicate<Class<?>> result = null;
     try
     {
       Method m = Class.class.getMethod("isSealed");

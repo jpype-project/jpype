@@ -3,11 +3,22 @@ package org.jpype;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ * Instance of JPypeReflector loaded during bootstrapping.
+ *
+ * Due to restrictions in the Java module system it is necessary that the
+ * Reflector by loaded in the unnamed module category with a special
+ * classloader. As such this class may not appear in the jar as a loaded class.
+ * Instead the class is stored in the META-INF directory as if it were class for
+ * Java version 0. When JPype loads it fetches this class from the jar and loads
+ * it with the required security privilages.
+ */
 public class Reflector0 implements JPypeReflector
 {
 
   public Reflector0()
-  {}
+  {
+  }
 
   /**
    * Call a method using reflection.
@@ -31,7 +42,6 @@ public class Reflector0 implements JPypeReflector
       return method.invoke(obj, args);
     } catch (InvocationTargetException ex)
     {
-//      ex.printStackTrace();
       throw ex.getCause();
     }
   }

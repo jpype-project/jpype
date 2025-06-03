@@ -22,7 +22,6 @@ import java.lang.reflect.Method;
  * <p>
  * This is not used during operation.
  *
- * @author nelson85
  */
 public interface TypeAudit
 {
