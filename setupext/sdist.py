@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: utf-7 -*-
 # *****************************************************************************
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,46 +17,74 @@
 #
 # *****************************************************************************
 import os
-import distutils
-from distutils.dir_util import copy_tree, remove_tree, mkpath
-from distutils.file_util import copy_file
+import shutil
+from pathlib import Path
 from setuptools.command.sdist import sdist
 
-# Customization of the sdist
-
+# --- Logging compatibility shim ---
+try:
+    import distutils.log as _log
+    LOG_INFO = _log.INFO
+    LOG_WARN = _log.WARN
+    LOG_ERROR = _log.ERROR
+except ImportError:
+    import logging
+    class _log:
+        INFO = logging.INFO
+        WARN = logging.WARNING
+        ERROR = logging.ERROR
+# ----------------------------------
 
 class BuildSourceDistribution(sdist):
     """
-    Override some behavior on sdist
-
-    Copy the build/lib to native/jars to remove javac/jdk dependency
+    Custom sdist command to include prebuilt JPype jar files in the source distribution.
+    This removes the need for javac/jdk at install time.
     """
 
     def run(self):
-        dest = os.path.join('native', 'jars')
+        # Destination directory for the jar file(s)
+        dest = Path('native') / 'jars'
+        self.announce(f"Preparing to build and package JPype jar files at {dest}", level=LOG_INFO)
 
-        # We need to build a jar cache for the source distribution
+        # Get the build_ext command object and set the jar build flag
         cmd = self.distribution.get_command_obj('build_ext')
 
         # Call with jar only option
         cmd.jar = True
-        self.run_command('build_ext')
 
-        # Find out the location of the jar file
-        dirname = os.path.dirname(cmd.get_ext_fullpath("JAVA"))
-        jarFile = os.path.join(dirname, "org.jpype.jar")
+        # Run build_ext and test_java to ensure all Java artifacts are built
+        try:
+            self.run_command('build_ext')
+            self.run_command('test_java')
+        except Exception as e:
+            raise RuntimeError(f"Failed during build_ext or test_java: {e}")
 
-        # Also build the test harness files
-        self.run_command("test_java")
-        if not os.path.exists(jarFile):
-            distutils.log.error("Jar source file is missing from build")
-            raise distutils.errors.DistutilsPlatformError(
-                "Error copying jar file")
-        mkpath(dest)
-        copy_file(jarFile, dest)
+        # Determine the path to the generated jar file
+        jar_basename = "org.jpype.jar"
+        # The get_ext_fullpath method returns the path to the extension module,
+        # so we use its directory as the jar location.
+        ext_fullpath = cmd.get_ext_fullpath("JAVA")
+        jar_dir = Path(os.path.dirname(ext_fullpath))
+        jar_path = jar_dir / jar_basename
 
-        # Collect the sources
-        sdist.run(self)
+        # Check that the jar file exists
+        if not jar_path.exists():
+            self.announce(f"Jar source file is missing: {jar_path}", level=LOG_ERROR)
+            raise RuntimeError(f"Error copying jar file: {jar_path}")
 
-        # Clean up the jar cache after sdist
-        remove_tree(dest)
+        # Ensure the destination directory exists
+        dest.mkdir(parents=True, exist_ok=True)
+
+        # Copy the jar file to the destination
+        shutil.copy2(jar_path, dest / jar_basename)
+        self.announce(f"Copied {jar_path} to {dest}", level=LOG_INFO)
+
+        # Run the standard sdist process to package the source distribution
+        super().run()
+
+        # Clean up: remove the jar cache directory after sdist is complete
+        try:
+            shutil.rmtree(dest)
+            self.announce(f"Cleaned up temporary jar directory: {dest}", level=LOG_INFO)
+        except Exception as cleanup_error:
+            self.announce(f"Failed to clean up {dest}: {cleanup_error}", level=LOG_WARN)
