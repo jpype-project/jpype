@@ -35,13 +35,6 @@ public:
 	JPMatch();
 	JPMatch(JPJavaFrame *frame, PyObject *object);
 
-	JPContext *getContext() const
-	{
-		if (frame == nullptr)
-			return nullptr;
-		return frame->getContext();
-	}
-
 	/**
 	 * Get the Java slot associated with the Python object.
 	 *

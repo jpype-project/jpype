@@ -61,7 +61,7 @@ public:
 			JPPyObject defaults = JPPyObject::accept(PyObject_GetAttrString(func, "__defaults__"));
 			if (!defaults.isNull() && defaults.get() != Py_None)
 				optional = PyTuple_Size(defaults.get());
-			const int jargs = cls->getContext()->getTypeManager()->interfaceParameterCount(cls);
+			const int jargs = JPContext_global->getTypeManager()->interfaceParameterCount(cls);
 			// Too few arguments
 			if (!is_varargs && args < jargs)
 				return match.type = JPMatch::_none;
@@ -79,7 +79,7 @@ public:
 			JPPyObject defaults = JPPyObject::accept(PyObject_GetAttrString(func, "__defaults__"));
 			if (!defaults.isNull() && defaults.get() != Py_None)
 				optional = PyTuple_Size(defaults.get());
-			const int jargs = cls->getContext()->getTypeManager()->interfaceParameterCount(cls);
+			const int jargs = JPContext_global->getTypeManager()->interfaceParameterCount(cls);
 			// Bound self argument removes one argument
 			if ((PyMethod_Self(match.object))!=nullptr) // borrowed
 				args--;
@@ -106,16 +106,17 @@ public:
 	{
 		auto *cls = (JPFunctional*) match.closure;
 		JP_TRACE_IN("JPConversionFunctional::convert");
-		JPContext *context = PyJPModule_getContext();
-		JPJavaFrame frame = JPJavaFrame::inner(context);
+		JPJavaFrame frame = JPJavaFrame::inner();
 		auto *self = (PyJPProxy*) PyJPProxy_Type->tp_alloc(PyJPProxy_Type, 0);
 		JP_PY_CHECK();
 		JPClassList cl;
 		cl.push_back(cls);
-		self->m_Proxy = new JPProxyFunctional(context, self, cl);
+		self->m_Proxy = new JPProxyFunctional(self, cl);
 		self->m_Target = match.object;
+		self->m_Dispatch = match.object;
 		self->m_Convert = true;
-		Py_INCREF(match.object);
+		Py_INCREF(self->m_Target);
+		Py_INCREF(self->m_Dispatch);
 		jvalue v = self->m_Proxy->getProxy();
 		v.l = frame.keep(v.l);
 		Py_DECREF(self);

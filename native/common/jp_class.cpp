@@ -23,7 +23,6 @@ JPClass::JPClass(
 		const string& name,
 		jint modifiers)
 {
-	m_Context = nullptr;
 	m_CanonicalName = name;
 	m_SuperClass = nullptr;
 	m_Interfaces = JPClassList();
@@ -38,7 +37,6 @@ JPClass::JPClass(JPJavaFrame& frame,
 		jint modifiers)
 : m_Class(frame, clss)
 {
-	m_Context = frame.getContext();
 	m_CanonicalName = name;
 	m_SuperClass = super;
 	m_Interfaces = interfaces;
@@ -68,7 +66,7 @@ jclass JPClass::getJavaClass() const
 
 void JPClass::ensureMembers(JPJavaFrame& frame)
 {
-	JPContext* context = frame.getContext();
+	JPContext* context = JPContext_global;
 	JPTypeManager* typeManager = context->getTypeManager();
 	typeManager->populateMembers(this);
 }
@@ -97,14 +95,6 @@ JPValue JPClass::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 		}
 	}
 	return m_Constructors->invokeConstructor(frame, args);
-}
-
-JPContext* JPClass::getContext() const
-{
-	// This sanity check is for during shutdown.
-	if (m_Context == nullptr)
-		JP_RAISE(PyExc_RuntimeError, "Null context"); // GCOVR_EXCL_LINE
-	return m_Context;
 }
 
 JPClass* JPClass::newArrayType(JPJavaFrame &frame, long d)
@@ -136,9 +126,9 @@ jarray JPClass::newArrayOf(JPJavaFrame& frame, jsize sz)
 string JPClass::toString() const
 {
 	// This sanity check will not be hit in normal operation
-	if (m_Context == nullptr)
+	if (JPContext_global == nullptr)
 		return m_CanonicalName;  // GCOVR_EXCL_LINE
-	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	return frame.toString(m_Class.get());
 }
 // GCOVR_EXCL_STOP
@@ -146,11 +136,11 @@ string JPClass::toString() const
 string JPClass::getName() const
 {
 	// This sanity check will not be hit in normal operation
-	if (m_Context == nullptr)
+	if (JPContext_global == nullptr)
 		return m_CanonicalName;  // GCOVR_EXCL_LINE
-	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	return frame.toString(frame.CallObjectMethodA(
-			(jobject) m_Class.get(), m_Context->m_Class_GetNameID, nullptr));
+			(jobject) m_Class.get(), JPContext_global->m_Class_GetNameID, nullptr));
 }
 
 //</editor-fold>
@@ -320,7 +310,7 @@ JPPyObject JPClass::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 //</editor-fold>
 //<editor-fold desc="conversion" defaultstate="collapsed">
 
-JPValue JPClass::getValueFromObject(const JPValue& obj)
+JPValue JPClass::getValueFromObject(JPJavaFrame& frame, const JPValue& obj)
 {
 	JP_TRACE_IN("JPClass::getValueFromObject");
 	return JPValue(this, obj.getJavaObject());
@@ -411,10 +401,21 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
+PyObject* JPClass::getHints()
+{
+	PyObject* out = m_Hints.get();
+	if (out != nullptr)
+		return out;
+	// Force creation
+	JPJavaFrame frame = JPJavaFrame::outer();
+	PyJPClass_create(frame, this);
+	return m_Hints.get();
+}
+
 void JPClass::getConversionInfo(JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPClass::getConversionInfo");
-	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	objectConversion->getInfo(this, info);
 	hintsConversion->getInfo(this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());

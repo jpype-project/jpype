@@ -41,11 +41,6 @@ public:
 		return m_Class;
 	}
 
-	JPContext* getContext()
-	{
-		return m_Class->getContext();
-	}
-
 	const string& getName() const;
 
 	bool hasStatic() const

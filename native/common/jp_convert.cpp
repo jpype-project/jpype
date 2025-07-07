@@ -28,34 +28,35 @@ public:
     {
         uint16_t i = *(uint16_t*) c;
 		uint32_t sign = (i&0x8000)>>15;
-		uint32_t man  = (i&0x7C00)>>10;
+		uint32_t exp  = (i&0x7C00)>>10;
 		uint32_t frac = (i&0x03ff);
 		uint32_t k = sign<<31;
+		uint32_t count = (i&0x03ff);
 
-		if (man == 0)
+		if (exp == 0)
 		{
 			// subnormal numbers
 			if (frac != 0)
 			{
-				frac = frac | (frac >> 1);
-				frac = frac | (frac >> 2);
-				frac = frac | (frac >> 4);
-				frac = frac | (frac >> 8);
-				int zeros = std::bitset<32>(~frac).count();
-				man = 127-zeros+7;
-				man <<= 23;
+				count = count | (count >> 1);
+				count = count | (count >> 2);
+				count = count | (count >> 4);
+				count = count | (count >> 8);
+				int zeros = std::bitset<32>(~count).count();
+				exp = 127-zeros+7;
+				exp <<= 23;
 				frac <<= zeros-8;
 				frac &= 0x7fffff;
-				k |= man | frac;
+				k |= exp | frac;
 			}
 		}
-		else if (man < 31)
+		else if (exp < 31)
 		{
 			// normal numbers
-			man = man-15+127;
-			man <<= 23;
+			exp = exp-15+127;
+			exp <<= 23;
 			frac <<= 13;
-			k |= man | frac;
+			k |= exp | frac;
 		}
 		else
 		{

@@ -84,7 +84,7 @@ JPMatch::Type JPBoxedType::findJavaConversion(JPMatch &match)
 void JPBoxedType::getConversionInfo(JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPBoxedType::getConversionInfo");
-	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	m_PrimitiveType->getConversionInfo(info);
 	JPPyObject::call(PyObject_CallMethod(info.expl, "extend", "O", info.implicit));
 	JPPyObject::call(PyObject_CallMethod(info.implicit, "clear", ""));
@@ -117,13 +117,13 @@ JPPyObject JPBoxedType::convertToPythonObject(JPJavaFrame& frame, jvalue value, 
 
 	JPPyObject wrapper = PyJPClass_create(frame, cls);
 	JPPyObject obj;
-	JPContext *context = frame.getContext();
+	JPContext *context = JPContext_global;
 	if (this->getPrimitive() == context->_char)
 	{
 		jchar value2 = 0;
 		// Not null get the char value
 		if (value.l != nullptr)
-			value2 = context->_char->getValueFromObject(JPValue(this, value)).getValue().c;
+			value2 = context->_char->getValueFromObject(frame, JPValue(this, value)).getValue().c;
 		// Create a char string object
 		obj = JPPyObject::call(PyJPChar_Create((PyTypeObject*) wrapper.get(), value2));
 	} else

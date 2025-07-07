@@ -134,7 +134,7 @@ public:
 	void from(const JPStackInfo& info);
 
 	void convertJavaToPython();
-	void convertPythonToJava(JPContext* context);
+	void convertPythonToJava();
 
 	/** Transfer handling of this exception to python.
 	 *
@@ -144,19 +144,24 @@ public:
 	void toPython();
 
 	/** Transfer handling of this exception to java. */
-	void toJava(JPContext* context);
+	void toJava();
 
 	int getExceptionType() const
 	{
 		return m_Type;
 	}
 
+	jthrowable getThrowable()
+	{
+		return m_Throwable.get();
+	}
+
 private:
-	JPContext* m_Context{};
 	int m_Type;
 	JPErrorUnion m_Error{};
 	JPStackTrace m_Trace;
 	JPThrowableRef m_Throwable;
+	std::string m_Message;
 };
 
 #endif

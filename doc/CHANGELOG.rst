@@ -5,10 +5,26 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 - **1.6.0.dev0 - 2025-01-20**
+
+  - Java components have been converted to maven style module.
   
   - JArray is now registered as a Sequence.
 
+  - Fixed conversion of float16 for subnormal numbers.
+
+  - Fixed segmentation fault on null String.
+
   - Fixed bugs with java.util.List concat and repeat methods.
+
+  - Enhancement to JProxy to handle wrapping an existing Python object with a Java
+    interface.  
+
+  - Fixed bug in which using an interface the derived from Map with JProxy failed.
+
+  - Fixed a bug in which JPype did not respect a JConversion between two Java classes.
+
+  - Enhancement in convertToDirectBuffer to support wrapping bytes and readonly
+    memoryviews as readonly java ByteBuffers.
 
 - **1.5.2 - 2025-01-20**
 

@@ -69,11 +69,12 @@ JPMatch::Type JPStringType::findJavaConversion(JPMatch& match)
 
 void JPStringType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer();
+	JPContext* context = frame.getContext();
 	objectConversion->getInfo(this, info);
 	stringConversion->getInfo(this, info);
 	hintsConversion->getInfo(this, info);
-	if (m_Context->getConvertStrings())
+	if (context->getConvertStrings())
 		PyList_Append(info.ret, (PyObject*) & PyUnicode_Type); // GCOVR_EXCL_LINE
 	else
 		PyList_Append(info.ret, (PyObject*) getHost());

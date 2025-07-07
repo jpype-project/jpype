@@ -47,11 +47,6 @@ public:
 		return this->m_Field.get();
 	}
 
-	JPContext* getContext()
-	{
-		return m_Class->getContext();
-	}
-
 	const string& getName() const
 	{
 		return m_Name;

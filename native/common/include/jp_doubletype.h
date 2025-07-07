@@ -23,7 +23,6 @@ public:
 	JPDoubleType();
 	~JPDoubleType() override = default;
 
-public:
 	using type_t = jdouble;
 	using array_t = jdoubleArray;
 
@@ -37,18 +36,14 @@ public:
 		return v.d;
 	}
 
-	JPClass* getBoxedClass(JPContext *context) const override
-	{
-		return context->_java_lang_Double;
-	}
-
+	JPClass* getBoxedClass(JPJavaFrame& frame) const override;
 	JPMatch::Type findJavaConversion(JPMatch &match) override;
 	void getConversionInfo(JPConversionInfo &info) override;
-	JPPyObject  convertToPythonObject(JPJavaFrame &frame, jvalue val, bool cast) override;
-	JPValue     getValueFromObject(const JPValue& obj) override;
+	JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
+	JPValue     getValueFromObject(JPJavaFrame& frame, const JPValue& obj) override;
 
-	JPPyObject  invokeStatic(JPJavaFrame &frame, jclass, jmethodID, jvalue*) override;
-	JPPyObject  invoke(JPJavaFrame &frame, jobject, jclass, jmethodID, jvalue*) override;
+	JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
+	JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
 
 	JPPyObject  getStaticField(JPJavaFrame& frame, jclass c, jfieldID fid) override;
 	void        setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* val) override;
@@ -57,7 +52,8 @@ public:
 
 	jarray      newArrayOf(JPJavaFrame& frame, jsize size) override;
 	void        setArrayRange(JPJavaFrame& frame, jarray,
-			jsize start, jsize length, jsize step, PyObject*) override;
+			jsize start, jsize length, jsize step,
+			PyObject *sequence) override;
 	JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
 
@@ -66,13 +62,11 @@ public:
 		return 'D';
 	}
 
-	// GCOV_EXCL_START
-	// These are required for primitives, but converters for do not currently
-	// use them.
-
+	// GCOVR_EXCL_START
+	// Required but not exercised currently
 	jlong getAsLong(jvalue v) override
 	{
-		return (jlong) field(v);
+		return (jlong) field(v);  // GCOVR_EXCL_LINE
 	}
 
 	jdouble getAsDouble(jvalue v) override
@@ -90,7 +84,7 @@ public:
 			void* memory, int offset) override;
 
 	PyObject *newMultiArray(JPJavaFrame &frame,
-			JPPyBuffer& view, int subs, int base, jobject dims) override;
+			JPPyBuffer &buffer, int subs, int base, jobject dims) override;
 } ;
 
 #endif // _JP_DOUBLE_TYPE_H_

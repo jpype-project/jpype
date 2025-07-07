@@ -384,21 +384,28 @@ static void releaseView(void* view)
 	}
 }
 
-static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* src)
+static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* args)
 {
 	JP_PY_TRY("PyJPModule_convertToDirectByteBuffer");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
+
+	PyObject *src;
+	int ro;
+	if (!PyArg_ParseTuple(args, "Op", &src, &ro))
+		return nullptr;
 
 	if (PyObject_CheckBuffer(src))
 	{
 		JPViewWrapper vw;
-		if (PyObject_GetBuffer(src, vw.view, PyBUF_WRITABLE) == -1)
+		if (PyObject_GetBuffer(src, vw.view, ro ? 0 : PyBUF_WRITABLE) == -1)
 			return nullptr;
 
 		// Create a byte buffer
 		jvalue v;
 		v.l = frame.NewDirectByteBuffer(vw.view->buf, vw.view->len);
+
+		if (vw.view->readonly)
+			v.l = frame.asReadOnlyBuffer(v.l);
 
 		// Bind lifespan of the view to the java object.
 		frame.registerRef(v.l, vw.view, &releaseView);
@@ -419,8 +426,7 @@ static PyObject* PyJPModule_enableStacktraces(PyObject* self, PyObject* src)
 PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 {
 	JP_PY_TRY("PyJPModule_newArrayType");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 
 	PyObject *type, *dims;
 	if (!PyArg_ParseTuple(args, "OO", &type, &dims))
@@ -446,8 +452,8 @@ PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 PyObject *PyJPModule_getClass(PyObject* module, PyObject *obj)
 {
 	JP_PY_TRY("PyJPModule_getClass");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
+	JPContext *context = frame.getContext();
 
 	JPClass* cls;
 	if (JPPyString::check(obj))
@@ -485,8 +491,7 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 	JP_PY_TRY("PyJPModule_hasClass");
 	if (!JPContext_global->isRunning())
 		Py_RETURN_FALSE; // GCOVR_EXCL_LINE
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 
 	JPClass* cls;
 	if (JPPyString::check(obj))
@@ -598,8 +603,7 @@ static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 		PyErr_Format(PyExc_TypeError, "isPackage required unicode");
 		return nullptr;
 	}
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	return PyBool_FromLong(frame.isPackage(JPPyString::asStringUTF8(pkg)));
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
@@ -723,7 +727,7 @@ static PyMethodDef moduleMethods[] = {
 
 	//{"dumpJVMStats", (PyCFunction) (&PyJPModule_dumpJVMStats), METH_NOARGS, ""},
 
-	{"convertToDirectBuffer", (PyCFunction) PyJPModule_convertToDirectByteBuffer, METH_O, ""},
+	{"convertToDirectBuffer", (PyCFunction) PyJPModule_convertToDirectByteBuffer, METH_VARARGS, ""},
 	{"arrayFromBuffer", (PyCFunction) PyJPModule_arrayFromBuffer, METH_VARARGS, ""},
 	{"enableStacktraces", (PyCFunction) PyJPModule_enableStacktraces, METH_O, ""},
 	{"isPackage", (PyCFunction) PyJPModule_isPackage, METH_O, ""},
@@ -823,7 +827,7 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 {
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	Py_buffer& view = buffer.getView();
 
 	// Okay two possibilities here.  We have a valid dtype specified,

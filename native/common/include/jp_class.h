@@ -40,10 +40,7 @@ public:
 
 	void setHints(PyObject* host);
 
-	PyObject* getHints()
-	{
-		return m_Hints.get();
-	}
+	PyObject* getHints();
 
 public:
 	void ensureMembers(JPJavaFrame& frame);
@@ -149,7 +146,7 @@ public:
 	 *
 	 * @return a java value with class.
 	 */
-	virtual JPValue getValueFromObject(const JPValue& obj);
+	virtual JPValue getValueFromObject(JPJavaFrame& frame, const JPValue& obj);
 
 	/**
 	 * Call a static method that returns this type of object.
@@ -201,10 +198,7 @@ public:
 		return m_Interfaces;
 	}
 
-	JPContext* getContext() const;
-
 protected:
-	JPContext*           m_Context;
 	JPClassRef           m_Class;
 	JPClass*             m_SuperClass;
 	JPClassList          m_Interfaces;

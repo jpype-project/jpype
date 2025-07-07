@@ -23,13 +23,10 @@ public:
 	JPVoidType();
 	~JPVoidType() override;
 
-	JPClass* getBoxedClass(JPContext *context) const override
-	{
-		return context->_java_lang_Void;
-	}
-
+	JPClass* getBoxedClass(JPJavaFrame& frame) const override;
 	JPMatch::Type findJavaConversion(JPMatch &match) override;
 	JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
+	JPValue     getValueFromObject(JPJavaFrame& frame, const JPValue& obj) override;
 
 	JPPyObject  invokeStatic(JPJavaFrame& frame, jclass, jmethodID, jvalue*) override;
 	JPPyObject  invoke(JPJavaFrame& frame, jobject, jclass, jmethodID, jvalue*) override;
@@ -45,7 +42,6 @@ public:
 			PyObject *sequence) override;
 	JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
-	JPValue     getValueFromObject(const JPValue& obj) override;
 
 	char getTypeCode() override;
 	jlong getAsLong(jvalue v) override;
@@ -58,8 +54,9 @@ public:
 	void copyElements(JPJavaFrame &frame,
 			jarray a, jsize start, jsize len,
 			void* memory, int offset) override;
+
 	PyObject *newMultiArray(JPJavaFrame &frame,
-			JPPyBuffer& view, int subs, int base, jobject dims) override;
+			JPPyBuffer &buffer, int subs, int base, jobject dims) override;
 } ;
 
 #endif // _JP_VOID_TYPE_H_
