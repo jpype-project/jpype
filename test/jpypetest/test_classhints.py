@@ -44,10 +44,10 @@ class ClassHintsTestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.Custom = jpype.JClass("jpype.classhints.Custom")
-        self.ClassHintsTest = jpype.JClass("jpype.classhints.ClassHintsTest")
+        self.Custom = jpype.JClass("org.jpype.test.classhints.Custom")
+        self.ClassHintsTest = jpype.JClass("org.jpype.test.classhints.ClassHintsTest")
 
-        @jpype.JImplements("jpype.classhints.Custom")
+        @jpype.JImplements("org.jpype.test.classhints.Custom")
         class MyCustom(object):
             def __init__(self, arg):
                 self.arg = arg

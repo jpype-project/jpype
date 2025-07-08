@@ -334,7 +334,7 @@ def startJVM(
             # Don't remove
 
         # ok, setup the jpype system classloader and add to the path after startup
-        # this guarentees all classes have the same permissions as they did in the past
+        # this guarantees all classes have the same permissions as they did in the past
         from urllib.parse import quote
         extra_jvm_args += [
             '-Djava.system.class.loader=org.jpype.JPypeClassLoader',
@@ -563,17 +563,17 @@ def synchronized(obj):
     return _jpype._JMonitor(obj)
 
 
-def getJVMVersion():
+def getJVMVersion() -> tuple[int, int, int] | tuple[int, ...]:
     """ Get the JVM version if the JVM is started.
 
     This function can be used to determine the version of the JVM. It is
     useful to help determine why a Jar has failed to load.
 
     Returns:
-      A typle with the (major, minor, revison) of the JVM if running.
+      A tuple with the (major, minor, revision) of the JVM if running.
     """
     if not _jpype.isStarted():
-        return (0, 0, 0)
+        return 0, 0, 0
 
     import re
     runtime = _jpype.JClass('java.lang.Runtime')
@@ -582,8 +582,11 @@ def getJVMVersion():
     # Java 9+ has a version method
     if not version:
         version = runtime.version()
-    version = (re.match("([0-9.]+)", str(version)).group(1))
-    return tuple([int(i) for i in version.split('.')])
+    match = re.match("([0-9.]+)", str(version))
+    if not match:
+        raise RuntimeError("could not determine JVM version")
+    version = match.group(1)
+    return tuple(int(i) for i in version.split('.'))
 
 
 @_jcustomizer.JImplementationFor("java.lang.Runtime")

@@ -33,7 +33,7 @@ class SerializationTestCase(common.JPypeTestCase):
         os.remove(self.tempname)
 
     def testSerialize(self):
-        o = JClass("jpype.serial.SerializationTest")()
+        o = JClass("org.jpype.test.serial.SerializationTest")()
         tmp = self.tempname
         fos = java.io.FileOutputStream(tmp)
         oos = java.io.ObjectOutputStream(fos)

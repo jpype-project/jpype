@@ -70,7 +70,7 @@ class Utf8TestCase(common.JPypeTestCase):
         common.JPypeTestCase.setUp(self)
 
         # Java IO test class
-        self.Utf8Test = JClass('jpype.utf8.Utf8Test')
+        self.Utf8Test = JClass('org.jpype.test.utf8.Utf8Test')
 
         # Test strings
         # IMPORTANT: they should be identical, and in the same order, as the test strings difned in the

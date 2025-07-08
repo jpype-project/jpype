@@ -34,7 +34,7 @@ class JFloatTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.value = 1.0 + 1.0 / 65536
-        self.cls = JClass("jpype.common.Fixture")
+        self.cls = JClass("org.jpype.test.common.Fixture")
         self.fixture = self.cls()
 
     def compareFloatEqual(self, x, y, msg=None):
@@ -211,7 +211,7 @@ class JFloatTestCase(common.JPypeTestCase):
         ja = JArray(JFloat)(5)
         with self.assertRaises(TypeError):
             ja[1] = object()
-        jf = JClass("jpype.common.Fixture")
+        jf = JClass("org.jpype.test.common.Fixture")
         with self.assertRaises(TypeError):
             jf.static_float_field = object()
         with self.assertRaises(TypeError):

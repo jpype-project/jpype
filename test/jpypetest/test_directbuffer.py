@@ -16,10 +16,8 @@
 #
 # *****************************************************************************
 import _jpype
-import jpype
 import _jpype
 from jpype.types import *
-from jpype import java
 import common
 try:
     import numpy as np
@@ -28,12 +26,11 @@ except ImportError:
 
 
 class JBufferTestCase(common.JPypeTestCase):
-    """ Test for direct buffers.
-    """
+    """ Test for direct buffers."""
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.fixture = JClass('jpype.common.Fixture')()
+        self.fixture = JClass('org.jpype.test.common.Fixture')()
         self.bo = JClass("java.nio.ByteOrder")
         self.cls = JClass("java.nio.ByteBuffer")
 

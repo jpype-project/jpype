@@ -62,7 +62,7 @@ class ProxyTestCase(common.JPypeTestCase):
 
     def setUp(self):
         super(ProxyTestCase, self).setUp()
-        self.package = JPackage("jpype.proxy")
+        self.package = JPackage("org.jpype.test.proxy")
         self._triggers = self.package.ProxyTriggers
 
     def testProxyDecl(self):
@@ -75,8 +75,8 @@ class ProxyTestCase(common.JPypeTestCase):
         proxy = JProxy(itf1, dict=d)
         proxy = JProxy([itf1], dict=d)
         proxy = JProxy([itf1, itf2], dict=d)
-        proxy = JProxy("jpype.proxy.TestInterface1", dict=d)
-        proxy = JProxy(["jpype.proxy.TestInterface1"], dict=d)
+        proxy = JProxy("org.jpype.test.proxy.TestInterface1", dict=d)
+        proxy = JProxy(["org.jpype.test.proxy.TestInterface1"], dict=d)
 
     def testNotImplemented(self):
         itf1 = self.package.TestInterface1
@@ -183,14 +183,14 @@ class ProxyTestCase(common.JPypeTestCase):
                 pass
 
     def testProxyImplementsForm3(self):
-        @JImplements("jpype.proxy.TestInterface1")
+        @JImplements("org.jpype.test.proxy.TestInterface1")
         class MyImpl(object):
             @JOverride
             def testMethod1(self):
                 pass
 
     def testProxyImplementsForm4(self):
-        @JImplements("jpype.proxy.TestInterface1", "jpype.proxy.TestInterface2")
+        @JImplements("org.jpype.test.proxy.TestInterface1", "org.jpype.test.proxy.TestInterface2")
         class MyImpl(object):
             @JOverride
             def testMethod1(self):
@@ -225,7 +225,7 @@ class ProxyTestCase(common.JPypeTestCase):
     def testProxyImplementsFail3(self):
         with self.assertRaisesRegex(NotImplementedError, "requires method"):
             # Missing implementation
-            @JImplements("jpype.proxy.TestInterface1")
+            @JImplements("org.jpype.test.proxy.TestInterface1")
             class MyImpl(object):
                 def testMethod1(self):
                     pass
@@ -339,8 +339,8 @@ class ProxyTestCase(common.JPypeTestCase):
     def testProxyConvert(self):
         # This was tests that arguments and "self" both
         # convert to the same object
-        TestInterface5 = JClass("jpype.proxy.TestInterface5")
-        ProxyTriggers = JClass("jpype.proxy.ProxyTriggers")
+        TestInterface5 = JClass("org.jpype.test.proxy.TestInterface5")
+        ProxyTriggers = JClass("org.jpype.test.proxy.ProxyTriggers")
 
         @JImplements(TestInterface5)
         class Bomb(object):
@@ -429,7 +429,7 @@ class ProxyTestCase(common.JPypeTestCase):
             java.util.Arrays.sort(arr, TooFewParams())
 
     def testUnwrap(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
 
         @JImplements("java.io.Serializable")
         class Q(object):
@@ -449,7 +449,7 @@ class ProxyTestCase(common.JPypeTestCase):
         self.assertEqual(JProxy.unwrap(s2), r)
 
     def testConvert(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
 
         class R(object):
             pass
@@ -467,7 +467,7 @@ class ProxyTestCase(common.JPypeTestCase):
         self.assertEqual(s2, r)
 
     def testMethods(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
 
         @JImplements("java.io.Serializable")
         class R(object):
@@ -481,7 +481,7 @@ class ProxyTestCase(common.JPypeTestCase):
         self.assertIsInstance(s.hashCode(), int)
 
     def testMethods2(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
 
         class R(object):
             pass

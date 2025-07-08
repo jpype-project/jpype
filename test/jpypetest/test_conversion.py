@@ -29,12 +29,12 @@ class ConversionTestCase(common.JPypeTestCase):
         self.jc2 = jpype.JClass("java.lang.Integer")
 
     def testList(self):
-        cls = JClass('jpype.collection.CollectionTest')
+        cls = JClass('org.jpype.test.collection.CollectionTest')
         self.assertIsInstance(cls.testList(
             [1, 2, 3]), JClass('java.util.List'))
 
     def testMap(self):
-        cls = JClass('jpype.collection.CollectionTest')
+        cls = JClass('org.jpype.test.collection.CollectionTest')
         self.assertIsInstance(cls.testMap(
             {'a': 1, 'b': 2}), JClass('java.util.Map'))
 
@@ -69,7 +69,7 @@ class ConversionTestCase(common.JPypeTestCase):
             self.jc1._convertToJava(1)
 
     def testUnbox(self):
-        jf = JClass('jpype.common.Fixture')
+        jf = JClass('org.jpype.test.common.Fixture')
         java = jpype.java
         jf.static_bool_field = java.lang.Boolean(True)
         self.assertEqual(jf.static_bool_field, True)

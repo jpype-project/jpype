@@ -38,8 +38,8 @@ class ReferenceQueueTestCase(common.JPypeTestCase):
         self.assertTrue(self.refqueue.isRunning())
 
     def testRefs(self):
-        # This routine will exercise each of the clean up paths once
-        fixture = JClass("jpype.common.Fixture")()
+        # This routine will exercise each of the cleanup paths once.
+        fixture = JClass("org.jpype.test.common.Fixture")()
 
         def f():
             # Create a proxy to test the proxy path

@@ -32,7 +32,7 @@ except ImportError:
 class JByteTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.fixture = jpype.JClass("jpype.common.Fixture")()
+        self.fixture = jpype.JClass("org.jpype.test.common.Fixture")()
 
     @common.requireInstrumentation
     def testConversionFault(self):
@@ -141,7 +141,7 @@ class JByteTestCase(common.JPypeTestCase):
             self.fixture.callByte(None)
 
     def testByteArrayAsString(self):
-        t = JClass("jpype.array.TestArray")()
+        t = JClass("org.jpype.test.array.TestArray")()
         v = t.getByteArray()
         self.assertEqual(str(v), 'avcd')
 
@@ -171,7 +171,7 @@ class JByteTestCase(common.JPypeTestCase):
         ja = JArray(JByte)(5)
         with self.assertRaises(TypeError):
             ja[1] = object()
-        jf = JClass("jpype.common.Fixture")
+        jf = JClass("org.jpype.test.common.Fixture")
         with self.assertRaises(TypeError):
             jf.static_byte_field = object()
         with self.assertRaises(TypeError):
