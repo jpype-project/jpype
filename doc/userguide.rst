@@ -5932,6 +5932,13 @@ Tracing mode logs every JNI call, along with object addresses and exceptions,
 to the console. To enable tracing, JPype must be recompiled with the
 ``--enable-tracing`` option.
 
+This can be done via:
+
+.. code-block:: shell
+
+    python setup.py develop --enable-tracing --enable-build-jar
+
+
 Tracing is useful for identifying failures that originate in one JNI call but
 manifest later. However, this mode produces verbose logs and is recommended
 only for advanced debugging.
