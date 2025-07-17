@@ -22,6 +22,7 @@ import os
 from pathlib import Path
 import sys
 import typing
+import weakref
 
 import _jpype
 from . import types as _jtypes
@@ -29,6 +30,7 @@ from . import _classpath
 from . import _jcustomizer
 from . import _jinit
 from . import _pykeywords
+from . import _jbridge
 
 from ._jvmfinder import *
 
@@ -459,6 +461,8 @@ def initializeResources():
     _jpype.JPypeContext = _jpype.JClass('org.jpype.JPypeContext').getInstance()
     _jpype.JPypeClassLoader = _jpype.JPypeContext.getClassLoader()
 
+    _jbridge.initialize()
+
     # Everything succeeded so started is now true.
     _JVM_started = True
 
@@ -597,3 +601,16 @@ class _JRuntime(object):
 
 
 _jpype.JVMNotRunning = JVMNotRunning
+
+# Support for Java bridge code
+# Dictionary of Python types to Java Interfaces
+_jpype._concrete = {}
+# Dictionary of String to Java Interfaces
+_jpype._protocol = {}
+# Dictionary of Type to Tuple(Interface[], Dict)
+_jpype._cache = weakref.WeakKeyDictionary()
+# Dictionary of Tuple(Interface[]) to Tuple(Interface[])
+_jpype._cache_interfaces = {}
+_jpype._cache_methods = {}
+# Dictionary of Tuple(Interface) to Dict
+_jpype._methods = {}

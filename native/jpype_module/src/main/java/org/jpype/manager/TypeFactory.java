@@ -19,38 +19,57 @@ import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 
 /**
- * Interface for creating new resources used by JPype.
- * <p>
- * This calls the C++ constructors with all of the required fields for each
- * class. This pattern eliminates the need for C++ layer probing Java for
- * resources.
- * <p>
- * This is an interface for testing.
+ * Interface for creating and managing resources used by JPype.
  *
- * @author nelson85
+ * The {@code TypeFactory} interface defines methods for constructing various
+ * JPype-related types and resources, such as wrapper types, array classes,
+ * object classes, primitive types, methods, fields, and dispatch mechanisms. It
+ * serves as a bridge between the Java layer and the C++ layer, enabling
+ * efficient resource creation and management without requiring direct probing
+ * of Java from C++.
+ *
+ * This interface is also designed to facilitate testing by providing a clear
+ * contract for resource creation and destruction.
+ *
+ * <p>
+ * Key responsibilities:
+ * <ul>
+ * <li>Define and create JPype-specific types and classes</li>
+ * <li>Assign members (fields and methods) to classes</li>
+ * <li>Manage method dispatch and field definitions</li>
+ * <li>Destroy resources when no longer needed</li>
+ * </ul>
+ *
  */
 public interface TypeFactory
 {
-//<editor-fold desc="class" defaultstate="collapsed">
 
+  //<editor-fold desc="class" defaultstate="collapsed">
   /**
-   * Create a new wrapper type for Python.
+   * Creates a new wrapper type for Python.
    *
-   * @param context
-   * @param cls is the pointer to the JClass.
+   * This method constructs a wrapper type that can be used to interface with
+   * Python.
+   *
+   * @param context The JPContext object representing the current JPype context.
+   * @param cls A pointer to the Java class (JClass) to wrap.
    */
   void newWrapper(long context, long cls);
 
   /**
-   * Create a JPArray class.
+   * Creates a JPArray class.
    *
-   * @param context JPContext object
-   * @param cls is the class type.
-   * @param name
-   * @param superClass
-   * @param componentPtr
-   * @param modifiers
-   * @return the pointer to the JPArrayClass.
+   * This method defines a new array class in JPype, including its type
+   * information, superclass, component type, and modifiers.
+   *
+   * @param context The JPContext object representing the current JPype context.
+   * @param cls The Java class type for the array.
+   * @param name The name of the array class.
+   * @param superClass A pointer to the superclass of the array class.
+   * @param componentPtr A pointer to the component type of the array.
+   * @param modifiers The modifiers for the array class (e.g., public, private,
+   * etc.).
+   * @return A pointer to the newly created JPArrayClass.
    */
   long defineArrayClass(
           long context,
@@ -61,15 +80,20 @@ public interface TypeFactory
           int modifiers);
 
   /**
-   * Create a class type.
+   * Creates a JPObject class.
    *
-   * @param context JPContext object
-   * @param cls
-   * @param superClass
-   * @param interfaces
-   * @param modifiers
-   * @param name
-   * @return the pointer to the JPClass.
+   * This method defines a new object class in JPype, including its type
+   * information, superclass, interfaces, and modifiers.
+   *
+   * @param context The JPContext object representing the current JPype context.
+   * @param cls The Java class type for the object.
+   * @param name The name of the object class.
+   * @param superClass A pointer to the superclass of the object class.
+   * @param interfaces An array of pointers to the interfaces implemented by the
+   * object class.
+   * @param modifiers The modifiers for the object class (e.g., public, private,
+   * etc.).
+   * @return A pointer to the newly created JPObjectClass.
    */
   long defineObjectClass(
           long context,
@@ -80,13 +104,17 @@ public interface TypeFactory
           int modifiers);
 
   /**
-   * Define a primitive types.
+   * Defines a primitive type.
    *
-   * @param context JPContext object
-   * @param cls is the Java class for this primitive.
-   * @param boxedPtr is the JPClass for the boxed class.
-   * @param modifiers
-   * @return
+   * This method creates a JPype representation of a Java primitive type,
+   * including its boxed type and modifiers.
+   *
+   * @param context The JPContext object representing the current JPype context.
+   * @param name The name of the primitive type.
+   * @param cls The Java class representing the primitive type.
+   * @param boxedPtr A pointer to the JPClass representing the boxed type.
+   * @param modifiers The modifiers for the primitive type.
+   * @return A pointer to the newly defined primitive type.
    */
   long definePrimitive(
           long context,
@@ -95,17 +123,21 @@ public interface TypeFactory
           long boxedPtr,
           int modifiers);
 
-//</editor-fold>
-//<editor-fold desc="members" defaultstate="collapsed">
+  //</editor-fold>
+  //<editor-fold desc="members" defaultstate="collapsed">
   /**
-   * Called after a class is constructed to populate the required fields and
-   * methods.
+   * Assigns members (fields and methods) to a class.
    *
-   * @param context JPContext object
-   * @param cls is the JPClass to populate
-   * @param ctorMethod is the JPMethod for the constructor.
-   * @param methodList is a list of JPMethod for the method list.
-   * @param fieldList is a list of JPField for the field list.
+   * This method populates the specified JPClass with its constructor, methods,
+   * and fields.
+   *
+   * @param context The JPContext object representing the current JPype context.
+   * @param cls A pointer to the JPClass to populate.
+   * @param ctorMethod A pointer to the JPMethod representing the constructor.
+   * @param methodList An array of pointers to JPMethod objects representing the
+   * methods.
+   * @param fieldList An array of pointers to JPField objects representing the
+   * fields.
    */
   void assignMembers(
           long context,
@@ -115,35 +147,39 @@ public interface TypeFactory
           long[] fieldList);
 
   /**
-   * Create a Method.
+   * Defines a field.
    *
-   * @param context JPContext object
-   * @param cls is the class holding this.
-   * @param name
-   * @param field
-   * @param fieldType
-   * @param modifiers
-   * @return the pointer to the JPMethod.
+   * This method creates a JPField for the specified class.
+   *
+   * @param context The JPContext object representing the current JPype context.
+   * @param cls A pointer to the class owning the field.
+   * @param name The name of the field.
+   * @param field The Java {@link Field} object representing the field.
+   * @param fieldType A pointer to the JPClass representing the field's type.
+   * @param modifiers The modifiers for the field (e.g., public, private, etc.).
+   * @return A pointer to the newly defined JPField.
    */
   long defineField(
           long context,
           long cls,
           String name,
-          Field field, // This will convert to a field id
+          Field field,
           long fieldType,
           int modifiers);
 
   /**
-   * Create a Method.
+   * Defines a method.
    *
-   * @param context JPContext object
-   * @param cls is the class holding this.
-   * @param name
-   * @param method is the Java method that will be called, converts to a method
-   * id.
-   * @param overloadList
-   * @param modifiers
-   * @return the pointer to the JPMethod.
+   * This method creates a JPMethod for the specified class.
+   *
+   * @param context The JPContext object representing the current JPype context.
+   * @param cls A pointer to the class owning the method.
+   * @param name The name of the method.
+   * @param method The Java {@link Executable} object representing the method.
+   * @param overloadList An array of pointers to overloads for the method.
+   * @param modifiers The modifiers for the method (e.g., public, private,
+   * static, etc.).
+   * @return A pointer to the newly defined JPMethod.
    */
   long defineMethod(
           long context,
@@ -153,6 +189,16 @@ public interface TypeFactory
           long[] overloadList,
           int modifiers);
 
+  /**
+   * Populates a method with its return type and argument types.
+   *
+   * @param context The JPContext object representing the current JPype context.
+   * @param method A pointer to the JPMethod to populate.
+   * @param returnType A pointer to the JPClass representing the return type of
+   * the method.
+   * @param argumentTypes An array of pointers to JPClass objects representing
+   * the argument types.
+   */
   void populateMethod(
           long context,
           long method,
@@ -160,14 +206,18 @@ public interface TypeFactory
           long[] argumentTypes);
 
   /**
-   * Create a Method dispatch for Python by name.
+   * Defines a method dispatch for Python by name.
    *
-   * @param context JPContext object
-   * @param cls is the class that owns this dispatch.
-   * @param name is the name of the dispatch.
-   * @param overloadList is the list of all methods constructed for this class.
-   * @param modifiers contains if the method is (CTOR, STATIC),
-   * @return the pointer to the JPMethodDispatch.
+   * This method creates a JPMethodDispatch for the specified class and method
+   * name.
+   *
+   * @param context The JPContext object representing the current JPype context.
+   * @param cls A pointer to the class owning the dispatch.
+   * @param name The name of the dispatch.
+   * @param overloadList An array of pointers to overloads for the dispatch.
+   * @param modifiers The modifiers for the dispatch (e.g., constructor, static,
+   * etc.).
+   * @return A pointer to the newly defined JPMethodDispatch.
    */
   long defineMethodDispatch(
           long context,
@@ -176,17 +226,20 @@ public interface TypeFactory
           long[] overloadList,
           int modifiers);
 
-//</editor-fold>
-//<editor-fold desc="destroy" defaultstate="collapsed">
+  //</editor-fold>
+  //<editor-fold desc="destroy" defaultstate="collapsed">
   /**
-   * Destroy the resources.
+   * Destroys resources.
    *
-   * @param context JPContext object
-   * @param resources
-   * @param sz
+   * This method releases the specified resources in the JPype context.
+   *
+   * @param context The JPContext object representing the current JPype context.
+   * @param resources An array of pointers to the resources to destroy.
+   * @param sz The size of the resources array.
    */
   void destroy(
           long context,
           long[] resources, int sz);
-//</editor-fold>
+
+  //</editor-fold>
 }

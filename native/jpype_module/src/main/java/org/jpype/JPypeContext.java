@@ -64,8 +64,6 @@ import org.jpype.ref.JPypeReferenceQueue;
  * contents of JPJni.
  *
  *
- *
- * @author nelson85
  */
 public class JPypeContext
 {
@@ -327,7 +325,7 @@ public class JPypeContext
   /**
    * Helper function for collect rectangular,
    */
-  private static boolean collect(List l, Object o, int q, int[] shape, int d)
+  private static boolean collect(List<Object> l, Object o, int q, int[] shape, int d)
   {
     if (Array.getLength(o) != shape[q])
       return false;
