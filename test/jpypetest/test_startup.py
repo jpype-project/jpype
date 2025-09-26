@@ -225,3 +225,8 @@ class StartJVMCase(unittest.TestCase):
             ZoneId.of("JpypeTest/Timezone")
         except ZoneRulesException:
             self.fail("JpypeZoneRulesProvider not loaded")
+
+    @unittest.skipUnless(common.java_version() < (9,), "run only for Java8")
+    def test_raise_for_java8(self):
+        with self.assertRaises(RuntimeError, msg=".*requires at least Java9 to run.*"):
+            jpype.startJVM()
