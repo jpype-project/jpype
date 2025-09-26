@@ -37,7 +37,8 @@
 JPResource::~JPResource() = default;
 
 
-#define USE_JNI_VERSION JNI_VERSION_1_4
+// minimum JNI API (or equivalent JRE version).
+#define USE_JNI_VERSION JNI_VERSION_9
 
 void JPRef_failed()
 {
@@ -132,8 +133,8 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 
 	// Pack the arguments
 	JP_TRACE("Pack arguments");
-	char *block = (char*) malloc(mem);
-	JavaVMInitArgs* jniArgs = (JavaVMInitArgs*) block;
+	auto block = (char*) malloc(mem);
+	auto* jniArgs = (JavaVMInitArgs*) block;
 	memset(jniArgs, 0, mem);
 	jniArgs->options = (JavaVMOption*)(&block[oblock]);
 
@@ -169,6 +170,20 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	if (m_JavaVM == nullptr)
 	{
 		JP_TRACE("Unable to start");
+		// If we fail with jni_version 1.9, we fall back to 8,
+        // if that succeeds, raise a human understandable error msg!
+        JavaVMInitArgs jniArgs2;
+        jniArgs2.version = JNI_VERSION_1_8;
+        jniArgs2.nOptions = 0;
+        jniArgs2.options = nullptr;
+        jniArgs2.ignoreUnrecognized = JNI_TRUE;
+        CreateJVM_Method(&m_JavaVM, (void**) &env, &jniArgs2);
+        if (m_JavaVM) {
+			JP_TRACE("Java8 found");
+			m_JavaVM->DestroyJavaVM();
+            JP_RAISE(PyExc_RuntimeError, "JPype (version >= 1.6) requires at least Java9 to run, you provided a Java8 JVM.");
+        }
+        JP_TRACE("Unable to start");
 		JP_RAISE(PyExc_RuntimeError, "Unable to start JVM");
 	}
 
