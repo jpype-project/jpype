@@ -99,19 +99,19 @@ class JChar2TestCase(common.JPypeTestCase):
         ja = JArray(JChar)(5)
         with self.assertRaises(TypeError):
             ja[1] = object()
-        jf = JClass("jpype.common.Fixture")
+        jf = JClass("org.jpype.test.common.Fixture")
         with self.assertRaises(TypeError):
             jf.static_char_field = object()
         with self.assertRaises(TypeError):
             jf().char_field = object()
 
     def testCharArrayAsString(self):
-        t = JClass("jpype.array.TestArray")()
+        t = JClass("org.jpype.test.array.TestArray")()
         v = t.getCharArray()
         self.assertEqual(str(v), 'avcd')
 
     def testArrayConversionChar(self):
-        t = JClass("jpype.array.TestArray")()
+        t = JClass("org.jpype.test.array.TestArray")()
         v = t.getCharArray()
         self.assertEqual(str(v[:]), 'avcd')
 
@@ -201,7 +201,7 @@ class JCharTestCase(common.JPypeTestCase):
         self.assertIsInstance(self.nc ^ 1, int)
 
     def testPass(self):
-        fixture = jpype.JClass('jpype.common.Fixture')()
+        fixture = jpype.JClass('org.jpype.test.common.Fixture')()
         self.assertEqual(type(fixture.callChar(self.nc)), JChar)
         self.assertEqual(type(fixture.callObject(self.nc)), jpype.java.lang.Character)
 
@@ -326,7 +326,7 @@ class JCharBoxedTestCase(common.JPypeTestCase):
         self.assertFalse(bool(JChar(0)))
 
     def testPass(self):
-        fixture = jpype.JClass('jpype.common.Fixture')()
+        fixture = jpype.JClass('org.jpype.test.common.Fixture')()
         self.assertEqual(type(fixture.callObject(self.nc)), type(self.nc))
 
     def check(self, u, v0, v1, v2):
@@ -470,7 +470,7 @@ class JCharBoxedNullTestCase(common.JPypeTestCase):
         self.assertFalse(self.nc != self.nc)
 
     def testPass(self):
-        fixture = jpype.JClass('jpype.common.Fixture')()
+        fixture = jpype.JClass('org.jpype.test.common.Fixture')()
         self.assertEqual(fixture.callObject(self.nc), None)
 
 

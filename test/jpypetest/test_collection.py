@@ -206,7 +206,7 @@ class CollectionMapCase(common.JPypeTestCase):
         self.assertEqual(len(h.iterator().next()), 2)
 
     def testEnumMap(self):
-        enumclass = JClass('jpype.collection.TestEnum')
+        enumclass = JClass('org.jpype.test.collection.TestEnum')
         enummap = JClass('java.util.EnumMap')(enumclass)
         enummap.put(enumclass.A, 'ABC')
         enummap.put(enumclass.B, 'DEF')

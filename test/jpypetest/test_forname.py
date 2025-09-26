@@ -22,21 +22,18 @@ import common
 
 class ForNameTestCase(common.JPypeTestCase):
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     def testForName(self):
         cls = jpype.JClass('java.lang.Class')
-        test = cls.forName('jpype.overloads.Test1')
+        test = cls.forName('org.jpype.test.overloads.Test1')
         # Should return a java.lang.Class, rather than the python wrapper for java.lang.Class
         self.assertTrue(type(test) == type(cls.class_))
-        self.assertEqual(test.getName(), 'jpype.overloads.Test1')
+        self.assertEqual(test.getName(), 'org.jpype.test.overloads.Test1')
 
     def testForName2(self):
         cls = jpype.JClass('java.lang.Class')
         clsloader = jpype.JClass(
             'java.lang.ClassLoader').getSystemClassLoader()
-        test = cls.forName('jpype.overloads.Test1', True, clsloader)
+        test = cls.forName('org.jpype.test.overloads.Test1', True, clsloader)
         # Should return a java.lang.Class, rather than the python wrapper for java.lang.Class
         self.assertTrue(type(test) == type(cls.class_))
-        self.assertEqual(test.getName(), 'jpype.overloads.Test1')
+        self.assertEqual(test.getName(), 'org.jpype.test.overloads.Test1')

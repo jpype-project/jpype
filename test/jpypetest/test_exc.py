@@ -26,12 +26,12 @@ def throwIOException():
 
 
 def throwByJavaException():
-    JClass('jpype.exc.ExceptionTest').throwIOException()
+    JClass('org.jpype.test.exc.ExceptionTest').throwIOException()
 
 
 class ExceptionTestCase(common.JPypeTestCase):
     def testExceptionThrown(self):
-        ext = JClass('jpype.exc.ExceptionTest')
+        ext = JClass('org.jpype.test.exc.ExceptionTest')
         try:
             ext.throwRuntime()
             self.fail()
@@ -43,7 +43,7 @@ class ExceptionTestCase(common.JPypeTestCase):
                 'java.lang.RuntimeException: Foo'))
 
     def testExceptionByJavaClass(self):
-        ext = JClass('jpype.exc.ExceptionTest')
+        ext = JClass('org.jpype.test.exc.ExceptionTest')
         try:
             ext.throwRuntime()
             self.fail()
@@ -55,15 +55,15 @@ class ExceptionTestCase(common.JPypeTestCase):
                 'java.lang.RuntimeException: Foo'))
 
     def testThrowException(self):
-        exthrow = JClass('jpype.exc.ExceptionThrower')
-        extest = JClass('jpype.exc.ExceptionTest')
+        exthrow = JClass('org.jpype.test.exc.ExceptionThrower')
+        extest = JClass('org.jpype.test.exc.ExceptionTest')
         d = {"throwIOException": throwIOException, }
         p = JProxy(exthrow, dict=d)
         self.assertTrue(extest.delegateThrow(p))
 
     def testThrowException3(self):
-        exthrow = JClass('jpype.exc.ExceptionThrower')
-        extest = JClass('jpype.exc.ExceptionTest')
+        exthrow = JClass('org.jpype.test.exc.ExceptionThrower')
+        extest = JClass('org.jpype.test.exc.ExceptionTest')
         d = {"throwIOException": throwByJavaException, }
         p = JProxy(exthrow, dict=d)
 
@@ -71,27 +71,27 @@ class ExceptionTestCase(common.JPypeTestCase):
 
 #    This test is problematic as __name__ is a class property not an object property
 #    def testExceptionPYEXCName(self):
-#        e = self.jpype.exc.ChildTestException()
-#        name = "jpype.exc.ChildTestException"
+#        e = self.jpype.test.exc.ChildTestException()
+#        name = "org.jpype.test.exc.ChildTestException"
 #        self.assertEqual(name, e.__name__)
 
     def testExceptionInstanceof(self):
-        e = self.jpype.exc.ChildTestException()
-        self.assertIsInstance(e, self.jpype.exc.ParentTestException)
+        e = self.jpype.test.exc.ChildTestException()
+        self.assertIsInstance(e, self.jpype.test.exc.ParentTestException)
 
     def testExceptionPYEXCInstanceof(self):
-        e = self.jpype.exc.ChildTestException
-        self.assertTrue(issubclass(e, self.jpype.exc.ParentTestException))
+        e = self.jpype.test.exc.ChildTestException
+        self.assertTrue(issubclass(e, self.jpype.test.exc.ParentTestException))
 
     def testThrowChildExceptionFromCatchJExceptionParentClass(self):
         try:
-            self.jpype.exc.ExceptionTest.throwChildTestException()
+            self.jpype.test.exc.ExceptionTest.throwChildTestException()
             self.fail()
-        except self.jpype.exc.ParentTestException as ex:
-            self.assertIsInstance(ex, self.jpype.exc.ChildTestException)
+        except self.jpype.test.exc.ParentTestException as ex:
+            self.assertIsInstance(ex, self.jpype.test.exc.ChildTestException)
 
     def testCause(self):
-        cls = jpype.JClass("jpype.exc.ExceptionTest")
+        cls = jpype.JClass("org.jpype.test.exc.ExceptionTest")
         try:
             cls.throwChain()
         except Exception as ex:
@@ -100,9 +100,9 @@ class ExceptionTestCase(common.JPypeTestCase):
         self.assertEqual(str(ex1.__cause__), "Java Exception")
         frame = ex1.__cause__.__traceback__
         expected = [
-            'jpype.exc.ExceptionTest.throwChain',
-            'jpype.exc.ExceptionTest.method1',
-            'jpype.exc.ExceptionTest.method2',
+            'org.jpype.test.exc.ExceptionTest.throwChain',
+            'org.jpype.test.exc.ExceptionTest.method1',
+            'org.jpype.test.exc.ExceptionTest.method2',
         ]
         i = 0
         while (frame):
@@ -120,7 +120,7 @@ class ExceptionTestCase(common.JPypeTestCase):
             js.substring(0)
 
     def testExcCtor(self):
-        WE = jpype.JClass("jpype.exc.WierdException")
+        WE = jpype.JClass("org.jpype.test.exc.WierdException")
         with self.assertRaises(WE):
             WE.testThrow()
         try:
@@ -132,7 +132,7 @@ class ExceptionTestCase(common.JPypeTestCase):
     def testExcCauseChained1(self):
         import jpype.imports
         try:
-            from org.jpype.fail import BadInitializer  # type: ignore
+            from org.jpype.test.fail import BadInitializer  # type: ignore
         except Exception as ex:
             ex1 = ex
         self.assertIsInstance(ex1, ImportError)
@@ -145,7 +145,7 @@ class ExceptionTestCase(common.JPypeTestCase):
 
     def testExcCauseChained2(self):
         try:
-            JClass('org.jpype.fail.BadInitializer2')
+            JClass('org.jpype.test.fail.BadInitializer2')
         except Exception as ex:
             ex1 = ex
         self.assertIsInstance(ex1, JClass(

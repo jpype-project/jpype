@@ -29,7 +29,7 @@ class VirtualsTestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.vt = jpype.JClass('jpype.types.VirtualTest')
+        self.vt = jpype.JClass('org.jpype.test.types.VirtualTest')
 
     def testCallBooleanImplements(self):
         v1 = self.vt.getBooleanImplements()

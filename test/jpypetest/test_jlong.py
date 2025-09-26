@@ -34,7 +34,7 @@ VALUES = [random.randint(-2**63, 2**63 - 1) for i in range(10)]
 class JLongTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.cls = JClass("jpype.common.Fixture")
+        self.cls = JClass("org.jpype.test.common.Fixture")
         self.fixture = self.cls()
 
     @common.requireInstrumentation
@@ -189,7 +189,7 @@ class JLongTestCase(common.JPypeTestCase):
         ja = JArray(JLong)(5)
         with self.assertRaises(TypeError):
             ja[1] = object()
-        jf = JClass("jpype.common.Fixture")
+        jf = JClass("org.jpype.test.common.Fixture")
         with self.assertRaises(TypeError):
             jf.static_long_field = object()
         with self.assertRaises(TypeError):

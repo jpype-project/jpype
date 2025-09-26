@@ -15,6 +15,7 @@
 **************************************************************************** */
 package org.jpype;
 
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -51,10 +52,22 @@ public class JPypeSignal
       Class SignalHandler = Class.forName("sun.misc.SignalHandler");
       main = Thread.currentThread();
       Method method = Signal.getMethod("handle", Signal, SignalHandler);
+
+      Object handler = Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), new Class[]
+      {
+        SignalHandler
+      }, new InvocationHandler()
+      {
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
+        {
+          main.interrupt();
+          interruptPy();
+          return null;
+        }
+      });
       Object intr = Signal.getDeclaredConstructor(String.class).newInstance("INT");
-      method.invoke(null, intr, getSignalHandler(SignalHandler, 2));
-      Object intrTerm = Signal.getDeclaredConstructor(String.class).newInstance("TERM");
-      method.invoke(null, intrTerm, getSignalHandler(SignalHandler, 15));
+      method.invoke(null, intr, handler);
     } catch (InvocationTargetException | IllegalArgumentException | IllegalAccessException | InstantiationException | ClassNotFoundException | NoSuchMethodException | SecurityException ex)
     {
       // If we don't get the signal handler run without it.  (ANDROID)

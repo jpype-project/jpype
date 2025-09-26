@@ -26,6 +26,9 @@ import common
 from contextlib import redirect_stdout
 import io
 
+import conftest
+import jpype
+
 _modules = {}  # type: ignore[var-annotated]
 
 
@@ -76,7 +79,7 @@ class Client(object):
         self.outQueue = ctx.Queue()
         self.process = ctx.Process(target=_execute, args=(self.inQueue, self.outQueue), daemon=True)
         self.process.start()
-        self.timeout = 20
+        self.timeout = 3
 
     def execute(self, function, *args, **kwargs):
         self.inQueue.put([function.__name__, os.path.abspath(
@@ -148,6 +151,9 @@ def _prepare(orig, individual=False):
         def setUp(self):
             if common.fast:
                 raise unittest.SkipTest("fast")
+            if not jpype.isJVMStarted():
+                conftest.start_test_jvm()
+
             if individual:
                 ProxyClass._client.restart()
             ProxyClass._client.execute(_hook, filename, clsname, '_setUp')

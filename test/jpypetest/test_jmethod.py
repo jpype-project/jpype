@@ -163,21 +163,21 @@ class JMethodTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJMethod_get(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("PyJPMethod_get")
         with self.assertRaisesRegex(SystemError, "fault"):
             fixture.callInt(1)
 
     @common.requireInstrumentation
     def testJMethod_str(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("PyJPMethod_get")
         with self.assertRaisesRegex(SystemError, "fault"):
             str(fixture.callInt)
 
     @common.requireInstrumentation
     def testJMethod_str_2(self):
-        Fixture = JClass("jpype.common.Fixture")
+        Fixture = JClass("org.jpype.test.common.Fixture")
         fixture = Fixture()
         _jpype.fault("PyJPMethod_get")
         with self.assertRaisesRegex(SystemError, "fault"):
@@ -187,35 +187,35 @@ class JMethodTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJMethod_selfFault(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("PyJPMethod_getSelf")
         with self.assertRaisesRegex(SystemError, "fault"):
             fixture.callInt.__self__
 
     @common.requireInstrumentation
     def testJMethod_nameFault(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("PyJPMethod_getName")
         with self.assertRaisesRegex(SystemError, "fault"):
             fixture.callInt.__name__
 
     @common.requireInstrumentation
     def testJMethod_qualnameFault(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("PyJPMethod_getQualName")
         with self.assertRaisesRegex(SystemError, "fault"):
             fixture.callInt.__qualname__
 
     @common.requireInstrumentation
     def testJMethod_annotationsFault(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("PyJPMethod_getAnnotations")
         with self.assertRaisesRegex(SystemError, "fault"):
             fixture.callInt.__annotations__
 
     @common.requireInstrumentation
     def testJMethod_docFault(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("PyJPMethod_getDoc")
         with self.assertRaisesRegex(SystemError, "fault"):
             fixture.callInt.__doc__
@@ -225,14 +225,14 @@ class JMethodTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJMethod_docFault_2(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("PyJPMethod_getCodeAttr")
         with self.assertRaisesRegex(SystemError, "fault"):
             fixture.callFloat.__code__
 
     @common.requireInstrumentation
     def testJMethod_beansFault(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("PyJPMethod_isBeanAccessor")
         with self.assertRaisesRegex(SystemError, "fault"):
             fixture.callInt._isBeanAccessor()
@@ -242,68 +242,68 @@ class JMethodTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJMethod_diagnosticsFault(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("PyJPMethod_matchReport")
         with self.assertRaisesRegex(SystemError, "fault"):
             fixture.callInt.matchReport()
 
     @common.requireInstrumentation
     def testJMethod_callFault(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         _jpype.fault("PyJPMethod_call")
         with self.assertRaisesRegex(SystemError, "fault"):
             fixture.callInt(1)
 
     def testJMethod_self(self):
-        Fixture = JClass("jpype.common.Fixture")
-        fixture = JClass("jpype.common.Fixture")()
+        Fixture = JClass("org.jpype.test.common.Fixture")
+        fixture = JClass("org.jpype.test.common.Fixture")()
         self.assertEqual(fixture.callInt.__self__, fixture)
         self.assertEqual(Fixture.callStaticInt.__self__, None)
 
     def testJMethod_name(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         self.assertIsInstance(fixture.callInt.__name__, str)
         self.assertEqual(fixture.callInt.__name__, 'callInt')
 
     def testJMethod_doc(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         self.assertIsInstance(fixture.callInt.__doc__, str)
 
     def testJMethod_annotations(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         self.assertIsInstance(fixture.callInt.__annotations__, dict)
         ann = fixture.callInt.__annotations__
         expected = {'arg0': JInt, 'return': JInt}
         self.assertEqual(ann, expected)
 
     def testJMethod_closure(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         self.assertNotEqual(fixture.callInt.__closure__, None)
 
     def testJMethod_code(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
 
         def f():
             pass
         self.assertIsInstance(fixture.callInt.__code__, type(f.__code__))
 
     def testJMethod_defaults(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         self.assertEqual(fixture.callInt.__defaults__, None)
 
     def testJMethod_kwdefaults(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         self.assertEqual(fixture.callInt.__kwdefaults__, None)
 
     def testJMethod_globals(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         self.assertIsInstance(fixture.callInt.__globals__, dict)
 
     def testJMethod_qualname(self):
-        fixture = JClass("jpype.common.Fixture")()
+        fixture = JClass("org.jpype.test.common.Fixture")()
         self.assertIsInstance(fixture.callInt.__qualname__, str)
         self.assertEqual(fixture.callInt.__qualname__,
-                         'jpype.common.Fixture.callInt')
+                         'org.jpype.test.common.Fixture.callInt')
 
     def testMatches(self):
         js = JClass("java.lang.String")()

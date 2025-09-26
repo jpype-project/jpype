@@ -32,7 +32,7 @@ def compareList(l1, l2):
 class VarArgsTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.VarArgs = jpype.JClass('jpype.varargs.VarArgs')
+        self.VarArgs = jpype.JClass('org.jpype.test.varargs.VarArgs')
         self.Object = jpype.JClass('java.lang.Object')
         self.ObjectA = jpype.JArray(self.Object)
         self.Integer = jpype.JClass('java.lang.Integer')

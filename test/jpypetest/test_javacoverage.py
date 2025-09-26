@@ -26,7 +26,7 @@ import common
 class JavaCoverageTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.fixture = JClass('jpype.common.Fixture')()
+        self.fixture = JClass('org.jpype.test.common.Fixture')()
         JPypeContext = JClass('org.jpype.JPypeContext')
         self.inst = JPypeContext.getInstance()
 

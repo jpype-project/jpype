@@ -22,8 +22,7 @@ except ImportError:
 db_name = "jdbc:h2:mem:testdb"
 
 def setUpModule(module):
-    from common import java_version
-    version = java_version()
+    version = jpype.getJVMVersion()
     if version[0] == 1 and version[1] == 8:
         pytest.skip("jdk8 unsupported", allow_module_level=True)
 

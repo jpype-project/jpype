@@ -33,17 +33,17 @@ class JCallerSensitiveCase(common.JPypeTestCase):
     called with (nothing, object, primitive, many, varargs)
 
     Unfortunately, the actual problematic method in Java is private,
-    so we can't get to it directly.  Thus will will perform indirect tests.
+    so we can't get to it directly.  Thus will perform indirect tests.
 
     For now we do not support caller sensitive constructors.
     """
 
     def setUp(self):
-        common.JPypeTestCase.setUp(self)
+        super().setUp()
         if not jpype.getJVMVersion() > (1, 8, 0):
             raise common.unittest.SkipTest
 
-        self.Class = jpype.JClass("jpype.method.Caller")
+        self.Class = jpype.JClass("org.jpype.test.method.Caller")
         self.obj = self.Class()
 
     def testCallStatic(self):

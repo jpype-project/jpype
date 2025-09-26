@@ -15,6 +15,8 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+import pathlib
+
 import jpype
 import common
 import subrun
@@ -34,12 +36,12 @@ class LegacyTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Run with automatic string conversion
-        jpype.startJVM(classpath=os.path.abspath(
-            "test/classes"), convertStrings=True)
+        jpype.startJVM(classpath=pathlib.Path(__file__).parent.parent / "classes",
+             convertStrings=True)
 
     def setUp(self):
-        self._test = jpype.JClass("jpype.str.Test")
-        self._intf = jpype.JClass("jpype.str.StringFunction")
+        self._test = jpype.JClass("org.jpype.test.str.Test")
+        self._intf = jpype.JClass("org.jpype.test.str.StringFunction")
 
     def testStaticField(self):
         s = self._test.staticField

@@ -71,21 +71,21 @@ if __name__ == '__main__':
 class OverloadTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.__jp = self.jpype.overloads
-        self._aclass = JClass('jpype.overloads.Test1$A')
-        self._bclass = JClass('jpype.overloads.Test1$B')
-        self._cclass = JClass('jpype.overloads.Test1$C')
+        self.__jp = self.jpype.test.overloads
+        self._aclass = JClass('org.jpype.test.overloads.Test1$A')
+        self._bclass = JClass('org.jpype.test.overloads.Test1$B')
+        self._cclass = JClass('org.jpype.test.overloads.Test1$C')
         self._a = self._aclass()
         self._b = self._bclass()
         self._c = self._cclass()
-        self._i1impl = JClass('jpype.overloads.Test1$I1Impl')()
-        self._i2impl = JClass('jpype.overloads.Test1$I2Impl')()
-        self._i3impl = JClass('jpype.overloads.Test1$I3Impl')()
-        self._i4impl = JClass('jpype.overloads.Test1$I4Impl')()
-        self._i5impl = JClass('jpype.overloads.Test1$I5Impl')()
-        self._i6impl = JClass('jpype.overloads.Test1$I6Impl')()
-        self._i7impl = JClass('jpype.overloads.Test1$I7Impl')()
-        self._i8impl = JClass('jpype.overloads.Test1$I8Impl')()
+        self._i1impl = JClass('org.jpype.test.overloads.Test1$I1Impl')()
+        self._i2impl = JClass('org.jpype.test.overloads.Test1$I2Impl')()
+        self._i3impl = JClass('org.jpype.test.overloads.Test1$I3Impl')()
+        self._i4impl = JClass('org.jpype.test.overloads.Test1$I4Impl')()
+        self._i5impl = JClass('org.jpype.test.overloads.Test1$I5Impl')()
+        self._i6impl = JClass('org.jpype.test.overloads.Test1$I6Impl')()
+        self._i7impl = JClass('org.jpype.test.overloads.Test1$I7Impl')()
+        self._i8impl = JClass('org.jpype.test.overloads.Test1$I8Impl')()
 
     def testMostSpecificInstanceMethod(self):
         test1 = self.__jp.Test1()
@@ -103,11 +103,11 @@ class OverloadTestCase(common.JPypeTestCase):
         # JObject wrapper forces exact matches
         #self.assertRaisesRegex(TypeError, 'No matching overloads found', test1.testMostSpecific, JObject(self._c, self._cclass))
         self.assertEqual('A', test1.testMostSpecific(
-            JObject(self._c, 'jpype.overloads.Test1$A')))
+            JObject(self._c, 'org.jpype.test.overloads.Test1$A')))
         self.assertEqual('B', test1.testMostSpecific(
-            JObject(self._c, 'jpype.overloads.Test1$B')))
+            JObject(self._c, 'org.jpype.test.overloads.Test1$B')))
         # JObject wrapper forces exact matches
-        #self.assertRaisesRegex(TypeError, 'No matching overloads found', test1.testMostSpecific, JObject(self._c, 'jpype.overloads.Test1$C'))
+        #self.assertRaisesRegex(TypeError, 'No matching overloads found', test1.testMostSpecific, JObject(self._c, 'org.jpype.test.overloads.Test1$C'))
 
     def testVarArgsCall(self):
         test1 = self.__jp.Test1()
@@ -165,17 +165,17 @@ class OverloadTestCase(common.JPypeTestCase):
         self.assertRaisesRegex(
             TypeError, 'Ambiguous overloads found', test1.testInterfaces1, self._i4impl)
         self.assertEqual('I2', test1.testInterfaces1(
-            JObject(self._i4impl, 'jpype.overloads.Test1$I2')))
+            JObject(self._i4impl, 'org.jpype.test.overloads.Test1$I2')))
         self.assertEqual('I3', test1.testInterfaces1(
-            JObject(self._i4impl, 'jpype.overloads.Test1$I3')))
+            JObject(self._i4impl, 'org.jpype.test.overloads.Test1$I3')))
 
     def testInterfaces2(self):
         test1 = self.__jp.Test1()
         self.assertEqual('I4', test1.testInterfaces2(self._i4impl))
         self.assertEqual('I2', test1.testInterfaces2(
-            JObject(self._i4impl, 'jpype.overloads.Test1$I2')))
+            JObject(self._i4impl, 'org.jpype.test.overloads.Test1$I2')))
         self.assertEqual('I3', test1.testInterfaces2(
-            JObject(self._i4impl, 'jpype.overloads.Test1$I3')))
+            JObject(self._i4impl, 'org.jpype.test.overloads.Test1$I3')))
 
     def testInterfaces3(self):
         test1 = self.__jp.Test1()
@@ -203,9 +203,9 @@ class OverloadTestCase(common.JPypeTestCase):
         self.assertEqual('Object', test1.testClassVsObject(1))
         self.assertEqual('Class', test1.testClassVsObject(None))
         self.assertEqual('Class', test1.testClassVsObject(
-            JClass('jpype.overloads.Test1$I4Impl')))
+            JClass('org.jpype.test.overloads.Test1$I4Impl')))
         self.assertEqual('Class', test1.testClassVsObject(
-            JClass('jpype.overloads.Test1$I3')))
+            JClass('org.jpype.test.overloads.Test1$I3')))
 
     def testStringArray(self):
         test1 = self.__jp.Test1()
@@ -229,7 +229,7 @@ class OverloadTestCase(common.JPypeTestCase):
 
     def testDefaultMethods(self):
         try:
-            testdefault = JClass('jpype.overloads.Test1$DefaultC')()
+            testdefault = JClass('org.jpype.test.overloads.Test1$DefaultC')()
         except:
             pass
         else:
@@ -287,7 +287,7 @@ class OverloadTestCase(common.JPypeTestCase):
     def testDerivedStatic(self):
         Boolean = jpype.JClass("java.lang.Boolean")
         Object = jpype.JClass("java.lang.Object")
-        DerivedTest = JClass("jpype.overloads.DerivedTest")
+        DerivedTest = JClass("org.jpype.test.overloads.DerivedTest")
         Base = DerivedTest.Base()
         Derived = DerivedTest.Derived()
         self.assertEqual(DerivedTest.testStatic(True, Base), 1)
@@ -302,7 +302,7 @@ class OverloadTestCase(common.JPypeTestCase):
     def testDerivedMember(self):
         Boolean = jpype.JClass("java.lang.Boolean")
         Object = jpype.JClass("java.lang.Object")
-        DerivedTest = JClass("jpype.overloads.DerivedTest")
+        DerivedTest = JClass("org.jpype.test.overloads.DerivedTest")
         Base = DerivedTest.Base()
         Derived = DerivedTest.Derived()
         obj = DerivedTest()
@@ -318,7 +318,7 @@ class OverloadTestCase(common.JPypeTestCase):
     def testDerivedSub(self):
         Boolean = jpype.JClass("java.lang.Boolean")
         Object = jpype.JClass("java.lang.Object")
-        DerivedTest = JClass("jpype.overloads.DerivedTest")
+        DerivedTest = JClass("org.jpype.test.overloads.DerivedTest")
         Base = DerivedTest.Base()
         Derived = DerivedTest.Derived()
         obj = DerivedTest.Sub()

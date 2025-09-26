@@ -54,7 +54,7 @@ class Leak2TestCase(common.JPypeTestCase):
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.fixture = JClass('jpype.common.Fixture')()
+        self.fixture = JClass('org.jpype.test.common.Fixture')()
         Tracer.reset()
 
     def testArrayCall(self):
