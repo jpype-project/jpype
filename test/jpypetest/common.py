@@ -158,9 +158,10 @@ class JPypeTestCase(unittest.TestCase):
 def java_version():
     import subprocess
     import sys
-    java_version = str(subprocess.check_output([sys.executable, "-c",
-                          "import jpype; jpype.startJVM(); "
-                          "print(jpype.java.lang.System.getProperty('java.version'))"]),
-                       encoding='ascii')
+    # java_version = str(subprocess.check_output([sys.executable, "-c",
+    #                       "import jpype; jpype.startJVM(); "
+    #                       "print(jpype.java.lang.System.getProperty('java.version'))"]),
+    #                    encoding='ascii')
+    java_version = str(subprocess.check_output(["java", "-version"]))
     # todo: make this robust for version "numbers" containing strings (e.g.) 22.1-internal
     return tuple(map(int, java_version.split(".")))
