@@ -24,7 +24,7 @@ db_name = "jdbc:h2:mem:testdb"
 def setUpModule(module):
     from common import java_version
     version = java_version()
-    if version[0] == 1 and version[1] == 8:
+    if version["major"] == 1 and version["minor"] == 8:
         pytest.skip("jdk8 unsupported", allow_module_level=True)
 
 
