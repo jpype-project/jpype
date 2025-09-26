@@ -22,21 +22,24 @@ Full process:
       ``git checkout release``
 - [ ] Make a new branch for the release cycle
       ``git checkout -b releases/{version}``
-- [ ] Check the .azure scripts to see if they are up to date.
-      Look on https://devguide.python.org/versions/ to see what versions can be dropped
-      Check Python versions for Windows
-      Check Python versions for OSX
-      Check the manylinux image for Linux
-- [ ] Merge the current master with the release
-      ``git pull origin master``
-- [ ] Start a release
-      ``bumpversion release``
-- [ ] Edit doc/CHANGELOG.rst
-- [ ] Send the release to be evaluated
-      ``git push``
-- [ ] Verify CI on azure
-- [ ] Manually trigger a ``jpype.release`` on azure
-      If successful, download the artifacts for publication.
+- [ ] Update release process to current
+    - [ ] Check the .azure scripts to see if they are up to date.
+          Look on https://devguide.python.org/versions/ to see what versions can be dropped
+          Check Python versions for Windows
+          Check Python versions for OSX
+          Check the manylinux image for Linux
+    - [ ] Check patterns in .azure/scripts/build-wheels.sh
+    - [ ] Merge the current master with the release
+          ``git pull origin master``
+    - [ ] Edit doc/CHANGELOG.rst
+- [ ] Create a release candidate
+    - [ ] Bump the version to release
+        ``bumpversion release``
+    - [ ] Send the release to be evaluated
+        ``git push``
+    - [ ] Verify CI on Azure  ([Azure](https://dev.azure.com/jpype-project/jpype/_build?definitionId=1))
+    - [ ] Manually trigger a ``jpype.release`` on ([Azure](https://dev.azure.com/jpype-project/jpype/_build?definitionId=2))
+          If successful, download the artifacts for publication.
 - [ ] Advance the release pointer 
       ``git checkout release``
       ``git merge releases/<version>``
