@@ -236,9 +236,7 @@ PyObject* JPContext::getJVMVersion(PyObject* self, PyObject* args) {
         JP_TRACE("Load entry points");
         JPPlatformAdapter *platform = JPPlatformAdapter::getAdapter();
         // Load symbols from the shared library
-        printf("prior load lib\n");
         platform->loadLibrary(jvm_path);
-        printf("after load lib\n");
         CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *) )platform->getSymbol("JNI_CreateJavaVM");
     } catch (JPypeException& ex)
     {
@@ -274,29 +272,19 @@ PyObject* JPContext::getJVMVersion(PyObject* self, PyObject* args) {
             env->NewStringUTF("java.version")
     );
 
-    const char* chars = env->GetStringUTFChars(versionStr, nullptr);
-
     if (versionStr == nullptr) {
-        std::cerr << "CallStaticObjectMethod returned null" << std::endl;
+		JP_TRACE("CallStaticObjectMethod returned null");
     } else {
         const char* versionCStr = env->GetStringUTFChars(versionStr, nullptr);
         if (versionCStr) {
-            std::cout << "Java version: " << versionCStr << std::endl;
             // convert c string to pyobject string
             PyObject *py = PyUnicode_FromStringAndSize(versionCStr, strlen(versionCStr));
             env->ReleaseStringUTFChars(versionStr, versionCStr);
             return py;
         } else {
-            throw std::runtime_error("Failed to get UTF chars from jstring");
-            std::cerr << "Failed to get UTF chars from jstring" << std::endl;
+			JP_TRACE("Failed to get UTF chars from jstring");
         }
     }
-    //JP_TRACE("cstr version: %s\n", version);
-
-    // convert c string to pyobject string
-    //PyObject *py = PyUnicode_FromStringAndSize(version, strlen(version));
-    // free resources.
-	//env->ReleaseStringUTFChars(versionStr, version);
 	jvm->DestroyJavaVM();
 
 	return nullptr;
