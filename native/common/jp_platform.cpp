@@ -132,6 +132,7 @@ public:
 		{
 			JP_TRACE("null library");
 			JP_TRACE("errno", errno);
+			JP_TRACE("strerror", strerror(errno));
 			if (errno == ENOEXEC)
 			{
 				JP_TRACE("dignostics", dlerror());

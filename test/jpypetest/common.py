@@ -15,8 +15,6 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-from functools import lru_cache
-
 import pytest
 import _jpype
 import jpype
@@ -152,43 +150,3 @@ class JPypeTestCase(unittest.TestCase):
 
     def useEqualityFunc(self, func):
         return UseFunc(self, func, 'assertEqual')
-
-
-@lru_cache(1)
-def java_version() -> dict:
-
-    def get_jvm_version(java_bin="java"):
-        import subprocess
-        import re
-
-        try:
-            # java -version prints to stderr for most vendors
-            result = subprocess.run(
-                [java_bin, "-version"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=True
-            )
-            output = result.stderr.decode() + "\n" + result.stdout.decode()
-
-            # Look for first quoted string like "25.0.1" or "11.0.20"
-            m = re.search(r'"([\d._]+)"', output)
-            if m:
-                version_str = m.group(1)
-                # Normalize underscores to dots
-                version_str = version_str.replace("_", ".")
-                # Split into components if needed
-                parts = version_str.split(".")
-                major = int(parts[0])
-                minor = int(parts[1]) if len(parts) > 1 else 0
-                patch = int(parts[2]) if len(parts) > 2 else 0
-                return {"full": version_str, "major": major, "minor": minor, "patch": patch}
-            else:
-                raise ValueError("Cannot parse java -version output")
-
-        except FileNotFoundError:
-            raise RuntimeError(f"Java binary not found: {java_bin}")
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"java -version failed: {e}")
-
-    return get_jvm_version()

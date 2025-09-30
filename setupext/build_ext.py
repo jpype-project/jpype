@@ -306,6 +306,12 @@ class BuildExtCommand(build_ext):
             "Jar cache is missing, using --enable-build-jar to recreate it.")
 
         target_version = "11"
+        # todo: target and source version are used synonymously. consider -release x
+        """
+        warning: [options] location of system modules is not set in conjunction with -source 11
+          not setting the location of system modules may lead to class files that cannot run on JDK 11
+          --release 11 is recommended instead of -source 11 -target 11 because it sets the location of system modules automatically
+        """
         # build the jar
         try:
             dirname = os.path.dirname(self.get_ext_fullpath("JAVA"))

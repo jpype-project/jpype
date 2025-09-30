@@ -213,7 +213,32 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	JP_TRACE_OUT;
 }
 
-std::string JPContext::get_jvm_version(const char* jvm_path) {
+/**
+ * Get JVM version from java.lang.System.getProperty('java.version') from a freshly created JVM.
+ *
+ * @param jvm_path
+ * @return version string or empty string in case of error
+ * note: this boots up a jvm, so we'd need to perform this in a separate process to be able to boot up the jpype jvm in the main process.
+ * So a Python callee should only get this, once a separate process has been created!
+ */
+PyObject* JPContext::getJVMVersion(const char* jvm_path) {
+    // Get the entry points in the shared library
+    jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
+    try
+    {
+        JP_TRACE("Load entry points");
+        JPPlatformAdapter *platform = JPPlatformAdapter::getAdapter();
+        // Load symbols from the shared library
+        printf("prior load lib\n");
+        platform->loadLibrary(jvm_path);
+        printf("after load lib\n");
+        CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *) )platform->getSymbol("JNI_CreateJavaVM");
+    } catch (JPypeException& ex)
+    {
+        (void) ex;
+        throw;
+    }
+
 	JavaVM *jvm;
 	JNIEnv *env;
 	JavaVMInitArgs args;
@@ -221,26 +246,26 @@ std::string JPContext::get_jvm_version(const char* jvm_path) {
 	args.nOptions = 0;
 	args.options = nullptr;
 	args.ignoreUnrecognized = JNI_TRUE;
-
-	JavaVMOption* options = nullptr;
-
-	// Create JVM
-	if (JNI_CreateJavaVM(&jvm, (void**)&env, &args) != 0) {
-		return "";
+	if (CreateJVM_Method(&jvm, (void**) &env, &args) != 0) {
+        // we failed to create a JVM
+        PyObject *empty = PyUnicode_FromString("");
+        return empty;
 	}
 
-	jclass systemClass = (*env)->FindClass(env, "java/lang/System");
-	jmethodID getProperty = (*env)->GetStaticMethodID(env, systemClass,
+	jclass systemClass = env->FindClass("java/lang/System");
+	jmethodID getProperty = env->GetStaticMethodID(systemClass,
 													  "getProperty", "(Ljava/lang/String;)Ljava/lang/String;");
-	jstring versionStr = (*env)->CallStaticObjectMethod(env, systemClass,
-														getProperty, (*env)->NewStringUTF(env, "java.version"));
+	auto versionStr = (jstring) env->CallStaticObjectMethod(systemClass,
+                                                       getProperty, env->NewStringUTF("java.version"));
 
-	const char* version_cstr = (*env)->GetStringUTFChars(env, versionStr, NULL);
-	char* version = strdup(version_cstr);
-	(*env)->ReleaseStringUTFChars(env, versionStr, version_cstr);
+	const char* version = env->GetStringUTFChars(versionStr, nullptr);
+	env->ReleaseStringUTFChars(versionStr, version);
 
-	(*jvm)->DestroyJavaVM(jvm);
-	return version;
+	jvm->DestroyJavaVM();
+
+    // convert c string to pyobject string
+    PyObject *py = PyUnicode_FromStringAndSize(version, strlen(version));
+	return py;
 }
 
 void JPContext::attachJVM(JNIEnv* env)
@@ -252,13 +277,13 @@ void JPContext::attachJVM(JNIEnv* env)
 	initializeResources(env, false);
 }
 
-std::string getShared() 
+std::string getShared()
 {
 #ifdef WIN32
 	// Windows specific
 	char path[MAX_PATH];
 	HMODULE hm = NULL;
-	if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | 
+	if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
 		GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
 		(LPCSTR) &getShared, &hm) != 0 &&
 		GetModuleFileName(hm, path, sizeof(path)) != 0)
