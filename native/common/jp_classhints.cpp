@@ -514,7 +514,7 @@ public:
 		for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
 		{
 			// This is a special case.  Sequences produce new references
-			// so we must hold the reference in a container while the
+			// so we must hold the reference in a container while
 			// the match is caching it.
 			JPPyObject item = seq[i];
 			JPMatch imatch(match.frame, item.get());
