@@ -33,12 +33,64 @@
 #include <errno.h>
 #endif
 
-
-JPResource::~JPResource() = default;
-
-
 // minimum JNI API (or equivalent JRE version).
 #define USE_JNI_VERSION JNI_VERSION_9
+
+namespace {
+
+/**
+ * Handles the memory padding and resource handling for JVM arguments.
+ * The JVM seems to take over the memory after it has been passed.
+ */
+class JNIArgs {
+private:
+	JavaVMInitArgs* m_JniArgs = nullptr;
+public:
+	JNIArgs(const StringVector& args, bool ignoreUnrecognized) {
+		// Determine the memory requirements
+#define PAD(x) ((x+31)&~31)
+		size_t mem = PAD(sizeof(JavaVMInitArgs));
+		size_t oblock = mem;
+		mem += PAD(sizeof(JavaVMOption)*args.size() + 1);
+		size_t sblock = mem;
+		for (const auto & arg : args)
+		{
+			mem += PAD(arg.size()+1);
+		}
+
+		// Pack the arguments
+		JP_TRACE("Pack arguments");
+		auto block = (char*) malloc(mem);
+		m_JniArgs = (JavaVMInitArgs*) block; // pointer alias.
+		memset(m_JniArgs, 0, mem);
+		m_JniArgs->options = (JavaVMOption*)(&block[oblock]);
+
+		// prepare this ...
+		m_JniArgs->version = USE_JNI_VERSION; // enforce minimum JNI (Java Runtime) version.
+		m_JniArgs->ignoreUnrecognized = ignoreUnrecognized;
+		JP_TRACE("IgnoreUnrecognized", ignoreUnrecognized);
+
+		m_JniArgs->nOptions = (jint) args.size();
+		JP_TRACE("NumOptions", m_JniArgs->nOptions);
+		size_t j = sblock;
+		for (size_t i = 0; i < args.size(); i++)
+		{
+			JP_TRACE("Option", args[i]);
+			strncpy(&block[j], args[i].c_str(), args[i].size());
+			m_JniArgs->options[i].optionString = (char*) &block[j];
+			j += PAD(args[i].size()+1);
+		}
+	}
+	void* getArgs() {
+		return m_JniArgs;
+	}
+	~JNIArgs() {
+		free(m_JniArgs);
+	}
+};
+}
+
+JPResource::~JPResource() = default;
 
 void JPRef_failed()
 {
@@ -120,57 +172,25 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		throw;
 	}
 
-	// Determine the memory requirements
-#define PAD(x) ((x+31)&~31)
-	size_t mem = PAD(sizeof(JavaVMInitArgs));
-	size_t oblock = mem;
-	mem += PAD(sizeof(JavaVMOption)*args.size() + 1);
-	size_t sblock = mem;
-	for (size_t i = 0; i < args.size(); i++)
-	{
-		mem += PAD(args[i].size()+1);
-	}
-
-	// Pack the arguments
-	JP_TRACE("Pack arguments");
-	auto block = (char*) malloc(mem);
-	auto* jniArgs = (JavaVMInitArgs*) block;
-	memset(jniArgs, 0, mem);
-	jniArgs->options = (JavaVMOption*)(&block[oblock]);
-
-	// prepare this ...
-	jniArgs->version = USE_JNI_VERSION;
-	jniArgs->ignoreUnrecognized = ignoreUnrecognized;
-	JP_TRACE("IgnoreUnrecognized", ignoreUnrecognized);
-
-	jniArgs->nOptions = (jint) args.size();
-	JP_TRACE("NumOptions", jniArgs->nOptions);
-	size_t j = sblock;
-	for (size_t i = 0; i < args.size(); i++)
-	{
-		JP_TRACE("Option", args[i]);
-		strncpy(&block[j], args[i].c_str(), args[i].size());
-		jniArgs->options[i].optionString = (char*) &block[j];
-		j += PAD(args[i].size()+1);
-	}
+	// prepare JNIArgs for JVM.
+	JNIArgs jniArgs(args, ignoreUnrecognized);
 
 	// Launch the JVM
 	JNIEnv* env = nullptr;
 	JP_TRACE("Create JVM");
 	try
 	{
-		CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) jniArgs);
+		CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) jniArgs.getArgs());
 	} catch (...)
 	{
 		JP_TRACE("Exception in CreateJVM?");
 	}
 	JP_TRACE("JVM created");
-	free(jniArgs);
 
 	if (m_JavaVM == nullptr)
 	{
 		JP_TRACE("Unable to start");
-		// If we fail with jni_version 1.9, we fall back to 8,
+		// If we fail with jni_version 9, we fall back to 1.8,
         // if that succeeds, raise a human understandable error msg!
         JavaVMInitArgs jniArgs2;
         jniArgs2.version = JNI_VERSION_1_8;
@@ -191,6 +211,36 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	m_Running = true;
 	initializeResources(env, interrupt);
 	JP_TRACE_OUT;
+}
+
+std::string JPContext::get_jvm_version(const char* jvm_path) {
+	JavaVM *jvm;
+	JNIEnv *env;
+	JavaVMInitArgs args;
+	args.version = JNI_VERSION_1_8;
+	args.nOptions = 0;
+	args.options = nullptr;
+	args.ignoreUnrecognized = JNI_TRUE;
+
+	JavaVMOption* options = nullptr;
+
+	// Create JVM
+	if (JNI_CreateJavaVM(&jvm, (void**)&env, &args) != 0) {
+		return "";
+	}
+
+	jclass systemClass = (*env)->FindClass(env, "java/lang/System");
+	jmethodID getProperty = (*env)->GetStaticMethodID(env, systemClass,
+													  "getProperty", "(Ljava/lang/String;)Ljava/lang/String;");
+	jstring versionStr = (*env)->CallStaticObjectMethod(env, systemClass,
+														getProperty, (*env)->NewStringUTF(env, "java.version"));
+
+	const char* version_cstr = (*env)->GetStringUTFChars(env, versionStr, NULL);
+	char* version = strdup(version_cstr);
+	(*env)->ReleaseStringUTFChars(env, versionStr, version_cstr);
+
+	(*jvm)->DestroyJavaVM(jvm);
+	return version;
 }
 
 void JPContext::attachJVM(JNIEnv* env)
