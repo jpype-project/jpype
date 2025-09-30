@@ -24,6 +24,29 @@
 #include <Windows.h>
 #endif
 
+namespace {
+int init_numpy_bool_type()
+{
+	JP_TRACE("init_numpy_bool_type()");
+	PyObject *numpy = PyImport_ImportModule("numpy");
+	if (numpy == nullptr) {
+		return -1;
+	}
+
+	PyObject *t = PyObject_GetAttrString(numpy, "bool_");
+	Py_DECREF(numpy);
+	if (t == nullptr) {
+		JP_TRACE("bool_ attr not found");
+		return -1;
+	}
+
+	/* store as PyTypeObject* for fast checks */
+	_NPBool_Type = (PyTypeObject *)t;
+	return 0;
+}
+
+}
+
 void PyJPModule_installGC(PyObject* module);
 
 bool _jp_cpp_exceptions = false;
@@ -76,6 +99,7 @@ PyObject* _JMethodAnnotations = nullptr;
 PyObject* _JMethodCode = nullptr;
 PyObject* _JObjectKey = nullptr;
 PyObject* _JVMNotRunning = nullptr;
+PyTypeObject* _NPBool_Type = nullptr;
 
 void PyJPModule_loadResources(PyObject* module)
 {
@@ -791,6 +815,8 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPChar_initType(module);
 
 	_PyJPModule_trace = true;
+
+	init_numpy_bool_type();
 
 	return module;
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
