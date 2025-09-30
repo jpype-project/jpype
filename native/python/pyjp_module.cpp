@@ -702,8 +702,8 @@ static PyObject *PyJPModule_bootstrap(PyObject *module)
 #endif
 
 static PyMethodDef moduleMethods[] = {
-        // obtain jvm version (must be called in separate process!)
-		{"_get_jvm_version", (PyCFunction) JPContext::getJVMVersion, METH_VARARGS, ""},
+    // obtain jvm version from a new JVM instance. (must be called in separate process or things will horribly go wrong!)
+	{"_get_jvm_version", (PyCFunction) JPContext::getJVMVersion, METH_VARARGS, ""},
 	// Startup and initialization
 	{"isStarted", (PyCFunction) PyJPModule_isStarted, METH_NOARGS, ""},
 #ifdef ANDROID

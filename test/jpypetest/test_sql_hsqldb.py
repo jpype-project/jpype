@@ -28,7 +28,7 @@ db_name = "jdbc:hsqldb:mem:myDb"
 
 @pytest.fixture(scope="module", autouse=True)
 def check_jvm_version(java_version):
-    if java_version["major"] == 1 and java_version["minor"] == 8:
+    if java_version.major == 1 and java_version.minor == 8:
         pytest.skip("jdk8 unsupported", allow_module_level=True)
 
 @common.unittest.skipUnless(zlib, "requires zlib")

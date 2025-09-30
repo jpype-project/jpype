@@ -15,8 +15,6 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import os
-
 import pytest
 
 import common
@@ -48,50 +46,28 @@ def common_opts(request):
     request.cls._jacoco = request.config.getoption("--jacoco")
     request.cls._checkjni = request.config.getoption("--checkjni")
 
-def _run_cmd(queue, jvm_path):
-    import _jpype, pathlib
-    print("pid:", os.getpid())
+def _get_jvm_version_from_jni(jvm_path):
+    import _jpype
     version = _jpype._get_jvm_version(jvm_path)
-    queue.put(version)
+    assert version
+    return version
+
 
 @pytest.fixture(scope="session", autouse=True)
-def java_version():
-    print("pid:", os.getpid())
-    print("hi from java version")
-    def _java_version() -> dict:
-        import jpype
-        jvm_path = jpype.getDefaultJVMPath()
+def setup_values():
+    import multiprocessing as mp
+    ctx = mp.get_context("spawn")
+    jvm_path = jpype.getDefaultJVMPath()
 
+    pool = ctx.Pool(1)
+    result = pool.apply_async(_get_jvm_version_from_jni, args=(jvm_path,))
+    yield result
+    pool.close()
+    pool.join()
 
-        import multiprocessing as mp
-        ctx = mp.get_context("spawn")
-        queue = ctx.Queue()
-        p = ctx.Process(target=_run_cmd, args=(queue, jvm_path))
-        p.start()
-        print("join version proc")
-        p.join(timeout=1)
-        print("joinED version proc")
-        version = queue.get()
-        print(version)
+@pytest.fixture(scope="session")
+def java_version(setup_values):
+    from packaging.version import Version
 
-        def parse_output(output):
-            import re
-
-            # Look for first quoted string like "25.0.1" or "11.0.20"
-            m = re.search(r'"([\d._]+)"', output)
-            if m:
-                version_str = m.group(1)
-                # Normalize underscores to dots
-                version_str = version_str.replace("_", ".")
-                # Split into components if needed
-                parts = version_str.split(".")
-                major = int(parts[0])
-                minor = int(parts[1]) if len(parts) > 1 else 0
-                patch = int(parts[2]) if len(parts) > 2 else 0
-                return {"full": version_str, "major": major, "minor": minor, "patch": patch}
-            else:
-                raise ValueError("Cannot parse java -version output")
-
-        return parse_output(version)
-
-    return _java_version()
+    output = setup_values.get()
+    return Version(output)

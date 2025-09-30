@@ -221,7 +221,14 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
  * note: this boots up a jvm, so we'd need to perform this in a separate process to be able to boot up the jpype jvm in the main process.
  * So a Python callee should only get this, once a separate process has been created!
  */
-PyObject* JPContext::getJVMVersion(const char* jvm_path) {
+PyObject* JPContext::getJVMVersion(PyObject* self, PyObject* args) {
+    const char* jvm_path;
+
+    // Parse the Python arguments
+    if (!PyArg_ParseTuple(args, "s", &jvm_path)) {
+        return nullptr;  // error, e.g., wrong argument type
+    }
+
     // Get the entry points in the shared library
     jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
     try
@@ -241,31 +248,58 @@ PyObject* JPContext::getJVMVersion(const char* jvm_path) {
 
 	JavaVM *jvm;
 	JNIEnv *env;
-	JavaVMInitArgs args;
-	args.version = JNI_VERSION_1_8;
-	args.nOptions = 0;
-	args.options = nullptr;
-	args.ignoreUnrecognized = JNI_TRUE;
-	if (CreateJVM_Method(&jvm, (void**) &env, &args) != 0) {
+	JavaVMInitArgs vmArgs;
+    vmArgs.version = JNI_VERSION_1_8;
+    vmArgs.nOptions = 0;
+    vmArgs.options = nullptr;
+    vmArgs.ignoreUnrecognized = JNI_TRUE;
+	if (CreateJVM_Method(&jvm, (void**) &env, &vmArgs) != 0) {
+        JP_TRACE("could not create jvm.");
         // we failed to create a JVM
         PyObject *empty = PyUnicode_FromString("");
         return empty;
 	}
 
-	jclass systemClass = env->FindClass("java/lang/System");
-	jmethodID getProperty = env->GetStaticMethodID(systemClass,
-													  "getProperty", "(Ljava/lang/String;)Ljava/lang/String;");
-	auto versionStr = (jstring) env->CallStaticObjectMethod(systemClass,
-                                                       getProperty, env->NewStringUTF("java.version"));
+    jclass systemClass = env->FindClass("java/lang/System");
+    JP_TRACE("got system class");
+    jmethodID getProperty = env->GetStaticMethodID(
+            systemClass,
+            "getProperty",
+            "(Ljava/lang/String;)Ljava/lang/String;"
+    );
 
-	const char* version = env->GetStringUTFChars(versionStr, nullptr);
-	env->ReleaseStringUTFChars(versionStr, version);
+    jstring versionStr = (jstring) env->CallStaticObjectMethod(
+            systemClass,
+            getProperty,
+            env->NewStringUTF("java.version")
+    );
 
-	jvm->DestroyJavaVM();
+    const char* chars = env->GetStringUTFChars(versionStr, nullptr);
+
+    if (versionStr == nullptr) {
+        std::cerr << "CallStaticObjectMethod returned null" << std::endl;
+    } else {
+        const char* versionCStr = env->GetStringUTFChars(versionStr, nullptr);
+        if (versionCStr) {
+            std::cout << "Java version: " << versionCStr << std::endl;
+            // convert c string to pyobject string
+            PyObject *py = PyUnicode_FromStringAndSize(versionCStr, strlen(versionCStr));
+            env->ReleaseStringUTFChars(versionStr, versionCStr);
+            return py;
+        } else {
+            throw std::runtime_error("Failed to get UTF chars from jstring");
+            std::cerr << "Failed to get UTF chars from jstring" << std::endl;
+        }
+    }
+    //JP_TRACE("cstr version: %s\n", version);
 
     // convert c string to pyobject string
-    PyObject *py = PyUnicode_FromStringAndSize(version, strlen(version));
-	return py;
+    //PyObject *py = PyUnicode_FromStringAndSize(version, strlen(version));
+    // free resources.
+	//env->ReleaseStringUTFChars(versionStr, version);
+	jvm->DestroyJavaVM();
+
+	return nullptr;
 }
 
 void JPContext::attachJVM(JNIEnv* env)
