@@ -30,6 +30,7 @@ int init_numpy_bool_type()
 	JP_TRACE("init_numpy_bool_type()");
 	PyObject *numpy = PyImport_ImportModule("numpy");
 	if (numpy == nullptr) {
+		PyErr_Clear(); // we do not want a Python error to be propagated.
 		return -1;
 	}
 
