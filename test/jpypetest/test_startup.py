@@ -15,7 +15,6 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import pytest
 from packaging.version import Version
 
 import jpype
