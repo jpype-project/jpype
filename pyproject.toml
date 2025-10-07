@@ -1,9 +1,7 @@
 [build-system]
-requires = [
-    "setuptools",
-]
-build-backend = "setuptools.build_meta"
+requires = ["scikit-build-core>=0.9"]
 
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "jpype1"
@@ -17,7 +15,7 @@ maintainers = [
 description = "A Python to Java bridge"
 readme = "README.rst"
 requires-python = ">=3.8"
-license = {text = "License :: OSI Approved :: Apache Software License"}
+license = "Apache-2.0"
 classifiers = [
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.8',
@@ -66,3 +64,24 @@ module = [
     "jedi.access",
 ]
 ignore_missing_imports = true
+
+[tool.setuptools]
+packages = ["jpype", "jpype._pyinstaller"]
+package-dir={'jpype' = 'jpype'}
+package-data={'jpype' = ['*.pyi']}
+# todo: this is still experimental
+#ext-modules=["setup.jpypeLib", "setup.jpypeJar"]
+platforms=[
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: POSIX',
+    'Operating System :: Unix',
+    'Operating System :: MacOS',
+]
+
+[tool.setuptools.cmdclass]
+build_ext = "setupext.build_ext.BuildExtCommand"
+develop = "setupext.develop.Develop"
+sdist = "setupext.sdist.BuildSourceDistribution"
+test_java = "setupext.test_java.TestJavaCommand"
+
+
