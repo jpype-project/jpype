@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
 project(jpype-native)
 
+option(ENABLE_TRACING "Enable tracing in the extension" OFF)
+option(ENABLE_COVERAGE "Enable " OFF)
+option(ENABLE_BUILD_JAR "Enable building of the Java JAR" ON)
+
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
@@ -11,11 +15,31 @@ include(UseJava)  # or include(Java) in older setups
 
 # jar
 file(GLOB_RECURSE JAVA_SOURCES "native/jpype_module/*.java")
+set(SOME_DEP_JAR="asm-8.0.1.jar") # tODO: test
+# todo: add fallback jni.h in case it aint found (no jdk required, or not found).
 add_jar(jpype_jar
         SOURCES ${JAVA_SOURCES}
         INCLUDE_JARS ${SOME_DEP_JAR}
         OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}"
 )
+
+if(ENABLE_TRACING)
+    add_compile_definitions(JP_TRACING_ENABLE)
+endif()
+
+if(ENABLE_COVERAGE)
+    add_compile_definitions(JP_INSTRUMENTATION)
+    # Enable debug symbols
+    add_compile_options(-ggdb)
+
+    # Enable coverage instrumentation (GCC/Clang)
+    add_compile_options(--coverage -ftest-coverage)
+    add_link_options(--coverage)
+endif()
+
+if(ENABLE_BUILD_JAR)
+    # your custom commands to build the jar
+endif()
 
 
 # C++ Python extension
