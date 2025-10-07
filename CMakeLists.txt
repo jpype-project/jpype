@@ -8,20 +8,22 @@ option(ENABLE_BUILD_JAR "Enable building of the Java JAR" ON)
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
-find_package(Java REQUIRED COMPONENTS Development)
+find_package(Java REQUIRED)# COMPONENTS Development)
+# todo: add fallback jni.h in case it aint found (no jdk required, or not found).
+set(JNI_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/native/jni_include" ${JNI_INCLUDE_DIRS})
 find_package(JNI REQUIRED)  # if you need the native interface
-
+message("JAVA_INCLUDE_PATH: ${JNI}")
 include(UseJava)  # or include(Java) in older setups
 
-# jar
-file(GLOB_RECURSE JAVA_SOURCES "native/jpype_module/*.java")
-set(SOME_DEP_JAR="asm-8.0.1.jar") # tODO: test
-# todo: add fallback jni.h in case it aint found (no jdk required, or not found).
-add_jar(jpype_jar
-        SOURCES ${JAVA_SOURCES}
-        INCLUDE_JARS ${SOME_DEP_JAR}
-        OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}"
-)
+if(ENABLE_BUILD_JAR)
+    file(GLOB_RECURSE JAVA_SOURCES "native/jpype_module/*.java")
+    set(SOME_DEP_JAR="asm-8.0.1.jar") # tODO: test
+    add_jar(jpype_jar
+            SOURCES ${JAVA_SOURCES}
+            INCLUDE_JARS ${SOME_DEP_JAR}
+            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}"
+    )
+endif()
 
 if(ENABLE_TRACING)
     add_compile_definitions(JP_TRACING_ENABLE)
@@ -36,11 +38,6 @@ if(ENABLE_COVERAGE)
     add_compile_options(--coverage -ftest-coverage)
     add_link_options(--coverage)
 endif()
-
-if(ENABLE_BUILD_JAR)
-    # your custom commands to build the jar
-endif()
-
 
 # C++ Python extension
 include_directories(
