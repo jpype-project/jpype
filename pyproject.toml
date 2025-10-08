@@ -77,9 +77,9 @@ platforms=[
 
 [tool.scikit-build]
 build.verbose = true
-logging.level = "DEBUG"
+logging.level = "INFO"
 wheel.packages = ["jpype"]
-
+editable.mode = "inplace"
 #sdist.include = [
 #    "jpype/**/*.py[i]",
 #]
