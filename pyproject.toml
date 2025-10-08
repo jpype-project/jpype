@@ -73,8 +73,9 @@ testpaths = ["test", "jpype/_pyinstaller"]
 build.verbose = true
 logging.level = "INFO"
 wheel.packages = ["jpype", "jpype._pyinstaller"]
-#editable.mode = "inplace"
-editable.rebuild = true
+editable.mode = "inplace"
+# todo: try out automatic rebuild feature.
+#editable.rebuild = true
 #sdist.include = [
 #    "jpype/**/*.py[i]",
 #]
