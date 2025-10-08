@@ -1,7 +1,5 @@
 path_classifiers:
    test:
-     - setup.py
-     - setupext
      - test
      - examples
 
@@ -12,7 +10,7 @@ extraction:
    cpp:
        index:
            build_command: 
-             - python3 setup.py build
+             - pip install .
 
    java:
        index:

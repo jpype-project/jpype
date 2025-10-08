@@ -2,22 +2,25 @@ cmake_minimum_required(VERSION 3.20)
 project(jpype-native)
 
 option(ENABLE_TRACING "Enable tracing in the extension" OFF)
-option(ENABLE_COVERAGE "Enable " OFF)
+option(ENABLE_COVERAGE "Enable compilation for coverage measurement" OFF)
 option(ENABLE_BUILD_JAR "Enable building of the Java JAR" ON)
-
-set(CMAKE_CXX_STANDARD 11)
+# Optionally set Python GIL disabled flag
+# set(PY_GIL_DISABLED ON)
+set(CMAKE_CXX_STANDARD 14)
 
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 find_package(Java REQUIRED)# COMPONENTS Development)
 # todo: add fallback jni.h in case it aint found (no jdk required, or not found).
 set(JNI_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/native/jni_include" ${JNI_INCLUDE_DIRS})
 find_package(JNI REQUIRED)  # if you need the native interface
-message("JAVA_INCLUDE_PATH: ${JNI}")
 include(UseJava)  # or include(Java) in older setups
+message(DEBUG "JAVA_INCLUDE_PATH: ${JNI}")
+
 
 if(ENABLE_BUILD_JAR)
-    file(GLOB_RECURSE JAVA_SOURCES "native/jpype_module/*.java")
-    set(SOME_DEP_JAR="asm-8.0.1.jar") # tODO: test
+    message("build jar")
+    file(GLOB_RECURSE JAVA_SOURCES "native/jpype_module/src/main/java/*.java")
+    set(SOME_DEP_JAR="asm-8.0.1.jar") # tODO: test lib gets included.
     add_jar(jpype_jar
             SOURCES ${JAVA_SOURCES}
             INCLUDE_JARS ${SOME_DEP_JAR}
@@ -30,12 +33,23 @@ if(ENABLE_TRACING)
 endif()
 
 if(ENABLE_COVERAGE)
+    if(NOT CMAKE_BUILD_TYPE)
+        message(STATUS "ENABLE_COVERAGE set — forcing Debug build for coverage correctness")
+        set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    elseif(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(WARNING "ENABLE_COVERAGE set but CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}; coverage may be unreliable")
+    endif()
+
     add_compile_definitions(JP_INSTRUMENTATION)
+    message(STATUS "Adding coverage instrumentation flags")
+    if(MSVC)
+        warn("Coverage not supported on windows.")
+    endif()
     # Enable debug symbols
     add_compile_options(-ggdb)
 
     # Enable coverage instrumentation (GCC/Clang)
-    add_compile_options(--coverage -ftest-coverage)
+    add_compile_options(-O0 --coverage -ftest-coverage)
     add_link_options(--coverage)
 endif()
 
@@ -105,4 +119,36 @@ set(JPYPE_NATIVE_SRC
 )
 
 Python3_add_library(_jpype SHARED ${JPYPE_NATIVE_SRC})
-target_link_libraries(_jpype ${PYTHON_LIBRARIES})
+target_link_libraries(_jpype PRIVATE ${PYTHON_LIBRARIES})
+
+# Apply Windows-specific configuration
+if(WIN32)
+    # todo set debug var conditional on build_Type?
+    config_windows(_jpype ON)   # ON = debug, OFF = release
+else()
+    # Additional libraries for non-Windows
+    target_link_libraries(_jpype PRIVATE dl)
+endif()
+
+
+# Set target properties for scikit-build export
+set_target_properties(_jpype PROPERTIES
+        PREFIX ""  # remove 'lib' prefix
+        #LIBRARY_OUTPUT_DIRECTORY "${JPYPE_WHEEL_OUTPUT_DIR}"
+        #LIBRARY_OUTPUT_DIRECTORY "$<$<CONFIG:Debug>:${JPYPE_WHEEL_OUTPUT_DIR}/Debug>"
+        #LIBRARY_OUTPUT_DIRECTORY_RELEASE "$<$<CONFIG:Release>:${JPYPE_WHEEL_OUTPUT_DIR}/Release>"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${Python3_SITEARCH}"
+)
+
+# Only stage the extension into the wheel if scikit-build-core is building
+if(DEFINED SKBUILD)
+    message("installing _jpype")
+    install(TARGETS _jpype
+            LIBRARY DESTINATION ${SKBUILD_PLATLIB_DIR}   # Linux/macOS
+            RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}   # Windows
+    )
+else ()
+    message("fuck")
+endif()
+
+# todo: install jar in wheel
