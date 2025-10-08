@@ -14,17 +14,33 @@ find_package(Java REQUIRED)# COMPONENTS Development)
 set(JNI_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/native/jni_include" ${JNI_INCLUDE_DIRS})
 find_package(JNI REQUIRED)  # if you need the native interface
 include(UseJava)  # or include(Java) in older setups
-message(DEBUG "JAVA_INCLUDE_PATH: ${JNI}")
+message("JAVA_INCLUDE_PATH: ${JNI}")
 
+if(SKBUILD)
+    message("skbuild")
+    set(DEST_JAR ${SKBUILD_DATA_DIR})
+    set(DEST_EXTENSION "${CMAKE_BINARY_DIR}/${Python3_SITEARCH}")
+else()
+    message("no skbuild")
+    # TODO: define sane destinations for the pure cmake invocation
+    set(DEST_JAR ${CMAKE_CURRENT_BINARY_DIR})
+    set(DEST_EXTENSION ${CMAKE_CURRENT_BINARY_DIR})
+endif()
 
 if(ENABLE_BUILD_JAR)
     message("build jar")
     file(GLOB_RECURSE JAVA_SOURCES "native/jpype_module/src/main/java/*.java")
-    set(SOME_DEP_JAR="asm-8.0.1.jar") # tODO: test lib gets included.
-    add_jar(jpype_jar
+    #set(SOME_DEP_JAR="asm-8.0.1.jar") # tODO: test lib gets included.
+    set(JAR_FILE "org.jpype") # note: .jar suffix will be appended by add_jar
+    add_jar(${JAR_FILE}
             SOURCES ${JAVA_SOURCES}
-            INCLUDE_JARS ${SOME_DEP_JAR}
+            #INCLUDE_JARS ${SOME_DEP_JAR}
             OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}"
+    )
+    # install in Jar in JPypes Python package data directory.
+    install(FILES
+            ${CMAKE_CURRENT_BINARY_DIR}/${JAR_FILE}.jar
+            DESTINATION ${DEST_JAR}
     )
 endif()
 
@@ -137,18 +153,18 @@ set_target_properties(_jpype PROPERTIES
         #LIBRARY_OUTPUT_DIRECTORY "${JPYPE_WHEEL_OUTPUT_DIR}"
         #LIBRARY_OUTPUT_DIRECTORY "$<$<CONFIG:Debug>:${JPYPE_WHEEL_OUTPUT_DIR}/Debug>"
         #LIBRARY_OUTPUT_DIRECTORY_RELEASE "$<$<CONFIG:Release>:${JPYPE_WHEEL_OUTPUT_DIR}/Release>"
-        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${Python3_SITEARCH}"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${Python3_SITEARCH}" # todo: this is only desired for building wheel, not during development
 )
 
 # Only stage the extension into the wheel if scikit-build-core is building
-if(DEFINED SKBUILD)
+if(SKBUILD)
     message("installing _jpype")
     install(TARGETS _jpype
             LIBRARY DESTINATION ${SKBUILD_PLATLIB_DIR}   # Linux/macOS
             RUNTIME DESTINATION ${SKBUILD_PLATLIB_DIR}   # Windows
     )
-else ()
-    message("fuck")
+else()
+    message("no skbuild env")
 endif()
 
 # todo: install jar in wheel
