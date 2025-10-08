@@ -64,22 +64,17 @@ module = [
 ]
 ignore_missing_imports = true
 
-[tool.setuptools]
-packages = ["jpype", "jpype._pyinstaller"]
-package-dir={'jpype' = 'jpype'}
-package-data={'jpype' = ['*.pyi']}
-platforms=[
-    'Operating System :: Microsoft :: Windows',
-    'Operating System :: POSIX',
-    'Operating System :: Unix',
-    'Operating System :: MacOS',
-]
+[tool.pytest]
+addopts = "--verbose"
+testpaths = ["test", "jpype/_pyinstaller"]
+
 
 [tool.scikit-build]
 build.verbose = true
 logging.level = "INFO"
-wheel.packages = ["jpype"]
-editable.mode = "inplace"
+wheel.packages = ["jpype", "jpype._pyinstaller"]
+#editable.mode = "inplace"
+editable.rebuild = true
 #sdist.include = [
 #    "jpype/**/*.py[i]",
 #]
