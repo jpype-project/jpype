@@ -4,7 +4,6 @@ project(jpype-native)
 option(ENABLE_TRACING "Enable tracing in the extension" OFF)
 option(ENABLE_COVERAGE "Enable compilation for coverage measurement" OFF)
 option(ENABLE_BUILD_JAR "Enable building of the Java JAR" ON)
-option(ENABLE_JAVA_TEST_HARNESS "Enable building Java test classes for test suite." ON)
 # Optionally set Python GIL disabled flag
 # set(PY_GIL_DISABLED ON)
 set(CMAKE_CXX_STANDARD 14)
@@ -42,14 +41,6 @@ if(ENABLE_BUILD_JAR)
     )
 endif()
 
-
-if(ENABLE_JAVA_TEST_HARNESS)
-    # todo: compile with ant or javac directly into test/jpypetest/classes
-    # todo: what would be the downside of creating a test jar instead? does it hinder development process, compilation has to be performed anyways?
-    add_custom_target(jpypetest_java ALL
-        COMMAND ant WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/test
-    )
-endif()
 
 if(ENABLE_TRACING)
     add_compile_definitions(JP_TRACING_ENABLE)
