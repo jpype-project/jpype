@@ -62,7 +62,7 @@ module = [
     "jedi",
     "jedi.access",
 ]
-ignore_missing_imports = true
+#ignore_missing_imports = true
 
 [tool.pytest]
 addopts = "--verbose"
