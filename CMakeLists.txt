@@ -138,9 +138,9 @@ target_link_libraries(_jpype PRIVATE ${PYTHON_LIBRARIES})
 # Apply Windows-specific configuration
 if(WIN32)
     # Define WIN32 macro (Windows-specific code)
-    target_compile_definitions(${target} PRIVATE WIN32=1)
+    target_compile_definitions(_jpype PRIVATE WIN32=1)
     # Runtime and exception flags
-    target_compile_options(${target} PRIVATE /O2 /EHsc /MD)
+    target_compile_options(_jpype PRIVATE /O2 /EHsc /MD)
 else()
     # Additional libraries for non-Windows
     target_link_libraries(_jpype PRIVATE
