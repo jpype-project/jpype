@@ -19,7 +19,6 @@ include(UseJava)
 if(SKBUILD)
     message("SKBuild invocation")
     set(DEST_JAR ${SKBUILD_PLATLIB_DIR}/jpype) # jar should go to JPype Python package.
-    # todo: the make_editable hook does not deal with non-pythonic files. We would need to handle it as a datafile.
     set(DEST_EXTENSION ${SKBUILD_PLATLIB_DIR})
 else()
     # in-place build, set output to cmakes output dir.
@@ -180,19 +179,11 @@ set_target_properties(_jpype PROPERTIES
 
 # Only stage the extension into the wheel if scikit-build-core is building
 if(SKBUILD)
-    message("install _jpype extension")
+    message(DEBUG "install _jpype extension")
     install(TARGETS _jpype
             LIBRARY DESTINATION ${DEST_EXTENSION}
             RUNTIME DESTINATION ${DEST_EXTENSION}
     )
-
-    if (ENABLE_BUILD_JAR)
-        message(DEBUG "depend jar")
-        # optionally make native targets depend on the Ant artifacts
-        #add_dependencies(_jpype myapp_jar)
-    endif ()
-    
 else()
-    message("no skbuild env")
+    message(DEBUG "no skbuild env")
 endif()
-#add_dependencies(_jpype copy_jar)
