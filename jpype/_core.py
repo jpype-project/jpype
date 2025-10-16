@@ -284,6 +284,7 @@ def startJVM(
         # Not specified at all, use the default classpath.
         classpath = _classpath.getClassPath()
 
+# todo: this should be activated now.
 # Code for 1.6 release when we add module support
 #    # Modulepath handling
 #    old_modulepath = _getOption(jvm_args, "--module-path", _classpath._SEP)
@@ -298,11 +299,12 @@ def startJVM(
 #        extra_jvm_args += ['--module-path=%s'%mp ]
 
     # Get the support library
-    support_lib = os.path.join(os.path.dirname(
-        os.path.dirname(__file__)), "org.jpype.jar")
-    if not os.path.exists(support_lib):
+    support_lib = Path(__file__).resolve().parent / "org.jpype.jar"
+    if not support_lib.exists():
         raise RuntimeError(
-            "Unable to find org.jpype.jar support library at " + support_lib)
+            f"Unable to find org.jpype.jar support library at {support_lib}")
+    # convert to string for passing to JVM instantiation.
+    support_lib = str(support_lib)
 
     system_class_loader = _getOption(
         jvm_args, "-Djava.system.class.loader", keep=True)
