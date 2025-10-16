@@ -29,54 +29,36 @@ endif()
 
 if(ENABLE_BUILD_JAR)
     message("build jar")
-#    file(GLOB_RECURSE JAVA_SOURCES "native/jpype_module/src/main/java/*.java")
-#    #set(SOME_DEP_JAR="asm-8.0.1.jar") # tODO: test lib gets included.
-#    set(JAR_FILE "org.jpype") # note: .jar suffix will be appended by add_jar
-#    add_jar(${JAR_FILE}
-#            SOURCES ${JAVA_SOURCES}
-#            #INCLUDE_JARS ${SOME_DEP_JAR}
-#            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}"
-#    )
+
     find_program(ANT_EXECUTABLE ant REQUIRED)
-    #set(JAR_OUTPUT "${CMAKE_BINARY_DIR}/jpype/org.jpype.jar")
+    # this is the build artifact of Ant.
     set(JAR_OUTPUT "${CMAKE_SOURCE_DIR}/native/build/lib/org.jpype.jar")
 
-    # todo: we also need to copy the JAR_OUTPUT to CMAKE_CURRENT_BINARY_DIR
+    # we also need to copy the JAR_OUTPUT to CMAKE_CURRENT_BINARY_DIR
     add_custom_command(
             OUTPUT "${JAR_OUTPUT}"
             COMMAND "${ANT_EXECUTABLE}" -f "${CMAKE_SOURCE_DIR}/native/build.xml"
-            #BYPRODUCTS "${JAR_OUTPUT}"
             WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
             COMMENT "Building ${JAR_OUTPUT} with Apache Ant"
     )
     # link ant command with output jar
     add_custom_target(jpype_jar ALL DEPENDS "${JAR_OUTPUT}")
 
+    # Copy the Ant build artifact to current cmake output dir (required for editable installs).
     set(DEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/org.jpype.jar")
-
-    # Copy as a build step
     add_custom_command(
             OUTPUT "${DEST_FILE}"
             COMMAND ${CMAKE_COMMAND} -E copy "${JAR_OUTPUT}" "${DEST_FILE}"
             DEPENDS "${JAR_OUTPUT}"   # ensures it only runs after the source exists
             COMMENT "Copying ${JAR_OUTPUT} to internal destination"
     )
-
-    # Step 2: Wrap in a target so other targets can depend on it
     add_custom_target(copy_jar ALL DEPENDS "${DEST_FILE}")
-#    # Step 3: Register the output for installation
-#    install(
-#            FILES "${JAR_OUTPUT}"
-#            DESTINATION ${DEST_JAR}
-#    )
-#
-#
-#
-#    # install in Jar in JPypes Python package data directory.
-#    install(FILES
-#            ${CMAKE_SOURCE_DIR}/native/build/lib/org.jpype.jar
-#            DESTINATION ${DEST_JAR}
-#    )
+
+    # finally install the jar to DEST_JAR, which makes it available for wheel building.
+    install(
+            FILES "${DEST_FILE}"
+            DESTINATION ${DEST_JAR}
+    )
 endif()
 
 
@@ -205,7 +187,7 @@ if(SKBUILD)
     )
 
     if (ENABLE_BUILD_JAR)
-        message("depend jar")
+        message(DEBUG "depend jar")
         # optionally make native targets depend on the Ant artifacts
         #add_dependencies(_jpype myapp_jar)
     endif ()
@@ -213,4 +195,4 @@ if(SKBUILD)
 else()
     message("no skbuild env")
 endif()
-add_dependencies(_jpype copy_jar)
+#add_dependencies(_jpype copy_jar)
