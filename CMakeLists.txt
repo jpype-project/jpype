@@ -11,14 +11,15 @@ set(CMAKE_CXX_STANDARD 14)
 find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 find_package(Java REQUIRED COMPONENTS Development)
 # todo: add fallback jni.h in case it aint found (no jdk required, or not found).
-set(JNI_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/native/jni_include" ${JNI_INCLUDE_DIRS})
+#set(JAVA_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/native/jni_include" ${JAVA_INCLUDE_PATH})
 find_package(JNI REQUIRED)
 include(UseJava)
-message("JAVA_INCLUDE_PATH: ${JNI}")
+
 
 if(SKBUILD)
     message("SKBuild invocation")
     set(DEST_JAR ${SKBUILD_PLATLIB_DIR}/jpype) # jar should go to JPype Python package.
+    # todo: the make_editable hook does not deal with non-pythonic files. We would need to handle it as a datafile.
     set(DEST_EXTENSION ${SKBUILD_PLATLIB_DIR})
 else()
     # in-place build, set output to cmakes output dir.
@@ -36,25 +37,46 @@ if(ENABLE_BUILD_JAR)
 #            #INCLUDE_JARS ${SOME_DEP_JAR}
 #            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}"
 #    )
-    # locate Ant
     find_program(ANT_EXECUTABLE ant REQUIRED)
+    #set(JAR_OUTPUT "${CMAKE_BINARY_DIR}/jpype/org.jpype.jar")
+    set(JAR_OUTPUT "${CMAKE_SOURCE_DIR}/native/build/lib/org.jpype.jar")
 
-    # example: drive an existing Ant build.xml
-    add_custom_target(
-            run_ant ALL
-            COMMAND ${ANT_EXECUTABLE} -f ${CMAKE_SOURCE_DIR}/native/build.xml
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-            COMMENT "Building JPype Java support library with Apache Ant"
+    # todo: we also need to copy the JAR_OUTPUT to CMAKE_CURRENT_BINARY_DIR
+    add_custom_command(
+            OUTPUT "${JAR_OUTPUT}"
+            COMMAND "${ANT_EXECUTABLE}" -f "${CMAKE_SOURCE_DIR}/native/build.xml"
+            #BYPRODUCTS "${JAR_OUTPUT}"
+            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+            COMMENT "Building ${JAR_OUTPUT} with Apache Ant"
+    )
+    # link ant command with output jar
+    add_custom_target(jpype_jar ALL DEPENDS "${JAR_OUTPUT}")
+
+    set(DEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/org.jpype.jar")
+
+    # Copy as a build step
+    add_custom_command(
+            OUTPUT "${DEST_FILE}"
+            COMMAND ${CMAKE_COMMAND} -E copy "${JAR_OUTPUT}" "${DEST_FILE}"
+            DEPENDS "${JAR_OUTPUT}"   # ensures it only runs after the source exists
+            COMMENT "Copying ${JAR_OUTPUT} to internal destination"
     )
 
-    # optionally make native targets depend on the Ant artifacts
-    #add_dependencies(my_native_target run_ant)
-
-    # install in Jar in JPypes Python package data directory.
-    install(FILES
-            ${CMAKE_SOURCE_DIR}/native/build/lib/org.jpype.jar
-            DESTINATION ${DEST_JAR}
-    )
+    # Step 2: Wrap in a target so other targets can depend on it
+    add_custom_target(copy_jar ALL DEPENDS "${DEST_FILE}")
+#    # Step 3: Register the output for installation
+#    install(
+#            FILES "${JAR_OUTPUT}"
+#            DESTINATION ${DEST_JAR}
+#    )
+#
+#
+#
+#    # install in Jar in JPypes Python package data directory.
+#    install(FILES
+#            ${CMAKE_SOURCE_DIR}/native/build/lib/org.jpype.jar
+#            DESTINATION ${DEST_JAR}
+#    )
 endif()
 
 
@@ -176,11 +198,19 @@ set_target_properties(_jpype PROPERTIES
 
 # Only stage the extension into the wheel if scikit-build-core is building
 if(SKBUILD)
-    message("installing _jpype")
+    message("install _jpype extension")
     install(TARGETS _jpype
             LIBRARY DESTINATION ${DEST_EXTENSION}
             RUNTIME DESTINATION ${DEST_EXTENSION}
     )
+
+    if (ENABLE_BUILD_JAR)
+        message("depend jar")
+        # optionally make native targets depend on the Ant artifacts
+        #add_dependencies(_jpype myapp_jar)
+    endif ()
+    
 else()
     message("no skbuild env")
 endif()
+add_dependencies(_jpype copy_jar)
