@@ -17,26 +17,42 @@ include(UseJava)
 message("JAVA_INCLUDE_PATH: ${JNI}")
 
 if(SKBUILD)
-    set(DEST_JAR ${SKBUILD_PLATLIB_DIR}/jpype) # jar should go to jpype python package.
+    message("SKBuild invocation")
+    set(DEST_JAR ${SKBUILD_PLATLIB_DIR}/jpype) # jar should go to JPype Python package.
     set(DEST_EXTENSION ${SKBUILD_PLATLIB_DIR})
 else()
+    # in-place build, set output to cmakes output dir.
     set(DEST_JAR ${CMAKE_CURRENT_BINARY_DIR})
     set(DEST_EXTENSION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
 if(ENABLE_BUILD_JAR)
     message("build jar")
-    file(GLOB_RECURSE JAVA_SOURCES "native/jpype_module/src/main/java/*.java")
-    #set(SOME_DEP_JAR="asm-8.0.1.jar") # tODO: test lib gets included.
-    set(JAR_FILE "org.jpype") # note: .jar suffix will be appended by add_jar
-    add_jar(${JAR_FILE}
-            SOURCES ${JAVA_SOURCES}
-            #INCLUDE_JARS ${SOME_DEP_JAR}
-            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}"
+#    file(GLOB_RECURSE JAVA_SOURCES "native/jpype_module/src/main/java/*.java")
+#    #set(SOME_DEP_JAR="asm-8.0.1.jar") # tODO: test lib gets included.
+#    set(JAR_FILE "org.jpype") # note: .jar suffix will be appended by add_jar
+#    add_jar(${JAR_FILE}
+#            SOURCES ${JAVA_SOURCES}
+#            #INCLUDE_JARS ${SOME_DEP_JAR}
+#            OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}"
+#    )
+    # locate Ant
+    find_program(ANT_EXECUTABLE ant REQUIRED)
+
+    # example: drive an existing Ant build.xml
+    add_custom_target(
+            run_ant ALL
+            COMMAND ${ANT_EXECUTABLE} -f ${CMAKE_SOURCE_DIR}/native/build.xml
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+            COMMENT "Building JPype Java support library with Apache Ant"
     )
+
+    # optionally make native targets depend on the Ant artifacts
+    #add_dependencies(my_native_target run_ant)
+
     # install in Jar in JPypes Python package data directory.
     install(FILES
-            ${CMAKE_CURRENT_BINARY_DIR}/${JAR_FILE}.jar
+            ${CMAKE_SOURCE_DIR}/native/build/lib/org.jpype.jar
             DESTINATION ${DEST_JAR}
     )
 endif()
