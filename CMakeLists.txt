@@ -160,6 +160,7 @@ if(WIN32)
     target_compile_definitions(_jpype PRIVATE WIN32=1)
     # Runtime and exception flags
     target_compile_options(_jpype PRIVATE /O2 /EHsc /MD)
+    set_target_properties(_jpype PROPERTIES SUFFIX ".pyd")
 else()
     # Additional libraries for non-Windows
     target_link_libraries(_jpype PRIVATE
