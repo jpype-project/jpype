@@ -44,7 +44,7 @@ if(ENABLE_BUILD_JAR)
     add_custom_target(jpype_jar ALL DEPENDS "${JAR_OUTPUT}")
 
     # Copy the Ant build artifact to current cmake output dir (required for editable installs).
-    set(DEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/org.jpype.jar")
+    set(DEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/jpype/org.jpype.jar")
     add_custom_command(
             OUTPUT "${DEST_FILE}"
             COMMAND ${CMAKE_COMMAND} -E copy "${JAR_OUTPUT}" "${DEST_FILE}"
