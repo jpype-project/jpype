@@ -215,7 +215,7 @@ message(STATUS "dest extension: ${DEST_EXTENSION}")
 #)
 
 install(TARGETS _jpype
-        RUNTIME DESTINATION "."
+        RUNTIME DESTINATION "foo"
         LIBRARY DESTINATION "."
         ARCHIVE DESTINATION "."
 )
