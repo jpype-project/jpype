@@ -157,6 +157,7 @@ target_link_libraries(_jpype PRIVATE Python3::Python)
 set_target_properties(_jpype PROPERTIES
         PREFIX ""  # remove 'lib' prefix
 )
+set_target_properties(_jpype PROPERTIES     OUTPUT_NAME "_jpype")
 
 #fixme: causes problems on osx (would need to build shared lib, not module.
 #set_target_properties(_jpype PROPERTIES VERSION "1.6.1.dev0")
@@ -171,7 +172,6 @@ if(WIN32)
     # Required: export all symbols for Python module
     set_target_properties(_jpype PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-    set_target_properties(_jpype PROPERTIES     OUTPUT_NAME "_jpype")
 
     # Ensure /MD and exception model are set
     target_compile_options(_jpype PRIVATE /O2 /EHsc /MD)
@@ -197,8 +197,19 @@ endif()
 #endif()
 
 # cross-platform install
+#install(TARGETS _jpype
+#        RUNTIME DESTINATION ${Python_SITELIB}  # Windows
+#        LIBRARY DESTINATION ${Python_SITELIB}  # Linux/macOS
+#        ARCHIVE DESTINATION ${Python_SITELIB}  # static archives if any
+#)
+get_target_property(name _jpype OUTPUT_NAME)
+get_target_property(prefix _jpype PREFIX)
+get_target_property(suffix _jpype SUFFIX)
+message(STATUS "name=${name} prefix=${prefix} suffix=${suffix}")
+
+message(STATUS "dest extension: ${DEST_EXTENSION}")
+
 install(TARGETS _jpype
-        RUNTIME DESTINATION ${Python_SITELIB}  # Windows
-        LIBRARY DESTINATION ${Python_SITELIB}  # Linux/macOS
-        ARCHIVE DESTINATION ${Python_SITELIB}  # static archives if any
+        RUNTIME DESTINATION ${DEST_EXTENSION}  # Windows
+        LIBRARY DESTINATION ${DEST_EXTENSION}  # Linux/macOS
 )
