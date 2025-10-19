@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.13.4)
 project(jpype-native)
 
 option(ENABLE_TRACING "Enable tracing in the extension" OFF)
@@ -158,14 +158,24 @@ target_link_libraries(_jpype PRIVATE ${PYTHON_LIBRARIES})
 if(WIN32)
     # Define WIN32 macro (Windows-specific code)
     target_compile_definitions(_jpype PRIVATE WIN32=1)
-    # Runtime and exception flags
-    target_compile_options(_jpype PRIVATE /O2 /EHsc /MD)
+    # Required: .pyd suffix
     set_target_properties(_jpype PROPERTIES SUFFIX ".pyd")
+
+    # Required: link python library
+    target_link_libraries(_jpype PRIVATE Python3::Python)
+
+    # Required: export all symbols for Python module
+    set_target_properties(_jpype PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
+    # Ensure /MD and exception model are set
+    target_compile_options(_jpype PRIVATE /O2 /EHsc /MD)
 else()
     # Additional libraries for non-Windows
     target_link_libraries(_jpype PRIVATE
             dl # dynamic linker
     )
+    # even on OSX Python uses .so suffix instead of .dylib
+    set_target_properties(_jpype PROPERTIES SUFFIX ".so")
 endif()
 
 
