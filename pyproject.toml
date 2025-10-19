@@ -72,7 +72,9 @@ testpaths = ["test", "jpype/_pyinstaller"]
 [tool.scikit-build]
 build.verbose = true
 logging.level = "INFO"
-wheel.packages = ["jpype", "jpype._pyinstaller"]
+#install = true # invoke cmakes install target by default.
+#install.components = ["default"]
+wheel.packages = ["jpype", "jpype._pyinstaller", "_jpype"]
 editable.mode = "inplace"
 # todo: try out automatic rebuild feature.
 #editable.rebuild = true
