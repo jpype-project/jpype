@@ -186,12 +186,15 @@ endif()
 
 
 # Only stage the extension into the wheel if scikit-build-core is building
-if(SKBUILD)
-    message(DEBUG "install _jpype extension")
-    install(TARGETS _jpype
-            LIBRARY DESTINATION ${DEST_EXTENSION}
-            RUNTIME DESTINATION ${DEST_EXTENSION}
-    )
-else()
-    message(DEBUG "no skbuild env")
-endif()
+#if(SKBUILD)
+#    message(DEBUG "install _jpype extension")
+#    install(TARGETS _jpype
+#            LIBRARY DESTINATION ${DEST_EXTENSION}
+#            RUNTIME DESTINATION ${DEST_EXTENSION}
+#    )
+#else()
+#    message(DEBUG "no skbuild env")
+#endif()
+# cross-platform install
+install(TARGETS _jpype
+        LIBRARY DESTINATION ${Python_SITELIB})
