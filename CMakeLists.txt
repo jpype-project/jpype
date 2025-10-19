@@ -209,7 +209,13 @@ message(STATUS "name=${name} prefix=${prefix} suffix=${suffix}")
 
 message(STATUS "dest extension: ${DEST_EXTENSION}")
 
+#install(TARGETS _jpype
+#        RUNTIME DESTINATION ${DEST_EXTENSION}  # Windows
+#        LIBRARY DESTINATION ${DEST_EXTENSION}  # Linux/macOS
+#)
+
 install(TARGETS _jpype
-        RUNTIME DESTINATION ${DEST_EXTENSION}  # Windows
-        LIBRARY DESTINATION ${DEST_EXTENSION}  # Linux/macOS
+        RUNTIME DESTINATION "."
+        LIBRARY DESTINATION "."
+        ARCHIVE DESTINATION "."
 )
