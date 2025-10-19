@@ -151,8 +151,8 @@ set(JPYPE_NATIVE_SRC
         native/python/pyjp_value.cpp
 )
 
-Python3_add_library(_jpype SHARED ${JPYPE_NATIVE_SRC})
-target_link_libraries(_jpype PRIVATE ${PYTHON_LIBRARIES})
+Python3_add_library(_jpype MODULE ${JPYPE_NATIVE_SRC})
+target_link_libraries(_jpype PRIVATE Python3::Python)
 
 # Apply Windows-specific configuration
 if(WIN32)
@@ -160,9 +160,6 @@ if(WIN32)
     target_compile_definitions(_jpype PRIVATE WIN32=1)
     # Required: .pyd suffix
     set_target_properties(_jpype PROPERTIES SUFFIX ".pyd")
-
-    # Required: link python library
-    target_link_libraries(_jpype PRIVATE Python3::Python)
 
     # Required: export all symbols for Python module
     set_target_properties(_jpype PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
