@@ -195,6 +195,10 @@ endif()
 #else()
 #    message(DEBUG "no skbuild env")
 #endif()
+
 # cross-platform install
 install(TARGETS _jpype
-        LIBRARY DESTINATION ${Python_SITELIB})
+        RUNTIME DESTINATION ${Python_SITELIB}  # Windows
+        LIBRARY DESTINATION ${Python_SITELIB}  # Linux/macOS
+        ARCHIVE DESTINATION ${Python_SITELIB}  # static archives if any
+)
