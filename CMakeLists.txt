@@ -158,7 +158,7 @@ set_target_properties(_jpype PROPERTIES
         PREFIX ""  # remove 'lib' prefix
 )
 
-set_target_properties(_jpype PROPERTIES VERSION 1.6.1)
+set_target_properties(_jpype PROPERTIES VERSION "1.6.1.dev0")
 
 # Apply Windows-specific configuration
 if(WIN32)
