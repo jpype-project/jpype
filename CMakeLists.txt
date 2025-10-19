@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13.4)
+cmake_minimum_required(VERSION 3.16)
 project(jpype-native)
 
 option(ENABLE_TRACING "Enable tracing in the extension" OFF)
@@ -169,6 +169,8 @@ if(WIN32)
 
     # Required: export all symbols for Python module
     set_target_properties(_jpype PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
+    set_target_properties(_jpype PROPERTIES     OUTPUT_NAME "_jpype")
 
     # Ensure /MD and exception model are set
     target_compile_options(_jpype PRIVATE /O2 /EHsc /MD)
