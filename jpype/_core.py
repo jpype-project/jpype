@@ -299,7 +299,7 @@ def startJVM(
 #        extra_jvm_args += ['--module-path=%s'%mp ]
 
     # Get the support library
-    support_lib = Path(__file__).resolve().parent / "org.jpype.jar"
+    support_lib = Path(__file__).resolve().parent.parent / "org.jpype.jar"
     if not support_lib.exists():
         raise RuntimeError(
             f"Unable to find org.jpype.jar support library at {support_lib}")
