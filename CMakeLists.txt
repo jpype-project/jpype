@@ -153,6 +153,12 @@ set(JPYPE_NATIVE_SRC
 
 Python3_add_library(_jpype MODULE ${JPYPE_NATIVE_SRC})
 target_link_libraries(_jpype PRIVATE Python3::Python)
+# Set target properties for scikit-build export
+set_target_properties(_jpype PROPERTIES
+        PREFIX ""  # remove 'lib' prefix
+)
+
+set_target_properties(_jpype VERSION 1.6.1)
 
 # Apply Windows-specific configuration
 if(WIN32)
@@ -175,15 +181,6 @@ else()
     set_target_properties(_jpype PROPERTIES SUFFIX ".so")
 endif()
 
-
-# Set target properties for scikit-build export
-set_target_properties(_jpype PROPERTIES
-        PREFIX ""  # remove 'lib' prefix
-        #LIBRARY_OUTPUT_DIRECTORY "${JPYPE_WHEEL_OUTPUT_DIR}"
-        #LIBRARY_OUTPUT_DIRECTORY "$<$<CONFIG:Debug>:${JPYPE_WHEEL_OUTPUT_DIR}/Debug>"
-        #LIBRARY_OUTPUT_DIRECTORY_RELEASE "$<$<CONFIG:Release>:${JPYPE_WHEEL_OUTPUT_DIR}/Release>"
-        #LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${Python3_SITEARCH}" # todo: this is only desired for building wheel, not during development
-)
 
 # Only stage the extension into the wheel if scikit-build-core is building
 if(SKBUILD)
