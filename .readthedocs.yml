@@ -24,4 +24,4 @@ build:
     python: "3.12"
   os: ubuntu-lts-latest
   apt_packages:
-    - openjdk-11-jdk
+    - openjdk-11-jdk ant
