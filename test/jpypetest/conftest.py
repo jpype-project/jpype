@@ -39,17 +39,12 @@ def pytest_collection_modifyitems(config, items):
     if config.getoption("--fast"):
         common.fast = True
 
-
-@pytest.fixture(scope="class")
-def common_opts(request):
-    request.cls._classpath = request.config.getoption("--classpath")
-    request.cls._convertStrings = request.config.getoption("--convertStrings")
-    request.cls._jacoco = request.config.getoption("--jacoco")
-    request.cls._checkjni = request.config.getoption("--checkjni")
+convertStrings = None
 
 @pytest.fixture(scope="session")
 def jvm_session(request):
     """Starts a JVM with testing jars on classpath and additional options."""
+    global convertStrings
     import _jpype
     from pathlib import Path
     import logging
@@ -68,7 +63,7 @@ def jvm_session(request):
 
 
     _classpath = request.config.getoption("--classpath")
-    _convertStrings = request.config.getoption("--convertStrings")
+    convertStrings = request.config.getoption("--convertStrings")
     _jacoco = request.config.getoption("--jacoco")
     _checkjni = request.config.getoption("--checkjni")
 
@@ -86,7 +81,7 @@ def jvm_session(request):
         # This needs to be relative to run location
         jpype.addClassPath(Path(_classpath).resolve())
         warnings.warn("using jar instead of thunks")
-    if _convertStrings:
+    if convertStrings:
         warnings.warn("using deprecated convertStrings")
     if _jacoco:
         args.append(
@@ -99,4 +94,4 @@ def jvm_session(request):
     args.append(classpath_arg)
     _jpype.enableStacktraces(True)
     jpype.startJVM(jvm_path, *args,
-                   convertStrings=_convertStrings)
+                   convertStrings=convertStrings)

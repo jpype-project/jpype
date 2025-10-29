@@ -18,9 +18,7 @@
 from functools import lru_cache
 
 import pytest
-import _jpype
 import jpype
-import logging
 from os import path
 import unittest  # Extensively used as common.unittest.
 
@@ -91,7 +89,6 @@ class UseFunc(object):
         setattr(self.obj, self.attr, self.orig)
 
 
-@pytest.mark.usefixtures("common_opts")
 @pytest.mark.usefixtures("jvm_session")
 class JPypeTestCase(unittest.TestCase):
     def setUp(self):
