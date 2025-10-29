@@ -50,7 +50,7 @@ def common_opts(request):
 @pytest.fixture(scope="session")
 def jvm_session(request):
     import _jpype
-    from os import path
+    from pathlib import Path
     import logging
 
     assert not jpype.isJVMStarted()
@@ -67,8 +67,9 @@ def jvm_session(request):
     _jacoco = request.config.getoption("--jacoco")
     _checkjni = request.config.getoption("--checkjni")
 
-    root = path.dirname(path.abspath(path.dirname(__file__)))
-    jpype.addClassPath(path.join(root, 'classes'))
+    #root = path.dirname(path.abspath(path.dirname(__file__)))
+    root = Path(__file__).parent.resolve()
+    jpype.addClassPath(root / 'classes')
     jvm_path = jpype.getDefaultJVMPath()
     logger = logging.getLogger(__name__)
     logger.info("Running testsuite using JVM %s" % jvm_path)

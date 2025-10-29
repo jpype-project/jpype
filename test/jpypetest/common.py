@@ -134,6 +134,8 @@ class JPypeTestCase(unittest.TestCase):
             #JPypeTestCase.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))
             jpype.startJVM(jvm_path, *args,
                            convertStrings=self._convertStrings)
+        else:
+            raise RuntimeError("should be started by fixture (temp)")
         self.jpype = jpype.JPackage('jpype')
 
     def tearDown(self):
