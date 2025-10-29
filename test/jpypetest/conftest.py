@@ -49,9 +49,14 @@ def common_opts(request):
 
 @pytest.fixture(scope="session")
 def jvm_session(request):
+    """Starts a JVM with testing jars on classpath and additional options."""
     import _jpype
     from pathlib import Path
     import logging
+    import warnings
+
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
 
     assert not jpype.isJVMStarted()
     try:
@@ -67,11 +72,10 @@ def jvm_session(request):
     _jacoco = request.config.getoption("--jacoco")
     _checkjni = request.config.getoption("--checkjni")
 
-    #root = path.dirname(path.abspath(path.dirname(__file__)))
     root = Path(__file__).parent.resolve()
-    jpype.addClassPath(root / 'classes')
+    print("root: %s", root)
+    jpype.addClassPath(root / '../classes')
     jvm_path = jpype.getDefaultJVMPath()
-    logger = logging.getLogger(__name__)
     logger.info("Running testsuite using JVM %s" % jvm_path)
     classpath_arg = "-Djava.class.path=%s"
     args = ["-ea", "-Xmx256M", "-Xms16M"]
@@ -80,24 +84,20 @@ def jvm_session(request):
     # TODO: enabling this check crashes the JVM with: FATAL ERROR in native method: Bad global or local ref passed to JNI
     # "-Xcheck:jni",
     if _classpath:
-        from pathlib import Path
-        import warnings
         # This needs to be relative to run location
         jpype.addClassPath(Path(_classpath).resolve())
         warnings.warn("using jar instead of thunks")
     if _convertStrings:
-        import warnings
         warnings.warn("using deprecated convertStrings")
     if _jacoco:
-        import warnings
         args.append(
             "-javaagent:lib/org.jacoco.agent-0.8.5-runtime.jar=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
         warnings.warn("using JaCoCo")
-    jpype.addClassPath(path.join(root, "../lib/*"))
-    jpype.addClassPath(path.join(root, "jar/*"))
+
+    jpype.addClassPath(root / "../../lib/*")  # jars downloaded by ivy to root lib directory.
+    jpype.addClassPath(root / "../jar/*") # jars in test directory.
     classpath_arg %= jpype.getClassPath()
     args.append(classpath_arg)
     _jpype.enableStacktraces(True)
-    #JPypeTestCase.str_conversion = eval(os.getenv('JPYPE_STR_CONVERSION', 'True'))
     jpype.startJVM(jvm_path, *args,
                    convertStrings=_convertStrings)
