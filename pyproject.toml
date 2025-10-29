@@ -63,7 +63,8 @@ module = [
     "jedi",
     "jedi.access",
 ]
-#ignore_missing_imports = true
+
+ignore_missing_imports = true # todo: this should be false, add a proper _jpype.pyi file
 
 [tool.pytest]
 addopts = "--verbose"
