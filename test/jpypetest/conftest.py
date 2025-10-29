@@ -62,10 +62,10 @@ def jvm_session(request):
         pass
 
 
-    _classpath = request.config.getoption("--classpath")
+    classpath = request.config.getoption("--classpath")
     convertStrings = request.config.getoption("--convertStrings")
-    _jacoco = request.config.getoption("--jacoco")
-    _checkjni = request.config.getoption("--checkjni")
+    jacoco = request.config.getoption("--jacoco")
+    checkjni = request.config.getoption("--checkjni")
 
     root = Path(__file__).parent.resolve()
     jpype.addClassPath(root / '../classes')
@@ -73,23 +73,23 @@ def jvm_session(request):
     logger.info("Running testsuite using JVM %s" % jvm_path)
     classpath_arg = "-Djava.class.path=%s"
     args = ["-ea", "-Xmx256M", "-Xms16M"]
-    if _checkjni:
+    if checkjni:
         args.append("-Xcheck:jni")
-    # TODO: enabling this check crashes the JVM with: FATAL ERROR in native method: Bad global or local ref passed to JNI
-    # "-Xcheck:jni",
-    if _classpath:
+    if classpath:
         # This needs to be relative to run location
-        jpype.addClassPath(Path(_classpath).resolve())
+        jpype.addClassPath(Path(classpath).resolve())
         warnings.warn("using jar instead of thunks")
     if convertStrings:
         warnings.warn("using deprecated convertStrings")
-    if _jacoco:
+    if jacoco:
+        jar = (root / '../../lib').absolute() / "/org.jacoco.agent-0.8.5-runtime.jar".absolute()
+        assert jar.exists()
         args.append(
-            "-javaagent:lib/org.jacoco.agent-0.8.5-runtime.jar=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
+            f"-javaagent:{jar}=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
         warnings.warn("using JaCoCo")
 
     jpype.addClassPath(root / "../../lib/*")  # jars downloaded by ivy to root lib directory.
-    jpype.addClassPath(root / "../jar/*") # jars in test directory.
+    jpype.addClassPath(root / "../jar/*")  # jars in test directory.
     classpath_arg %= jpype.getClassPath()
     args.append(classpath_arg)
     _jpype.enableStacktraces(True)
