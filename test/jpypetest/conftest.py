@@ -73,7 +73,6 @@ def jvm_session(request):
     _checkjni = request.config.getoption("--checkjni")
 
     root = Path(__file__).parent.resolve()
-    print("root: %s", root)
     jpype.addClassPath(root / '../classes')
     jvm_path = jpype.getDefaultJVMPath()
     logger.info("Running testsuite using JVM %s" % jvm_path)
