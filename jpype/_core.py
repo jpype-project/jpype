@@ -189,7 +189,7 @@ def _findTemp():
         try:
             p.touch()
             p.unlink()
-        except Exception as ex:
+        except Exception:
             continue
         return d
     raise SystemError("Unable to find non-ansii path")
