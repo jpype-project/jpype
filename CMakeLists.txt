@@ -186,36 +186,14 @@ endif()
 
 
 # Only stage the extension into the wheel if scikit-build-core is building
-#if(SKBUILD)
-#    message(DEBUG "install _jpype extension")
-#    install(TARGETS _jpype
-#            LIBRARY DESTINATION ${DEST_EXTENSION}
-#            RUNTIME DESTINATION ${DEST_EXTENSION}
-#    )
-#else()
-#    message(DEBUG "no skbuild env")
-#endif()
+if(SKBUILD)
+    message(STATUS "install _jpype extension to ${DEST_EXTENSION}")
+    install(TARGETS _jpype
+            LIBRARY DESTINATION ${DEST_EXTENSION}
+            RUNTIME DESTINATION ${DEST_EXTENSION}
+    )
+else()
+    message(DEBUG "no skbuild env")
+endif()
 
-# cross-platform install
-#install(TARGETS _jpype
-#        RUNTIME DESTINATION ${Python_SITELIB}  # Windows
-#        LIBRARY DESTINATION ${Python_SITELIB}  # Linux/macOS
-#        ARCHIVE DESTINATION ${Python_SITELIB}  # static archives if any
-#)
-get_target_property(name _jpype OUTPUT_NAME)
-get_target_property(prefix _jpype PREFIX)
-get_target_property(suffix _jpype SUFFIX)
-message(STATUS "name=${name} prefix=${prefix} suffix=${suffix}")
-
-message(STATUS "dest extension: ${DEST_EXTENSION}")
-
-#install(TARGETS _jpype
-#        RUNTIME DESTINATION ${DEST_EXTENSION}  # Windows
-#        LIBRARY DESTINATION ${DEST_EXTENSION}  # Linux/macOS
-#)
-
-install(TARGETS _jpype
-        RUNTIME DESTINATION "foo"
-        LIBRARY DESTINATION "."
-        ARCHIVE DESTINATION "."
-)
+message("state: ${SKBUILD_STATE}")
