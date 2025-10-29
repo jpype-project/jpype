@@ -24,12 +24,12 @@ import common
 
 # test dir jpype/test
 root = Path(__file__).parent.parent
-cp = (root / "classes").absolute()
-test_jar = (root / "jar").absolute()
-assert cp.exists()
-assert test_jar.exists()
-cp = str(cp)
-test_jar = str(test_jar)
+cp_p = (root / "classes").absolute()
+test_jar_p = (root / "jar").absolute()
+assert cp_p.exists()
+assert test_jar_p.exists()
+cp = str(cp_p)
+test_jar = str(test_jar_p)
 
 
 @subrun.TestCase(individual=True)

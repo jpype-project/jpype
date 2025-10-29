@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import atexit
 import os
+import pathlib
 from pathlib import Path
 import sys
 import typing
@@ -63,7 +64,7 @@ except AttributeError:
 
 
 if typing.TYPE_CHECKING:
-    _PathOrStr = typing.Union[str, os.PathLike]
+    _PathOrStr = typing.Union[str, os.PathLike, Path]
 
 
 # See http://scottlobdell.me/2015/04/decorators-arguments-python/
@@ -299,12 +300,12 @@ def startJVM(
 #        extra_jvm_args += ['--module-path=%s'%mp ]
 
     # Get the support library
-    support_lib = Path(__file__).resolve().parent.parent / "org.jpype.jar"
-    if not support_lib.exists():
+    support_lib_p = Path(__file__).resolve().parent.parent / "org.jpype.jar"
+    if not support_lib_p.exists():
         raise RuntimeError(
-            f"Unable to find org.jpype.jar support library at {support_lib}")
+            f"Unable to find org.jpype.jar support library at {support_lib_p}")
     # convert to string for passing to JVM instantiation.
-    support_lib = str(support_lib)
+    support_lib = str(support_lib_p)
 
     system_class_loader = _getOption(
         jvm_args, "-Djava.system.class.loader", keep=True)
