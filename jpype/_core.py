@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import atexit
 import os
-import pathlib
 from pathlib import Path
 import sys
 import typing
