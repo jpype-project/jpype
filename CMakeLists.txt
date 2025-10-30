@@ -22,6 +22,8 @@ if(SKBUILD)
     set(DEST_EXTENSION ${SKBUILD_PLATLIB_DIR})
 else()
     # in-place build, set output to cmakes output dir.
+    # todo: or set it to the project root (src-dir), so the extension and jar are in place for direct execution.
+    # note that this is non-standard and might be surprising.
     set(DEST_JAR ${CMAKE_CURRENT_BINARY_DIR})
     set(DEST_EXTENSION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
