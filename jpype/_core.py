@@ -57,13 +57,13 @@ try:
     _jedi_access.ALLOWED_DESCRIPTOR_ACCESS += _jpype._JMethod, _jpype._JField
 except ModuleNotFoundError:
     pass
-except AttributeError:
+except AttributeError:  # pragma: no cover
     import warnings as _w
     _w.warn(f"provided Jedi seems out of date. Version is {_jedi_version}.")
 
 
 if typing.TYPE_CHECKING:
-    _PathOrStr = typing.Union[str, os.PathLike, Path]
+    _PathOrStr = typing.Union[str, os.PathLike]
 
 
 # See http://scottlobdell.me/2015/04/decorators-arguments-python/
@@ -300,7 +300,7 @@ def startJVM(
 
     # Get the support library
     support_lib_p = Path(__file__).resolve().parent.parent / "org.jpype.jar"
-    if not support_lib_p.exists():
+    if not support_lib_p.exists():  # pragma: no cover
         raise RuntimeError(
             f"Unable to find org.jpype.jar support library at {support_lib_p}")
     # convert to string for passing to JVM instantiation.
