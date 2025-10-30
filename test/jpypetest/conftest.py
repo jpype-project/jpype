@@ -82,7 +82,7 @@ def jvm_session(request):
     if convertStrings:
         warnings.warn("using deprecated convertStrings")
     if jacoco:
-        jar = (root / '../../lib').absolute() / "/org.jacoco.agent-0.8.5-runtime.jar".absolute()
+        jar = ((root / '../../lib') / "/org.jacoco.agent-0.8.5-runtime.jar").absolute()
         assert jar.exists()
         args.append(
             f"-javaagent:{jar}=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
