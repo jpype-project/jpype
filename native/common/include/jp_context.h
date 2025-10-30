@@ -264,6 +264,8 @@ public:
 
 	// This will gather C++ resources to clean up after shutdown.
 	std::list<JPResource*> m_Resources;
+    // TODO: this is actually not dependent on jpcontext at all and should go somewhere else
+	static PyObject* getJVMVersion(PyObject* self, PyObject* args);
 } ;
 
 extern "C" JPContext* JPContext_global;

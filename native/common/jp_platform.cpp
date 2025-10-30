@@ -107,7 +107,7 @@ public:
 #endif // HPUX
 #include <errno.h>
 
-// The code in this modules is mostly excluded from coverage as it is only
+// The code in this module is mostly excluded from coverage as it is only
 // possible to execute during a fatal error.
 
 class LinuxPlatformAdapter : public JPPlatformAdapter
@@ -132,6 +132,7 @@ public:
 		{
 			JP_TRACE("null library");
 			JP_TRACE("errno", errno);
+			JP_TRACE("strerror", strerror(errno));
 			if (errno == ENOEXEC)
 			{
 				JP_TRACE("dignostics", dlerror());

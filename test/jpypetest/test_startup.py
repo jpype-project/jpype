@@ -15,6 +15,8 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+from packaging.version import Version
+
 import jpype
 import subrun
 import os
@@ -225,3 +227,12 @@ class StartJVMCase(unittest.TestCase):
             ZoneId.of("JpypeTest/Timezone")
         except ZoneRulesException:
             self.fail("JpypeZoneRulesProvider not loaded")
+
+    def test_raise_for_java8(self):
+        # we cannot use our pytest java_version fixture here, because the run is not performed in pytest in the subrun.
+        import _jpype
+        jvm_version = _jpype._get_jvm_version(jpype.getDefaultJVMPath())
+        if Version(jvm_version).major < 9:
+            self.skipTest("run only for Java8")
+        with self.assertRaises(RuntimeError, msg=".*requires at least Java9 to run.*"):
+            jpype.startJVM()

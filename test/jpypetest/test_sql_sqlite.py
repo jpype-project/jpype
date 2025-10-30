@@ -20,18 +20,14 @@ except ImportError:
 
 db_name = "jdbc:sqlite::memory:"
 
-def setUpModule(module):
-    from common import java_version
-    version = java_version()
-    if version[0] == 1 and version[1] == 8:
+@pytest.fixture(scope="module", autouse=True)
+def check_jvm_version(java_version):
+    if java_version.major == 1 and java_version.minor == 8:
         pytest.skip("jdk8 unsupported", allow_module_level=True)
 
 
+@pytest.mark.skipif(common.fast, reason="skip sql tests due to fast setting.")
 class ConnectTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-        if common.fast:
-            raise common.unittest.SkipTest("fast")
 
     def testConnect(self):
         cx = dbapi2.connect(db_name)

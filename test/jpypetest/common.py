@@ -15,8 +15,6 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-from functools import lru_cache
-
 import pytest
 import _jpype
 import jpype
@@ -152,15 +150,3 @@ class JPypeTestCase(unittest.TestCase):
 
     def useEqualityFunc(self, func):
         return UseFunc(self, func, 'assertEqual')
-
-
-@lru_cache(1)
-def java_version():
-    import subprocess
-    import sys
-    java_version = str(subprocess.check_output([sys.executable, "-c",
-                          "import jpype; jpype.startJVM(); "
-                          "print(jpype.java.lang.System.getProperty('java.version'))"]),
-                       encoding='ascii')
-    # todo: make this robust for version "numbers" containing strings (e.g.) 22.1-internal
-    return tuple(map(int, java_version.split(".")))

@@ -1,6 +1,8 @@
 # This file is Public Domain and may be used without restrictions,
 # because noone should have to waste their lives typing this again.
 import _jpype
+import pytest
+
 import jpype
 from jpype.types import *
 from jpype import java
@@ -24,21 +26,14 @@ db_name = "jdbc:hsqldb:mem:myDb"
 #first = "jdbc:derby:memory:myDb;create=True"
 
 
-def setUpModule(module):
-    from common import java_version
-    import pytest
-    version = java_version()
-    if version[0] == 1 and version[1] == 8:
+@pytest.fixture(scope="module", autouse=True)
+def check_jvm_version(java_version):
+    if java_version.major == 1 and java_version.minor == 8:
         pytest.skip("jdk8 unsupported", allow_module_level=True)
 
-
 @common.unittest.skipUnless(zlib, "requires zlib")
+@pytest.mark.skipif(common.fast, reason="skip sql tests due to fast setting.")
 class ConnectTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-        if common.fast:
-            raise common.unittest.SkipTest("fast")
-
     def testConnect(self):
         cx = dbapi2.connect(db_name)
         self.assertIsInstance(cx, dbapi2.Connection)

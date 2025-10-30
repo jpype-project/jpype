@@ -15,10 +15,10 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-
 import pytest
 
 import common
+import jpype
 
 
 def pytest_addoption(parser):
@@ -45,3 +45,29 @@ def common_opts(request):
     request.cls._convertStrings = request.config.getoption("--convertStrings")
     request.cls._jacoco = request.config.getoption("--jacoco")
     request.cls._checkjni = request.config.getoption("--checkjni")
+
+def _get_jvm_version_from_jni(jvm_path):
+    import _jpype
+    version = _jpype._get_jvm_version(jvm_path)
+    assert version
+    return version
+
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_values():
+    import multiprocessing as mp
+    ctx = mp.get_context("spawn")
+    jvm_path = jpype.getDefaultJVMPath()
+
+    pool = ctx.Pool(1)
+    result = pool.apply_async(_get_jvm_version_from_jni, args=(jvm_path,))
+    yield result
+    pool.close()
+    pool.join()
+
+@pytest.fixture(scope="session")
+def java_version(setup_values):
+    from packaging.version import Version
+
+    output = setup_values.get()
+    return Version(output)

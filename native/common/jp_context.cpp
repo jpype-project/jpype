@@ -33,11 +33,64 @@
 #include <errno.h>
 #endif
 
+// minimum JNI API (or equivalent JRE version).
+#define USE_JNI_VERSION JNI_VERSION_9
+
+namespace {
+
+/**
+ * Handles the memory padding and resource handling for JVM arguments.
+ * The JVM seems to take over the memory after it has been passed.
+ */
+class JNIArgs {
+private:
+	JavaVMInitArgs* m_JniArgs = nullptr;
+public:
+	JNIArgs(const StringVector& args, bool ignoreUnrecognized) {
+		// Determine the memory requirements
+#define PAD(x) ((x+31)&~31)
+		size_t mem = PAD(sizeof(JavaVMInitArgs));
+		size_t oblock = mem;
+		mem += PAD(sizeof(JavaVMOption)*args.size() + 1);
+		size_t sblock = mem;
+		for (const auto & arg : args)
+		{
+			mem += PAD(arg.size()+1);
+		}
+
+		// Pack the arguments
+		JP_TRACE("Pack arguments");
+		auto block = (char*) malloc(mem);
+		m_JniArgs = (JavaVMInitArgs*) block; // pointer alias.
+		memset(m_JniArgs, 0, mem);
+		m_JniArgs->options = (JavaVMOption*)(&block[oblock]);
+
+		// prepare this ...
+		m_JniArgs->version = USE_JNI_VERSION; // enforce minimum JNI (Java Runtime) version.
+		m_JniArgs->ignoreUnrecognized = ignoreUnrecognized;
+		JP_TRACE("IgnoreUnrecognized", ignoreUnrecognized);
+
+		m_JniArgs->nOptions = (jint) args.size();
+		JP_TRACE("NumOptions", m_JniArgs->nOptions);
+		size_t j = sblock;
+		for (size_t i = 0; i < args.size(); i++)
+		{
+			JP_TRACE("Option", args[i]);
+			strncpy(&block[j], args[i].c_str(), args[i].size());
+			m_JniArgs->options[i].optionString = (char*) &block[j];
+			j += PAD(args[i].size()+1);
+		}
+	}
+	void* getArgs() {
+		return m_JniArgs;
+	}
+	~JNIArgs() {
+		free(m_JniArgs);
+	}
+};
+}
 
 JPResource::~JPResource() = default;
-
-
-#define USE_JNI_VERSION JNI_VERSION_1_4
 
 void JPRef_failed()
 {
@@ -119,56 +172,38 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		throw;
 	}
 
-	// Determine the memory requirements
-#define PAD(x) ((x+31)&~31)
-	size_t mem = PAD(sizeof(JavaVMInitArgs));
-	size_t oblock = mem;
-	mem += PAD(sizeof(JavaVMOption)*args.size() + 1);
-	size_t sblock = mem;
-	for (size_t i = 0; i < args.size(); i++)
-	{
-		mem += PAD(args[i].size()+1);
-	}
-
-	// Pack the arguments
-	JP_TRACE("Pack arguments");
-	char *block = (char*) malloc(mem);
-	JavaVMInitArgs* jniArgs = (JavaVMInitArgs*) block;
-	memset(jniArgs, 0, mem);
-	jniArgs->options = (JavaVMOption*)(&block[oblock]);
-
-	// prepare this ...
-	jniArgs->version = USE_JNI_VERSION;
-	jniArgs->ignoreUnrecognized = ignoreUnrecognized;
-	JP_TRACE("IgnoreUnrecognized", ignoreUnrecognized);
-
-	jniArgs->nOptions = (jint) args.size();
-	JP_TRACE("NumOptions", jniArgs->nOptions);
-	size_t j = sblock;
-	for (size_t i = 0; i < args.size(); i++)
-	{
-		JP_TRACE("Option", args[i]);
-		strncpy(&block[j], args[i].c_str(), args[i].size());
-		jniArgs->options[i].optionString = (char*) &block[j];
-		j += PAD(args[i].size()+1);
-	}
+	// prepare JNIArgs for JVM.
+	JNIArgs jniArgs(args, ignoreUnrecognized);
 
 	// Launch the JVM
 	JNIEnv* env = nullptr;
 	JP_TRACE("Create JVM");
 	try
 	{
-		CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) jniArgs);
+		CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) jniArgs.getArgs());
 	} catch (...)
 	{
 		JP_TRACE("Exception in CreateJVM?");
 	}
 	JP_TRACE("JVM created");
-	free(jniArgs);
 
 	if (m_JavaVM == nullptr)
 	{
 		JP_TRACE("Unable to start");
+		// If we fail with jni_version 9, we fall back to 1.8,
+        // if that succeeds, raise a human understandable error msg!
+        JavaVMInitArgs jniArgs2;
+        jniArgs2.version = JNI_VERSION_1_8;
+        jniArgs2.nOptions = 0;
+        jniArgs2.options = nullptr;
+        jniArgs2.ignoreUnrecognized = JNI_TRUE;
+        CreateJVM_Method(&m_JavaVM, (void**) &env, &jniArgs2);
+        if (m_JavaVM) {
+			JP_TRACE("Java8 found");
+			m_JavaVM->DestroyJavaVM();
+            JP_RAISE(PyExc_RuntimeError, "JPype (version >= 1.6) requires at least Java9 to run, you provided a Java8 JVM.");
+        }
+        JP_TRACE("Unable to start");
 		JP_RAISE(PyExc_RuntimeError, "Unable to start JVM");
 	}
 
@@ -176,6 +211,83 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	m_Running = true;
 	initializeResources(env, interrupt);
 	JP_TRACE_OUT;
+}
+
+/**
+ * Get JVM version from java.lang.System.getProperty('java.version') from a freshly created JVM.
+ *
+ * @param jvm_path
+ * @return version string or empty string in case of error
+ * note: this boots up a jvm, so we'd need to perform this in a separate process to be able to boot up the jpype jvm in the main process.
+ * So a Python callee should only get this, once a separate process has been created!
+ */
+PyObject* JPContext::getJVMVersion(PyObject* self, PyObject* args) {
+    const char* jvm_path;
+
+    // Parse the Python arguments
+    if (!PyArg_ParseTuple(args, "s", &jvm_path)) {
+        return nullptr;  // error, e.g., wrong argument type
+    }
+
+    // Get the entry points in the shared library
+    jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args);
+    try
+    {
+        JP_TRACE("Load entry points");
+        JPPlatformAdapter *platform = JPPlatformAdapter::getAdapter();
+        // Load symbols from the shared library
+        platform->loadLibrary(jvm_path);
+        CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *) )platform->getSymbol("JNI_CreateJavaVM");
+    } catch (JPypeException& ex)
+    {
+        (void) ex;
+        throw;
+    }
+
+	JavaVM *jvm;
+	JNIEnv *env;
+	JavaVMInitArgs vmArgs;
+    vmArgs.version = JNI_VERSION_1_8;
+    vmArgs.nOptions = 0;
+    vmArgs.options = nullptr;
+    vmArgs.ignoreUnrecognized = JNI_TRUE;
+	if (CreateJVM_Method(&jvm, (void**) &env, &vmArgs) != 0) {
+        JP_TRACE("could not create jvm.");
+        // we failed to create a JVM
+        PyObject *empty = PyUnicode_FromString("");
+        return empty;
+	}
+
+    jclass systemClass = env->FindClass("java/lang/System");
+    JP_TRACE("got system class");
+    jmethodID getProperty = env->GetStaticMethodID(
+            systemClass,
+            "getProperty",
+            "(Ljava/lang/String;)Ljava/lang/String;"
+    );
+
+    jstring versionStr = (jstring) env->CallStaticObjectMethod(
+            systemClass,
+            getProperty,
+            env->NewStringUTF("java.version")
+    );
+
+    if (versionStr == nullptr) {
+		JP_TRACE("CallStaticObjectMethod returned null");
+    } else {
+        const char* versionCStr = env->GetStringUTFChars(versionStr, nullptr);
+        if (versionCStr) {
+            // convert c string to pyobject string
+            PyObject *py = PyUnicode_FromStringAndSize(versionCStr, strlen(versionCStr));
+            env->ReleaseStringUTFChars(versionStr, versionCStr);
+            return py;
+        } else {
+			JP_TRACE("Failed to get UTF chars from jstring");
+        }
+    }
+	jvm->DestroyJavaVM();
+
+	return nullptr;
 }
 
 void JPContext::attachJVM(JNIEnv* env)
@@ -187,13 +299,13 @@ void JPContext::attachJVM(JNIEnv* env)
 	initializeResources(env, false);
 }
 
-std::string getShared() 
+std::string getShared()
 {
 #ifdef WIN32
 	// Windows specific
 	char path[MAX_PATH];
 	HMODULE hm = NULL;
-	if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | 
+	if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
 		GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
 		(LPCSTR) &getShared, &hm) != 0 &&
 		GetModuleFileName(hm, path, sizeof(path)) != 0)
