@@ -1,4 +1,4 @@
-<project default="build-all" name="JPype - Native">
+<project default="build-all" name="JPype - Test harness">
 
 	<property name="src" location="harness"/>
 	<property name="build" location="classes"/>
@@ -72,15 +72,11 @@
 		<delete dir="${build}"/>
 	</target>
 
-	<!--todo: add call to javadoc
-	"javadoc -Xdoclint:none test/harness/jpype/doc/Test.java -d test/classes/"))
--->
-
+	<!-- Build javadocs for test class (jpype.doc package). -->
 	<target name="javadoc">
-		<mkdir dir="${build}/javadoc"/>
 		<javadoc
 				sourcepath="${src}"
-				destdir="${build}/javadoc"
+				destdir="${build}"
 				packagenames="jpype.doc"
 				failonerror="false"
 				additionalparam="-Xdoclint:none">
