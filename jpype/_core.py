@@ -52,15 +52,15 @@ class JVMNotRunning(RuntimeError):
 
 # Activate jedi tab completion
 try:
-    from jedi import __version__ as _jedi_version
-    import jedi.access as _jedi_access
-    _jedi_access.ALLOWED_DESCRIPTOR_ACCESS += _jpype._JMethod, _jpype._JField
+    from jedi import __version__ as _jedi_version # first check
+    try:
+        import jedi.access as _jedi_access
+        _jedi_access.ALLOWED_DESCRIPTOR_ACCESS += _jpype._JMethod, _jpype._JField  # jedi < 0.18
+    except ModuleNotFoundError: # we have jedi, but the access module moved and  indicates jedi > 0.18
+        import jedi.inference.compiled.access as _jedi_access
+        _jedi_access.ALLOWED_GETITEM_TYPES = _jedi_access.ALLOWED_GETITEM_TYPES + (_jpype._JMethod, _jpype._JField)
 except ModuleNotFoundError:
-    print("no jedi")
-except AttributeError:  # pragma: no cover
-    import warnings as _w
-    _w.warn(f"provided Jedi seems out of date. Version is {_jedi_version}.")
-
+    pass
 
 if typing.TYPE_CHECKING:
     _PathOrStr = typing.Union[str, os.PathLike]
