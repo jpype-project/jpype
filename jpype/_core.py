@@ -36,7 +36,7 @@ from ._jvmfinder import *
 # but on some systems it may not load properly from C.  To make sure it gets
 # loaded properly we are going to force the issue even through we don't
 # use it in this module.  (Do not remove)
-from importlib import util as _util
+from importlib import util as _util  # noqa
 
 __all__ = [
     'isJVMStarted', 'startJVM', 'shutdownJVM',
@@ -56,7 +56,7 @@ try:
     import jedi.access as _jedi_access
     _jedi_access.ALLOWED_DESCRIPTOR_ACCESS += _jpype._JMethod, _jpype._JField
 except ModuleNotFoundError:
-    pass
+    print("no jedi")
 except AttributeError:  # pragma: no cover
     import warnings as _w
     _w.warn(f"provided Jedi seems out of date. Version is {_jedi_version}.")
@@ -167,7 +167,7 @@ def interactive():
     return bool(getattr(sys, 'ps1', sys.flags.interactive))
 
 
-def _findTemp():
+def _findTemp():  # pragma: no cover
     dirlist = []
     # Mirror Python tempfile with a check for ascii
     for envname in 'TMPDIR', 'TEMP', 'TMP':
@@ -192,7 +192,7 @@ def _findTemp():
         except Exception:
             continue
         return d
-    raise SystemError("Unable to find non-ansii path")
+    raise RuntimeError("Unable to find non-ansii path.")
 
 
 def startJVM(
@@ -323,7 +323,7 @@ def startJVM(
                 "system classloader cannot be specified with non ascii characters in the classpath")
 
         # If we are not installed on an ascii path then we will need to copy the jar to a new location
-        if not support_lib.isascii():
+        if not support_lib.isascii(): # pragma: no cover
             import tempfile
             import shutil
             fd, path = tempfile.mkstemp(dir=_findTemp())
@@ -366,7 +366,7 @@ def startJVM(
                 locale.setlocale(i, j)
             except locale.Error:
                 pass
-    except RuntimeError as ex:
+    except RuntimeError as ex: # pragma: no cover, # todo: this assumed it was manually tested.
         source = str(ex)
         if "UnsupportedClassVersion" in source:
             import re
