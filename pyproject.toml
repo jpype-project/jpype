@@ -55,16 +55,15 @@ homepage = "https://github.com/jpype-project/jpype"
 
 [[tool.mypy.overrides]]
 module = [
-    "_jpype",
+    "_jpype", # todo: add a proper _jpype.pyi file
     "commonx",
     "brokenx",
     "java.*",
     "jpypex.common",
-    "jedi",
-    "jedi.access",
+    "jedi.*",
 ]
 
-ignore_missing_imports = true # todo: this should be false, add a proper _jpype.pyi file
+ignore_missing_imports = true
 
 [tool.pytest]
 addopts = "--verbose"
