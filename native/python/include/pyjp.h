@@ -154,7 +154,9 @@ extern PyObject *_JMethodAnnotations;
 extern PyObject *_JMethodCode;
 extern PyObject *_JObjectKey;
 extern PyObject *_JVMNotRunning;
-extern PyObject* PyJPClassMagic;
+extern PyObject *PyJPClassMagic;
+// for caching type checks with Numpy bool after np version 2.1
+extern PyTypeObject *_NPBool_Type;
 
 extern JPContext* JPContext_global;
 

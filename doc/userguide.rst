@@ -1324,7 +1324,7 @@ Java casting
 ------------
 
 To access a casting operation we use the casting ``JObject`` wrapper.
-For example, ``JObject(object, Type)`` would produce a copy with specificed type.
+For example, ``JObject(object, Type)`` would produce a copy with specified type.
 The first argument is the object to convert and
 the second is the type to cast to.  The second argument should always be a Java
 type specified using a class wrapper, a Java class instance, or a string.
@@ -1764,7 +1764,7 @@ Java arrays provide several Python methods:
   Memory views of Java arrays are not writable.
 
 - **Iteration (For Each)**:
-  Java arrays can be used in Python `for` loops and lopp comprehensions.
+  Java arrays can be used in Python `for` loops and loop comprehensions.
 
 - **Clone**:
   Java arrays can be duplicated using the `clone()` method.
@@ -2285,7 +2285,7 @@ Interactions of Custom Converters and Caching
 
 It is unwise to define very broad conversions as it can interact poorly with 
 caching. Suppose that one defined a convertion from all Python strings to the
-Java class for date under some condition. Or perhaps an even broader convserion
+Java class for date under some condition. Or perhaps an even broader conversion
 was defined such as all Python classes that inherit from object.
 
 If such overly broad conversions are applied to a function
@@ -2378,7 +2378,7 @@ dictionary
 .. [10] Java boxed types are mapped to Python primitives, but will
         produce an implicit conversion even if the Python type is an exact
         match. This is to allow for resolution between methods
-        that take both a Java primitve and a Java boxed type.
+        that take both a Java primitive and a Java boxed type.
 
 .. [11] Boxed to ``java.lang.Number``
 
@@ -3010,11 +3010,11 @@ from any other thread will raise an exception.
 
 
 Numerous examples found on the internet explicity state that `shutdownJVM` is a
-good practice.  These examples are legecy from early developement.  At the time
+good practice.  These examples are legacy from early development.  At the time
 shutdownJVM brutally closed the JVM and bypassed all for the JVM shutdown routines
 thus causing the program to skip over errors in the JPype module resulting
 from mishandled race conditions.   While it is still acceptable to shutdown the
-JVM and may be desireable to do so if a module needs a particular order to shutdown
+JVM and may be desirable to do so if a module needs a particular order to shutdown
 cleanly, the use of an explicit shutdown is discouraged.
 
 
@@ -4489,9 +4489,9 @@ Example 2: Transferring `float16` to a Primitive Array
 
    print(java_primitive_array)  # Output: [1.1, 2.2, 3.3] (as float32[])
 
-.. _working_with_numpy_summary_of_numpy_automatic_converstions:
+.. _working_with_numpy_summary_of_numpy_automatic_conversions:
 
-Summary of NumPy Automatic Converstions
+Summary of NumPy Automatic Conversions
 ---------------------------------------
 
 JPype supports transferring NumPy arrays to Java, with automatic conversions
@@ -4732,7 +4732,7 @@ JProxy
 The ``JProxy`` allows Python code to "implement" any number of Java interfaces,
 so as to receive callbacks through them.  The JProxy factory has the signature::
 
-   JProxy(intr, [dict=obj | inst=obj] [, deferred=False])
+   JProxy(int, [dict=obj | inst=obj] [, deferred=False])
 
 The first argument is the interface to be implemented.  This may be either
 a string with the name of the interface, a Java class, or a Java class instance.
@@ -5043,7 +5043,7 @@ Java.  Failure to attach a thread will result in a segmentation fault.  It used
 to be a requirement that users manually attach their thread to call a Java
 function, but as the user has no control over the spawning of threads by other
 applications such as an IDE, this inevitably lead to unexpected segmentation
-faults.  Rather that crashing randomly, JPype automatically attachs any
+faults.  Rather that crashing randomly, JPype automatically attaches any
 thread that invokes a Java method.  These threads are attached automatically as
 daemon threads so that will not prevent the JVM from shutting down properly
 upon request.  If a thread must be attached as a non-daemon, use the method
@@ -5068,7 +5068,7 @@ attached and detached.
 Java Threads
 ------------
 
-To use Java threads, create a Java proxy implementins
+To use Java threads, create a Java proxy implementing
 ``java.lang.Runnable``.  The Runnable can then be passed any Java threading
 mechanism to be executed.  Each time that Java threads transfer control
 back to Python, the GIL is reacquired.
@@ -5101,7 +5101,7 @@ not block JVM shutdown. While this behavior simplifies integration, it can lead
 to resource leaks in thread-heavy applications if threads are not properly
 detached when they terminate.
 
-To address this, JPype customizes `java.lang.Thread` with additional methods
+To address this, JPype customizes ``java.lang.Thread`` with additional methods
 for managing thread attachment and detachment. These methods allow developers
 to explicitly detach threads, freeing resources in the JVM and preventing leaks.
 
@@ -5110,9 +5110,10 @@ to explicitly detach threads, freeing resources in the JVM and preventing leaks.
 Customized Methods
 ------------------
 
-The following methods are added to `java.lang.Thread` by JPype:
+The following methods are added to ``java.lang.Thread`` by JPype:
 
 .. method:: java.lang.Thread.attach()
+   :no-index:
 
    Attaches the current thread to the JVM as a user thread.
 
@@ -5124,6 +5125,7 @@ The following methods are added to `java.lang.Thread` by JPype:
      - `RuntimeError`: If the JVM is not running.
 
 .. method:: java.lang.Thread.attachAsDaemon()
+   :no-index:
 
    Attaches the current thread to the JVM as a daemon thread.
 
@@ -5136,6 +5138,7 @@ The following methods are added to `java.lang.Thread` by JPype:
      - `RuntimeError`: If the JVM is not running.
 
 .. method:: java.lang.Thread.detach()
+   :no-index:
 
    Detaches the current thread from the JVM.
 
@@ -6281,9 +6284,9 @@ with JPype installations and no extra configuration should be needed.
 Useless Trivia
 ==============
 
-Thrameos, the primary developer, maintains the correct pronounciation of
+Thrameos, the primary developer, maintains the correct pronunciation of
 JPype is Jay-Pie-Pee like the word recipe.  His position is that application
-of a silient e is inappropriate for this made up name.
+of a silent e is inappropriate for this made up name.
 
 1) Jay-Pie is more emblematic of the project goal which is connection of
 Java and Python.

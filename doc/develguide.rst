@@ -1036,23 +1036,27 @@ When debugging JPype, deliberate crashes (segmentation faults) provide the
 following benefits:
 
 1. **Stack Trace Availability**:
+
    - Deliberate crashes generate a meaningful stack trace for tools like `gdb`.
    - Termination does not produce a stack trace, making it harder to identify
      the root cause of the problem.
 
 2. **Bypassing Signal Handlers**:
+
    - Deliberate crashes bypass Java's signal handlers, ensuring the stack trace
      remains intact.
    - Termination may still be affected by Java's signal handling, corrupting
      the debugging process.
 
 3. **Memory State Preservation**:
+
    - Deliberate crashes halt execution immediately, preventing Python's memory
      recycling from altering the program state.
    - Termination allows Python to continue recycling memory, which can obscure
      the root cause of memory-related bugs.
 
 4. **Interactive Debugging**:
+
    - Deliberate crashes enable interactive debugging with `gdb`, allowing
      developers to inspect the program state before corruption occurs.
    - Termination does not provide this opportunity.

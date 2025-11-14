@@ -49,15 +49,20 @@ class JPConversionAsBoolean : public JPConversion
 {
 public:
 
-	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
-	{
-		if (!PyBool_Check(match.object))
-			return match.type = JPMatch::_none;
-		match.conversion = this;
-		return match.type = JPMatch::_exact;
-	}
+    JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+    {
+        PyObject* obj = match.object;
 
-	void getInfo(JPClass * cls, JPConversionInfo &info) override
+        if (PyBool_Check(obj) || PyObject_IsInstance(obj, (PyObject*)_NPBool_Type))
+        {
+            match.conversion = this;
+            return match.type = JPMatch::_exact;
+        }
+
+        return match.type = JPMatch::_none;
+    }
+
+    void getInfo(JPClass * cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.exact, (PyObject*) & PyBool_Type);
 	}
