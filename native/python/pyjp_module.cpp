@@ -790,6 +790,7 @@ PyMODINIT_FUNC PyInit__jpype()
 #ifdef Py_GIL_DISABLED
     PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
 #endif
+// TODO: we should probably pass the version directly from a scikit-build (cmake) defined macro.
 	PyModule_AddStringConstant(module, "__version__", "1.6.1.dev0");
 
 	// Our module will be used for PyFrame object and it is a requirement that

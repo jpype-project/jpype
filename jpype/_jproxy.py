@@ -24,7 +24,7 @@ __all__ = ["JProxy", "JImplements"]
 # so we can properly handle name mangling on the override.
 
 def _checkInterfaceOverrides(interfaces, overrides):
-    # Verify all methods are overriden
+    # Verify all methods are overridden
     for interface in interfaces:
         for method in interface.class_.getMethods():
             if method.getModifiers() & 1024 == 0:

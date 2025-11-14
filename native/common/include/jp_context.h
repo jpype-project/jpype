@@ -279,7 +279,7 @@ JPRef<jref>::JPRef(const JPRef& other)
 	if (JPContext_global != nullptr)
 	{
 		JPJavaFrame frame = JPJavaFrame::external(JPContext_global->getEnv());
-		m_Ref = (jref) frame.NewGlobalRef((jobject) other.m_Ref);
+		m_Ref = static_cast<jref>(frame.NewGlobalRef(other.m_Ref));
 	} else
 	{
 		JPRef_failed();
