@@ -51,7 +51,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'JPype'
-copyright = u'2014-18, Steve Menard, Luis Nell and others'
+copyright = u'2014-25, Steve Menard, Luis Nell and others'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
