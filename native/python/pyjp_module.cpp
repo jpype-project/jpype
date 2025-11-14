@@ -15,11 +15,9 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
-#include "jp_arrayclass.h"
 #include "jp_primitive_accessor.h"
 #include "jp_gc.h"
-#include "jp_stringtype.h"
-#include "jp_classloader.h"
+
 #ifdef WIN32
 #include <Windows.h>
 #endif
@@ -30,15 +28,16 @@ int init_numpy_bool_type()
 	JP_TRACE("init_numpy_bool_type()");
 	PyObject *numpy = PyImport_ImportModule("numpy");
 	if (numpy == nullptr) {
-		PyErr_Clear(); // we do not want a Python error to be propagated.
-		return -1;
+		// we do not want a Python error to be propagated.
+		PyErr_Clear(); // GCOVR_EXCL_LINE
+		return -1; // GCOVR_EXCL_LINE
 	}
 
 	PyObject *t = PyObject_GetAttrString(numpy, "bool_");
 	Py_DECREF(numpy);
 	if (t == nullptr) {
-		JP_TRACE("bool_ attr not found");
-		return -1;
+		JP_TRACE("bool_ attr not found"); // GCOVR_EXCL_LINE
+		return -1; // GCOVR_EXCL_LINE
 	}
 
 	/* store as PyTypeObject* for fast checks */
@@ -870,7 +869,7 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 
 	// First lets find out what we are unpacking
 	Py_ssize_t itemsize = view.itemsize;
-	char *format = view.format;
+	const char *format = view.format;
 	if (format == nullptr)
 		format = "B";
 	// Standard size for 'l' is 4 in docs, but numpy uses format 'l' for long long
