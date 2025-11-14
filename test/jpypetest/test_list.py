@@ -275,5 +275,4 @@ class JListTestCase(common.JPypeTestCase):
         ArrayList = jpype.JClass('java.util.ArrayList')
         l1 = ArrayList([1,2,3])
         l2 = l1 * 3
-        print(l2)
         self.assertEqual(l2, ArrayList([1,2,3,1,2,3,1,2,3]))

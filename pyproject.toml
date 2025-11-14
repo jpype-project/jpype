@@ -1,9 +1,6 @@
 [build-system]
-requires = [
-    "setuptools",
-]
-build-backend = "setuptools.build_meta"
-
+requires = ["scikit-build-core>=0.9"]
+build-backend = "scikit_build_core.build"
 
 [project]
 name = "jpype1"
@@ -58,12 +55,28 @@ homepage = "https://github.com/jpype-project/jpype"
 
 [[tool.mypy.overrides]]
 module = [
-    "_jpype",
+    "_jpype", # todo: add a proper _jpype.pyi file
     "commonx",
     "brokenx",
     "java.*",
     "jpypex.common",
-    "jedi",
-    "jedi.access",
+    "jedi.*",
 ]
+
 ignore_missing_imports = true
+
+[tool.pytest]
+addopts = "--verbose"
+testpaths = ["test", "jpype/_pyinstaller"]
+
+
+[tool.scikit-build]
+build.verbose = true
+logging.level = "INFO"
+wheel.packages = ["jpype", "jpype._pyinstaller", "_jpype"]
+editable.mode = "inplace"
+# todo: try out automatic rebuild feature.
+#editable.rebuild = true
+
+sdist.exclude = [".azure", ".github"]
+

@@ -36,7 +36,7 @@ from ._jvmfinder import *
 # but on some systems it may not load properly from C.  To make sure it gets
 # loaded properly we are going to force the issue even through we don't
 # use it in this module.  (Do not remove)
-from importlib import util as _util
+from importlib import util as _util  # noqa
 
 __all__ = [
     'isJVMStarted', 'startJVM', 'shutdownJVM',
@@ -52,15 +52,15 @@ class JVMNotRunning(RuntimeError):
 
 # Activate jedi tab completion
 try:
-    from jedi import __version__ as _jedi_version
-    import jedi.access as _jedi_access
-    _jedi_access.ALLOWED_DESCRIPTOR_ACCESS += _jpype._JMethod, _jpype._JField
+    from jedi import __version__ as _jedi_version # first check
+    try:
+        import jedi.access as _jedi_access
+        _jedi_access.ALLOWED_DESCRIPTOR_ACCESS += _jpype._JMethod, _jpype._JField  # jedi < 0.18
+    except ModuleNotFoundError: # we have jedi, but the access module moved and  indicates jedi > 0.18
+        import jedi.inference.compiled.access as _jedi_access
+        _jedi_access.ALLOWED_GETITEM_TYPES = _jedi_access.ALLOWED_GETITEM_TYPES + (_jpype._JMethod, _jpype._JField)
 except ModuleNotFoundError:
     pass
-except AttributeError:
-    import warnings as _w
-    _w.warn(f"provided Jedi seems out of date. Version is {_jedi_version}.")
-
 
 if typing.TYPE_CHECKING:
     _PathOrStr = typing.Union[str, os.PathLike]
@@ -167,7 +167,7 @@ def interactive():
     return bool(getattr(sys, 'ps1', sys.flags.interactive))
 
 
-def _findTemp():
+def _findTemp():  # pragma: no cover
     dirlist = []
     # Mirror Python tempfile with a check for ascii
     for envname in 'TMPDIR', 'TEMP', 'TMP':
@@ -189,10 +189,10 @@ def _findTemp():
         try:
             p.touch()
             p.unlink()
-        except Exception as ex:
+        except Exception:
             continue
         return d
-    raise SystemError("Unable to find non-ansii path")
+    raise RuntimeError("Unable to find non-ansii path.")
 
 
 def startJVM(
@@ -284,6 +284,7 @@ def startJVM(
         # Not specified at all, use the default classpath.
         classpath = _classpath.getClassPath()
 
+# todo: this should be activated now.
 # Code for 1.6 release when we add module support
 #    # Modulepath handling
 #    old_modulepath = _getOption(jvm_args, "--module-path", _classpath._SEP)
@@ -298,11 +299,12 @@ def startJVM(
 #        extra_jvm_args += ['--module-path=%s'%mp ]
 
     # Get the support library
-    support_lib = os.path.join(os.path.dirname(
-        os.path.dirname(__file__)), "org.jpype.jar")
-    if not os.path.exists(support_lib):
+    support_lib_p = Path(__file__).resolve().parent.parent / "org.jpype.jar"
+    if not support_lib_p.exists():  # pragma: no cover
         raise RuntimeError(
-            "Unable to find org.jpype.jar support library at " + support_lib)
+            f"Unable to find org.jpype.jar support library at {support_lib_p}")
+    # convert to string for passing to JVM instantiation.
+    support_lib = str(support_lib_p)
 
     system_class_loader = _getOption(
         jvm_args, "-Djava.system.class.loader", keep=True)
@@ -321,7 +323,7 @@ def startJVM(
                 "system classloader cannot be specified with non ascii characters in the classpath")
 
         # If we are not installed on an ascii path then we will need to copy the jar to a new location
-        if not support_lib.isascii():
+        if not support_lib.isascii(): # pragma: no cover
             import tempfile
             import shutil
             fd, path = tempfile.mkstemp(dir=_findTemp())
@@ -364,7 +366,7 @@ def startJVM(
                 locale.setlocale(i, j)
             except locale.Error:
                 pass
-    except RuntimeError as ex:
+    except RuntimeError as ex: # pragma: no cover, # todo: this assumed it was manually tested.
         source = str(ex)
         if "UnsupportedClassVersion" in source:
             import re

@@ -37,7 +37,7 @@ jobs:
         if: ${{ matrix.language == 'python' }}
 
       - name: Build cpp
-        run: python3 setup.py build
+        run: pip install build ; python3 -m build
         if: ${{ matrix.language == 'cpp' }}
 
       - name: Build java

@@ -25,3 +25,4 @@ build:
   os: ubuntu-lts-latest
   apt_packages:
     - openjdk-11-jdk
+    - ant
