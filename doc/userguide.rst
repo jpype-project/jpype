@@ -5047,17 +5047,17 @@ faults.  Rather that crashing randomly, JPype automatically attaches any
 thread that invokes a Java method.  These threads are attached automatically as
 daemon threads so that will not prevent the JVM from shutting down properly
 upon request.  If a thread must be attached as a non-daemon, use the method
-:java:meth:``java.lang.Thread.attach()`` from within the thread context.  Once this is
+``java.lang.Thread.attach()`` from within the thread context.  Once this is
 done the JVM will not shut down until that thread is completed.
 
-There is a function called :java:meth:``java.lang.Thread.isAttached()`` which will check
+There is a function called ``java.lang.Thread.isAttached()`` which will check
 if a thread is attached.  As threads automatically attach to Java, the only
 way that a thread would not be attached is if it has never called a Java method.
 
 The downside of automatic attachment is that each attachment allocates a
 small amount of resources in the JVM.  For applications that spawn frequent
 dynamically allocated threads, these threads will need to be detached prior
-to completing the thread with :java:meth:``java.lang.Thread.detach()``.  When
+to completing the thread with ``java.lang.Thread.detach()``.  When
 implementing dynamic threading, one can detach the thread
 whenever Java is no longer needed.  The thread will automatically reattach if
 Java is needed again.  There is a performance penalty each time a thread is
@@ -5101,7 +5101,7 @@ not block JVM shutdown. While this behavior simplifies integration, it can lead
 to resource leaks in thread-heavy applications if threads are not properly
 detached when they terminate.
 
-To address this, JPype customizes `java.lang.Thread` with additional methods
+To address this, JPype customizes ``java.lang.Thread`` with additional methods
 for managing thread attachment and detachment. These methods allow developers
 to explicitly detach threads, freeing resources in the JVM and preventing leaks.
 
@@ -5110,9 +5110,10 @@ to explicitly detach threads, freeing resources in the JVM and preventing leaks.
 Customized Methods
 ------------------
 
-The following methods are added to `java.lang.Thread` by JPype:
+The following methods are added to ``java.lang.Thread`` by JPype:
 
 .. method:: java.lang.Thread.attach()
+   :no-index:
 
    Attaches the current thread to the JVM as a user thread.
 
@@ -5124,6 +5125,7 @@ The following methods are added to `java.lang.Thread` by JPype:
      - `RuntimeError`: If the JVM is not running.
 
 .. method:: java.lang.Thread.attachAsDaemon()
+   :no-index:
 
    Attaches the current thread to the JVM as a daemon thread.
 
@@ -5136,6 +5138,7 @@ The following methods are added to `java.lang.Thread` by JPype:
      - `RuntimeError`: If the JVM is not running.
 
 .. method:: java.lang.Thread.detach()
+   :no-index:
 
    Detaches the current thread from the JVM.
 
