@@ -1,12 +1,21 @@
 #!/bin/bash
 set -e -x
 
-# Collect the pythons
-pys=(/opt/python/cp*/bin)
+pys=()
+echo "Available Python bins:"
+ls -d /opt/python/cp*/bin 
 
-# Exclude specific Pythons (3.6, 3.7)
-pys=(${pys[@]//*36*/})
-pys=(${pys[@]//*37*/})
+for pybin in /opt/python/cp*/bin; do
+    # Exclude 3.6, 3.7, 3.8 and any alpha/beta/rc release
+    if [[ "$dir" =~ ^cp3(6|7|8|9|14)-cp3(6|7|8|9|14)t?$ ]]; then
+        continue
+    fi
+    pys+=("$pybin")
+done
+
+# Show what you found for debugging
+echo "Found Python bins:"
+printf '%s\n' "${pys[@]}"
 
 # Compile wheels
 for PYBIN in "${pys[@]}"; do

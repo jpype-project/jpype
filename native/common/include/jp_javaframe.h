@@ -43,17 +43,14 @@
  */
 static const int LOCAL_FRAME_DEFAULT = 8;
 
-class JPContext;
-
 class JPJavaFrame
 {
-	JPContext* m_Context;
 	JNIEnv* m_Env;
 	bool m_Popped;
 	bool m_Outer;
 
 private:
-	JPJavaFrame(JPContext* context, JNIEnv* env, int size, bool outer);
+	JPJavaFrame(JNIEnv* env, int size, bool outer);
 
 public:
 
@@ -68,9 +65,9 @@ public:
 	 * @throws JPypeException if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
-	static JPJavaFrame outer(JPContext* context, int size = LOCAL_FRAME_DEFAULT)
+	static JPJavaFrame outer(int size = LOCAL_FRAME_DEFAULT)
 	{
-		return {context, nullptr, size, true};
+		return {nullptr, size, true};
 	}
 
 	/** Create a new JavaFrame when called internal when
@@ -82,9 +79,9 @@ public:
 	 * @throws JPypeException if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
-	static JPJavaFrame inner(JPContext* context, int size = LOCAL_FRAME_DEFAULT)
+	static JPJavaFrame inner(int size = LOCAL_FRAME_DEFAULT)
 	{
-		return {context, nullptr, size, false};
+		return {nullptr, size, false};
 	}
 
 	/** Create a new JavaFrame when called from Java.
@@ -97,9 +94,9 @@ public:
 	 * @throws JPypeException if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
-	static JPJavaFrame external(JPContext* context, JNIEnv* env, int size = LOCAL_FRAME_DEFAULT)
+	static JPJavaFrame external(JNIEnv* env, int size = LOCAL_FRAME_DEFAULT)
 	{
-		return {context, env, size, false};
+		return {env, size, false};
 	}
 
 	JPJavaFrame(const JPJavaFrame& frame);
@@ -111,6 +108,8 @@ public:
 	 * by the keep method will be kept alive.
 	 */
 	~JPJavaFrame();
+
+	JPContext* getContext();
 
 	void check();
 
@@ -158,11 +157,6 @@ public:
 	JNIEnv* getEnv() const
 	{
 		return m_Env;
-	}
-
-	JPContext* getContext() const
-	{
-		return m_Context;
 	}
 
 	string toString(jobject o);
@@ -374,6 +368,7 @@ public:
 	void* GetDirectBufferAddress(jobject obj);
 	jlong GetDirectBufferCapacity(jobject obj);
 	jboolean isBufferReadOnly(jobject obj);
+	jobject asReadOnlyBuffer(jobject obj);
 	jboolean orderBuffer(jobject obj);
 	jclass getClass(jobject obj);
 

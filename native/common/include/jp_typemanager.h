@@ -44,7 +44,6 @@ public:
     int interfaceParameterCount(JPClass* cls);
 
 private:
-	JPContext* m_Context;
 	JPObjectRef m_JavaTypeManager;
 	jmethodID m_FindClass;
 	jmethodID m_FindClassByName;

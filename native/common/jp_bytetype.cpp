@@ -27,6 +27,11 @@ JPByteType::JPByteType()
 JPByteType::~JPByteType()
 = default;
 
+JPClass* JPByteType::getBoxedClass(JPJavaFrame& frame) const
+{
+	return frame.getContext()->_java_lang_Byte;
+}
+
 JPPyObject JPByteType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
 	JPPyObject tmp = JPPyObject::call(PyLong_FromLong(field(val)));
@@ -35,10 +40,8 @@ JPPyObject JPByteType::convertToPythonObject(JPJavaFrame& frame, jvalue val, boo
 	return out;
 }
 
-JPValue JPByteType::getValueFromObject(const JPValue& obj)
+JPValue JPByteType::getValueFromObject(JPJavaFrame &frame, const JPValue& obj)
 {
-	JPContext *context = obj.getClass()->getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	jobject jo = obj.getValue().l;
 	auto* jb = dynamic_cast<JPBoxedType*>( frame.findClassForObject(jo));
@@ -70,7 +73,7 @@ public:
 
 	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		JPContext *context = cls->getContext();
+		JPContext *context = JPContext_global;
 		PyList_Append(info.exact, (PyObject*) context->_byte->getHost());
 		unboxConversion->getInfo(cls, info);
 	}
@@ -95,11 +98,11 @@ JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)
 
 void JPByteType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	jbyteConversion.getInfo(this, info);
 	byteConversion.getInfo(this, info);
 	byteNumberConversion.getInfo(this, info);
-	PyList_Append(info.ret, (PyObject*) m_Context->_int->getHost());
+	PyList_Append(info.ret, (PyObject*) JPContext_global->_int->getHost());
 }
 
 jarray JPByteType::newArrayOf(JPJavaFrame& frame, jsize sz)
@@ -244,7 +247,7 @@ void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 
 void JPByteType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
+	JPJavaFrame frame = JPJavaFrame::outer();
 	view.m_Memory = (void*) frame.GetByteArrayElements(
 			(jbyteArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "b";
@@ -255,7 +258,7 @@ void JPByteType::releaseView(JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
+		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseByteArrayElements((jbyteArray) view.m_Array->getJava(),
 				(jbyte*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

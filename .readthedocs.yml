@@ -21,9 +21,8 @@ python:
 
 build:
   tools:
-    python: "3.8"
-  os: ubuntu-22.04
+    python: "3.12"
+  os: ubuntu-lts-latest
   apt_packages:
     - openjdk-11-jdk
-
-
+    - ant

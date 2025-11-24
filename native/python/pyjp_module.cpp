@@ -15,14 +15,37 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
-#include "jp_arrayclass.h"
 #include "jp_primitive_accessor.h"
 #include "jp_gc.h"
-#include "jp_stringtype.h"
-#include "jp_classloader.h"
+
 #ifdef WIN32
 #include <Windows.h>
 #endif
+
+namespace {
+int init_numpy_bool_type()
+{
+	JP_TRACE("init_numpy_bool_type()");
+	PyObject *numpy = PyImport_ImportModule("numpy");
+	if (numpy == nullptr) {
+		// we do not want a Python error to be propagated.
+		PyErr_Clear(); // GCOVR_EXCL_LINE
+		return -1; // GCOVR_EXCL_LINE
+	}
+
+	PyObject *t = PyObject_GetAttrString(numpy, "bool_");
+	Py_DECREF(numpy);
+	if (t == nullptr) {
+		JP_TRACE("bool_ attr not found"); // GCOVR_EXCL_LINE
+		return -1; // GCOVR_EXCL_LINE
+	}
+
+	/* store as PyTypeObject* for fast checks */
+	_NPBool_Type = (PyTypeObject *)t;
+	return 0;
+}
+
+}
 
 void PyJPModule_installGC(PyObject* module);
 
@@ -76,6 +99,7 @@ PyObject* _JMethodAnnotations = nullptr;
 PyObject* _JMethodCode = nullptr;
 PyObject* _JObjectKey = nullptr;
 PyObject* _JVMNotRunning = nullptr;
+PyTypeObject* _NPBool_Type = nullptr;
 
 void PyJPModule_loadResources(PyObject* module)
 {
@@ -384,21 +408,28 @@ static void releaseView(void* view)
 	}
 }
 
-static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* src)
+static PyObject* PyJPModule_convertToDirectByteBuffer(PyObject* self, PyObject* args)
 {
 	JP_PY_TRY("PyJPModule_convertToDirectByteBuffer");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
+
+	PyObject *src;
+	int ro;
+	if (!PyArg_ParseTuple(args, "Op", &src, &ro))
+		return nullptr;
 
 	if (PyObject_CheckBuffer(src))
 	{
 		JPViewWrapper vw;
-		if (PyObject_GetBuffer(src, vw.view, PyBUF_WRITABLE) == -1)
+		if (PyObject_GetBuffer(src, vw.view, ro ? 0 : PyBUF_WRITABLE) == -1)
 			return nullptr;
 
 		// Create a byte buffer
 		jvalue v;
 		v.l = frame.NewDirectByteBuffer(vw.view->buf, vw.view->len);
+
+		if (vw.view->readonly)
+			v.l = frame.asReadOnlyBuffer(v.l);
 
 		// Bind lifespan of the view to the java object.
 		frame.registerRef(v.l, vw.view, &releaseView);
@@ -419,8 +450,7 @@ static PyObject* PyJPModule_enableStacktraces(PyObject* self, PyObject* src)
 PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 {
 	JP_PY_TRY("PyJPModule_newArrayType");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 
 	PyObject *type, *dims;
 	if (!PyArg_ParseTuple(args, "OO", &type, &dims))
@@ -446,8 +476,8 @@ PyObject *PyJPModule_newArrayType(PyObject *module, PyObject *args)
 PyObject *PyJPModule_getClass(PyObject* module, PyObject *obj)
 {
 	JP_PY_TRY("PyJPModule_getClass");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
+	JPContext *context = frame.getContext();
 
 	JPClass* cls;
 	if (JPPyString::check(obj))
@@ -485,8 +515,7 @@ PyObject *PyJPModule_hasClass(PyObject* module, PyObject *obj)
 	JP_PY_TRY("PyJPModule_hasClass");
 	if (!JPContext_global->isRunning())
 		Py_RETURN_FALSE; // GCOVR_EXCL_LINE
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 
 	JPClass* cls;
 	if (JPPyString::check(obj))
@@ -598,8 +627,7 @@ static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 		PyErr_Format(PyExc_TypeError, "isPackage required unicode");
 		return nullptr;
 	}
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	return PyBool_FromLong(frame.isPackage(JPPyString::asStringUTF8(pkg)));
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
@@ -723,7 +751,7 @@ static PyMethodDef moduleMethods[] = {
 
 	//{"dumpJVMStats", (PyCFunction) (&PyJPModule_dumpJVMStats), METH_NOARGS, ""},
 
-	{"convertToDirectBuffer", (PyCFunction) PyJPModule_convertToDirectByteBuffer, METH_O, ""},
+	{"convertToDirectBuffer", (PyCFunction) PyJPModule_convertToDirectByteBuffer, METH_VARARGS, ""},
 	{"arrayFromBuffer", (PyCFunction) PyJPModule_arrayFromBuffer, METH_VARARGS, ""},
 	{"enableStacktraces", (PyCFunction) PyJPModule_enableStacktraces, METH_O, ""},
 	{"isPackage", (PyCFunction) PyJPModule_isPackage, METH_O, ""},
@@ -761,7 +789,8 @@ PyMODINIT_FUNC PyInit__jpype()
 #ifdef Py_GIL_DISABLED
     PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
 #endif
-	PyModule_AddStringConstant(module, "__version__", "1.6.0.dev0");
+// TODO: we should probably pass the version directly from a scikit-build (cmake) defined macro.
+	PyModule_AddStringConstant(module, "__version__", "1.6.1.dev0");
 
 	// Our module will be used for PyFrame object and it is a requirement that
 	// we have a builtins in our dictionary.
@@ -787,6 +816,8 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPChar_initType(module);
 
 	_PyJPModule_trace = true;
+
+	init_numpy_bool_type();
 
 	return module;
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
@@ -823,7 +854,7 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 {
 	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	Py_buffer& view = buffer.getView();
 
 	// Okay two possibilities here.  We have a valid dtype specified,
@@ -838,7 +869,7 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 
 	// First lets find out what we are unpacking
 	Py_ssize_t itemsize = view.itemsize;
-	char *format = view.format;
+	const char *format = view.format;
 	if (format == nullptr)
 		format = "B";
 	// Standard size for 'l' is 4 in docs, but numpy uses format 'l' for long long

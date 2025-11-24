@@ -34,11 +34,22 @@ static void jpype_frame_check(int popped)
 #define JP_FRAME_CHECK() if (false) while (false)
 #endif
 
-JPJavaFrame::JPJavaFrame(JPContext* context, JNIEnv* p_env, int size, bool outer)
-: m_Context(context), m_Env(p_env), m_Popped(false), m_Outer(outer)
+JPJavaFrame::JPJavaFrame(JNIEnv* p_env, int size, bool outer)
+: m_Env(p_env), m_Popped(false), m_Outer(outer)
 {
+	JPContext* context = JPContext_global;
+
 	if (p_env == nullptr)
+	{
+		if (outer)
+		{
+#ifdef JP_INSTRUMENTATION
+			PyJPModuleFault_throw(compile_hash("PyJPModule_getContext"));
+#endif
+			assertJVMRunning((JPContext*)context, JP_STACKINFO());
+		}
 		m_Env = context->getEnv();
+	}
 
 	// Create a memory management frame to live in
 	m_Env->PushLocalFrame(size);
@@ -46,11 +57,17 @@ JPJavaFrame::JPJavaFrame(JPContext* context, JNIEnv* p_env, int size, bool outer
 }
 
 JPJavaFrame::JPJavaFrame(const JPJavaFrame& frame)
-: m_Context(frame.m_Context), m_Env(frame.m_Env), m_Popped(false), m_Outer(false)
+: m_Env(frame.m_Env), m_Popped(false), m_Outer(false)
 {
 	// Create a memory management frame to live in
 	m_Env->PushLocalFrame(LOCAL_FRAME_DEFAULT);
 	JP_TRACE_JAVA("JavaFrame (copy)", (jobject) - 1);
+}
+
+JPContext* JPJavaFrame::getContext()
+{
+	// We can add guard statements here.
+	return JPContext_global;
 }
 
 jobject JPJavaFrame::keep(jobject obj)
@@ -1022,15 +1039,22 @@ jlong JPJavaFrame::GetDirectBufferCapacity(jobject obj)
 
 jboolean JPJavaFrame::isBufferReadOnly(jobject obj)
 {
-	return CallBooleanMethodA(obj, m_Context->m_Buffer_IsReadOnlyID, nullptr);
+	return CallBooleanMethodA(obj, getContext()->m_Buffer_IsReadOnlyID, nullptr);
+}
+
+jobject JPJavaFrame::asReadOnlyBuffer(jobject obj)
+{
+	JAVA_RETURN_OBJ(jobject, "JPJavaFrame::asReadOnlyBuffer",
+			m_Env->CallObjectMethod(obj, getContext()->m_Buffer_AsReadOnlyID));
 }
 
 jboolean JPJavaFrame::orderBuffer(jobject obj)
 {
 	jvalue arg;
 	arg.l = obj;
-	return CallBooleanMethodA(m_Context->m_JavaContext.get(),
-			m_Context->m_Context_OrderID, &arg);
+	JPContext *context = getContext();
+	return CallBooleanMethodA(context->m_JavaContext.get(),
+			context->m_Context_OrderID, &arg);
 }
 
 // GCOVR_EXCL_START
@@ -1038,7 +1062,7 @@ jboolean JPJavaFrame::orderBuffer(jobject obj)
 
 jclass JPJavaFrame::getClass(jobject obj)
 {
-	return (jclass) CallObjectMethodA(obj, m_Context->m_Object_GetClassID, nullptr);
+	return (jclass) CallObjectMethodA(obj, getContext()->m_Object_GetClassID, nullptr);
 }
 // GCOVR_EXCL_STOP
 
@@ -1075,7 +1099,9 @@ public:
 
 string JPJavaFrame::toString(jobject o)
 {
-	auto str = (jstring) CallObjectMethodA(o, m_Context->m_Object_ToStringID, nullptr);
+	auto str = (jstring) CallObjectMethodA(o, getContext()->m_Object_ToStringID, nullptr);
+	if (str == nullptr)
+		return "null";
 	return toStringUTF8(str);
 }
 
@@ -1101,100 +1127,105 @@ jstring JPJavaFrame::fromStringUTF8(const string& str)
 
 jobject JPJavaFrame::toCharArray(jstring jstr)
 {
-	return CallObjectMethodA(jstr, m_Context->m_String_ToCharArrayID, nullptr);
+	return CallObjectMethodA(jstr, getContext()->m_String_ToCharArrayID, nullptr);
 }
 
 bool JPJavaFrame::equals(jobject o1, jobject o2 )
 {
 	jvalue args;
 	args.l = o2;
-	return CallBooleanMethodA(o1, m_Context->m_Object_EqualsID, &args) != 0;
+	return CallBooleanMethodA(o1, getContext()->m_Object_EqualsID, &args) != 0;
 }
 
 jint JPJavaFrame::hashCode(jobject o)
 {
-	return CallIntMethodA(o, m_Context->m_Object_HashCodeID, nullptr);
+	return CallIntMethodA(o, getContext()->m_Object_HashCodeID, nullptr);
 }
 
 jobject JPJavaFrame::collectRectangular(jarray obj)
 {
-	if (m_Context->m_Context_collectRectangularID == nullptr)
+	JPContext* context = getContext();
+	if (context->m_Context_collectRectangularID == nullptr)
 		return nullptr;
 	jvalue v;
 	v.l = (jobject) obj;
 	JAVA_RETURN(jobject, "JPJavaFrame::collectRectangular",
 			CallObjectMethodA(
-			m_Context->m_JavaContext.get(),
-			m_Context->m_Context_collectRectangularID, &v));
+			context->m_JavaContext.get(),
+			context->m_Context_collectRectangularID, &v));
 }
 
 jobject JPJavaFrame::assemble(jobject dims, jobject parts)
 {
-	if (m_Context->m_Context_collectRectangularID == nullptr)
+	JPContext* context = getContext();
+	if (context->m_Context_collectRectangularID == nullptr)
 		return nullptr;
 	jvalue v[2];
 	v[0].l = (jobject) dims;
 	v[1].l = (jobject) parts;
 	JAVA_RETURN(jobject, "JPJavaFrame::assemble",
 			CallObjectMethodA(
-			m_Context->m_JavaContext.get(),
-			m_Context->m_Context_assembleID, v));
+			context->m_JavaContext.get(),
+			context->m_Context_assembleID, v));
 }
 
 jobject JPJavaFrame::newArrayInstance(jclass c, jintArray dims)
 {
+	JPContext* context = getContext();
 	jvalue v[2];
 	v[0].l = (jobject) c;
 	v[1].l = (jobject) dims;
 	JAVA_RETURN(jobject, "JPJavaFrame::newArrayInstance",
 			CallStaticObjectMethodA(
-			m_Context->m_Array.get(),
-			m_Context->m_Array_NewInstanceID, v));
+			context->m_Array.get(),
+			context->m_Array_NewInstanceID, v));
 }
 
 jobject JPJavaFrame::callMethod(jobject method, jobject obj, jobject args)
 {
 	JP_TRACE_IN("JPJavaFrame::callMethod");
-	if (m_Context->m_CallMethodID == nullptr)
+	JPContext* context = getContext();
+	if (context->m_CallMethodID == nullptr)
 		return nullptr;
 	JPJavaFrame frame(*this);
 	jvalue v[3];
 	v[0].l = method;
 	v[1].l = obj;
 	v[2].l = args;
-	return frame.keep(frame.CallObjectMethodA(m_Context->m_Reflector.get(), m_Context->m_CallMethodID, v));
+	return frame.keep(frame.CallObjectMethodA(context->m_Reflector.get(), context->m_CallMethodID, v));
 	JP_TRACE_OUT;
 }
 
 string JPJavaFrame::getFunctional(jclass c)
 {
+	JPContext* context = getContext();
 	jvalue v;
 	v.l = (jobject) c;
 	return toStringUTF8((jstring) CallStaticObjectMethodA(
-			m_Context->m_ContextClass.get(),
-			m_Context->m_Context_GetFunctionalID, &v));
+			context->m_ContextClass.get(),
+			context->m_Context_GetFunctionalID, &v));
 }
 
 JPClass *JPJavaFrame::findClass(jclass obj)
 {
-	return m_Context->getTypeManager()->findClass(obj);
+	return getContext()->getTypeManager()->findClass(obj);
 }
 
 JPClass *JPJavaFrame::findClassByName(const string& name)
 {
-	return m_Context->getTypeManager()->findClassByName(name);
+	return getContext()->getTypeManager()->findClassByName(name);
 }
 
 JPClass *JPJavaFrame::findClassForObject(jobject obj)
 {
-	return m_Context->getTypeManager()->findClassForObject(obj);
+	return getContext()->getTypeManager()->findClassForObject(obj);
 }
 
 jint JPJavaFrame::compareTo(jobject obj, jobject obj2)
 {
 	jvalue v;
 	v.l = obj2;
-	jint ret = m_Env->CallIntMethodA(obj, m_Context->m_CompareToID, &v);
+	jint ret = m_Env->CallIntMethodA(obj, getContext()->m_CompareToID, &v);
 	if (m_Env->ExceptionOccurred())
 	{
 		m_Env->ExceptionClear();
@@ -1205,28 +1236,30 @@ jint JPJavaFrame::compareTo(jobject obj, jobject obj2)
 
 jthrowable JPJavaFrame::getCause(jthrowable th)
 {
-	return (jthrowable) CallObjectMethodA((jobject) th, m_Context->m_Throwable_GetCauseID, nullptr);
+	return (jthrowable) CallObjectMethodA((jobject) th, getContext()->m_Throwable_GetCauseID, nullptr);
 }
 
 jstring JPJavaFrame::getMessage(jthrowable th)
 {
-	return (jstring) CallObjectMethodA((jobject) th, m_Context->m_Throwable_GetMessageID, nullptr);
+	return (jstring) CallObjectMethodA((jobject) th, getContext()->m_Throwable_GetMessageID, nullptr);
 }
 
 jboolean JPJavaFrame::isPackage(const string& str)
 {
+	JPContext* context = getContext();
 	jvalue v;
 	v.l = fromStringUTF8(str);
 	JAVA_RETURN(jboolean, "JPJavaFrame::isPackage",
-			CallBooleanMethodA(m_Context->m_JavaContext.get(), m_Context->m_Context_IsPackageID, &v));
+			CallBooleanMethodA(context->m_JavaContext.get(), context->m_Context_IsPackageID, &v));
 }
 
 jobject JPJavaFrame::getPackage(const string& str)
 {
+	JPContext* context = getContext();
 	jvalue v;
 	v.l = fromStringUTF8(str);
 	JAVA_RETURN(jobject, "JPJavaFrame::getPackage",
-			CallObjectMethodA(m_Context->m_JavaContext.get(), m_Context->m_Context_GetPackageID, &v));
+			CallObjectMethodA(context->m_JavaContext.get(), context->m_Context_GetPackageID, &v));
 }
 
 jobject JPJavaFrame::getPackageObject(jobject pkg, const string& str)
@@ -1234,23 +1267,24 @@ jobject JPJavaFrame::getPackageObject(jobject pkg, const string& str)
 	jvalue v;
 	v.l = fromStringUTF8(str);
 	JAVA_RETURN(jobject, "JPJavaFrame::getPackageObject",
-			CallObjectMethodA(pkg, m_Context->m_Package_GetObjectID, &v));
+			CallObjectMethodA(pkg, getContext()->m_Package_GetObjectID, &v));
 }
 
 jarray JPJavaFrame::getPackageContents(jobject pkg)
 {
 	jvalue v;
 	JAVA_RETURN(auto, "JPJavaFrame::getPackageContents",
-			(jarray) CallObjectMethodA(pkg, m_Context->m_Package_GetContentsID, &v));
+			(jarray) CallObjectMethodA(pkg, getContext()->m_Package_GetContentsID, &v));
 }
 
 void JPJavaFrame::newWrapper(JPClass* cls)
 {
+	JPContext* context = getContext();
 	JPPyCallRelease call;
 	jvalue jv;
 	jv.j = (jlong) cls;
-	CallVoidMethodA(m_Context->getJavaContext(),
-			m_Context->m_Context_NewWrapperID, &jv);
+	CallVoidMethodA(context->getJavaContext(),
+			context->m_Context_NewWrapperID, &jv);
 }
 
 void JPJavaFrame::registerRef(jobject obj, PyObject* hostRef)
@@ -1265,9 +1299,10 @@ void JPJavaFrame::registerRef(jobject obj, void* ref, JCleanupHook cleanup)
 
 void JPJavaFrame::clearInterrupt(bool throws)
 {
+	JPContext* context = getContext();
 	JPPyCallRelease call;
 	jvalue jv;
 	jv.z = throws;
-	CallVoidMethodA(m_Context->m_ContextClass.get(),
-			m_Context->m_Context_ClearInterruptID, &jv);
+	CallVoidMethodA(context->m_ContextClass.get(),
+			context->m_Context_ClearInterruptID, &jv);
 }

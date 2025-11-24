@@ -252,9 +252,9 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
 {
 	JP_TRACE_IN("JPMethod::invokeCallerSensitive");
-	JPContext *context = m_Class->getContext();
 	size_t alen = m_ParameterTypes.size();
-	JPJavaFrame frame = JPJavaFrame::outer(context, (int) (8 + alen));
+	JPJavaFrame frame = JPJavaFrame::outer((int) (8 + alen));
+	JPContext *context = frame.getContext();
 	JPClass* retType = m_ReturnType;
 
 	// Pack the arguments
@@ -285,7 +285,7 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 			auto* type = dynamic_cast<JPPrimitiveType*>( cls);
 			PyObject *u = arg[i + match.m_Skip];
 			JPMatch conv(&frame, u);
-			JPClass *boxed = type->getBoxedClass(context);
+			JPClass *boxed = type->getBoxedClass(frame);
 			boxed->findJavaConversion(conv);
 			jvalue v = conv.convert();
 			frame.SetObjectArrayElement(ja, i, v.l);
@@ -309,8 +309,8 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 	if (retType->isPrimitive())
 	{
 		JP_TRACE("Return primitive");
-		JPClass *boxed = (dynamic_cast<JPPrimitiveType*>( retType))->getBoxedClass(context);
-		JPValue out = retType->getValueFromObject(JPValue(boxed, o));
+		JPClass *boxed = (dynamic_cast<JPPrimitiveType*>( retType))->getBoxedClass(frame);
+		JPValue out = retType->getValueFromObject(frame, JPValue(boxed, o));
 		return retType->convertToPythonObject(frame, out.getValue(), false);
 	} else
 	{
@@ -336,8 +336,7 @@ JPValue JPMethod::invokeConstructor(JPJavaFrame& frame, JPMethodMatch& match, JP
 string JPMethod::matchReport(JPPyObjectVector& args)
 {
 	ensureTypeCache();
-	JPContext *context = m_Class->getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	std::stringstream res;
 
 	res << m_ReturnType->getCanonicalName() << " (";
@@ -397,5 +396,5 @@ void JPMethod::ensureTypeCache()
 	if (m_ReturnType != (JPClass*) (-1))
 		return;
 
-	m_Class->getContext()->getTypeManager()->populateMethod(this, m_Method.get());
+	JPContext_global->getTypeManager()->populateMethod(this, m_Method.get());
 }

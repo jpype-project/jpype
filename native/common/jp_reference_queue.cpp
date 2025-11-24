@@ -47,11 +47,10 @@ JNIEXPORT void JNICALL Java_org_jpype_ref_JPypeReferenceNative_init
 JNIEXPORT void JNICALL Java_org_jpype_ref_JPypeReferenceNative_removeHostReference
 (JNIEnv *env, jclass, jlong host, jlong cleanup)
 {
-	JPContext* context = JPContext_global;
 	// Exceptions are not allowed here
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::external((JPContext*) context, env);
+		JPJavaFrame frame = JPJavaFrame::external(env);
 		JPPyCallAcquire callback;
 		if (cleanup != 0)
 		{

@@ -48,7 +48,7 @@ JPContext::JPContext()
 {
 	m_Embedded = false;
 
-	m_GC = new JPGarbageCollection(this);
+	m_GC = new JPGarbageCollection();
 }
 
 JPContext::~JPContext()
@@ -172,6 +172,8 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		JP_RAISE(PyExc_RuntimeError, "Unable to start JVM");
 	}
 
+	// Mark running for assert
+	m_Running = true;
 	initializeResources(env, interrupt);
 	JP_TRACE_OUT;
 }
@@ -217,7 +219,7 @@ std::string getShared()
 
 void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 {
-	JPJavaFrame frame = JPJavaFrame::external(this, env);
+	JPJavaFrame frame = JPJavaFrame::external(env);
 	// This is the only frame that we can use until the system
 	// is initialized.  Any other frame creation will result in an error.
 
@@ -332,6 +334,10 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	m_Buffer_IsReadOnlyID = frame.GetMethodID(bufferClass, "isReadOnly",
 			"()Z");
 
+	jclass bytebufferClass = frame.FindClass("java/nio/ByteBuffer");
+	m_Buffer_AsReadOnlyID = frame.GetMethodID(bytebufferClass, "asReadOnlyBuffer",
+			"()Ljava/nio/ByteBuffer;");
+
 	jclass comparableClass = frame.FindClass("java/lang/Comparable");
 	m_CompareToID = frame.GetMethodID(comparableClass, "compareTo",
 			"(Ljava/lang/Object;)I");
@@ -353,7 +359,6 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	// FIXME find a way to call this from instrumentation.
 	// throw std::runtime_error("Failed");
 	// Everything is started.
-	m_Running = true;
 }
 
 void JPContext::onShutdown()
@@ -460,7 +465,9 @@ JNIEnv* JPContext::getEnv()
 		// not deadlock the shutdown.  The user can convert later if they want.
 		res = m_JavaVM->AttachCurrentThreadAsDaemon((void**) &env, nullptr);
 		if (res != JNI_OK)
+		{
 			JP_RAISE(PyExc_RuntimeError, "Unable to attach to local thread");
+		}
 	}
 	return env;
 }

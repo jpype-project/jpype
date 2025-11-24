@@ -35,13 +35,6 @@ public:
 	JPMatch();
 	JPMatch(JPJavaFrame *frame, PyObject *object);
 
-	JPContext *getContext() const
-	{
-		if (frame == nullptr)
-			return nullptr;
-		return frame->getContext();
-	}
-
 	/**
 	 * Get the Java slot associated with the Python object.
 	 *
@@ -65,8 +58,8 @@ public:
 class JPMethodCache
 {
 public:
-	long m_Hash;
-	JPMethod* m_Overload;
+	long m_Hash{-1};
+	JPMethod* m_Overload{nullptr};
 } ;
 
 class JPMethodMatch : public JPMethodCache

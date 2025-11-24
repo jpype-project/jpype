@@ -27,6 +27,11 @@ JPShortType::JPShortType()
 JPShortType::~JPShortType()
 = default;
 
+JPClass* JPShortType::getBoxedClass(JPJavaFrame& frame) const
+{
+	return frame.getContext()->_java_lang_Short;
+}
+
 JPPyObject JPShortType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
 	JPPyObject tmp = JPPyObject::call(PyLong_FromLong(field(val)));
@@ -35,10 +40,8 @@ JPPyObject JPShortType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bo
 	return out;
 }
 
-JPValue JPShortType::getValueFromObject(const JPValue& obj)
+JPValue JPShortType::getValueFromObject(JPJavaFrame& frame, const JPValue& obj)
 {
-	JPContext *context = obj.getClass()->getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jvalue v;
 	jobject jo = obj.getValue().l;
 	auto* jb = dynamic_cast<JPBoxedType*>( frame.findClassForObject(jo));
@@ -89,7 +92,7 @@ public:
 
 	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
-		JPContext *context = cls->getContext();
+		JPContext *context = JPContext_global;
 		PyList_Append(info.exact, (PyObject*) context->_short->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
@@ -117,11 +120,11 @@ JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
 
 void JPShortType::getConversionInfo(JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	jshortConversion.getInfo(this, info);
 	shortConversion.getInfo(this, info);
 	shortNumberConversion.getInfo(this, info);
-	PyList_Append(info.ret, (PyObject*) m_Context->_short->getHost());
+	PyList_Append(info.ret, (PyObject*) JPContext_global->_short->getHost());
 }
 
 jarray JPShortType::newArrayOf(JPJavaFrame& frame, jsize sz)
@@ -267,7 +270,7 @@ void JPShortType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject
 
 void JPShortType::getView(JPArrayView& view)
 {
-	JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
+	JPJavaFrame frame = JPJavaFrame::outer();
 	view.m_Memory = (void*) frame.GetShortArrayElements(
 			(jshortArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "h";
@@ -278,7 +281,7 @@ void JPShortType::releaseView(JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer(view.getContext());
+		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseShortArrayElements((jshortArray) view.m_Array->getJava(),
 				(jshort*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

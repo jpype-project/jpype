@@ -111,9 +111,8 @@ void JPGarbageCollection::triggered()
 	}
 }
 
-JPGarbageCollection::JPGarbageCollection(JPContext *context)
+JPGarbageCollection::JPGarbageCollection()
 {
-	m_Context = context;
 	running = false;
 	in_python_gc = false;
 	java_triggered = false;
@@ -154,7 +153,7 @@ void JPGarbageCollection::init(JPJavaFrame& frame)
 	_SystemClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/System"));
 	_gcMethodID = frame.GetStaticMethodID(_SystemClass, "gc", "()V");
 
-	jclass ctxt = frame.getContext()->m_ContextClass.get();
+	jclass ctxt = JPContext_global->m_ContextClass.get();
 	_ContextClass = ctxt;
 	_totalMemoryID = frame.GetStaticMethodID(ctxt, "getTotalMemory", "()J");
 	_freeMemoryID = frame.GetStaticMethodID(ctxt, "getFreeMemory", "()J");
@@ -252,7 +251,7 @@ void JPGarbageCollection::onEnd()
 
 #if 0
 		{
-			JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+			JPJavaFrame frame = JPJavaFrame::outer();
 			jlong totalMemory = frame.CallStaticLongMethodA(_ContextClass, _totalMemoryID, nullptr);
 			jlong freeMemory = frame.CallStaticLongMethodA(_ContextClass, _freeMemoryID, nullptr);
 			jlong maxMemory = frame.CallStaticLongMethodA(_ContextClass, _maxMemoryID, nullptr);
@@ -269,7 +268,7 @@ void JPGarbageCollection::onEnd()
 			// Move up the low water
 			low_water = (low_water + high_water) / 2;
 			// Don't reset the limit if it was count triggered
-			JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+			JPJavaFrame frame = JPJavaFrame::outer();
 			frame.CallStaticVoidMethodA(_SystemClass, _gcMethodID, nullptr);
 			python_triggered++;
 		}

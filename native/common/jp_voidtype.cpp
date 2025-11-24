@@ -24,6 +24,11 @@ JPVoidType::JPVoidType()
 JPVoidType::~JPVoidType()
 = default;
 
+JPClass* JPVoidType::getBoxedClass(JPJavaFrame& frame) const
+{
+	return frame.getContext()->_java_lang_Void;
+}
+
 JPPyObject JPVoidType::invokeStatic(JPJavaFrame& frame, jclass claz, jmethodID mth, jvalue* val)
 {
 	{
@@ -47,7 +52,7 @@ JPPyObject JPVoidType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 
 // GCOVR_EXCL_START
 
-JPValue JPVoidType::getValueFromObject(const JPValue& obj)
+JPValue JPVoidType::getValueFromObject(JPJavaFrame& frame, const JPValue& obj)
 {
 	// This is needed if we call a caller sensitive method
 	// and we get a return which is expected to be a void object

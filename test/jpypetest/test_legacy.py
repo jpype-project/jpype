@@ -15,6 +15,8 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+from pathlib import Path
+
 import jpype
 import common
 import subrun
@@ -34,8 +36,9 @@ class LegacyTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # Run with automatic string conversion
-        jpype.startJVM(classpath=os.path.abspath(
-            "test/classes"), convertStrings=True)
+        cp = Path(__file__).parent / "../classes"
+        assert cp.exists()
+        jpype.startJVM(classpath=cp.absolute(), convertStrings=True)
 
     def setUp(self):
         self._test = jpype.JClass("jpype.str.Test")

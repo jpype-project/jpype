@@ -28,8 +28,6 @@ extern "C"
 static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPProxy_new");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
 	auto *self = (PyJPProxy*) type->tp_alloc(type, 0);
 	JP_PY_CHECK();
 
@@ -48,6 +46,7 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 		return nullptr;
 	}
 
+	JPJavaFrame frame = JPJavaFrame::outer();
 	JPClassList interfaces;
 	JPPySequence intf = JPPySequence::use(pyintf);
 	jlong len = intf.size();
@@ -66,9 +65,9 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	}
 
 	if (dispatch == Py_None)
-		self->m_Proxy = new JPProxyDirect(context, self, interfaces);
+		self->m_Proxy = new JPProxyDirect(self, interfaces);
 	else
-		self->m_Proxy = new JPProxyIndirect(context, self, interfaces);
+		self->m_Proxy = new JPProxyIndirect(self, interfaces);
 	self->m_Target = instance;
 	self->m_Dispatch = dispatch;
 	self->m_Convert = (convert != 0);
@@ -108,7 +107,7 @@ void PyJPProxy_dealloc(PyJPProxy* self)
 
 static PyObject *PyJPProxy_class(PyJPProxy *self, void *context)
 {
-	JPJavaFrame frame = JPJavaFrame::outer(self->m_Proxy->getContext());
+	JPJavaFrame frame = JPJavaFrame::outer();
 	JPClass* cls = self->m_Proxy->getInterfaces()[0];
 	return PyJPClass_create(frame, cls).keep();
 }

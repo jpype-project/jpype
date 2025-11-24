@@ -1,11 +1,10 @@
-<project default="test" name="JPype - Native">
+<project default="build-all" name="JPype - Test harness">
 
 	<property name="src" location="harness"/>
 	<property name="build" location="classes"/>
-        <property name="version" value="${ant.java.version}"/>
+	<property name="version" value="${ant.java.version}"/>
 
-	<target name="test" depends="compile">
-	</target>
+	<target name="test" depends="compile"/>
 
 	<condition property="build-9">
 		<not><or>
@@ -22,6 +21,7 @@
 		<javac destdir="${build}"
 			source="${version}"
 			target="${version}"
+			includeantruntime="false"
 			>
 			<compilerarg value="--add-exports"/>
 			<compilerarg value="java.base/jdk.internal.reflect=ALL-UNNAMED"/>
@@ -36,6 +36,7 @@
 		<javac destdir="${build}"
 			source="${version}"
 			target="${version}"
+			includeantruntime="false"
 			>
 			<src>
 				<pathelement location="${src}/java8"/>
@@ -49,6 +50,7 @@
 		<javac destdir="${build}"
 			source="${version}"
 			target="${version}"
+			includeantruntime="false"
 			debug="true"
 			debuglevel="lines,vars,source"
 			>
@@ -70,4 +72,18 @@
 		<delete dir="${build}"/>
 	</target>
 
+	<!-- Build javadocs for test class (jpype.doc package). -->
+	<target name="javadoc">
+		<javadoc
+				sourcepath="${src}"
+				destdir="${build}"
+				packagenames="jpype.doc"
+				failonerror="false"
+				additionalparam="-Xdoclint:none">
+			<classpath>
+				<pathelement location="${build}"/>
+			</classpath>
+		</javadoc>
+	</target>
+	<target name="build-all" depends="compile,javadoc"/>
 </project>

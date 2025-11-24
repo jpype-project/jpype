@@ -33,8 +33,7 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	}
 
 	// Create an instance (this may fail)
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	JPPyObjectVector args(pyargs);
 	JPValue jv = cls->newInstance(frame, args);
 
@@ -67,8 +66,7 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 		return out;
 	}
 
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	JPValue *javaSlot0 = PyJPValue_getJavaSlot(self);
 	JPValue *javaSlot1 = PyJPValue_getJavaSlot(other);
 
@@ -110,8 +108,7 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 {
 	JP_PY_TRY("PyJPComparable_compare");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	JPValue *javaSlot0 = PyJPValue_getJavaSlot(self);
 	JPValue *javaSlot1 = PyJPValue_getJavaSlot(other);
 
@@ -202,8 +199,7 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 static Py_hash_t PyJPObject_hash(PyObject *obj)
 {
 	JP_PY_TRY("PyJPObject_hash");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	JPValue *javaSlot = PyJPValue_getJavaSlot(obj);
 	if (javaSlot == nullptr)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
@@ -267,13 +263,12 @@ static PyObject *PyJPException_new(PyTypeObject *type, PyObject *pyargs, PyObjec
 	}  // GCOVR_EXCL_STOP
 
 	// Special constructor path for Exceptions
+	JPJavaFrame frame = JPJavaFrame::outer();
 	JPPyObjectVector args(pyargs);
 	if (args.size() == 2 && args[0] == _JObjectKey)
 		return ((PyTypeObject*) PyExc_BaseException)->tp_new(type, args[1], kwargs);
 
 	// Create an instance (this may fail)
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPValue jv = cls->newInstance(frame, args);
 
 	// Exception must be constructed with the BaseException_new
@@ -301,8 +296,7 @@ static int PyJPException_init(PyObject *self, PyObject *pyargs, PyObject *kwargs
 static PyObject* PyJPException_expandStacktrace(PyObject* self)
 {
 	JP_PY_TRY("PyJPModule_expandStackTrace");
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer(context);
+	JPJavaFrame frame = JPJavaFrame::outer();
 	JPValue *val = PyJPValue_getJavaSlot(self);
 
 	// These two are loop invariants and must match each time
@@ -396,7 +390,7 @@ void PyJPObject_initType(PyObject* module)
 void PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, jthrowable enclosing)
 {
 	JP_TRACE_IN("PyJPException_normalize");
-	JPContext *context = frame.getContext();
+	JPContext *context = PyJPModule_getContext();
 	while (th != nullptr)
 	{
 		// Attach the frame to first
