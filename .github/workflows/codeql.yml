@@ -40,7 +40,7 @@ jobs:
         if: ${{ matrix.language == 'python' }}
 
       - name: Build cpp
-        run: pip install -e .
+        run: pip install . --verbose --no-build-isolation
         if: ${{ matrix.language == 'cpp' }}
 
       - name: Build java
