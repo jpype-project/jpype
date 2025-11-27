@@ -31,13 +31,16 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           queries: +security-and-quality
+          config: |
+            paths-ignore:
+              - "test/**"
 
       - name: Autobuild
         uses: github/codeql-action/autobuild@v4
         if: ${{ matrix.language == 'python' }}
 
       - name: Build cpp
-        run: pip install build ; python3 -m build
+        run: pip install -e .
         if: ${{ matrix.language == 'cpp' }}
 
       - name: Build java
