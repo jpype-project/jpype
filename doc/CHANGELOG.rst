@@ -8,6 +8,8 @@ Latest Changes:
 
   - Fixed compatibility with NumPy 2.3. #1320
 
+  - Fixed a race condition upon JPype import on Windows. #1316
+
 - **1.6.0 - 2025-01-20**
 
   - Java components have been converted to maven style module.
