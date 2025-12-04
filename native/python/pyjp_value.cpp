@@ -15,6 +15,7 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_stringtype.h"
 #include <Python.h>
 #include <mutex>
 
