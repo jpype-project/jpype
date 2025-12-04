@@ -15,7 +15,6 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
-#include "jp_stringtype.h"
 #include <Python.h>
 #include <mutex>
 
@@ -24,7 +23,6 @@ extern "C"
 {
 #endif
 
-std::mutex mtx;
 
 // Create a dummy type which we will use only for allocation
 PyTypeObject* PyJPAlloc_Type = nullptr;
@@ -46,6 +44,7 @@ PyTypeObject* PyJPAlloc_Type = nullptr;
  */
 PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 {
+	static std::mutex mtx;
 	JP_PY_TRY("PyJPValue_alloc");
 
 #if PY_VERSION_HEX >= 0x030d0000
@@ -60,7 +59,7 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 
 	PyObject* obj = nullptr;
 	{  
-		std::lock_guard<std::mutex> lock(mtx);
+		std::lock_guard<std::mutex> const lock(mtx);
 		// Mutate the allocator type 
 		PyJPAlloc_Type->tp_flags = type->tp_flags;
 		PyJPAlloc_Type->tp_basicsize = type->tp_basicsize + sizeof (JPValue);
