@@ -726,11 +726,7 @@ static bool PySlice_CheckFull(PyObject *item)
 		return false;
 	Py_ssize_t start, stop, step;
 	int rc = PySlice_Unpack(item, &start, &stop, &step);
-#if defined(ANDROID)
-	return (rc == 0)&&(start == 0)&&(step == 1)&&((int) stop >= 0x7fffffff);
-#else
-	return (rc == 0)&&(start == 0)&&(step == 1)&&((int) stop == -1);
-#endif
+	return (rc == 0)&&(start == 0)&&(step == 1)&&(stop == PY_SSIZE_T_MAX);
 }
 
 static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
