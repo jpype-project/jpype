@@ -29,8 +29,11 @@ Latest Changes:
 
   - Fixed a bug in which JPype did not respect a JConversion between two Java classes.
 
+  - Support for minimum_version argument on startJVM.
+
   - Enhancement in convertToDirectBuffer to support wrapping bytes and readonly
     memoryviews as readonly java ByteBuffers.
+
 
 - **1.5.2 - 2025-01-20**
 
