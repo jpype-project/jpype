@@ -174,6 +174,12 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 
 	// Mark running for assert
 	m_Running = true;
+
+	jint jni_version = env->GetVersion();
+	if (jni_version < 0x00090000)
+	{
+		JP_RAISE(PyExc_RuntimeError, "Java version too old. Java 9 or later is required");
+	}
 	initializeResources(env, interrupt);
 	JP_TRACE_OUT;
 }
