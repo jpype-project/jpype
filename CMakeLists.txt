@@ -9,7 +9,8 @@ option(BUILD_TEST_HARNESS "Build the Java test harness" ON)
 # set(PY_GIL_DISABLED ON)
 set(CMAKE_CXX_STANDARD 14)
 
-find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(Python3 COMPONENTS Development.Embed)
 find_package(Java REQUIRED COMPONENTS Development)
 # todo: add fallback jni.h in case it aint found (no jdk required, or not found).
 #set(JAVA_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/native/jni_include" ${JAVA_INCLUDE_PATH})
