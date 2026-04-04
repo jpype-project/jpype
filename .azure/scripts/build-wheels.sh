@@ -75,6 +75,6 @@ echo "=============="
 for PYBIN in "${pys[@]}"; do
     echo "Verifying installation for $PYBIN"
     "${PYBIN}/python" -m pip install ${package_name} --no-index -f /io/wheelhouse
-    "${PYBIN}/python" -c "import jpype; print(f'JPype version {jpype.__version__} installed successfully')"
+    "${PYBIN}/python" -c "import jpype; print(\"JPype version {} installed successfully\".format(jpype.__version__))"
 done
 
