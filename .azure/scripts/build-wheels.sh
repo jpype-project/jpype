@@ -57,7 +57,7 @@ for PYBIN in "${pys[@]}"; do
         -DPython3_INCLUDE_DIR=${PYTHON_INCLUDE};\
         -DPython3_FIND_STRATEGY=LOCATION;\
         -DPython3_FIND_COMPONENTS='Interpreter;Development.Module';\
-        -DJAVA_HOME=${JAVA_HOME}
+        -DJAVA_HOME=${JAVA_HOME}"
 
 done
 
