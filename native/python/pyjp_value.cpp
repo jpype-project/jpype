@@ -373,8 +373,6 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
     local_alloc_type->tp_itemsize = type->tp_itemsize;
 
     // 4. Perform the allocation
-    // If this triggers a GC finalizer, we are safe because no other thread
-    // is waiting on a mutex for 'local_alloc_type'.
     PyObject* obj = PyType_GenericAlloc(local_alloc_type, nitems);
 	Py_DECREF(local_alloc_type);
 
@@ -390,8 +388,3 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
     JP_PY_CATCH(nullptr);
 }
 
-
-
-void PyJPValue_initType(PyObject* module)
-{
-}
