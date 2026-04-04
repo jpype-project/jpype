@@ -690,7 +690,7 @@ class CursorTestCase(common.JPypeTestCase):
             ids = cu.lastrowid
             if isinstance(ids, int):
                 self.assertEqual(ids, 2)
-                ids_list = [ids - 1, ids]g
+                ids_list = [ids - 1, ids]
             else:
                 self.assertIsInstance(ids, list)
                 self.assertEqual(len(ids), 2)

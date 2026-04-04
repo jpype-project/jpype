@@ -29,19 +29,24 @@ done
 echo "Found Python bins for build: ${pys[@]}"
 
 # Compile wheels
-# We build directly from the source /io to let scikit-build-core manage CMake
 for PYBIN in "${pys[@]}"; do
     echo "=================================================="
     echo "Building wheel for $PYBIN"
     echo "=================================================="
-    
-    # 1. Update build tools for the specific python bin
+
+    # 1. Update build tools first
     "${PYBIN}/pip" install --upgrade pip setuptools wheel scikit-build-core
-    
-    # 2. Build the wheel directly from the source directory
-    # -w: output directory
-    # /io: the mounted source root
-    "${PYBIN}/pip" wheel /io/ -w wheelhouse/ -v --no-deps
+
+    # 2. Extract the prefix (e.g., /opt/python/cp310-cp310)
+    PYTHON_PREFIX=$(dirname $(dirname "$PYBIN"))
+
+    # 3. Build the wheel ONCE with the necessary CMake hints
+    # Note: We use -DPython3_EXECUTABLE to be absolutely certain it doesn't 
+    # grab the build-machine's Python (3.12) instead of the target (3.10).
+    "${PYBIN}/pip" wheel /io/ -w wheelhouse/ -v --no-deps \
+      --config-setting=cmake.args="-DPython3_ROOT_DIR=${PYTHON_PREFIX};-DPython3_EXECUTABLE=${PYBIN}/python;-DPython3_FIND_STRATEGY=LOCATION"
+
+    echo "Finished build for $PYBIN"
 done
 
 echo "=============="
