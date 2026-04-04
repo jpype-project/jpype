@@ -1,43 +1,63 @@
 #!/bin/bash
 set -e -x
 
+# Ensure the package name is available (usually passed from Azure env)
+package_name=${package_name:-jpype1}
+
 pys=()
-echo "Available Python bins:"
-ls -d /opt/python/cp*/bin 
+echo "Available Python bins in ManyLinux image:"
+ls -d /opt/python/cp*/bin
 
 for pybin in /opt/python/cp*/bin; do
-    # Exclude 3.6, 3.7, 3.8 and any alpha/beta/rc release
-    if [[ "$dir" =~ ^cp3(6|7|8|9|14)-cp3(6|7|8|9|14)t?$ ]]; then
+    # Get the directory name (e.g., cp310-cp310)
+    dir=$(basename $(dirname "$pybin"))
+
+    # EXCLUSION LOGIC:
+    # Drop EOL versions (3.6, 3.7, 3.8, 3.9)
+    # Note: 3.9 is EOL as of late 2025, but keep it if your users require it.
+    if [[ "$dir" =~ ^cp3(6|7|8|9)- ]]; then
+        echo "Skipping legacy version: $dir"
         continue
     fi
-    pys+=("$pybin")
+
+    # Include 3.10, 3.11, 3.12, 3.13, 3.14
+    if [[ "$dir" =~ ^cp3(10|11|12|13|14) ]]; then
+        pys+=("$pybin")
+    fi
 done
 
-# Show what you found for debugging
-echo "Found Python bins:"
-printf '%s\n' "${pys[@]}"
+echo "Found Python bins for build: ${pys[@]}"
 
 # Compile wheels
+# We build directly from the source /io to let scikit-build-core manage CMake
 for PYBIN in "${pys[@]}"; do
-    echo "Compile $PYBIN"
-    ls -l /io/dist
-    "${PYBIN}/pip" install -r /io/dev-requirements.txt
-    "${PYBIN}/pip" wheel /io/dist/$package_name-*.tar.gz -w wheelhouse/ -v
+    echo "=================================================="
+    echo "Building wheel for $PYBIN"
+    echo "=================================================="
+    
+    # 1. Update build tools for the specific python bin
+    "${PYBIN}/pip" install --upgrade pip setuptools wheel scikit-build-core
+    
+    # 2. Build the wheel directly from the source directory
+    # -w: output directory
+    # /io: the mounted source root
+    "${PYBIN}/pip" wheel /io/ -w wheelhouse/ -v --no-deps
 done
-echo "=============="
 
-# Bundle external shared libraries into the wheels
-for whl in wheelhouse/$package_name-*.whl; do
+echo "=============="
+echo "Repairing wheels with auditwheel"
+# Bundle external shared libraries into the wheels (standard ManyLinux procedure)
+for whl in wheelhouse/${package_name}-*.whl; do
     echo "Audit $whl"
-    auditwheel repair --plat $PLAT "$whl" -w /io/wheelhouse/
+    # Repair and move to the final output directory /io/wheelhouse
+    auditwheel repair --plat "$PLAT" "$whl" -w /io/wheelhouse/
 done
 echo "=============="
 
-# Install packages and test
+# Simple verification
 for PYBIN in "${pys[@]}"; do
-    echo "Test install $PYBIN $package_name"
-    "${PYBIN}/python" -m pip install $package_name --no-index -f /io/wheelhouse
-    # Manylinux does not have a JVM so there is no way to test the wheel in the docker
-    # "${PYBIN}/pip" install -r /io/test-requirements.txt
-    # "${PYBIN}/pytest" /io/test/jpypetest
+    echo "Verifying installation for $PYBIN"
+    "${PYBIN}/python" -m pip install ${package_name} --no-index -f /io/wheelhouse
+    "${PYBIN}/python" -c "import jpype; print(f'JPype version {jpype.__version__} installed successfully')"
 done
+

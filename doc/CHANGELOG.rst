@@ -4,7 +4,37 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
-- **1.6.0 - 2025-05-31**
+=======
+
+
+- **1.6.1.dev0 - 2025-05-31**
+
+  - Fixed compatibility with NumPy 2.3 breaking change where `np.bool_` no longer inherits from Python `bool`. #1307
+
+  - Migrated build system from legacy `setup.py` to `cmake` and `scikit-build-core`. 
+
+  - Added initial support and testing for Python 3.14. #1338
+
+  - Updated `pyproject.toml` metadata for PEP 639 license compliance. #1337
+
+  - Fixed a race condition in cross-module mutex initialization. #1333
+
+  - Fixed `PySlice_CheckFull` for 32-bit architectures. #1336
+
+  - Fixed unknown references in `dbapi2` module. #1342
+
+  - Fixed regression in relative classpath resolution and modernized `org.jpype.jar` discovery.
+
+  - Optimized Azure CI pipelines with improved pip caching.
+
+  - Added documentation for building tracing-instrumented extensions.
+
+  - Added a support script to validate wheels.
+
+  - Fixed compatibility with NumPy 2.3. #1320
+
+  - Fixed a race condition upon JPype import on Windows. #1316
+
 - **1.6.0 - 2025-01-20**
 
   - Java components have been converted to maven style module.
