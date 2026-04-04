@@ -174,7 +174,7 @@ set(JPYPE_NATIVE_SRC
 )
 
 Python3_add_library(_jpype MODULE ${JPYPE_NATIVE_SRC})
-target_link_libraries(_jpype PRIVATE Python3::Python)
+target_link_libraries(_jpype PRIVATE Python3::Module)
 # Set target properties for scikit-build export
 set_target_properties(_jpype PROPERTIES
         PREFIX ""  # remove 'lib' prefix
