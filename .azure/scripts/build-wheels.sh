@@ -29,6 +29,11 @@ done
 echo "Found Python bins for build: ${pys[@]}"
 
 yum install -y java-11-openjdk-devel ant
+alternatives --set java java-11-openjdk.x86_64
+alternatives --set javac java-11-openjdk.x86_64
+java -version
+javac -version
+
 
 # Compile wheels
 for PYBIN in "${pys[@]}"; do
