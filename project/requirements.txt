@@ -12,3 +12,4 @@ pytest
 numpy>=2.2.6 
 sphinx
 sphinx-rtd-theme
+bump2version
