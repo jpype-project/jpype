@@ -32,21 +32,18 @@ echo "Found Python bins for build: ${pys[@]}"
 for PYBIN in "${pys[@]}"; do
     echo "=================================================="
     echo "Building wheel for $PYBIN"
-    echo "=================================================="
+    # 1. Get the precise Library configuration directory (The 'Internal' path)
+    PYTHON_LIBPL=$("${PYBIN}/python" -c "from sysconfig import get_config_var; print(get_config_var('LIBPL'))")
+    PYTHON_LDLIBRARY=$("${PYBIN}/python" -c "from sysconfig import get_config_var('LDLIBRARY')")
 
-    # 1. Update build tools first
-    "${PYBIN}/pip" install --upgrade pip setuptools wheel scikit-build-core
+    echo "--- i686 Forensic Check ---"
+    echo "LIBPL (The hidden gear box): $PYTHON_LIBPL"
+    ls -l "$PYTHON_LIBPL/$PYTHON_LDLIBRARY" || echo "!!! Library NOT in LIBPL !!!"
 
-    # 2. Extract the prefix (e.g., /opt/python/cp310-cp310)
-    PYTHON_PREFIX=$(dirname $(dirname "$PYBIN"))
-
-    # 3. Build the wheel ONCE with the necessary CMake hints
-    # Note: We use -DPython3_EXECUTABLE to be absolutely certain it doesn't 
-    # grab the build-machine's Python (3.12) instead of the target (3.10).
+    # 2. Build with the 'Secret' Library Path
     "${PYBIN}/pip" wheel /io/ -w wheelhouse/ -v --no-deps \
-      --config-setting=cmake.args="-DPython3_ROOT_DIR=${PYTHON_PREFIX};-DPython3_EXECUTABLE=${PYBIN}/python;-DPython3_FIND_STRATEGY=LOCATION"
-
-    echo "Finished build for $PYBIN"
+      --config-setting=cmake.args="-DPython3_EXECUTABLE=${PYBIN}/python;-DPython3_INCLUDE_DIR=${PYTHON_INCLUDE};-DPython3_LIBRARY=${PYTHON_LIBPL}/${PYTHON_LDLIBRARY};-DPython3_FIND_STRATEGY=LOCATION;-Dskbuild.cmake_define.Python3_FIND_COMPONENTS=Interpreter;Development.Module"
+        
 done
 
 echo "=============="
