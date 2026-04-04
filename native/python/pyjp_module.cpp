@@ -63,7 +63,6 @@ extern void PyJPNumber_initType(PyObject* module);
 extern void PyJPClassHints_initType(PyObject* module);
 extern void PyJPPackage_initType(PyObject* module);
 extern void PyJPChar_initType(PyObject* module);
-extern void PyJPValue_initType(PyObject* module);
 
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype);
 
@@ -800,7 +799,6 @@ PyMODINIT_FUNC PyInit__jpype()
 
 	PyJPClassMagic = PyDict_New();
 	// Initialize each of the python extension types
-	PyJPValue_initType(module);
 	PyJPClass_initType(module);
 	PyJPObject_initType(module);
 
