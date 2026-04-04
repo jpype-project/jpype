@@ -32,44 +32,19 @@ echo "Found Python bins for build: ${pys[@]}"
 for PYBIN in "${pys[@]}"; do
     echo "=================================================="
     echo "Processing: $PYBIN"
-    
-    # 1. Extraction (Using double quotes for Python strings to avoid shell collision)
-    PYTHON_INCLUDE=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_paths()[\"include\"])")
-    PYTHON_LIBPL=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_config_var(\"LIBPL\") or \"\")")
-    PYTHON_LDLIBRARY=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_config_var(\"LDLIBRARY\") or \"\")")
 
+    # 1. Extraction (No-collision quoting)
+    PYTHON_INCLUDE=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_paths()[\"include\"])")
+    
     echo "--- Forensic Path Interrogation ---"
     echo "INCLUDE:   $PYTHON_INCLUDE"
-    echo "LIBPL:     $PYTHON_LIBPL"
-    echo "LDLIBRARY: $PYTHON_LDLIBRARY"
 
-    # Don't trust sysconfig anymore; it's a liar. 
-    # Search the entire /opt/python tree for the actual library file.
-    ACTUAL_LIB=$(find /opt/python/cp310-cp310 -name "libpython3.10*" -type f | head -n 1)
-
-    echo "--- The Final Truth ---"
-    echo "Sysconfig thought it was: $PYTHON_LIBPL/$PYTHON_LDLIBRARY"
-    echo "I actually found it at:   $ACTUAL_LIB"
-
-    # If ACTUAL_LIB is empty, the 'Development' headers/libs are literally missing from the image.
-    
-    # Verify the gear actually exists before we start the 12-hour wait
-    if [ -f "$PYTHON_LIBPL/$PYTHON_LDLIBRARY" ]; then
-        echo "CHECK: Found $PYTHON_LDLIBRARY in LIBPL."
-    else
-        echo "!!! WARNING: $PYTHON_LDLIBRARY NOT FOUND in $PYTHON_LIBPL !!!"
-        # Emergency hunt: search the internal tree for the library if the guess failed
-        find $(dirname $(dirname "$PYBIN")) -name "libpython*" -type f | head -n 3
-    fi
-    echo "--------------------------------------------------"
-
-    # 2. Build with Explicit Hints
-    # We use 'Development.Module' because JPype doesn't need 'Embed' (static linking) 
-    # to be a successful Python extension. This avoids 50% of CMake's whining.
+    # 2. Build with 'Module' strategy
+    # We drop -DPython3_LIBRARY because the file is missing from the image.
+    # On Linux, 'Development.Module' only requires headers to build the extension.
     "${PYBIN}/pip" wheel /io/ -w wheelhouse/ -v --no-deps \
       --config-setting=cmake.args="-DPython3_EXECUTABLE=${PYBIN}/python;\
 -DPython3_INCLUDE_DIR=${PYTHON_INCLUDE};\
--DPython3_LIBRARY=${PYTHON_LIBPL}/${PYTHON_LDLIBRARY};\
 -DPython3_FIND_STRATEGY=LOCATION;\
 -Dskbuild.cmake_define.Python3_FIND_COMPONENTS=Interpreter;Development.Module"
 
