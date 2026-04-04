@@ -34,9 +34,9 @@ for PYBIN in "${pys[@]}"; do
     echo "Building wheel for $PYBIN"
     # 1. Get the precise Library configuration directory (The 'Internal' path)
     PYTHON_LIBPL=$("${PYBIN}/python" -c "from sysconfig import get_config_var; print(get_config_var('LIBPL'))")
-    PYTHON_LDLIBRARY=$("${PYBIN}/python" -c "from sysconfig import get_config_var('LDLIBRARY')")
+    PYTHON_LDLIBRARY=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_config_var('LDLIBRARY'))")
 
-    echo "--- i686 Forensic Check ---"
+    echo "--- Forensic Check ---"
     echo "LIBPL (The hidden gear box): $PYTHON_LIBPL"
     ls -l "$PYTHON_LIBPL/$PYTHON_LDLIBRARY" || echo "!!! Library NOT in LIBPL !!!"
 
