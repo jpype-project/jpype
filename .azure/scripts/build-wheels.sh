@@ -33,11 +33,10 @@ for PYBIN in "${pys[@]}"; do
     echo "=================================================="
     echo "Processing: $PYBIN"
     
-    # 1. Extraction (Using double quotes to shield the internal Python single quotes)
-    # This grabs the 'Secret Gear Box' where ManyLinux hides the .a and .so files
-    PYTHON_INCLUDE=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_paths()['include'])")
-    PYTHON_LIBPL=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_config_var('LIBPL') or '')")
-    PYTHON_LDLIBRARY=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_config_var('LDLIBRARY') or '')")
+    # 1. Extraction (Using double quotes for Python strings to avoid shell collision)
+    PYTHON_INCLUDE=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_paths()[\"include\"])")
+    PYTHON_LIBPL=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_config_var(\"LIBPL\") or \"\")")
+    PYTHON_LDLIBRARY=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_config_var(\"LDLIBRARY\") or \"\")")
 
     echo "--- Forensic Path Interrogation ---"
     echo "INCLUDE:   $PYTHON_INCLUDE"
