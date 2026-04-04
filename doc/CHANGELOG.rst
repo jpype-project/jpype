@@ -537,7 +537,7 @@ Latest Changes:
     which enforces type slots.  Mixins of Python base classes is not
     permitted.  Objects, Proxies, Exceptions, Numbers, and Arrays
     derive directly from internal CPython implementations.
-    See the :doc:`ChangeLog-0.7.2` for details of all changes.
+    See the `ChangeLog-0.7.2` for details of all changes.
 
   - Internal improvements to tracing and exception handling.
 
@@ -646,7 +646,7 @@ Latest Changes:
   - Complete rewrite of the core module code to deal unattached threads,
     improved hardening, and member management.  Massive number of internal
     bugs were identified during the rewrite and corrected.
-    See the :doc:`ChangeLog-0.7` for details of all changes.
+    See the `ChangeLog-0.7` for details of all changes.
 
   - API breakage:
 
