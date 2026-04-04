@@ -1,0 +1,14 @@
+# --- Build System Requirements ---
+# These are needed because we use --no-build-isolation
+scikit-build-core>=0.9
+cmake
+ninja
+
+# --- Project Dependencies ---
+packaging
+
+# --- Optional Development Dependencies ---
+pytest
+numpy>=2.2.6 
+sphinx
+sphinx-rtd-theme

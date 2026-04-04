@@ -4,6 +4,7 @@ project(jpype-native)
 option(ENABLE_TRACING "Enable tracing in the extension" OFF)
 option(ENABLE_COVERAGE "Enable compilation for coverage measurement" OFF)
 option(ENABLE_BUILD_JAR "Enable building of the Java JAR" ON)
+option(BUILD_TEST_HARNESS "Build the Java test harness" ON)
 # Optionally set Python GIL disabled flag
 # set(PY_GIL_DISABLED ON)
 set(CMAKE_CXX_STANDARD 14)
@@ -87,6 +88,24 @@ if(ENABLE_COVERAGE)
     add_compile_options(-O0 --coverage -ftest-coverage)
     add_link_options(--coverage)
 endif()
+
+if(BUILD_TEST_HARNESS)
+    find_program(ANT_EXECUTABLE ant REQUIRED)
+    
+    # We define a representative output file to help CMake track dependencies
+    set(TEST_SENTINEL "${CMAKE_SOURCE_DIR}/test/classes/org/jpype/JPypeTest.class")
+
+    add_custom_command(
+        OUTPUT "${TEST_SENTINEL}"
+        COMMAND "${ANT_EXECUTABLE}" -f "test/build.xml"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        DEPENDS jpype_jar  # Ensure the main org.jpype.jar is built first
+        COMMENT "Building JPype Java Test Harness via Ant"
+    )
+
+    add_custom_target(build_tests ALL DEPENDS "${TEST_SENTINEL}")
+endif()
+
 
 # C++ Python extension
 include_directories(

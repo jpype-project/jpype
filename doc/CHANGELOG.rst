@@ -34,6 +34,8 @@ Latest Changes:
 
   - Fixed a race condition upon JPype import on Windows. #1316
 
+  - Made jedi support optional
+
 - **1.6.0 - 2025-01-20**
 
   - Java components have been converted to maven style module.
