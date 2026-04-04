@@ -42,6 +42,16 @@ for PYBIN in "${pys[@]}"; do
     echo "INCLUDE:   $PYTHON_INCLUDE"
     echo "LIBPL:     $PYTHON_LIBPL"
     echo "LDLIBRARY: $PYTHON_LDLIBRARY"
+
+    # Don't trust sysconfig anymore; it's a liar. 
+    # Search the entire /opt/python tree for the actual library file.
+    ACTUAL_LIB=$(find /opt/python/cp310-cp310 -name "libpython3.10*" -type f | head -n 1)
+
+    echo "--- The Final Truth ---"
+    echo "Sysconfig thought it was: $PYTHON_LIBPL/$PYTHON_LDLIBRARY"
+    echo "I actually found it at:   $ACTUAL_LIB"
+
+    # If ACTUAL_LIB is empty, the 'Development' headers/libs are literally missing from the image.
     
     # Verify the gear actually exists before we start the 12-hour wait
     if [ -f "$PYTHON_LIBPL/$PYTHON_LDLIBRARY" ]; then
