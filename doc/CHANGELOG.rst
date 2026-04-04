@@ -4,6 +4,7 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
+- **1.7.0.dev0 - 2026-04-04**
 
 
 - **1.6.1.dev0 - 2025-05-31**
