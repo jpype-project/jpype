@@ -1,12 +1,13 @@
-import _jpype
-from . import _jinit
-from . import _jcustomizer
-from . import types as _jtypes
-import typing
-import _jpype
-import time
-import threading
 import datetime
+import threading
+import time
+import typing
+
+import _jpype
+
+from . import _jcustomizer
+from . import _jinit
+from . import types as _jtypes
 
 # TODO
 #  - Callable procedures
@@ -434,7 +435,7 @@ def connect(dsn, *, driver=None, driver_args=None,
         info = Properties()
         for k, v in kwargs.items():
             info.setProperty(k, v)
-        connection = DM.getConnection(url, info)
+        connection = DM.getConnection(None, info)
 
     return Connection(connection, adapters, converters, setters, getters)
 
@@ -1274,7 +1275,7 @@ class Cursor(object):
         """
         self._resultSet.close()
         if self._statement.getMoreResults():  # pragma: no cover
-            self._onResultSet(_statement.getResultSet())
+            self._onResultSet(self._statement.getResultSet())
             return True
         else:
             self._rowcount = self._statement.getUpdateCount()

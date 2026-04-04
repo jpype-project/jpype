@@ -36,7 +36,12 @@
 
 	<target name="jar" depends="compile">
 		<jar destfile="${build}/lib/org.jpype.jar"
-			basedir="${build}/classes" />
+			basedir="${build}/classes">
+			<!-- Include entities.txt in jar. -->
+			<fileset dir="${src}">
+				<include name="**/entities.txt"/>
+			</fileset>
+		</jar>
   </target>
 
 	<target name="all" depends="jar" />

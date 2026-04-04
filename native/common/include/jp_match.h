@@ -58,8 +58,8 @@ public:
 class JPMethodCache
 {
 public:
-	long m_Hash;
-	JPMethod* m_Overload;
+	long m_Hash{-1};
+	JPMethod* m_Overload{nullptr};
 } ;
 
 class JPMethodMatch : public JPMethodCache

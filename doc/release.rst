@@ -23,14 +23,14 @@ Full process:
 - [ ] Make a new branch for the release cycle
       ``git checkout -b releases/{version}``
 - [ ] Update release process to current
+    - [ ] Merge the current master with the release
+          ``git pull origin master``
     - [ ] Check the .azure scripts to see if they are up to date.
           Look on https://devguide.python.org/versions/ to see what versions can be dropped
           Check Python versions for Windows
           Check Python versions for OSX
           Check the manylinux image for Linux
     - [ ] Check patterns in .azure/scripts/build-wheels.sh
-    - [ ] Merge the current master with the release
-          ``git pull origin master``
     - [ ] Edit doc/CHANGELOG.rst
 - [ ] Create a release candidate
     - [ ] Bump the version to release

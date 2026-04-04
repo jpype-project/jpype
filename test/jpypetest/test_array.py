@@ -634,3 +634,10 @@ class ArrayTestCase(common.JPypeTestCase):
         a = jpype.JInt[5]
         with self.assertRaises(TypeError):
             b = a * 3
+
+    @common.requireNumpy
+    def testNumpyBool2dArray(self):
+        """Regression test for numpy 2.3"""
+        np_array = np.array([[True, False], [False, True]])
+        bool_2d = JArray(JBoolean, dims=2)(np_array)
+        np.testing.assert_array_equal(np_array, bool_2d)

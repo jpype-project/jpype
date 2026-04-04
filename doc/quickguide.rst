@@ -188,13 +188,13 @@ module, loaded using ``JPackage`` or loaded with the ``JClass`` factory.
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Get a static field        | .. code-block:: java                                    | .. code-block:: python                                  |
+| Get a static field        | .. code-block:: none                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |     int var = MyClass.staticField;                      |     var = MyClass.staticField                           |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 |                           |                                                         |                                                         |
-| Get a member field        | .. code-block:: java                                    | .. code-block:: python                                  |
+| Get a member field        | .. code-block:: none                                    | .. code-block:: python                                  |
 |                           |                                                         |                                                         |
 |                           |     int var = myObject.memberField;                     |     var = myObject.memberField                          |
 |                           |                                                         |                                                         |

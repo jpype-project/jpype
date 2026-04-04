@@ -24,25 +24,13 @@
 
 #include "pyjp.h"
 
-JPMatch::JPMatch()
-{
-	conversion = nullptr;
-	frame = nullptr;
-	object = nullptr;
-	type = JPMatch::_none;
-	slot = (JPValue*) - 1;
-	closure = nullptr;
-}
+JPMatch::JPMatch() : conversion(nullptr), frame(nullptr), object(nullptr),
+					 type(JPMatch::_none), slot((JPValue*) - 1), closure(nullptr)
+{}
 
-JPMatch::JPMatch(JPJavaFrame *fr, PyObject *obj)
-{
-	conversion = nullptr;
-	frame = fr;
-	object = obj;
-	type = JPMatch::_none;
-	slot = (JPValue*) - 1;
-	closure = nullptr;
-}
+JPMatch::JPMatch(JPJavaFrame *fr, PyObject *obj) : conversion(nullptr), frame(fr), object(obj),
+												   type(JPMatch::_none), slot((JPValue*) - 1), closure(nullptr)
+{}
 
 JPValue *JPMatch::getJavaSlot()
 {
@@ -60,13 +48,9 @@ jvalue JPMatch::convert()
 }
 
 JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool callInstance)
-: m_Arguments(args.size())
+	: m_Arguments(args.size()), m_Type(JPMatch::_none), m_IsVarIndirect(false),// m_Overload(nullptr),
+	  m_Offset(0), m_Skip(0)
 {
-	m_Type = JPMatch::_none;
-	m_IsVarIndirect = false;
-	m_Overload = nullptr;
-	m_Offset = 0;
-	m_Skip = 0;
 	m_Hash = callInstance ? 0 : 1000;
 	for (size_t i = 0; i < args.size(); ++i)
 	{
@@ -514,7 +498,7 @@ public:
 		for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
 		{
 			// This is a special case.  Sequences produce new references
-			// so we must hold the reference in a container while the
+			// so we must hold the reference in a container while
 			// the match is caching it.
 			JPPyObject item = seq[i];
 			JPMatch imatch(match.frame, item.get());

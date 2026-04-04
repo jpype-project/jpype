@@ -19,6 +19,7 @@
 import pytest
 
 import common
+import jpype
 
 
 def pytest_addoption(parser):
@@ -38,10 +39,61 @@ def pytest_collection_modifyitems(config, items):
     if config.getoption("--fast"):
         common.fast = True
 
+convertStrings = None
 
-@pytest.fixture(scope="class")
-def common_opts(request):
-    request.cls._classpath = request.config.getoption("--classpath")
-    request.cls._convertStrings = request.config.getoption("--convertStrings")
-    request.cls._jacoco = request.config.getoption("--jacoco")
-    request.cls._checkjni = request.config.getoption("--checkjni")
+@pytest.fixture(scope="session")
+def jvm_session(request):
+    """Starts a JVM with testing jars on classpath and additional options."""
+    global convertStrings
+    import _jpype
+    from pathlib import Path
+    import logging
+    import warnings
+
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+
+    assert not jpype.isJVMStarted()
+    try:
+        import faulthandler
+        faulthandler.enable()
+        faulthandler.disable()
+    except:
+        pass
+
+
+    classpath = request.config.getoption("--classpath")
+    convertStrings = request.config.getoption("--convertStrings")
+    jacoco = request.config.getoption("--jacoco")
+    checkjni = request.config.getoption("--checkjni")
+
+    root = Path(__file__).parent.resolve()
+    jpype.addClassPath(root / '../classes')
+    jvm_path = jpype.getDefaultJVMPath()
+    logger.info("Running testsuite using JVM %s" % jvm_path)
+    classpath_arg = "-Djava.class.path=%s"
+    args = ["-ea", "-Xmx256M", "-Xms16M"]
+    if checkjni:
+        args.append("-Xcheck:jni")
+    if classpath:
+        # This needs to be relative to run location
+        jpype.addClassPath(Path(classpath).resolve())
+        warnings.warn("using jar instead of thunks")
+    if convertStrings:
+        warnings.warn("using deprecated convertStrings")
+    if jacoco:
+        lib_dir = (root / '../../lib')
+        assert lib_dir.exists()
+        jar = (lib_dir / "org.jacoco.agent-0.8.5-runtime.jar").absolute()
+        assert jar.exists()
+        args.append(
+            f"-javaagent:{jar}=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
+        warnings.warn("using JaCoCo")
+
+    jpype.addClassPath(root / "../../lib/*")  # jars downloaded by ivy to root lib directory.
+    jpype.addClassPath(root / "../jar/*")  # jars in test directory.
+    classpath_arg %= jpype.getClassPath()
+    args.append(classpath_arg)
+    _jpype.enableStacktraces(True)
+    jpype.startJVM(jvm_path, *args,
+                   convertStrings=convertStrings)

@@ -65,7 +65,7 @@ def JConversion(cls, exact=None, instanceof=None, attribute=None, excludes=None)
         Can be used to prevent a specific type from being converted.
         For example, to prevent maps or strings from passing 
         a check for Sequence.  Exclusions are applied before all 
-        other user specificied conversions.
+        other user specified conversions.
     """
     hints = getClassHints(cls)
     if excludes is not None:

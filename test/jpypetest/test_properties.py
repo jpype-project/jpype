@@ -15,6 +15,8 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+from pathlib import Path
+
 import subrun
 import unittest
 import jpype
@@ -26,7 +28,9 @@ class PropertiesTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import jpype.beans
-        jpype.startJVM(classpath="test/classes", convertStrings=False)
+        cp = Path(__file__).parent / "../classes"
+        assert cp.exists()
+        jpype.startJVM(classpath=cp.absolute(), convertStrings=False)
 
     def setUp(self):
         self._bean = jpype.JClass('jpype.properties.TestBean')()
