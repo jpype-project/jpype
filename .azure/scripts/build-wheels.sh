@@ -29,8 +29,14 @@ done
 echo "Found Python bins for build: ${pys[@]}"
 
 yum install -y java-11-openjdk-devel ant
+
 alternatives --set java java-11-openjdk.x86_64
 alternatives --set javac java-11-openjdk.x86_64
+export JAVA_HOME=$(ls -d /usr/lib/jvm/java-11-openjdk-* | head -n 1)
+export JAVAC=$JAVA_HOME/bin/javac
+export PATH=$JAVA_HOME/bin:$PATH
+
+which javac
 java -version
 javac -version
 
@@ -53,8 +59,9 @@ for PYBIN in "${pys[@]}"; do
 --config-setting=cmake.args="-DPython3_EXECUTABLE=${PYBIN}/python;\
 -DPython3_INCLUDE_DIR=${PYTHON_INCLUDE};\
 -DPython3_FIND_STRATEGY=LOCATION;\
--Dskbuild.cmake_define.Python3_FIND_COMPONENTS='Interpreter;Development.Module'"
-
+-DPython3_FIND_COMPONENTS='Interpreter;Development.Module';\
+-DJAVA_HOME=${JAVA_HOME};\
+-DANT_ARGS='-Dbuild.compiler=modern;-Dant.java.version=11'"
 done
 
 echo "=============="
