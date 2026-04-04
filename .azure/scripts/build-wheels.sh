@@ -31,19 +31,39 @@ echo "Found Python bins for build: ${pys[@]}"
 # Compile wheels
 for PYBIN in "${pys[@]}"; do
     echo "=================================================="
-    echo "Building wheel for $PYBIN"
-    # 1. Get the precise Library configuration directory (The 'Internal' path)
-    PYTHON_LIBPL=$("${PYBIN}/python" -c "from sysconfig import get_config_var; print(get_config_var('LIBPL'))")
-    PYTHON_LDLIBRARY=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_config_var('LDLIBRARY'))")
+    echo "Processing: $PYBIN"
+    
+    # 1. Extraction (Using double quotes to shield the internal Python single quotes)
+    # This grabs the 'Secret Gear Box' where ManyLinux hides the .a and .so files
+    PYTHON_INCLUDE=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_paths()['include'])")
+    PYTHON_LIBPL=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_config_var('LIBPL') or '')")
+    PYTHON_LDLIBRARY=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_config_var('LDLIBRARY') or '')")
 
-    echo "--- Forensic Check ---"
-    echo "LIBPL (The hidden gear box): $PYTHON_LIBPL"
-    ls -l "$PYTHON_LIBPL/$PYTHON_LDLIBRARY" || echo "!!! Library NOT in LIBPL !!!"
+    echo "--- Forensic Path Interrogation ---"
+    echo "INCLUDE:   $PYTHON_INCLUDE"
+    echo "LIBPL:     $PYTHON_LIBPL"
+    echo "LDLIBRARY: $PYTHON_LDLIBRARY"
+    
+    # Verify the gear actually exists before we start the 12-hour wait
+    if [ -f "$PYTHON_LIBPL/$PYTHON_LDLIBRARY" ]; then
+        echo "CHECK: Found $PYTHON_LDLIBRARY in LIBPL."
+    else
+        echo "!!! WARNING: $PYTHON_LDLIBRARY NOT FOUND in $PYTHON_LIBPL !!!"
+        # Emergency hunt: search the internal tree for the library if the guess failed
+        find $(dirname $(dirname "$PYBIN")) -name "libpython*" -type f | head -n 3
+    fi
+    echo "--------------------------------------------------"
 
-    # 2. Build with the 'Secret' Library Path
+    # 2. Build with Explicit Hints
+    # We use 'Development.Module' because JPype doesn't need 'Embed' (static linking) 
+    # to be a successful Python extension. This avoids 50% of CMake's whining.
     "${PYBIN}/pip" wheel /io/ -w wheelhouse/ -v --no-deps \
-      --config-setting=cmake.args="-DPython3_EXECUTABLE=${PYBIN}/python;-DPython3_INCLUDE_DIR=${PYTHON_INCLUDE};-DPython3_LIBRARY=${PYTHON_LIBPL}/${PYTHON_LDLIBRARY};-DPython3_FIND_STRATEGY=LOCATION;-Dskbuild.cmake_define.Python3_FIND_COMPONENTS=Interpreter;Development.Module"
-        
+      --config-setting=cmake.args="-DPython3_EXECUTABLE=${PYBIN}/python;\
+-DPython3_INCLUDE_DIR=${PYTHON_INCLUDE};\
+-DPython3_LIBRARY=${PYTHON_LIBPL}/${PYTHON_LDLIBRARY};\
+-DPython3_FIND_STRATEGY=LOCATION;\
+-Dskbuild.cmake_define.Python3_FIND_COMPONENTS=Interpreter;Development.Module"
+
 done
 
 echo "=============="
