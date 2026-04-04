@@ -28,7 +28,7 @@ done
 
 echo "Found Python bins for build: ${pys[@]}"
 
-yum install -y java-11-openjdk-devel
+yum install -y java-11-openjdk-devel ant
 
 # Compile wheels
 for PYBIN in "${pys[@]}"; do
