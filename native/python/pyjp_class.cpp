@@ -445,6 +445,29 @@ PyObject *PyJPClass_getattro(PyObject *obj, PyObject *name)
 		return nullptr;
 	}
 
+	// Support for hot patching a class
+	if (PyUnicode_GetLength(name) > 0 && PyUnicode_ReadChar(name, 0) == '.')
+	{
+		PyObject* chopped = PyUnicode_Substring(name, 1, PyUnicode_GetLength(name));
+		if (chopped == nullptr) 
+			return nullptr;
+			
+		JPPyObject chopped_name = JPPyObject::claim(chopped);
+		
+		PyObject* dict = ((PyTypeObject*)obj)->tp_dict;
+		PyObject* attr = PyDict_GetItemWithError(dict, chopped_name.get());
+		
+		if (attr == nullptr)
+		{
+			if (!PyErr_Occurred())
+				PyErr_Format(PyExc_AttributeError, "Shadow field '%U' not found", chopped_name.get());
+			return nullptr;
+		}
+
+		Py_INCREF(attr);
+		return attr;
+	}
+
 	// Private members are accessed directly
 	PyObject* pyattr = PyType_Type.tp_getattro(obj, name);
 	if (pyattr == nullptr)
@@ -479,6 +502,15 @@ int PyJPClass_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
 				"attribute name must be string, not '%.200s'",
 				attr_name->ob_type->tp_name);
 		return -1;
+	}
+
+	// Support for hot patching a class
+	if (PyUnicode_GetLength(attr_name) && PyUnicode_ReadChar(attr_name, 0) == '.')
+	{
+		// Slice the string to remove the leading '.'
+		JPPyObject chopped_name = JPPyObject::claim(PyUnicode_Substring(attr_name, 1, PyUnicode_GetLength(attr_name)));
+		int result = PyType_Type.tp_setattro(self, chopped_name.get(), v);
+		return result;
 	}
 
 	// Private members are accessed directly
