@@ -238,3 +238,6 @@ class FieldsTestCase(common.JPypeTestCase):
             getattr(Fixture, ".")
         with self.assertRaises(AttributeError):
             setattr(Fixture, ".", 1)
+        with self.assertRaises(AttributeError):
+            getattr(Fixture, ".not")
+        
