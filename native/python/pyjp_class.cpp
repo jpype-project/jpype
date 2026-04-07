@@ -505,16 +505,21 @@ int PyJPClass_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
 	}
 
 	// Support for hot patching a class
-	if (PyUnicode_GetLength(attr_name) && PyUnicode_ReadChar(attr_name, 0) == '.')
+	int len =  PyUnicode_GetLength(attr_name);
+	if (len>1 && PyUnicode_ReadChar(attr_name, 0) == '.')
 	{
 		// Slice the string to remove the leading '.'
-		JPPyObject chopped_name = JPPyObject::claim(PyUnicode_Substring(attr_name, 1, PyUnicode_GetLength(attr_name)));
+		PyObject* chopped = PyUnicode_Substring(attr_name, 1, len);
+		if (chopped == nullptr) 
+			return -1;
+			
+		JPPyObject chopped_name = JPPyObject::claim(chopped);
 		int result = PyType_Type.tp_setattro(self, chopped_name.get(), v);
 		return result;
 	}
 
 	// Private members are accessed directly
-	if (PyUnicode_GetLength(attr_name) && PyUnicode_ReadChar(attr_name, 0) == '_')
+	if (len && PyUnicode_ReadChar(attr_name, 0) == '_')
 		return PyType_Type.tp_setattro(self, attr_name, v);
 
 	JPPyObject f = JPPyObject::accept(PyJP_GetAttrDescriptor((PyTypeObject*) self, attr_name));

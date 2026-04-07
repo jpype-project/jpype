@@ -231,4 +231,10 @@ class FieldsTestCase(common.JPypeTestCase):
         self.assertEqual(Fixture.alias, 52)
         Fixture.alias = 17
         self.assertEqual(Fixture.static_long_field, 17)
-        
+
+    def testDot(self):
+        Fixture = JClass("jpype.common.Fixture")
+        with self.assertRaises(AttributeError):
+            getattr(Fixture, ".")
+        with self.assertRaises(AttributeError):
+            setattr(Fixture, ".", 1)
