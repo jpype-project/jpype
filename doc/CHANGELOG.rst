@@ -4,6 +4,8 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
+  - Support for descriptor level alterations using "." prefix.
+
 - **1.6.1.dev0 - 2025-05-31**
 
   - Fixed compatibility with NumPy 2.3. #1320
