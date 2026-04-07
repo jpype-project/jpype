@@ -446,9 +446,10 @@ PyObject *PyJPClass_getattro(PyObject *obj, PyObject *name)
 	}
 
 	// Support for hot patching a class
-	if (PyUnicode_GetLength(name) > 0 && PyUnicode_ReadChar(name, 0) == '.')
+	int len =  PyUnicode_GetLength(name);
+	if (len > 1 && PyUnicode_ReadChar(name, 0) == '.')
 	{
-		PyObject* chopped = PyUnicode_Substring(name, 1, PyUnicode_GetLength(name));
+		PyObject* chopped = PyUnicode_Substring(name, 1, len);
 		if (chopped == nullptr) 
 			return nullptr;
 			
@@ -475,7 +476,7 @@ PyObject *PyJPClass_getattro(PyObject *obj, PyObject *name)
 	JPPyObject attr = JPPyObject::claim(pyattr);
 
 	// Private members go regardless
-	if (PyUnicode_GetLength(name) && PyUnicode_ReadChar(name, 0) == '_')
+	if (len && PyUnicode_ReadChar(name, 0) == '_')
 		return attr.keep();
 
 	// Methods
