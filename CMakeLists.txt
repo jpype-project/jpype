@@ -12,26 +12,46 @@ set(CMAKE_CXX_STANDARD 14)
 find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
 find_package(Python3 COMPONENTS Development.Embed)
 find_package(Java REQUIRED COMPONENTS Development)
-# todo: add fallback jni.h in case it aint found (no jdk required, or not found).
-#set(JAVA_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/native/jni_include" ${JAVA_INCLUDE_PATH})
-find_package(JNI REQUIRED)
+find_package(JNI)
+
+if(JNI_FOUND)
+    message(STATUS "System JNI found successfully.")
+else()
+    message(STATUS "System JNI not found. Falling back to bundled jni.h.")
+
+    # 2. Populate the standard variable that FindJNI usually sets
+    set(JNI_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/native/jni_include")
+
+    # 3. Create a mock JNI::JNI target
+    # This ensures that if your CMakeLists relies on modern target-based
+    # linking (e.g., target_link_libraries(my_ext PRIVATE JNI::JNI)),
+    # it won't break.
+    if(NOT TARGET JNI::JNI)
+        add_library(JNI::JNI INTERFACE IMPORTED)
+        set_target_properties(JNI::JNI PROPERTIES
+                INTERFACE_INCLUDE_DIRECTORIES "${JNI_INCLUDE_DIRS}"
+        )
+    endif()
+endif()
+
 include(UseJava)
 
 
 if(SKBUILD)
     message("SKBuild invocation")
-    set(DEST_JAR ${SKBUILD_PLATLIB_DIR}) # todo: jar should go to JPype Python package?
+    set(DEST_JAR ${SKBUILD_PLATLIB_DIR})
     set(DEST_EXTENSION ${SKBUILD_PLATLIB_DIR})
 else()
     # in-place build, set output to cmakes output dir.
-    # todo: or set it to the project root (src-dir), so the extension and jar are in place for direct execution.
-    # note that this is non-standard and might be surprising.
     set(DEST_JAR ${CMAKE_CURRENT_BINARY_DIR})
     set(DEST_EXTENSION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
+message(STATUS "Destination Python extension: ${DEST_EXTENSION}")
+message(STATUS "Destination JAR: ${DEST_JAR}")
+
 if(ENABLE_BUILD_JAR)
-    message("build jar")
+    message(DEBUG "build jar")
 
     find_program(ANT_EXECUTABLE ant REQUIRED)
     # this is the build artifact of Ant.
@@ -56,7 +76,8 @@ if(ENABLE_BUILD_JAR)
             COMMENT "Copying ${JAR_OUTPUT} to internal destination"
     )
     add_custom_target(copy_jar ALL DEPENDS "${DEST_FILE}")
-
+    # Explicitly link targets so MSBuild doesn't run them in parallel.
+    add_dependencies(copy_jar jpype_jar)
     # finally install the jar to DEST_JAR, which makes it available for wheel building.
     install(
             FILES "${DEST_FILE}"
@@ -179,10 +200,7 @@ target_link_libraries(_jpype PRIVATE Python3::Module)
 set_target_properties(_jpype PROPERTIES
         PREFIX ""  # remove 'lib' prefix
 )
-set_target_properties(_jpype PROPERTIES     OUTPUT_NAME "_jpype")
-
-#fixme: causes problems on osx (would need to build shared lib, not module.
-#set_target_properties(_jpype PROPERTIES VERSION "1.6.1.dev0")
+set_target_properties(_jpype PROPERTIES OUTPUT_NAME "_jpype")
 
 # Apply Windows-specific configuration
 if(WIN32)
@@ -218,4 +236,3 @@ else()
     message(DEBUG "no skbuild env")
 endif()
 
-message("state: ${SKBUILD_STATE}")
