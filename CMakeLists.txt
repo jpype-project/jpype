@@ -18,27 +18,15 @@ if(JNI_FOUND)
     message(STATUS "System JNI found successfully.")
 else()
     message(STATUS "System JNI not found. Falling back to bundled jni.h.")
-
-    # 2. Populate the standard variable that FindJNI usually sets
+    # Populate the standard variable that FindJNI usually sets
     set(JNI_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/native/jni_include")
-
-    # 3. Create a mock JNI::JNI target
-    # This ensures that if your CMakeLists relies on modern target-based
-    # linking (e.g., target_link_libraries(my_ext PRIVATE JNI::JNI)),
-    # it won't break.
-    if(NOT TARGET JNI::JNI)
-        add_library(JNI::JNI INTERFACE IMPORTED)
-        set_target_properties(JNI::JNI PROPERTIES
-                INTERFACE_INCLUDE_DIRECTORIES "${JNI_INCLUDE_DIRS}"
-        )
-    endif()
 endif()
 
 include(UseJava)
 
 
 if(SKBUILD)
-    message("SKBuild invocation")
+    message(DEBUG "SKBuild invocation")
     set(DEST_JAR ${SKBUILD_PLATLIB_DIR})
     set(DEST_EXTENSION ${SKBUILD_PLATLIB_DIR})
 else()
