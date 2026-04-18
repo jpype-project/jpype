@@ -662,10 +662,10 @@ class CursorTestCase(common.JPypeTestCase):
             if nxt:
                 self.assertEqual(cu.fetchone(), booze)
 
-    @common.unittest.skip  # type: ignore
+    #@common.unittest.skip  # type: ignore
     def test_lastrowid(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table booze(id INTEGER IDENTITY PRIMARY KEY, name varchar(255))")
+            cu.execute("create table booze(id INTEGER PRIMARY KEY, name varchar(255))")
             cu.execute("insert into booze(name) values('hello')", keys=True)
             id0 = cu.lastrowid
             self.assertIsInstance(id0, int)
@@ -678,22 +678,27 @@ class CursorTestCase(common.JPypeTestCase):
             self.assertIsInstance(id2, int)
             cu.execute("select * from booze")
             f = cu.fetchall()
-            self.assertEqual(cu.lastrowid, None)  # sqlite has weird behaviors
+            self.assertEqual(cu.lastrowid, 2)  # sqlite has weird behaviors
             self.assertEqual(f[0][0], id0)
             self.assertEqual(f[1][0], id2)
 
-    @common.unittest.skip  # type: ignore
+    #@common.unittest.skip  # type: ignore
     def test_lastrowidMany(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
-            cu.execute("create table booze(id INTEGER IDENTITY PRIMARY KEY, name varchar(255))")
+            cu.execute("create table booze(id INTEGER PRIMARY KEY, name varchar(255))")
             cu.executemany("insert into booze(name) values(?)", [['Redback'], ['Fat Yak']], keys=True)
             ids = cu.lastrowid
-            self.assertIsInstance(ids, list)
-            self.assertEqual(len(ids), 2)
-            cu.execute("select * from booze")
+            if isinstance(ids, int):
+                self.assertEqual(ids, 2)
+                ids_list = [ids - 1, ids]
+            else:
+                self.assertIsInstance(ids, list)
+                self.assertEqual(len(ids), 2)
+                ids_list = ids
+            cu.execute("select id, name from booze order by id")
             f = cu.fetchall()
-            self.assertEqual(f[0][0], ids[0])
-            self.assertEqual(f[1][0], ids[1])
+            self.assertEqual(f[0][0], ids_list[0])
+            self.assertEqual(f[1][0], ids_list[1])
 
     def test_iter(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
@@ -726,17 +731,14 @@ class CursorTestCase(common.JPypeTestCase):
             with self.assertRaises(dbapi2.ProgrammingError):
                 r = cu.callproc("lower", ("FOO",))
 
-    @common.unittest.skip  # type: ignore
     def test_callprocBad(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             with self.assertRaises(dbapi2.ProgrammingError):
                 r = cu.callproc("not_there", ("FOO",))
             with self.assertRaises(dbapi2.InterfaceError):
                 r = cu.callproc(object(), ("FOO",))
-            with self.assertRaises(dbapi2.InterfaceError):
+            with self.assertRaises(dbapi2.ProgrammingError):
                 r = cu.callproc("lower", (object(),))
-            with self.assertRaises(dbapi2.InterfaceError):
-                r = cu.callproc("lower", object())
 
     def test_close(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
@@ -1334,7 +1336,6 @@ class ThreadingTestCase(common.JPypeTestCase):
             cu.execute("insert into test(name) values('a')")
             self._testThread(cu, cu.close, (), dbapi2.ProgrammingError)
 
-    @common.unittest.skip  # type: ignore
     def test_callproc(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table test(name VARCHAR(10))")

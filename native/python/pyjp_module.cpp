@@ -63,7 +63,6 @@ extern void PyJPNumber_initType(PyObject* module);
 extern void PyJPClassHints_initType(PyObject* module);
 extern void PyJPPackage_initType(PyObject* module);
 extern void PyJPChar_initType(PyObject* module);
-extern void PyJPValue_initType(PyObject* module);
 
 static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype);
 
@@ -790,7 +789,7 @@ PyMODINIT_FUNC PyInit__jpype()
     PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
 #endif
 // TODO: we should probably pass the version directly from a scikit-build (cmake) defined macro.
-	PyModule_AddStringConstant(module, "__version__", "1.6.1.dev0");
+	PyModule_AddStringConstant(module, "__version__", "1.7.1.dev0");
 
 	// Our module will be used for PyFrame object and it is a requirement that
 	// we have a builtins in our dictionary.
@@ -800,7 +799,6 @@ PyMODINIT_FUNC PyInit__jpype()
 
 	PyJPClassMagic = PyDict_New();
 	// Initialize each of the python extension types
-	PyJPValue_initType(module);
 	PyJPClass_initType(module);
 	PyJPObject_initType(module);
 

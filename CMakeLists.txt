@@ -4,32 +4,42 @@ project(jpype-native)
 option(ENABLE_TRACING "Enable tracing in the extension" OFF)
 option(ENABLE_COVERAGE "Enable compilation for coverage measurement" OFF)
 option(ENABLE_BUILD_JAR "Enable building of the Java JAR" ON)
+option(BUILD_TEST_HARNESS "Build the Java test harness" ON)
 # Optionally set Python GIL disabled flag
 # set(PY_GIL_DISABLED ON)
 set(CMAKE_CXX_STANDARD 14)
 
-find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
+find_package(Python3 COMPONENTS Development.Embed)
 find_package(Java REQUIRED COMPONENTS Development)
-# todo: add fallback jni.h in case it aint found (no jdk required, or not found).
-#set(JAVA_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/native/jni_include" ${JAVA_INCLUDE_PATH})
-find_package(JNI REQUIRED)
+find_package(JNI)
+
+if(JNI_FOUND)
+    message(STATUS "System JNI found successfully.")
+else()
+    message(STATUS "System JNI not found. Falling back to bundled jni.h.")
+    # Populate the standard variable that FindJNI usually sets
+    set(JNI_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/native/jni_include")
+endif()
+
 include(UseJava)
 
 
 if(SKBUILD)
-    message("SKBuild invocation")
-    set(DEST_JAR ${SKBUILD_PLATLIB_DIR}) # todo: jar should go to JPype Python package?
+    message(DEBUG "SKBuild invocation")
+    set(DEST_JAR ${SKBUILD_PLATLIB_DIR})
     set(DEST_EXTENSION ${SKBUILD_PLATLIB_DIR})
 else()
     # in-place build, set output to cmakes output dir.
-    # todo: or set it to the project root (src-dir), so the extension and jar are in place for direct execution.
-    # note that this is non-standard and might be surprising.
     set(DEST_JAR ${CMAKE_CURRENT_BINARY_DIR})
     set(DEST_EXTENSION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
+message(STATUS "Destination Python extension: ${DEST_EXTENSION}")
+message(STATUS "Destination JAR: ${DEST_JAR}")
+
 if(ENABLE_BUILD_JAR)
-    message("build jar")
+    message(DEBUG "build jar")
 
     find_program(ANT_EXECUTABLE ant REQUIRED)
     # this is the build artifact of Ant.
@@ -54,7 +64,8 @@ if(ENABLE_BUILD_JAR)
             COMMENT "Copying ${JAR_OUTPUT} to internal destination"
     )
     add_custom_target(copy_jar ALL DEPENDS "${DEST_FILE}")
-
+    # Explicitly link targets so MSBuild doesn't run them in parallel.
+    add_dependencies(copy_jar jpype_jar)
     # finally install the jar to DEST_JAR, which makes it available for wheel building.
     install(
             FILES "${DEST_FILE}"
@@ -87,6 +98,24 @@ if(ENABLE_COVERAGE)
     add_compile_options(-O0 --coverage -ftest-coverage)
     add_link_options(--coverage)
 endif()
+
+if(BUILD_TEST_HARNESS)
+    find_program(ANT_EXECUTABLE ant REQUIRED)
+    
+    # We define a representative output file to help CMake track dependencies
+    set(TEST_SENTINEL "${CMAKE_SOURCE_DIR}/test/classes/org/jpype/JPypeTest.class")
+
+    add_custom_command(
+        OUTPUT "${TEST_SENTINEL}"
+        COMMAND "${ANT_EXECUTABLE}" -f "test/build.xml"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        DEPENDS jpype_jar  # Ensure the main org.jpype.jar is built first
+        COMMENT "Building JPype Java Test Harness via Ant"
+    )
+
+    add_custom_target(build_tests ALL DEPENDS "${TEST_SENTINEL}")
+endif()
+
 
 # C++ Python extension
 include_directories(
@@ -154,15 +183,12 @@ set(JPYPE_NATIVE_SRC
 )
 
 Python3_add_library(_jpype MODULE ${JPYPE_NATIVE_SRC})
-target_link_libraries(_jpype PRIVATE Python3::Python)
+target_link_libraries(_jpype PRIVATE Python3::Module)
 # Set target properties for scikit-build export
 set_target_properties(_jpype PROPERTIES
         PREFIX ""  # remove 'lib' prefix
 )
-set_target_properties(_jpype PROPERTIES     OUTPUT_NAME "_jpype")
-
-#fixme: causes problems on osx (would need to build shared lib, not module.
-#set_target_properties(_jpype PROPERTIES VERSION "1.6.1.dev0")
+set_target_properties(_jpype PROPERTIES OUTPUT_NAME "_jpype")
 
 # Apply Windows-specific configuration
 if(WIN32)
@@ -198,4 +224,3 @@ else()
     message(DEBUG "no skbuild env")
 endif()
 
-message("state: ${SKBUILD_STATE}")

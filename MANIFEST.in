@@ -4,5 +4,4 @@ include *.rst doc/* LICENSE
 # include test/
 graft test
 prune test/classes/*
-graft setupext
 global-exclude *.pyc

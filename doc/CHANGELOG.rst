@@ -4,13 +4,40 @@ Changelog
 This changelog *only* contains changes from the *first* pypi release (0.5.4.3) onwards.
 
 Latest Changes:
+
+- **1.7.1.dev0 - 2026-04-09**
+
   - Support for descriptor level alterations using "." prefix.
 
-- **1.6.1.dev0 - 2025-05-31**
+- **1.7.0 - 2026-04-04**
+
+  - Fixed compatibility with NumPy 2.3 breaking change where `np.bool_` no longer inherits from Python `bool`. #1307
+
+  - Migrated build system from legacy `setup.py` to `cmake` and `scikit-build-core`. 
+
+  - Added initial support and testing for Python 3.14. #1338
+
+  - Updated `pyproject.toml` metadata for PEP 639 license compliance. #1337
+
+  - Fixed a race condition in cross-module mutex initialization. #1333
+
+  - Fixed `PySlice_CheckFull` for 32-bit architectures. #1336
+
+  - Fixed unknown references in `dbapi2` module. #1342
+
+  - Fixed regression in relative classpath resolution and modernized `org.jpype.jar` discovery.
+
+  - Optimized Azure CI pipelines with improved pip caching.
+
+  - Added documentation for building tracing-instrumented extensions.
+
+  - Added a support script to validate wheels.
 
   - Fixed compatibility with NumPy 2.3. #1320
 
   - Fixed a race condition upon JPype import on Windows. #1316
+
+  - Made jedi support optional
 
 - **1.6.0 - 2025-01-20**
 
@@ -511,7 +538,7 @@ Latest Changes:
     which enforces type slots.  Mixins of Python base classes is not
     permitted.  Objects, Proxies, Exceptions, Numbers, and Arrays
     derive directly from internal CPython implementations.
-    See the :doc:`ChangeLog-0.7.2` for details of all changes.
+    See the `ChangeLog-0.7.2` for details of all changes.
 
   - Internal improvements to tracing and exception handling.
 
@@ -620,7 +647,7 @@ Latest Changes:
   - Complete rewrite of the core module code to deal unattached threads,
     improved hardening, and member management.  Massive number of internal
     bugs were identified during the rewrite and corrected.
-    See the :doc:`ChangeLog-0.7` for details of all changes.
+    See the `ChangeLog-0.7` for details of all changes.
 
   - API breakage:
 

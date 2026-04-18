@@ -1,7 +1,7 @@
 <project default="all" name="JPype - Native">
 
 	<!-- JAVA_VERSION must match the oldest supported Java version -->
-	<property name="JAVA_VERSION" value="11" />
+	<property name="JAVA_VERSION" value="9" />
 
 	<!-- src can't be "java" as it breaks nose tests -->
 	<property name="src" location="jpype_module/src/main/java"/>
@@ -19,7 +19,7 @@
 		<javac destdir="${build}/classes"
 			source="${JAVA_VERSION}"
 			target="${JAVA_VERSION}"
-			excludes="**/Reflector0.java.java"
+			excludes="**/Reflector0.java"
             includeantruntime="false"
 			>
 			<src path="${src}"/>

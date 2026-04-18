@@ -49,18 +49,31 @@ __all__ = [
 class JVMNotRunning(RuntimeError):
     pass
 
-
-# Activate jedi tab completion
-try:
-    from jedi import __version__ as _jedi_version # first check
+def _register_jedi():
+    # Activate jedi tab completion
     try:
-        import jedi.access as _jedi_access
-        _jedi_access.ALLOWED_DESCRIPTOR_ACCESS += _jpype._JMethod, _jpype._JField  # jedi < 0.18
-    except ModuleNotFoundError: # we have jedi, but the access module moved and  indicates jedi > 0.18
-        import jedi.inference.compiled.access as _jedi_access
-        _jedi_access.ALLOWED_GETITEM_TYPES = _jedi_access.ALLOWED_GETITEM_TYPES + (_jpype._JMethod, _jpype._JField)
-except ModuleNotFoundError:
-    pass
+        from jedi import __version__ as _jedi_version
+        try:
+            # Jedi < 0.18
+            import jedi.access as _jedi_access
+            if hasattr(_jedi_access, 'ALLOWED_DESCRIPTOR_ACCESS'):
+                _jedi_access.ALLOWED_DESCRIPTOR_ACCESS += (_jpype._JMethod, _jpype._JField)
+        except ModuleNotFoundError:
+            # Jedi >= 0.18 (The "Inference" era)
+            try:
+                import jedi.inference.compiled.access as _jedi_access
+                # Add to ALLOWED_GETITEM_TYPES if it exists
+                current = getattr(_jedi_access, 'ALLOWED_GETITEM_TYPES', ())
+                setattr(_jedi_access, 'ALLOWED_GETITEM_TYPES', current + (_jpype._JMethod, _jpype._JField))
+            except (ModuleNotFoundError, AttributeError):
+                # If Jedi moves things again, we just move on.
+                pass
+    except (ModuleNotFoundError, ImportError):
+        # No Jedi installed, or something went wrong during early lookup
+        pass
+
+if 'jedi' in sys.modules:
+    _register_jedi()
 
 if typing.TYPE_CHECKING:
     _PathOrStr = typing.Union[str, os.PathLike]

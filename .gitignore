@@ -85,3 +85,18 @@ jacoco/
 wheelhouse/
 vc*.pdb
 *.class
+.build_history
+.cmake
+
+# --- Build Artifacts (scikit-build-core) ---
+.ninja_deps
+.ninja_log
+.skbuild-info.json
+CMakeCache.txt
+CMakeFiles/
+CMakeInit.txt
+build.ninja
+cmake_install.cmake
+_jpype.so
+org.jpype.jar
+.build_history

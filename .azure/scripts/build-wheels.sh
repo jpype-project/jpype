@@ -1,43 +1,80 @@
 #!/bin/bash
 set -e -x
 
+# Ensure the package name is available (usually passed from Azure env)
+package_name=${package_name:-jpype1}
+
 pys=()
-echo "Available Python bins:"
-ls -d /opt/python/cp*/bin 
+echo "Available Python bins in ManyLinux image:"
+ls -d /opt/python/cp*/bin
 
 for pybin in /opt/python/cp*/bin; do
-    # Exclude 3.6, 3.7, 3.8 and any alpha/beta/rc release
-    if [[ "$dir" =~ ^cp3(6|7|8|9|14)-cp3(6|7|8|9|14)t?$ ]]; then
+    # Get the directory name (e.g., cp310-cp310)
+    dir=$(basename $(dirname "$pybin"))
+
+    # EXCLUSION LOGIC:
+    # Drop EOL versions (3.6, 3.7, 3.8, 3.9)
+    # Note: 3.9 is EOL as of late 2025, but keep it if your users require it.
+    if [[ "$dir" =~ ^cp3(6|7|8|9)- ]]; then
+        echo "Skipping legacy version: $dir"
         continue
     fi
-    pys+=("$pybin")
+
+    # Include 3.10, 3.11, 3.12, 3.13, 3.14
+    if [[ "$dir" =~ ^cp3(10|11|12|13|14) ]]; then
+        pys+=("$pybin")
+    fi
 done
 
-# Show what you found for debugging
-echo "Found Python bins:"
-printf '%s\n' "${pys[@]}"
+echo "Found Python bins for build: ${pys[@]}"
+
+yum install -y java-11-openjdk-devel ant
+export JAVA_HOME=$(ls -d /usr/lib/jvm/java-11-openjdk-* | head -n 1)
+export JAVAC=$JAVA_HOME/bin/javac
+export PATH=$JAVA_HOME/bin:$PATH
+
+which javac
+java -version
+javac -version
+
 
 # Compile wheels
 for PYBIN in "${pys[@]}"; do
-    echo "Compile $PYBIN"
-    ls -l /io/dist
-    "${PYBIN}/pip" install -r /io/dev-requirements.txt
-    "${PYBIN}/pip" wheel /io/dist/$package_name-*.tar.gz -w wheelhouse/ -v
-done
-echo "=============="
+    echo "=================================================="
+    echo "Processing: $PYBIN"
 
-# Bundle external shared libraries into the wheels
-for whl in wheelhouse/$package_name-*.whl; do
+    # 1. Extraction (No-collision quoting)
+    PYTHON_INCLUDE=$("${PYBIN}/python" -c "import sysconfig; print(sysconfig.get_paths()[\"include\"])")
+    
+    echo "--- Forensic Path Interrogation ---"
+    echo "INCLUDE:   $PYTHON_INCLUDE"
+
+    # 2. Build with 'Module' strategy
+    # We drop -DPython3_LIBRARY because the file is missing from the image.
+    # On Linux, 'Development.Module' only requires headers to build the extension.
+    "${PYBIN}/pip" wheel /io/ -w wheelhouse/ -v --no-deps \
+        --config-setting=cmake.args="-DPython3_EXECUTABLE=${PYBIN}/python;\
+        -DPython3_INCLUDE_DIR=${PYTHON_INCLUDE};\
+        -DPython3_FIND_STRATEGY=LOCATION;\
+        -DPython3_FIND_COMPONENTS='Interpreter;Development.Module';\
+        -DJAVA_HOME=${JAVA_HOME}"
+
+done
+
+echo "=============="
+echo "Repairing wheels with auditwheel"
+# Bundle external shared libraries into the wheels (standard ManyLinux procedure)
+for whl in wheelhouse/${package_name}-*.whl; do
     echo "Audit $whl"
-    auditwheel repair --plat $PLAT "$whl" -w /io/wheelhouse/
+    # Repair and move to the final output directory /io/wheelhouse
+    auditwheel repair --plat "$PLAT" "$whl" -w /io/wheelhouse/
 done
 echo "=============="
 
-# Install packages and test
+# Simple verification
 for PYBIN in "${pys[@]}"; do
-    echo "Test install $PYBIN $package_name"
-    "${PYBIN}/python" -m pip install $package_name --no-index -f /io/wheelhouse
-    # Manylinux does not have a JVM so there is no way to test the wheel in the docker
-    # "${PYBIN}/pip" install -r /io/test-requirements.txt
-    # "${PYBIN}/pytest" /io/test/jpypetest
+    echo "Verifying installation for $PYBIN"
+    "${PYBIN}/python" -m pip install ${package_name} --no-index -f /io/wheelhouse
+    "${PYBIN}/python" -c "import jpype; print(\"JPype version {} installed successfully\".format(jpype.__version__))"
 done
+
