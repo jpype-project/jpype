@@ -15,13 +15,13 @@ for pybin in /opt/python/cp*/bin; do
     # EXCLUSION LOGIC:
     # Drop EOL versions (3.6, 3.7, 3.8, 3.9)
     # Note: 3.9 is EOL as of late 2025, but keep it if your users require it.
-    if [[ "$dir" =~ ^cp3(6|7|8|9)- ]]; then
+    if [[ "$dir" =~ ^cp3(6|7)- ]]; then
         echo "Skipping legacy version: $dir"
         continue
     fi
 
     # Include 3.10, 3.11, 3.12, 3.13, 3.14
-    if [[ "$dir" =~ ^cp3(10|11|12|13|14) ]]; then
+    if [[ "$dir" =~ ^cp3(8|9|10|11|12|13|14) ]]; then
         pys+=("$pybin")
     fi
 done
