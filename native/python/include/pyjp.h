@@ -157,6 +157,7 @@ extern PyObject *_JVMNotRunning;
 extern PyObject *PyJPClassMagic;
 // for caching type checks with Numpy bool after np version 2.1
 extern PyObject* _num_bool_type;
+extern PyObject* _numpy_int8_type;
 extern PyObject* _numpy_int16_type;
 extern PyObject* _numpy_int32_type;
 extern PyObject* _numpy_bool_type;
@@ -185,7 +186,7 @@ PyObject  *PyJPModule_getClass(PyObject* module, PyObject *obj);
 PyObject  *PyJPValue_getattro(PyObject *obj, PyObject *name);
 int        PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value);
 PyObject  *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p);
-PyTypeObject* PyJP_GetNumPyBaseType(PyObject* obj);
+PyTypeObject* PyJP_GetNumPyBaseType(PyTypeObject* obj);
 
 #ifdef __cplusplus
 }

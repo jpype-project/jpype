@@ -775,13 +775,13 @@ public:
 
 		// Hot path dispatch using the numpy tree
 		PyTypeObject* nptype = PyJP_GetNumPyBaseType(type);
-		if (nptype != null)
+		if (nptype != nullptr)
 		{
-			if (nptype == _numpy_int32_type)
+			if (nptype == (PyTypeObject*) _numpy_int32_type)
 				match.closure = JPContext_global->_java_lang_Integer;
-			else if (nptype == _numpy_int16_type)
+			else if (nptype == (PyTypeObject*) _numpy_int16_type)
 				match.closure = JPContext_global->_java_lang_Short;
-			else if (nptype == _numpy_int8_type)
+			else if (nptype == (PyTypeObject*) _numpy_int8_type)
 				match.closure = JPContext_global->_java_lang_Byte;
 		}
 
