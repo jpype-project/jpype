@@ -53,7 +53,7 @@ public:
     {
         PyObject* obj = match.object;
 
-        if (PyBool_Check(obj) || PyObject_IsInstance(obj, (PyObject*)_NPBool_Type))
+        if (PyBool_Check(obj) || PyJP_IsInstanceSingle(obj, _NPBool_Type))
         {
             match.conversion = this;
             return match.type = JPMatch::_exact;
