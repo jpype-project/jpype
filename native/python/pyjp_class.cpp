@@ -496,50 +496,52 @@ PyObject *PyJPClass_getattro(PyObject *obj, PyObject *name)
 int PyJPClass_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
 {
 	JP_PY_TRY("PyJPClass_setattro");
-	PyJPModule_getContext();
 	if (!PyUnicode_Check(attr_name))
 	{
-		PyErr_Format(PyExc_TypeError,
-				"attribute name must be string, not '%.200s'",
-				attr_name->ob_type->tp_name);
+		PyErr_Format(PyExc_TypeError, "attribute name must be string");
 		return -1;
 	}
 
-	// Support for hot patching a class
-	int len =  PyUnicode_GetLength(attr_name);
-	if (len>1 && PyUnicode_ReadChar(attr_name, 0) == '.')
+	Py_ssize_t len = PyUnicode_GetLength(attr_name);
+	if (len == 0) return -1;
+
+	// 1. HOT PATCH / PYTHON OVERRIDE
+	// Explicitly bypass Java descriptors using the '.' leader
+	if (len>=2 && PyUnicode_ReadChar(attr_name, 0) == '.')
 	{
-		// Slice the string to remove the leading '.'
-		PyObject* chopped = PyUnicode_Substring(attr_name, 1, len);
-		if (chopped == nullptr) 
-			return -1;
-			
-		JPPyObject chopped_name = JPPyObject::claim(chopped);
-		int result = PyType_Type.tp_setattro(self, chopped_name.get(), v);
-		return result;
+		JPPyObject chopped_name = JPPyObject::claim(PyUnicode_Substring(attr_name, 1, len));
+		return PyType_Type.tp_setattro(self, chopped_name.get(), v);
 	}
 
-	// Private members are accessed directly
-	if (len && PyUnicode_ReadChar(attr_name, 0) == '_')
+	// 2. JAVA DESCRIPTOR PRIORITY
+	// Check if Java owns this name (even if it starts with '_')
+	JPPyObject f = JPPyObject::accept(PyJP_GetAttrDescriptor((PyTypeObject*) self, attr_name));
+	if (!f.isNull())
+	{
+		PyJPModule_getContext();
+		descrsetfunc desc = Py_TYPE(f.get())->tp_descr_set;
+		if (desc != nullptr)
+			return desc(f.get(), self, v);
+
+		// Found Java field, but it's final or otherwise read-only
+		const char *name_str = PyUnicode_AsUTF8(attr_name);
+		PyErr_Format(PyExc_AttributeError,
+			"Static field '%s' is not settable on Java class '%s'",
+			name_str, ((PyTypeObject*) self)->tp_name);
+		return -1;
+	}
+
+	// 3. PYTHON FALLBACK
+	// If it's a private Python member (starts with '_') or we want to allow
+	// adding new Python-only attributes to the class.
+	if (PyUnicode_ReadChar(attr_name, 0) == '_')
 		return PyType_Type.tp_setattro(self, attr_name, v);
 
-	JPPyObject f = JPPyObject::accept(PyJP_GetAttrDescriptor((PyTypeObject*) self, attr_name));
-	if (f.isNull())
-	{
-		const char *name_str = PyUnicode_AsUTF8(attr_name);
-		PyErr_Format(PyExc_AttributeError, "Field '%s' is not found", name_str);
-		return -1;
-	}
-
-	descrsetfunc desc = Py_TYPE(f.get())->tp_descr_set;
-	if (desc != nullptr)
-		return desc(f.get(), self, v);
-
-	// Not a descriptor
+	// 4. NOT FOUND
 	const char *name_str = PyUnicode_AsUTF8(attr_name);
 	PyErr_Format(PyExc_AttributeError,
-			"Static field '%s' is not settable on Java '%s' object",
-			name_str, ((PyTypeObject*) self)->tp_name);
+		"Java class '%s' has no static field '%s'",
+		((PyTypeObject*) self)->tp_name, name_str);
 	return -1;
 	JP_PY_CATCH(-1);
 }
@@ -1011,6 +1013,7 @@ PyObject* PyJPClass_customize(PyJPClass *self, PyObject *args, PyObject *kwargs)
 	PyObject *value = nullptr;
 	if (!PyArg_ParseTuple(args, "OO", &name, &value))
 		return nullptr;
+	// PyErr_WarnEx(PyExc_DeprecationWarning, "_customize() is deprecated, use "setattr(cls,'.'+name,value)" syntax instead", 1);
 	if (PyType_Type.tp_setattro((PyObject*) self, name, value) == -1)
 		return nullptr;
 	Py_RETURN_NONE;

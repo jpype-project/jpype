@@ -152,7 +152,8 @@ def _jclassPost(res, *args):
             if cls.getModifiers() & 1 == 0:
                 continue
             wrapper = _jpype.JClass(cls)
-            res._customize(str(cls.getSimpleName()), wrapper)
+            name = str(cls.getSimpleName())
+            setattr(res, "."+name, wrapper)
 
 
 def _jclassDoc(cls):
