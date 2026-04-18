@@ -25,6 +25,14 @@
 void PyJPModule_installGC(PyObject* module);
 
 bool _jp_cpp_exceptions = false;
+static int _numpy_typepos = 0;
+static int _numpy_genericpos = 0;
+PyObject* _numpy_generic_type = nullptr;
+PyObject* _numpy_bool_type = nullptr;
+PyObject* _numpy_int8_type  = nullptr;
+PyObject* _numpy_int16_type = nullptr;
+PyObject* _numpy_int32_type = nullptr;
+
 
 extern void PyJPArray_initType(PyObject* module);
 extern void PyJPBuffer_initType(PyObject* module);
@@ -219,9 +227,8 @@ int PyJP_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj)
 	return PyTuple_GetItem(mro1, n1 - n2) == (PyObject*) type;
 }
 
-PyTypeObject* PyJP_GetNumPyBaseType(PyObject* obj)
+PyTypeObject* PyJP_GetNumPyBaseType(PyTypeObject* type)
 {
-	PyTypeObject* type = Py_TYPE(obj);
 	PyObject* mro = type->tp_mro;
 	if (mro == nullptr || _numpy_generic_type == nullptr) return nullptr;
 
@@ -631,56 +638,32 @@ static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
-int _numpy_typepos = 0;
-int _numpy_genericpos = 0;
-PyObject* _numpy_generic_type = nullptr;
-PyObject* _numpy_bool_type = nullptr;
-PyObject* _numpy_int8_type  = nullptr;
-PyObject* _numpy_int16_type = nullptr;
-PyObject* _numpy_int32_type = nullptr;
-
-static int  PyJPModule_InitNumpy()
+static void PyJPModule_InitNumpy()
 {
-    JP_TRACE("JPClassHints::initNumPy()");
-
-    // Default to standard Python bool in case NumPy isn't there
-    _numpy_bool_type = &PyBool_Type;
-
-    // Import NumPy only once
     PyObject *numpy = PyImport_ImportModule("numpy");
-    if (numpy == nullptr) {
-        // Clear the error so JPype can continue without NumPy support
+    if (numpy == nullptr) 
+    {
         PyErr_Clear();
         return;
     }
 
-    auto get_type = [&](const char* name) -> PyObject* {
-        PyObject* attr = PyObject_GetAttrString(numpy, name);
-        if (attr == nullptr) {
-            PyErr_Clear();
-            JP_TRACE("NumPy attribute not found:", name);
-        }
-        return attr;
-    };
+    // Do it one by one. If one fails, you can actually handle it.
+    _numpy_generic_type = PyObject_GetAttrString(numpy, "generic");
+    _numpy_bool_type    = PyObject_GetAttrString(numpy, "bool_");
+    _numpy_int8_type   = PyObject_GetAttrString(numpy, "int8");
+    _numpy_int16_type   = PyObject_GetAttrString(numpy, "int16");
+    _numpy_int32_type   = PyObject_GetAttrString(numpy, "int32");
 
-    _numpy_generic_type = get_type("generic");
+    // Check for nulls BEFORE you try to access internals
+    if (_numpy_int32_type && _numpy_generic_type)
+    {
+        _numpy_typepos = PyTuple_GET_SIZE(((PyTypeObject*)_numpy_int32_type)->tp_mro);
+        _numpy_genericpos = PyTuple_GET_SIZE(((PyTypeObject*)_numpy_generic_type)->tp_mro);
+    }
 
-    // 1. Existing boolean initialization
-    _numpy_bool_type = get_type("bool_");
-
-    // 2. Your new j2ni/transfer type pointers
-    _numpy_int8_type  = get_type("int8");
-    _numpy_int16_type = get_type("int16");
-    _numpy_int32_type = get_type("int32");
-
-	// Cache for speed
-	_numpy_typepos = PyTuple_GET_SIZE(((PyTypeObject*)_numpy_int32_type)->tp_mro)
-	_numpy_genericpos = PyTuple_GET_SIZE(((PyTypeObject*)_numpy_generic_type)->tp_mro)
-
-    // Finished with the module handle
     Py_DECREF(numpy);
-
 }
+
 
 #if 1
 // GCOVR_EXCL_START
