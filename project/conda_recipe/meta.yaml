@@ -1,5 +1,11 @@
-{% set version = "1.7.0" %}
+{% set version = "0" %}
 {% set name = "JPype1" %}
+
+#### specific to this repo only:
+# obtain the version from skbuild-core somehow.
+{% set pyproject = load_file_data('pyproject.toml') %}
+{% set version = pyproject[ 'project' ][ 'version' ] %}
+####
 
 package:
   name: {{ name|lower }}
@@ -15,7 +21,7 @@ build:
 requirements:
   build:
     - python                                 # [build_platform != target_platform]
-    #- cross-python_{{ target_platform }}     # [build_platform != target_platform]
+    - cross-python_{{ target_platform }}     # [build_platform != target_platform]
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
     - {{ stdlib('c') }}
