@@ -22,34 +22,17 @@
 #include <Windows.h>
 #endif
 
-namespace {
-int init_numpy_bool_type()
-{
-	JP_TRACE("init_numpy_bool_type()");
-	PyObject *numpy = PyImport_ImportModule("numpy");
-	if (numpy == nullptr) {
-		// we do not want a Python error to be propagated.
-		PyErr_Clear(); // GCOVR_EXCL_LINE
-		return -1; // GCOVR_EXCL_LINE
-	}
-
-	PyObject *t = PyObject_GetAttrString(numpy, "bool_");
-	Py_DECREF(numpy);
-	if (t == nullptr) {
-		JP_TRACE("bool_ attr not found"); // GCOVR_EXCL_LINE
-		return -1; // GCOVR_EXCL_LINE
-	}
-
-	/* store as PyTypeObject* for fast checks */
-	_NPBool_Type = (PyTypeObject *)t;
-	return 0;
-}
-
-}
-
 void PyJPModule_installGC(PyObject* module);
 
 bool _jp_cpp_exceptions = false;
+static int _numpy_typepos = 0;
+static int _numpy_genericpos = 0;
+PyObject* _numpy_generic_type = nullptr;
+PyObject* _numpy_bool_type = nullptr;
+PyObject* _numpy_int8_type  = nullptr;
+PyObject* _numpy_int16_type = nullptr;
+PyObject* _numpy_int32_type = nullptr;
+
 
 extern void PyJPArray_initType(PyObject* module);
 extern void PyJPBuffer_initType(PyObject* module);
@@ -98,7 +81,6 @@ PyObject* _JMethodAnnotations = nullptr;
 PyObject* _JMethodCode = nullptr;
 PyObject* _JObjectKey = nullptr;
 PyObject* _JVMNotRunning = nullptr;
-PyTypeObject* _NPBool_Type = nullptr;
 
 void PyJPModule_loadResources(PyObject* module)
 {
@@ -244,6 +226,31 @@ int PyJP_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj)
 		return 0;
 	return PyTuple_GetItem(mro1, n1 - n2) == (PyObject*) type;
 }
+
+PyTypeObject* PyJP_GetNumPyBaseType(PyTypeObject* type)
+{
+	PyObject* mro = type->tp_mro;
+	if (mro == nullptr || _numpy_generic_type == nullptr) return nullptr;
+
+	Py_ssize_t n = PyTuple_GET_SIZE(mro);
+
+	// 1. Check the Gate using cached generic position
+	// If n < 2, it's a raw object/type.
+	// If the item at (n - _numpy_genericpos) isn't generic, it's not NumPy.
+	if (n < _numpy_genericpos || 
+			PyTuple_GET_ITEM(mro, n - _numpy_genericpos) != _numpy_generic_type)
+		return nullptr;
+
+	// 2. Resolve the concrete base (e.g., int32) using cached type position
+	// If the user subclassed it, n will be > _numpy_typepos.
+	// The base type is always at index (n - _numpy_typepos).
+	if (n >= _numpy_typepos && _numpy_typepos > 0)
+		return (PyTypeObject*) PyTuple_GET_ITEM(mro, n - _numpy_typepos);
+    
+	// 3. Fallback for types with shallower MROs (like bool_ or generic itself)
+	return type;
+}
+
 
 int PyJP_IsInstanceSingle(PyObject* obj, PyTypeObject* type)
 {
@@ -631,6 +638,32 @@ static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
+static void PyJPModule_InitNumpy()
+{
+    PyObject *numpy = PyImport_ImportModule("numpy");
+    if (numpy == nullptr) 
+    {
+        PyErr_Clear();
+        return;
+    }
+
+    // Do it one by one. If one fails, you can actually handle it.
+    _numpy_generic_type = PyObject_GetAttrString(numpy, "generic");
+    _numpy_bool_type    = PyObject_GetAttrString(numpy, "bool_");
+    _numpy_int8_type   = PyObject_GetAttrString(numpy, "int8");
+    _numpy_int16_type   = PyObject_GetAttrString(numpy, "int16");
+    _numpy_int32_type   = PyObject_GetAttrString(numpy, "int32");
+
+    // Check for nulls BEFORE you try to access internals
+    if (_numpy_int32_type && _numpy_generic_type)
+    {
+        _numpy_typepos = PyTuple_GET_SIZE(((PyTypeObject*)_numpy_int32_type)->tp_mro);
+        _numpy_genericpos = PyTuple_GET_SIZE(((PyTypeObject*)_numpy_generic_type)->tp_mro);
+    }
+
+    Py_DECREF(numpy);
+}
+
 
 #if 1
 // GCOVR_EXCL_START
@@ -815,7 +848,7 @@ PyMODINIT_FUNC PyInit__jpype()
 
 	_PyJPModule_trace = true;
 
-	init_numpy_bool_type();
+	PyJPModule_InitNumpy();
 
 	return module;
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE

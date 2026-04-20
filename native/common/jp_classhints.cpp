@@ -771,18 +771,20 @@ public:
 	jvalue convert(JPMatch &match) override
 	{
 		PyTypeObject* type = Py_TYPE(match.object);
-		const char *name = type->tp_name;
 		match.closure = JPContext_global->_java_lang_Long;
-		if (strncmp(name, "numpy", 5) == 0)
+
+		// Hot path dispatch using the numpy tree
+		PyTypeObject* nptype = PyJP_GetNumPyBaseType(type);
+		if (nptype != nullptr)
 		{
-			// We only handle specific sized types, all others go to long.
-			if (strcmp(&name[5], ".int8") == 0)
-				match.closure = JPContext_global->_java_lang_Byte;
-			else if (strcmp(&name[5], ".int16") == 0)
-				match.closure = JPContext_global->_java_lang_Short;
-			else if (strcmp(&name[5], ".int32") == 0)
+			if (nptype == (PyTypeObject*) _numpy_int32_type)
 				match.closure = JPContext_global->_java_lang_Integer;
+			else if (nptype == (PyTypeObject*) _numpy_int16_type)
+				match.closure = JPContext_global->_java_lang_Short;
+			else if (nptype == (PyTypeObject*) _numpy_int8_type)
+				match.closure = JPContext_global->_java_lang_Byte;
 		}
+
 		return JPConversionBox::convert(match);
 	}
 } _boxLongConversion;
