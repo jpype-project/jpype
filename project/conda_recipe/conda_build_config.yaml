@@ -1,0 +1,10 @@
+python:
+  - 3.8 # oldest Python version
+  - 3.9
+  - 3.14 # latest Python version
+
+# this is zip_key'ed to `python` to declare if it is the minimum supported Python version.
+is_python_min:
+  - true
+  - false
+  - false
