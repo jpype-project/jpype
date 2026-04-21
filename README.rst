@@ -30,7 +30,7 @@ access to the entirety of CPython and Java libraries.
 :Documentation: `Python Docs`_
 :License: `Apache 2 License`_
 :Build status:  |TestsCI|_ |Docs|_
-:Quality status:  |Codecov|_ |lgtm_python|_ |lgtm_java|_ |lgtm_cpp|_
+:Quality status:  |Codecov|_ |codeql|_
 :Version: |PypiVersion|_ |Conda|_
 
 The work on this project began on `Sourceforge <http://sourceforge.net/projects/jpype/>`__.
@@ -39,11 +39,8 @@ LLNL-CODE- 812311
 
 .. |alerts| image:: https://img.shields.io/lgtm/alerts/g/jpype-project/jpype.svg?logo=lgtm&logoWidth=18
 .. _alerts: https://lgtm.com/projects/g/jpype-project/jpype/alerts/
-.. |lgtm_python| image:: https://img.shields.io/lgtm/grade/python/g/jpype-project/jpype.svg?logo=lgtm&logoWidth=18&label=python
-.. _lgtm_python: https://lgtm.com/projects/g/jpype-project/jpype/context:python
-.. |lgtm_java| image:: https://img.shields.io/lgtm/grade/java/g/jpype-project/jpype.svg?logo=lgtm&logoWidth=18&label=java
-.. _lgtm_java: https://lgtm.com/projects/g/jpype-project/jpype/context:java
-.. |lgtm_cpp| image:: https://img.shields.io/lgtm/grade/cpp/g/jpype-project/jpype.svg?logo=lgtm&logoWidth=18&label=C++
+.. |codeql| image:: https://github.com/jpype-project/jpype/actions/workflows/codeql.yml/badge.svg
+.. _codeql: https://github.com/jpype-project/jpype/security/code-scanning
 .. _lgtm_cpp: https://lgtm.com/projects/g/jpype-project/jpype/context:cpp
 .. |PypiVersion| image:: https://img.shields.io/pypi/v/Jpype1.svg
 .. _PypiVersion: https://badge.fury.io/py/JPype1
