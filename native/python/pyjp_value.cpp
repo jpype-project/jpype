@@ -24,6 +24,14 @@ extern "C"
 {
 #endif
 
+#ifndef Py_SET_TYPE
+static inline void _Py_SET_TYPE(PyObject *ob, PyTypeObject *type)
+{
+    ob->ob_type = type;
+}
+#define Py_SET_TYPE(ob, type) _Py_SET_TYPE((PyObject*)(ob), (type))
+#endif
+
 /**
  * Internal key for the thread-local allocator type.
  */

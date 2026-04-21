@@ -17,12 +17,11 @@ find_package(JNI)
 if(JNI_FOUND)
     message(STATUS "System JNI found successfully.")
 else()
-    message(STATUS "System JNI not found. Falling back to bundled jni.h.")
-    # Populate the standard variable that FindJNI usually sets
+    message(STATUS "System JNI headers not found. Falling back to bundled jni.h.")
     set(JNI_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/native/jni_include")
 endif()
 
-include(UseJava)
+message(STATUS "Final JNI include dirs: ${JNI_INCLUDE_DIRS}")
 
 
 if(SKBUILD)
@@ -120,8 +119,8 @@ endif()
 # C++ Python extension
 include_directories(
         native/common/include
-        native/jni_include
         native/python/include
+        ${JNI_INCLUDE_DIRS}
 )
 
 set(JPYPE_NATIVE_SRC
