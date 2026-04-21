@@ -1,0 +1,66 @@
+{% set version = "0" %}
+{% set name = "JPype1" %}
+
+#### specific to this repo only:
+# obtain the version from skbuild-core somehow.
+{% set pyproject = load_file_data('pyproject.toml') %}
+{% set version = pyproject[ 'project' ][ 'version' ] %}
+####
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  path: ../../
+
+build:
+  number: 0
+  script: {{ PYTHON }} -m pip install . -vv
+
+requirements:
+  build:
+    - python                                 # [build_platform != target_platform]
+    - cross-python_{{ target_platform }}     # [build_platform != target_platform]
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
+    - {{ stdlib('c') }}
+    - openjdk ==11
+    - ant
+    - cmake
+    - ninja  # [win]
+    - make  # [not win]
+
+  host:
+    - python
+    - pip
+    - scikit-build-core
+
+  run:
+    - python
+    - packaging
+
+test:
+  imports:
+    - jpype
+  commands:
+    - pip check
+    - python -c "import jpype; jpype.startJVM(); print(jpype.java.lang.String('hi there'));"
+  requires:
+    - pip
+    - openjdk
+
+about:
+  home: https://github.com/jpype-project/jpype
+  license: Apache-2.0
+  license_file: LICENSE
+  summary: A Python to Java bridge.
+  description: A Python to Java bridge.
+  doc_url: http://jpype.readthedocs.io/en/stable/
+
+extra:
+  recipe-maintainers:
+    - caspervdw
+    - marscher
+    - mariusvniekerk
+    - Thrameos
