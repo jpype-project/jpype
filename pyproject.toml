@@ -80,3 +80,6 @@ editable.mode = "inplace"
 
 sdist.exclude = [".azure", ".github"]
 
+# keep debug info
+cmake.build-type = "RelWithDebInfo"
+install.strip = false
