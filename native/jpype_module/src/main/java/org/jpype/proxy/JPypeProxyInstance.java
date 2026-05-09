@@ -1,3 +1,4 @@
+// --- file: org/jpype/proxy/JPypeProxyInstance.java ---
 package org.jpype.proxy;
 
 import java.lang.reflect.InvocationHandler;

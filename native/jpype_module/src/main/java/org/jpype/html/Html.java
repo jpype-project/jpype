@@ -1,3 +1,4 @@
+// --- file: org/jpype/html/Html.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -25,7 +26,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import org.jpype.JPypeContext;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 

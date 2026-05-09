@@ -1,3 +1,4 @@
+// --- file: org/jpype/pickle/ByteBufferInputStream.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -23,7 +24,7 @@ import java.util.LinkedList;
 public class ByteBufferInputStream extends InputStream
 {
 
-  private LinkedList<ByteBuffer> buffers = new LinkedList<>();
+  private final LinkedList<ByteBuffer> buffers = new LinkedList<>();
 
   public void put(byte[] bytes)
   {
