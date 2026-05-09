@@ -54,7 +54,7 @@ JPPyObject getArgs(jlongArray parameterTypePtrs,
 
 extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 		JNIEnv *env, jclass clazz,
-		jlong contextPtr, jstring name,
+		jstring name,
 		jlong hostObj,
 		jlong returnTypePtr,
 		jlongArray parameterTypePtrs,

@@ -23,7 +23,6 @@ import java.util.EnumSet;
  * <p>
  * These pretty much match Java plus a few codes we need.
  *
- * @author nelson85
  */
 public enum ModifierCode
 {

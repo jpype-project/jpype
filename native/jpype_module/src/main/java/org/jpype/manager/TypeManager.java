@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.TreeSet;
 import org.jpype.JPypeContext;
 import org.jpype.JPypeUtilities;
-import org.jpype.proxy.JPypeProxy;
+import org.jpype.proxy.JPypeProxyInstance;
 
 /**
  *
@@ -42,10 +42,9 @@ import org.jpype.proxy.JPypeProxy;
 public class TypeManager
 {
 
-  public long context = 0;
   public boolean isStarted = false;
   public boolean isShutdown = false;
-  public HashMap<Class, ClassDescriptor> classMap = new HashMap<>();
+  public HashMap<Class<?>, ClassDescriptor> classMap = new HashMap<>();
   public TypeFactory typeFactory = null;
   public TypeAudit audit = null;
   private ClassDescriptor java_lang_Object;
@@ -57,9 +56,8 @@ public class TypeManager
   {
   }
 
-  public TypeManager(long context, TypeFactory typeFactory)
+  public TypeManager(TypeFactory typeFactory)
   {
-    this.context = context;
     this.typeFactory = typeFactory;
   }
 
@@ -85,7 +83,7 @@ public class TypeManager
         Class.class, Number.class, CharSequence.class, Throwable.class,
         Void.class, Boolean.class, Byte.class, Character.class,
         Short.class, Integer.class, Long.class, Float.class, Double.class,
-        String.class, JPypeProxy.class,
+        String.class, JPypeProxyInstance.class,
         Method.class, Field.class
       };
       for (Class c : cls)
@@ -284,7 +282,7 @@ public class TypeManager
 
     try
     {
-      typeFactory.populateMethod(context, wrapper, returnType, paramPtrs);
+      typeFactory.populateMethod(wrapper, returnType, paramPtrs);
     } catch (Exception ex)
     {
       ex.printStackTrace();
@@ -320,9 +318,9 @@ public class TypeManager
 
     Class cls = object.getClass();
     if (Proxy.isProxyClass(cls)
-            && (Proxy.getInvocationHandler(object) instanceof JPypeProxy))
+            && (Proxy.getInvocationHandler(object) instanceof JPypeProxyInstance))
     {
-      return this.findClass(JPypeProxy.class);
+      return this.findClass(JPypeProxyInstance.class);
     }
 
     return this.findClass(cls);
@@ -461,7 +459,7 @@ public class TypeManager
       name = cls.getName();
 
     // Create the JPClass
-    long classPtr = typeFactory.defineObjectClass(context, cls, name,
+    long classPtr = typeFactory.defineObjectClass(cls, name,
             superClassPtr,
             interfacesPtr,
             modifiers);
@@ -477,7 +475,7 @@ public class TypeManager
     if (parent.anonymous != 0)
       return parent.anonymous;
 
-    parent.anonymous = typeFactory.defineObjectClass(context,
+    parent.anonymous = typeFactory.defineObjectClass(
             parent.cls, parent.cls.getCanonicalName() + "$Anonymous",
             parent.classPtr,
             null,
@@ -485,7 +483,7 @@ public class TypeManager
     return parent.anonymous;
   }
 
-  ClassDescriptor createArrayClass(Class cls)
+  ClassDescriptor createArrayClass(Class<?> cls)
   {
     // Array classes are simple, we just need the component type
     Class componentType = cls.getComponentType();
@@ -497,7 +495,7 @@ public class TypeManager
       modifiers |= ModifierCode.PRIMITIVE_ARRAY.value;
 
     long classPtr = typeFactory
-            .defineArrayClass(context, cls,
+            .defineArrayClass(cls,
                     cls.getCanonicalName(),
                     this.java_lang_Object.classPtr,
                     componentTypePtr,
@@ -515,9 +513,9 @@ public class TypeManager
    * @param cls
    * @param boxed
    */
-  private void createPrimitive(String name, Class cls, Class boxed)
+  private void createPrimitive(String name, Class<?> cls, Class<?> boxed)
   {
-    long classPtr = typeFactory.definePrimitive(context,
+    long classPtr = typeFactory.definePrimitive(
             name,
             cls,
             this.getClass(boxed).classPtr,
@@ -555,7 +553,7 @@ public class TypeManager
       audit.verifyMembers(desc);
 
     // Pass this to JPype
-    this.typeFactory.assignMembers(context,
+    this.typeFactory.assignMembers(
             desc.classPtr,
             desc.constructorDispatch,
             desc.methodDispatch,
@@ -573,7 +571,7 @@ public class TypeManager
     int i = 0;
     for (Field field : fields)
     {
-      fieldPtr[i++] = this.typeFactory.defineField(context,
+      fieldPtr[i++] = this.typeFactory.defineField(
               desc.classPtr,
               field.getName(),
               field,
@@ -609,7 +607,7 @@ public class TypeManager
 
     // Create the dispatch for it
     desc.constructorDispatch = typeFactory
-            .defineMethodDispatch(context,
+            .defineMethodDispatch(
                     desc.classPtr,
                     "<init>",
                     desc.constructors,
@@ -643,7 +641,7 @@ public class TypeManager
 
       int modifiers = constructor.getModifiers() & 0xffff;
       modifiers |= ModifierCode.CTOR.value;
-      ov.ptr = typeFactory.defineMethod(context,
+      ov.ptr = typeFactory.defineMethod(
               desc.classPtr,
               constructor.toString(),
               constructor,
@@ -719,7 +717,7 @@ public class TypeManager
     List<MethodResolution> overloads = MethodResolution.sortMethods(methods);
     long[] overloadPtrs = this.createMethods(desc, overloads);
 
-    long methodContainer = typeFactory.defineMethodDispatch(context,
+    long methodContainer = typeFactory.defineMethodDispatch(
             desc.classPtr,
             key,
             overloadPtrs,
@@ -780,7 +778,7 @@ public class TypeManager
       if (isCallerSensitive(method))
         modifiers |= ModifierCode.CALLER_SENSITIVE.value;
 
-      ov.ptr = typeFactory.defineMethod(context,
+      ov.ptr = typeFactory.defineMethod(
               desc.classPtr,
               method.toString(),
               method,
@@ -976,7 +974,7 @@ public class TypeManager
         return;
       if (v.length > BLOCK_SIZE / 2)
       {
-        typeFactory.destroy(context, v, v.length);
+        typeFactory.destroy(v, v.length);
         return;
       }
       if (index + v.length > BLOCK_SIZE)
@@ -993,7 +991,7 @@ public class TypeManager
 
     void flush()
     {
-      typeFactory.destroy(context, queue, index);
+      typeFactory.destroy(queue, index);
       index = 0;
     }
   }

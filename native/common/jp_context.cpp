@@ -268,19 +268,18 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 			"(Ljava/lang/Throwable;Ljava/lang/Throwable;)[Ljava/lang/Object;");
 
 	jmethodID startMethod = frame.GetStaticMethodID(contextClass, "createContext",
-			"(JLjava/lang/ClassLoader;Ljava/lang/String;Z)Lorg/jpype/JPypeContext;");
+			"(Ljava/lang/ClassLoader;Ljava/lang/String;Z)Lorg/jpype/JPypeContext;");
 
 	// Launch
-	jvalue val[4];
-	val[0].j = (jlong) this;
-	val[1].l = m_ClassLoader->getBootLoader();
-	val[2].l = nullptr;
-	val[3].z = interrupt;
+	jvalue val[3];
+	val[0].l = m_ClassLoader->getBootLoader();
+	val[1].l = nullptr;
+	val[2].z = interrupt;
 
 	if (!m_Embedded)
 	{
 		std::string shared = getShared();
-		val[2].l = frame.fromStringUTF8(shared);
+		val[1].l = frame.fromStringUTF8(shared);
 	}
 
 	// Required before launch
@@ -479,9 +478,9 @@ JNIEnv* JPContext::getEnv()
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeContext_onShutdown
-(JNIEnv *env, jobject obj, jlong contextPtr)
+(JNIEnv *env, jobject obj)
 {
-	((JPContext*) contextPtr)->onShutdown();
+	JPContext_global->onShutdown();
 }
 
 /**********************************************************************

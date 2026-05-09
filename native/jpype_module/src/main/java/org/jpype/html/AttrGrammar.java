@@ -234,10 +234,10 @@ public class AttrGrammar implements Parser.Grammar
     }
 
     @Override
-    public void execute(Parser parser)
+    public void execute(Parser<?> parser)
     {
-      Entity e2 = (Entity) parser.stack.removeLast();
-      Entity e1 = (Entity) parser.stack.removeLast();
+      Entity e2 = parser.stack.removeLast();
+      Entity e1 = parser.stack.removeLast();
       AttrParser aparser = (AttrParser) parser;
       Attr attr = aparser.doc.createAttribute((String) e1.value);
       attr.setNodeValue((String) e1.value);

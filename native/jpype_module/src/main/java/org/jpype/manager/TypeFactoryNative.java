@@ -27,14 +27,11 @@ import java.lang.reflect.Field;
 public class TypeFactoryNative implements TypeFactory
 {
 
-  public long context;
-
-  public native void newWrapper(long context, long cls);
+  public native void newWrapper(long cls);
 
   @Override
   public native long defineArrayClass(
-          long context,
-          Class cls,
+          Class<?> cls,
           String name,
           long superClass,
           long componentPtr,
@@ -42,8 +39,7 @@ public class TypeFactoryNative implements TypeFactory
 
   @Override
   public native long defineObjectClass(
-          long context,
-          Class cls,
+          Class<?> cls,
           String name,
           long superClass,
           long[] interfaces,
@@ -51,15 +47,13 @@ public class TypeFactoryNative implements TypeFactory
 
   @Override
   public native long definePrimitive(
-          long context,
           String name,
-          Class cls,
+          Class<?> cls,
           long boxedPtr,
           int modifiers);
 
   @Override
   public native void assignMembers(
-          long context,
           long cls,
           long ctorMethod,
           long[] methodList,
@@ -67,7 +61,6 @@ public class TypeFactoryNative implements TypeFactory
 
   @Override
   public native long defineField(
-          long context,
           long cls,
           String name,
           Field field,
@@ -76,7 +69,6 @@ public class TypeFactoryNative implements TypeFactory
 
   @Override
   public native long defineMethod(
-          long context,
           long cls,
           String name,
           Executable method,
@@ -85,14 +77,12 @@ public class TypeFactoryNative implements TypeFactory
 
   @Override
   public native void populateMethod(
-          long context,
           long method,
           long returnType,
           long[] argumentTypes);
 
   @Override
   public native long defineMethodDispatch(
-          long context,
           long cls,
           String name,
           long[] overloadList,
@@ -100,6 +90,5 @@ public class TypeFactoryNative implements TypeFactory
 
   @Override
   public native void destroy(
-          long context,
           long[] resources, int sz);
 }

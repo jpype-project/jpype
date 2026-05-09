@@ -88,7 +88,7 @@ extern "C"
 {
 
 JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_newWrapper(
-		JNIEnv *env, jobject self, jlong contextPtr, jlong jcls)
+		JNIEnv *env, jobject self, jlong jcls)
 {
 	JPJavaFrame frame = JPJavaFrame::external(env);
 	JP_JAVA_TRY("JPTypeFactory_newWrapper");
@@ -99,7 +99,7 @@ JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_newWrapper(
 }
 
 JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_destroy(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
 		jlongArray resources,
 		jint sz)
 {
@@ -118,7 +118,7 @@ JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_destroy(
 }
 
 JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethodDispatch(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
 		jlong clsPtr,
 		jstring name,
 		jlongArray overloadPtrs,
@@ -137,7 +137,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethodDis
 }
 
 JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineArrayClass(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
 		jclass cls,
 		jstring name,
 		jlong superClass,
@@ -158,7 +158,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineArrayClas
 }
 
 JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectClass(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
 		jclass cls,
 		jstring name,
 		jlong superClass,
@@ -294,7 +294,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 }
 
 JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_definePrimitive(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
 		jstring name,
 		jclass cls,
 		jlong boxedPtr,
@@ -357,7 +357,6 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_definePrimitive
 
 JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_assignMembers(
 		JNIEnv *env, jobject self,
-		jlong contextPtr,
 		jlong clsPtr,
 		jlong ctorMethod,
 		jlongArray methodPtrs,
@@ -380,7 +379,7 @@ JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_assignMembers(
 }
 
 JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineField(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
 		jlong cls,
 		jstring name,
 		jobject field,
@@ -404,7 +403,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineField(
 }
 
 JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethod(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
 		jlong cls, jstring name,
 		jobject method,
 		jlongArray overloadList, jint modifiers)
@@ -427,7 +426,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethod(
 }
 
 JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_populateMethod(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
 		jlong method,
 		jlong returnType,
 		jlongArray argumentTypes

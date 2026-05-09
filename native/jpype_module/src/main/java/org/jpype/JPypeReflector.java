@@ -3,17 +3,23 @@ package org.jpype;
 import java.lang.reflect.Method;
 
 /**
+ * Interface for invoking methods using reflection in JPype.
  *
- * @author nelson85
+ * The {@code JPypeReflector} interface provides a mechanism to call methods
+ * dynamically using Java reflection. This is particularly useful for invoking
+ * caller-sensitive methods while ensuring proper stack frame creation for
+ * execution.
  */
 public interface JPypeReflector
 {
 
   /**
-   * Call a method using reflection.
+   * Invokes a method using reflection.
    *
-   * This method creates a stackframe so that caller sensitive methods will
-   * execute properly.
+   * This method dynamically calls the specified method on the provided object
+   * (or class, if the method is static) using reflection. It ensures that
+   * caller-sensitive methods execute correctly by creating the appropriate
+   * stack frame during invocation.
    *
    * @param method is the method to call.
    * @param obj is the object to operate on, it will be null if the method is
@@ -23,6 +29,5 @@ public interface JPypeReflector
    * @throws java.lang.Throwable throws whatever type the called method
    * produces.
    */
-  public Object callMethod(Method method, Object obj, Object[] args)
-          throws Throwable;
+  public Object callMethod(Method method, Object obj, Object[] args) throws Throwable;
 }
