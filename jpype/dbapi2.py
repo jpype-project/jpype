@@ -38,10 +38,15 @@ apilevel = "2.0"
 threadsafety = 2
 paramstyle = 'qmark'
 
+
+class JDBCTypeProtocol(typing.Protocol):
+    def get(self, rs, column, st):...
+    def set(self, ps, column, value):...
+
 _SQLException = None
 _SQLTimeoutException = None
-_registry = {}
-_types = []
+_registry: dict[str, JDBCTypeProtocol] = {}
+_types: list[JDBCTypeProtocol] = []
 
 
 def _nop(x):
@@ -51,7 +56,7 @@ def _nop(x):
 # Types
 
 
-class JDBCType(object):
+class JDBCType(JDBCTypeProtocol):
     def __init__(self, name, code=None, getter=None, setter=None):
         """ (internal) Create a new JDBC type. """
         if isinstance(name, (str, type(None))):
@@ -241,7 +246,7 @@ _default_map = {ARRAY: OBJECT, OBJECT: OBJECT, NULL: OBJECT,
                 LONGNVARCHAR: STRING, DOUBLE: DOUBLE, OTHER: OBJECT
                 }
 
-_default_setters = {}  # type: ignore[var-annotated]
+_default_setters: dict[typing.Any, typing.Union[JDBCType, _JDBCTypePrimitive]] = {}
 
 _default_converters = {}  # type: ignore[var-annotated]
 
@@ -278,7 +283,7 @@ def GETTERS_BY_TYPE(cx, meta, idx):
     """ Option for getters to determine column type by the JDBC type.
 
     This option is the default option that uses the type code supplied in
-    the meta data.  On some databases it is better to use the name.
+    the metadata.  On some databases it is better to use the name.
     If the type code is OTHER, it will attempt to find a type by name.
     New types can be created with JDBCType for database specific types.
     """
@@ -492,9 +497,9 @@ class Connection(object):
     def adapters(self):
         """ Adapters are used to convert Python types into JDBC types.
 
-        Adaptors are stored in a mapping from incoming type to an adapter
+        Adapters are stored in a mapping from incoming type to an adapter
         function.  Adapters set on a connection apply only to that connection.
-        Adapters can be overriden when calling the ``.execute*()`` method.
+        Adapters can be overridden when calling the ``.execute*()`` method.
 
         Adapters can also be set on the JDBC types directly.
         """
@@ -510,9 +515,7 @@ class Connection(object):
 
     @property
     def converters(self):
-        """ Converters are applied when retrieving a JDBC type from the database.
-
-        """
+        """Converters are applied when retrieving a JDBC type from the database."""
         return self._converters
 
     @converters.setter
@@ -525,7 +528,7 @@ class Connection(object):
 
     @property
     def getters(self):
-        """ Getters are used to retrieve JDBC types from the database following
+        """Getters are used to retrieve JDBC types from the database following
         a ``.fetch*()``.
 
         Getters should be a function taking (connection, meta, col) -> JDBCTYPE
@@ -551,10 +554,11 @@ class Connection(object):
 
     def __setattr__(self, name, value):
         if isinstance(vars(type(self)).get(name, None), property):
-            return object.__setattr__(self, name, value)
+            super().__setattr__(name, value)
+            return
         if not name.startswith("_"):
             raise AttributeError("'%s' cannot be set" % name)
-        object.__setattr__(self, name, value)
+        super().__setattr__(name, value)
 
     def _close(self):
         if self._closed or not _jpype.isStarted():
@@ -570,6 +574,8 @@ class Connection(object):
         self._close()
 
     def __del__(self):
+        # fixme: Python will not behave well under garbage collection, e.g. some attributes of the instance could already be gone.
+        # only the context manager protocol will handle clean up correctly.
         try:
             self._close()
         except Exception:  # pragma: no cover
@@ -635,7 +641,7 @@ class Connection(object):
         Connection object.
 
         This can be used to retrieve additional metadata and other features
-        that are outside of the scope of the DBAPI driver.
+        that are outside the scope of the DBAPI driver.
         """
         return self._jcx
 
@@ -643,7 +649,7 @@ class Connection(object):
     def autocommit(self):
         """ bool: Property controlling autocommit behavior.
 
-        By default connects are not autocommit.  Setting autocommit
+        By default, connects are not autocommit.  Setting autocommit
         will result in commit and rollback producing a ProgrammingError.
         """
         self._validate()
@@ -664,7 +670,7 @@ class Connection(object):
         out = {}
         metadata = self._jcx.getMetaData()
         with metadata.getTypeInfo() as resultSet:
-            while (resultSet.next()):
+            while resultSet.next():
                 try:
                     key = str(resultSet.getString("TYPE_NAME"))
                     out[key] = _registry[resultSet.getInt("DATA_TYPE")]
@@ -703,6 +709,13 @@ class Cursor(object):
         self._resultGetters = None
         self._thread = threading.get_ident()
         self._last = None
+        self._parameterTypes = None
+        self._getters = None
+        self._setters = None
+        self._converters = None
+        self._columnTypes = None
+        self._code = None
+        self._adapters = None
 
     def _close(self):
         if self._closed or not _jpype.isStarted():
@@ -714,65 +727,41 @@ class Cursor(object):
         cx = self._connection
         meta = self._statement.getParameterMetaData()
         count = meta.getParameterCount()
-        types = self._parameterTypes
-        if types is None:
-            types = [None] * count
+
         if isinstance(params, str):
             raise _UnsupportedTypeError(
                 "parameters must be a sequence of values")
-        if isinstance(params, typing.Sequence):
-            if count != len(params):
-                raise ProgrammingError("incorrect number of parameters (%d!=%d)"
-                                       % (count, len(params)))
-            for i in range(len(params)):
-                p = params[i]
-
-                # Find and apply the adapter
-                a = cx._adapters.get(type(p), None)
-                if a is not None:
-                    p = a(p)
-
-                # Find the setter
-                if types[i] is None:
-                    s = cx._setters(cx, meta, i, type(p))
-                    types[i] = s
-                if s is None:
-                    raise _UnsupportedTypeError(
-                        "no setter found for '%s'" % type(p).__name__)
-                s.set(self._statement, i + 1, p)
-            # Cache
-            if hasattr(cx._setters, "_cachable"):
-                self._parameterTypes = types
         elif isinstance(params, typing.Mapping):
             raise _UnsupportedTypeError("mapping parameters not supported")
-        elif isinstance(params, typing.Iterable):
-            for i, p in enumerate(params):
-                if i >= count:
-                    raise ProgrammingError(
-                        "incorrect number of parameters (%d!=%d)" % (count, i + 1))
+        elif not isinstance(params, typing.Iterable):
+            raise _UnsupportedTypeError("'%s' parameters not supported" % type(params).__name__)  # pragma: no cover
 
-                # Find and apply the adapter
-                a = cx._adapters.get(type(p), None)
-                if a is not None:
-                    p = a(p)
+        param_tuple = tuple(params)
 
-                # Find the setter
-                if types[i] is None:
-                    s = cx._setters(cx, meta, i, type(p))
-                    types[i] = s
-                if s is None:
-                    raise _UnsupportedTypeError(
-                        "no setter found for '%s'" % type(p).__name__)
-                s.set(self._statement, i + 1, p)
-            if count != i + 1:
-                raise ProgrammingError(
-                    "incorrect number of parameters (%d!=%d)" % (count, i + 1))
-            # Cache
-            if hasattr(cx._setters, "_cachable"):
-                self._parameterTypes = types
-        else:
-            raise _UnsupportedTypeError("'%s' parameters not supported" % (
-                type(params).__name__))  # pragma: no cover
+        if len(param_tuple) != count:
+            raise ProgrammingError(
+                "incorrect number of parameters (%d!=%d)" % (count, len(param_tuple)))
+        types = self._parameterTypes or [None] * count
+
+        for i, p in enumerate(param_tuple):
+            # Find and apply the adapter
+            a = cx._adapters.get(type(p), None)
+            if a:
+                p = a(p)
+
+            # Get or create setter
+            s = types[i]
+            if s is None:
+                s = cx._setters(cx, meta, i, type(p))
+                types[i] = s
+            if s is None:
+                raise _UnsupportedTypeError(
+                    "no setter found for '%s'" % type(p).__name__)
+            s.set(self._statement, i + 1, p)
+
+        # Cache
+        if hasattr(cx._setters, "_cachable"):
+            self._parameterTypes = types
 
     def _onResultSet(self, rs):
         meta = rs.getMetaData()
@@ -1420,7 +1409,7 @@ def Binary(data):
 
 
 #  SQL NULL values are represented by the Python None singleton on input and output.
-_accepted = set(["exact", "implicit"])
+_accepted = {"exact", "implicit"}
 
 
 def _populateTypes():
