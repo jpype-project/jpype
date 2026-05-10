@@ -36,7 +36,7 @@ import java.util.TreeSet;
 import org.jpype.JPypeContext;
 import org.jpype.JPypeUtilities;
 import org.jpype.proxy.JPypeProxyInstance;
-import org.jpype.proxy.JPypeProxyType;
+import java.util.logging.Level;
 
 /**
  *
@@ -104,12 +104,11 @@ public class TypeManager
       createPrimitive("long", Long.TYPE, Long.class);
       createPrimitive("float", Float.TYPE, Float.class);
       createPrimitive("double", Double.TYPE, Double.class);
-      
-      JPypeProxyType.init(this);
+
     } catch (Throwable ex)
     {
       // We can't get debugging information at this point in the process.
-      ex.printStackTrace();
+      JPypeContext.LOGGER.log(Level.SEVERE, "error in init", ex);
       throw ex;
     }
   }
@@ -289,7 +288,7 @@ public class TypeManager
       typeFactory.populateMethod(wrapper, returnType, paramPtrs);
     } catch (Exception ex)
     {
-      ex.printStackTrace();
+      JPypeContext.LOGGER.log(Level.SEVERE, "error in populateMethod", ex);
     }
   }
 
@@ -541,7 +540,7 @@ public class TypeManager
       createMembers(desc);
     } catch (Exception ex)
     {
-      ex.printStackTrace(System.out);
+      JPypeContext.LOGGER.log(Level.SEVERE, "error in populate members", ex);
       throw ex;
     }
   }

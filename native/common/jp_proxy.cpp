@@ -132,6 +132,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyInstance_hos
 
 			// Find the return type
 			auto* returnClass = (JPClass*) returnTypePtr;
+printf("return class %p %ld\n", returnClass, returnTypePtr);
 			JP_TRACE("Get return type", returnClass->getCanonicalName());
 
 			// convert the arguments into a python list
@@ -158,6 +159,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyInstance_hos
 
 			// We must box here.
 			JPMatch returnMatch(&frame, returnValue.get());
+printf("return class %p\n", returnClass);
 			if (returnClass->isPrimitive())
 			{
 				JP_TRACE("Box return");

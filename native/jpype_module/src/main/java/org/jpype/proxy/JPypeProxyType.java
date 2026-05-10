@@ -2,14 +2,11 @@
 package org.jpype.proxy;
 
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 import org.jpype.JPypeContext;
 import org.jpype.manager.TypeManager;
 import org.jpype.ref.JPypeReferenceQueue;
@@ -88,7 +85,7 @@ public class JPypeProxyType
       long[] paramTypes = new long[params.length];
       for (int i = 0; i < params.length; i++)
         paramTypes[i] = tm.findClass(params[i]);
-
+      
       MethodHandle defaultHandle = null;
       if (method.isDefault())
         defaultHandle = getDefaultHandle(method.getDeclaringClass(), method, java.lang.invoke.MethodHandles.class);

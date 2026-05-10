@@ -38,6 +38,7 @@ $(SENTINEL): pyproject.toml $(PY_SRC) $(CPP_SRC) org.jpype.jar
 	@echo "Changes detected. Rebuilding project..."
 	$(PIP) install -v --no-build-isolation -e . \
 		--config-settings=cmake.define.BUILD_TEST_HARNESS=ON \
+        --config-settings=cmake.define.CMAKE_BUILD_TYPE=RelWithDebInfo \
 		--config-settings=cmake.verbose=true \
 		--config-settings=editable.mode=inplace
 	@touch $(SENTINEL)

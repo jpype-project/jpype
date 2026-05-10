@@ -36,6 +36,7 @@ import org.jpype.pkg.JPypePackage;
 import org.jpype.pkg.JPypePackageManager;
 import org.jpype.ref.JPypeReferenceQueue;
 import java.util.logging.Logger;
+import org.jpype.proxy.JPypeProxyType;
 
 /**
  * Context for JPype.
@@ -144,6 +145,8 @@ public class JPypeContext
   {
     // Okay everything is setup so lets give it a go.
     this.typeManager.init();
+    JPypeProxyType.init(this.typeManager);
+
     JPypeReferenceQueue.getInstance().start();
     if (!interrupt)
       JPypeSignal.installHandlers();
