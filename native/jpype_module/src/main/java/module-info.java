@@ -22,6 +22,7 @@ module org.jpype {
   requires java.management;
   
   exports org.jpype;
+  exports org.jpype.bridge;
   exports org.jpype.html;
   exports org.jpype.javadoc;
   exports org.jpype.manager;
@@ -29,4 +30,6 @@ module org.jpype {
   exports org.jpype.pkg;
   exports org.jpype.proxy;
   exports org.jpype.ref;
+  exports python.lang;
+  exports python.exception;
 }
