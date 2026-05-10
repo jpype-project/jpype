@@ -355,20 +355,28 @@ def startJVM(
     old_cp = _getOption(jvm_args, "-Djava.class.path", _classpath._SEP)
     if old_cp and classpath is not None:
         raise TypeError('classpath specified twice')
-    
+   
+    system_class_loader = _getOption(jvm_args, "-Djava.system.class.loader", keep=True) 
     final_classpath = _expandClassPath(classpath if classpath is not None else (old_cp or _classpath.getClassPath()))
-    
-    if final_classpath and not _classpath._SEP.join(final_classpath).isascii():
+    cp_string = _classpath._SEP.join(final_classpath)
+
+    if final_classpath and not cp_string.isascii():
+        # RESTORED SAFETY CHECK:
+        # https://bugs.openjdk.org/browse/JDK-8079633
+        if system_class_loader:
+            raise ValueError(
+                "system classloader cannot be specified with non ascii characters in the classpath")
+
         # Custom Classloader logic for non-ascii user paths
         from urllib.parse import quote
         extra_jvm_args += [
             '-Djava.system.class.loader=org.jpype.JPypeClassLoader',
-            '-Djpype.class.path=%s' % quote(_classpath._SEP.join(final_classpath)),
+            '-Djpype.class.path=%s' % quote(cp_string),
             '-Djava.class.path=', # Keep CP empty to force our loader
             '-Xshare:off'
         ]
     else:
-        extra_jvm_args.append(f'-Djava.class.path={_classpath._SEP.join(final_classpath)}')
+        extra_jvm_args.append(f'-Djava.class.path={cp_string}')
 
     try:
         import locale

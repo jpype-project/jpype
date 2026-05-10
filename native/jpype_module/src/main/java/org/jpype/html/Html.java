@@ -72,6 +72,36 @@ public class Html
 
   static
   {
+    // Use the class itself to get the resource, not the System ClassLoader
+    try (InputStream is = Html.class.getResourceAsStream("/org/jpype/html/entities.txt"))
+    {
+      if (is == null)
+      {
+        throw new RuntimeException("Resource not found: org/jpype/html/entities.txt");
+      }
+      try (InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8); BufferedReader rd = new BufferedReader(isr))
+      {
+        String line;
+        while ((line = rd.readLine()) != null)
+        {
+          if (line.startsWith("#") || line.trim().isEmpty())
+            continue;
+          String[] parts = line.split("\\s+");
+          if (parts.length >= 2)
+          {
+            ENTITIES.put(parts[0], Integer.parseInt(parts[1]));
+          }
+        }
+      }
+    } catch (IOException ex)
+    {
+      throw new RuntimeException("Failed to load HTML entities", ex);
+    }
+  }
+
+ /*
+  static
+  {
     ClassLoader cl = ClassLoader.getSystemClassLoader();
     try (InputStream is = cl.getResourceAsStream("org/jpype/html/entities.txt"); InputStreamReader isr = new InputStreamReader(is); BufferedReader rd = new BufferedReader(isr))
     {
@@ -90,6 +120,7 @@ public class Html
       throw new RuntimeException(ex);
     }
   }
+*/
 
   public static String decode(String s)
   {
