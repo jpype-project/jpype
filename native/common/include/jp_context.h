@@ -241,10 +241,12 @@ private:
 	jmethodID m_Throwable_GetCauseID{};
 	jmethodID m_Throwable_GetMessageID{};
 	jmethodID m_Context_GetFunctionalID{};
+
 	friend class JPProxy;
-	JPClassRef m_ProxyClass;
-	jmethodID m_Proxy_NewID{};
-	jmethodID m_Proxy_NewInstanceID{};
+	JPClassRef m_ProxyFactoryClass;
+	jmethodID  m_ProxyFactory_getProxyTypeID{};
+	JPClassRef m_ProxyTypeClass;
+	jmethodID  m_ProxyType_newInstanceID{};
 
 	jmethodID m_Context_IsPackageID{};
 	jmethodID m_Context_GetPackageID{};

@@ -348,14 +348,16 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	m_CompareToID = frame.GetMethodID(comparableClass, "compareTo",
 			"(Ljava/lang/Object;)I");
 
-	jclass proxyClass = getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxy");
-	m_ProxyClass = JPClassRef(frame, proxyClass);
-	m_Proxy_NewID = frame.GetStaticMethodID(m_ProxyClass.get(),
-			"newProxy",
-			"(Lorg/jpype/JPypeContext;JJ[Ljava/lang/Class;)Lorg/jpype/proxy/JPypeProxy;");
-	m_Proxy_NewInstanceID = frame.GetMethodID(m_ProxyClass.get(),
-			"newInstance",
-			"()Ljava/lang/Object;");
+	// Look up the class once
+	jclass factoryClass = getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxyFactory");
+	m_ProxyFactoryClass = JPClassRef(frame, factoryClass);
+	m_ProxyFactory_getProxyTypeID = frame.GetStaticMethodID(factoryClass, "getProxyType",
+		"(J[Ljava/lang/Class;)Lorg/jpype/proxy/JPypeProxyType;");
+
+	jclass proxyTypeClass = getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxyType");
+	m_ProxyTypeClass = JPClassRef(frame, proxyTypeClass);
+
+	m_ProxyType_newInstanceID = frame.GetMethodID(proxyTypeClass, "newInstance", "(J)Ljava/lang/Object;");
 
 	m_GC->init(frame);
 

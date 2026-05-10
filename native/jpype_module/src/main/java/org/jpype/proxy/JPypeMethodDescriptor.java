@@ -24,7 +24,7 @@ import java.lang.invoke.MethodHandle;
  */
 public class JPypeMethodDescriptor
 {
-  final String name;    
+  final String name;
   final long returnType;
   final long[] parameterTypes;
   final MethodHandle defaultHandler;
@@ -36,5 +36,5 @@ public class JPypeMethodDescriptor
     this.parameterTypes = parameterTypes;
     this.defaultHandler = defaultHandler;
   }
-    
+
 }

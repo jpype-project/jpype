@@ -3,6 +3,7 @@ package org.jpype.proxy;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import org.jpype.JPypeContext;
 
 public class JPypeProxyInstance implements InvocationHandler
@@ -29,16 +30,29 @@ public class JPypeProxyInstance implements InvocationHandler
 
     // Resolve method parameter and return types
     // The type resolution logic remains, but uses the shared context
-    Object result = hostInvoke(method.getName(), instance, md.returnType, md.parameterTypes, args, missing);
+    Object result = hostInvoke(md.name, instance, md.returnType, md.parameterTypes, args, missing);
 
     if (result != missing)
       return result;
 
+    // FIXME in Java 16 they made it possible to call Default, once we abandon 9 we can safely run it.
+    //    return InvocationHandler.invokeDefault(proxy, method, args);
     // Handle default methods in interfaces
     if (md.defaultHandler != null)
       return md.defaultHandler.bindTo(proxy).invokeWithArguments(args);
-    
+
     throw new NoSuchMethodError(method.getName());
+  }
+
+  // exports to JNI
+  private static long getInstance(Object obj)
+  {
+    if (obj == null || !Proxy.isProxyClass(obj.getClass()))
+      return 0L;
+    InvocationHandler handler = Proxy.getInvocationHandler(obj);
+    if (handler instanceof JPypeProxyInstance)
+      return ((JPypeProxyInstance) handler).instance;
+    return 0L;
   }
 
   /**

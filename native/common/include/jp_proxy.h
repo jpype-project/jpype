@@ -23,7 +23,7 @@ class JPFunctional;
 class JPProxy
 {
 public:
-	friend class JPProxyType;
+	friend class JPProxyInstance;
 	JPProxy(PyJPProxy* inst, JPClassList& intf);
 	virtual ~JPProxy();
 
@@ -43,7 +43,7 @@ public:
 	}
 
 	PyJPProxy*    m_Instance;
-	JPObjectRef   m_Proxy;
+	JPObjectRef   m_ProxyType;
 	JPClassList   m_InterfaceClasses;
 	jweak         m_Ref;
 } ;
@@ -76,24 +76,23 @@ private:
 
 /** Special wrapper for round trip returns
  */
-class JPProxyType : public JPClass
+class JPProxyInstance : public JPClass
 {
 public:
-	JPProxyType(JPJavaFrame& frame,
+	JPProxyInstance(JPJavaFrame& frame,
 			jclass clss,
 			const string& name,
 			JPClass* super,
 			JPClassList& interfaces,
 			jint modifiers);
-	~ JPProxyType() override;
+	~JPProxyInstance() override;
 
 public: // JPClass implementation
 	JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 
 private:
 	JPClassRef m_ProxyClass;
-	jmethodID  m_GetInvocationHandlerID;
-	jfieldID   m_InstanceID;
+	jmethodID  m_GetInstanceID;
 } ;
 
 #endif // JPPROXY_H

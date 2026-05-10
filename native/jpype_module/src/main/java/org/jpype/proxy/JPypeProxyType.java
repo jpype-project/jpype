@@ -7,7 +7,7 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import org.jpype.JPypeContext;
@@ -16,16 +16,17 @@ import org.jpype.ref.JPypeReferenceQueue;
 
 public class JPypeProxyType
 {
+
   // Static cache for standard Object methods to avoid re-resolving them
-  private static final Map<Method, JPypeMethodDescriptor> OBJECT_METHOD_CACHE = new IdentityHashMap<>();
+  private static final Map<Method, JPypeMethodDescriptor> OBJECT_METHOD_CACHE = new HashMap<>();
   private final Class<?>[] interfaces;
   private final ClassLoader cl;
   final long cleanup;
-  private final Map<Method, JPypeMethodDescriptor> methodCache;
+  final Map<Method, JPypeMethodDescriptor> methodCache;
 
   /**
-   * Initializes the static cache for Object methods.
-   * This happens once when the class is loaded.
+   * Initializes the static cache for Object methods. This happens once when the
+   * class is loaded.
    */
   public static void init(TypeManager tm)
   {
@@ -37,9 +38,7 @@ public class JPypeProxyType
         Class<?>[] params = method.getParameterTypes();
         long[] paramTypes = new long[params.length];
         for (int i = 0; i < params.length; i++)
-        {
           paramTypes[i] = tm.findClass(params[i]);
-        }
         OBJECT_METHOD_CACHE.put(method, new JPypeMethodDescriptor(method.getName(), returnType, paramTypes, null));
       }
     }
@@ -61,8 +60,8 @@ public class JPypeProxyType
     this.cl = tempCl;
 
     // Build the instance-specific cache
-    Map<Method, JPypeMethodDescriptor> tempMap = new IdentityHashMap<>();
-    
+    Map<Method, JPypeMethodDescriptor> tempMap = new HashMap<>();
+
     // 1. Bulk copy the pre-resolved Object methods
     tempMap.putAll(OBJECT_METHOD_CACHE);
 
@@ -88,25 +87,11 @@ public class JPypeProxyType
       Class<?>[] params = method.getParameterTypes();
       long[] paramTypes = new long[params.length];
       for (int i = 0; i < params.length; i++)
-      {
         paramTypes[i] = tm.findClass(params[i]);
-      }
 
       MethodHandle defaultHandle = null;
       if (method.isDefault())
-      {
-        try
-        {
-          Class<?> decl = method.getDeclaringClass();
-          defaultHandle = MethodHandles.lookup()
-                  .findSpecial(decl, method.getName(),
-                          MethodType.methodType(method.getReturnType(), method.getParameterTypes()), decl);
-        } catch (NoSuchMethodException | IllegalAccessException ex)
-        {
-          JPypeContext.getLogger().log(Level.SEVERE, "Unable to get default method: " + method.getName(), ex);
-        }
-      }
-
+        defaultHandle = getDefaultHandle(method.getDeclaringClass(), method, java.lang.invoke.MethodHandles.class);
       map.put(method, new JPypeMethodDescriptor(method.getName(), returnType, paramTypes, defaultHandle));
     }
   }
@@ -123,5 +108,7 @@ public class JPypeProxyType
     JPypeReferenceQueue.getInstance().registerRef(proxy, instance, cleanup);
     return proxy;
   }
+  
+  native MethodHandle getDefaultHandle(Class<?> cls, Method method, Class<?> mhCls);
 
 }

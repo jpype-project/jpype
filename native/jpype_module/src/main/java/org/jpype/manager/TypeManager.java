@@ -36,6 +36,7 @@ import java.util.TreeSet;
 import org.jpype.JPypeContext;
 import org.jpype.JPypeUtilities;
 import org.jpype.proxy.JPypeProxyInstance;
+import org.jpype.proxy.JPypeProxyType;
 
 /**
  *
@@ -103,6 +104,8 @@ public class TypeManager
       createPrimitive("long", Long.TYPE, Long.class);
       createPrimitive("float", Float.TYPE, Float.class);
       createPrimitive("double", Double.TYPE, Double.class);
+      
+      JPypeProxyType.init(this);
     } catch (Throwable ex)
     {
       // We can't get debugging information at this point in the process.

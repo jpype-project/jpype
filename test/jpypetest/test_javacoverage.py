@@ -69,48 +69,48 @@ class JavaCoverageTestCase(common.JPypeTestCase):
                 return self.id
 
             @JOverride
-            def newWrapper(self, context, cls):
+            def newWrapper(self, cls):
                 pass
 
             @JOverride
-            def defineArrayClass(self, context, cls, name, superClass, componentPtr, modifiers):
+            def defineArrayClass(self, cls, name, superClass, componentPtr, modifiers):
                 return self.define(name)
 
             @JOverride
-            def defineObjectClass(self, context, cls, name, superClass, interfaces, modifiers):
+            def defineObjectClass(self, cls, name, superClass, interfaces, modifiers):
                 return self.define(name)
 
             @JOverride
-            def definePrimitive(self, context, name, cls, boxedPtr, modifiers):
+            def definePrimitive(self, name, cls, boxedPtr, modifiers):
                 return self.define(name)
 
             @JOverride
-            def assignMembers(self, context, cls, ctorMethod, methodList, fieldList):
+            def assignMembers(self, cls, ctorMethod, methodList, fieldList):
                 return
 
             @JOverride
-            def defineField(self, context, cls, name, field, fieldType, modifiers):
+            def defineField(self, cls, name, field, fieldType, modifiers):
                 return self.define(name)
 
             @JOverride
-            def defineMethod(self, context, cls, name, method, overloadList, modifiers):
+            def defineMethod(self, cls, name, method, overloadList, modifiers):
                 return self.define(name)
 
             @JOverride
-            def populateMethod(self, context, method, returnType, argumentTypes):
+            def populateMethod(self, method, returnType, argumentTypes):
                 return
 
             @JOverride
-            def defineMethodDispatch(self, context, cls, name, overloadList, modifiers):
+            def defineMethodDispatch(self, cls, name, overloadList, modifiers):
                 return self.define(name)
 
             @JOverride
-            def destroy(self, context, resources, sz):
+            def destroy(self, resources, sz):
                 for i in range(sz):
                     del self.entities[resources[i]]
         manager = TypeManager()
         factory = TF()
-        manager = TypeManager(62621463, factory)
+        manager = TypeManager(factory)
         manager.init()
 
         # Can only be initialized once
