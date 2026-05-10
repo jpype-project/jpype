@@ -94,10 +94,16 @@ void JPContext::loadEntryPoints(const string& path)
 {
 	JP_TRACE_IN("JPContext::loadEntryPoints");
 	JPPlatformAdapter *platform = JPPlatformAdapter::getAdapter();
-	// Load symbols from the shared library
 	platform->loadLibrary((char*) path.c_str());
-	CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *) )platform->getSymbol("JNI_CreateJavaVM");
-	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))platform->getSymbol("JNI_GetCreatedJavaVMs");
+	CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *) )
+		platform->getSymbol("JNI_CreateJavaVM");
+	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))
+		platform->getSymbol("JNI_GetCreatedJavaVMs");
+	GetDefaultJavaVMInitArgs_Method = (jint(JNICALL *)(void *))
+		platform->getSymbol("JNI_GetDefaultJavaVMInitArgs");
+
+	if (CreateJVM_Method == nullptr || GetDefaultJavaVMInitArgs_Method == nullptr)
+		JP_RAISE(PyExc_RuntimeError, "JVM shared library is missing required JNI symbols");
 	JP_TRACE_OUT;
 }
 
@@ -118,6 +124,15 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	{
 		(void) ex;
 		throw;
+	}
+
+	// 2. Scout for Version 21+
+	bool isJDK21 = false;
+	JavaVMInitArgs scout;
+	scout.version = 0x00150000; // JNI_VERSION_21 (JDK 21)
+	if (GetDefaultJavaVMInitArgs_Method(&scout) == JNI_OK)
+	{
+		isJDK21 = true;
 	}
 
 	// Determine the memory requirements
@@ -146,13 +161,28 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	jniArgs->nOptions = (jint) args.size();
 	JP_TRACE("NumOptions", jniArgs->nOptions);
 	size_t j = sblock;
+	jint currentOption = 0;
 	for (size_t i = 0; i < args.size(); i++)
 	{
-		JP_TRACE("Option", args[i]);
-		strncpy(&block[j], args[i].c_str(), args[i].size());
-		jniArgs->options[i].optionString = (char*) &block[j];
-		j += PAD(args[i].size()+1);
+		const string& opt = args[i];
+		// CHOP: If not JDK 21, specifically kill native-access even if it's there
+		if (!isJDK21 && opt.find("--enable-native-access") == 0)
+		{
+			JP_TRACE("Chopping JDK21 option", opt);
+			continue;
+		}
+
+		// Pack the valid option
+		JP_TRACE("Packing Option", opt);
+		strncpy(&block[j], opt.c_str(), opt.size());
+		jniArgs->options[currentOption].optionString = (char*) &block[j];
+		
+		j += PAD(opt.size() + 1);
+		currentOption++;
 	}
+
+	// Finalize the count based on what actually survived the chop
+	jniArgs->nOptions = currentOption;
 
 	// Launch the JVM
 	JNIEnv* env = nullptr;

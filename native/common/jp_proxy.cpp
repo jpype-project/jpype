@@ -53,6 +53,8 @@ JPPyObject getArgs(jlongArray parameterTypePtrs,
 	JP_TRACE_OUT;
 }
 
+
+// Consider using a Multirelease Jar to skip this starting in 16
 extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyType_getDefaultHandle(
     JNIEnv *env, jclass clazz, jclass iface, jobject method, jclass mhClass)
 {
@@ -61,19 +63,22 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyType_getDefa
         jmethodID lookupMethod = env->GetStaticMethodID(mhClass, "lookup", 
             "()Ljava/lang/invoke/MethodHandles$Lookup;");
 
-        // 2. Get a Lookup instance
+#if 1
+		// Until we drop Java 11 we are stuck with this extreme unfriendly code
+		jclass lookupClass = env->FindClass("java/lang/invoke/MethodHandles$Lookup");
+		jfieldID implLookupField = env->GetStaticFieldID(lookupClass, "IMPL_LOOKUP", "Ljava/lang/invoke/MethodHandles$Lookup;");
+		jobject trustedLookup = env->GetStaticObjectField(lookupClass, implLookupField);
+		jmethodID unreflectMethod = env->GetMethodID(lookupClass, "unreflectSpecial", 
+			"(Ljava/lang/reflect/Method;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;");
+		jobject methodHandle = env->CallObjectMethod(trustedLookup, unreflectMethod, method, iface);
+#else
+		// Until we drop Java 15 we are stuck with this backdoor (after 15 we can use the safe method in Java)
         jobject lookupObj = env->CallStaticObjectMethod(mhClass, lookupMethod);
-
-        // 3. Get the MethodHandles.Lookup.unreflectSpecial method
-        // Signature: (Method, Class) -> MethodHandle
         jclass lookupClass = env->GetObjectClass(lookupObj);
         jmethodID unreflectMethod = env->GetMethodID(lookupClass, "unreflectSpecial", 
             "(Ljava/lang/reflect/Method;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;");
-
-        // 4. Call unreflectSpecial. 
-        // This is the "Magic" step: JNI calls this without the same 
-        // module-boundary enforcement that pure Java does.
         jobject methodHandle = env->CallObjectMethod(lookupObj, unreflectMethod, method, iface);
+#endif
 
         if (env->ExceptionCheck())
         {
