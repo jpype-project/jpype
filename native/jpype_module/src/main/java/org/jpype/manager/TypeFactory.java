@@ -52,7 +52,6 @@ public interface TypeFactory
    * This method constructs a wrapper type that can be used to interface with
    * Python.
    *
-   * @param context The JPContext object representing the current JPype context.
    * @param cls A pointer to the Java class (JClass) to wrap.
    */
   void newWrapper(long cls);
@@ -63,11 +62,9 @@ public interface TypeFactory
    * This method defines a new array class in JPype, including its type
    * information, superclass, component type, and modifiers.
    *
-   * @param context The JPContext object representing the current JPype context.
    * @param cls The Java class type for the array.
    * @param name The name of the array class.
    * @param superClass A pointer to the superclass of the array class.
-   * @param componentPtr A pointer to the component type of the array.
    * @param modifiers The modifiers for the array class (e.g., public, private,
    * etc.).
    * @return A pointer to the newly created JPArrayClass.
@@ -107,7 +104,6 @@ public interface TypeFactory
    * This method creates a JPype representation of a Java primitive type,
    * including its boxed type and modifiers.
    *
-   * @param context The JPContext object representing the current JPype context.
    * @param name The name of the primitive type.
    * @param cls The Java class representing the primitive type.
    * @param boxedPtr A pointer to the JPClass representing the boxed type.

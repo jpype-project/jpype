@@ -8,9 +8,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public class JPypeProxyFactory
 {
 
-  private final Map<InterfaceKey, JPypeProxyType> typeCache = new ConcurrentHashMap<>();
+  // Define a common interface for both keys
+  private interface ProxyKey
+  {
 
-  // A reusable key per thread to avoid allocation during lookups
+    Class<?>[] getInterfaces();
+  }
+
+  // Map now uses the interface, silencing CodeQL
+  private final Map<ProxyKey, JPypeProxyType> typeCache = new ConcurrentHashMap<>();
+
   private static final ThreadLocal<ReusableKey> LOOKUP_KEY
           = ThreadLocal.withInitial(ReusableKey::new);
 
@@ -23,19 +30,18 @@ public class JPypeProxyFactory
 
   JPypeProxyType getProxyTypeImpl(long cleanup, Class<?>[] interfaces)
   {
-    // 1. Sort the input array in-place if allowed, or use a local stack-based sort
-    // For now, we canonicalize. To truly avoid churn, the caller (C++) 
-    // could provide them pre-sorted.
     Arrays.sort(interfaces, Comparator.comparing(Class::getName));
 
-    // 2. Use the thread-local probe to check the map
+    // 1. Thread-local probe (Zero allocation)
     ReusableKey probe = LOOKUP_KEY.get().set(interfaces);
+
+    // CodeQL is happy because ReusableKey implements ProxyKey
     JPypeProxyType existing = typeCache.get(probe);
 
     if (existing != null)
-      return existing; // Found it! Zero objects allocated.
+      return existing;
 
-    // 3. Cache Miss: Only now do we pay the allocation tax
+    // 2. Cache Miss (Allocation tax)
     Class<?>[] permanentArray = interfaces.clone();
     InterfaceKey permanentKey = new InterfaceKey(permanentArray);
 
@@ -43,8 +49,7 @@ public class JPypeProxyFactory
             k -> new JPypeProxyType(cleanup, permanentArray));
   }
 
-  // Specialized key that doesn't own the array, just points to it
-  private static class ReusableKey
+  private static class ReusableKey implements ProxyKey
   {
 
     private Class<?>[] ref;
@@ -58,6 +63,12 @@ public class JPypeProxyFactory
     }
 
     @Override
+    public Class<?>[] getInterfaces()
+    {
+      return ref;
+    }
+
+    @Override
     public int hashCode()
     {
       return hash;
@@ -66,15 +77,13 @@ public class JPypeProxyFactory
     @Override
     public boolean equals(Object obj)
     {
-      // This works because InterfaceKey and ReusableKey 
-      // both compare their internal arrays via Arrays.equals
-      if (obj instanceof InterfaceKey)
-        return Arrays.equals(this.ref, ((InterfaceKey) obj).interfaces);
-      return false;
+      if (!(obj instanceof ProxyKey))
+        return false;
+      return Arrays.equals(this.ref, ((ProxyKey) obj).getInterfaces());
     }
   }
 
-  private static class InterfaceKey
+  private static class InterfaceKey implements ProxyKey
   {
 
     private final Class<?>[] interfaces;
@@ -87,19 +96,25 @@ public class JPypeProxyFactory
     }
 
     @Override
-    public boolean equals(Object obj)
+    public Class<?>[] getInterfaces()
     {
-      if (this == obj)
-        return true;
-      if (!(obj instanceof InterfaceKey))
-        return false;
-      return Arrays.equals(this.interfaces, ((InterfaceKey) obj).interfaces);
+      return interfaces;
     }
 
     @Override
     public int hashCode()
     {
       return hashCode;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+      if (this == obj)
+        return true;
+      if (!(obj instanceof ProxyKey))
+        return false;
+      return Arrays.equals(this.interfaces, ((ProxyKey) obj).getInterfaces());
     }
   }
 }

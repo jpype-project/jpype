@@ -89,6 +89,7 @@ def main() -> None:
     changed_count = 0
     scanned_count = 0
 
+    comment_prefix = ""
     comment_suffix = ""
     if args.comment_style == 'c':
         comment_prefix = "//"

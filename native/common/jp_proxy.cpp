@@ -60,9 +60,6 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyType_getDefa
 {
     JPJavaFrame frame = JPJavaFrame::external(env);
     try {
-        jmethodID lookupMethod = env->GetStaticMethodID(mhClass, "lookup", 
-            "()Ljava/lang/invoke/MethodHandles$Lookup;");
-
 #if 1
 		// Until we drop Java 11 we are stuck with this extreme unfriendly code
 		jclass lookupClass = env->FindClass("java/lang/invoke/MethodHandles$Lookup");
@@ -73,6 +70,8 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyType_getDefa
 		jobject methodHandle = env->CallObjectMethod(trustedLookup, unreflectMethod, method, iface);
 #else
 		// Until we drop Java 15 we are stuck with this backdoor (after 15 we can use the safe method in Java)
+        jmethodID lookupMethod = env->GetStaticMethodID(mhClass, "lookup", 
+            "()Ljava/lang/invoke/MethodHandles$Lookup;");
         jobject lookupObj = env->CallStaticObjectMethod(mhClass, lookupMethod);
         jclass lookupClass = env->GetObjectClass(lookupObj);
         jmethodID unreflectMethod = env->GetMethodID(lookupClass, "unreflectSpecial", 

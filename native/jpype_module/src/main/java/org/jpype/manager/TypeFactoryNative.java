@@ -28,6 +28,7 @@ import java.lang.reflect.Field;
 public class TypeFactoryNative implements TypeFactory
 {
 
+  @Override
   public native void newWrapper(long cls);
 
   @Override
