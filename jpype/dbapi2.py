@@ -45,8 +45,8 @@ class JDBCTypeProtocol(typing.Protocol):
 
 _SQLException = None
 _SQLTimeoutException = None
-_registry: dict[str, JDBCTypeProtocol] = {}
-_types: list[JDBCTypeProtocol] = []
+_registry: typing.Dict[str, JDBCTypeProtocol] = {}
+_types: typing.List[JDBCTypeProtocol] = []
 
 
 def _nop(x):
@@ -246,11 +246,11 @@ _default_map = {ARRAY: OBJECT, OBJECT: OBJECT, NULL: OBJECT,
                 LONGNVARCHAR: STRING, DOUBLE: DOUBLE, OTHER: OBJECT
                 }
 
-_default_setters: dict[typing.Any, typing.Union[JDBCType, _JDBCTypePrimitive]] = {}
+_default_setters: typing.Dict[typing.Any, typing.Union[JDBCType, _JDBCTypePrimitive]] = {}
 
-_default_converters = {}  # type: ignore[var-annotated]
+_default_converters : typing.Dict[typing.Any, typing.Callable] = {}
 
-_default_adapters = {}  # type: ignore[var-annotated]
+_default_adapters : typing.Dict[typing.Any, typing.Any] = {}
 
 
 # Setters take (connection, meta, col, type) -> JDBCTYPE

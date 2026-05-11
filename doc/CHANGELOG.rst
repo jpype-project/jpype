@@ -7,9 +7,9 @@ Latest Changes:
 
 - **1.7.2.dev0**
  
-  - Fixed instablity in threading for method dispatch.
+  - Fixed instablity in threading for method dispatch. #1366
 
-  - Fixed caching issue with method overloading for functors.
+  - Fixed caching issue with method overloading for functors. #1366
 
 - **1.7.1 - 2026-05-06**
 

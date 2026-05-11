@@ -15,13 +15,13 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-from typing import Callable
+from typing import Callable, List
 
 import _jpype
 
 __all__ = ['onJVMStart']
 
-JInitializers: list[Callable] = []
+JInitializers: List[Callable] = []
 
 
 def onJVMStart(func):
