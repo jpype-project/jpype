@@ -232,3 +232,15 @@ class StartJVMCase(unittest.TestCase):
             ZoneId.of("JpypeTest/Timezone")
         except ZoneRulesException:
             self.fail("JpypeZoneRulesProvider not loaded")
+
+    def testShutdown(self):
+        jpype.startJVM(self.jvmpath, classpath=cp)
+        # Install a coverage hook
+        instance = jpype.JClass("org.jpype.JPypeContext").getInstance()
+        jpype.JClass("jpype.common.OnShutdown").addCoverageHook(instance)
+
+        # Shutdown
+        jpype.shutdownJVM()
+
+        # Check that shutdown does not raise
+        jpype._core._JTerminate()
