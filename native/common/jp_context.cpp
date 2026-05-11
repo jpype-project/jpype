@@ -126,14 +126,15 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		throw;
 	}
 
-	// 2. Scout for Version 21+
-	bool isJDK21 = false;
 	JavaVMInitArgs scout;
+	scout.version = 0x00090000; // JNI_VERSION_21 (JDK 21)
+	if (GetDefaultJavaVMInitArgs_Method(&scout) != JNI_OK)
+		JP_RAISE(PyExc_RuntimeError, "Java version too old. Java 9 or later is required");
+
+	bool isJDK21 = false;
 	scout.version = 0x00150000; // JNI_VERSION_21 (JDK 21)
 	if (GetDefaultJavaVMInitArgs_Method(&scout) == JNI_OK)
-	{
 		isJDK21 = true;
-	}
 
 	// Determine the memory requirements
 #define PAD(x) ((x+31)&~31)
