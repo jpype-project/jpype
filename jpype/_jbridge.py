@@ -22,6 +22,7 @@ from . import types as _jtypes
 from . import _jcustomizer
 from collections.abc import Mapping, Sequence, MutableSequence
 import itertools
+import inspect
 from typing import MutableMapping, Callable, List
 
 __all__: List[str] = []
@@ -31,99 +32,260 @@ JProxy = _jproxy.JProxy
 JOverride = _jclass.JOverride
 JConversion = _jcustomizer.JConversion
 JClass = _jclass.JClass
+JString = _jpype.JString
 
 ###################################################################################
 # Set up methods binds from Java to Python
 
-def _isTrue(x):
-    return x==True
+# DO NOT INTRODUCE NEW MEMBERS THAT DO THE SAME THING 
+# USE _attr for simple member access
+# FOLLOW THE NAMING SCHEME
+# USE A DIRECT BUILTIN IF IT HAS THE RIGHT LOGIC
 
-def _not(x):
-    return not x
+# Attribute helpers
+def _attr(name):
+    return lambda x: getattr(x, name)
 
-def _setitem(x, k, v):
-    x[k] = v
+def _delitem(x, i):
+    del x[i]
 
-def _getitem(x, k):
-    return x[k]
+def _setitem(x, s, v):
+    x[s] = v
 
-def _setitem_str(x, k, v):
-    x[str(k)] = v
-
-def _getitem_str(x, k):
-    return x[str(k)]
-
-def _delitem(x, k):
-    del x[k]
-
-def _identity(x):
-    return x
-
-def _newdict(args):
-    out = dict()
-    for p,v in args.entrySet():
-        out[p]=v
-    return out
+def _setitem_str(x, s, v):
+    x[str(s)] = v
 
 def _asfunc(x):
     if hasattr(x,__call__):
         return x
     return None
 
-def _hasattr(x,k):
-    return hasattr(x, str(k))
+# Flips
+def _map(x,f):
+    return map(f,x)
 
-def _getattr(x,k):
-    return getattr(x, str(k))
+# Starred
+def _new_list_from_array(*elements):
+    return list(elements)
 
-def _setattr(x,k,v):
-    setattr(x, str(k), v)
+def _range(*args):
+    return range(*args)
 
-def _delattr(x,k):
-    delattr(x, str(k))
+# Capture return
+def _delattr_return(x, key):
+    key = str(key)
+    out = getattr(x, key)
+    delattr(x, key)
+    return out
 
-def _getdict(x):
-    return x.__dict__
+def _delitem_return(x, k):
+    out = x[k]
+    del x[k]
+    return out
+
+def _setitem_return(x, k, v):
+    out = x[k]
+    x[k] = v
+    return out
+
+def _setitem_from_object(x, key, value):
+    old = None
+    try:
+        old = x[key]
+    except Exception:
+        old = None
+    x[key] = value
+    return old
+
+
+######################################################
+
+def _call(x, v, k):
+    if k is None:
+        return x(*v)
+    return x(*v, **k)
+
+def _call_async(*args, **kwargs):
+    raise NotImplementedError("callAsync is not implemented in the uploaded Python bridge code")
+
+def _call_async_with_timeout(*args, **kwargs):
+    raise NotImplementedError("callAsyncWithTimeout is not implemented in the uploaded Python bridge code")
+
+def _get_signature(x):
+    return str(inspect.signature(x))
+
+def _is_callable(x):
+    return callable(x)
 
 def _isinstance(x, args):
     try:
-        # If args is a collection/iterable (like a list of classes)
         return isinstance(x, tuple(args))
     except TypeError:
-        # If args is a single class type
         return isinstance(x, args)
 
-def _contains(x, v):
-    return v in x
+def _tee_iterator(iterator):
+    import itertools
+    a, b = itertools.tee(iterator)
+    return a
 
-def _putall(x, m):
-    for p,v in m.entrySet():
-        x[p] = v
+def _slice_dispatch(start=None, stop=None, step=None):
+    return slice(start, stop, step)
 
-def _containsvalue(x, v):
-    return v in x.values()
+def _next_with_stop(iterator, stop):
+    return next(iterator, stop)
 
-def _clear(x):
-    x.clear()
+def _mapping_contains_all_values(obj, c):
+    values = list(obj.values())
+    return all(v in values for v in c)
 
-def _isempty(x):
-    return len(x) == 0
+def _mapping_remove_all_keys(obj, collection):
+    removed = False
+    for key in list(collection):
+        if key in obj:
+            del obj[key]
+            removed = True
+    return removed
 
-def _keyset(x):
-    return JClass("org.jpype.bridge.KeySet")(x)
+def _mapping_remove_all_values(obj, collection):
+    targets = set(collection)
+    to_remove = [k for k, v in obj.items() if v in targets]
+    for k in to_remove:
+        del obj[k]
+    return bool(to_remove)
 
-def _add(x,v):
-    return x+v
+def _mapping_remove_value(obj, value):
+    to_remove = [k for k, v in obj.items() if v == value]
+    for k in to_remove:
+        del obj[k]
+    return bool(to_remove)
 
-def _sub(x,v):
-    return x-v
+def _mapping_retain_all_keys(obj, collection):
+    keep = set(collection)
+    to_remove = [k for k in list(obj.keys()) if k not in keep]
+    for k in to_remove:
+        del obj[k]
+    return bool(to_remove)
 
-def _mult(x,v):
-    return x*v
+def _mapping_retain_all_values(obj, collection):
+    keep = set(collection)
+    to_remove = [k for k, v in obj.items() if v not in keep]
+    for k in to_remove:
+        del obj[k]
+    return bool(to_remove)
 
-def _div(x,v):
-    return x/v
 
+_PyJPBackendMethods: MutableMapping[str, Callable] = {
+    # Core constructors / builtins
+    "bytearray": bytearray,
+    "bytearrayFromHex": bytearray.fromhex,
+    "bytes": bytes,
+    "bytesFromHex": bytes.fromhex,
+    "call": _call,
+    "callAsync": _call_async,
+    "callAsyncWithTimeout": _call_async_with_timeout,
+    "contains": lambda x,v: v in x,
+    "delitemByIndex": _delitem,
+    "delitemByObject": _delitem,
+    "delattrReturn": _delattr_return,
+    "delattrString": lambda x,s: delattr(x, str(s)),
+    "dir": dir,
+    "enumerate": enumerate,
+    "eval": eval,
+    "exec": exec,
+    "getDict": _attr("__dict__"),
+    "getDocString": lambda x: getattr(x, "__doc__", None),
+    "getSignature": _get_signature,
+    "getattrDefault": lambda x,s,d: getattr(x, str(s), d),
+    "getattrObject": lambda x,k: getattr(x, k),
+    "getattrString": lambda x,s: getattr(x, str(s)),
+    "getitemMappingObject": lambda x,i: x[i],
+    "getitemMappingString": lambda x,s: x[str(s)],
+    "getitemSequence": lambda x,i: x[i],
+    "hasattrString": lambda x,s: hasattr(x, str(s)),
+    "isCallable": _is_callable,
+    "isinstanceFromArray": _isinstance,
+    "items": lambda x: x.items(),
+    "iter": iter,
+    "iterSet": iter,
+    "iterMap": iter,
+    "keys": lambda x: x.keys(),
+    "len": len,
+    "list": list,
+    "mappingClear": lambda x: x.clear(),
+    "mappingContainsAllValues": _mapping_contains_all_values,
+    "mappingContainsValue": lambda x,v: v in x.values(),
+    "mappingRemoveAllKeys": _mapping_remove_all_keys,
+    "mappingRemoveAllValue": _mapping_remove_all_values,
+    "mappingRemoveValue": _mapping_remove_value,
+    "mappingRetainAllKeys": _mapping_retain_all_keys,
+    "mappingRetainAllValue": _mapping_retain_all_values,
+    "memoryview": memoryview,
+    "newByteArray": lambda: bytearray(),
+    "newByteArrayFromBuffer": bytearray,
+    "newByteArrayFromIterable": bytearray,
+    "newByteArrayFromIterator": bytearray,
+    "newByteArrayOfSize": bytearray,
+    "newBytesFromBuffer": bytes,
+    "newBytesFromIterator": bytes,
+    "newBytesOfSize": bytes,
+    "newComplex": lambda r,i: complex(r,i),
+    "newDict": lambda: {},
+    "newDictFromIterable": dict,
+    "newEnumerate": enumerate,
+    "newFloat": float,
+    "newFrozenSet": frozenset,
+    "newInt": int,
+    "newList": lambda: [],
+    "newListFromArray": _new_list_from_array,
+    "newListFromIterable": list,
+    "newSet": lambda: set(),
+    "newSetFromIterable": set,
+    "newTuple": lambda: tuple(),
+    "newTupleFromArray": tuple,
+    "newTupleFromIterator": tuple,
+    "newZip": lambda x: zip(*x),
+    "next": _next_with_stop,
+    "object": lambda: object(),
+    "range": _range,
+    "repr": repr,
+    "set": set,
+    "setattrReturn": lambda x,s,v: setattr(x, str(s), v),
+    "setattrString": lambda x,s,v: setattr(x, str(s), v),
+    "setitemFromObject": _setitem_from_object,
+    "setitemFromString": _setitem_str,
+    "setitemMapping": _setitem,
+    "setitemSequence": _setitem_return,
+    "slice": _slice_dispatch,
+    "str": str,
+    "teeIterator": _tee_iterator,
+    "type": type,
+    "values": lambda x: x.values(),
+    "vars": vars,
+    "zipFromArray": lambda x: zip(*x),
+    "zipFromIterable": lambda x: zip(*x),
+}
+
+
+# FIXME
+#  The mappings must match the Java interface names exactly.
+#  We do not provide bindings of default methods in Java as those are already covered
+#  Some methods are removed from the interfaces as they were not needed.
+#  Some classes were switched to concrete and thus no longer need mappings.
+
+def _to_string(o):
+    return JString(str(o))
+
+_PyObjectMethods: MutableMapping[str, Callable] = { 
+    "hashCode": hash,
+    "equals": lambda x,y : x==y,
+    "toString": _to_string,
+}
+
+_PyCallableMethods: MutableMapping[str, Callable] = {}
+_PyCoroutineMethods: MutableMapping[str, Callable] = {}
+_PyAwaitableMethods: MutableMapping[str, Callable] = {}
+
+### Number types
 def _addassign(x,v):
     x += v
     return x
@@ -140,62 +302,264 @@ def _divassign(x,v):
     x /= v
     return x
 
-def _matmul(x,v):
-    return x@v
+_PyIntMethods: MutableMapping[str, Callable] = {}
+_PyFloatMethods: MutableMapping[str, Callable] = {}
+_PyIndexMethods: MutableMapping[str, Callable] = {}
+_PyNumberMethods: MutableMapping[str, Callable] = {
+    "add": lambda x, v: x + v,
+    "divide": lambda x, v: x / v,
+    "divideWithRemainder": lambda x, d: x // d,
+    "matrixMultiply": lambda x, v: x @ v,
+    "multiply": lambda x, v: x * v,
+    "negate": lambda x: not x,
+    "power": lambda x, p: x ** p,
+    "modulus": lambda x, v: x % v,
+    "subtract": lambda x, v: x - v,
+    "toBoolean": bool,
+    "toDouble": float,
+    "toInteger": int,
+    "abs": abs,
+    "negateValue": lambda x: -x,
+    "positive": lambda x: +x,
+    "floorDivide": lambda x, v: x // v,
+    "compareTo": lambda x, y: -1 if x < y else (1 if x > y else 0),
+    "addInPlace": _addassign,
+    "divideInPlace": _divassign,
+    "multiplyInPlace": _multassign,
+    "subtractInPlace": _subassign,
+}
 
-def _divmod(x,v):
-    return x//v
+_PyComplexMethods: MutableMapping[str, Callable] = {
+    "real": lambda x: x.real(),
+    "imag": lambda x: x.imag(),
+    "conjugate": complex.conjugate
+}
 
-def _pow(x,v):
-    return x**v
 
-def _remainder(x,v):
-    return x%v
+### Concrete types
+_PyExcMethods: MutableMapping[str, Callable] = {
+    "getMessage": str,
+}
+_PyExcMethods.update(_PyObjectMethods)
 
-def _call(x, v, k):
-    if k is None:
-        return x(*v)
-    return x(*v, **k)
+_PySliceMethods: MutableMapping[str, Callable] = {
+    "getStart": _attr("start"),
+    "getStop": _attr("end"),
+    "getStep": _attr("step"),
+    "indices": slice.indices,
+    "isValid": lambda x: x.step !=0,
+}
+_PySliceMethods.update(_PyObjectMethods)
 
-def _range(*args):
-    return range(*args)
 
-def _map(x,f):
-    return map(f,x)
+def _type_is_instance(x, obj):
+    return isinstance(obj, x)
 
-def  _set_union(x, args):
-    return x.union(*tuple(args))
+def _type_get_method(x, name):
+    return getattr(x, str(name), None)
 
-def  _set_intersect(x, args):
-    return x.intersect(*tuple(args))
+_PyTypeMethods: MutableMapping[str, Callable] = {
+    "getName": _attr("__name__"),
+    "mro": type.mro,
+    "getBase": lambda x: getattr(x, "__base__", ()),
+    "getBases": lambda x: getattr(x, "__bases__", None),
+    "isSubclassOf": lambda x,t: issubclass(x,t),
+    "isInstance": _type_is_instance,
+    "getMethod": _type_get_method,
+    "isAbstract": inspect.isabstract,
+    "getSubclasses": lambda x: x.__subclasses__(),
+}
+_PyTypeMethods.update(_PyObjectMethods)
 
-def  _set_difference(x, args):
-    return x.difference(*tuple(args))
 
-def  _set_symmetric_difference(x, args):
-    return x.symmetric_difference(*tuple(args))
+### Memory like
+_PyBufferMethods: MutableMapping[str, Callable] = {}
+_PyBytesMethods: MutableMapping[str, Callable] = {
+    "decode": bytes.decode,
+    "translate": bytes.translate,
+}
 
-def _set_add(s, v):
-    if v in s:
-        return False
-    s.add(v)
-    return True
+_PyByteArrayMethods: MutableMapping[str, Callable] = {
+    "decode": bytearray.decode,
+    "translate": bytearray.translate,
+}
 
-def _set_contains(s, v):
-    return v in s
+_PyMemoryViewMethods: MutableMapping[str, Callable] = {
+    "getBuffer": _attr("obj"),
+    "getFormat": _attr("format"),
+    "getShape": _attr("shape"),
+    "getSlice": lambda x,s,e: x[s:e],
+    "getStrides": _attr("strides"),
+    "getSubOffsets": _attr("suboffsets"),
+    "isReadOnly": _attr("readonly"),
+    "release": memoryview.release,
+}
 
-def _equals(x,y):
-    return x == y
+### String
+def _count_occurrences(x, sub, start=None, end=None):
+    if start is None and end is None:
+        return x.count(str(sub))
+    if end is None:
+        return x.count(str(sub), start)
+    return x.count(str(sub), start, end)
 
-def _filter(x, f):
-    return filter(f,x)
+def _ends_with_suffix(x, suffix, start=None, end=None):
+    suffix = str(suffix)
+    if start is None and end is None:
+        return x.endswith(suffix)
+    if end is None:
+        return x.endswith(suffix, start)
+    return x.endswith(suffix, start, end)
 
-def _charat(x,y):
-    return x[y]
+def _find_last_substring(x, sub, start=None, end=None):
+    sub = str(sub)
+    if start is None and end is None:
+        return x.rfind(sub)
+    if end is None:
+        return x.rfind(sub, start)
+    return x.rfind(sub, start, end)
 
-def _str_subseq(x,s,e):
-    return x[s:e]
+def _find_substring(x, sub, start=None, end=None):
+    sub = str(sub)
+    if start is None and end is None:
+        return x.find(sub)
+    if end is None:
+        return x.find(sub, start)
+    return x.find(sub, start, end)
 
+def _format_using_mapping(x, mapping):
+    return x.format_map(mapping)
+
+def _format_with(x, args, kwargs):
+    if args is None:
+        args = ()
+    if kwargs is None:
+        kwargs = {}
+    return x.format(*args, **kwargs)
+
+def _index_of_last_substring(x, sub, start=None, end=None):
+    sub = str(sub)
+    if start is None and end is None:
+        return x.rindex(sub)
+    if end is None:
+        return x.rindex(sub, start)
+    return x.rindex(sub, start, end)
+
+def _index_of_substring(x, sub, start=None, end=None):
+    sub = str(sub)
+    if start is None and end is None:
+        return x.index(sub)
+    if end is None:
+        return x.index(sub, start)
+    return x.index(sub, start, end)
+
+def _padded_center(x, width, fill=' '):
+    return x.center(width, str(fill)[0])
+
+def _replace_substring(x, old, new, count=None):
+    old = str(old)
+    new = str(new)
+    if count is None:
+        return x.replace(old, new)
+    return x.replace(old, new, count)
+
+def _split_into(x, sep=None, maxsplit=-1):
+    if sep is None:
+        return x.split(None, maxsplit)
+    return x.split(str(sep), maxsplit)
+
+def _split_into_lines(x, keepends=False):
+    return x.splitlines(keepends)
+
+def _split_into_reverse(x, sep=None, maxsplit=-1):
+    if sep is None:
+        return x.rsplit(None, maxsplit)
+    return x.rsplit(str(sep), maxsplit)
+
+def _starts_with_prefix(x, prefix, start=None, end=None):
+    prefix = str(prefix)
+    if start is None and end is None:
+        return x.startswith(prefix)
+    if end is None:
+        return x.startswith(prefix, start)
+    return x.startswith(prefix, start, end)
+
+def _strip_characters(x, chars):
+    return x.strip(None if chars is None else str(chars))
+
+def _strip_leading(x, chars=None):
+    if chars is None:
+        return x.lstrip()
+    return x.lstrip(str(chars))
+
+def _strip_trailing(x, chars=None):
+    if chars is None:
+        return x.rstrip()
+    return x.rstrip(str(chars))
+
+def _to_encoded(x, encoding=None, errorHandling=None):
+    if encoding is None and errorHandling is None:
+        return x.encode()
+    if errorHandling is None:
+        return x.encode(str(encoding))
+    return x.encode(str(encoding), str(errorHandling))
+
+
+_PyStringMethods: MutableMapping[str, Callable] = {
+    "charAt": lambda x,i: x[i],
+    "containsSubstring": lambda x, s: str(s) in x,
+    "countOccurrences": _count_occurrences,
+    "endsWithSuffix": _ends_with_suffix,
+    "expandTabs": str.expandtabs,
+    "findLastSubstring": _find_last_substring,
+    "findSubstring": _find_substring,
+    "formatUsingMapping": _format_using_mapping,
+    "formatWith": _format_with,
+    "getCharacterAt": lambda x,i: x[i],
+    "indexOfLastSubstring": _index_of_last_substring,
+    "indexOfSubstring": _index_of_substring,
+    "isAlphabetic": str.isalpha,
+    "isAlphanumeric": str.isalnum,
+    "isAsciiCharacters": str.isascii,
+    "isDecimalNumber": str.isdecimal,
+    "isDigitCharacters": str.isdigit,
+    "isLowercase": str.islower,
+    "isNumericCharacters": str.isnumeric,
+    "isPrintableCharacters": str.isprintable,
+    "isTitleCase": str.istitle,
+    "isUppercase": str.isupper,
+    "isValidIdentifier": str.isidentifier,
+    "isWhitespace": str.isspace,
+    "join": str.join,
+    "length": len,
+    "paddedCenter": _padded_center,
+    "removePrefix": str.removeprefix,
+    "removeSuffix": str.removesuffix,
+    "replaceSubstring": _replace_substring,
+    "splitInto": _split_into,
+    "splitIntoLines": _split_into_lines,
+    "splitIntoPartition": lambda x, s:  x.partition(str(s)),
+    "splitIntoReverse": _split_into_reverse,
+    "splitIntoReversePartition": lambda x, s:  x.rpartition(str(s)),
+    "startsWithPrefix": _starts_with_prefix,
+    "stripCharacters": _strip_characters,
+    "stripLeading": _strip_leading,
+    "stripTrailing": _strip_trailing,
+    "stripWhitespace": lambda x: x.strip(),
+    "subSequence": lambda x,s,e: x[s:e],
+    "swapCaseCharacters": lambda x: x.swapcase(),
+    "toCapitalized": lambda x: x.capitalize(),
+    "toCaseFolded": lambda x: x.casefold(),
+    "toEncoded": _to_encoded,
+    "toTitleCase": lambda x: x.title(),
+    "toUppercase": lambda x: x.upper(),
+    "translateUsingMapping": lambda x, m: x.translate(m),
+    "translateUsingSequence": lambda x, m: x.translate(m),
+    "zeroFill": str.zfill,
+}
+
+
+### Collections
 def _c_add(x, *args):
     if len(args)==1:
         x.append(args[0])
@@ -203,11 +567,18 @@ def _c_add(x, *args):
     x.insert(args[0], args[1])
     return None
 
-def _indexof(x, v):
+def _c_remove_index(x, i):
     try:
-        return x.index(v)
+        return x.pop(i)
+    except (IndexError, KeyError):
+        raise IndexError("Index out of range")
+
+def _c_remove_object(x, v):
+    try:
+        x.remove(v)
+        return True
     except ValueError:
-        return -1
+        return False
 
 def _c_set(x, i, v):
     if i<0:
@@ -228,237 +599,41 @@ def _retainall(x, c):
     x.clear()
     x.extend(nl)
 
-def _real(x):
-    return x.real
-
-def _imag(x):
-    return x.imag
-
-def _items(x):
-    return x.items()
-
-def _values(x):
-    return x.values()
-
-def _sublist(x, s, e):
-    return x[s:e]
-
-def _start(x):
-    return x.start
-
-def _end(x):
-    return x.end
-
-def _step(x):
-    return x.step
-
-def _dict_put(x, k, v):
-    out = x.get(k)  # Get the previous value or None
-    x[k] = v
-    return out
-
-def _c_remove_index(x, i):
+def _indexof(x, v):
     try:
-        return x.pop(i) # pop() removes and returns the value
-    except (IndexError, KeyError):
-        raise IndexError("Index out of range")
-
-def _c_remove_object(x, v):
-    try:
-        x.remove(v)
-        return True
+        return x.index(v)
     except ValueError:
-        return False
+        return -1
 
-def _c_delitem(x, k):
-    del x[k]
-
-
-
-_PyJPBackendMethods: MutableMapping[str, Callable] = {
-    "bytearray": bytearray,
-    "bytearray_fromhex": bytearray.fromhex,
-    "bytes": bytes,
-    "bytes_fromhex": bytes.fromhex,
-    "call": _call,
-    "complex": complex,
-    "delattr": _delattr,
-    "dict": dict,
-    "dir": dir,
-    "enumerate": enumerate,
-    "eval": eval,
-    "exec": exec,
-    "getDict": _getdict,
-    "getattr": _getattr,
-    "getitem": _getitem_str,
-    "hasattr": _hasattr,
-    "isinstance": _isinstance,
-    "iter": iter,
-    "list": list,
-    "memoryview": memoryview,
-    "newDict": _newdict,
-    "newSet": set,
-    "newTuple": tuple,
-    "next": next,
-    "object": object,
-    "range": _range,
-    "repr": repr,
-    "set": set,
-    "setattr": _setattr,
-    "setitem": _setitem_str,
-    "slice": slice,
-    "str": str,
-    "tee": itertools.tee,
-    "tuple": tuple,
-    "type": type,
-    "zip": zip,
-    "items": _items,
-    "values": _values,
-}
-
-
-# Now we need to set up the dictionary for the proxy object
-#  This seems trivial but the name binds the Java interface to existing functions
-_PyObjectMethods: MutableMapping[str, Callable] = { 
-    "getType": type,
-    "isInstance": isinstance,
-    "asAttributes": _identity,
-    "asSequence": _identity,
-    "asFunc": _asfunc,
-    "toInt": _identity,
-    "toFloat": _identity,
-    "hashCode": hash,
-    "equals": _equals,
-}
-
-# Protocols
-
-_PyAttributesMethods: MutableMapping[str, Callable]= { 
-    "asObject": _identity,
-    "get": _getattr,
-    "set": _setattr,
-    "remove": _delattr,
-    "has": _hasattr,
-    "dir": dir,
-    "dict": _getdict
-}
-
-_PyCallableMethods: MutableMapping[str, Callable] = { 
-    "asObject": _identity,
-}
-
-
-_PyMappingMethods: MutableMapping[str, Callable] = { 
-    "asObject": _identity,
-    "clear": _clear,
-    "containsKey": _contains,
-    "containsValue": _containsvalue,
-    "get": _getitem,
-    "put": _dict_put,
-    "remove": _dict_put,
-    "putAll": _putall,
-}
-
-_PyNumberMethods: MutableMapping[str, Callable] = {
-    "asObject": _identity,
-    "toInt": int,
-    "toFloat": float,
-    "toBool": bool,
-    "not": _not,
-    "add": _add,
-    "sub": _sub,
-    "mult": _mult,
-    "div": _div,
-    "addAssign": _addassign,
-    "subAssign": _subassign,
-    "multAssign": _multassign,
-    "divAssign": _divassign,
-    "matMult": _matmul,
-    "divMod": _divmod,
-    "pow": _pow,
-    "remainder": _remainder,
-}
-
-_PySequenceMethods = {
-    "asObject": _identity,
-    "get": _getitem,
-    "set": _setitem,
-    "remove": _delitem,
-    "size": len,
-}
+_PyCollectionMethods: MutableMapping[str, Callable] = {}
+_PyContainerMethods: MutableMapping[str, Callable] = {}
+_PySizedMethods: MutableMapping[str, Callable] = {}
 
 _PyIterableMethods: MutableMapping[str, Callable] = {
-    "any": any,
-    "all": all,
+    "allMatch": all,
+    "anyMatch": any,
     "iter": iter,
-    "map": _map,
-    "min": min,
-    "max": max,
-    "reversed": reversed,
-    "sorted": sorted,
-    "sum": sum,
+    "mapElements": _map,
+    "findMin": min,
+    "findMax": max,
+    "getSorted": sorted,
+    "computeSum": sum,
 }
-_PyIterableMethods.update(_PyObjectMethods)
 
-_PyIterMethods: MutableMapping[str, Callable] = {
-    "filter": _filter,
-    "next": next,
+_PySequenceMethods: MutableMapping[str, Callable] = {
+    "remove": _delitem_return,
+    "set": _setitem_return,
+    "setAny": _setitem_return,
 }
-_PyIterMethods.update(_PyObjectMethods)
-
-## Concrete types
-
-_PyBytesMethods: MutableMapping[str, Callable] = {
-    "decode": bytes.decode,
-    "translate": bytes.translate,
-}
-_PyBytesMethods.update(_PyObjectMethods)
-
-_PyByteArrayMethods: MutableMapping[str, Callable] = {
-    "decode": bytearray.decode,
-    "translate": bytearray.translate,
-}
-_PyByteArrayMethods.update(_PyObjectMethods)
-
-_PyComplexMethods: MutableMapping[str, Callable] = {
-    "real": _real,
-    "imag": _imag,
-    "conjugate": complex.conjugate
-}
-_PyComplexMethods.update(_PyObjectMethods)
-_PyComplexMethods.update(_PyNumberMethods)
-
-_PyDictMethods: MutableMapping[str, Callable] = {
-    "clear": _clear,
-    "containsKey": _contains,
-    "containsValue": _containsvalue,
-    "get": _getitem,
-    "put": _dict_put,
-    "remove": _delitem,
-    "putAll": _putall,
-}
-_PyDictMethods.update(_PyObjectMethods)
-
-_PyExcMethods: MutableMapping[str, Callable] = {
-    "getMessage": str,
-}
-_PyExcMethods.update(_PyObjectMethods)
-
-# enumerate, zip, range
-_PyGeneratorMethods: MutableMapping[str, Callable] = {
-    "iter": iter
-}
-_PyGeneratorMethods.update(_PyObjectMethods)
-
-        
 
 _PyListMethods: MutableMapping[str, Callable] = {
     "add": _c_add,
     "addAny": _c_add,
+
     "clear": list.clear,
-    "contains": _contains,
+    "contains": lambda x,v: v in x,
     "extend": list.extend,
-    "get": _getitem,
+    "get": lambda x,i: x[i],
     "indexOf": _indexof,
     "insert": list.insert,
     "remove": _c_remove_index,
@@ -468,105 +643,154 @@ _PyListMethods: MutableMapping[str, Callable] = {
     "set": _c_set,
     "setAny": _setitem,
     "size": len,
-    "subList": _sublist,
+    "subList": lambda x,s,e: x[s,e],
 }
-_PyListMethods.update(_PyIterableMethods)
 
-_PyMemoryViewMethods: MutableMapping[str, Callable] = {}
-_PyMemoryViewMethods.update(_PyObjectMethods)
+_PyTupleMethods = {
+    "contains": lambda x,v: v in x,
+    "get": lambda x,i: x[i],
+    "indexOf": _indexof,
+    "size": len,
+    "subList": lambda x,s,e: x[s,e],
+}
+
+
+### Maps
+
+# Map specialized
+def _mapping_clear_noargs():
+    raise TypeError("mappingClear() requires an object on the Python backend side")
+
+def _dict_setdefault(x, k, default):
+    return x.setdefault(k, default)
+
+def _dict_update(x, other):
+    if hasattr(other, "entrySet"):
+        for k, v in other.entrySet():
+            x[k] = v
+        return
+    x.update(other)
+
+def _dict_put(x, k, v):
+    out = x.get(k)
+    x[k] = v
+    return out
+
+def _dict_remove_key_value(x, k, value):
+    if k in x and x[k] == value:
+        del x[k]
+        return True
+    return False
+
+def _putall(x, m):
+    for p,v in m.entrySet():
+        x[p] = v
+
+
+_PyDictMethods: MutableMapping[str, Callable] = {
+    "clear": lambda x: x.clear(),
+    "containsKey": lambda x,v: v in x,
+    "containsValue": lambda x,v: v in x.values(),
+    "get": lambda x, k: x.get(k),
+    "getOrDefault": lambda x,k,d: x.get(k,d),
+    "pop": lambda x, k, d: x.pop(k, d),
+    "popItem": lambda x: x.popitem(),
+    "put": _dict_put,
+    "putAny": _setitem_from_object,
+    "putAll": _putall,
+    "remove": _delitem_return,
+    "remove$Object$Object": _dict_remove_key_value,
+    "setDefault": _dict_setdefault,
+    "update": _dict_update,
+}
+
+_PyMappingMethods: MutableMapping[str, Callable] = {
+    "containsKey": lambda x,v: v in x,
+    "containsValue": lambda x,v: v in x.values(),
+    "putAll": _putall,
+    "remove": _delitem_return,
+}
+
+### Sets
+def _set_add(s, v):
+    if v in s:
+        return False
+    s.add(v)
+    return True
+
+def _set_add_any(s, v):
+    before = len(s)
+    s.add(v)
+    return len(s) != before
 
 _PySetMethods = {
     "add": _set_add,
+    "addAny": _set_add_any,
     "clear": set.clear,
-    "contains": _set_contains,
+    "contains": lambda x,v: v in x,
     "copy": set.copy,
-    "difference": _set_difference,
+    "difference": lambda x,v: x.difference(*tuple(v)),
+    "differenceUpdate": lambda x,v: x.difference_update(*tuple(v)),
     "discard": set.discard,
-    "intersect": _set_intersect,
+    "intersect": lambda x,v: x.intersect(*tuple(v)),
+    "intersectionUpdate": lambda x,s: x.intersection_update(*tuple(s)),
     "isDisjoint": set.isdisjoint,
     "isSubset": set.issubset,
     "isSuperset": set.issuperset,
     "size": len,
     "pop": set.pop,
-    "symmetricDifference": _set_symmetric_difference,
-    "union": _set_union,
+    "symmetricDifference": lambda x,s: x.symmetric_difference(s),
+    "symmetricDifferenceUpdate": lambda x,s: x.symmetric_difference_update(s),
+    "toList": list,
+    "union": lambda x,s: x.union(*tuple(s)),
+    "unionUpdate": lambda x,s: x.union(*tuple(s)),
     "update": set.update,
 }
 _PySetMethods.update(_PyObjectMethods)
-
-_PySliceMethods: MutableMapping[str, Callable] = {
-    "start": _start,
-    "end": _end,
-    "step": _step,
-    "indices": slice.indices
+_PyAbstractSetMethods: MutableMapping[str, Callable] = {}
+_PyMutableSetMethods: MutableMapping[str, Callable] = {}
+_PyFrozenSetMethods: MutableMapping[str, Callable] = {
+    "copy": frozenset.copy,
+    "difference": lambda x,v: x.difference(*tuple(v)),
+    "intersect": lambda x,v: x.intersect(*tuple(v)),
+    "isDisjoint": frozenset.isdisjoint,
+    "isSubset": frozenset.issubset,
+    "isSuperset": frozenset.issuperset,
+    "symmetricDifference": lambda x,s: x.symmetric_difference(*tuple(s)),
+    "union": lambda x,v: x.union(*tuple(v)),
 }
-_PySliceMethods.update(_PyObjectMethods)
+_PyFrozenSetMethods.update(_PyObjectMethods)
 
-_PyStringMethods: MutableMapping[str, Callable] = {
-    "charAt": _charat,
-    "length": len,
-    "subSequence": _str_subseq,
-    "capitalize":     str.capitalize,
-    "casefold":       str.casefold,
-    "center":         str.center,
-    "count":          str.count,
-    "encode":         str.encode,
-    "endsWith":       str.endswith,
-    "expandTabs":     str.expandtabs,
-    "find":           str.find,
-    "format":         str.format,
-    "formatMap":      str.format_map,
-    "index":          str.index,
-    "isAlnum":        str.isalnum,
-    "isAlpha":        str.isalpha,
-    "isAscii":        str.isascii,
-    "isDecimal":      str.isdecimal,
-    "isDigit":        str.isdigit,
-    "isIdentifier":   str.isidentifier,
-    "isLower":        str.islower,
-    "isNumeric":      str.isnumeric,
-    "isPrintable":    str.isprintable,
-    "isSpace":        str.isspace,
-    "isTitle":        str.istitle,
-    "isUpper":        str.isupper,
-    "join":           str.join,
-    "lstrip":         str.lstrip,
-    "partition":      str.partition,
-#    "removePrefix":   str.removeprefix,
-#    "removeSuffix":   str.removesuffix,
-    "replace":        str.replace,
-    "rfind":          str.rfind,
-    "rindex":         str.rindex,
-    "rpartition":     str.rpartition,
-    "rsplit":         str.rsplit,
-    "split":          str.split,
-    "splitLines":     str.splitlines,
-    "startsWith":     str.startswith,
-    "swapCase":       str.swapcase,
-    "title":          str.title,
-    "translate":      str.translate,
-    "upper":          str.upper,
-    "zfill":          str.zfill,
-}
-_PyStringMethods.update(_PyObjectMethods)
 
-_PyTupleMethods = {
-    "contains": _contains,
-    "get": _getitem,
-    "indexOf": _indexof,
-    "size": len,
-    "subList": _sublist,
+### Generators
+_PyIterMethods: MutableMapping[str, Callable] = {
+    "tee": _tee_iterator,
+    "filter": lambda x,f : filter(f,x),
+    "toList": list,
+    "toSet": set,
 }
-_PyTupleMethods.update(_PyIterableMethods)
+_PyIterMethods.update(_PyObjectMethods)
 
-_PyTypeMethods = {
-    "mro": type.mro,
+# enumerate, zip, range
+_PyGeneratorMethods: MutableMapping[str, Callable] = {
+    "iter": iter
 }
-_PyTypeMethods.update(_PyObjectMethods)
+_PyGeneratorMethods.update(_PyObjectMethods)
+
+_PyRangeMethods: MutableMapping[str, Callable] = {
+    "getStart": _attr("start"),
+    "getStop": _attr("end"),
+    "getStep": _attr("step"),
+    "getLength": len,
+    "getItem": lambda x,i: x[i],
+    "getSlice": lambda x,s,e: x[s:e],
+    "contains": lambda x,v: v in x,
+}
+_PyRangeMethods.update(_PyGeneratorMethods)
+
 
 
 def initialize():
-    return
     # Install the handler
     bridge = JClass("org.jpype.bridge.Interpreter").getInstance()
     Backend = JClass("org.jpype.bridge.Backend")
@@ -592,46 +816,109 @@ def initialize():
     _PyTuple = JClass("python.lang.PyTuple")
     _PyType = JClass("python.lang.PyType")
     _PyZip = JClass("python.lang.PyZip")
-    _PyExc = JClass("python.exception.PyExc")
+    _PyExc = JClass("python.lang.PyExc")
+    _PyInt = JClass("python.lang.PyInt")
+    _PyFloat = JClass("python.lang.PyFloat")
+    _PyFrozenSet = JClass("python.lang.PyFrozenSet")
 
     # Protocols
-    _PyAttributes = JClass("python.protocol.PyAttributes")
-    _PyCallable = JClass("python.protocol.PyCallable")
-    _PyGenerator = JClass("python.protocol.PyGenerator")
-    _PyIterable = JClass("python.protocol.PyIterable")
-    _PyIter = JClass("python.protocol.PyIter")
-    _PyMapping = JClass("python.protocol.PyMapping")
-    _PyNumber = JClass("python.protocol.PyNumber")
-    _PySequence = JClass("python.protocol.PySequence")
+    _PyCallable = JClass("python.lang.PyCallable")
+    _PyGenerator = JClass("python.lang.PyGenerator")
+    _PyIterable = JClass("python.lang.PyIterable")
+    _PyIter = JClass("python.lang.PyIter")
+    _PyMapping = JClass("python.lang.PyMapping")
+    _PyNumber = JClass("python.lang.PyNumber")
+    _PySequence = JClass("python.lang.PySequence")
+    _PyAbstractSet = JClass("python.lang.PyAbstractSet")
+    _PySized = JClass("python.lang.PySized")
+    _PyAwaitable = JClass("python.lang.PyAwaitable")
+    _PyBuffer = JClass("python.lang.PyBuffer")
+    _PyCollection = JClass("python.lang.PyCollection")
+    _PyContainer = JClass("python.lang.PyContainer")
+    _PyCoroutine = JClass("python.lang.PyCoroutine")
+    _PyIndex = JClass("python.lang.PyIndex")
+    _PyMutableSet = JClass("python.lang.PyMutableSet")
+
+    #############################################################################
+    # Add all of the concrete types to the _concrete interfaces list.
+    _jpype._concrete[bytearray] = _PyByteArray
+    _jpype._concrete[bytes] = _PyBytes
+    _jpype._concrete[complex] = _PyComplex
+    _jpype._concrete[dict] = _PyDict
+    _jpype._concrete[enumerate] = _PyEnumerate
+    _jpype._concrete[float] = _PyFloat
+    _jpype._concrete[frozenset] = _PyFrozenSet
+    _jpype._concrete[BaseException] = _PyExc
+    _jpype._concrete[int] = _PyInt
+    _jpype._concrete[list] = _PyList
+    _jpype._concrete[memoryview] =  _PyMemoryView
+    _jpype._concrete[object] = _PyObject
+    _jpype._concrete[range] =  _PyList
+    _jpype._concrete[set] =  _PySet
+    _jpype._concrete[slice] = _PySlice
+    _jpype._concrete[str] = _PyString
+    _jpype._concrete[tuple] = _PyTuple
+    _jpype._concrete[type] =  _PyType
+    _jpype._concrete[zip] = _PyZip
+
+    #############################################################################
+    # Add all of the abstract types to the _protocol interfaces list
+    # The key must be a string and the value a Java class
+    _jpype._protocol["abstract_set"] = _PyAbstractSet
+    _jpype._protocol["awaitable"] = _PyAwaitable
+    _jpype._protocol["buffer"] = _PyBuffer
+    _jpype._protocol["callable"] = _PyCallable
+    _jpype._protocol["collection"] = _PyCollection
+    _jpype._protocol["container"] = _PyContainer
+    _jpype._protocol["coroutine"] = _PyCoroutine
+    _jpype._protocol["generator"] = _PyGenerator
+    _jpype._protocol["index"] = _PyIndex
+    _jpype._protocol["iter"] = _PyIter
+    _jpype._protocol["iterable"] = _PyIterable
+    _jpype._protocol["mapping"] = _PyMapping
+    _jpype._protocol["mutable_set"] = _PyMutableSet
+    _jpype._protocol["number"] = _PyNumber
+    _jpype._protocol["sequence"] = _PySequence
+    _jpype._protocol["sized"] = _PySized
 
     ###################################################################################
     # Bind the method tables
 
     # Define the method tables for each type here
-    _PyBytes._methods = _PyBytesMethods
-    _PyByteArray._methods = _PyByteArrayMethods
-    _PyDict._methods = _PyDictMethods
-    _PyEnumerate._methods = _PyGeneratorMethods
-    _PyGenerator._methods = _PyGeneratorMethods
-    _PyIterable._methods = _PyIterableMethods
-    _PyIter._methods = _PyIterMethods
-    _PyList._methods = _PyListMethods
-    _PyMemoryView._methods = _PyMemoryViewMethods
-    _PyObject._methods = _PyObjectMethods
-    _PyRange._methods = _PyGeneratorMethods
-    _PySet._methods = _PySetMethods
-    _PySlice._methods = _PySliceMethods
-    _PyString._methods = _PyStringMethods
-    _PyTuple._methods = _PyTupleMethods
-    _PyType._methods = _PyTypeMethods
-    _PyZip._methods = _PyGeneratorMethods
+    _jpype._methods[_PyBytes] = _PyBytesMethods
+    _jpype._methods[_PyByteArray] = _PyByteArrayMethods
+    _jpype._methods[_PyDict] = _PyDictMethods
+    _jpype._methods[_PyEnumerate] = _PyGeneratorMethods
+    _jpype._methods[_PyGenerator] = _PyGeneratorMethods
+    _jpype._methods[_PyIter] = _PyIterMethods
+    _jpype._methods[_PyList] = _PyListMethods
+    _jpype._methods[_PyMemoryView] = _PyMemoryViewMethods
+    _jpype._methods[_PyObject] = _PyObjectMethods
+    _jpype._methods[_PyRange] = _PyRangeMethods
+    _jpype._methods[_PySlice] = _PySliceMethods
+    _jpype._methods[_PyString] = _PyStringMethods
+    _jpype._methods[_PyTuple] = _PyTupleMethods
+    _jpype._methods[_PyType] = _PyTypeMethods
+    _jpype._methods[_PyZip] = _PyGeneratorMethods
+    _jpype._methods[_PyComplex] = _PyComplexMethods
+    _jpype._methods[_PyExc] = _PyExcMethods
+    _jpype._methods[_PyIterable] = _PyIterableMethods
+    _jpype._methods[_PyCallable] = _PyCallableMethods
+    _jpype._methods[_PyMapping] = _PyMappingMethods
+    _jpype._methods[_PyNumber] = _PyNumberMethods
+    _jpype._methods[_PySequence] = _PySequenceMethods
+    _jpype._methods[_PyAwaitable] = _PyAwaitableMethods
+    _jpype._methods[_PyBuffer] = _PyBufferMethods
+    _jpype._methods[_PyCollection] = _PyCollectionMethods
+    _jpype._methods[_PyContainer] = _PyContainerMethods
+    _jpype._methods[_PyCoroutine] = _PyCoroutineMethods
+    _jpype._methods[_PyIndex] = _PyIndexMethods
+    _jpype._methods[_PySized] = _PySizedMethods
 
-    _PyAttributes._methods = _PyAttributesMethods
-    _PyCallable._methods = _PyCallableMethods
-    _PyMapping._methods = _PyMappingMethods
-    _PyNumber._methods = _PyNumberMethods
-    _PySequence._methods = _PySequenceMethods
-
+    _jpype._methods[_PySet] = _PySetMethods
+    _jpype._methods[_PyAbstractSet] = _PyAbstractSetMethods
+    _jpype._methods[_PyMutableSet] = _PyMutableSetMethods
+    _jpype._methods[_PyFrozenSet] = _PyFrozenSetMethods
 
     ###################################################################################
     # Construct conversions between concrete types and protocols.
@@ -660,13 +947,12 @@ def initialize():
     @JConversion(_PyIterable, attribute="__iter__")
     @JConversion(_PyIter, attribute="__next__")
     # Bind the protocols
-    @JConversion(_PyAttributes, instanceof=object)
     @JConversion(_PyCallable, instanceof=object)
     @JConversion(_PyMapping, instanceof=object)
     @JConversion(_PyNumber, instanceof=object)
     @JConversion(_PySequence, instanceof=object)
     def _jconvert(jcls, obj):
-        return JProxy(jcls, dict=jcls._methods, inst=obj, convert=True)
+        return jcls@JProxy(jcls, dict=_jpype._methods[jcls], inst=obj, convert=True)
 
     # Create a dispatch which will bind Python concrete types to Java.
     # Most of the time people won't see them, but we can add Java interfaces to 
@@ -679,6 +965,9 @@ def initialize():
         str:  _PyString,
         tuple: _PyTuple,
         type: _PyType,
+        int: _PyInt,
+        float: _PyFloat,
+        zip: _PyZip,
     }
 
     # Next we bind the dispatch to the Java types using the dispatch

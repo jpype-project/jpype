@@ -1,3 +1,4 @@
+// --- file: python/lang/PySequence.java ---
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy of
@@ -62,7 +63,7 @@ public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
    * @param index the {@link PyIndex} representing the item or slice to retrieve
    * @return the item or slice as a {@link PyObject}
    */
-  default PyObject get(PyIndex index)
+  default PyObject get(PySubscript index)
   {
     return backend().getitemMappingObject(this, index);
   }
@@ -79,7 +80,7 @@ public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
    * @return the resulting slice(s) as a {@link PyObject}
    * @throws IllegalArgumentException if the type does not support tuple assignment.
    */
-  default PyObject get(PyIndex... indices)
+  default PyObject get(PySubscript... indices)
   {
     return backend().getitemMappingObject(this, PyBuiltIn.indices(indices));
   }

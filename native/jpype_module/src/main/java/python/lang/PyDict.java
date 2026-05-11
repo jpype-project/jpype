@@ -1,3 +1,4 @@
+// --- file: python/lang/PyDict.java ---
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy fromMap
@@ -18,7 +19,6 @@ package python.lang;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
-import org.jpype.bridge.Interpreter;
 import static python.lang.PyBuiltIn.backend;
 
 /**
@@ -42,7 +42,7 @@ import static python.lang.PyBuiltIn.backend;
  * loops when placing Java objects into Python collections, as this may lead to
  * unintended behaviors.</p>
  */
-public interface PyDict extends PyObject, PyMapping<PyObject, PyObject>
+public interface PyDict extends PyObject, PyMapping<PyObject, PyObject>, PyCombinable
 {
 
   /**

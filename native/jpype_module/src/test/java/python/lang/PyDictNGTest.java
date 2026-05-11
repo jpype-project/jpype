@@ -1,3 +1,4 @@
+// --- file: python/lang/PyDictNGTest.java ---
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy fromMap
@@ -25,7 +26,6 @@ import org.jpype.bridge.Interpreter;
 import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 import org.testng.annotations.BeforeClass;
-import python.lang.PyBuiltIn;
 
 /**
  *

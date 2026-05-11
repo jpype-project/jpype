@@ -1,9 +1,12 @@
+// --- file: python/exception/PyIndexError.java ---
 package python.exception;
 
 import python.lang.PyExc;
 
 public class PyIndexError extends PyLookupError
 {
+
+  private static final long serialVersionUID = 1L;
 
   public PyIndexError(PyExc base)
   {

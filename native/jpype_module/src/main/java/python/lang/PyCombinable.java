@@ -1,4 +1,4 @@
-// --- file: python/lang/PyCoroutine.java ---
+// --- file: python/lang/PyCollection.java ---
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy of
@@ -17,11 +17,9 @@
 package python.lang;
 
 /**
- * Protocol for objects that act as coroutines.
- * 
- * Adds behaviors for send, throw and close.
+ * Represents those types that have binary OR operator.
  */
-public interface PyCoroutine extends PyAwaitable
+public interface PyCombinable extends PyObject
 {
-  
+    PyObject or(PyObject other);
 }

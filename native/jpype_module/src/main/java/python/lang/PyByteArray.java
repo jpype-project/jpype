@@ -1,3 +1,4 @@
+// --- file: python/lang/PyByteArray.java ---
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy of
@@ -121,13 +122,13 @@ public interface PyByteArray extends PyObject, PyBuffer, PySequence<PyInt>
   PyObject decode(PyObject encoding, PyObject errors);
 
   @Override
-  default PyInt get(PyIndex... indices)
+  default PyInt get(PySubscript... indices)
   {
     throw new IllegalArgumentException("bytearray does not support tuple assignment");
   }
 
   @Override
-  default PyInt get(PyIndex index)
+  default PyInt get(PySubscript index)
   {
     return (PyInt) PyBuiltIn.backend().getitemMappingObject(this, index);
   }
@@ -141,7 +142,7 @@ public interface PyByteArray extends PyObject, PyBuffer, PySequence<PyInt>
   @Override
   PyInt remove(int index);
 
-  void remove(PyIndex index);
+  void remove(PySubscript index);
 
   @Override
   default PyInt set(int index, PyInt value)
@@ -149,7 +150,7 @@ public interface PyByteArray extends PyObject, PyBuffer, PySequence<PyInt>
     return (PyInt) PyBuiltIn.backend().setitemSequence(this, index, value);
   }
 
-  default void set(PyIndex index, PyObject values)
+  default void set(PySubscript index, PyObject values)
   {
     PyBuiltIn.backend().setitemMapping(this, index, values);
   }

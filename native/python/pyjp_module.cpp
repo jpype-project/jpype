@@ -676,7 +676,7 @@ static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 /** Code to determine what interfaces are required based on the
  * dunder methods.
  */
-PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
+static PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
 {
 	JP_PY_TRY("probe");
 	PyTypeObject *type;
@@ -691,8 +691,12 @@ PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
 		return cached.keep();
 	PyErr_Clear();
 
-	printf("======\n");
-	printf("  Concrete: %s\n", type->tp_name);
+	// FIXME First we should ask Java if there is a known interface set to use that will allow use to support numpy.ndarray
+	// The problem is we want to get the most advanced binding so we would need to take each type from the mro 
+    // with its canonical name and set it to Java as a string to see if it comes back with a wrapper.
+    // If we get a hit we just need to collect up a list of bindings and add it to the cache
+	// This step is likely more complex that can be done in C binds for now so we likely need a helper in Python that we can call.
+
 	PyObject *mro = type->tp_mro;
 	Py_ssize_t sz = PyTuple_Size(mro);
 
@@ -710,7 +714,6 @@ PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
 	JPPyObject typing = JPPyObject::call(PyImport_ImportModule("typing")); // Call returns a new reference
 	// Buffer appears in 3.12 so will probe dunder instead
 
-	printf("  Protocol: %s\n", type->tp_name);
 	bool is_callable = (type->tp_call != nullptr);
 	bool is_buffer = (type->tp_as_buffer != nullptr);
 
@@ -739,14 +742,42 @@ PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
 	bool is_iterator = (PyObject_IsSubclass((PyObject*)type, abc_iterator.get())!=0);
 	bool is_awaitable = (PyObject_IsSubclass((PyObject*)type, abc_awaitable.get())!=0);
 	bool is_coroutine = (PyObject_IsSubclass((PyObject*)type, abc_coroutine.get())!=0);
+	bool nb_and = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_and != nullptr);
+	bool nb_or  = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_or != nullptr);
+	bool nb_xor = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_xor != nullptr);
 
-	printf("	is_callable=%d  is_buffer=%d resource=%d\n", is_callable, is_buffer, as_resource);
-	printf("	is_generator=%d  is_iterable=%d is_iterator=%d\n", is_generator, is_iterable, is_iterator);
-	printf("	is_seq=%d  seq_get=%d  seq_set=%d\n", is_sequence, seq_get, seq_set);
-	printf("	is_map=%d  map_get=%d  map_set=%d\n", is_mapping, map_get, map_set);
-	printf("	is_set=%d is_collection=%d is_container=%d\n", is_set, is_collection, is_container);
-	printf("	index=%d int=%d float=%d logical=%d  matrix=%d\n", as_index, as_int, as_float, logical, as_matrix);
-	printf("	is_awaitable=%d is_coroutine=%d\n", is_awaitable, is_coroutine);
+#if 0
+	printf("probe type=%s\n", type->tp_name);
+	printf("  is_callable=%d\n", is_callable);
+	printf("  is_buffer=%d\n", is_buffer);
+
+	printf("  seq_get=%d\n", seq_get);
+	printf("  seq_set=%d\n", seq_set);
+	printf("  map_get=%d\n", map_get);
+	printf("  map_set=%d\n", map_set);
+
+	printf("  as_float=%d\n", as_float);
+	printf("  as_int=%d\n", as_int);
+	printf("  logical=%d\n", logical);
+	printf("  as_matrix=%d\n", as_matrix);
+
+	printf("  as_resource=%d\n", as_resource);
+	printf("  as_index=%d\n", as_index);
+
+	printf("  is_collection=%d\n", is_collection);
+	printf("  is_container=%d\n", is_container);
+	printf("  is_sequence=%d\n", is_sequence);
+	printf("  is_mapping=%d\n", is_mapping);
+	printf("  is_set=%d\n", is_set);
+	printf("  is_generator=%d\n", is_generator);
+	printf("  is_iterable=%d\n", is_iterable);
+	printf("  is_iterator=%d\n", is_iterator);
+	printf("  is_awaitable=%d\n", is_awaitable);
+	printf("  is_coroutine=%d\n", is_coroutine);
+	printf("  nb_and=%d nb_or=%d nb_xor=%d\n", nb_and, nb_or, nb_xor);
+	printf("\n");
+	fflush(stdout);
+#endif
 
 	JPPyObject cls;
 	JPPyObject interfaces = JPPyObject::accept(PyList_New(0));
@@ -836,12 +867,20 @@ PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
-	if (as_int || as_float || logical) 
+	if (as_int || as_float) 
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "number"));
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
+	// Dict and Type have this odd combination
+	if (!as_int && !as_float && nb_or)
+	{
+		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "combinable"));
+		if (cls.isValid())
+			PyList_Append(interfaces.get(), cls.get());
+	}
+
 
 	// We look to see if there is a concrete method
 	if (sz > 1)
@@ -874,7 +913,6 @@ PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
 		existing_interfaces = JPPyObject::use(item);
 	}
 
-
 	// First consult the methods cache for the tuple
 	PyObject* methods_item = PyDict_GetItem(_cacheMethodsDict, interfaces_tuple.get()); // Borrowed reference
 	JPPyObject existing_methods;
@@ -884,14 +922,15 @@ PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
 		JPPyObject new_methods = JPPyObject::call(PyDict_New());
 
 		// Iterate through the tuple and update methods
-		Py_ssize_t tuple_size = PyTuple_Size(interfaces_tuple.get());
+		PyObject* it = interfaces_tuple.get();
+		Py_ssize_t tuple_size = PyTuple_Size(it);
 		for (Py_ssize_t i = 0; i < tuple_size; ++i)
 		{
-			PyObject* interface = PyTuple_GetItem(interfaces_tuple.get(), i); // Borrowed reference
-			if (interface == nullptr)
+			PyObject* interf = PyTuple_GetItem(it, i); // Borrowed reference
+			if (interf == nullptr)
 				return nullptr;
 
-			PyObject* methods_item = PyDict_GetItem(_methodsDict, interface); // Borrowed reference
+			PyObject* methods_item = PyDict_GetItem(_methodsDict, interf); // Borrowed reference
 			if (methods_item != nullptr)
 			{
 				JPPyObject methods = JPPyObject::use(methods_item);

@@ -42,10 +42,9 @@ JPClass* JPTypeManager::findClass(jclass obj)
 	JP_TRACE_OUT;
 }
 
-JPClass* JPTypeManager::findClassByName(const string& name)
+JPClass* JPTypeManager::findClassByName(JPJavaFrame& frame, const string& name)
 {
 	JP_TRACE_IN("JPTypeManager::findClassByName");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val;
 	val.l = (jobject) frame.fromStringUTF8(name);
 	auto* out = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));

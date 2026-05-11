@@ -1,3 +1,4 @@
+// --- file: python/lang/PyType.java ---
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +25,7 @@ package python.lang;
  * attributes and methods defined on the type.
  *
  */
-public interface PyType extends PyObject, PyCallable
+public interface PyType extends PyObject, PyCallable, PyCombinable
 {
 
   /**

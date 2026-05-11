@@ -1,3 +1,4 @@
+// --- file: org/jpype/bridge/Interpreter.java ---
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy of
@@ -73,6 +74,7 @@ public class Interpreter
    * List of module paths used by the Python interpreter.
    */
   private final List<String> modulePaths = new ArrayList<>();
+  private String pythonExecutable;
 
   /**
    * Path to the Python library.
@@ -388,14 +390,16 @@ public class Interpreter
     // System properties dub compiled in paths
     this.pythonLibrary = System.getProperty("python.lib", pythonLibrary);
 
+    // Find the Python executable
+    this.pythonExecutable = getExecutable();
+    String key = makeHash(pythonExecutable);
+    
     // No need to do a probe
     if (this.jpypeLibrary != null && this.pythonLibrary != null)
       return;
 
-    // Find the Python executable
-    String pythonExecutable = getExecutable();
-    String key = makeHash(pythonExecutable);
-    if (checkCache(key))
+    boolean noCache = Boolean.parseBoolean(System.getProperty("jpype.nocache", "false"));
+    if (!noCache && checkCache(key))
       return;
 
     // Probe the Python executeable for the values we need to start
@@ -524,6 +528,10 @@ public class Interpreter
     // Get the _jpype extension library
     resolveLibraries();
 
+    System.out.println("Found " + pythonLibrary);
+    System.out.println("Found " + jpypeLibrary);
+    System.out.println("Found " + jpypeVersion);
+
     // If we don't find the required libraries then we must fail.
     if (jpypeLibrary == null || pythonLibrary == null)
     {
@@ -546,7 +554,7 @@ public class Interpreter
       // system that is similar we will need to load a bootstrap class which
       // forces loading Python with global linkage prior to loading the
       // first Python module.
-      String jpypeBootstrapLibrary = jpypeLibrary.replace("jpype.c", "jpypeb.c");
+      String jpypeBootstrapLibrary = jpypeLibrary.replace("jpype.c", "jpyne.c");
 
       // First, load the preload hooks
       System.load(jpypeBootstrapLibrary);
@@ -557,10 +565,12 @@ public class Interpreter
     {
       // If no bootstrap is required we will simply preload the Python library.
       System.load(pythonLibrary);
+      System.out.println("LOADED " + pythonLibrary);
     }
 
     // Finally, load the Python module
     System.load(jpypeLibrary);
+    System.out.println("LOADED " + jpypeLibrary);
 
     String[] paths = null;
     if (!this.modulePaths.isEmpty())
@@ -574,6 +584,15 @@ public class Interpreter
     String home = System.getProperty("python.config.home");
     String exec_prefix = System.getProperty("python.config.exec_prefix");
     String executable = System.getProperty("python.config.executable");
+
+    // If not explicitly set, derive 'home' from the detected library path
+    if (home == null && pythonLibrary != null)
+      home = Paths.get(pythonLibrary).getParent().toString();
+
+    // If not explicitly set, derive 'executable' from the probe results
+    if (executable == null)
+      executable = this.pythonExecutable;
+   
     boolean isolated = Boolean.parseBoolean(System.getProperty("python.config.isolated", "false"));
     boolean fault_handler = Boolean.parseBoolean(System.getProperty("python.config.fault_handler", "false"));
     boolean quiet = Boolean.parseBoolean(System.getProperty("python.config.quiet", "false"));

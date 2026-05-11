@@ -1,3 +1,4 @@
+// --- file: python/lang/PyByteArrayNGTest.java ---
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +21,6 @@ import org.jpype.bridge.Interpreter;
 import static org.testng.Assert.*;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
-import python.lang.PyBuiltIn;
 
 /**
  *

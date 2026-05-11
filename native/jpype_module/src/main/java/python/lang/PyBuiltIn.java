@@ -1,3 +1,4 @@
+// --- file: python/lang/PyBuiltIn.java ---
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy of
@@ -216,7 +217,7 @@ public class PyBuiltIn
    * indices.
    * @return a new {@link PyTuple} instance containing the indices.
    */
-  public static PyTuple indices(PyIndex... indices)
+  public static PyTuple indices(PySubscript... indices)
   {
     return backend().newTupleFromArray(Arrays.asList(indices));
   }

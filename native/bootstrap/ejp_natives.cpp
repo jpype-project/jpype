@@ -1,3 +1,4 @@
+// --- file: bootstrap/ejp_natives.cpp ---
 /*
 This is a fake module which is installed with the _jpype module to hold the prelaunch hooks.
 */

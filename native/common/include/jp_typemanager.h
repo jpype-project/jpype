@@ -37,7 +37,7 @@ public:
 	 * The pointer returned is NOT owned by the caller
 	 */
 	JPClass* findClass(jclass cls);
-	JPClass* findClassByName(const string& str);
+	JPClass* findClassByName(JPJavaFrame& frame, const string& str);
 	JPClass* findClassForObject(jobject obj);
 	void populateMethod(void* method, jobject obj);
 	void populateMembers(JPClass* cls);

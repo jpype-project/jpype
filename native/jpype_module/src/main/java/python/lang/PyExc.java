@@ -1,3 +1,4 @@
+// --- file: python/lang/PyExc.java ---
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy of
@@ -15,6 +16,7 @@
  */
 package python.lang;
 
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Level;
@@ -28,7 +30,7 @@ import static python.lang.PyBuiltIn.*;
  *
  * This will be the type that is unwrapped to in Python.
  */
-public interface PyExc extends PyObject
+public interface PyExc extends PyObject, Serializable
 {
 
   /**

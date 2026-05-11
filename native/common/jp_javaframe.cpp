@@ -1214,7 +1214,7 @@ JPClass *JPJavaFrame::findClass(jclass obj)
 
 JPClass *JPJavaFrame::findClassByName(const string& name)
 {
-	return getContext()->getTypeManager()->findClassByName(name);
+	return getContext()->getTypeManager()->findClassByName(*this, name);
 }
 
 JPClass *JPJavaFrame::findClassForObject(jobject obj)
