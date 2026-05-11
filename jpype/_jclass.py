@@ -135,7 +135,7 @@ def _jclassPre(name, bases, members):
     # Apply customizers
     hints = _jcustomizer.getClassHints(name)
     hints.applyCustomizers(name, bases, members)
-    return (name, tuple(bases), members)
+    return name, tuple(bases), members
 
 
 def _jclassPost(res, *args):

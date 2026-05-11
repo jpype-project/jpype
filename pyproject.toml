@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "jpype1"
-version = '1.7.1'
+version = '1.7.2.dev0'
 authors = [
     {name = "Steve Menard", email = "devilwolf@users.sourceforge.net"},
     {name = "Karl Einar Nelson", email = "thrameos@gmail.com"},
@@ -81,3 +81,6 @@ editable.mode = "inplace"
 
 sdist.exclude = [".azure", ".github"]
 
+# keep debug info
+cmake.build-type = "RelWithDebInfo"
+install.strip = false
