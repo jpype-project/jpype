@@ -39,8 +39,6 @@ static void convertException(JNIEnv *env, JPypeException& ex)
 		return;
 	}
 
-	
-
 	// No guarantees that the exception will make it back so print it first
 	PyObject *err = PyErr_Occurred();
 	if (err != NULL)
@@ -53,7 +51,7 @@ static void convertException(JNIEnv *env, JPypeException& ex)
 	}
 }
 
-static wchar_t* toWideString(JNIEnv* env, jstring value, std::list<wchar_t*>& resources)
+static wchar_t* toWideString(JNIEnv* env, jstring value)
 {
 	if (value == nullptr)
 		return nullptr;
@@ -66,19 +64,14 @@ static wchar_t* toWideString(JNIEnv* env, jstring value, std::list<wchar_t*>& re
 	int length = env->GetStringUTFLength(value);
 	std::string str = transcribe(cstr, length, JPEncodingJavaUTF8(), JPEncodingUTF8());
 	env->ReleaseStringUTFChars(value, cstr);
-
 	wchar_t* wide_str = Py_DecodeLocale(str.c_str(), NULL);
-	if (wide_str != nullptr)
-		resources.push_back(wide_str);
-
 	return wide_str;
 }
 
 static PyStatus appendStringArray(
 	JNIEnv* env,
 	jobjectArray array,
-	PyWideStringList* target,
-	std::list<wchar_t*>& resources)
+	PyWideStringList* target)
 {
 	PyStatus status = PyStatus_Ok();
 
@@ -92,7 +85,7 @@ static PyStatus appendStringArray(
 		if (value == nullptr)
 			continue;
 
-		wchar_t* wide_str = toWideString(env, value, resources);
+		wchar_t* wide_str = toWideString(env, value);
 		if (wide_str == nullptr)
 			return PyStatus_Error("failed to convert Java string");
 
@@ -107,13 +100,12 @@ static PyStatus appendStringArray(
 static bool assignWideString(
 	JNIEnv* env,
 	jstring value,
-	wchar_t*& target,
-	std::list<wchar_t*>& resources)
+	wchar_t*& target)
 {
 	if (value == nullptr)
 		return true;
 
-	wchar_t* wide_str = toWideString(env, value, resources);
+	wchar_t* wide_str = toWideString(env, value);
 	if (wide_str == nullptr)
 		return false;
 
@@ -151,6 +143,21 @@ static void dumpWideList(const char* name, const PyWideStringList* list)
 		char label[256];
 		snprintf(label, sizeof(label), "%s[%zd]", name, (size_t)i);
 		dumpWide(label, list->items[i]);
+	}
+}
+
+void print_module_path(const char* name, PyObject* module) {
+	if (module != NULL) {
+		// Access the __file__ attribute
+		PyObject* file_path = PyObject_GetAttrString(module, "__file__");
+		if (file_path != NULL) {
+			// In Python 3, __file__ is a Unicode object
+			const char* path = PyUnicode_AsUTF8(file_path);
+			printf("Module [%s] loaded from: %s\n", name, path);
+			Py_DECREF(file_path);
+		} else {
+			printf("Module [%s] has no __file__ attribute (it might be built-in).\n", name);
+		}
 	}
 }
 
@@ -205,34 +212,36 @@ static bool appendModulePathsToSysPath(JNIEnv* env, jobjectArray modulePath)
 	}
 
 	jsize count = env->GetArrayLength(modulePath);
+	printf("Paths %d\n", count);
 	for (jsize i = 0; i < count; ++i)
 	{
 		jstring jpath = (jstring) env->GetObjectArrayElement(modulePath, i);
-		if (jpath == nullptr)
-			continue;
+		if (jpath == nullptr) continue;
 
-		const jchar* chars = env->GetStringChars(jpath, nullptr);
-		jsize len = env->GetStringLength(jpath);
-
-		PyObject* pyPath = PyUnicode_FromWideChar((const wchar_t*) chars, (Py_ssize_t) len);
-		env->ReleaseStringChars(jpath, chars);
-		env->DeleteLocalRef(jpath);
-
-		if (pyPath == nullptr)
+		// Use your existing helper to get a real wchar_t*
+		wchar_t* widePath = toWideString(env, jpath);
+		if (widePath == nullptr)
 		{
+			env->DeleteLocalRef(jpath);
 			Py_DECREF(path);
 			return false;
 		}
 
-		if (PyList_Append(path, pyPath) < 0)
+		// Now Python is getting the 32-bit wchar_t it expects on Linux
+		PyObject* pyPath = PyUnicode_FromWideChar(widePath, -1);
+		
+		// Py_DecodeLocale uses PyMem_RawMalloc, so free it properly
+		PyMem_RawFree(widePath); 
+		env->DeleteLocalRef(jpath);
+
+		if (pyPath == nullptr || PyList_Append(path, pyPath) < 0)
 		{
-			Py_DECREF(pyPath);
+			Py_XDECREF(pyPath);
 			Py_DECREF(path);
 			return false;
 		}
 		Py_DECREF(pyPath);
 	}
-
 	Py_DECREF(path);
 	return true;
 }
@@ -266,14 +275,20 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_start
 	jsize items;
 	wchar_t* wide_str;
 	jobject v;
-	std::list<wchar_t*> resources;
 
 	try
 	{
+		printf("isolated=%d\n", isolated);
 		if (isolated)
+		{
+			printf("INIT ISOLATED\n");
 			PyConfig_InitIsolatedConfig(&config);
+		}
 		else
+		{
+			printf("INIT PYTHON CONFIG\n");
 			PyConfig_InitPythonConfig(&config);
+		}
 
 		config.faulthandler = faulthandler;
 		config.quiet = quiet;
@@ -282,21 +297,21 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_start
 		config.write_bytecode = bytecode;
 		config.verbose = verbose;
 
-		if (!assignWideString(env, name, config.program_name, resources))
+		if (!assignWideString(env, name, config.program_name))
 			goto error_config;
-		if (!assignWideString(env, prefix, config.prefix, resources))
+		if (!assignWideString(env, prefix, config.prefix))
 			goto error_config;
-		if (!assignWideString(env, home, config.home, resources))
+		if (!assignWideString(env, home, config.home))
 		{
 			printf("Error in home\n");
 			goto error_config;
 		}
-		if (!assignWideString(env, exec_prefix, config.exec_prefix, resources))
+		if (!assignWideString(env, exec_prefix, config.exec_prefix))
 		{
 			printf("Error in exec_prefix\n");
 			goto error_config;
 		}
-		if (!assignWideString(env, executable, config.executable, resources))
+		if (!assignWideString(env, executable, config.executable))
 		{
 			printf("Error in executable\n");
 			goto error_config;
@@ -315,7 +330,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_start
 //		if (modulePath != nullptr)
 //		{
 //			config.module_search_paths_set = 0;
-//			status = appendStringArray(env, modulePath, &config.module_search_paths, resources);
+//			status = appendStringArray(env, modulePath, &config.module_search_paths);
 //			if (PyStatus_Exception(status))
 //			{
 //				printf("Error in module path\n");
@@ -326,7 +341,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_start
 		if (args != nullptr)
 		{
 			config.parse_argv = 1;
-			status = appendStringArray(env, args, &config.argv, resources);
+			status = appendStringArray(env, args, &config.argv);
 			if (PyStatus_Exception(status))
 			{
 				printf("Error in args\n");
@@ -334,9 +349,9 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_start
 			}
 		}
 
+		printf("INIT\n");
 		// Get Python started
-//		PyImport_AppendInittab("_jpype", &PyInit__jpype);
-//		dumpPyConfig(&config);
+		dumpPyConfig(&config);
 		status = Py_InitializeFromConfig(&config);
 		if (PyStatus_Exception(status))
 		{
@@ -348,16 +363,15 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_start
 			goto error_config;
 		}
 
-			goto success_config;
+		goto success_config;
 
 error_config:
 		PyConfig_Clear(&config);
 		fail(env, "configuration failed");
-		for (std::list<wchar_t*>::iterator iter = resources.begin(); iter!=resources.end(); ++iter)
-			PyMem_Free(*iter);
 		return;
 
 success_config:
+		printf("SUCCESS\n");
 
 		PyConfig_Clear(&config);
 #if  PY_VERSION_HEX<0x030a0000
@@ -389,6 +403,10 @@ success_config:
 			fail(env, "jpype module not found");
 			return;
 		}
+		// Usage in your code:
+		print_module_path("jpype", jpype);
+		print_module_path("_jpype", jpypep);
+
 
 		printf("Load resource\n");
 		fflush(stdout);
@@ -405,16 +423,29 @@ success_config:
 		obj = PyObject_GetAttrString(jpype, "_core");
 		obj2 = PyObject_GetAttrString(obj, "initializeResources");
 		obj3 = PyTuple_New(0);
-		PyObject_Call(obj2, obj3, NULL);
+		printf("obj=%p\n", obj);
+		printf("obj2=%p\n", obj2);
+		printf("obj3=%p\n", obj3);
+		PyObject* out = PyObject_Call(obj2, obj3, NULL);
+		if (out == NULL) {
+			// This will print the full Python traceback to your console
+			PyErr_Print(); 
+		} else {
+			printf("out=%p\n", out);
+			Py_DECREF(out); // Don't forget to decref the result on success!
+		}
+		printf("out=%p\n", out);
 		Py_DECREF(obj);
 		Py_DECREF(obj2);
 		Py_DECREF(obj3);
+		printf("done Initialize resources\n");
 
 		Py_DECREF(jpype);
 		Py_DECREF(jpypep);
 
 		// Next, we need to release the state so we can return to Java.
 		PyGILState_Release(gstate);
+		fflush(stdout);
 		return;
 
 	} catch (JPypeException& ex)

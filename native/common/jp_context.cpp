@@ -205,7 +205,6 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	}
 
 	// Mark running for assert
-	m_Running = true;
 
 	jint jni_version = env->GetVersion();
 	if (jni_version < 0x00090000)
@@ -257,6 +256,7 @@ std::string getShared()
 
 void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 {
+	m_Running = true;
 	JPJavaFrame frame = JPJavaFrame::external(env);
 	// This is the only frame that we can use until the system
 	// is initialized.  Any other frame creation will result in an error.

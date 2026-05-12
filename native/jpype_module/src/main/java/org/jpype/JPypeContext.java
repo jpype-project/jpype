@@ -71,7 +71,7 @@ import org.jpype.proxy.JPypeProxyType;
 public class JPypeContext
 {
 
-  public final String VERSION = "1.7.2.dev0";
+  public static final String VERSION = "1.7.2.dev0";
 
   private static final JPypeContext INSTANCE = new JPypeContext();
   // This is the C++ portion of the context.

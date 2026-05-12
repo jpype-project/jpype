@@ -22,7 +22,7 @@
 #include "pyjp.h"
 
 static_assert(std::is_nothrow_copy_constructible<JPypeException>::value,
-              "S must be nothrow copy constructible");
+			  "S must be nothrow copy constructible");
 
 PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace);
 
@@ -65,8 +65,8 @@ JPypeException::JPypeException(int type,  const string& msn, int errType, const 
 }
 
 JPypeException::JPypeException(const JPypeException &ex) noexcept
-        : runtime_error(ex.what()), m_Type(ex.m_Type),  m_Error(ex.m_Error),
-        m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable)
+		: runtime_error(ex.what()), m_Type(ex.m_Type),  m_Error(ex.m_Error),
+		m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable)
 {
 }
 
@@ -205,6 +205,29 @@ void JPypeException::convertJavaToPython()
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
+// We are going to use this to get over the border eventually
+static PyObject* getExceptionInstance() 
+{
+#if PY_VERSION_HEX >= 0x030C0000
+	// 3.12+ : Returns the actual exception instance directly
+	return PyErr_GetRaisedException();
+#else
+	PyObject *type, *value, *traceback;
+	PyErr_Fetch(&type, &value, &traceback);
+	// If it's just a type, we need to instantiate it to get an instance
+	PyErr_NormalizeException(&type, &value, &traceback);
+	
+	if (traceback != nullptr) {
+		PyException_SetTraceback(value, traceback);
+		Py_DECREF(traceback);
+	}
+	Py_XDECREF(type);
+	
+	// Now 'value' is the single exception object (instance)
+	return value;
+#endif
+}
+
 void JPypeException::convertPythonToJava()
 {
 	JP_TRACE_IN("JPypeException::convertPythonToJava");
@@ -230,6 +253,23 @@ void JPypeException::convertPythonToJava()
 		frame.ThrowNew(frame.FindClass("java/lang/RuntimeException"), std::runtime_error::what());
 		return;
 	}
+
+#if 1
+	if (eframe.m_ExceptionClass.get() != nullptr) {
+		PyObject* c_repr = PyObject_Repr(eframe.m_ExceptionClass.get());
+		PyObject* v_repr = PyObject_Repr(eframe.m_ExceptionValue.get());
+		
+		printf("DEBUG BOOTSTRAP:\n");
+		printf("  Class: %s\n", c_repr ? PyUnicode_AsUTF8(c_repr) : "NULL");
+		printf("  Value: %s\n", v_repr ? PyUnicode_AsUTF8(v_repr) : "NULL");
+		
+		Py_XDECREF(c_repr);
+		Py_XDECREF(v_repr);
+	} else {
+		printf("DEBUG BOOTSTRAP: Exception state is empty (NULL pointers).\n");
+	}
+#endif
+
 
 
 	// Otherwise

@@ -190,8 +190,8 @@ _PyJPBackendMethods: MutableMapping[str, Callable] = {
     "delattrString": lambda x,s: delattr(x, str(s)),
     "dir": dir,
     "enumerate": enumerate,
-    "eval": eval,
-    "exec": exec,
+    "eval": lambda s,g,l: eval(str(s),g,l),
+    "exec": lambda s,g,l: exec(str(s),g,l),
     "getDict": _attr("__dict__"),
     "getDocString": lambda x: getattr(x, "__doc__", None),
     "getSignature": _get_signature,
@@ -305,6 +305,7 @@ def _divassign(x,v):
 _PyIntMethods: MutableMapping[str, Callable] = {}
 _PyFloatMethods: MutableMapping[str, Callable] = {}
 _PyIndexMethods: MutableMapping[str, Callable] = {}
+_PySubscriptMethods: MutableMapping[str, Callable] = {}
 _PyNumberMethods: MutableMapping[str, Callable] = {
     "add": lambda x, v: x + v,
     "divide": lambda x, v: x / v,
@@ -340,7 +341,6 @@ _PyComplexMethods: MutableMapping[str, Callable] = {
 _PyExcMethods: MutableMapping[str, Callable] = {
     "getMessage": str,
 }
-_PyExcMethods.update(_PyObjectMethods)
 
 _PySliceMethods: MutableMapping[str, Callable] = {
     "getStart": _attr("start"),
@@ -349,7 +349,6 @@ _PySliceMethods: MutableMapping[str, Callable] = {
     "indices": slice.indices,
     "isValid": lambda x: x.step !=0,
 }
-_PySliceMethods.update(_PyObjectMethods)
 
 
 def _type_is_instance(x, obj):
@@ -369,7 +368,6 @@ _PyTypeMethods: MutableMapping[str, Callable] = {
     "isAbstract": inspect.isabstract,
     "getSubclasses": lambda x: x.__subclasses__(),
 }
-_PyTypeMethods.update(_PyObjectMethods)
 
 
 ### Memory like
@@ -746,7 +744,6 @@ _PySetMethods = {
     "unionUpdate": lambda x,s: x.union(*tuple(s)),
     "update": set.update,
 }
-_PySetMethods.update(_PyObjectMethods)
 _PyAbstractSetMethods: MutableMapping[str, Callable] = {}
 _PyMutableSetMethods: MutableMapping[str, Callable] = {}
 _PyFrozenSetMethods: MutableMapping[str, Callable] = {
@@ -759,7 +756,6 @@ _PyFrozenSetMethods: MutableMapping[str, Callable] = {
     "symmetricDifference": lambda x,s: x.symmetric_difference(*tuple(s)),
     "union": lambda x,v: x.union(*tuple(v)),
 }
-_PyFrozenSetMethods.update(_PyObjectMethods)
 
 
 ### Generators
@@ -769,13 +765,11 @@ _PyIterMethods: MutableMapping[str, Callable] = {
     "toList": list,
     "toSet": set,
 }
-_PyIterMethods.update(_PyObjectMethods)
 
 # enumerate, zip, range
 _PyGeneratorMethods: MutableMapping[str, Callable] = {
     "iter": iter
 }
-_PyGeneratorMethods.update(_PyObjectMethods)
 
 _PyRangeMethods: MutableMapping[str, Callable] = {
     "getStart": _attr("start"),
@@ -786,9 +780,11 @@ _PyRangeMethods: MutableMapping[str, Callable] = {
     "getSlice": lambda x,s,e: x[s:e],
     "contains": lambda x,v: v in x,
 }
-_PyRangeMethods.update(_PyGeneratorMethods)
 
-
+_PyCombinableMethods: MutableMapping[str, Callable] = {
+    "or": lambda x,y: x|y
+}
+ 
 
 def initialize():
     # Install the handler
@@ -837,7 +833,9 @@ def initialize():
     _PyContainer = JClass("python.lang.PyContainer")
     _PyCoroutine = JClass("python.lang.PyCoroutine")
     _PyIndex = JClass("python.lang.PyIndex")
+    _PySubscript = JClass("python.lang.PySubscript")
     _PyMutableSet = JClass("python.lang.PyMutableSet")
+    _PyCombinable = JClass("python.lang.PyCombinable")
 
     #############################################################################
     # Add all of the concrete types to the _concrete interfaces list.
@@ -873,6 +871,7 @@ def initialize():
     _jpype._protocol["coroutine"] = _PyCoroutine
     _jpype._protocol["generator"] = _PyGenerator
     _jpype._protocol["index"] = _PyIndex
+    _jpype._protocol["subscript"] = _PySubscript
     _jpype._protocol["iter"] = _PyIter
     _jpype._protocol["iterable"] = _PyIterable
     _jpype._protocol["mapping"] = _PyMapping
@@ -880,6 +879,7 @@ def initialize():
     _jpype._protocol["number"] = _PyNumber
     _jpype._protocol["sequence"] = _PySequence
     _jpype._protocol["sized"] = _PySized
+    _jpype._protocol["combinable"] = _PyCombinable
 
     ###################################################################################
     # Bind the method tables
@@ -913,12 +913,14 @@ def initialize():
     _jpype._methods[_PyContainer] = _PyContainerMethods
     _jpype._methods[_PyCoroutine] = _PyCoroutineMethods
     _jpype._methods[_PyIndex] = _PyIndexMethods
+    _jpype._methods[_PySubscript] = _PySubscriptMethods
     _jpype._methods[_PySized] = _PySizedMethods
 
     _jpype._methods[_PySet] = _PySetMethods
     _jpype._methods[_PyAbstractSet] = _PyAbstractSetMethods
     _jpype._methods[_PyMutableSet] = _PyMutableSetMethods
     _jpype._methods[_PyFrozenSet] = _PyFrozenSetMethods
+    _jpype._methods[_PyCombinable] = _PyCombinableMethods
 
     ###################################################################################
     # Construct conversions between concrete types and protocols.
@@ -975,10 +977,11 @@ def initialize():
     def _pyobject(jcls, obj):
         if isinstance(obj, _jpype._JObject):
             return _PyJavaObject(obj)
+
         # See if there is a more advanced wrapper we can apply
-        if len(obj.__class__.__mro__) > 1:
-            jcls = _conversionDispatch.get(obj.__class__.__mro__[-2], jcls)
-        return _jconvert(jcls, obj)
+        jcls, meth = _jpype.probe(obj)
+        print(type(obj), jcls)
+        return JProxy(jcls, dict=meth, inst=obj, convert=True)
 
     bridge.setBackend(backend)
 

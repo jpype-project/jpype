@@ -422,7 +422,6 @@ def startJVM(
 
 
 def initializeResources():
-    print("INITIALIZE RESOURCES")
     global _JVM_started
     _jpype._java_lang_Class = None
     _jpype._java_lang_Object = _jpype.JClass("java.lang.Object")

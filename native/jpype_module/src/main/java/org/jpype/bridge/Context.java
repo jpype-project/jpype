@@ -89,7 +89,7 @@ public class Context extends PyBuiltIn
    *
    * @return
    */
-  PyDict globals()
+  public PyDict globals()
   {
     return globalsDict;
   }
@@ -99,7 +99,7 @@ public class Context extends PyBuiltIn
    *
    * @return
    */
-  PyObject locals()
+  public PyObject locals()
   {
     return localsDict;
   }
