@@ -126,7 +126,6 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		throw;
 	}
 
-	bool isJDK9 = false;
 	JavaVMInitArgs scout;
 	scout.version = 0x00090000; // JNI_VERSION_21 (JDK 21)
 	if (GetDefaultJavaVMInitArgs_Method(&scout) != JNI_OK)

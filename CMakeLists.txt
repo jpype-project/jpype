@@ -128,6 +128,7 @@ set(JPYPE_NATIVE_SRC
         native/common/jp_arrayclass.cpp
         native/common/jp_booleantype.cpp
         native/common/jp_boxedtype.cpp
+        native/common/jp_bridge.cpp
         native/common/jp_buffer.cpp
         native/common/jp_buffertype.cpp
         native/common/jp_bytetype.cpp
