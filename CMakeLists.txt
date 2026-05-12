@@ -200,14 +200,16 @@ if(WIN32)
     # Required: export all symbols for Python module
     set_target_properties(_jpype PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-
     # Ensure /MD and exception model are set
-    target_compile_options(_jpype PRIVATE /O2 /EHsc /MD)
+    target_compile_options(_jpype PRIVATE /EHsc /MD)
 else()
     # Additional libraries for non-Windows
     target_link_libraries(_jpype PRIVATE
             dl # dynamic linker
     )
+    # Keep frame pointers for better stack unwinding.
+    add_compile_options(-fno-omit-frame-pointer)
+
     # even on OSX Python uses .so suffix instead of .dylib
     set_target_properties(_jpype PROPERTIES SUFFIX ".so")
 endif()
