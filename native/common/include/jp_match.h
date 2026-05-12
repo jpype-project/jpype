@@ -55,14 +55,7 @@ public:
 	void *closure;
 } ;
 
-class JPMethodCache
-{
-public:
-	long m_Hash{-1};
-	JPMethod* m_Overload{nullptr};
-} ;
-
-class JPMethodMatch : public JPMethodCache
+class JPMethodMatch
 {
 public:
 
@@ -83,6 +76,8 @@ public:
 	bool m_IsVarIndirect;
 	char m_Offset;
 	char m_Skip;
+	long m_Hash{-1};
+	JPMethod* m_Overload{nullptr};
 } ;
 
 #endif /* JP_MATCH_H */
