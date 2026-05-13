@@ -69,10 +69,9 @@ JPClass* JPTypeManager::findClassForObject(JPJavaFrame &frame, jobject obj)
 	JP_TRACE_OUT;
 }
 
-void JPTypeManager::populateMethod(void* method, jobject obj)
+void JPTypeManager::populateMethod(JPJavaFrame& frame, void* method, jobject obj)
 {
 	JP_TRACE_IN("JPTypeManager::populateMethod");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val[2];
 	val[0].j = (jlong) method;
 	val[1].l = obj;
@@ -81,10 +80,9 @@ void JPTypeManager::populateMethod(void* method, jobject obj)
 	JP_TRACE_OUT;
 }
 
-void JPTypeManager::populateMembers(JPClass* cls)
+void JPTypeManager::populateMembers(JPJavaFrame& frame, JPClass* cls)
 {
 	JP_TRACE_IN("JPTypeManager::populateMembers");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val[1];
 	val[0].l = (jobject) cls->getJavaClass();
 	frame.CallVoidMethodA(m_JavaTypeManager.get(), m_PopulateMembers, val);

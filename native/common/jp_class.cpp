@@ -69,7 +69,7 @@ void JPClass::ensureMembers(JPJavaFrame& frame)
 {
 	JPContext* context = JPContext_global;
 	JPTypeManager* typeManager = context->getTypeManager();
-	typeManager->populateMembers(this);
+	typeManager->populateMembers(frame, this);
 }
 
 void JPClass::assignMembers(JPMethodDispatch* ctor,
