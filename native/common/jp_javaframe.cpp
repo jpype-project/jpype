@@ -1209,17 +1209,17 @@ string JPJavaFrame::getFunctional(jclass c)
 
 JPClass *JPJavaFrame::findClass(jclass obj)
 {
-	return getContext()->getTypeManager()->findClass(obj);
+	return getContext()->getTypeManager()->findClass(*this, obj);
 }
 
 JPClass *JPJavaFrame::findClassByName(const string& name)
 {
-	return getContext()->getTypeManager()->findClassByName(name);
+	return getContext()->getTypeManager()->findClassByName(*this, name);
 }
 
 JPClass *JPJavaFrame::findClassForObject(jobject obj)
 {
-	return getContext()->getTypeManager()->findClassForObject(obj);
+	return getContext()->getTypeManager()->findClassForObject(*this, obj);
 }
 
 jint JPJavaFrame::compareTo(jobject obj, jobject obj2)

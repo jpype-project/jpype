@@ -36,9 +36,9 @@ public:
 	 *
 	 * The pointer returned is NOT owned by the caller
 	 */
-	JPClass* findClass(jclass cls);
-	JPClass* findClassByName(const string& str);
-	JPClass* findClassForObject(jobject obj);
+	JPClass* findClass(JPJavaFrame& frame, jclass cls);
+	JPClass* findClassByName(JPJavaFrame& frame, const string& str);
+	JPClass* findClassForObject(JPJavaFrame& frame, jobject obj);
 	void populateMethod(void* method, jobject obj);
 	void populateMembers(JPClass* cls);
     int interfaceParameterCount(JPClass* cls);

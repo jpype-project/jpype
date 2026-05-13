@@ -32,20 +32,18 @@ JPTypeManager::JPTypeManager(JPJavaFrame& frame)
 	JP_TRACE_OUT;
 }
 
-JPClass* JPTypeManager::findClass(jclass obj)
+JPClass* JPTypeManager::findClass(JPJavaFrame &frame, jclass obj)
 {
 	JP_TRACE_IN("JPTypeManager::findClass");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val;
 	val.l = obj;
 	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClass, &val));
 	JP_TRACE_OUT;
 }
 
-JPClass* JPTypeManager::findClassByName(const string& name)
+JPClass* JPTypeManager::findClassByName(JPJavaFrame& frame, const string& name)
 {
 	JP_TRACE_IN("JPTypeManager::findClassByName");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val;
 	val.l = (jobject) frame.fromStringUTF8(name);
 	auto* out = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
@@ -59,10 +57,9 @@ JPClass* JPTypeManager::findClassByName(const string& name)
 	JP_TRACE_OUT;
 }
 
-JPClass* JPTypeManager::findClassForObject(jobject obj)
+JPClass* JPTypeManager::findClassForObject(JPJavaFrame &frame, jobject obj)
 {
 	JP_TRACE_IN("JPTypeManager::findClassForObject");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val;
 	val.l = obj;
 	auto *cls = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassForObject, &val));

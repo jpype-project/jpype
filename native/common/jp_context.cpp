@@ -392,7 +392,7 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 
 	m_GC->init(frame);
 
-	_java_nio_ByteBuffer = this->getTypeManager()->findClassByName("java.nio.ByteBuffer");
+	_java_nio_ByteBuffer = frame.findClassByName("java.nio.ByteBuffer");
 
 	// Testing code to make sure C++ exceptions are handled.
 	// FIXME find a way to call this from instrumentation.
