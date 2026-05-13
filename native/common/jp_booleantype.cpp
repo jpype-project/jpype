@@ -168,9 +168,8 @@ JPMatch::Type JPBooleanType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPBooleanType::getConversionInfo(JPConversionInfo &info)
+void JPBooleanType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	asBooleanExact.getInfo(this, info);
 	asBooleanJBool.getInfo(this, info);
 	asBooleanLong.getInfo(this, info);

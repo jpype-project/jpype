@@ -68,9 +68,8 @@ JPMatch::Type JPStringType::findJavaConversion(JPMatch& match)
 	JP_TRACE_OUT; // GCOV_EXCL_LINE
 }
 
-void JPStringType::getConversionInfo(JPConversionInfo &info)
+void JPStringType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	JPContext* context = frame.getContext();
 	objectConversion->getInfo(this, info);
 	stringConversion->getInfo(this, info);

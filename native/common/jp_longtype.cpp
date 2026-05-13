@@ -122,9 +122,8 @@ JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPLongType::getConversionInfo(JPConversionInfo &info)
+void JPLongType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jlongConversion.getInfo(this, info);
 	longConversion.getInfo(this, info);
 	longNumberConversion.getInfo(this, info);

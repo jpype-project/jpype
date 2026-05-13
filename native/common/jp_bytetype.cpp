@@ -97,9 +97,8 @@ JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPByteType::getConversionInfo(JPConversionInfo &info)
+void JPByteType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jbyteConversion.getInfo(this, info);
 	byteConversion.getInfo(this, info);
 	byteNumberConversion.getInfo(this, info);

@@ -139,9 +139,8 @@ JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPDoubleType::getConversionInfo(JPConversionInfo &info)
+void JPDoubleType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	asJDoubleConversion.getInfo(this, info);
 	asDoubleExactConversion.getInfo(this, info);
 	asDoubleLongConversion.getInfo(this, info);

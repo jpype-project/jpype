@@ -62,7 +62,7 @@ public:
 	JPValue invokeConstructor(JPJavaFrame& frame, JPPyObjectVector& vargs);
 	bool matches(JPJavaFrame& frame, JPPyObjectVector& args, bool instance);
 
-	string matchReport(JPPyObjectVector& sequence);
+	string matchReport(JPJavaFrame& frame, JPPyObjectVector& sequence);
 
 	const JPMethodList& getMethodOverloads()
 	{

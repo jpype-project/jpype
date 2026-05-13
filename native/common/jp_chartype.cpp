@@ -140,9 +140,8 @@ JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPCharType::getConversionInfo(JPConversionInfo &info)
+void JPCharType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	asJCharConversion.getInfo(this, info);
 	asCharConversion.getInfo(this, info);
 	PyList_Append(info.ret, (PyObject*) JPContext_global->_char->getHost());

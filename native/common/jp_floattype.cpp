@@ -126,9 +126,8 @@ JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPFloatType::getConversionInfo(JPConversionInfo &info)
+void JPFloatType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	asJFloatConversion.getInfo(this, info);
 	asFloatLongConversion.getInfo(this, info);
 	asFloatConversion.getInfo(this, info);

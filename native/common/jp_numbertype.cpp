@@ -46,10 +46,9 @@ JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
 	JP_TRACE_OUT;
 }
 
-void JPNumberType::getConversionInfo(JPConversionInfo &info)
+void JPNumberType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPNumberType::getConversionInfo");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	javaNumberAnyConversion->getInfo(this, info);
 	boxLongConversion->getInfo(this, info);
 	boxDoubleConversion->getInfo(this, info);

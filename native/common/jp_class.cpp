@@ -413,10 +413,9 @@ PyObject* JPClass::getHints()
 	return m_Hints.get();
 }
 
-void JPClass::getConversionInfo(JPConversionInfo &info)
+void JPClass::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPClass::getConversionInfo");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	objectConversion->getInfo(this, info);
 	hintsConversion->getInfo(this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());

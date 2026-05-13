@@ -45,9 +45,8 @@ JPMatch::Type JPClassType::findJavaConversion(JPMatch& match)
 	JP_TRACE_OUT;
 }
 
-void JPClassType::getConversionInfo(JPConversionInfo &info)
+void JPClassType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	nullConversion->getInfo(this, info);
 	objectConversion->getInfo(this, info);
 	classConversion->getInfo(this, info);

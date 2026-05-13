@@ -50,10 +50,9 @@ JPMatch::Type JPObjectType::findJavaConversion(JPMatch& match)
 	JP_TRACE_OUT;
 }
 
-void JPObjectType::getConversionInfo(JPConversionInfo &info)
+void JPObjectType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPObjectType::getConversionInfo");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	nullConversion->getInfo(this, info);
 	objectConversion->getInfo(this, info);
 	stringConversion->getInfo(this, info);

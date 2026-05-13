@@ -122,9 +122,8 @@ JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPIntType::getConversionInfo(JPConversionInfo &info)
+void JPIntType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jintConversion.getInfo(this, info);
 	intConversion.getInfo(this, info);
 	intNumberConversion.getInfo(this, info);

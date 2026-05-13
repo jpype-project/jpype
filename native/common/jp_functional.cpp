@@ -138,10 +138,10 @@ JPMatch::Type JPFunctional::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
-void JPFunctional::getConversionInfo(JPConversionInfo &info)
+void JPFunctional::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPJPFunctional::getConversionInfo");
-	JPClass::getConversionInfo(info);
+	JPClass::getConversionInfo(frame, info);
 	functional_conversion.getInfo(this, info);
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }

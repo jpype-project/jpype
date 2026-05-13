@@ -119,9 +119,8 @@ JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPShortType::getConversionInfo(JPConversionInfo &info)
+void JPShortType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jshortConversion.getInfo(this, info);
 	shortConversion.getInfo(this, info);
 	shortNumberConversion.getInfo(this, info);
