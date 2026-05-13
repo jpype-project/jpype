@@ -270,20 +270,18 @@ void JPFloatType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject
 	frame.SetFloatArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-void JPFloatType::getView(JPArrayView& view)
+void JPFloatType::getView(JPJavaFrame& frame, JPArrayView& view)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	view.m_Memory = (void*) frame.GetFloatArrayElements(
 			(jfloatArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "f";
 	view.m_Buffer.itemsize = sizeof (jfloat);
 }
 
-void JPFloatType::releaseView(JPArrayView& view)
+void JPFloatType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseFloatArrayElements((jfloatArray) view.m_Array->getJava(),
 				(jfloat*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

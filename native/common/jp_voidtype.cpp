@@ -114,11 +114,11 @@ jarray JPVoidType::newArrayOf(JPJavaFrame& frame, jsize)
 	JP_RAISE(PyExc_SystemError, "void cannot be the type of an array.");
 }
 
-void JPVoidType::getView(JPArrayView& view)
+void JPVoidType::getView(JPJavaFrame& frame, JPArrayView& view)
 {
 }
 
-void JPVoidType::releaseView(JPArrayView& view)
+void JPVoidType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 }
 

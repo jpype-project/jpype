@@ -313,20 +313,18 @@ void JPBooleanType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObje
 	frame.SetBooleanArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-void JPBooleanType::getView(JPArrayView& view)
+void JPBooleanType::getView(JPJavaFrame& frame, JPArrayView& view)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	view.m_Memory = (void*) frame.GetBooleanArrayElements(
 			(jbooleanArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "?";
 	view.m_Buffer.itemsize = sizeof (jboolean);
 }
 
-void JPBooleanType::releaseView(JPArrayView& view)
+void JPBooleanType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseBooleanArrayElements((jbooleanArray) view.m_Array->getJava(),
 				(jboolean*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

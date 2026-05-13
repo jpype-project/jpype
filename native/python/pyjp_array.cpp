@@ -249,7 +249,7 @@ static void PyJPArray_releaseBuffer(PyJPArray *self, Py_buffer *view)
 	if (context->isRunning())
 	{
 		JPJavaFrame frame = JPJavaFrame::outer();
-		if (self->m_View == nullptr || !self->m_View->unreference())
+		if (self->m_View == nullptr || !self->m_View->unreference(frame))
 			return;
 	}
 	delete self->m_View;

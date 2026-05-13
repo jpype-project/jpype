@@ -246,20 +246,18 @@ void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 	frame.SetByteArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-void JPByteType::getView(JPArrayView& view)
+void JPByteType::getView(JPJavaFrame& frame, JPArrayView& view)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	view.m_Memory = (void*) frame.GetByteArrayElements(
 			(jbyteArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "b";
 	view.m_Buffer.itemsize = sizeof (jbyte);
 }
 
-void JPByteType::releaseView(JPArrayView& view)
+void JPByteType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseByteArrayElements((jbyteArray) view.m_Array->getJava(),
 				(jbyte*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

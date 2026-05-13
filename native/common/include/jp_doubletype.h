@@ -75,8 +75,8 @@ public:
 	}
 	// GCOV_EXCL_STOP
 
-	void getView(JPArrayView& view) override;
-	void releaseView(JPArrayView& view) override;
+	void getView(JPJavaFrame& frame, JPArrayView& view) override;
+	void releaseView(JPJavaFrame& frame, JPArrayView& view) override;
 	const char* getBufferFormat() override;
 	Py_ssize_t getItemSize() override;
 	void copyElements(JPJavaFrame &frame,

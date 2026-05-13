@@ -148,7 +148,7 @@ JPArrayView::JPArrayView(JPArray* array)
 	m_Buffer.ndim = 1;
 	m_Buffer.suboffsets = nullptr;
 	auto *type = dynamic_cast<JPPrimitiveType*>( array->getClass()->getComponentType());
-	type->getView(*this);
+	type->getView(frame, *this);
 	m_Strides[0] = m_Buffer.itemsize * array->m_Step;
 	m_Shape[0] = array->m_Length;
 	m_Buffer.buf = (char*) m_Memory + m_Buffer.itemsize * array->m_Start;
@@ -241,11 +241,11 @@ void JPArrayView::reference()
 	m_RefCount++;
 }
 
-bool JPArrayView::unreference()
+bool JPArrayView::unreference(JPJavaFrame& frame)
 {
 	m_RefCount--;
 	auto *type = dynamic_cast<JPPrimitiveType*>( m_Array->getClass()->getComponentType());
 	if (m_RefCount == 0 && !m_Owned)
-		type->releaseView(*this);
+		type->releaseView(frame, *this);
 	return m_RefCount == 0;
 }

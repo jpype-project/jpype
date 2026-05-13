@@ -284,20 +284,18 @@ void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObjec
 	frame.SetDoubleArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-void JPDoubleType::getView(JPArrayView& view)
+void JPDoubleType::getView(JPJavaFrame& frame, JPArrayView& view)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	view.m_Memory = (void*) frame.GetDoubleArrayElements(
 			(jdoubleArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "d";
 	view.m_Buffer.itemsize = sizeof (jdouble);
 }
 
-void JPDoubleType::releaseView(JPArrayView& view)
+void JPDoubleType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseDoubleArrayElements((jdoubleArray) view.m_Array->getJava(),
 				(jdouble*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

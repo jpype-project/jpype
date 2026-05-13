@@ -249,20 +249,18 @@ void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 	frame.SetCharArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-void JPCharType::getView(JPArrayView& view)
+void JPCharType::getView(JPJavaFrame& frame, JPArrayView& view)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	view.m_Memory = (void*) frame.GetCharArrayElements(
 			(jcharArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "H";
 	view.m_Buffer.itemsize = sizeof (jchar);
 }
 
-void JPCharType::releaseView(JPArrayView& view)
+void JPCharType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseCharArrayElements((jcharArray) view.m_Array->getJava(),
 				(jchar*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)
