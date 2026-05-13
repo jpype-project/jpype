@@ -74,7 +74,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 			JP_RAISE(PyExc_TypeError, "Class must be array type");
 		if (arrayClass2 != arrayClass)
 			JP_RAISE(PyExc_TypeError, "Array class mismatch");
-		((PyJPArray*) self)->m_Array = new JPArray(*value);
+		((PyJPArray*) self)->m_Array = new JPArray(frame, *value);
 		PyJPValue_assignJavaSlot(frame, self, *value);
 		return 0;
 	}
@@ -86,8 +86,8 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		if (length < 0 || length > 2147483647)
 			JP_RAISE(PyExc_ValueError, "Array size invalid");
 		JPValue newArray = arrayClass->newArray(frame, (int) length);
-		((PyJPArray*) self)->m_Array = new JPArray(newArray);
-		((PyJPArray*) self)->m_Array->setRange(0, (jsize) length, 1, v);
+		((PyJPArray*) self)->m_Array = new JPArray(frame, newArray);
+		((PyJPArray*) self)->m_Array->setRange(frame, 0, (jsize) length, 1, v);
 		PyJPValue_assignJavaSlot(frame, self, newArray);
 		return 0;
 	}
@@ -99,7 +99,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		if (length < 0 || length > 2147483647)
 			JP_RAISE(PyExc_ValueError, "Array size invalid");
 		JPValue newArray = arrayClass->newArray(frame, (int) length);
-		((PyJPArray*) self)->m_Array = new JPArray(newArray);
+		((PyJPArray*) self)->m_Array = new JPArray(frame, newArray);
 		PyJPValue_assignJavaSlot(frame, self, newArray);
 		return 0;
 	}
@@ -151,7 +151,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 		Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
 		if (i == -1 && PyErr_Occurred())
 			return nullptr;  // GCOVR_EXCL_LINE
-		return self->m_Array->getItem((jsize) i).keep();
+		return self->m_Array->getItem(frame, (jsize) i).keep();
 	}
 
 	if (PySlice_Check(item))
@@ -216,7 +216,7 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 		Py_ssize_t i = PyNumber_AsSsize_t(item, PyExc_IndexError);
 		if (i == -1 && PyErr_Occurred())
 			return -1;  // GCOVR_EXCL_LINE
-		self->m_Array->setItem((jsize) i, value);
+		self->m_Array->setItem(frame, (jsize) i, value);
 		return 0;
 	}
 
@@ -233,7 +233,7 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
         if (slicelength <= 0)
 			return 0;
 
-		self->m_Array->setRange((jsize) start, (jsize) slicelength, (jsize) step,  value);
+		self->m_Array->setRange(frame, (jsize) start, (jsize) slicelength, (jsize) step,  value);
 		return 0;
 	}
 	PyErr_Format(PyExc_TypeError,
@@ -304,7 +304,7 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 	try
 	{
 		if (self->m_View == nullptr)
-			self->m_View = new JPArrayView(self->m_Array, result);
+			self->m_View = new JPArrayView(frame, self->m_Array, result);
 		JP_PY_CHECK();
 		self->m_View->reference();
 		*view = self->m_View->m_Buffer;
@@ -356,7 +356,7 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 
 		if (self->m_View == nullptr)
 		{
-			self->m_View = new JPArrayView(self->m_Array);
+			self->m_View = new JPArrayView(frame, self->m_Array);
 		}
 		self->m_View->reference();
 		*view = self->m_View->m_Buffer;
@@ -502,7 +502,7 @@ JPPyObject PyJPArray_create(JPJavaFrame &frame, PyTypeObject *type, const JPValu
 {
 	PyObject *obj = type->tp_alloc(type, 0);
 	JP_PY_CHECK();
-	((PyJPArray*) obj)->m_Array = new JPArray(value);
+	((PyJPArray*) obj)->m_Array = new JPArray(frame, value);
 	PyJPValue_assignJavaSlot(frame, obj, value);
 	return JPPyObject::claim(obj);
 }
