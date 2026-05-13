@@ -72,11 +72,11 @@ public:
 		return JPMatch::_implicit; // stop the search
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = JPContext_global;
 		PyList_Append(info.exact, (PyObject*) context->_byte->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 
 } jbyteConversion;
@@ -99,9 +99,9 @@ JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)
 
 void JPByteType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	jbyteConversion.getInfo(this, info);
-	byteConversion.getInfo(this, info);
-	byteNumberConversion.getInfo(this, info);
+	jbyteConversion.getInfo(frame, this, info);
+	byteConversion.getInfo(frame, this, info);
+	byteNumberConversion.getInfo(frame, this, info);
 	PyList_Append(info.ret, (PyObject*) JPContext_global->_int->getHost());
 }
 

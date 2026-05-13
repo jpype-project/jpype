@@ -96,7 +96,7 @@ public:
 		return JPMatch::_implicit; // stop search
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = JPContext_global;
 		PyList_Append(info.exact, (PyObject*) context->_float->getHost());
@@ -105,7 +105,7 @@ public:
 		PyList_Append(info.implicit, (PyObject*) context->_short->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_int->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_long->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 
 } asJFloatConversion;
@@ -128,9 +128,9 @@ JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
 
 void JPFloatType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	asJFloatConversion.getInfo(this, info);
-	asFloatLongConversion.getInfo(this, info);
-	asFloatConversion.getInfo(this, info);
+	asJFloatConversion.getInfo(frame, this, info);
+	asFloatLongConversion.getInfo(frame, this, info);
+	asFloatConversion.getInfo(frame, this, info);
 	PyList_Append(info.ret, (PyObject*) JPContext_global->_float->getHost());
 }
 

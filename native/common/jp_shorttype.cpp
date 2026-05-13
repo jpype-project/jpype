@@ -91,13 +91,13 @@ public:
 		return JPMatch::_implicit;  //short cut further checks
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = JPContext_global;
 		PyList_Append(info.exact, (PyObject*) context->_short->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 
 
@@ -121,9 +121,9 @@ JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
 
 void JPShortType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	jshortConversion.getInfo(this, info);
-	shortConversion.getInfo(this, info);
-	shortNumberConversion.getInfo(this, info);
+	jshortConversion.getInfo(frame, this, info);
+	shortConversion.getInfo(frame, this, info);
+	shortNumberConversion.getInfo(frame, this, info);
 	PyList_Append(info.ret, (PyObject*) JPContext_global->_short->getHost());
 }
 

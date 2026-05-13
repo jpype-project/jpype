@@ -96,7 +96,7 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "Callable"));
@@ -142,6 +142,6 @@ void JPFunctional::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPJPFunctional::getConversionInfo");
 	JPClass::getConversionInfo(frame, info);
-	functional_conversion.getInfo(this, info);
+	functional_conversion.getInfo(frame, this, info);
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }

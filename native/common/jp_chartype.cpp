@@ -82,7 +82,7 @@ public:
 		JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.implicit, (PyObject*) & PyUnicode_Type);
 	}
@@ -116,11 +116,11 @@ public:
 		return JPMatch::_implicit; // stop the search
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = JPContext_global;
 		PyList_Append(info.exact, (PyObject*) context->_char->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 
 } asJCharConversion;
@@ -142,8 +142,8 @@ JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
 
 void JPCharType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	asJCharConversion.getInfo(this, info);
-	asCharConversion.getInfo(this, info);
+	asJCharConversion.getInfo(frame, this, info);
+	asCharConversion.getInfo(frame, this, info);
 	PyList_Append(info.ret, (PyObject*) JPContext_global->_char->getHost());
 }
 

@@ -49,10 +49,10 @@ JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
 void JPNumberType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPNumberType::getConversionInfo");
-	javaNumberAnyConversion->getInfo(this, info);
-	boxLongConversion->getInfo(this, info);
-	boxDoubleConversion->getInfo(this, info);
-	hintsConversion->getInfo(this, info);
+	javaNumberAnyConversion->getInfo(frame, this, info);
+	boxLongConversion->getInfo(frame, this, info);
+	boxDoubleConversion->getInfo(frame, this, info);
+	hintsConversion->getInfo(frame, this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 	JP_TRACE_OUT;
 }

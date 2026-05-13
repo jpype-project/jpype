@@ -93,7 +93,7 @@ public:
 		return JPMatch::_implicit;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = JPContext_global;
 		PyList_Append(info.exact, (PyObject*) context->_long->getHost());
@@ -101,7 +101,7 @@ public:
 		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_short->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_int->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 } jlongConversion;
 
@@ -124,9 +124,9 @@ JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
 
 void JPLongType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	jlongConversion.getInfo(this, info);
-	longConversion.getInfo(this, info);
-	longNumberConversion.getInfo(this, info);
+	jlongConversion.getInfo(frame, this, info);
+	longConversion.getInfo(frame, this, info);
+	longNumberConversion.getInfo(frame, this, info);
 	PyList_Append(info.ret, (PyObject*) JPContext_global->_long->getHost());
 }
 

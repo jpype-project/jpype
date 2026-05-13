@@ -108,7 +108,7 @@ public:
 
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = JPContext_global;
 		PyList_Append(info.exact, (PyObject*) context->_double->getHost());
@@ -118,7 +118,7 @@ public:
 		PyList_Append(info.implicit, (PyObject*) context->_int->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_long->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_float->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 } asJDoubleConversion;
 
@@ -141,10 +141,10 @@ JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
 
 void JPDoubleType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	asJDoubleConversion.getInfo(this, info);
-	asDoubleExactConversion.getInfo(this, info);
-	asDoubleLongConversion.getInfo(this, info);
-	asDoubleConversion.getInfo(this, info);
+	asJDoubleConversion.getInfo(frame, this, info);
+	asDoubleExactConversion.getInfo(frame, this, info);
+	asDoubleLongConversion.getInfo(frame, this, info);
+	asDoubleConversion.getInfo(frame, this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }
 

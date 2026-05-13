@@ -53,15 +53,15 @@ JPMatch::Type JPObjectType::findJavaConversion(JPMatch& match)
 void JPObjectType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPObjectType::getConversionInfo");
-	nullConversion->getInfo(this, info);
-	objectConversion->getInfo(this, info);
-	stringConversion->getInfo(this, info);
-	boxBooleanConversion->getInfo(this, info);
-	boxLongConversion->getInfo(this, info);
-	boxDoubleConversion->getInfo(this, info);
-	classConversion->getInfo(this, info);
-	proxyConversion->getInfo(this, info);
-	hintsConversion->getInfo(this, info);
+	nullConversion->getInfo(frame, this, info);
+	objectConversion->getInfo(frame, this, info);
+	stringConversion->getInfo(frame, this, info);
+	boxBooleanConversion->getInfo(frame, this, info);
+	boxLongConversion->getInfo(frame, this, info);
+	boxDoubleConversion->getInfo(frame, this, info);
+	classConversion->getInfo(frame, this, info);
+	proxyConversion->getInfo(frame, this, info);
+	hintsConversion->getInfo(frame, this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 	JP_TRACE_OUT;
 }

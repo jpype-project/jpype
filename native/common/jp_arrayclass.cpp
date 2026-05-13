@@ -53,11 +53,11 @@ JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
 
 void JPArrayClass::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	objectConversion->getInfo(this, info);
-	charArrayConversion->getInfo(this, info);
-	byteArrayConversion->getInfo(this, info);
-	sequenceConversion->getInfo(this, info);
-	hintsConversion->getInfo(this, info);
+	objectConversion->getInfo(frame, this, info);
+	charArrayConversion->getInfo(frame, this, info);
+	byteArrayConversion->getInfo(frame, this, info);
+	sequenceConversion->getInfo(frame, this, info);
+	hintsConversion->getInfo(frame, this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }
 

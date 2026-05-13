@@ -63,7 +63,7 @@ public:
         return match.type = JPMatch::_none;
     }
 
-    void getInfo(JPClass * cls, JPConversionInfo &info) override
+    void getInfo(JPJavaFrame& frame, JPClass * cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.exact, (PyObject*) & PyBool_Type);
 	}
@@ -99,11 +99,11 @@ public:
 		return JPMatch::_implicit; // search no further.
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = JPContext_global;
 		PyList_Append(info.exact, (PyObject*) context->_boolean->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 
 } asBooleanJBool;
@@ -121,7 +121,7 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsIndex"));
@@ -142,7 +142,7 @@ public:
 		return match.type = JPMatch::_explicit;
 	}
 
-	void getInfo(JPClass * cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass * cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsFloat"));
@@ -170,10 +170,10 @@ JPMatch::Type JPBooleanType::findJavaConversion(JPMatch &match)
 
 void JPBooleanType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	asBooleanExact.getInfo(this, info);
-	asBooleanJBool.getInfo(this, info);
-	asBooleanLong.getInfo(this, info);
-	asBooleanNumber.getInfo(this, info);
+	asBooleanExact.getInfo(frame, this, info);
+	asBooleanJBool.getInfo(frame, this, info);
+	asBooleanLong.getInfo(frame, this, info);
+	asBooleanNumber.getInfo(frame, this, info);
 	PyList_Append(info.ret, (PyObject*) & PyBool_Type);
 }
 

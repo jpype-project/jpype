@@ -47,9 +47,9 @@ JPMatch::Type JPClassType::findJavaConversion(JPMatch& match)
 
 void JPClassType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	nullConversion->getInfo(this, info);
-	objectConversion->getInfo(this, info);
-	classConversion->getInfo(this, info);
-	hintsConversion->getInfo(this, info);
+	nullConversion->getInfo(frame, this, info);
+	objectConversion->getInfo(frame, this, info);
+	classConversion->getInfo(frame, this, info);
+	hintsConversion->getInfo(frame, this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }
