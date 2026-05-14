@@ -491,6 +491,7 @@ JNIEnv* JPContext::getEnv()
 	JNIEnv* env = nullptr;
 	if (m_JavaVM == nullptr)
 	{
+		assertJVMRunning(this, JP_STACKINFO());
 		JP_RAISE(PyExc_RuntimeError, "JVM is null");
 	}
 
@@ -505,6 +506,7 @@ JNIEnv* JPContext::getEnv()
 		res = m_JavaVM->AttachCurrentThreadAsDaemon((void**) &env, nullptr);
 		if (res != JNI_OK)
 		{
+			assertJVMRunning(this, JP_STACKINFO());
 			JP_RAISE(PyExc_RuntimeError, "Unable to attach to local thread");
 		}
 	}

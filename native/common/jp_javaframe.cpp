@@ -28,11 +28,7 @@
 static void jpype_frame_check(int popped)
 {
 	if (popped)
-	{
-		//int *i=0;
-		//*i=0;
 		JP_RAISE(PyExc_SystemError, "Local reference outside of frame");
-	}
 }
 #define JP_FRAME_CHECK() jpype_frame_check(m_Popped)
 #else
