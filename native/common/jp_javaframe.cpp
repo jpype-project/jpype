@@ -28,7 +28,11 @@
 static void jpype_frame_check(int popped)
 {
 	if (popped)
+	{
+		//int *i=0;
+		//*i=0;
 		JP_RAISE(PyExc_SystemError, "Local reference outside of frame");
+	}
 }
 #define JP_FRAME_CHECK() jpype_frame_check(m_Popped)
 #else
@@ -36,25 +40,22 @@ static void jpype_frame_check(int popped)
 #endif
 
 JPJavaFrame::JPJavaFrame(JNIEnv* p_env, int size, bool outer)
-: m_Env(p_env), m_Outer(outer)
+: m_Env(p_env), m_Popped(false), m_Outer(outer)
 {
 	JPContext* context = JPContext_global;
 
 	if (p_env == nullptr)
 	{
+		m_Env = context->getEnv();
 		if (outer)
 		{
 #ifdef JP_INSTRUMENTATION
 			PyJPModuleFault_throw(compile_hash("PyJPModule_getContext"));
 #endif
 			assertJVMRunning((JPContext*)context, JP_STACKINFO());
+			m_Env->PushLocalFrame(size);
 		}
-		m_Env = context->getEnv();
-		m_Env->PushLocalFrame(size);
-		m_Popped = false;
 	}
-	else
-		m_Popped = true;
 
 	// Create a memory management frame to live in
 	JP_TRACE_JAVA("JavaFrame", (jobject) - 1);
@@ -90,7 +91,7 @@ jobject JPJavaFrame::keep(jobject obj)
 JPJavaFrame::~JPJavaFrame()
 {
 	// Check if we have already closed the frame.
-	if (!m_Popped)
+	if (!m_Popped && m_Outer)
 	{
 		JP_TRACE_JAVA("~JavaFrame", (jobject) - 2);
 		m_Env->PopLocalFrame(nullptr);
