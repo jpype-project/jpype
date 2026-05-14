@@ -37,6 +37,7 @@ import org.jpype.pkg.JPypePackageManager;
 import org.jpype.ref.JPypeReferenceQueue;
 import java.util.logging.Logger;
 import org.jpype.proxy.JPypeProxyType;
+import org.jpype.internal.JPypeStringManager;
 
 /**
  * Context for JPype.
@@ -531,10 +532,10 @@ public class JPypeContext
    * @param cls
    * @return
    */
-  public static String getFunctional(Class cls)
+  public static long getFunctional(Class cls)
   {
     Method m = JPypeUtilities.getFunctionalInterfaceMethod(cls);
-    return m != null ? m.getName() : null;
+    return m != null ? JPypeStringManager.get(m.getName()) : 0;
   }
 
   /**

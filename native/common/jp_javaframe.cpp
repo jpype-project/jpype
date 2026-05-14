@@ -1200,12 +1200,12 @@ jobject JPJavaFrame::callMethod(jobject method, jobject obj, jobject args)
 	JP_TRACE_OUT;
 }
 
-string JPJavaFrame::getFunctional(jclass c)
+PyObject* JPJavaFrame::getFunctional(jclass c)
 {
 	JPContext* context = getContext();
 	jvalue v;
 	v.l = (jobject) c;
-	return toStringUTF8((jstring) CallStaticObjectMethodA(
+	return reinterpret_cast<PyObject*>(CallStaticLongMethodA(
 			context->m_ContextClass.get(),
 			context->m_Context_GetFunctionalID, &v));
 }

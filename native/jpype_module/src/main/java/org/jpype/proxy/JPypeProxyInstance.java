@@ -66,7 +66,7 @@ public class JPypeProxyInstance implements InvocationHandler
    * @param bad is the object indicating a missing implementation.
    * @return the result of the method invocation.
    */
-  private static native Object hostInvoke(String name, long pyObject,
+  private static native Object hostInvoke(long name, long pyObject,
           long returnType, long[] argsTypes, Object[] args, Object bad);
 
 }

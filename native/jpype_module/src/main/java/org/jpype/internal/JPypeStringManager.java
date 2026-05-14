@@ -6,5 +6,5 @@ package org.jpype.internal;
  */
 public class JPypeStringManager
 {
-  public native long get(String name);
+  public native static long get(String name);
 }

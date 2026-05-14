@@ -317,7 +317,7 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	// Required before launch
 	m_Context_GetFunctionalID = frame.GetStaticMethodID(contextClass,
 			"getFunctional",
-			"(Ljava/lang/Class;)Ljava/lang/String;");
+			"(Ljava/lang/Class;)J");
 
 	m_JavaContext = JPObjectRef(frame, frame.CallStaticObjectMethodA(contextClass, startMethod, val));
 
