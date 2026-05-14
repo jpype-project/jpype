@@ -100,8 +100,8 @@ public class JPypeProxyInstance implements InvocationHandler
    * @param returnType is the return type of the method.
    * @param argsTypes is the types of the method parameters.
    * @param args is the arguments passed to the method.
-   * @param bad is the object indicating a missing implementation.
-   * @return the result of the method invocation.
+   * @param len is the length of the parameters passed.
+   * @return the result of the method invocation or argsTypes on a missing impl.
    */
   private static native Object hostInvoke(long name, long pyObject,
           long returnType, long[] argsTypes, Object[] args, int len);
