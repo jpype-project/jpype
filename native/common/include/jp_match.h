@@ -83,6 +83,8 @@ public:
 	bool m_IsVarIndirect;
 	char m_Offset;
 	char m_Skip;
+	long m_Hash{-1};
+	JPMethod* m_Overload{nullptr};
 } ;
 
 #endif /* JP_MATCH_H */
