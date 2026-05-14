@@ -37,8 +37,8 @@ public:
 		m_Class = JPClassRef(frame, o);
 	}
 
-	virtual void getView(JPArrayView& view) = 0;
-	virtual void releaseView(JPArrayView& view) = 0;
+	virtual void getView(JPJavaFrame& frame, JPArrayView& view) = 0;
+	virtual void releaseView(JPJavaFrame& frame, JPArrayView& view) = 0;
 	virtual const char* getBufferFormat() = 0;
 	virtual Py_ssize_t getItemSize() = 0;
 	virtual void copyElements(JPJavaFrame &frame,

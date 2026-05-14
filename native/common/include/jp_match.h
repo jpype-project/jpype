@@ -47,15 +47,22 @@ public:
 	jvalue convert();
 
 public:
-	JPMatch::Type type;
 	JPConversion *conversion;
 	JPJavaFrame *frame;
 	PyObject *object;
+	JPMatch::Type type;
 	JPValue *slot;
 	void *closure;
 } ;
 
-class JPMethodMatch
+class JPMethodCache
+{
+public:
+	jlong m_Hash{-1};
+	JPMethod* m_Overload{nullptr};
+} ;
+
+class JPMethodMatch : public JPMethodCache
 {
 public:
 

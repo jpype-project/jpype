@@ -1,3 +1,4 @@
+// --- file: python/pyjp_buffer.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -155,7 +156,7 @@ void PyJPBuffer_initType(PyObject * module)
 JPPyObject PyJPBuffer_create(JPJavaFrame &frame, PyTypeObject *type, const JPValue& value)
 {
 	JPPyObject obj = JPPyObject::call(type->tp_alloc(type, 0));
-	((PyJPBuffer*) obj.get())->m_Buffer = new JPBuffer(value);
+	((PyJPBuffer*) obj.get())->m_Buffer = new JPBuffer(frame, value);
 	PyJPValue_assignJavaSlot(frame, obj.get(), value);
 	return obj;
 }

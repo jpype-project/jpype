@@ -1,3 +1,4 @@
+// --- file: common/jp_inttype.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -93,14 +94,14 @@ public:
 		return JPMatch::_implicit;  //short cut further checks
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = JPContext_global;
 		PyList_Append(info.exact, (PyObject*) context->_int->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_short->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 
 } jintConversion;
@@ -121,12 +122,11 @@ JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPIntType::getConversionInfo(JPConversionInfo &info)
+void JPIntType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
-	jintConversion.getInfo(this, info);
-	intConversion.getInfo(this, info);
-	intNumberConversion.getInfo(this, info);
+	jintConversion.getInfo(frame, this, info);
+	intConversion.getInfo(frame, this, info);
+	intNumberConversion.getInfo(frame, this, info);
 	PyList_Append(info.ret, (PyObject*) JPContext_global->_int->getHost());
 }
 
@@ -271,9 +271,8 @@ void JPIntType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* 
 	frame.SetIntArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-void JPIntType::getView(JPArrayView& view)
+void JPIntType::getView(JPJavaFrame& frame, JPArrayView& view)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	view.m_IsCopy = false;
 	view.m_Memory = (void*) frame.GetIntArrayElements(
 			(jintArray) view.m_Array->getJava(), &view.m_IsCopy);
@@ -281,11 +280,10 @@ void JPIntType::getView(JPArrayView& view)
 	view.m_Buffer.itemsize = sizeof (jint);
 }
 
-void JPIntType::releaseView(JPArrayView& view)
+void JPIntType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseIntArrayElements((jintArray) view.m_Array->getJava(),
 				(jint*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

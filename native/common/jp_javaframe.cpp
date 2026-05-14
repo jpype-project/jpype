@@ -1,3 +1,4 @@
+// --- file: common/jp_javaframe.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -41,18 +42,18 @@ JPJavaFrame::JPJavaFrame(JNIEnv* p_env, int size, bool outer)
 
 	if (p_env == nullptr)
 	{
+		m_Env = context->getEnv();
 		if (outer)
 		{
 #ifdef JP_INSTRUMENTATION
 			PyJPModuleFault_throw(compile_hash("PyJPModule_getContext"));
 #endif
 			assertJVMRunning((JPContext*)context, JP_STACKINFO());
+			m_Env->PushLocalFrame(size);
 		}
-		m_Env = context->getEnv();
 	}
 
 	// Create a memory management frame to live in
-	m_Env->PushLocalFrame(size);
 	JP_TRACE_JAVA("JavaFrame", (jobject) - 1);
 }
 
@@ -86,7 +87,7 @@ jobject JPJavaFrame::keep(jobject obj)
 JPJavaFrame::~JPJavaFrame()
 {
 	// Check if we have already closed the frame.
-	if (!m_Popped)
+	if (!m_Popped && m_Outer)
 	{
 		JP_TRACE_JAVA("~JavaFrame", (jobject) - 2);
 		m_Env->PopLocalFrame(nullptr);
@@ -1196,29 +1197,29 @@ jobject JPJavaFrame::callMethod(jobject method, jobject obj, jobject args)
 	JP_TRACE_OUT;
 }
 
-string JPJavaFrame::getFunctional(jclass c)
+PyObject* JPJavaFrame::getFunctional(jclass c)
 {
 	JPContext* context = getContext();
 	jvalue v;
 	v.l = (jobject) c;
-	return toStringUTF8((jstring) CallStaticObjectMethodA(
+	return reinterpret_cast<PyObject*>(CallStaticLongMethodA(
 			context->m_ContextClass.get(),
 			context->m_Context_GetFunctionalID, &v));
 }
 
 JPClass *JPJavaFrame::findClass(jclass obj)
 {
-	return getContext()->getTypeManager()->findClass(obj);
+	return getContext()->getTypeManager()->findClass(*this, obj);
 }
 
 JPClass *JPJavaFrame::findClassByName(const string& name)
 {
-	return getContext()->getTypeManager()->findClassByName(name);
+	return getContext()->getTypeManager()->findClassByName(*this, name);
 }
 
 JPClass *JPJavaFrame::findClassForObject(jobject obj)
 {
-	return getContext()->getTypeManager()->findClassForObject(obj);
+	return getContext()->getTypeManager()->findClassForObject(*this, obj);
 }
 
 jint JPJavaFrame::compareTo(jobject obj, jobject obj2)

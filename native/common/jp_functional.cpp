@@ -1,3 +1,4 @@
+// --- file: common/jp_functional.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -95,7 +96,7 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "Callable"));
@@ -137,10 +138,10 @@ JPMatch::Type JPFunctional::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
-void JPFunctional::getConversionInfo(JPConversionInfo &info)
+void JPFunctional::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPJPFunctional::getConversionInfo");
-	JPClass::getConversionInfo(info);
-	functional_conversion.getInfo(this, info);
+	JPClass::getConversionInfo(frame, info);
+	functional_conversion.getInfo(frame, this, info);
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }

@@ -28,14 +28,14 @@ public:
 	~JPFunctional() override;
 
 	JPMatch::Type findJavaConversion(JPMatch &match) override;
-	void getConversionInfo(JPConversionInfo &info) override;
+	void getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info) override;
 
-	string getMethod()
+	PyObject* getMethod()
 	{
 		return m_Method;
 	}
 protected:
-	string  m_Method;
+	PyObject*  m_Method;
 } ;
 
 #endif /* JP_FUNCTIONAL_H */

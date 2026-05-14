@@ -1,3 +1,4 @@
+// --- file: common/jp_class.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -68,7 +69,7 @@ void JPClass::ensureMembers(JPJavaFrame& frame)
 {
 	JPContext* context = JPContext_global;
 	JPTypeManager* typeManager = context->getTypeManager();
-	typeManager->populateMembers(this);
+	typeManager->populateMembers(frame, this);
 }
 
 void JPClass::assignMembers(JPMethodDispatch* ctor,
@@ -412,12 +413,11 @@ PyObject* JPClass::getHints()
 	return m_Hints.get();
 }
 
-void JPClass::getConversionInfo(JPConversionInfo &info)
+void JPClass::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPClass::getConversionInfo");
-	JPJavaFrame frame = JPJavaFrame::outer();
-	objectConversion->getInfo(this, info);
-	hintsConversion->getInfo(this, info);
+	objectConversion->getInfo(frame, this, info);
+	hintsConversion->getInfo(frame, this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 	JP_TRACE_OUT;
 }
