@@ -66,7 +66,7 @@ JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool ca
 		// prove this is a perfect hash function.
 		m_Hash *= 0x10523C01;
 		PyTypeObject* type = Py_TYPE(arg);
-		m_Hash += (long)type;
+		m_Hash += (jlong)type;
 
 		// Specialized fast-check for functional types
 		if (type == &PyFunction_Type)
@@ -74,12 +74,12 @@ JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool ca
 			// A single pointer dereference is much faster than PyFunction_GetCode
 			// co_argcount is at a fixed offset in the code object.
 			PyObject* code = ((PyFunctionObject*)arg)->func_code;
-			m_Hash ^= (long)code; 
+			m_Hash ^= (jlong)code; 
 		}
 		else if (type == &PyMethod_Type)
 		{
 			PyObject* func = ((PyMethodObject*)arg)->im_func;
-			m_Hash ^= (long)func;
+			m_Hash ^= (jlong)func;
 		}
 	}
 }

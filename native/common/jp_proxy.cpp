@@ -346,7 +346,7 @@ JPProxyFunctional::JPProxyFunctional(PyJPProxy* inst, JPClassList& intf)
 JPProxyFunctional::~JPProxyFunctional()
 = default;
 
-extern PyObject *Py_JP_CALL;
+extern "C" PyObject *Py_JP_CALL;
 JPPyObject JPProxyFunctional::getCallable(PyObject* name, int& addSelf)
 {
 	if (name == m_Functional->getMethod())
