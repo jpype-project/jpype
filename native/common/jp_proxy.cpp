@@ -46,7 +46,8 @@ JPPyObject getArgs(JPJavaFrame& frame, jlongArray parameterTypePtrs,
 		if (type == nullptr)
 			type = reinterpret_cast<JPClass*> (types[i]);
 		JPValue val = type->getValueFromObject(frame, JPValue(type, obj));
-		PyTuple_SetItem(pyargs.get(), i+extra, type->convertToPythonObject(frame, val, false).keep());
+		// We know the exact type here so we can use cast
+		PyTuple_SetItem(pyargs.get(), i+extra, type->convertToPythonObject(frame, val, true).keep());
 		frame.DeleteLocalRef(obj);
 	}
 	return pyargs;

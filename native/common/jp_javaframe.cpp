@@ -36,7 +36,7 @@ static void jpype_frame_check(int popped)
 #endif
 
 JPJavaFrame::JPJavaFrame(JNIEnv* p_env, int size, bool outer)
-: m_Env(p_env), m_Popped(false), m_Outer(outer)
+: m_Env(p_env), m_Outer(outer)
 {
 	JPContext* context = JPContext_global;
 
@@ -50,10 +50,13 @@ JPJavaFrame::JPJavaFrame(JNIEnv* p_env, int size, bool outer)
 			assertJVMRunning((JPContext*)context, JP_STACKINFO());
 		}
 		m_Env = context->getEnv();
+		m_Env->PushLocalFrame(size);
+		m_Popped = false;
 	}
+	else
+		m_Popped = true;
 
 	// Create a memory management frame to live in
-	m_Env->PushLocalFrame(size);
 	JP_TRACE_JAVA("JavaFrame", (jobject) - 1);
 }
 
