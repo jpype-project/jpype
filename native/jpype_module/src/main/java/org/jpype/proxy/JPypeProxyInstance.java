@@ -5,14 +5,15 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import org.jpype.JPypeContext;
+import org.jpype.manager.TypeManager;
 
 public class JPypeProxyInstance implements InvocationHandler
 {
 
+  static final TypeManager manager = JPypeContext.getInstance().getTypeManager();
   private final JPypeProxyType type;
   private final long instance;
-  public static Object missing = new Object();
-
+  
   public JPypeProxyInstance(JPypeProxyType type, long instance)
   {
     this.type = type;
@@ -28,11 +29,22 @@ public class JPypeProxyInstance implements InvocationHandler
 
     JPypeMethodDescriptor md = type.getMethodDescriptor(method);
 
+    // Set up to transfer all the types on the downcall
+    int sz = args.length;
+    long[] scratch = get(sz);
+    for (int i = 0; i < sz; ++i)
+    {
+      long cls = manager.findClassForObject(args[i]);
+      if (cls == 0L)
+        cls = md.parameterTypes[i];
+      scratch[i] = cls;
+    }
+
     // Resolve method parameter and return types
     // The type resolution logic remains, but uses the shared context
-    Object result = hostInvoke(md.name, instance, md.returnType, md.parameterTypes, args, missing);
+    Object result = hostInvoke(md.name, instance, md.returnType, scratch, args, sz);
 
-    if (result != missing)
+    if (result != scratch)
       return result;
 
     // FIXME in Java 16 they made it possible to call Default, once we abandon 9 we can safely run it.
@@ -55,6 +67,26 @@ public class JPypeProxyInstance implements InvocationHandler
     return 0L;
   }
 
+  private static final int INITIAL_SIZE = 16;
+
+  private static final ThreadLocal<long[]> CACHE = ThreadLocal.withInitial(() -> new long[INITIAL_SIZE]);
+
+  /**
+   * Ensures the current thread's cache is at least 'requiredSize'. Returns the
+   * (possibly new) array.
+   */
+  public static long[] get(int requiredSize)
+  {
+    long[] current = CACHE.get();
+    if (current.length < requiredSize)
+    {
+      long[] next = new long[requiredSize];
+      CACHE.set(next);
+      return next;
+    }
+    return current;
+  }
+
   /**
    * Native method to invoke a method on the Python object.
    *
@@ -67,6 +99,6 @@ public class JPypeProxyInstance implements InvocationHandler
    * @return the result of the method invocation.
    */
   private static native Object hostInvoke(long name, long pyObject,
-          long returnType, long[] argsTypes, Object[] args, Object bad);
+          long returnType, long[] argsTypes, Object[] args, int len);
 
 }

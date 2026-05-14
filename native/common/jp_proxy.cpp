@@ -24,10 +24,9 @@
 #include "jp_functional.h"
 
 JPPyObject getArgs(JPJavaFrame& frame, jlongArray parameterTypePtrs,
-		jobjectArray args, PyObject* self, int addSelf)
+		jobjectArray args, PyObject* self, int addSelf, jsize argLen)
 {
 	JP_TRACE_IN("JProxy::getArgs");
-	jsize argLen = frame.GetArrayLength(parameterTypePtrs);
 	jsize extra = addSelf?1:0;
 	JPPyObject pyargs = JPPyObject::call(PyTuple_New(argLen+extra));
 	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, parameterTypePtrs,
@@ -42,9 +41,7 @@ JPPyObject getArgs(JPJavaFrame& frame, jlongArray parameterTypePtrs,
 	for (jsize i = 0; i < argLen; i++)
 	{
 		jobject obj = frame.GetObjectArrayElement(args, i);
-		JPClass* type = frame.findClassForObject(obj);
-		if (type == nullptr)
-			type = reinterpret_cast<JPClass*> (types[i]);
+		JPClass* type = reinterpret_cast<JPClass*> (types[i]);
 		JPValue val = type->getValueFromObject(frame, JPValue(type, obj));
 		// We know the exact type here so we can use cast
 		PyTuple_SetItem(pyargs.get(), i+extra, type->convertToPythonObject(frame, val, true).keep());
@@ -96,12 +93,12 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyType_getDefa
 
 extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyInstance_hostInvoke(
 		JNIEnv *env, jclass clazz,
-		long cname,
+		jlong cname,
 		jlong hostObj,
 		jlong returnTypePtr,
 		jlongArray parameterTypePtrs,
 		jobjectArray args,
-		jobject missing)
+		jsize sz)
 {
 	JPJavaFrame frame = JPJavaFrame::external(env);
 
@@ -131,7 +128,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyInstance_hos
 
 			// If method can't be called, throw an exception
 			if (callable.isNull() || callable.get() == Py_None)
-				return missing;
+				return parameterTypePtrs;
 
 			// Find the return type
 			auto* returnClass = (JPClass*) returnTypePtr;
@@ -139,7 +136,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyInstance_hos
 
 			// convert the arguments into a python list
 			JP_TRACE("Convert arguments");
-			JPPyObject pyargs = getArgs(frame, parameterTypePtrs, args, proxy->m_Instance->m_Target, addSelf);
+			JPPyObject pyargs = getArgs(frame, parameterTypePtrs, args, proxy->m_Instance->m_Target, addSelf, sz);
 
 			JP_TRACE("Call Python");
 			JPPyObject returnValue = JPPyObject::call(PyObject_Call(callable.get(), pyargs.get(), nullptr));
