@@ -47,10 +47,10 @@ public:
 	jvalue convert();
 
 public:
-	JPMatch::Type type;
 	JPConversion *conversion;
 	JPJavaFrame *frame;
 	PyObject *object;
+	JPMatch::Type type;
 	JPValue *slot;
 	void *closure;
 } ;

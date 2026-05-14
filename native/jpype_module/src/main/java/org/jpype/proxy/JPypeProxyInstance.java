@@ -13,7 +13,7 @@ public class JPypeProxyInstance implements InvocationHandler
   static final TypeManager manager = JPypeContext.getInstance().getTypeManager();
   private final JPypeProxyType type;
   private final long instance;
-  
+
   public JPypeProxyInstance(JPypeProxyType type, long instance)
   {
     this.type = type;
@@ -29,15 +29,20 @@ public class JPypeProxyInstance implements InvocationHandler
 
     JPypeMethodDescriptor md = type.getMethodDescriptor(method);
 
-    // Set up to transfer all the types on the downcall
-    int sz = args.length;
-    long[] scratch = get(sz);
-    for (int i = 0; i < sz; ++i)
+    long[] scratch = md.parameterTypes;
+    int sz = 0;
+    if (args != null)
     {
-      long cls = manager.findClassForObject(args[i]);
-      if (cls == 0L)
-        cls = md.parameterTypes[i];
-      scratch[i] = cls;
+      // Set up to transfer all the types on the downcall
+      sz = args.length;
+      scratch = get(sz);
+      for (int i = 0; i < sz; ++i)
+      {
+        long cls = manager.findClassForObject(args[i]);
+        if (cls == 0L)
+          cls = md.parameterTypes[i];
+        scratch[i] = cls;
+      }
     }
 
     // Resolve method parameter and return types

@@ -31,6 +31,7 @@ JPPyObject getArgs(JPJavaFrame& frame, jlongArray parameterTypePtrs,
 	JPPyObject pyargs = JPPyObject::call(PyTuple_New(argLen+extra));
 	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, parameterTypePtrs,
 			&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
+	JPContext *context = frame.getContext();
 
 	if (addSelf)
 	{
@@ -43,8 +44,8 @@ JPPyObject getArgs(JPJavaFrame& frame, jlongArray parameterTypePtrs,
 		jobject obj = frame.GetObjectArrayElement(args, i);
 		JPClass* type = reinterpret_cast<JPClass*> (types[i]);
 		JPValue val = type->getValueFromObject(frame, JPValue(type, obj));
-		// We know the exact type here so we can use cast
-		PyTuple_SetItem(pyargs.get(), i+extra, type->convertToPythonObject(frame, val, true).keep());
+		// We know the exact type here so we can use cast (except for String which must take slow path)
+		PyTuple_SetItem(pyargs.get(), i+extra, type->convertToPythonObject(frame, val, type!=(JPClass*) (context->_java_lang_String)).keep());
 		frame.DeleteLocalRef(obj);
 	}
 	return pyargs;
