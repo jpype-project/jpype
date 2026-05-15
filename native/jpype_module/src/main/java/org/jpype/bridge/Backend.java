@@ -66,6 +66,10 @@ import python.lang.PyIter;
 public interface Backend
 {
 
+  double asDouble(PyObject obj);
+
+  long asLong(PyObject obj);
+
   // Create a Python `bytearray` from the specified object.
   PyByteArray bytearray(Object obj);
 

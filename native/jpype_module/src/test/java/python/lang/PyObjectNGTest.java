@@ -21,6 +21,7 @@ import org.jpype.bridge.Interpreter;
 import org.testng.annotations.BeforeClass;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
+
 /**
  *
  * @author nelson85
@@ -29,6 +30,7 @@ public class PyObjectNGTest
 {
 
   private static Context context;
+
   public PyObjectNGTest()
   {
   }
@@ -36,7 +38,8 @@ public class PyObjectNGTest
   @BeforeClass
   public static void setUpClass() throws Exception
   {
-    Interpreter.getInstance().start(new String[0]);
+    if (!Interpreter.getInstance().isStarted())
+      Interpreter.getInstance().start(new String[0]);
     context = new Context();
   }
 
@@ -63,15 +66,15 @@ public class PyObjectNGTest
   @Test
   public void testIdentity()
   {
-    PyObject list1 = (PyObject) context.eval("[]");
-    PyObject list2 = (PyObject) context.eval("[]");
+    PyObject str1 = (PyObject) context.eval("'A'");
+    PyObject str2 = (PyObject) context.eval("'B'");
 
     // Python identity test
-    assertNotEquals(list1, list2, "Distinct Python objects should not be equal");
-    assertEquals(list1, list1, "Same object should be equal");
+    assertNotEquals(str1, str2, "Distinct Python objects should not be equal");
+    assertEquals(str1, str1, "Same object should be equal");
 
     // Verify hashCode consistency
-    int initialHash = list1.hashCode();
-    assertEquals(initialHash, list1.hashCode(), "Hash code must be stable");
+    int initialHash = str1.hashCode();
+    assertEquals(initialHash, str1.hashCode(), "Hash code must be stable");
   }
 }

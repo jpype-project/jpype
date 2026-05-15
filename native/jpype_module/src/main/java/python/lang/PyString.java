@@ -201,7 +201,7 @@ public interface PyString extends PyObject, CharSequence
    * values.
    * @return a formatted PyString instance.
    */
-  PyString formatUsingMapping(PyMapping<?,?> mapping);
+  PyString formatUsingMapping(PyMapping<?, ?> mapping);
 
   /**
    * Formats the string using positional and keyword arguments.
@@ -675,7 +675,7 @@ public interface PyString extends PyObject, CharSequence
    * @param mapping is the mapping object specifying character replacements.
    * @return a new PyString instance with translated characters.
    */
-  PyString translateUsingMapping(PyMapping<?,?> mapping);
+  PyString translateUsingMapping(PyMapping<?, ?> mapping);
 
   /**
    * Translates the string using a sequence of character replacements.
@@ -692,4 +692,8 @@ public interface PyString extends PyObject, CharSequence
    * @return a new PyString instance with zero padding.
    */
   PyString zeroFill(int width);
+
+  @Override
+  String toString();
+
 }

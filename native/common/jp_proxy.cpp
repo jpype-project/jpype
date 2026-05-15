@@ -127,6 +127,14 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyInstance_hos
 			PyObject* pyMethodName = reinterpret_cast<PyObject*>(cname);
 			JPPyObject callable(proxy->getCallable(pyMethodName, addSelf));
 
+#if 1
+			// Get the name attribute from the callable
+			const char* nameStr = PyUnicode_AsUTF8(pyMethodName);
+			if (nameStr) {
+				printf("DEBUG: Calling Python method: %s:%s\n", Py_TYPE(proxy->m_Instance->m_Target)->tp_name, nameStr);
+			}
+#endif
+
 			// If method can't be called, throw an exception
 			if (callable.isNull() || callable.get() == Py_None)
 				return parameterTypePtrs;

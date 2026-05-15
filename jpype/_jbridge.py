@@ -23,9 +23,11 @@ from . import _jcustomizer
 from collections.abc import Mapping, Sequence, MutableSequence
 import itertools
 import inspect
+import functools
 from typing import MutableMapping, Callable, List
 
 __all__: List[str] = []
+
 
 JImplements = _jproxy.JImplements
 JProxy = _jproxy.JProxy
@@ -41,6 +43,8 @@ JString = _jpype.JString
 # USE _attr for simple member access
 # FOLLOW THE NAMING SCHEME
 # USE A DIRECT BUILTIN IF IT HAS THE RIGHT LOGIC
+
+as_pyobject = None
 
 # Attribute helpers
 def _attr(name):
@@ -173,9 +177,10 @@ def _mapping_retain_all_values(obj, collection):
         del obj[k]
     return bool(to_remove)
 
-
 _PyJPBackendMethods: MutableMapping[str, Callable] = {
     # Core constructors / builtins
+    "asDouble": float,
+    "asLong": int,
     "bytearray": bytearray,
     "bytearrayFromHex": bytearray.fromhex,
     "bytes": bytes,
@@ -275,8 +280,17 @@ _PyJPBackendMethods: MutableMapping[str, Callable] = {
 def _to_string(o):
     return JString(str(o))
 
+def _hash(x):
+    try:
+        h = hash(x)
+        return (h ^ (h >> 32)) & 0xFFFFFFFF
+    except TypeError:
+        # Fallback to id(x) which is basically the pointer address
+        ptr = id(x)
+        return (ptr ^ (ptr >> 32)) & 0xFFFFFFFF
+
 _PyObjectMethods: MutableMapping[str, Callable] = { 
-    "hashCode": hash,
+    "hashCode": _hash,
     "equals": lambda x,y : x==y,
     "toString": _to_string,
 }
@@ -915,6 +929,8 @@ def initialize():
     _jpype._methods[_PyIndex] = _PyIndexMethods
     _jpype._methods[_PySubscript] = _PySubscriptMethods
     _jpype._methods[_PySized] = _PySizedMethods
+    _jpype._methods[_PyInt] = _PyIntMethods
+    _jpype._methods[_PyFloat] = _PyFloatMethods
 
     _jpype._methods[_PySet] = _PySetMethods
     _jpype._methods[_PyAbstractSet] = _PyAbstractSetMethods
@@ -945,6 +961,8 @@ def initialize():
     @JConversion(_PyTuple, instanceof=tuple)
     @JConversion(_PyType, instanceof=type)
     @JConversion(_PyZip, instanceof=zip)
+    @JConversion(_PyInt, instanceof=int)
+    @JConversion(_PyFloat, instanceof=float)
     # Bind dunder
     @JConversion(_PyIterable, attribute="__iter__")
     @JConversion(_PyIter, attribute="__next__")
@@ -980,7 +998,11 @@ def initialize():
 
         # See if there is a more advanced wrapper we can apply
         jcls, meth = _jpype.probe(obj)
+        print(type(obj),":",jcls)
         return JProxy(jcls, dict=meth, inst=obj, convert=True)
+
+    global as_pyobject
+    as_pyobject = functools.partial(_pyobject, _PyObject)
 
     bridge.setBackend(backend)
 

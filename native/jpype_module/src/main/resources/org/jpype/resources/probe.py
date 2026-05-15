@@ -25,14 +25,23 @@ except ImportError:
     jp_file = "NOT_FOUND"
     jp_ver = "NOT_FOUND"
 
+def clean(path):
+    if path is None:
+        return ''
+    # Convert backslashes to forward slashes to avoid Java Property escape issues
+    return str(path).replace('\\', '/')
+
+# Clean version
+sys_paths = [clean(p) for p in sys.path if p]
+
 # The output is formatted specifically for Java's Properties.load()
-print(f"python.config.home={sys.prefix}")
-print(f"python.config.base_home={sys.base_prefix}")
-print(f"python.config.path={os.pathsep.join(sys.path)}")
-print(f"python.lib={get_lib()}")
-print(f"jpype.lib={jp_file}")
-print(f"jpype.version={jp_ver}")
+print(f'python.config.home={clean(sys.prefix)}')
+print(f'python.config.base_home={clean(sys.base_prefix)}')
+print(f'python.config.path={os.pathsep.join(sys_paths)}')
+print(f'python.lib={clean(get_lib())}')
+print(f'jpype.lib={clean(jp_file)}')
+print(f'jpype.version={jp_ver}')
 
 # Architecture string for pip self-healing logic
-arch = f"{platform.system().lower()}_{platform.machine().lower()}"
-print(f"jpype.arch={arch}")
+arch = f'{platform.system().lower()}_{platform.machine().lower()}'
+print(f'jpype.arch={arch}')

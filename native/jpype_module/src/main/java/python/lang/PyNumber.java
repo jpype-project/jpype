@@ -16,6 +16,8 @@
  */
 package python.lang;
 
+import static python.lang.PyBuiltIn.backend;
+
 /**
  * Interface representing Python numeric operations.
  *
@@ -282,19 +284,10 @@ public interface PyNumber extends PyObject, Comparable<Number>
    */
   boolean toBoolean();
 
-  /**
-   * Converts this object to a double value.
-   *
-   * @return A double representation of this object.
-   */
-  double toDouble();
-
-  /**
-   * Converts this object to an integer value.
-   *
-   * @return An integer representation of this object.
-   */
-  int toInteger();
+  public default Number toNumber()
+  {
+    return Utility.toNumber(this);
+  }
 
   /**
    * Computes the absolute value of this object.

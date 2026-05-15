@@ -31,6 +31,16 @@ public class PyBuiltIn
 
   static Backend instance;
 
+  static double asDouble(PyObject obj)
+  {
+    return backend().asDouble(obj);
+  }
+
+  static long asLong(PyObject obj)
+  {
+    return backend().asLong(obj);
+  }
+
   protected PyBuiltIn()
   {
   }
@@ -190,6 +200,8 @@ public class PyBuiltIn
    */
   public static PyObject getattr(PyObject obj, Object key)
   {
+    if (key instanceof CharSequence)
+      return backend().getattrString(obj, (CharSequence) key);
     return backend().getattrObject(obj, key);
   }
 

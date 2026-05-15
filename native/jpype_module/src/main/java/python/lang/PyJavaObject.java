@@ -61,5 +61,12 @@ public class PyJavaObject implements PyObject
     final PyJavaObject other = (PyJavaObject) obj;
     return Objects.equals(this.obj_, other.obj_);
   }
+  
+  public String toString()
+  {
+    if (this.obj_==null)
+      return "null";
+    return obj_.toString();
+  }
 
 }
