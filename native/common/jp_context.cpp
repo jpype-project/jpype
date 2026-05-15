@@ -415,6 +415,8 @@ void JPContext::onShutdown()
 void JPContext::shutdownJVM(bool destroyJVM, bool freeJVM)
 {
 	JP_TRACE_IN("JPContext::shutdown");
+	if (m_Embedded)
+		JP_RAISE(PyExc_RuntimeError, "Attempt to shutdown embedded JVM");
 	if (m_JavaVM == nullptr)
 		JP_RAISE(PyExc_RuntimeError, "Attempt to shutdown without a live JVM");
 	//	if (m_Embedded)

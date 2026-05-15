@@ -289,9 +289,12 @@ def _hash(x):
         ptr = id(x)
         return (ptr ^ (ptr >> 32)) & 0xFFFFFFFF
 
+def _equals(x,y):
+    return x == y
+
 _PyObjectMethods: MutableMapping[str, Callable] = { 
     "hashCode": _hash,
-    "equals": lambda x,y : x==y,
+    "equals": _equals,
     "toString": _to_string,
 }
 
@@ -782,12 +785,13 @@ _PyIterMethods: MutableMapping[str, Callable] = {
 
 # enumerate, zip, range
 _PyGeneratorMethods: MutableMapping[str, Callable] = {
-    "iter": iter
+    "iter": iter,
+    "toList": list
 }
 
 _PyRangeMethods: MutableMapping[str, Callable] = {
     "getStart": _attr("start"),
-    "getStop": _attr("end"),
+    "getStop": _attr("stop"),
     "getStep": _attr("step"),
     "getLength": len,
     "getItem": lambda x,i: x[i],
@@ -872,6 +876,8 @@ def initialize():
     _jpype._concrete[tuple] = _PyTuple
     _jpype._concrete[type] =  _PyType
     _jpype._concrete[zip] = _PyZip
+    _jpype._concrete[range] = _PyRange
+    _jpype._concrete[type] = _PyType
 
     #############################################################################
     # Add all of the abstract types to the _protocol interfaces list
@@ -972,7 +978,8 @@ def initialize():
     @JConversion(_PyNumber, instanceof=object)
     @JConversion(_PySequence, instanceof=object)
     def _jconvert(jcls, obj):
-        return jcls@JProxy(jcls, dict=_jpype._methods[jcls], inst=obj, convert=True)
+        jinf, meth = _jpype.probe(obj)
+        return jcls@JProxy(jinf, dict=meth, inst=obj, convert=True)
 
     # Create a dispatch which will bind Python concrete types to Java.
     # Most of the time people won't see them, but we can add Java interfaces to 
@@ -998,7 +1005,7 @@ def initialize():
 
         # See if there is a more advanced wrapper we can apply
         jcls, meth = _jpype.probe(obj)
-        print(type(obj),":",jcls)
+        print(type(obj),":",jcls, flush=True)
         return JProxy(jcls, dict=meth, inst=obj, convert=True)
 
     global as_pyobject

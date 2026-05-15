@@ -102,13 +102,13 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyInstance_hos
 		jsize sz)
 {
 	if (JPContext_global == nullptr || !JPContext_global->isRunning())
-    {
+	{
 		printf("FATAL AFTER\n");
 		fflush(stdout);
-        jclass ise = env->FindClass("java/lang/IllegalStateException");
-        env->ThrowNew(ise, "JPype Proxy invoked after the Python Interpreter was terminated.");
-        return nullptr; 
-    }
+		jclass ise = env->FindClass("java/lang/IllegalStateException");
+		env->ThrowNew(ise, "JPype Proxy invoked after the Python Interpreter was terminated.");
+		return nullptr; 
+	}
 
 	JPJavaFrame frame = JPJavaFrame::external(env);
 
@@ -140,7 +140,8 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyInstance_hos
 			// Get the name attribute from the callable
 			const char* nameStr = PyUnicode_AsUTF8(pyMethodName);
 			if (nameStr) {
-				printf("DEBUG: Calling Python method: %s:%s\n", Py_TYPE(proxy->m_Instance->m_Target)->tp_name, nameStr);
+				printf("DEBUG: Calling Python method: %p %s:%s\n", callable.get(), Py_TYPE(proxy->m_Instance->m_Target)->tp_name, nameStr);
+				fflush(stdout);
 			}
 #endif
 

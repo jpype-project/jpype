@@ -189,9 +189,10 @@ public class PyBuiltInNGTest extends PyTestHarness
             + "obj_default = BuiltinAttrTest()\n");
     PyObject obj = (PyObject) context.eval("obj_default");
     PyObject fallback = PyString.from("fallback");
-
     PyObject result = PyBuiltIn.getattrDefault(obj, "missing", fallback);
 
+    System.out.println(result.equals(fallback));
+    System.out.println(fallback.equals(result));
     assertEquals(result, fallback);
   }
 

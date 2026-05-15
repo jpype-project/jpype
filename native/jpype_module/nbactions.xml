@@ -61,7 +61,7 @@
                 <packaging>*</packaging>
             </packagings>
             <goals>
-                <goal>install</goal>
+                <goal>package</goal>
                 <goal>-DskipTests</goal>
             </goals>
         </action>
