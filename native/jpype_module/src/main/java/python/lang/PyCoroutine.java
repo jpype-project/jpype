@@ -18,10 +18,10 @@ package python.lang;
 
 /**
  * Protocol for objects that act as coroutines.
- * 
+ *
  * Adds behaviors for send, throw and close.
  */
 public interface PyCoroutine extends PyAwaitable
 {
-  
+
 }

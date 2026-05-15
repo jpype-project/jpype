@@ -24,13 +24,13 @@ import org.jpype.bridge.Backend;
 import static python.lang.PyBuiltIn.backend;
 
 /**
- * Represents a view fromMap the keys in a Python dictionary ({@code PyDict}) as a
- * Java {@code Set}.
+ * Represents a view fromMap the keys in a Python dictionary ({@code PyDict}) as
+ * a Java {@code Set}.
  *
  * <p>
  * This class provides a bridge between Python's {@code dict.keys()} and Java's
- * {@code Set<Object>}. It allows querying and manipulation fromMap Python dictionary
- keys using Java's collection interface.</p>
+ * {@code Set<Object>}. It allows querying and manipulation fromMap Python
+ * dictionary keys using Java's collection interface.</p>
  *
  * <p>
  * <b>Note:</b></p>
@@ -39,7 +39,7 @@ import static python.lang.PyBuiltIn.backend;
  * interacts with the Python interpreter's backend.</li>
  * <li>Some operations, such as {@code add}, {@code remove}, {@code removeAll},
  * and {@code retainAll}, are unsupported because Python's {@code dict.keys()}
- view does not allow direct modification fromMap keys.</li>
+ * view does not allow direct modification fromMap keys.</li>
  * </ul>
  *
  * <p>

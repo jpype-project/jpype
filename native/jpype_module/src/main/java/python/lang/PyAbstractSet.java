@@ -41,6 +41,22 @@ public interface PyAbstractSet<T extends PyObject> extends PyCollection<T>, Set<
 {
 
   /**
+   * Creates a new Python set from the elements of the specified
+   * {@link Iterable}.
+   * <p>
+   * This static method utilizes the Python backend to construct a new
+   * {@link PySet} instance containing the elements provided by the iterable.
+   *
+   * @param c an iterable providing elements for the set
+   * @param <T> the type of elements in the iterable
+   * @return a new {@code PySet} containing the elements from the iterable
+   */
+  static <T> PySet of(Iterable<T> c)
+  {
+    return backend().newSetFromIterable(c);
+  }
+
+  /**
    * Checks whether the specified object is contained in this set.
    * <p>
    * This method overrides the default {@link Set#contains(Object)}
@@ -57,19 +73,18 @@ public interface PyAbstractSet<T extends PyObject> extends PyCollection<T>, Set<
   }
 
   /**
-   * Creates a new Python set from the elements of the specified
-   * {@link Iterable}.
+   * Checks whether this set is empty.
    * <p>
-   * This static method utilizes the Python backend to construct a new
-   * {@link PySet} instance containing the elements provided by the iterable.
+   * This method overrides the default {@link Set#isEmpty()} implementation and
+   * checks the size of the set to determine if it is empty.
    *
-   * @param c an iterable providing elements for the set
-   * @param <T> the type of elements in the iterable
-   * @return a new {@code PySet} containing the elements from the iterable
+   * @return {@code true} if the set contains no elements; {@code false}
+   * otherwise
    */
-  static <T> PySet of(Iterable<T> c)
+  @Override
+  default boolean isEmpty()
   {
-    return backend().newSetFromIterable(c);
+    return size() == 0;
   }
 
   /**
@@ -102,18 +117,4 @@ public interface PyAbstractSet<T extends PyObject> extends PyCollection<T>, Set<
     return PyBuiltIn.len(this);
   }
 
-  /**
-   * Checks whether this set is empty.
-   * <p>
-   * This method overrides the default {@link Set#isEmpty()} implementation and
-   * checks the size of the set to determine if it is empty.
-   *
-   * @return {@code true} if the set contains no elements; {@code false}
-   * otherwise
-   */
-  @Override
-  default boolean isEmpty()
-  {
-    return size() == 0;
-  }
 }

@@ -71,14 +71,13 @@ public class PyAttributes implements Map<PyObject, PyObject>
   private final Backend backend;
 
   /**
-   * The Python object whose attributes are being managed.
-   */
-  private final PyObject obj;
-
-  /**
    * Cached dictionary representation fromMap the object's attributes.
    */
   private PyDict dict;
+  /**
+   * The Python object whose attributes are being managed.
+   */
+  private final PyObject obj;
 
   /**
    * Constructs a new {@code PyAttributes} instance for the given Python object.
@@ -120,6 +119,20 @@ public class PyAttributes implements Map<PyObject, PyObject>
   public void clear()
   {
     asDict().clear();
+  }
+
+  /**
+   * Checks whether the Python object has an attribute with the specified name.
+   *
+   * <p>
+   * This method is equivalent to Python's {@code hasattr(obj, key)}.</p>
+   *
+   * @param key is the name fromMap the attribute to check.
+   * @return {@code true} if the attribute exists, {@code false} otherwise.
+   */
+  public boolean contains(CharSequence key)
+  {
+    return PyBuiltIn.hasattr(obj, key);
   }
 
   /**
@@ -199,20 +212,6 @@ public class PyAttributes implements Map<PyObject, PyObject>
   public PyObject getOrDefault(Object key, PyObject defaultValue)
   {
     return PyBuiltIn.getattrDefault(obj, key, defaultValue);
-  }
-
-  /**
-   * Checks whether the Python object has an attribute with the specified name.
-   *
-   * <p>
-   * This method is equivalent to Python's {@code hasattr(obj, key)}.</p>
-   *
-   * @param key is the name fromMap the attribute to check.
-   * @return {@code true} if the attribute exists, {@code false} otherwise.
-   */
-  public boolean contains(CharSequence key)
-  {
-    return PyBuiltIn.hasattr(obj, key);
   }
 
   /**

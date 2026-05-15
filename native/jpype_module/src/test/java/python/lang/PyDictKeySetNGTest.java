@@ -1,23 +1,16 @@
+// --- file: python/lang/PyDictKeySetNGTest.java ---
 package python.lang;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import org.jpype.bridge.Interpreter;
 import static org.testng.Assert.*;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class PyDictKeySetNGTest
+public class PyDictKeySetNGTest extends PyTestHarness
 {
 
-  @BeforeClass
-  public static void setUpClass() throws Exception
-  {
-    if (!Interpreter.getInstance().isStarted())
-      Interpreter.getInstance().start(new String[0]);
-  }
 
   private PyDict dictOf(Object... items)
   {
@@ -27,31 +20,45 @@ public class PyDictKeySetNGTest
     return dict;
   }
 
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testAddAllUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictKeySet<Object> keys = new PyDictKeySet<>(dict);
+
+    keys.addAll(Arrays.asList("b", "c"));
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testAddUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictKeySet<Object> keys = new PyDictKeySet<>(dict);
+
+    keys.add("b");
+  }
+
   @Test
-  public void testSize()
+  public void testClearClearsUnderlyingDict()
   {
     PyDict dict = dictOf("a", 1, "b", 2);
     PyDictKeySet<?> keys = new PyDictKeySet<>(dict);
 
-    assertEquals(keys.size(), 2);
-  }
-
-  @Test
-  public void testIsEmptyTrue()
-  {
-    PyDict dict = PyBuiltIn.dict();
-    PyDictKeySet<?> keys = new PyDictKeySet<>(dict);
+    keys.clear();
 
     assertTrue(keys.isEmpty());
+    assertTrue(dict.isEmpty());
+    assertEquals(dict.size(), 0);
   }
 
   @Test
-  public void testIsEmptyFalse()
+  public void testContainsAll()
   {
-    PyDict dict = dictOf("a", 1);
+    PyDict dict = dictOf("a", 1, "b", 2, "c", 3);
     PyDictKeySet<?> keys = new PyDictKeySet<>(dict);
 
-    assertFalse(keys.isEmpty());
+    assertTrue(keys.containsAll(Arrays.asList("a", "b")));
+    assertFalse(keys.containsAll(Arrays.asList("a", "z")));
   }
 
   @Test
@@ -74,13 +81,21 @@ public class PyDictKeySetNGTest
   }
 
   @Test
-  public void testContainsAll()
+  public void testIsEmptyFalse()
   {
-    PyDict dict = dictOf("a", 1, "b", 2, "c", 3);
+    PyDict dict = dictOf("a", 1);
     PyDictKeySet<?> keys = new PyDictKeySet<>(dict);
 
-    assertTrue(keys.containsAll(Arrays.asList("a", "b")));
-    assertFalse(keys.containsAll(Arrays.asList("a", "z")));
+    assertFalse(keys.isEmpty());
+  }
+
+  @Test
+  public void testIsEmptyTrue()
+  {
+    PyDict dict = PyBuiltIn.dict();
+    PyDictKeySet<?> keys = new PyDictKeySet<>(dict);
+
+    assertTrue(keys.isEmpty());
   }
 
   @Test
@@ -99,17 +114,40 @@ public class PyDictKeySetNGTest
     assertTrue(out.contains("b"));
   }
 
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testRemoveAllUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictKeySet<?> keys = new PyDictKeySet<>(dict);
+
+    keys.removeAll(Arrays.asList("a"));
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testRemoveUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictKeySet<?> keys = new PyDictKeySet<>(dict);
+
+    keys.remove("a");
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testRetainAllUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictKeySet<?> keys = new PyDictKeySet<>(dict);
+
+    keys.retainAll(Arrays.asList("a"));
+  }
+
   @Test
-  public void testClearClearsUnderlyingDict()
+  public void testSize()
   {
     PyDict dict = dictOf("a", 1, "b", 2);
     PyDictKeySet<?> keys = new PyDictKeySet<>(dict);
 
-    keys.clear();
-
-    assertTrue(keys.isEmpty());
-    assertTrue(dict.isEmpty());
-    assertEquals(dict.size(), 0);
+    assertEquals(keys.size(), 2);
   }
 
   @Test
@@ -152,48 +190,4 @@ public class PyDictKeySetNGTest
     assertFalse(keys.contains("a"));
   }
 
-  @Test(expectedExceptions = UnsupportedOperationException.class)
-  public void testAddUnsupported()
-  {
-    PyDict dict = dictOf("a", 1);
-    PyDictKeySet<Object> keys = new PyDictKeySet<>(dict);
-
-    keys.add("b");
-  }
-
-  @Test(expectedExceptions = UnsupportedOperationException.class)
-  public void testAddAllUnsupported()
-  {
-    PyDict dict = dictOf("a", 1);
-    PyDictKeySet<Object> keys = new PyDictKeySet<>(dict);
-
-    keys.addAll(Arrays.asList("b", "c"));
-  }
-
-  @Test(expectedExceptions = UnsupportedOperationException.class)
-  public void testRemoveUnsupported()
-  {
-    PyDict dict = dictOf("a", 1);
-    PyDictKeySet<?> keys = new PyDictKeySet<>(dict);
-
-    keys.remove("a");
-  }
-
-  @Test(expectedExceptions = UnsupportedOperationException.class)
-  public void testRemoveAllUnsupported()
-  {
-    PyDict dict = dictOf("a", 1);
-    PyDictKeySet<?> keys = new PyDictKeySet<>(dict);
-
-    keys.removeAll(Arrays.asList("a"));
-  }
-
-  @Test(expectedExceptions = UnsupportedOperationException.class)
-  public void testRetainAllUnsupported()
-  {
-    PyDict dict = dictOf("a", 1);
-    PyDictKeySet<?> keys = new PyDictKeySet<>(dict);
-
-    keys.retainAll(Arrays.asList("a"));
-  }
 }

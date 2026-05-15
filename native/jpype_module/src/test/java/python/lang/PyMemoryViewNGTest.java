@@ -25,17 +25,15 @@ import org.testng.annotations.BeforeClass;
  */
 public class PyMemoryViewNGTest
 {
-  
+
   public PyMemoryViewNGTest()
   {
   }
 
-
   @BeforeClass
   public static void setUpClass() throws Exception
   {
- Interpreter.getInstance().start(new String[0]);
+    Interpreter.getInstance().start(new String[0]);
   }
-  
-  
+
 }

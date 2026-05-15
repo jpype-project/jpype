@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
  *
  * @author nelson85
  */
-public class PyFloatNGTest
+public class PyFloatNGTest extends PyTestHarness
 {
 
   public PyFloatNGTest()

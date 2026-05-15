@@ -50,6 +50,7 @@ import static python.lang.PyBuiltIn.backend;
  */
 public interface PyFrozenSet extends PyObject, Set<PyObject>
 {
+
   /**
    * Creates a new Python `frozenset` object from the specified
    * {@link Iterable}.
@@ -173,7 +174,8 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
   /**
    * Converts this `frozenset` into an array of the specified getType.
    *
-   * @param reference the array into which the elements of this set will be stored.
+   * @param reference the array into which the elements of this set will be
+   * stored.
    * @param <T> the getType of the array elements.
    * @return an array containing all elements in this set.
    */

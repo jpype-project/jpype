@@ -28,14 +28,12 @@ import org.testng.annotations.BeforeClass;
 public class PyTupleNGTest
 {
 
-  
-
   @BeforeClass
   public static void setUpClass() throws Exception
   {
- Interpreter.getInstance().start(new String[0]);
+    Interpreter.getInstance().start(new String[0]);
   }
-  
+
   @Test
   public void testEmpty()
   {
@@ -117,7 +115,7 @@ public class PyTupleNGTest
   @Test(expectedExceptions = UnsupportedOperationException.class)
   public void testAddThrowsException()
   {
-       PyTuple tuple = PyTuple.of("a", "b");
+    PyTuple tuple = PyTuple.of("a", "b");
     tuple.add(PyString.from("a"));
   }
 

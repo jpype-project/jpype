@@ -75,8 +75,8 @@ public class PyDictValues<T extends PyObject> implements Collection<T>
    * Constructs a new {@code PyDictValues} instance for the given Python
    * dictionary.
    *
-   * @param dict is the Python dictionary ({@code PyDict}) whose values are to be
-   * represented.
+   * @param dict is the Python dictionary ({@code PyDict}) whose values are to
+   * be represented.
    */
   public PyDictValues(PyDict dict)
   {

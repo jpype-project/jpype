@@ -20,7 +20,7 @@ import static python.lang.PyBuiltIn.backend;
 
 /**
  * Java front-end interface for the Python `float` type.
- * 
+ *
  * This interface provides functionality for creating and interacting with
  * Python `float` objects in a Java environment, mimicking Python's built-in
  * `float` type.

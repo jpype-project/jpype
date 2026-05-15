@@ -21,5 +21,6 @@ package python.lang;
  */
 public interface PyCombinable extends PyObject
 {
-    PyObject or(PyObject other);
+
+  PyObject or(PyObject other);
 }

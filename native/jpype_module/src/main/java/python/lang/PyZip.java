@@ -35,6 +35,4 @@ public interface PyZip extends PyIter<PyTuple>
     return backend().newZip(items);
   }
 
-
-
 }

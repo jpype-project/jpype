@@ -1,17 +1,29 @@
+// --- file: python/lang/PyBytesNGTest.java ---
 package python.lang;
 
-import org.jpype.bridge.Interpreter;
 import static org.testng.Assert.*;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class PyBytesNGTest
+public class PyBytesNGTest extends PyTestHarness
 {
-  @BeforeClass
-  public static void setUpClass() throws Exception
+
+  @Test
+  public void testCreateIsZeroFilled()
   {
-    if (!Interpreter.getInstance().isStarted())
-      Interpreter.getInstance().start(new String[0]);
+    PyBytes instance = PyBytes.create(3);
+
+    assertEquals(instance.get(0).toNumber().intValue(), 0);
+    assertEquals(instance.get(1).toNumber().intValue(), 0);
+    assertEquals(instance.get(2).toNumber().intValue(), 0);
+  }
+
+  @Test
+  public void testCreateWithLength()
+  {
+    PyBytes instance = PyBytes.create(4);
+
+    assertNotNull(instance);
+    assertEquals(instance.size(), 4);
   }
 
   @Test
@@ -25,22 +37,25 @@ public class PyBytesNGTest
   }
 
   @Test
-  public void testCreateWithLength()
+  public void testDecodeAscii()
   {
-    PyBytes instance = PyBytes.create(4);
+    PyBytes instance = PyBytes.fromHex("414243");
 
-    assertNotNull(instance);
-    assertEquals(instance.size(), 4);
+    PyString decoded = instance.decode("ascii", null);
+
+    assertNotNull(decoded);
+    assertEquals(decoded.toString(), "ABC");
   }
 
   @Test
-  public void testCreateIsZeroFilled()
+  public void testDecodeUtf8()
   {
-    PyBytes instance = PyBytes.create(3);
+    PyBytes instance = PyBytes.fromHex("48656c6c6f");
 
-    assertEquals(instance.get(0).toNumber().intValue(), 0);
-    assertEquals(instance.get(1).toNumber().intValue(), 0);
-    assertEquals(instance.get(2).toNumber().intValue(), 0);
+    PyString decoded = instance.decode("utf-8", null);
+
+    assertNotNull(decoded);
+    assertEquals(decoded.toString(), "Hello");
   }
 
   @Test
@@ -57,6 +72,12 @@ public class PyBytesNGTest
     assertEquals(instance.get(4).toNumber().intValue(), 111);
   }
 
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testFromHexInvalidThrows()
+  {
+    PyBytes.fromHex("not_hex");
+  }
+
   @Test
   public void testGetByIndex()
   {
@@ -67,26 +88,11 @@ public class PyBytesNGTest
     assertEquals(instance.get(2).toNumber().intValue(), 67);
   }
 
-  @Test
-  public void testDecodeUtf8()
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testGetOutOfBoundsThrows()
   {
-    PyBytes instance = PyBytes.fromHex("48656c6c6f");
-
-    PyString decoded = instance.decode("utf-8", null);
-
-    assertNotNull(decoded);
-    assertEquals(decoded.toString(), "Hello");
-  }
-
-  @Test
-  public void testDecodeAscii()
-  {
-    PyBytes instance = PyBytes.fromHex("414243");
-
-    PyString decoded = instance.decode("ascii", null);
-
-    assertNotNull(decoded);
-    assertEquals(decoded.toString(), "ABC");
+    PyBytes instance = PyBytes.fromHex("41");
+    instance.get(5);
   }
 
   @Test(expectedExceptions = UnsupportedOperationException.class)
@@ -101,19 +107,6 @@ public class PyBytesNGTest
   {
     PyBytes instance = PyBytes.fromHex("414243");
     instance.set(1, PyInt.of(90));
-  }
-
-  @Test(expectedExceptions = RuntimeException.class)
-  public void testFromHexInvalidThrows()
-  {
-    PyBytes.fromHex("not_hex");
-  }
-
-  @Test(expectedExceptions = RuntimeException.class)
-  public void testGetOutOfBoundsThrows()
-  {
-    PyBytes instance = PyBytes.fromHex("41");
-    instance.get(5);
   }
 
   @Test

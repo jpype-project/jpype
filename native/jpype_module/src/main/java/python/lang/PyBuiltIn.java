@@ -31,20 +31,6 @@ public class PyBuiltIn
 
   static Backend instance;
 
-  static double asDouble(PyObject obj)
-  {
-    return backend().asDouble(obj);
-  }
-
-  static long asLong(PyObject obj)
-  {
-    return backend().asLong(obj);
-  }
-
-  protected PyBuiltIn()
-  {
-  }
-
   /**
    * Creates a new Python float object.
    *
@@ -65,6 +51,16 @@ public class PyBuiltIn
   public static PyInt $int(long value)
   {
     return backend().newInt(value);
+  }
+
+  static double asDouble(PyObject obj)
+  {
+    return backend().asDouble(obj);
+  }
+
+  static long asLong(PyObject obj)
+  {
+    return backend().asLong(obj);
   }
 
   /**
@@ -521,6 +517,9 @@ public class PyBuiltIn
   {
     return backend().zipFromIterable(Arrays.asList(objects));
   }
-  
- 
+
+  protected PyBuiltIn()
+  {
+  }
+
 }

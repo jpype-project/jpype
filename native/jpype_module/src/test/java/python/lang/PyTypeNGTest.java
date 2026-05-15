@@ -29,10 +29,12 @@ import python.lang.PyBuiltIn;
  */
 public class PyTypeNGTest
 {
- static PyType objectType;
- static PyType dictType;
- static PyType rangeType;
- @BeforeClass
+
+  static PyType objectType;
+  static PyType dictType;
+  static PyType rangeType;
+
+  @BeforeClass
   public static void setUpClass() throws Exception
   {
     Interpreter interpreter = Interpreter.getInstance();

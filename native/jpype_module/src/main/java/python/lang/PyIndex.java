@@ -1,3 +1,4 @@
+// --- file: python/lang/PyIndex.java ---
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy of
@@ -17,10 +18,10 @@ package python.lang;
 
 /**
  * Protocol for "__index__"
- * 
+ *
  * @author nelson85
  */
 public interface PyIndex extends PyObject, PySubscript
 {
-  
+
 }

@@ -25,25 +25,23 @@ import org.testng.annotations.Test;
  *
  * @author nelson85
  */
-public class PyExceptionFactoryNGTest
+public class PyExceptionFactoryNGTest extends PyTestHarness
 {
-  
+
   public PyExceptionFactoryNGTest()
   {
   }
 
-
   @BeforeClass
   public static void setUpClass() throws Exception
   {
- Interpreter.getInstance().start(new String[0]);
+    Interpreter.getInstance().start(new String[0]);
   }
-  
 
   @Test
   public void testSomeMethod()
   {
     fail("The test case is a prototype.");
   }
-  
+
 }

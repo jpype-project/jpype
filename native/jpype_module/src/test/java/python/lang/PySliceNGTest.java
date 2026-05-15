@@ -25,18 +25,15 @@ import org.testng.annotations.BeforeClass;
  */
 public class PySliceNGTest
 {
-  
+
   public PySliceNGTest()
   {
   }
 
-
-
   @BeforeClass
   public static void setUpClass() throws Exception
   {
- Interpreter.getInstance().start(new String[0]);
+    Interpreter.getInstance().start(new String[0]);
   }
-  
 
 }

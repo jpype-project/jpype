@@ -1,25 +1,14 @@
+// --- file: python/lang/PyAttributesNGTest.java ---
 package python.lang;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.jpype.bridge.Context;
-import org.jpype.bridge.Interpreter;
 import static org.testng.Assert.*;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class PyAttributesNGTest
+public class PyAttributesNGTest extends PyTestHarness
 {
 
-  private static Context context;
-
-  @BeforeClass
-  public static void setUpClass() throws Exception
-  {
-    if (!Interpreter.getInstance().isStarted())
-      Interpreter.getInstance().start(new String[0]);
-    context = new Context();
-  }
 
   private PyObject newObjectWithAttributes()
   {
@@ -30,6 +19,48 @@ public class PyAttributesNGTest
             + "obj.name = 'alice'\n"
             + "obj.value = 42\n");
     return (PyObject) context.eval("obj");
+  }
+
+  @Test
+  public void testClear()
+  {
+    PyObject obj = newObjectWithAttributes();
+    PyAttributes attrs = new PyAttributes(obj);
+
+    attrs.clear();
+
+    assertTrue(attrs.isEmpty());
+  }
+
+  @Test
+  public void testContainsAttribute()
+  {
+    PyObject obj = newObjectWithAttributes();
+    PyAttributes attrs = new PyAttributes(obj);
+
+    assertTrue(attrs.contains("name"));
+    assertFalse(attrs.contains("missing"));
+  }
+
+  @Test
+  public void testDirContainsKnownAttributes()
+  {
+    PyObject obj = newObjectWithAttributes();
+    PyAttributes attrs = new PyAttributes(obj);
+
+    PyList dir = attrs.dir();
+
+    assertNotNull(dir);
+    assertTrue(dir.contains(PyString.from("name")) || dir.toString().contains("name"));
+  }
+
+  @Test
+  public void testEntrySetNotEmpty()
+  {
+    PyObject obj = newObjectWithAttributes();
+    PyAttributes attrs = new PyAttributes(obj);
+
+    assertFalse(attrs.entrySet().isEmpty());
   }
 
   @Test
@@ -68,13 +99,29 @@ public class PyAttributesNGTest
   }
 
   @Test
-  public void testContainsAttribute()
+  public void testKeySetReflectsAttributes()
   {
     PyObject obj = newObjectWithAttributes();
     PyAttributes attrs = new PyAttributes(obj);
 
-    assertTrue(attrs.contains("name"));
-    assertFalse(attrs.contains("missing"));
+    assertTrue(attrs.keySet().toString().contains("name"));
+    assertTrue(attrs.keySet().toString().contains("value"));
+  }
+
+  @Test
+  public void testPutAll()
+  {
+    PyObject obj = newObjectWithAttributes();
+    PyAttributes attrs = new PyAttributes(obj);
+
+    Map<PyObject, PyObject> map = new HashMap<>();
+    map.put(PyString.from("x"), PyInt.of(1));
+    map.put(PyString.from("y"), PyInt.of(2));
+
+    attrs.putAll(map);
+
+    assertEquals(attrs.get("x").toString(), "1");
+    assertEquals(attrs.get("y").toString(), "2");
   }
 
   @Test
@@ -103,48 +150,6 @@ public class PyAttributesNGTest
   }
 
   @Test
-  public void testDirContainsKnownAttributes()
-  {
-    PyObject obj = newObjectWithAttributes();
-    PyAttributes attrs = new PyAttributes(obj);
-
-    PyList dir = attrs.dir();
-
-    assertNotNull(dir);
-    assertTrue(dir.contains(PyString.from("name")) || dir.toString().contains("name"));
-  }
-
-  @Test
-  public void testKeySetReflectsAttributes()
-  {
-    PyObject obj = newObjectWithAttributes();
-    PyAttributes attrs = new PyAttributes(obj);
-
-    assertTrue(attrs.keySet().toString().contains("name"));
-    assertTrue(attrs.keySet().toString().contains("value"));
-  }
-
-  @Test
-  public void testValuesReflectAttributes()
-  {
-    PyObject obj = newObjectWithAttributes();
-    PyAttributes attrs = new PyAttributes(obj);
-
-    String values = attrs.values().toString();
-    assertTrue(values.contains("alice"));
-    assertTrue(values.contains("42"));
-  }
-
-  @Test
-  public void testEntrySetNotEmpty()
-  {
-    PyObject obj = newObjectWithAttributes();
-    PyAttributes attrs = new PyAttributes(obj);
-
-    assertFalse(attrs.entrySet().isEmpty());
-  }
-
-  @Test
   public void testSizeAndIsEmpty()
   {
     context.exec(
@@ -158,29 +163,14 @@ public class PyAttributesNGTest
   }
 
   @Test
-  public void testPutAll()
+  public void testValuesReflectAttributes()
   {
     PyObject obj = newObjectWithAttributes();
     PyAttributes attrs = new PyAttributes(obj);
 
-    Map<PyObject, PyObject> map = new HashMap<>();
-    map.put(PyString.from("x"), PyInt.of(1));
-    map.put(PyString.from("y"), PyInt.of(2));
-
-    attrs.putAll(map);
-
-    assertEquals(attrs.get("x").toString(), "1");
-    assertEquals(attrs.get("y").toString(), "2");
+    String values = attrs.values().toString();
+    assertTrue(values.contains("alice"));
+    assertTrue(values.contains("42"));
   }
 
-  @Test
-  public void testClear()
-  {
-    PyObject obj = newObjectWithAttributes();
-    PyAttributes attrs = new PyAttributes(obj);
-
-    attrs.clear();
-
-    assertTrue(attrs.isEmpty());
-  }
 }

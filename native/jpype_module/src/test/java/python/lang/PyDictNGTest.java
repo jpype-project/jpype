@@ -1,3 +1,4 @@
+// --- file: python/lang/PyDictNGTest.java ---
 package python.lang;
 
 import java.util.AbstractMap;
@@ -6,20 +7,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import org.jpype.bridge.Interpreter;
 import static org.testng.Assert.*;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class PyDictNGTest
+public class PyDictNGTest extends PyTestHarness
 {
-
-  @BeforeClass
-  public static void setUpClass() throws Exception
-  {
-    if (!Interpreter.getInstance().isStarted())
-      Interpreter.getInstance().start(new String[0]);
-  }
 
   private PyDict dictOf(Object... items)
   {
@@ -30,12 +22,68 @@ public class PyDictNGTest
   }
 
   @Test
-  public void testPutAndGet()
+  public void testClear()
   {
-    PyDict dict = PyBuiltIn.dict();
-    dict.putAny("key1", "value1");
+    PyDict dict = dictOf("a", 1, "b", 2);
+    dict.clear();
 
-    assertEquals(dict.get("key1").toString(), "value1");
+    assertTrue(dict.isEmpty());
+    assertEquals(dict.size(), 0);
+  }
+
+  @Test
+  public void testContainsKey()
+  {
+    PyDict dict = dictOf("key1", "value1");
+
+    assertTrue(dict.containsKey("key1"));
+    assertFalse(dict.containsKey("missing"));
+  }
+
+  @Test
+  public void testContainsValue()
+  {
+    PyDict dict = dictOf("key1", PyString.from("value1"));
+
+    assertTrue(dict.containsValue(PyString.from("value1")) || dict.values().toString().contains("value1"));
+    assertFalse(dict.containsValue(PyString.from("missing")));
+  }
+
+  @Test
+  public void testEntrySetReflectsContents()
+  {
+    PyDict dict = dictOf("a", 1, "b", 2);
+
+    assertEquals(dict.entrySet().size(), 2);
+    assertFalse(dict.entrySet().isEmpty());
+  }
+
+  @Test
+  public void testFromItems()
+  {
+    List<Map.Entry<String, Integer>> items = List.of(
+            new AbstractMap.SimpleEntry<>("a", 1),
+            new AbstractMap.SimpleEntry<>("b", 2));
+
+    PyDict dict = PyDict.fromItems(items);
+
+    assertEquals(dict.size(), 2);
+    assertEquals(dict.get("a").toString(), "1");
+    assertEquals(dict.get("b").toString(), "2");
+  }
+
+  @Test
+  public void testFromMap()
+  {
+    Map<String, Object> map = new HashMap<>();
+    map.put("a", 1);
+    map.put("b", 2);
+
+    PyDict dict = PyDict.fromMap(map);
+
+    assertEquals(dict.size(), 2);
+    assertEquals(dict.get("a").toString(), "1");
+    assertEquals(dict.get("b").toString(), "2");
   }
 
   @Test
@@ -69,21 +117,68 @@ public class PyDictNGTest
   }
 
   @Test
-  public void testContainsKey()
+  public void testKeySetReflectsContents()
   {
-    PyDict dict = dictOf("key1", "value1");
+    PyDict dict = dictOf("a", 1, "b", 2);
 
-    assertTrue(dict.containsKey("key1"));
-    assertFalse(dict.containsKey("missing"));
+    assertTrue(dict.keySet().contains("a"));
+    assertTrue(dict.keySet().contains("b"));
+    assertFalse(dict.keySet().contains("z"));
   }
 
   @Test
-  public void testContainsValue()
+  public void testOrUsesDictUnionSemantics()
   {
-    PyDict dict = dictOf("key1", PyString.from("value1"));
+    PyDict left = dictOf("a", 1, "b", 2);
+    PyDict right = dictOf("b", 99, "c", 3);
 
-    assertTrue(dict.containsValue(PyString.from("value1")) || dict.values().toString().contains("value1"));
-    assertFalse(dict.containsValue(PyString.from("missing")));
+    PyDict out = (PyDict) left.or(right);
+
+    assertEquals(out.size(), 3);
+    assertEquals(out.get("a").toString(), "1");
+    assertEquals(out.get("b").toString(), "99");
+    assertEquals(out.get("c").toString(), "3");
+
+    assertEquals(left.get("b").toString(), "2");
+    assertEquals(right.get("b").toString(), "99");
+  }
+
+  @Test
+  public void testPop()
+  {
+    PyDict dict = dictOf("key1", "value1");
+    PyObject fallback = PyString.from("default");
+
+    assertEquals(dict.pop("key1", fallback).toString(), "value1");
+    assertEquals(dict.pop("missing", fallback), fallback);
+  }
+
+  @Test
+  public void testPopItem()
+  {
+    PyDict dict = dictOf("key1", "value1");
+
+    Map.Entry<Object, PyObject> entry = dict.popItem();
+
+    assertNotNull(entry);
+    assertEquals(entry.getKey(), "key1");
+    assertEquals(entry.getValue().toString(), "value1");
+    assertTrue(dict.isEmpty());
+  }
+
+  @Test(expectedExceptions = NoSuchElementException.class)
+  public void testPopItemEmptyDict()
+  {
+    PyBuiltIn.dict().popItem();
+  }
+
+  @Test
+  public void testPutAndGet()
+  {
+    PyDict dict = PyBuiltIn.dict();
+    dict.putAny("key1", "value1");
+
+    assertEquals(dict.get("key1").toString(), "value1");
   }
 
   @Test
@@ -122,32 +217,14 @@ public class PyDictNGTest
   }
 
   @Test
-  public void testPop()
-  {
-    PyDict dict = dictOf("key1", "value1");
-    PyObject fallback = PyString.from("default");
-
-    assertEquals(dict.pop("key1", fallback).toString(), "value1");
-    assertEquals(dict.pop("missing", fallback), fallback);
-  }
-
-  @Test
-  public void testPopItem()
+  public void testSetDefaultDoesNotOverwriteExisting()
   {
     PyDict dict = dictOf("key1", "value1");
 
-    Map.Entry<Object, PyObject> entry = dict.popItem();
+    PyObject result = dict.setDefault("key1", PyString.from("other"));
 
-    assertNotNull(entry);
-    assertEquals(entry.getKey(), "key1");
-    assertEquals(entry.getValue().toString(), "value1");
-    assertTrue(dict.isEmpty());
-  }
-
-  @Test(expectedExceptions = NoSuchElementException.class)
-  public void testPopItemEmptyDict()
-  {
-    PyBuiltIn.dict().popItem();
+    assertEquals(result.toString(), "value1");
+    assertEquals(dict.get("key1").toString(), "value1");
   }
 
   @Test
@@ -162,27 +239,6 @@ public class PyDictNGTest
   }
 
   @Test
-  public void testSetDefaultDoesNotOverwriteExisting()
-  {
-    PyDict dict = dictOf("key1", "value1");
-
-    PyObject result = dict.setDefault("key1", PyString.from("other"));
-
-    assertEquals(result.toString(), "value1");
-    assertEquals(dict.get("key1").toString(), "value1");
-  }
-
-  @Test
-  public void testClear()
-  {
-    PyDict dict = dictOf("a", 1, "b", 2);
-    dict.clear();
-
-    assertTrue(dict.isEmpty());
-    assertEquals(dict.size(), 0);
-  }
-
-  @Test
   public void testSizeAndIsEmpty()
   {
     PyDict dict = PyBuiltIn.dict();
@@ -192,21 +248,6 @@ public class PyDictNGTest
     dict.putAny("k", "v");
     assertEquals(dict.size(), 1);
     assertFalse(dict.isEmpty());
-  }
-
-  @Test
-  public void testUpdateWithMap()
-  {
-    PyDict dict = PyBuiltIn.dict();
-    Map<Object, PyObject> updateMap = new HashMap<>();
-    updateMap.put("key1", PyString.from("value1"));
-    updateMap.put("key2", PyString.from("value2"));
-
-    dict.update(updateMap);
-
-    assertEquals(dict.size(), 2);
-    assertEquals(dict.get("key1").toString(), "value1");
-    assertEquals(dict.get("key2").toString(), "value2");
   }
 
   @Test
@@ -225,41 +266,18 @@ public class PyDictNGTest
   }
 
   @Test
-  public void testFromMap()
+  public void testUpdateWithMap()
   {
-    Map<String, Object> map = new HashMap<>();
-    map.put("a", 1);
-    map.put("b", 2);
+    PyDict dict = PyBuiltIn.dict();
+    Map<Object, PyObject> updateMap = new HashMap<>();
+    updateMap.put("key1", PyString.from("value1"));
+    updateMap.put("key2", PyString.from("value2"));
 
-    PyDict dict = PyDict.fromMap(map);
+    dict.update(updateMap);
 
     assertEquals(dict.size(), 2);
-    assertEquals(dict.get("a").toString(), "1");
-    assertEquals(dict.get("b").toString(), "2");
-  }
-
-  @Test
-  public void testFromItems()
-  {
-    List<Map.Entry<String, Integer>> items = List.of(
-            new AbstractMap.SimpleEntry<>("a", 1),
-            new AbstractMap.SimpleEntry<>("b", 2));
-
-    PyDict dict = PyDict.fromItems(items);
-
-    assertEquals(dict.size(), 2);
-    assertEquals(dict.get("a").toString(), "1");
-    assertEquals(dict.get("b").toString(), "2");
-  }
-
-  @Test
-  public void testKeySetReflectsContents()
-  {
-    PyDict dict = dictOf("a", 1, "b", 2);
-
-    assertTrue(dict.keySet().contains("a"));
-    assertTrue(dict.keySet().contains("b"));
-    assertFalse(dict.keySet().contains("z"));
+    assertEquals(dict.get("key1").toString(), "value1");
+    assertEquals(dict.get("key2").toString(), "value2");
   }
 
   @Test
@@ -270,15 +288,6 @@ public class PyDictNGTest
     assertEquals(dict.values().size(), 2);
     assertTrue(dict.values().toString().contains("x"));
     assertTrue(dict.values().toString().contains("y"));
-  }
-
-  @Test
-  public void testEntrySetReflectsContents()
-  {
-    PyDict dict = dictOf("a", 1, "b", 2);
-
-    assertEquals(dict.entrySet().size(), 2);
-    assertFalse(dict.entrySet().isEmpty());
   }
 
   @Test
@@ -294,20 +303,4 @@ public class PyDictNGTest
     assertFalse(dict.keySet().contains("a"));
   }
 
-  @Test
-  public void testOrUsesDictUnionSemantics()
-  {
-    PyDict left = dictOf("a", 1, "b", 2);
-    PyDict right = dictOf("b", 99, "c", 3);
-
-    PyDict out = (PyDict) left.or(right);
-
-    assertEquals(out.size(), 3);
-    assertEquals(out.get("a").toString(), "1");
-    assertEquals(out.get("b").toString(), "99");
-    assertEquals(out.get("c").toString(), "3");
-
-    assertEquals(left.get("b").toString(), "2");
-    assertEquals(right.get("b").toString(), "99");
-  }
 }

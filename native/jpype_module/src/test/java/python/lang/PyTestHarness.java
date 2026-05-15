@@ -1,3 +1,4 @@
+// --- file: python/lang/PyTestHarness.java ---
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +27,7 @@ import org.testng.annotations.*;
 public class PyTestHarness
 {
 
-  private static Context context;
+  protected static Context context;
 
   @BeforeClass
   public static void setUpClass() throws Exception

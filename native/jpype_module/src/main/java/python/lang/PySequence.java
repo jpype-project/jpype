@@ -78,7 +78,8 @@ public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
    * @param indices an array of {@link PyIndex} objects representing the slices
    * to retrieve
    * @return the resulting slice(s) as a {@link PyObject}
-   * @throws IllegalArgumentException if the type does not support tuple assignment.
+   * @throws IllegalArgumentException if the type does not support tuple
+   * assignment.
    */
   default PyObject get(PySubscript... indices)
   {
@@ -120,9 +121,9 @@ public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
    */
   @Override
   T set(int index, T value);
-  
+
   void setAny(Object index, Object values);
-  
+
   /**
    * Returns the size of the sequence.
    *

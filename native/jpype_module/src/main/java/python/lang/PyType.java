@@ -42,27 +42,6 @@ public interface PyType extends PyObject, PyCallable, PyCombinable
   }
 
   /**
-   * Retrieves the name of the type.
-   *
-   * This corresponds to the Python `__name__` attribute, which represents the
-   * name of the type as a string.
-   *
-   * @return the name of the type as a String.
-   */
-  String getName();
-
-  /**
-   * Retrieves the method resolution order (MRO) of the type.The MRO defines the
-   * order in which base classes are searched when resolving methods and
-   * attributes.
-   *
-   * This corresponds to the Python `__mro__` attribute.
-   *
-   * @return a PyTuple representing the MRO of the getType.
-   */
-  PyTuple mro();
-
-  /**
    * Retrieves the base class of the type.
    *
    * This corresponds to the Python `__base__` attribute, which represents the
@@ -82,16 +61,44 @@ public interface PyType extends PyObject, PyCallable, PyCombinable
   PyTuple getBases();
 
   /**
-   * Checks if the current type is a subclass of the specified type.This
-   * corresponds to Python's `issubclass()` function and allows checking type
-   * relationships.
+   * Retrieves a callable method by name from the type.
    *
+   * This allows accessing methods defined on the type by their name.
    *
-   * @param type The getType to check against.
-   * @return true if this getType is a subclass of the specified getType, false
-   * otherwise.
+   * @param name The name of the method to retrieve.
+   * @return the callable method as a PyCallable, or null if the method does not
+   * exist.
    */
-  boolean isSubclassOf(PyType type);
+  PyCallable getMethod(String name);
+
+  /**
+   * Retrieves the name of the type.
+   *
+   * This corresponds to the Python `__name__` attribute, which represents the
+   * name of the type as a string.
+   *
+   * @return the name of the type as a String.
+   */
+  String getName();
+
+  /**
+   * Retrieves a list of subclasses of the type.This corresponds to Python's
+   * `__subclasses__()` method, which returns all known subclasses of the type.
+   *
+   *
+   * @return a PyList containing the subclasses of the getType.
+   */
+  PyList getSubclasses();
+
+  /**
+   * Checks if the type is abstract.An abstract type is one that contains
+   * abstract methods and cannot be instantiated directly.
+   *
+   * This corresponds to Python's `abc` module behavior.
+   *
+   * @return true if the getType is abstract, false otherwise.
+   */
+  boolean isAbstract();
 
   /**
    * Checks if the given object is an instance of this type.This corresponds to
@@ -105,32 +112,25 @@ public interface PyType extends PyObject, PyCallable, PyCombinable
   boolean isInstance(PyObject obj);
 
   /**
-   * Retrieves a callable method by name from the type.
+   * Checks if the current type is a subclass of the specified type.This
+   * corresponds to Python's `issubclass()` function and allows checking type
+   * relationships.
    *
-   * This allows accessing methods defined on the type by their name.
    *
-   * @param name The name of the method to retrieve.
-   * @return the callable method as a PyCallable, or null if the method does not
-   * exist.
+   * @param type The getType to check against.
+   * @return true if this getType is a subclass of the specified getType, false
+   * otherwise.
    */
-  PyCallable getMethod(String name);
+  boolean isSubclassOf(PyType type);
 
   /**
-   * Checks if the type is abstract.An abstract type is one that contains
-   * abstract methods and cannot be instantiated directly.
+   * Retrieves the method resolution order (MRO) of the type.The MRO defines the
+   * order in which base classes are searched when resolving methods and
+   * attributes.
    *
-   * This corresponds to Python's `abc` module behavior.
+   * This corresponds to the Python `__mro__` attribute.
    *
-   * @return true if the getType is abstract, false otherwise.
+   * @return a PyTuple representing the MRO of the getType.
    */
-  boolean isAbstract();
-
-  /**
-   * Retrieves a list of subclasses of the type.This corresponds to Python's
-   * `__subclasses__()` method, which returns all known subclasses of the type.
-   *
-   *
-   * @return a PyList containing the subclasses of the getType.
-   */
-  PyList getSubclasses();
+  PyTuple mro();
 }

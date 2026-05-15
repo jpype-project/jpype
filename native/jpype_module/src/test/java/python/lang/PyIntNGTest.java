@@ -23,19 +23,17 @@ import org.testng.annotations.BeforeClass;
  *
  * @author nelson85
  */
-public class PyIntNGTest
+public class PyIntNGTest extends PyTestHarness
 {
-  
+
   public PyIntNGTest()
   {
   }
 
-
   @BeforeClass
   public static void setUpClass() throws Exception
   {
- Interpreter.getInstance().start(new String[0]);
+    Interpreter.getInstance().start(new String[0]);
   }
-  
 
 }

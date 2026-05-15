@@ -22,5 +22,5 @@ package python.lang;
  */
 public interface PyFunction extends PyCallable
 {
-  
+
 }

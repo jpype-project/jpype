@@ -27,17 +27,18 @@ import org.jpype.internal.Utility;
  *
  * @author nelson85
  */
-public class PyDictItemsIterator<K,V> implements Iterator<Map.Entry<K, V>>
+public class PyDictItemsIterator<K, V> implements Iterator<Map.Entry<K, V>>
 {
-  private final PyIter<PyTuple> iter;
-  private PyTuple yield;
-  private boolean done = false;
+
   private boolean check = false;
+  private boolean done = false;
+  private final PyIter<PyTuple> iter;
   private final BiFunction<K, V, V> setter;
-  
-  public PyDictItemsIterator(PyIter<PyTuple> iter,  BiFunction<K, V, V> setter)
+  private PyTuple yield;
+
+  public PyDictItemsIterator(PyIter<PyTuple> iter, BiFunction<K, V, V> setter)
   {
-    this.iter =iter;
+    this.iter = iter;
     this.setter = setter;
   }
 
@@ -56,7 +57,7 @@ public class PyDictItemsIterator<K,V> implements Iterator<Map.Entry<K, V>>
     return !done;
   }
 
-     @SuppressWarnings("unchecked")
+  @SuppressWarnings("unchecked")
   @Override
   public Map.Entry<K, V> next() throws NoSuchElementException
   {
@@ -65,10 +66,10 @@ public class PyDictItemsIterator<K,V> implements Iterator<Map.Entry<K, V>>
     if (done)
       throw new NoSuchElementException();
     check = false;
-    
+
     K key = (K) yield.get(0);
     V value = (V) yield.get(1);
     return new Utility.MapEntryWithSet<>(key, value, setter);
   }
-  
+
 }

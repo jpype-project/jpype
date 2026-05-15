@@ -1,19 +1,30 @@
+// --- file: python/lang/PyByteArrayNGTest.java ---
 package python.lang;
 
 import java.util.Arrays;
-import org.jpype.bridge.Interpreter;
 import static org.testng.Assert.*;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class PyByteArrayNGTest
+public class PyByteArrayNGTest extends PyTestHarness
 {
 
-  @BeforeClass
-  public static void setUpClass() throws Exception
+  @Test
+  public void testCreateIsZeroFilled()
   {
-    if (!Interpreter.getInstance().isStarted())
-      Interpreter.getInstance().start(new String[0]);
+    PyByteArray instance = PyByteArray.create(3);
+
+    assertEquals(instance.get(0).toNumber().intValue(), 0);
+    assertEquals(instance.get(1).toNumber().intValue(), 0);
+    assertEquals(instance.get(2).toNumber().intValue(), 0);
+  }
+
+  @Test
+  public void testCreateWithLength()
+  {
+    PyByteArray instance = PyByteArray.create(10);
+
+    assertNotNull(instance);
+    assertEquals(instance.size(), 10);
   }
 
   @Test
@@ -27,22 +38,14 @@ public class PyByteArrayNGTest
   }
 
   @Test
-  public void testCreateWithLength()
+  public void testDecodeUtf8()
   {
-    PyByteArray instance = PyByteArray.create(10);
+    PyByteArray instance = PyByteArray.fromHex("48656c6c6f");
 
-    assertNotNull(instance);
-    assertEquals(instance.size(), 10);
-  }
+    PyObject decoded = instance.decode(PyString.from("utf-8"), null);
 
-  @Test
-  public void testCreateIsZeroFilled()
-  {
-    PyByteArray instance = PyByteArray.create(3);
-
-    assertEquals(instance.get(0).toNumber().intValue(), 0);
-    assertEquals(instance.get(1).toNumber().intValue(), 0);
-    assertEquals(instance.get(2).toNumber().intValue(), 0);
+    assertNotNull(decoded);
+    assertEquals(decoded.toString(), "Hello");
   }
 
   @Test
@@ -59,17 +62,36 @@ public class PyByteArrayNGTest
     assertEquals(instance.get(4).toNumber().intValue(), 111);
   }
 
-  @Test
-  public void testOfIterable()
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testFromHexInvalidThrows()
   {
-    PyByteArray instance = PyByteArray.of(Arrays.asList(
-            PyInt.of(65), PyInt.of(66), PyInt.of(67)));
+    PyByteArray.fromHex("this_is_not_hex");
+  }
 
-    assertNotNull(instance);
-    assertEquals(instance.size(), 3);
-    assertEquals(instance.get(0).toNumber().intValue(), 65);
-    assertEquals(instance.get(1).toNumber().intValue(), 66);
-    assertEquals(instance.get(2).toNumber().intValue(), 67);
+  @Test
+  public void testGetByIndex()
+  {
+    PyByteArray instance = PyByteArray.fromHex("4142");
+
+    PyInt value0 = instance.get(0);
+    PyInt value1 = instance.get(1);
+
+    assertEquals(value0.toNumber().intValue(), 65);
+    assertEquals(value1.toNumber().intValue(), 66);
+  }
+
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testGetOutOfBoundsThrows()
+  {
+    PyByteArray instance = PyByteArray.fromHex("41");
+    instance.get(5);
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testGetWithTupleSubscriptRejected()
+  {
+    PyByteArray instance = PyByteArray.fromHex("414243");
+    instance.get(PyBuiltIn.slice(0, 1), PyBuiltIn.slice(1, 2));
   }
 
   @Test
@@ -86,27 +108,16 @@ public class PyByteArrayNGTest
   }
 
   @Test
-  public void testGetByIndex()
+  public void testOfIterable()
   {
-    PyByteArray instance = PyByteArray.fromHex("4142");
+    PyByteArray instance = PyByteArray.of(Arrays.asList(
+            PyInt.of(65), PyInt.of(66), PyInt.of(67)));
 
-    PyInt value0 = instance.get(0);
-    PyInt value1 = instance.get(1);
-
-    assertEquals(value0.toNumber().intValue(), 65);
-    assertEquals(value1.toNumber().intValue(), 66);
-  }
-
-  @Test
-  public void testSetByIndex()
-  {
-    PyByteArray instance = PyByteArray.fromHex("414243");
-
-    PyInt previous = instance.set(1, PyInt.of(90));
-
-    assertNotNull(previous);
-    assertEquals(previous.toNumber().intValue(), 66);
-    assertEquals(instance.get(1).toNumber().intValue(), 90);
+    assertNotNull(instance);
+    assertEquals(instance.size(), 3);
+    assertEquals(instance.get(0).toNumber().intValue(), 65);
+    assertEquals(instance.get(1).toNumber().intValue(), 66);
+    assertEquals(instance.get(2).toNumber().intValue(), 67);
   }
 
   @Test
@@ -123,35 +134,23 @@ public class PyByteArrayNGTest
     assertEquals(instance.get(1).toNumber().intValue(), 67);
   }
 
-  @Test
-  public void testDecodeUtf8()
-  {
-    PyByteArray instance = PyByteArray.fromHex("48656c6c6f");
-
-    PyObject decoded = instance.decode(PyString.from("utf-8"), null);
-
-    assertNotNull(decoded);
-    assertEquals(decoded.toString(), "Hello");
-  }
-
-  @Test(expectedExceptions = IllegalArgumentException.class)
-  public void testGetWithTupleSubscriptRejected()
-  {
-    PyByteArray instance = PyByteArray.fromHex("414243");
-    instance.get(PyBuiltIn.slice(0, 1), PyBuiltIn.slice(1, 2));
-  }
-
   @Test(expectedExceptions = RuntimeException.class)
-  public void testFromHexInvalidThrows()
-  {
-    PyByteArray.fromHex("this_is_not_hex");
-  }
-
-  @Test(expectedExceptions = RuntimeException.class)
-  public void testGetOutOfBoundsThrows()
+  public void testRemoveOutOfBoundsThrows()
   {
     PyByteArray instance = PyByteArray.fromHex("41");
-    instance.get(5);
+    instance.remove(5);
+  }
+
+  @Test
+  public void testSetByIndex()
+  {
+    PyByteArray instance = PyByteArray.fromHex("414243");
+
+    PyInt previous = instance.set(1, PyInt.of(90));
+
+    assertNotNull(previous);
+    assertEquals(previous.toNumber().intValue(), 66);
+    assertEquals(instance.get(1).toNumber().intValue(), 90);
   }
 
   @Test(expectedExceptions = RuntimeException.class)
@@ -159,12 +158,5 @@ public class PyByteArrayNGTest
   {
     PyByteArray instance = PyByteArray.fromHex("41");
     instance.set(5, PyInt.of(1));
-  }
-
-  @Test(expectedExceptions = RuntimeException.class)
-  public void testRemoveOutOfBoundsThrows()
-  {
-    PyByteArray instance = PyByteArray.fromHex("41");
-    instance.remove(5);
   }
 }

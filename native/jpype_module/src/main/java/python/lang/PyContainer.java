@@ -23,6 +23,7 @@ import static python.lang.PyBuiltIn.backend;
  */
 public interface PyContainer<T extends PyObject> extends PyObject
 {
+
   default boolean contains(Object obj)
   {
     return backend().contains(this, obj);

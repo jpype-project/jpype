@@ -47,7 +47,7 @@ import static python.lang.PyBuiltIn.backend;
  * @see PyMapping
  * @see Backend
  */
-class PyMappingValues<K extends PyObject,V extends PyObject> implements Collection<V>
+class PyMappingValues<K extends PyObject, V extends PyObject> implements Collection<V>
 {
 
   private final Backend backend;

@@ -25,18 +25,17 @@ import org.testng.annotations.Test;
  *
  * @author nelson85
  */
-public class PyListIteratorNGTest
+public class PyListIteratorNGTest extends PyTestHarness
 {
-  
+
   public PyListIteratorNGTest()
   {
   }
 
-
   @BeforeClass
   public static void setUpClass() throws Exception
   {
- Interpreter.getInstance().start(new String[0]);
+    Interpreter.getInstance().start(new String[0]);
   }
 
 }

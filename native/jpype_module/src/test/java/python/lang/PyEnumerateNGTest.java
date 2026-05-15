@@ -25,9 +25,9 @@ import org.testng.annotations.Test;
  *
  * @author nelson85
  */
-public class PyEnumerateNGTest
+public class PyEnumerateNGTest extends PyTestHarness
 {
-  
+
   public PyEnumerateNGTest()
   {
   }
@@ -35,9 +35,8 @@ public class PyEnumerateNGTest
   @BeforeClass
   public static void setUpClass() throws Exception
   {
- Interpreter.getInstance().start(new String[0]);
+    Interpreter.getInstance().start(new String[0]);
   }
-  
 
   @Test
   public void testOf()
@@ -49,5 +48,5 @@ public class PyEnumerateNGTest
     assertEquals(result, expResult);
     fail("The test case is a prototype.");
   }
-  
+
 }

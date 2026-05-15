@@ -23,7 +23,7 @@ import org.testng.annotations.BeforeClass;
  *
  * @author nelson85
  */
-public class PyExcNGTest
+public class PyExcNGTest extends PyTestHarness
 {
 
   public PyExcNGTest()

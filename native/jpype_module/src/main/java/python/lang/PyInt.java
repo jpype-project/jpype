@@ -46,5 +46,5 @@ public interface PyInt extends PyObject, PyNumber
   {
     return backend().newInt(value);
   }
-  
+
 }

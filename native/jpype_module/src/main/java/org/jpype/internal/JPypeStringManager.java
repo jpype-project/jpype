@@ -1,3 +1,4 @@
+// --- file: org/jpype/internal/JPypeStringManager.java ---
 package org.jpype.internal;
 
 /**

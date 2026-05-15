@@ -16,58 +16,65 @@
  */
 package python.lang;
 
-import org.jpype.bridge.Interpreter;
 import static org.testng.Assert.*;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 /**
  *
- */
-public class PyComplexNGTest
+ */ 
+public class PyComplexNGTest extends PyTestHarness
 {
 
-  @BeforeClass
-  public static void setUpClass() throws Exception
+
+  @Test
+  public void testAbs()
   {
-    Interpreter.getInstance().start(new String[0]);
+    PyComplex a = PyComplex.of(3.0, 4.0);
+
+    PyObject result = a.abs();
+
+    assertTrue(result instanceof PyFloat || result instanceof PyInt);
+    assertEquals(((PyNumber) result).toNumber().doubleValue(), 5.0, 0.0001);
   }
 
   @Test
-  public void testCreateComplexNumber()
+  public void testAddDouble()
   {
-    double real = 3.0;
-    double imag = 4.0;
-    PyComplex pyComplex = PyComplex.of(real, imag);
+    PyComplex a = PyComplex.of(1.0, 2.0);
 
-    // Assert that the created PyComplex object is not null
-    assertNotNull(pyComplex, "PyComplex object should not be null");
+    PyObject result = a.add(2.5);
 
-    // Assert that the real and imaginary parts match the input values
-    assertEquals(pyComplex.real(), real, "Real part should match the input value");
-    assertEquals(pyComplex.imag(), imag, "Imaginary part should match the input value");
+    assertTrue(result instanceof PyComplex);
+    PyComplex c = (PyComplex) result;
+    assertEquals(c.real(), 3.5);
+    assertEquals(c.imag(), 2.0);
   }
 
   @Test
-  public void testRealPart()
+  public void testAddLong()
   {
-    double real = 5.0;
-    double imag = 2.0;
-    PyComplex pyComplex = PyComplex.of(real, imag);
+    PyComplex a = PyComplex.of(1.0, 2.0);
 
-    // Assert that the real part matches the expected value
-    assertEquals(pyComplex.real(), real, "Real part should match the expected value");
+    PyObject result = a.add(5L);
+
+    assertTrue(result instanceof PyComplex);
+    PyComplex c = (PyComplex) result;
+    assertEquals(c.real(), 6.0);
+    assertEquals(c.imag(), 2.0);
   }
 
   @Test
-  public void testImaginaryPart()
+  public void testAddPyObject()
   {
-    double real = 1.0;
-    double imag = 6.0;
-    PyComplex pyComplex = PyComplex.of(real, imag);
+    PyComplex a = PyComplex.of(1.0, 2.0);
+    PyComplex b = PyComplex.of(3.0, 4.0);
 
-    // Assert that the imaginary part matches the expected value
-    assertEquals(pyComplex.imag(), imag, "Imaginary part should match the expected value");
+    PyObject result = a.add(b);
+
+    assertTrue(result instanceof PyComplex);
+    PyComplex c = (PyComplex) result;
+    assertEquals(c.real(), 4.0);
+    assertEquals(c.imag(), 6.0);
   }
 
   @Test
@@ -90,71 +97,18 @@ public class PyComplexNGTest
   }
 
   @Test
-  public void testAddPyObject()
+  public void testCreateComplexNumber()
   {
-    PyComplex a = PyComplex.of(1.0, 2.0);
-    PyComplex b = PyComplex.of(3.0, 4.0);
+    double real = 3.0;
+    double imag = 4.0;
+    PyComplex pyComplex = PyComplex.of(real, imag);
 
-    PyObject result = a.add(b);
+    // Assert that the created PyComplex object is not null
+    assertNotNull(pyComplex, "PyComplex object should not be null");
 
-    assertTrue(result instanceof PyComplex);
-    PyComplex c = (PyComplex) result;
-    assertEquals(c.real(), 4.0);
-    assertEquals(c.imag(), 6.0);
-  }
-
-  @Test
-  public void testAddLong()
-  {
-    PyComplex a = PyComplex.of(1.0, 2.0);
-
-    PyObject result = a.add(5L);
-
-    assertTrue(result instanceof PyComplex);
-    PyComplex c = (PyComplex) result;
-    assertEquals(c.real(), 6.0);
-    assertEquals(c.imag(), 2.0);
-  }
-
-  @Test
-  public void testAddDouble()
-  {
-    PyComplex a = PyComplex.of(1.0, 2.0);
-
-    PyObject result = a.add(2.5);
-
-    assertTrue(result instanceof PyComplex);
-    PyComplex c = (PyComplex) result;
-    assertEquals(c.real(), 3.5);
-    assertEquals(c.imag(), 2.0);
-  }
-
-  @Test
-  public void testSubtractPyObject()
-  {
-    PyComplex a = PyComplex.of(5.0, 7.0);
-    PyComplex b = PyComplex.of(2.0, 3.0);
-
-    PyObject result = a.subtract(b);
-
-    assertTrue(result instanceof PyComplex);
-    PyComplex c = (PyComplex) result;
-    assertEquals(c.real(), 3.0);
-    assertEquals(c.imag(), 4.0);
-  }
-
-  @Test
-  public void testMultiplyPyObject()
-  {
-    PyComplex a = PyComplex.of(1.0, 2.0);
-    PyComplex b = PyComplex.of(3.0, 4.0);
-
-    PyObject result = a.multiply(b);
-
-    assertTrue(result instanceof PyComplex);
-    PyComplex c = (PyComplex) result;
-    assertEquals(c.real(), -5.0);
-    assertEquals(c.imag(), 10.0);
+    // Assert that the real and imaginary parts match the input values
+    assertEquals(pyComplex.real(), real, "Real part should match the input value");
+    assertEquals(pyComplex.imag(), imag, "Imaginary part should match the input value");
   }
 
   @Test
@@ -172,14 +126,38 @@ public class PyComplexNGTest
   }
 
   @Test
-  public void testAbs()
+  public void testImaginaryPart()
   {
-    PyComplex a = PyComplex.of(3.0, 4.0);
+    double real = 1.0;
+    double imag = 6.0;
+    PyComplex pyComplex = PyComplex.of(real, imag);
 
-    PyObject result = a.abs();
+    // Assert that the imaginary part matches the expected value
+    assertEquals(pyComplex.imag(), imag, "Imaginary part should match the expected value");
+  }
 
-    assertTrue(result instanceof PyFloat || result instanceof PyInt);
-    assertEquals(((PyNumber) result).toNumber().doubleValue(), 5.0, 0.0001);
+  @Test
+  public void testMultiplyPyObject()
+  {
+    PyComplex a = PyComplex.of(1.0, 2.0);
+    PyComplex b = PyComplex.of(3.0, 4.0);
+
+    PyObject result = a.multiply(b);
+
+    assertTrue(result instanceof PyComplex);
+    PyComplex c = (PyComplex) result;
+    assertEquals(c.real(), -5.0);
+    assertEquals(c.imag(), 10.0);
+  }
+
+  @Test
+  public void testNegate()
+  {
+    PyComplex zero = PyComplex.of(0.0, 0.0);
+    PyComplex nonZero = PyComplex.of(1.0, 1.0);
+
+    assertTrue(zero.negate());
+    assertFalse(nonZero.negate());
   }
 
   @Test
@@ -209,10 +187,28 @@ public class PyComplexNGTest
   }
 
   @Test
-  public void testToBooleanTrue()
+  public void testRealPart()
   {
-    PyComplex a = PyComplex.of(1.0, 0.0);
-    assertTrue(a.toBoolean());
+    double real = 5.0;
+    double imag = 2.0;
+    PyComplex pyComplex = PyComplex.of(real, imag);
+
+    // Assert that the real part matches the expected value
+    assertEquals(pyComplex.real(), real, "Real part should match the expected value");
+  }
+
+  @Test
+  public void testSubtractPyObject()
+  {
+    PyComplex a = PyComplex.of(5.0, 7.0);
+    PyComplex b = PyComplex.of(2.0, 3.0);
+
+    PyObject result = a.subtract(b);
+
+    assertTrue(result instanceof PyComplex);
+    PyComplex c = (PyComplex) result;
+    assertEquals(c.real(), 3.0);
+    assertEquals(c.imag(), 4.0);
   }
 
   @Test
@@ -223,13 +219,10 @@ public class PyComplexNGTest
   }
 
   @Test
-  public void testNegate()
+  public void testToBooleanTrue()
   {
-    PyComplex zero = PyComplex.of(0.0, 0.0);
-    PyComplex nonZero = PyComplex.of(1.0, 1.0);
-
-    assertTrue(zero.negate());
-    assertFalse(nonZero.negate());
+    PyComplex a = PyComplex.of(1.0, 0.0);
+    assertTrue(a.toBoolean());
   }
 
 }

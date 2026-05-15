@@ -17,9 +17,9 @@
 package python.lang;
 
 /**
- *  Representation for a Python filter object.
+ * Representation for a Python filter object.
  */
 public interface PyFilter<T extends PyObject> extends PyIter<T>
 {
-  
+
 }

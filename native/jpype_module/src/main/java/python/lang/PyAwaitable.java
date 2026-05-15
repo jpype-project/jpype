@@ -21,5 +21,5 @@ package python.lang;
  */
 public interface PyAwaitable extends PyObject
 {
-  
+
 }

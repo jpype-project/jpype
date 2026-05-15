@@ -23,7 +23,7 @@ package python.lang;
  * based on their duck type behavior. Use `instanceof` and casting to access the
  * available behaviors. Specific Java like behaviors are implemented on the
  * protocols where applicable.
- * 
+ *
  * When user defined wrappers expose their methods they will use a leading $
  * this ensures that there can never be a collision between Java and Python
  * methods.
@@ -34,7 +34,7 @@ public interface PyObject
 
   /**
    * Apply the attributes protocol to this object.
-   * 
+   *
    * The PyAttributes provides access to getattr, setattr, and delattr.
    *
    * This method never fails.
@@ -52,7 +52,7 @@ public interface PyObject
   @Override
   boolean equals(Object obj);
 
-    /**
+  /**
    * Returns a string representation of the object.
    * <p>
    * This method generates a string representation of the object, equivalent to
@@ -63,5 +63,5 @@ public interface PyObject
    */
   @Override
   String toString();
-  
+
 }

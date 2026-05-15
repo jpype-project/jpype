@@ -214,7 +214,7 @@ public interface PyCallable extends PyObject
      */
     public CallBuilder kwarg(CharSequence name, Object value)
     {
-      jkwargs.add(new CallBuilderEntry<Object,Object>(name, value));
+      jkwargs.add(new CallBuilderEntry<Object, Object>(name, value));
       return this;
     }
 
@@ -283,7 +283,7 @@ public interface PyCallable extends PyObject
   /**
    * Represents a single entry in the keyword arguments for a call.
    */
-  public static class CallBuilderEntry<K,V> implements Map.Entry<K,V>
+  public static class CallBuilderEntry<K, V> implements Map.Entry<K, V>
   {
 
     private final K key;

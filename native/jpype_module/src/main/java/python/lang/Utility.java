@@ -1,3 +1,4 @@
+// --- file: python/lang/Utility.java ---
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy of
@@ -19,16 +20,16 @@ package python.lang;
  *
  * @author nelson85
  */
- class Utility
+class Utility
 {
-   
-   static Number toNumber(PyObject obj)
-   {
-     if (obj instanceof PyFloat)
-       return Double.valueOf(PyBuiltIn.asDouble(obj));
-     if (obj instanceof PyInt)
-       return Long.valueOf(PyBuiltIn.asLong(obj));
-     throw new UnsupportedOperationException();
-   }
-  
+
+  static Number toNumber(PyObject obj)
+  {
+    if (obj instanceof PyFloat)
+      return Double.valueOf(PyBuiltIn.asDouble(obj));
+    if (obj instanceof PyInt)
+      return Long.valueOf(PyBuiltIn.asLong(obj));
+    throw new UnsupportedOperationException();
+  }
+
 }

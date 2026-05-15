@@ -41,11 +41,13 @@ public interface PyComplex extends PyObject, PyNumber
   }
 
   /**
-   * Returns the real part of the complex number.
+   * Computes the complex conjugate of the current complex number. The conjugate
+   * of a complex number is obtained by negating its imaginary part.
    *
-   * @return the real part as a {@code double}.
+   * @return a new {@link PyComplex} instance representing the conjugate of the
+   * current complex number.
    */
-  double real();
+  PyComplex conjugate();
 
   /**
    * Returns the imaginary part of the complex number.
@@ -55,11 +57,9 @@ public interface PyComplex extends PyObject, PyNumber
   double imag();
 
   /**
-   * Computes the complex conjugate of the current complex number. The conjugate
-   * of a complex number is obtained by negating its imaginary part.
+   * Returns the real part of the complex number.
    *
-   * @return a new {@link PyComplex} instance representing the conjugate of the
-   * current complex number.
+   * @return the real part as a {@code double}.
    */
-  PyComplex conjugate();
+  double real();
 }

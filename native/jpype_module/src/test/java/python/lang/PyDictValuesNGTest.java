@@ -1,23 +1,15 @@
+// --- file: python/lang/PyDictValuesNGTest.java ---
 package python.lang;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import org.jpype.bridge.Interpreter;
 import static org.testng.Assert.*;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class PyDictValuesNGTest
+public class PyDictValuesNGTest extends PyTestHarness
 {
-
-  @BeforeClass
-  public static void setUpClass() throws Exception
-  {
-    if (!Interpreter.getInstance().isStarted())
-      Interpreter.getInstance().start(new String[0]);
-  }
 
   private PyDict dictOf(Object... items)
   {
@@ -27,31 +19,49 @@ public class PyDictValuesNGTest
     return dict;
   }
 
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testAddAllUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictValues<PyObject> values = new PyDictValues<>(dict);
+
+    values.addAll(Arrays.asList(PyInt.of(2), PyInt.of(3)));
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testAddUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictValues<PyObject> values = new PyDictValues<>(dict);
+
+    values.add(PyInt.of(2));
+  }
+
   @Test
-  public void testSize()
+  public void testClearClearsUnderlyingDict()
   {
     PyDict dict = dictOf("a", 1, "b", 2);
     PyDictValues<?> values = new PyDictValues<>(dict);
 
-    assertEquals(values.size(), 2);
-  }
-
-  @Test
-  public void testIsEmptyTrue()
-  {
-    PyDict dict = PyBuiltIn.dict();
-    PyDictValues<?> values = new PyDictValues<>(dict);
+    values.clear();
 
     assertTrue(values.isEmpty());
+    assertTrue(dict.isEmpty());
+    assertEquals(dict.size(), 0);
   }
 
   @Test
-  public void testIsEmptyFalse()
+  public void testContainsAll()
   {
-    PyDict dict = dictOf("a", 1);
+    PyDict dict = dictOf(
+            "a", PyString.from("x"),
+            "b", PyString.from("y"),
+            "c", PyString.from("z"));
     PyDictValues<?> values = new PyDictValues<>(dict);
 
-    assertFalse(values.isEmpty());
+    assertTrue(values.containsAll(Arrays.asList(PyString.from("x"), PyString.from("y")))
+            || values.toString().contains("x") && values.toString().contains("y"));
+    assertFalse(values.containsAll(Arrays.asList(PyString.from("x"), PyString.from("missing"))));
   }
 
   @Test
@@ -74,17 +84,21 @@ public class PyDictValuesNGTest
   }
 
   @Test
-  public void testContainsAll()
+  public void testIsEmptyFalse()
   {
-    PyDict dict = dictOf(
-            "a", PyString.from("x"),
-            "b", PyString.from("y"),
-            "c", PyString.from("z"));
+    PyDict dict = dictOf("a", 1);
     PyDictValues<?> values = new PyDictValues<>(dict);
 
-    assertTrue(values.containsAll(Arrays.asList(PyString.from("x"), PyString.from("y")))
-            || values.toString().contains("x") && values.toString().contains("y"));
-    assertFalse(values.containsAll(Arrays.asList(PyString.from("x"), PyString.from("missing"))));
+    assertFalse(values.isEmpty());
+  }
+
+  @Test
+  public void testIsEmptyTrue()
+  {
+    PyDict dict = PyBuiltIn.dict();
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    assertTrue(values.isEmpty());
   }
 
   @Test
@@ -103,17 +117,40 @@ public class PyDictValuesNGTest
     assertTrue(out.contains("2"));
   }
 
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testRemoveAllUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    values.removeAll(Arrays.asList(PyInt.of(1)));
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testRemoveUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    values.remove(PyInt.of(1));
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testRetainAllUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    values.retainAll(Arrays.asList(PyInt.of(1)));
+  }
+
   @Test
-  public void testClearClearsUnderlyingDict()
+  public void testSize()
   {
     PyDict dict = dictOf("a", 1, "b", 2);
     PyDictValues<?> values = new PyDictValues<>(dict);
 
-    values.clear();
-
-    assertTrue(values.isEmpty());
-    assertTrue(dict.isEmpty());
-    assertEquals(dict.size(), 0);
+    assertEquals(values.size(), 2);
   }
 
   @Test
@@ -156,48 +193,4 @@ public class PyDictValuesNGTest
     assertFalse(values.toString().contains("1"));
   }
 
-  @Test(expectedExceptions = UnsupportedOperationException.class)
-  public void testAddUnsupported()
-  {
-    PyDict dict = dictOf("a", 1);
-    PyDictValues<PyObject> values = new PyDictValues<>(dict);
-
-    values.add(PyInt.of(2));
-  }
-
-  @Test(expectedExceptions = UnsupportedOperationException.class)
-  public void testAddAllUnsupported()
-  {
-    PyDict dict = dictOf("a", 1);
-    PyDictValues<PyObject> values = new PyDictValues<>(dict);
-
-    values.addAll(Arrays.asList(PyInt.of(2), PyInt.of(3)));
-  }
-
-  @Test(expectedExceptions = UnsupportedOperationException.class)
-  public void testRemoveUnsupported()
-  {
-    PyDict dict = dictOf("a", 1);
-    PyDictValues<?> values = new PyDictValues<>(dict);
-
-    values.remove(PyInt.of(1));
-  }
-
-  @Test(expectedExceptions = UnsupportedOperationException.class)
-  public void testRemoveAllUnsupported()
-  {
-    PyDict dict = dictOf("a", 1);
-    PyDictValues<?> values = new PyDictValues<>(dict);
-
-    values.removeAll(Arrays.asList(PyInt.of(1)));
-  }
-
-  @Test(expectedExceptions = UnsupportedOperationException.class)
-  public void testRetainAllUnsupported()
-  {
-    PyDict dict = dictOf("a", 1);
-    PyDictValues<?> values = new PyDictValues<>(dict);
-
-    values.retainAll(Arrays.asList(PyInt.of(1)));
-  }
 }

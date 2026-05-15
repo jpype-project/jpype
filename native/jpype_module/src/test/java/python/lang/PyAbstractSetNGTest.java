@@ -1,3 +1,4 @@
+// --- file: python/lang/PyAbstractSetNGTest.java ---
 package python.lang;
 
 import java.util.Arrays;
@@ -9,6 +10,47 @@ import org.testng.annotations.*;
 public class PyAbstractSetNGTest extends PyTestHarness
 {
 
+  @Test
+  public void testContainsMissingElement()
+  {
+    PyAbstractSet<PyObject> set = PyAbstractSet.of(Arrays.asList("a", "b", "c"));
+    assertFalse(set.contains("z"));
+  }
+
+  @Test
+  public void testContainsPresentElement()
+  {
+    PyAbstractSet<PyObject> set = PyAbstractSet.of(Arrays.asList("a", "b", "c"));
+    assertTrue(set.contains("a"));
+  }
+
+  @Test
+  public void testIsEmptyFalseForNonEmptySet()
+  {
+    PyAbstractSet<PyObject> set = PyAbstractSet.of(Arrays.asList("x"));
+    assertFalse(set.isEmpty());
+  }
+
+  @Test
+  public void testIteratorOnEmptySet()
+  {
+    PyAbstractSet<PyObject> set = PyAbstractSet.of(Arrays.asList());
+    assertFalse(set.iterator().hasNext());
+  }
+
+  public void testIteratorTraversesElements()
+  {
+    PyAbstractSet<PyObject> set = PyAbstractSet.of(Arrays.asList("a", "b", "c"));
+
+    Set<String> actual = new HashSet<>();
+    for (PyObject obj : set)
+      actual.add(obj.toString());
+
+    assertEquals(actual.size(), 3);
+    assertTrue(actual.contains("a"));
+    assertTrue(actual.contains("b"));
+    assertTrue(actual.contains("c"));
+  }
 
   @Test
   public void testOfCreatesSet()
@@ -28,51 +70,9 @@ public class PyAbstractSetNGTest extends PyTestHarness
   }
 
   @Test
-  public void testContainsPresentElement()
-  {
-    PyAbstractSet<PyObject> set = PyAbstractSet.of(Arrays.asList("a", "b", "c"));
-    assertTrue(set.contains("a"));
-  }
-
-  @Test
-  public void testContainsMissingElement()
-  {
-    PyAbstractSet<PyObject> set = PyAbstractSet.of(Arrays.asList("a", "b", "c"));
-    assertFalse(set.contains("z"));
-  }
-
-  @Test
   public void testSizeWithDuplicates()
   {
     PyAbstractSet<PyObject> set = PyAbstractSet.of(Arrays.asList("a", "a", "b"));
     assertEquals(set.size(), 2);
-  }
-
-  @Test
-  public void testIsEmptyFalseForNonEmptySet()
-  {
-    PyAbstractSet<PyObject> set = PyAbstractSet.of(Arrays.asList("x"));
-    assertFalse(set.isEmpty());
-  }
-
-  public void testIteratorTraversesElements()
-  {
-    PyAbstractSet<PyObject> set = PyAbstractSet.of(Arrays.asList("a", "b", "c"));
-
-    Set<String> actual = new HashSet<>();
-    for (PyObject obj : set)
-      actual.add(obj.toString());
-
-    assertEquals(actual.size(), 3);
-    assertTrue(actual.contains("a"));
-    assertTrue(actual.contains("b"));
-    assertTrue(actual.contains("c"));
-  }
-
-  @Test
-  public void testIteratorOnEmptySet()
-  {
-    PyAbstractSet<PyObject> set = PyAbstractSet.of(Arrays.asList());
-    assertFalse(set.iterator().hasNext());
   }
 }

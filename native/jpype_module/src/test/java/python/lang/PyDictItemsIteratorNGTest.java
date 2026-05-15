@@ -1,21 +1,15 @@
+// --- file: python/lang/PyDictItemsIteratorNGTest.java ---
 package python.lang;
 
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
-import org.jpype.bridge.Interpreter;
 import static org.testng.Assert.*;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class PyDictItemsIteratorNGTest
+public class PyDictItemsIteratorNGTest extends PyTestHarness
 {
-  @BeforeClass
-  public static void setUpClass() throws Exception
-  {
-    if (!Interpreter.getInstance().isStarted())
-      Interpreter.getInstance().start(new String[0]);
-  }
+
 
   private PyDict dictOf(Object... items)
   {
@@ -32,6 +26,48 @@ public class PyDictItemsIteratorNGTest
     PyIter<PyTuple> iter = PyBuiltIn.<PyTuple>iter(itemsView);
     BiFunction<PyObject, PyObject, PyObject> setter = dict::put;
     return new PyDictItemsIterator<>(iter, setter);
+  }
+
+  @Test
+  public void testEmptyIteratorHasNoNext()
+  {
+    PyDict dict = PyBuiltIn.dict();
+    PyDictItemsIterator<PyObject, PyObject> iterator = newIterator(dict);
+
+    assertFalse(iterator.hasNext());
+  }
+
+  @Test(expectedExceptions = NoSuchElementException.class)
+  public void testEmptyIteratorNextThrows()
+  {
+    PyDict dict = PyBuiltIn.dict();
+    PyDictItemsIterator<PyObject, PyObject> iterator = newIterator(dict);
+
+    iterator.next();
+  }
+
+  @Test
+  public void testEntrySetValueUpdatesUnderlyingDict()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictItemsIterator<PyObject, PyObject> iterator = newIterator(dict);
+
+    Map.Entry<PyObject, PyObject> entry = iterator.next();
+    PyObject old = entry.setValue(PyInt.of(42));
+
+    assertEquals(old.toString(), "1");
+    assertEquals(dict.get("a").toString(), "42");
+  }
+
+  @Test
+  public void testHasNextFalseAfterExhaustion()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictItemsIterator<PyObject, PyObject> iterator = newIterator(dict);
+
+    assertTrue(iterator.hasNext());
+    iterator.next();
+    assertFalse(iterator.hasNext());
   }
 
   @Test
@@ -86,17 +122,6 @@ public class PyDictItemsIteratorNGTest
     assertTrue(sawB);
   }
 
-  @Test
-  public void testHasNextFalseAfterExhaustion()
-  {
-    PyDict dict = dictOf("a", 1);
-    PyDictItemsIterator<PyObject, PyObject> iterator = newIterator(dict);
-
-    assertTrue(iterator.hasNext());
-    iterator.next();
-    assertFalse(iterator.hasNext());
-  }
-
   @Test(expectedExceptions = NoSuchElementException.class)
   public void testNextThrowsWhenExhausted()
   {
@@ -107,34 +132,4 @@ public class PyDictItemsIteratorNGTest
     iterator.next();
   }
 
-  @Test
-  public void testEmptyIteratorHasNoNext()
-  {
-    PyDict dict = PyBuiltIn.dict();
-    PyDictItemsIterator<PyObject, PyObject> iterator = newIterator(dict);
-
-    assertFalse(iterator.hasNext());
-  }
-
-  @Test(expectedExceptions = NoSuchElementException.class)
-  public void testEmptyIteratorNextThrows()
-  {
-    PyDict dict = PyBuiltIn.dict();
-    PyDictItemsIterator<PyObject, PyObject> iterator = newIterator(dict);
-
-    iterator.next();
-  }
-
-  @Test
-  public void testEntrySetValueUpdatesUnderlyingDict()
-  {
-    PyDict dict = dictOf("a", 1);
-    PyDictItemsIterator<PyObject, PyObject> iterator = newIterator(dict);
-
-    Map.Entry<PyObject, PyObject> entry = iterator.next();
-    PyObject old = entry.setValue(PyInt.of(42));
-
-    assertEquals(old.toString(), "1");
-    assertEquals(dict.get("a").toString(), "42");
-  }
 }

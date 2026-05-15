@@ -1,12 +1,10 @@
+// --- file: runner/HelloWorldMain.java ---
 package runner;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import org.jpype.bridge.Context;
 import org.jpype.bridge.Interpreter;
-import python.lang.PyBuiltIn;
-import python.lang.PyList;
 import python.lang.PyObject;
 
 public class HelloWorldMain
@@ -24,15 +22,6 @@ public class HelloWorldMain
       context.exec("msg = 'Hello World from Python'");
       PyObject result = context.eval("msg");
       System.out.println("Python returned: " + result);
-
-      java.util.List<String> jList = Arrays.asList("a", "b");
-      PyList pList = PyBuiltIn.list(jList);
-      System.out.println(PyBuiltIn.len(pList));
-      System.out.println(pList.toString());
-      PyObject item = pList.get(0);
-      System.out.println("before " + item.toString());
-      Interpreter.getInstance().stop();
-      System.out.println("after " + pList.toString());
     } catch (Throwable ex)
     {
       ex.printStackTrace();
