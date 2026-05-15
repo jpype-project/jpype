@@ -517,6 +517,7 @@ def shutdownJVM():
     Java objects. Due to limitations in the JPype, it is not possible to
     restart the JVM after being terminated.
     """
+    print("SHUTDOWN")
     import threading
     import jpype.config
     if threading.current_thread() is not threading.main_thread():

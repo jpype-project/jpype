@@ -121,6 +121,7 @@ public:
 	void startJVM(const string& vmPath, const StringVector& args,
 			bool ignoreUnrecognized, bool convertStrings, bool interrupt);
 	void attachJVM(JNIEnv* env);
+	void detachJVM();
 	void initializeResources(JNIEnv* env, bool interrupt);
 	void shutdownJVM(bool destroyJVM, bool freeJVM);
 	void attachCurrentThread();

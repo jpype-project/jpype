@@ -224,6 +224,13 @@ void JPContext::attachJVM(JNIEnv* env)
 	initializeResources(env, false);
 }
 
+void JPContext::detachJVM()
+{
+	printf("DETACH\n");
+	m_JavaVM = nullptr;
+	m_Running = false;
+}
+
 std::string getShared() 
 {
 #ifdef WIN32

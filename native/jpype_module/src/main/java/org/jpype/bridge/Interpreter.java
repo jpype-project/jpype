@@ -100,6 +100,7 @@ public class Interpreter
    * Indicates whether the interpreter is active.
    */
   private boolean active = false;
+  private boolean terminated = false;
 
   /**
    * Indicates whether the operating system is Windows.
@@ -135,24 +136,12 @@ public class Interpreter
   /**
    * Singleton instance of the {@code Interpreter}.
    */
-  static Interpreter instance = new Interpreter();
+  static Interpreter INSTANCE = new Interpreter();
 
   /**
    * Python object used to signal interpreter shutdown.
    */
   public static PyObject stop = null;
-
-  /**
-   * Determines if the current operating system is Windows.
-   *
-   * @return {@code true} if the operating system is Windows; {@code false}
-   * otherwise.
-   */
-  private static boolean checkWindows()
-  {
-    String osName = System.getProperty("os.name");
-    return osName.startsWith("Windows");
-  }
 
   /**
    * Returns the backend used to interact with Python.
@@ -175,6 +164,8 @@ public class Interpreter
    */
   public static void setBackend(Backend entry)
   {
+    if (backend != null)
+      throw new RuntimeException("Backend reconfigured");
     LOGGER.log(Level.INFO, "Backend installed");
     backend = entry;
     stop = backend.object();
@@ -187,7 +178,7 @@ public class Interpreter
    */
   public static Interpreter getInstance()
   {
-    return instance;
+    return INSTANCE;
   }
 
   /**
@@ -283,6 +274,9 @@ public class Interpreter
    */
   public synchronized void start(String... args)
   {
+    if (terminated)
+      throw new IllegalStateException("interpreter is terminated");
+
     if (Interpreter.backend != null || active)
       return;
     active = true;
@@ -354,9 +348,37 @@ public class Interpreter
             getBool(CONF_SITEIMPORT, "true"),
             getBool(CONF_USERSITE, "true"),
             getBool(CONF_WRITEBC, "true"));
+    LOGGER.info("Python launched");
+  }
+
+  /**
+   * Close the bridge.
+   *
+   * This is irrevokable.
+   */
+  public synchronized void stop()
+  {
+    if (terminated)
+      throw new IllegalStateException("interpreter is terminated");
+
+    Natives.finish();
+    backend = null;
+    terminated = true;
   }
 
 //<editor-fold desc="internal" defaultstate="collapsed">
+  /**
+   * Determines if the current operating system is Windows.
+   *
+   * @return {@code true} if the operating system is Windows; {@code false}
+   * otherwise.
+   */
+  private static boolean checkWindows()
+  {
+    String osName = System.getProperty("os.name");
+    return osName.startsWith("Windows");
+  }
+
   /**
    * Loads the detective probe from the resources directory.
    */

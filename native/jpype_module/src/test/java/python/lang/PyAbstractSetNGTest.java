@@ -3,19 +3,12 @@ package python.lang;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-import org.jpype.bridge.Interpreter;
 import static org.testng.Assert.*;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
-public class PyAbstractSetNGTest
+public class PyAbstractSetNGTest extends PyTestHarness
 {
-  @BeforeClass
-  public static void setUpClass() throws Exception
-  {
-    if (!Interpreter.getInstance().isStarted())
-      Interpreter.getInstance().start(new String[0]);
-  }
+
 
   @Test
   public void testOfCreatesSet()
@@ -62,7 +55,6 @@ public class PyAbstractSetNGTest
     assertFalse(set.isEmpty());
   }
 
-  @Test
   public void testIteratorTraversesElements()
   {
     PyAbstractSet<PyObject> set = PyAbstractSet.of(Arrays.asList("a", "b", "c"));

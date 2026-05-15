@@ -189,8 +189,7 @@ public class JPypeClassLoader extends URLClassLoader
     String aname = name.replace('.', '/') + ".class";
     URL url = this.getResource(aname);
     if (url == null)
-      throw new ClassNotFoundException(name);
-
+      return Class.forName(name, false, JPypeClassLoader.class.getClassLoader());
     try
     {
       URLConnection connection = url.openConnection();

@@ -358,7 +358,7 @@ _PyExcMethods: MutableMapping[str, Callable] = {
 
 _PySliceMethods: MutableMapping[str, Callable] = {
     "getStart": _attr("start"),
-    "getStop": _attr("end"),
+    "getStop": _attr("stop"),
     "getStep": _attr("step"),
     "indices": slice.indices,
     "isValid": lambda x: x.step !=0,

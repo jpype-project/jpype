@@ -419,18 +419,38 @@ success_config:
 JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_interactive
 (JNIEnv *env, jclass cls)
 {
-	JPPyCallAcquire callback;
-	PyRun_InteractiveLoop(stdin, "<stdin>");
+	try
+	{
+		JPPyCallAcquire callback;
+		PyRun_InteractiveLoop(stdin, "<stdin>");
+	} catch (JPypeException& ex)
+	{
+		convertException(env, ex);
+	}	catch (...)
+	{
+		fail(env, "C++ exception during interactive");
+	}
 }
 
 JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_finish
 (JNIEnv *env, jclass cls)
 {
-	JPPyCallAcquire callback;
-	Py_Finalize();
+	try
+	{
+		printf("A1\n");
+		PyGILState_STATE gstate = PyGILState_Ensure();
+		JPContext_global->detachJVM();
+		printf("A2\n");
+		Py_Finalize();
+		printf("A3\n");
+	} catch (JPypeException& ex)
+	{
+		convertException(env, ex);
+	}	catch (...)
+	{
+		fail(env, "C++ exception during finish");
+	}
 }
-
-
 
 #ifdef __cplusplus
 }

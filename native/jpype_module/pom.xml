@@ -58,14 +58,23 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
+                    <showSuccess>true</showSuccess>
+                    <trimStackTrace>true</trimStackTrace>
+                    <properties>
+                        <property>
+                            <name>verbose</name>
+                            <value>2</value>
+                        </property>
+                    </properties>
                     <systemPropertyVariables>
                         <java.util.logging.config.file>${project.basedir}/logging.properties</java.util.logging.config.file>
                         <jpype.path>../..</jpype.path>
-                        <jpype.nocache>true</jpype.nocache>
+                        <jpype.nocache>false</jpype.nocache>
                         <python.executable>python3.12</python.executable>
                         <python.config.home>/usr</python.config.home>
                     </systemPropertyVariables>
                     <argLine>
+                        --enable-native-access=ALL-UNNAMED
                         --enable-native-access=org.jpype
                         --module-path=${project.build.directory}/${project.build.finalName}.jar
                         --add-modules=org.jpype

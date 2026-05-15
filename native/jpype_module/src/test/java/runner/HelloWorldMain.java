@@ -6,8 +6,6 @@ import java.util.Arrays;
 import org.jpype.bridge.Context;
 import org.jpype.bridge.Interpreter;
 import python.lang.PyBuiltIn;
-import python.lang.PyFloat;
-import python.lang.PyInt;
 import python.lang.PyList;
 import python.lang.PyObject;
 
@@ -32,7 +30,9 @@ public class HelloWorldMain
       System.out.println(PyBuiltIn.len(pList));
       System.out.println(pList.toString());
       PyObject item = pList.get(0);
-      System.out.println(item.toString());
+      System.out.println("before " + item.toString());
+      Interpreter.getInstance().stop();
+      System.out.println("after " + pList.toString());
     } catch (Throwable ex)
     {
       ex.printStackTrace();
