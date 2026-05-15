@@ -50,9 +50,10 @@ import java.util.stream.Stream;
  * It also allows applications to operate interactively with the Python
  * interpreter.</p>
  *
- * 
- * To log use: java -Djava.util.logging.config.file=logging.properties -cp your_app.jar com.your.Main
- * 
+ *
+ * To log use: java -Djava.util.logging.config.file=logging.properties -cp
+ * your_app.jar com.your.Main
+ *
  * With logging.properties file:
  * <pre>
  *   handlers=java.util.logging.ConsoleHandler
@@ -60,14 +61,14 @@ import java.util.stream.Stream;
  *   java.util.logging.ConsoleHandler.level=INFO
  *   java.util.logging.ConsoleHandler.formatter=java.util.logging.SimpleFormatter
  * </pre>
- * 
+ *
  */
 public class Interpreter
 {
 
   final static Logger LOGGER = Logger.getLogger(Interpreter.class.getName());
   final static String PROBE = "/org/jpype/resources/probe.py";
-  
+
   // Configuration variables
   final static String CONF_NAME = "python.config.program_name";
   final static String CONF_HOME = "python.config.home";
@@ -82,19 +83,19 @@ public class Interpreter
   final static String CONF_SITEIMPORT = "python.config.site_import";
   final static String CONF_USERSITE = "python.config.user_site_directory";
   final static String CONF_WRITEBC = "python.config.write_bytecode";
-  
+
   final static String MOD_PATH = "python.module.path";
   final static String PYTHON_EXEC = "python.executable";
   final static String PYTHON_LIB = "python.lib";
-  
+
   final static String JPYPE_LIB = "jpype.lib";
   final static String JPYPE_ARCH = "jpype.arch";
   final static String JPYPE_NOCACHE = "jpype.nocache";
   final static String JPYPE_INSTALL = "jpype.install";
   final static String JPYPE_VER = "jpype.version";
-  
+
   final static String PROPERTIES = "jpype.properties";
-  
+
   /**
    * Indicates whether the interpreter is active.
    */
@@ -174,6 +175,7 @@ public class Interpreter
    */
   public static void setBackend(Backend entry)
   {
+    LOGGER.log(Level.INFO, "Backend installed");
     backend = entry;
     stop = backend.object();
   }
@@ -204,7 +206,7 @@ public class Interpreter
     interpreter.start(args);
     interpreter.interactive();
   }
-  
+
   /**
    * Returns the list of module paths used by the Python interpreter.
    *
@@ -250,14 +252,14 @@ public class Interpreter
   {
     return backend != null;
   }
-  
+
   /**
    * Prepares the interpreter environment without launching.
    * <p>
-   * This method runs the detective probe (or loads from cache), identifies 
-   * the correct libraries, and performs self-healing if necessary. After 
-   * calling this, you can inspect the System properties starting with 
-   * 'python.config.' or 'jpype.' before calling {@link #start(String...)}.
+   * This method runs the detective probe (or loads from cache), identifies the
+   * correct libraries, and performs self-healing if necessary. After calling
+   * this, you can inspect the System properties starting with 'python.config.'
+   * or 'jpype.' before calling {@link #start(String...)}.
    * </p>
    */
   public void prepare()
@@ -267,10 +269,10 @@ public class Interpreter
 
     // Run the environmental audit
     resolveLibraries();
-    
+
     LOGGER.info("Interpreter prepared. Ready for inspection or launch.");
   }
-  
+
   /**
    * Start the interpreter.Any configuration actions must have been completed
    * before the interpreter is started.
@@ -288,7 +290,7 @@ public class Interpreter
     // 1. Ensure the environment is prepared
     if (this.pythonLibrary == null)
       prepare();
-    
+
     // 2. Audit check: Ensure we have the minimum viable components
     if (jpypeLibrary == null || pythonLibrary == null)
     {
@@ -309,7 +311,7 @@ public class Interpreter
     // Pull everything from system properties now that resolveLibraries() has run
     String programName = System.getProperty(CONF_NAME, this.pythonExecutable);
     String home = System.getProperty(CONF_HOME);
-    String pythonPath = System.getProperty(CONF_PATH); // The sys.path from probe
+    String pythonPath = System.getProperty(CONF_PATH);
 
     LOGGER.info("Python C-API Configuration:");
     LOGGER.log(Level.INFO, "  program_name: {0}", programName);
@@ -319,7 +321,20 @@ public class Interpreter
     LOGGER.log(Level.INFO, "  site_import:  {0}", System.getProperty(CONF_SITEIMPORT, "true"));
 
     // Prepare paths
-    String[] paths = this.modulePaths.isEmpty() ? null : this.modulePaths.toArray(new String[0]);
+    List<String> allPaths = new ArrayList<>(this.modulePaths);
+    String sysPythonPath = System.getProperty(CONF_PATH);
+    if (sysPythonPath != null)
+    {
+      // Split by system path separator (':' on Linux, ';' on Windows)
+      allPaths.addAll(Arrays.asList(sysPythonPath.split(File.pathSeparator)));
+    }
+    String[] paths = allPaths.toArray(new String[0]);
+
+    LOGGER.log(Level.FINE, "Module paths");
+    for (String path : paths)
+    {
+      LOGGER.log(Level.FINE, "  {0}", path);
+    }
 
     // 7. Launch
     LOGGER.info("Launching Python Interpreter...");
@@ -337,18 +352,23 @@ public class Interpreter
             getBool(CONF_USERSITE, "true"),
             getBool(CONF_WRITEBC, "true"));
   }
-  
+
 //<editor-fold desc="internal" defaultstate="collapsed">
   /**
    * Loads the detective probe from the resources directory.
    */
   private String loadProbeResource()
   {
-    try (InputStream is = Interpreter.class.getResourceAsStream(PROBE))
+    // Get the module that contains the Interpreter class
+    Module module = Interpreter.class.getModule();
+
+    try (InputStream is = module.getResourceAsStream(PROBE))
     {
       if (is == null)
-        throw new RuntimeException("Missing resource: " + PROBE);
-      // Read the entire stream into a String
+      {
+        throw new RuntimeException("Missing resource: " + PROBE
+                + " (Ensure it is in the module path and the package is included in the JAR)");
+      }
       return new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
     } catch (IOException e)
     {
@@ -460,7 +480,6 @@ public class Interpreter
     throw new RuntimeException("Unable to locate Python executable");
   }
 
-
   private String makeHash(String path)
   {
     // No need to be cryptographic here.  We just need a unique key
@@ -533,6 +552,7 @@ public class Interpreter
    */
   private void saveCache(String key, String exe, Properties probed)
   {
+    LOGGER.log(Level.INFO, "Updating cache: {0} {1}", objs(key, exe));
     try
     {
       Path appPath = getAppPath(); // Helper to get .jpype or AppData path
@@ -569,6 +589,7 @@ public class Interpreter
   private boolean loadFromCache(String key, Properties probed)
   {
     Path propFile = getAppPath().resolve(PROPERTIES);
+    LOGGER.log(Level.FINE, "Load from cache {0}", propFile);
     if (!Files.exists(propFile))
       return false;
 
@@ -585,6 +606,7 @@ public class Interpreter
         {
           String cleanName = name.substring(prefix.length());
           probed.setProperty(cleanName, allCache.getProperty(name));
+          LOGGER.log(Level.FINE, "  {0} {1}", objs(cleanName, allCache.getProperty(name)));
           found = true;
         }
       }
@@ -610,6 +632,9 @@ public class Interpreter
 
     boolean noCache = Boolean.parseBoolean(System.getProperty(JPYPE_NOCACHE, "false")); //
     boolean attemptInstall = Boolean.parseBoolean(System.getProperty(JPYPE_INSTALL, "false"));
+
+    LOGGER.log(Level.FINE, "{0}={1}", objs(JPYPE_NOCACHE, noCache));
+    LOGGER.log(Level.FINE, "{0}={1}", objs(JPYPE_INSTALL, attemptInstall));
 
     if (!noCache && loadFromCache(key, probedProps))
     {
@@ -714,10 +739,7 @@ public class Interpreter
       if (System.getProperty(name) == null)
       {
         System.setProperty(name, probed.getProperty(name));
-        LOGGER.log(Level.FINE, "Setting default: {0} = {1}", new Object[]
-        {
-          name, probed.getProperty(name)
-        });
+        LOGGER.log(Level.FINE, "Setting default: {0} = {1}", objs(name, probed.getProperty(name)));
       }
     }
   }
@@ -756,6 +778,11 @@ public class Interpreter
   private boolean getBool(String key, String def)
   {
     return Boolean.parseBoolean(System.getProperty(key, def));
+  }
+
+  private Object[] objs(Object... obj)
+  {
+    return obj;
   }
 
 //</editor-fold>

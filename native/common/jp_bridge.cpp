@@ -30,8 +30,6 @@ static void convertException(JNIEnv *env, JPypeException& ex)
 	// We can't use ex.toJava() because this is part of initialization.
 	jclass runtimeException = env->FindClass("java/lang/RuntimeException");
 
-	printf("Exception type = %d\n", ex.getExceptionType());
-
 	// If it is a Java exception, we can simply throw it
 	if (ex.getExceptionType() == JPError::_java_error)
 	{
@@ -212,7 +210,6 @@ static bool appendModulePathsToSysPath(JNIEnv* env, jobjectArray modulePath)
 	}
 
 	jsize count = env->GetArrayLength(modulePath);
-	printf("Paths %d\n", count);
 	for (jsize i = 0; i < count; ++i)
 	{
 		jstring jpath = (jstring) env->GetObjectArrayElement(modulePath, i);
@@ -278,18 +275,13 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_start
 
 	try
 	{
-		printf("isolated=%d\n", isolated);
+		// 1. Basic Init
 		if (isolated)
-		{
-			printf("INIT ISOLATED\n");
 			PyConfig_InitIsolatedConfig(&config);
-		}
 		else
-		{
-			printf("INIT PYTHON CONFIG\n");
 			PyConfig_InitPythonConfig(&config);
-		}
 
+		// 2. Set Booleans
 		config.faulthandler = faulthandler;
 		config.quiet = quiet;
 		config.site_import = site_import;
@@ -297,61 +289,38 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_start
 		config.write_bytecode = bytecode;
 		config.verbose = verbose;
 
-		if (!assignWideString(env, name, config.program_name))
-			goto error_config;
-		if (!assignWideString(env, prefix, config.prefix))
-			goto error_config;
-		if (!assignWideString(env, home, config.home))
+		// 3. Set Path Inputs (Critical to do BEFORE PyConfig_Read)
+		if (!assignWideString(env, name, config.program_name)) goto error_config;
+		if (!assignWideString(env, home, config.home)) goto error_config;
+		if (!assignWideString(env, executable, config.executable)) goto error_config;
+		// Note: prefix and exec_prefix are usually calculated by Python 
+		// based on 'home', but setting them manually here is fine.
+
+		// 4. THE READ: This calculates the default sys.path
+		status = PyConfig_Read(&config);
+		if (PyStatus_Exception(status)) goto error_config;
+
+		// 5. THE APPEND: Add Java paths to the calculated system paths
+		if (modulePath != nullptr)
 		{
-			printf("Error in home\n");
-			goto error_config;
-		}
-		if (!assignWideString(env, exec_prefix, config.exec_prefix))
-		{
-			printf("Error in exec_prefix\n");
-			goto error_config;
-		}
-		if (!assignWideString(env, executable, config.executable))
-		{
-			printf("Error in executable\n");
-			goto error_config;
+			// We must set this to 1 to tell Python "I have modified the paths, 
+			// don't try to recalculate them during initialization."
+			config.module_search_paths_set = 1;
+			
+			status = appendStringArray(env, modulePath, &config.module_search_paths);
+			if (PyStatus_Exception(status)) goto error_config;
 		}
 
-		if (!isolated)
-		{
-			status = PyConfig_Read(&config);
-			if (PyStatus_Exception(status))
-			{
-				printf("Error in config read\n");
-				goto error_config;
-			}
-		}
-
-//		if (modulePath != nullptr)
-//		{
-//			config.module_search_paths_set = 0;
-//			status = appendStringArray(env, modulePath, &config.module_search_paths);
-//			if (PyStatus_Exception(status))
-//			{
-//				printf("Error in module path\n");
-//				goto error_config;
-//			}
-//		}
-
+		// 6. Set Argv
 		if (args != nullptr)
 		{
 			config.parse_argv = 1;
 			status = appendStringArray(env, args, &config.argv);
-			if (PyStatus_Exception(status))
-			{
-				printf("Error in args\n");
-				goto error_config;
-			}
+			if (PyStatus_Exception(status)) goto error_config;
 		}
 
-		printf("INIT\n");
-		// Get Python started
-		dumpPyConfig(&config);
+		// 7. Launch
+		//dumpPyConfig(&config);
 		status = Py_InitializeFromConfig(&config);
 		if (PyStatus_Exception(status))
 		{
@@ -371,7 +340,6 @@ error_config:
 		return;
 
 success_config:
-		printf("SUCCESS\n");
 
 		PyConfig_Clear(&config);
 #if  PY_VERSION_HEX<0x030a0000
@@ -403,13 +371,11 @@ success_config:
 			fail(env, "jpype module not found");
 			return;
 		}
+
 		// Usage in your code:
-		print_module_path("jpype", jpype);
-		print_module_path("_jpype", jpypep);
+		//print_module_path("jpype", jpype);
+		//print_module_path("_jpype", jpypep);
 
-
-		printf("Load resource\n");
-		fflush(stdout);
 		PyJPModule_loadResources(jpypep);
 
 		// Then attach the private module to the JVM
@@ -419,26 +385,19 @@ success_config:
 		JPJavaFrame frame = JPJavaFrame::external(env);
 		
 		// Initialize the resources in the jpype module
-		printf("Initialize resources\n");
 		obj = PyObject_GetAttrString(jpype, "_core");
 		obj2 = PyObject_GetAttrString(obj, "initializeResources");
 		obj3 = PyTuple_New(0);
-		printf("obj=%p\n", obj);
-		printf("obj2=%p\n", obj2);
-		printf("obj3=%p\n", obj3);
 		PyObject* out = PyObject_Call(obj2, obj3, NULL);
 		if (out == NULL) {
 			// This will print the full Python traceback to your console
 			PyErr_Print(); 
 		} else {
-			printf("out=%p\n", out);
 			Py_DECREF(out); // Don't forget to decref the result on success!
 		}
-		printf("out=%p\n", out);
 		Py_DECREF(obj);
 		Py_DECREF(obj2);
 		Py_DECREF(obj3);
-		printf("done Initialize resources\n");
 
 		Py_DECREF(jpype);
 		Py_DECREF(jpypep);

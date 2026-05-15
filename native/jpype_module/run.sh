@@ -1,2 +1,10 @@
-PYTHONPATH="../.." java -cp target/test-classes/ --module-path=target/jpype-1.7.2.dev0.jar -Dpython.executable=python3.12 -Dpython.config.home=/usr --add-modules=org.jpype runner/HelloWorldMain
-# -Djpype.nocache=True
+java  \
+    -Djava.util.logging.config.file=logging.properties  \
+    -Djpype.nocache=true \
+    -Dpython.executable=python3.12  \
+    -Dpython.config.home=/usr  \
+    -cp target/test-classes/  \
+    --enable-native-access=org.jpype \
+    --module-path=target/jpype-1.7.2.dev0.jar  \
+    --add-modules=org.jpype runner/HelloWorldMain \
+

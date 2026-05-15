@@ -16,26 +16,62 @@
  */
 package python.lang;
 
+import org.jpype.bridge.Context;
 import org.jpype.bridge.Interpreter;
 import org.testng.annotations.BeforeClass;
-
+import static org.testng.Assert.*;
+import org.testng.annotations.Test;
 /**
  *
  * @author nelson85
  */
 public class PyObjectNGTest
 {
-  
+
+  private static Context context;
   public PyObjectNGTest()
   {
   }
 
-
   @BeforeClass
   public static void setUpClass() throws Exception
   {
- Interpreter.getInstance().start(new String[0]);
+    Interpreter.getInstance().start(new String[0]);
+    context = new Context();
   }
-  
-  
+
+  @Test
+  public void testStringProtocol()
+  {
+    // Assume Interpreter is already started
+    PyObject strObj = (PyObject) context.eval("'Hello JPype'");
+
+    // 1. Test toString() mapping to Python str()
+    assertEquals("Hello JPype", strObj.toString());
+
+    // 2. Test Attributes Protocol
+    PyAttributes attrs = strObj.getAttributes();
+    PyObject upperFunc = attrs.get("upper");
+
+    // 3. Test Duck Typing (Check if it's callable)
+    assertTrue(upperFunc instanceof PyCallable, "upper should be callable");
+//
+//    PyObject result = ((PyCallable) upperFunc).call();
+//    assertEquals("HELLO JPYPE", result.toString());
+  }
+
+  @Test
+  public void testIdentity()
+  {
+    PyObject list1 = (PyObject) context.eval("[]");
+    PyObject list2 = (PyObject) context.eval("[]");
+
+    // Python identity test
+    assertNotEquals(list1, list2, "Distinct Python objects should not be equal");
+    assertEquals(list1, list1, "Same object should be equal");
+
+    // Verify hashCode consistency
+    int initialHash = list1.hashCode();
+    assertEquals(initialHash, list1.hashCode(), "Hash code must be stable");
+  }
 }

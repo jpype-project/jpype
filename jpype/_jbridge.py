@@ -980,7 +980,6 @@ def initialize():
 
         # See if there is a more advanced wrapper we can apply
         jcls, meth = _jpype.probe(obj)
-        print(type(obj), jcls)
         return JProxy(jcls, dict=meth, inst=obj, convert=True)
 
     bridge.setBackend(backend)
