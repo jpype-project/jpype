@@ -317,7 +317,7 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	// Required before launch
 	m_Context_GetFunctionalID = frame.GetStaticMethodID(contextClass,
 			"getFunctional",
-			"(Ljava/lang/Class;)Ljava/lang/String;");
+			"(Ljava/lang/Class;)J");
 
 	m_JavaContext = JPObjectRef(frame, frame.CallStaticObjectMethodA(contextClass, startMethod, val));
 
@@ -491,6 +491,7 @@ JNIEnv* JPContext::getEnv()
 	JNIEnv* env = nullptr;
 	if (m_JavaVM == nullptr)
 	{
+		assertJVMRunning(this, JP_STACKINFO());
 		JP_RAISE(PyExc_RuntimeError, "JVM is null");
 	}
 
@@ -505,6 +506,7 @@ JNIEnv* JPContext::getEnv()
 		res = m_JavaVM->AttachCurrentThreadAsDaemon((void**) &env, nullptr);
 		if (res != JNI_OK)
 		{
+			assertJVMRunning(this, JP_STACKINFO());
 			JP_RAISE(PyExc_RuntimeError, "Unable to attach to local thread");
 		}
 	}

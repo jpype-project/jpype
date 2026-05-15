@@ -47,10 +47,10 @@ public:
 	jvalue convert();
 
 public:
-	JPMatch::Type type;
 	JPConversion *conversion;
 	JPJavaFrame *frame;
 	PyObject *object;
+	JPMatch::Type type;
 	JPValue *slot;
 	void *closure;
 } ;
@@ -58,7 +58,7 @@ public:
 class JPMethodCache
 {
 public:
-	long m_Hash{-1};
+	jlong m_Hash{-1};
 	JPMethod* m_Overload{nullptr};
 } ;
 
@@ -83,6 +83,8 @@ public:
 	bool m_IsVarIndirect;
 	char m_Offset;
 	char m_Skip;
+	long m_Hash{-1};
+	JPMethod* m_Overload{nullptr};
 } ;
 
 #endif /* JP_MATCH_H */

@@ -108,7 +108,7 @@ public:
 
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = JPContext_global;
 		PyList_Append(info.exact, (PyObject*) context->_double->getHost());
@@ -118,7 +118,7 @@ public:
 		PyList_Append(info.implicit, (PyObject*) context->_int->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_long->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_float->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 } asJDoubleConversion;
 
@@ -139,13 +139,12 @@ JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPDoubleType::getConversionInfo(JPConversionInfo &info)
+void JPDoubleType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
-	asJDoubleConversion.getInfo(this, info);
-	asDoubleExactConversion.getInfo(this, info);
-	asDoubleLongConversion.getInfo(this, info);
-	asDoubleConversion.getInfo(this, info);
+	asJDoubleConversion.getInfo(frame, this, info);
+	asDoubleExactConversion.getInfo(frame, this, info);
+	asDoubleLongConversion.getInfo(frame, this, info);
+	asDoubleConversion.getInfo(frame, this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }
 
@@ -284,20 +283,18 @@ void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObjec
 	frame.SetDoubleArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-void JPDoubleType::getView(JPArrayView& view)
+void JPDoubleType::getView(JPJavaFrame& frame, JPArrayView& view)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	view.m_Memory = (void*) frame.GetDoubleArrayElements(
 			(jdoubleArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "d";
 	view.m_Buffer.itemsize = sizeof (jdouble);
 }
 
-void JPDoubleType::releaseView(JPArrayView& view)
+void JPDoubleType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseDoubleArrayElements((jdoubleArray) view.m_Array->getJava(),
 				(jdouble*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

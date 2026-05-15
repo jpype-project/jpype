@@ -125,7 +125,10 @@ void PyJPValue_finalize(void* obj)
 		return;
 
 	// JVM is running so set up the frame.
-	JPJavaFrame frame = JPJavaFrame::outer();
+	// This frame appear only appears to serve the purpose of catching a failed running state.
+	// But that is checked just a few lines later
+	//JPJavaFrame frame = JPJavaFrame::outer();
+
 	JPClass* cls = value->getClass();
 	// This one can't check for initialized because we may need to delete a stale
 	// resource after shutdown.

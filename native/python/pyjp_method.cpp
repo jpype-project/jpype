@@ -333,7 +333,8 @@ PyObject *PyJPMethod_matchReport(PyJPMethod *self, PyObject *args)
 	JP_PY_TRY("PyJPMethod_matchReport");
 	PyJPModule_getContext();
 	JPPyObjectVector vargs(args);
-	string report = self->m_Method->matchReport(vargs);
+	JPJavaFrame frame = JPJavaFrame::outer();
+	string report = self->m_Method->matchReport(frame, vargs);
 	return JPPyString::fromStringUTF8(report).keep();
 	JP_PY_CATCH(nullptr);
 }

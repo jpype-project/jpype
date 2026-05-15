@@ -65,7 +65,22 @@ JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool ca
 		// is only a speed cost if there is a collision, so we don't need to
 		// prove this is a perfect hash function.
 		m_Hash *= 0x10523C01;
-		m_Hash += (long) (Py_TYPE(arg));
+		PyTypeObject* type = Py_TYPE(arg);
+		m_Hash += (jlong)type;
+
+		// Specialized fast-check for functional types
+		if (type == &PyFunction_Type)
+		{
+			// A single pointer dereference is much faster than PyFunction_GetCode
+			// co_argcount is at a fixed offset in the code object.
+			PyObject* code = ((PyFunctionObject*)arg)->func_code;
+			m_Hash ^= (jlong)code; 
+		}
+		else if (type == &PyMethod_Type)
+		{
+			PyObject* func = ((PyMethodObject*)arg)->im_func;
+			m_Hash ^= (jlong)func;
+		}
 	}
 }
 
@@ -101,16 +116,16 @@ JPMatch::Type JPClassHints::getConversion(JPMatch& match, JPClass *cls)
 	return match.type = JPMatch::_explicit;
 }
 
-void JPIndexConversion::getInfo(JPClass *cls, JPConversionInfo &info)
+void JPIndexConversion::getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info)
 {
 	PyObject *typing = PyImport_AddModule("jpype.protocol");
 	JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsIndex"));
 	PyList_Append(info.implicit, proto.get());
 }
 
-void JPNumberConversion::getInfo(JPClass *cls, JPConversionInfo &info)
+void JPNumberConversion::getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info)
 {
-	JPIndexConversion::getInfo(cls, info);
+	JPIndexConversion::getInfo(frame, cls, info);
 	PyObject *typing = PyImport_AddModule("jpype.protocol");
 	JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsFloat"));
 	PyList_Append(info.implicit, proto.get());
@@ -185,7 +200,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.attributes, JPPyString::fromStringUTF8(attribute_).get());
 	}
@@ -231,7 +246,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.none, type_.get());
 	}
@@ -272,7 +287,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.implicit, type_.get());
 	}
@@ -298,12 +313,12 @@ void JPClassHints::excludeConversion(PyObject *type)
 	JP_TRACE_OUT;
 }
 
-void JPClassHints::getInfo(JPClass *cls, JPConversionInfo &info)
+void JPClassHints::getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info)
 {
 	for (auto iter = conversions.begin();
 			iter != conversions.end(); ++iter)
 	{
-		(*iter)->getInfo(cls, info);
+		(*iter)->getInfo(frame, cls, info);
 	}
 }
 
@@ -319,11 +334,11 @@ public:
 		return match.type;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		auto *pyhints = (PyJPClassHints*) cls->getHints();
 		JPClassHints *hints = pyhints->m_Hints;
-		hints->getInfo(cls, info);
+		hints->getInfo(frame, cls, info);
 	}
 
 	jvalue convert(JPMatch &match) override
@@ -350,7 +365,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		auto* acls = dynamic_cast<JPArrayClass*>( cls);
 		if (acls->getComponentType() != JPContext_global->_char)
@@ -392,7 +407,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		auto* acls = dynamic_cast<JPArrayClass*>( cls);
 		if (acls->getComponentType() != JPContext_global->_byte)
@@ -456,7 +471,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		// This will be covered by Sequence
 	}
@@ -513,7 +528,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "Sequence"));
@@ -552,7 +567,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 	}
 
@@ -582,9 +597,8 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
 		PyList_Append(info.implicit, (PyObject*) PyJPClass_Type);
 	}
 
@@ -637,9 +651,8 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
 		PyList_Append(info.exact, PyJPClass_create(frame, cls).get());
 	}
 
@@ -663,9 +676,8 @@ JPMatch::Type JPConversionJavaValue::matches(JPClass *cls, JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPConversionJavaValue::getInfo(JPClass *cls, JPConversionInfo &info)
+void JPConversionJavaValue::getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	PyList_Append(info.exact, PyJPClass_create(frame, cls).get());
 }
 
@@ -693,7 +705,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.implicit, (PyObject*) & PyUnicode_Type);
 	}
@@ -737,7 +749,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.implicit, (PyObject*) & PyBool_Type);
 	}
@@ -762,7 +774,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsIndex"));
@@ -808,7 +820,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "SupportsFloat"));
@@ -851,9 +863,8 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
 		PyList_Append(info.implicit, PyJPClass_create(frame, JPContext_global->_java_lang_Object).get());
 	}
 
@@ -906,7 +917,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.implicit, (PyObject*) PyJPNumberLong_Type);
 		PyList_Append(info.implicit, (PyObject*) PyJPNumberFloat_Type);
@@ -932,9 +943,8 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
 		auto *pcls = dynamic_cast<JPPrimitiveType*>( cls);
 		PyList_Append(info.implicit,
 				PyJPClass_create(frame, pcls->getBoxedClass(frame)).get());
@@ -974,7 +984,7 @@ public:
 		JP_TRACE_OUT;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 	}
 

@@ -34,7 +34,7 @@ public:
 
 	jvalue getProxy();
 
-	virtual JPPyObject getCallable(const string& cname, int& addSelf) = 0;
+	virtual JPPyObject getCallable(PyObject* name, int& addSelf) = 0;
 	static void releaseProxyPython(void* host);
 
 	PyJPProxy* getInstance()
@@ -53,7 +53,7 @@ class JPProxyDirect : public JPProxy
 public:
 	JPProxyDirect(PyJPProxy* inst, JPClassList& intf);
 	~JPProxyDirect() override;
-	JPPyObject getCallable(const string& cname, int& addSelf) override;
+	JPPyObject getCallable(PyObject* name, int& addSelf) override;
 } ;
 
 class JPProxyIndirect : public JPProxy
@@ -61,7 +61,7 @@ class JPProxyIndirect : public JPProxy
 public:
 	JPProxyIndirect(PyJPProxy* inst, JPClassList& intf);
 	~JPProxyIndirect() override;
-	JPPyObject getCallable(const string& cname, int& addSelf) override;
+	JPPyObject getCallable(PyObject* name, int& addSelf) override;
 } ;
 
 class JPProxyFunctional : public JPProxy
@@ -69,7 +69,7 @@ class JPProxyFunctional : public JPProxy
 public:
 	JPProxyFunctional(PyJPProxy* inst, JPClassList& intf);
 	~JPProxyFunctional() override;
-	JPPyObject getCallable(const string& cname, int& addSelf) override;
+	JPPyObject getCallable(PyObject* name, int& addSelf) override;
 private:
 	JPFunctional *m_Functional;
 } ;

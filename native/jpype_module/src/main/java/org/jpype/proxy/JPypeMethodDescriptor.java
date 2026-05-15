@@ -17,6 +17,7 @@
 package org.jpype.proxy;
 
 import java.lang.invoke.MethodHandle;
+import org.jpype.internal.JPypeStringManager;
 
 /**
  *
@@ -24,14 +25,14 @@ import java.lang.invoke.MethodHandle;
  */
 public class JPypeMethodDescriptor
 {
-  final String name;
+  final long name;
   final long returnType;
   final long[] parameterTypes;
   final MethodHandle defaultHandler;
 
   JPypeMethodDescriptor(String name, long returnType, long[] parameterTypes, MethodHandle defaultHandler)
   {
-    this.name = name;
+    this.name = JPypeStringManager.get(name);
     this.returnType = returnType;
     this.parameterTypes = parameterTypes;
     this.defaultHandler = defaultHandler;

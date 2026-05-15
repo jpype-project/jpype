@@ -52,11 +52,11 @@ public:
 		return m_Name;
 	}
 
-	JPPyObject getStaticField();
-	void     setStaticField(PyObject *pyobj);
+	JPPyObject getStaticField(JPJavaFrame& frame);
+	void     setStaticField(JPJavaFrame& frame, PyObject *pyobj);
 
-	JPPyObject getField(jobject inst);
-	void     setField(jobject inst, PyObject *pyobj);
+	JPPyObject getField(JPJavaFrame& frame, jobject inst);
+	void     setField(JPJavaFrame& frame, jobject inst, PyObject *pyobj);
 
 	bool isFinal() const
 	{

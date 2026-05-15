@@ -96,7 +96,7 @@ public:
 		return JPMatch::_implicit; // stop search
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = JPContext_global;
 		PyList_Append(info.exact, (PyObject*) context->_float->getHost());
@@ -105,7 +105,7 @@ public:
 		PyList_Append(info.implicit, (PyObject*) context->_short->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_int->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_long->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 
 } asJFloatConversion;
@@ -126,12 +126,11 @@ JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPFloatType::getConversionInfo(JPConversionInfo &info)
+void JPFloatType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
-	asJFloatConversion.getInfo(this, info);
-	asFloatLongConversion.getInfo(this, info);
-	asFloatConversion.getInfo(this, info);
+	asJFloatConversion.getInfo(frame, this, info);
+	asFloatLongConversion.getInfo(frame, this, info);
+	asFloatConversion.getInfo(frame, this, info);
 	PyList_Append(info.ret, (PyObject*) JPContext_global->_float->getHost());
 }
 
@@ -270,20 +269,18 @@ void JPFloatType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject
 	frame.SetFloatArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-void JPFloatType::getView(JPArrayView& view)
+void JPFloatType::getView(JPJavaFrame& frame, JPArrayView& view)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	view.m_Memory = (void*) frame.GetFloatArrayElements(
 			(jfloatArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "f";
 	view.m_Buffer.itemsize = sizeof (jfloat);
 }
 
-void JPFloatType::releaseView(JPArrayView& view)
+void JPFloatType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseFloatArrayElements((jfloatArray) view.m_Array->getJava(),
 				(jfloat*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

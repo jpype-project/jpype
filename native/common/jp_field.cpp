@@ -36,36 +36,32 @@ JPField::JPField(JPJavaFrame& frame,
 JPField::~JPField()
 = default;
 
-JPPyObject JPField::getStaticField()
+JPPyObject JPField::getStaticField(JPJavaFrame& frame)
 {
 	JP_TRACE_IN("JPField::getStaticAttribute");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	return m_Type->getStaticField(frame, m_Class->getJavaClass(), m_FieldID);
 	JP_TRACE_OUT;
 }
 
-void JPField::setStaticField(PyObject *pyobj)
+void JPField::setStaticField(JPJavaFrame& frame, PyObject *pyobj)
 {
 	JP_TRACE_IN("JPField::setStaticAttribute");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	m_Type->setStaticField(frame, m_Class->getJavaClass(), m_FieldID, pyobj);
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPField::getField(jobject inst)
+JPPyObject JPField::getField(JPJavaFrame& frame, jobject inst)
 {
 	JP_TRACE_IN("JPField::getAttribute");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	ASSERT_NOT_NULL(m_Type);
 	JP_TRACE("field type", m_Type->getCanonicalName());
 	return m_Type->getField(frame, inst, m_FieldID);
 	JP_TRACE_OUT;
 }
 
-void JPField::setField(jobject inst, PyObject *pyobj)
+void JPField::setField(JPJavaFrame& frame, jobject inst, PyObject *pyobj)
 {
 	JP_TRACE_IN("JPField::setAttribute");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	m_Type->setField(frame, inst, m_FieldID, pyobj);
 	JP_TRACE_OUT;
 }
