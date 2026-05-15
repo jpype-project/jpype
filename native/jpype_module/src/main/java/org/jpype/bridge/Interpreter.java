@@ -295,14 +295,17 @@ public class Interpreter
     if (jpypeLibrary == null || pythonLibrary == null)
     {
       LOGGER.severe("Bridge initialization failed: Libraries not found.");
-      throw new RuntimeException("Unable to find _jpype or libpython modules");
+      throw new UnsatisfiedLinkError("Unable to find _jpype or libpython modules");
     }
+
+    if (this.jpypeVersion.equals("NOT_FOUND"))
+      throw new UnsatisfiedLinkError("Jpype module not found");
 
     // 4. Compatibility check
     int[] version = parseVersion(this.jpypeVersion);
     int[] required = parseVersion(JPypeContext.VERSION);
     if (version[0] < required[0] || (version[0] == required[0] && version[1] < required[1]))
-      throw new RuntimeException("JPype version " + jpypeVersion + " is older than required " + JPypeContext.VERSION);
+      throw new LinkageError("JPype version " + jpypeVersion + " is older than required " + JPypeContext.VERSION);
 
     // 5. Load Native Binaries
     installNatives();
@@ -505,6 +508,17 @@ public class Interpreter
       LOGGER.info("Executing Detective Probe from resources");
 
       ProcessBuilder pb = new ProcessBuilder(cmd);
+
+      String jpypeDevPath = System.getProperty("jpype.path");
+      if (jpypeDevPath != null)
+      {
+        String currentPath = pb.environment().getOrDefault("PYTHONPATH", "");
+        String separator = isWindows ? ";" : ":";
+        String newPath = jpypeDevPath + (currentPath.isEmpty() ? "" : separator + currentPath);
+        pb.environment().put("PYTHONPATH", newPath);
+        LOGGER.log(Level.INFO, "Probe PYTHONPATH augmented with: {0}", jpypeDevPath);
+      }
+
       Process process = pb.start();
 
       try (InputStream is = process.getInputStream())

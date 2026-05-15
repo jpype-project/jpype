@@ -1,138 +1,170 @@
-// --- file: python/lang/PyByteArrayNGTest.java ---
-/*
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
- *  use this file except in compliance with the License. You may obtain a copy of
- *  the License at
- * 
- *  http://www.apache.org/licenses/LICENSE-2.0
- * 
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- *  License for the specific language governing permissions and limitations under
- *  the License.
- * 
- *  See NOTICE file for details.
- */
 package python.lang;
 
-import java.util.List;
+import java.util.Arrays;
 import org.jpype.bridge.Interpreter;
 import static org.testng.Assert.*;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-/**
- *
- * @author nelson85
- */
 public class PyByteArrayNGTest
 {
 
   @BeforeClass
   public static void setUpClass() throws Exception
   {
-    Interpreter.getInstance().start(new String[0]);
+    if (!Interpreter.getInstance().isStarted())
+      Interpreter.getInstance().start(new String[0]);
   }
 
-  // Helper method to create a new instance of PyByteArray for testing
-  private PyByteArray newInstance()
+  @Test
+  public void testCreateWithZeroLength()
   {
-    // Assume this method provides a concrete implementation of PyByteArray
-    return PyByteArray.create(0); // Replace with actual instantiation logic
+    PyByteArray instance = PyByteArray.create(0);
+
+    assertNotNull(instance);
+    assertEquals(instance.size(), 0);
+    assertTrue(instance.isEmpty());
   }
 
   @Test
   public void testCreateWithLength()
   {
-    int length = 10;
-    PyByteArray instance = PyByteArray.create(length);
+    PyByteArray instance = PyByteArray.create(10);
 
-    // Assert that the created PyByteArray object is not null
-    assertNotNull(instance, "PyByteArray object should not be null");
-
-    // Optionally, verify the size of the bytearray (if accessible)
-    int len2 = PyBuiltIn.len(instance);
-    assertEquals(len2, length, "PyByteArray size should match the specified length");
+    assertNotNull(instance);
+    assertEquals(instance.size(), 10);
   }
 
   @Test
-  public void testCreateFromIterable()
+  public void testCreateIsZeroFilled()
   {
-    Iterable<PyObject> iterable = List.of(newInstance(), newInstance());
-    PyByteArray instance = PyByteArray.of(iterable);
+    PyByteArray instance = PyByteArray.create(3);
 
-    // Assert that the created PyByteArray object is not null
-    assertNotNull(instance, "PyByteArray object should not be null");
-
-    // Optionally, verify the contents of the PyByteArray (if accessible)
-    // Example: assertTrue(instance.containsAll(iterable));
-  }
-
-  @Test
-  public void testCreateFromBuffer()
-  {
-    PyBuffer buffer = (PyBuffer) PyBytes.fromHex("48656c6c6f");
-    PyByteArray instance = PyByteArray.of(buffer);
-
-    // Assert that the created PyByteArray object is not null
-    assertNotNull(instance, "PyByteArray object should not be null");
-
-    // Optionally, verify the contents of the PyByteArray (if accessible)
-    // Example: assertEquals(instance.getBuffer(), buffer);
-  }
-  
-  @Test
-  public void testDecode()
-  {
-//    PyByteArray instance = newInstance();
-//    PyObject encoding = new PyObject(); // Assume PyObject is properly instantiated
-//    PyObject delete = null; // No bytes to delete
-//
-//    PyObject decoded = instance.decode(encoding, delete);
-//
-//    // Assert that the decoded PyObject is not null
-//    assertNotNull(decoded, "Decoded PyObject should not be null");
-//
-//    // Optionally, verify the decoded content (if accessible)
-//    // Example: assertEquals(decoded.toString(), "expectedString");
-  }
-
-  @Test
-  public void testTranslate()
-  {
-//    PyByteArray instance = newInstance();
-//    PyObject translationTable = new PyObject(); // Assume PyObject is properly instantiated
-//    PyObject translated = instance.translate(translationTable);
-//
-//    // Assert that the translated PyObject is not null
-//    assertNotNull(translated, "Translated PyObject should not be null");
-//
-//    // Optionally, verify the translated content (if accessible)
-//    // Example: assertEquals(translated.toString(), "expectedTranslatedString");
+    assertEquals(instance.get(0).toNumber().intValue(), 0);
+    assertEquals(instance.get(1).toNumber().intValue(), 0);
+    assertEquals(instance.get(2).toNumber().intValue(), 0);
   }
 
   @Test
   public void testFromHex()
   {
-    CharSequence hexString = "48656c6c6f"; // Hex for "Hello"
-    PyByteArray instance = PyByteArray.fromHex(hexString);
+    PyByteArray instance = PyByteArray.fromHex("48656c6c6f");
 
-    // Assert that the created PyByteArray object is not null
-    assertNotNull(instance, "PyByteArray object should not be null");
-
-    // Optionally, verify the decoded content (if accessible)
-    // Example: assertEquals(instance.toString(), "Hello");
+    assertNotNull(instance);
+    assertEquals(instance.size(), 5);
+    assertEquals(instance.get(0).toNumber().intValue(), 72);
+    assertEquals(instance.get(1).toNumber().intValue(), 101);
+    assertEquals(instance.get(2).toNumber().intValue(), 108);
+    assertEquals(instance.get(3).toNumber().intValue(), 108);
+    assertEquals(instance.get(4).toNumber().intValue(), 111);
   }
 
   @Test
-  public void testSize()
+  public void testOfIterable()
   {
-    PyByteArray instance = PyByteArray.create(10);
+    PyByteArray instance = PyByteArray.of(Arrays.asList(
+            PyInt.of(65), PyInt.of(66), PyInt.of(67)));
 
-    // Assert that the size of the PyByteArray matches the specified length
-    int len2 = PyBuiltIn.len(instance);
-    assertEquals(len2, 10, "PyByteArray size should match the specified length");
+    assertNotNull(instance);
+    assertEquals(instance.size(), 3);
+    assertEquals(instance.get(0).toNumber().intValue(), 65);
+    assertEquals(instance.get(1).toNumber().intValue(), 66);
+    assertEquals(instance.get(2).toNumber().intValue(), 67);
   }
 
+  @Test
+  public void testOfBuffer()
+  {
+    PyBytes buffer = PyBytes.fromHex("414243");
+    PyByteArray instance = PyByteArray.of(buffer);
+
+    assertNotNull(instance);
+    assertEquals(instance.size(), 3);
+    assertEquals(instance.get(0).toNumber().intValue(), 65);
+    assertEquals(instance.get(1).toNumber().intValue(), 66);
+    assertEquals(instance.get(2).toNumber().intValue(), 67);
+  }
+
+  @Test
+  public void testGetByIndex()
+  {
+    PyByteArray instance = PyByteArray.fromHex("4142");
+
+    PyInt value0 = instance.get(0);
+    PyInt value1 = instance.get(1);
+
+    assertEquals(value0.toNumber().intValue(), 65);
+    assertEquals(value1.toNumber().intValue(), 66);
+  }
+
+  @Test
+  public void testSetByIndex()
+  {
+    PyByteArray instance = PyByteArray.fromHex("414243");
+
+    PyInt previous = instance.set(1, PyInt.of(90));
+
+    assertNotNull(previous);
+    assertEquals(previous.toNumber().intValue(), 66);
+    assertEquals(instance.get(1).toNumber().intValue(), 90);
+  }
+
+  @Test
+  public void testRemoveByIndex()
+  {
+    PyByteArray instance = PyByteArray.fromHex("414243");
+
+    PyInt removed = instance.remove(1);
+
+    assertNotNull(removed);
+    assertEquals(removed.toNumber().intValue(), 66);
+    assertEquals(instance.size(), 2);
+    assertEquals(instance.get(0).toNumber().intValue(), 65);
+    assertEquals(instance.get(1).toNumber().intValue(), 67);
+  }
+
+  @Test
+  public void testDecodeUtf8()
+  {
+    PyByteArray instance = PyByteArray.fromHex("48656c6c6f");
+
+    PyObject decoded = instance.decode(PyString.from("utf-8"), null);
+
+    assertNotNull(decoded);
+    assertEquals(decoded.toString(), "Hello");
+  }
+
+  @Test(expectedExceptions = IllegalArgumentException.class)
+  public void testGetWithTupleSubscriptRejected()
+  {
+    PyByteArray instance = PyByteArray.fromHex("414243");
+    instance.get(PyBuiltIn.slice(0, 1), PyBuiltIn.slice(1, 2));
+  }
+
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testFromHexInvalidThrows()
+  {
+    PyByteArray.fromHex("this_is_not_hex");
+  }
+
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testGetOutOfBoundsThrows()
+  {
+    PyByteArray instance = PyByteArray.fromHex("41");
+    instance.get(5);
+  }
+
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testSetOutOfBoundsThrows()
+  {
+    PyByteArray instance = PyByteArray.fromHex("41");
+    instance.set(5, PyInt.of(1));
+  }
+
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testRemoveOutOfBoundsThrows()
+  {
+    PyByteArray instance = PyByteArray.fromHex("41");
+    instance.remove(5);
+  }
 }

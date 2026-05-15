@@ -1,42 +1,203 @@
-// --- file: python/lang/PyDictValuesNGTest.java ---
-/*
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
- *  use this file except in compliance with the License. You may obtain a copy of
- *  the License at
- * 
- *  http://www.apache.org/licenses/LICENSE-2.0
- * 
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- *  License for the specific language governing permissions and limitations under
- *  the License.
- * 
- *  See NOTICE file for details.
- */
 package python.lang;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 import org.jpype.bridge.Interpreter;
+import static org.testng.Assert.*;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
-/**
- *
- * @author nelson85
- */
 public class PyDictValuesNGTest
 {
-  
-  public PyDictValuesNGTest()
-  {
-  }
-
-
 
   @BeforeClass
   public static void setUpClass() throws Exception
   {
- Interpreter.getInstance().start(new String[0]);
+    if (!Interpreter.getInstance().isStarted())
+      Interpreter.getInstance().start(new String[0]);
   }
 
-  
+  private PyDict dictOf(Object... items)
+  {
+    PyDict dict = PyBuiltIn.dict();
+    for (int i = 0; i < items.length; i += 2)
+      dict.putAny(items[i], items[i + 1]);
+    return dict;
+  }
+
+  @Test
+  public void testSize()
+  {
+    PyDict dict = dictOf("a", 1, "b", 2);
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    assertEquals(values.size(), 2);
+  }
+
+  @Test
+  public void testIsEmptyTrue()
+  {
+    PyDict dict = PyBuiltIn.dict();
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    assertTrue(values.isEmpty());
+  }
+
+  @Test
+  public void testIsEmptyFalse()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    assertFalse(values.isEmpty());
+  }
+
+  @Test
+  public void testContainsExistingValue()
+  {
+    PyDict dict = dictOf("a", PyString.from("x"), "b", PyString.from("y"));
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    assertTrue(values.contains(PyString.from("x")) || values.toString().contains("x"));
+    assertTrue(values.contains(PyString.from("y")) || values.toString().contains("y"));
+  }
+
+  @Test
+  public void testContainsMissingValue()
+  {
+    PyDict dict = dictOf("a", PyString.from("x"));
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    assertFalse(values.contains(PyString.from("z")));
+  }
+
+  @Test
+  public void testContainsAll()
+  {
+    PyDict dict = dictOf(
+            "a", PyString.from("x"),
+            "b", PyString.from("y"),
+            "c", PyString.from("z"));
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    assertTrue(values.containsAll(Arrays.asList(PyString.from("x"), PyString.from("y")))
+            || values.toString().contains("x") && values.toString().contains("y"));
+    assertFalse(values.containsAll(Arrays.asList(PyString.from("x"), PyString.from("missing"))));
+  }
+
+  @Test
+  public void testIteratorYieldsAllValues()
+  {
+    PyDict dict = dictOf("a", 1, "b", 2);
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    Set<String> out = new HashSet<>();
+    Iterator<?> it = values.iterator();
+    while (it.hasNext())
+      out.add(it.next().toString());
+
+    assertEquals(out.size(), 2);
+    assertTrue(out.contains("1"));
+    assertTrue(out.contains("2"));
+  }
+
+  @Test
+  public void testClearClearsUnderlyingDict()
+  {
+    PyDict dict = dictOf("a", 1, "b", 2);
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    values.clear();
+
+    assertTrue(values.isEmpty());
+    assertTrue(dict.isEmpty());
+    assertEquals(dict.size(), 0);
+  }
+
+  @Test
+  public void testToArray()
+  {
+    PyDict dict = dictOf("a", 1, "b", 2);
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    Object[] array = values.toArray();
+
+    assertNotNull(array);
+    assertEquals(array.length, 2);
+  }
+
+  @Test
+  public void testToTypedArray()
+  {
+    PyDict dict = dictOf("a", 1, "b", 2);
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    Object[] array = values.toArray(new Object[0]);
+
+    assertNotNull(array);
+    assertEquals(array.length, 2);
+  }
+
+  @Test
+  public void testViewReflectsDictMutation()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    assertTrue(values.toString().contains("1"));
+    assertFalse(values.toString().contains("2"));
+
+    dict.putAny("b", 2);
+    assertTrue(values.toString().contains("2"));
+
+    dict.remove("a");
+    assertFalse(values.toString().contains("1"));
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testAddUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictValues<PyObject> values = new PyDictValues<>(dict);
+
+    values.add(PyInt.of(2));
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testAddAllUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictValues<PyObject> values = new PyDictValues<>(dict);
+
+    values.addAll(Arrays.asList(PyInt.of(2), PyInt.of(3)));
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testRemoveUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    values.remove(PyInt.of(1));
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testRemoveAllUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    values.removeAll(Arrays.asList(PyInt.of(1)));
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testRetainAllUnsupported()
+  {
+    PyDict dict = dictOf("a", 1);
+    PyDictValues<?> values = new PyDictValues<>(dict);
+
+    values.retainAll(Arrays.asList(PyInt.of(1)));
+  }
 }

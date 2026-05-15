@@ -105,7 +105,7 @@ public class PyAttributes implements Map<PyObject, PyObject>
   public PyDict asDict()
   {
     if (this.dict == null)
-      this.dict = PyBuiltIn.vars(this);
+      this.dict = PyBuiltIn.vars(obj);
     return this.dict;
   }
 

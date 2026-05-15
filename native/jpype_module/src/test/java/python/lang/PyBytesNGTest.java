@@ -1,39 +1,125 @@
-// --- file: python/lang/PyBytesNGTest.java ---
-/*
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
- *  use this file except in compliance with the License. You may obtain a copy of
- *  the License at
- * 
- *  http://www.apache.org/licenses/LICENSE-2.0
- * 
- *  Unless required by applicable law or agreed to in writing, software
- *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- *  License for the specific language governing permissions and limitations under
- *  the License.
- * 
- *  See NOTICE file for details.
- */
 package python.lang;
 
 import org.jpype.bridge.Interpreter;
+import static org.testng.Assert.*;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
-/**
- *
- * @author nelson85
- */
 public class PyBytesNGTest
 {
-
-  public PyBytesNGTest()
-  {
-  }
-
   @BeforeClass
   public static void setUpClass() throws Exception
   {
-    Interpreter.getInstance().start(new String[0]);
+    if (!Interpreter.getInstance().isStarted())
+      Interpreter.getInstance().start(new String[0]);
   }
 
+  @Test
+  public void testCreateWithZeroLength()
+  {
+    PyBytes instance = PyBytes.create(0);
+
+    assertNotNull(instance);
+    assertEquals(instance.size(), 0);
+    assertTrue(instance.isEmpty());
+  }
+
+  @Test
+  public void testCreateWithLength()
+  {
+    PyBytes instance = PyBytes.create(4);
+
+    assertNotNull(instance);
+    assertEquals(instance.size(), 4);
+  }
+
+  @Test
+  public void testCreateIsZeroFilled()
+  {
+    PyBytes instance = PyBytes.create(3);
+
+    assertEquals(instance.get(0).toNumber().intValue(), 0);
+    assertEquals(instance.get(1).toNumber().intValue(), 0);
+    assertEquals(instance.get(2).toNumber().intValue(), 0);
+  }
+
+  @Test
+  public void testFromHex()
+  {
+    PyBytes instance = PyBytes.fromHex("48656c6c6f");
+
+    assertNotNull(instance);
+    assertEquals(instance.size(), 5);
+    assertEquals(instance.get(0).toNumber().intValue(), 72);
+    assertEquals(instance.get(1).toNumber().intValue(), 101);
+    assertEquals(instance.get(2).toNumber().intValue(), 108);
+    assertEquals(instance.get(3).toNumber().intValue(), 108);
+    assertEquals(instance.get(4).toNumber().intValue(), 111);
+  }
+
+  @Test
+  public void testGetByIndex()
+  {
+    PyBytes instance = PyBytes.fromHex("414243");
+
+    assertEquals(instance.get(0).toNumber().intValue(), 65);
+    assertEquals(instance.get(1).toNumber().intValue(), 66);
+    assertEquals(instance.get(2).toNumber().intValue(), 67);
+  }
+
+  @Test
+  public void testDecodeUtf8()
+  {
+    PyBytes instance = PyBytes.fromHex("48656c6c6f");
+
+    PyString decoded = instance.decode("utf-8", null);
+
+    assertNotNull(decoded);
+    assertEquals(decoded.toString(), "Hello");
+  }
+
+  @Test
+  public void testDecodeAscii()
+  {
+    PyBytes instance = PyBytes.fromHex("414243");
+
+    PyString decoded = instance.decode("ascii", null);
+
+    assertNotNull(decoded);
+    assertEquals(decoded.toString(), "ABC");
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testRemoveUnsupported()
+  {
+    PyBytes instance = PyBytes.fromHex("414243");
+    instance.remove(1);
+  }
+
+  @Test(expectedExceptions = UnsupportedOperationException.class)
+  public void testSetUnsupported()
+  {
+    PyBytes instance = PyBytes.fromHex("414243");
+    instance.set(1, PyInt.of(90));
+  }
+
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testFromHexInvalidThrows()
+  {
+    PyBytes.fromHex("not_hex");
+  }
+
+  @Test(expectedExceptions = RuntimeException.class)
+  public void testGetOutOfBoundsThrows()
+  {
+    PyBytes instance = PyBytes.fromHex("41");
+    instance.get(5);
+  }
+
+  @Test
+  public void testSize()
+  {
+    PyBytes instance = PyBytes.fromHex("414243");
+    assertEquals(instance.size(), 3);
+  }
 }

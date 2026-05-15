@@ -52,6 +52,27 @@
                     </compilerArgs>
                 </configuration>
             </plugin>
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <java.util.logging.config.file>${project.basedir}/logging.properties</java.util.logging.config.file>
+                        <jpype.path>../..</jpype.path>
+                        <jpype.nocache>true</jpype.nocache>
+                        <python.executable>python3.12</python.executable>
+                        <python.config.home>/usr</python.config.home>
+                    </systemPropertyVariables>
+                    <argLine>
+                        --enable-native-access=org.jpype
+                        --module-path=${project.build.directory}/${project.build.finalName}.jar
+                        --add-modules=org.jpype
+                    </argLine>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
     <name>jpype_module</name>

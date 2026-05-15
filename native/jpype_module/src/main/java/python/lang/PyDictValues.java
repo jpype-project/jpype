@@ -127,7 +127,7 @@ public class PyDictValues<T extends PyObject> implements Collection<T>
   @Override
   public boolean contains(Object o)
   {
-    return backend.contains(this, o);
+    return backend.contains(this.values, o);
   }
 
   /**

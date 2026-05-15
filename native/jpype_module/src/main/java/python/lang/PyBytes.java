@@ -64,9 +64,9 @@ public interface PyBytes extends PyObject, PyBuffer, PySequence<PyInt>
    * @return a new {@link PyBytes} instance containing the bytes derived from
    * the iterable.
    */
-  static PyByteArray of(Iterable<PyObject> iterable)
+  static PyBytes of(Iterable<PyObject> iterable)
   {
-    return backend().newByteArrayFromIterator(iterable);
+    return backend().newBytesFromIterator(iterable);
   }
 
   /**
@@ -79,9 +79,9 @@ public interface PyBytes extends PyObject, PyBuffer, PySequence<PyInt>
    * @return a new {@link PyBytes} instance containing the bytes from the
    * buffer.
    */
-  static PyByteArray of(PyBuffer buffer)
+  static PyBytes of(PyBuffer buffer)
   {
-    return backend().newByteArrayFromBuffer(buffer);
+    return backend().newBytesFromBuffer(buffer);
   }
 
   /**

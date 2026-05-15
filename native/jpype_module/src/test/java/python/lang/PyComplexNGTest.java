@@ -30,9 +30,9 @@ public class PyComplexNGTest
   @BeforeClass
   public static void setUpClass() throws Exception
   {
- Interpreter.getInstance().start(new String[0]);
+    Interpreter.getInstance().start(new String[0]);
   }
-  
+
   @Test
   public void testCreateComplexNumber()
   {
@@ -47,7 +47,6 @@ public class PyComplexNGTest
     assertEquals(pyComplex.real(), real, "Real part should match the input value");
     assertEquals(pyComplex.imag(), imag, "Imaginary part should match the input value");
   }
-
 
   @Test
   public void testRealPart()
@@ -88,6 +87,149 @@ public class PyComplexNGTest
 
     // Assert that the imaginary part is negated
     assertEquals(conjugate.imag(), -imag, "Imaginary part of conjugate should be negated");
+  }
+
+  @Test
+  public void testAddPyObject()
+  {
+    PyComplex a = PyComplex.of(1.0, 2.0);
+    PyComplex b = PyComplex.of(3.0, 4.0);
+
+    PyObject result = a.add(b);
+
+    assertTrue(result instanceof PyComplex);
+    PyComplex c = (PyComplex) result;
+    assertEquals(c.real(), 4.0);
+    assertEquals(c.imag(), 6.0);
+  }
+
+  @Test
+  public void testAddLong()
+  {
+    PyComplex a = PyComplex.of(1.0, 2.0);
+
+    PyObject result = a.add(5L);
+
+    assertTrue(result instanceof PyComplex);
+    PyComplex c = (PyComplex) result;
+    assertEquals(c.real(), 6.0);
+    assertEquals(c.imag(), 2.0);
+  }
+
+  @Test
+  public void testAddDouble()
+  {
+    PyComplex a = PyComplex.of(1.0, 2.0);
+
+    PyObject result = a.add(2.5);
+
+    assertTrue(result instanceof PyComplex);
+    PyComplex c = (PyComplex) result;
+    assertEquals(c.real(), 3.5);
+    assertEquals(c.imag(), 2.0);
+  }
+
+  @Test
+  public void testSubtractPyObject()
+  {
+    PyComplex a = PyComplex.of(5.0, 7.0);
+    PyComplex b = PyComplex.of(2.0, 3.0);
+
+    PyObject result = a.subtract(b);
+
+    assertTrue(result instanceof PyComplex);
+    PyComplex c = (PyComplex) result;
+    assertEquals(c.real(), 3.0);
+    assertEquals(c.imag(), 4.0);
+  }
+
+  @Test
+  public void testMultiplyPyObject()
+  {
+    PyComplex a = PyComplex.of(1.0, 2.0);
+    PyComplex b = PyComplex.of(3.0, 4.0);
+
+    PyObject result = a.multiply(b);
+
+    assertTrue(result instanceof PyComplex);
+    PyComplex c = (PyComplex) result;
+    assertEquals(c.real(), -5.0);
+    assertEquals(c.imag(), 10.0);
+  }
+
+  @Test
+  public void testDividePyObject()
+  {
+    PyComplex a = PyComplex.of(1.0, 2.0);
+    PyComplex b = PyComplex.of(3.0, 4.0);
+
+    PyObject result = a.divide(b);
+
+    assertTrue(result instanceof PyComplex);
+    PyComplex c = (PyComplex) result;
+    assertEquals(c.real(), 0.44, 0.0001);
+    assertEquals(c.imag(), 0.08, 0.0001);
+  }
+
+  @Test
+  public void testAbs()
+  {
+    PyComplex a = PyComplex.of(3.0, 4.0);
+
+    PyObject result = a.abs();
+
+    assertTrue(result instanceof PyFloat || result instanceof PyInt);
+    assertEquals(((PyNumber) result).toNumber().doubleValue(), 5.0, 0.0001);
+  }
+
+  @Test
+  public void testNegateValue()
+  {
+    PyComplex a = PyComplex.of(3.0, -4.0);
+
+    PyObject result = a.negateValue();
+
+    assertTrue(result instanceof PyComplex);
+    PyComplex c = (PyComplex) result;
+    assertEquals(c.real(), -3.0);
+    assertEquals(c.imag(), 4.0);
+  }
+
+  @Test
+  public void testPositive()
+  {
+    PyComplex a = PyComplex.of(3.0, -4.0);
+
+    PyObject result = a.positive();
+
+    assertTrue(result instanceof PyComplex);
+    PyComplex c = (PyComplex) result;
+    assertEquals(c.real(), 3.0);
+    assertEquals(c.imag(), -4.0);
+  }
+
+  @Test
+  public void testToBooleanTrue()
+  {
+    PyComplex a = PyComplex.of(1.0, 0.0);
+    assertTrue(a.toBoolean());
+  }
+
+  @Test
+  public void testToBooleanFalse()
+  {
+    PyComplex a = PyComplex.of(0.0, 0.0);
+    assertFalse(a.toBoolean());
+  }
+
+  @Test
+  public void testNegate()
+  {
+    PyComplex zero = PyComplex.of(0.0, 0.0);
+    PyComplex nonZero = PyComplex.of(1.0, 1.0);
+
+    assertTrue(zero.negate());
+    assertFalse(nonZero.negate());
   }
 
 }
