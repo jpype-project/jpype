@@ -70,6 +70,12 @@ public:
 		return JPModifier::isFinal(m_Modifiers);
 	}
 
+	bool isPython() const
+	{
+		return JPModifier::isPython(m_Modifiers);
+	}
+
+
 	bool isThrowable() const
 	{
 		return JPModifier::isThrowable(m_Modifiers);

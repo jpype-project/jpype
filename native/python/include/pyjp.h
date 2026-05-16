@@ -188,6 +188,9 @@ int        PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value);
 PyObject  *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p);
 PyTypeObject* PyJP_GetNumPyBaseType(PyTypeObject* obj);
 
+PyObject* PyJPModule_pyobject(PyTypeObject* type, PyObject *object);
+PyObject* PyJPModule_probe(PyTypeObject *other);
+
 #ifdef __cplusplus
 }
 #endif

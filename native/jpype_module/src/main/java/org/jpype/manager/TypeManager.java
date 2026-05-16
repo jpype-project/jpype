@@ -53,7 +53,7 @@ public class TypeManager
   private ClassDescriptor java_lang_Object;
   // For reasons that are less than clear, this object cannot be created
   // during shutdown
-  private Destroyer destroyer = new Destroyer();
+  final private Destroyer destroyer = new Destroyer();
 
   public TypeManager()
   {
@@ -320,12 +320,12 @@ public class TypeManager
     if (object == null)
       return 0;
 
-    Class cls = object.getClass();
-    if (Proxy.isProxyClass(cls)
-            && (Proxy.getInvocationHandler(object) instanceof JPypeProxyInstance))
-    {
-      return this.findClass(JPypeProxyInstance.class);
-    }
+    Class<?> cls = object.getClass();
+ //   if (Proxy.isProxyClass(cls)
+ //           && (Proxy.getInvocationHandler(object) instanceof JPypeProxyInstance))
+ //   {
+//      return this.findClass(JPypeProxyInstance.class);
+//    }
 
     return this.findClass(cls);
   }
@@ -451,6 +451,8 @@ public class TypeManager
       modifiers |= ModifierCode.COMPARABLE.value;
     if (Buffer.class.isAssignableFrom(cls))
       modifiers |= ModifierCode.BUFFER.value | ModifierCode.SPECIAL.value;
+    if (PyObject.class.isAssignableFrom(cls))
+      modifiers |= ModifierCode.PYTHON.value;
 
     // Check if is Functional class
     Method method = JPypeUtilities.getFunctionalInterfaceMethod(cls);

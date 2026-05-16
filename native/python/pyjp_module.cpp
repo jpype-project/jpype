@@ -687,14 +687,8 @@ static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
-static PyObject* probe(PyTypeObject *type)
+PyObject* PyJPModule_probe(PyTypeObject *type)
 {
-	// FIXME First we should ask Java if there is a known interface set to use that will allow use to support numpy.ndarray
-	// The problem is we want to get the most advanced binding so we would need to take each type from the mro
-	// with its canonical name and set it to Java as a string to see if it comes back with a wrapper.
-	// If we get a hit we just need to collect up a list of bindings and add it to the cache
-	// This step is likely more complex that can be done in C binds for now so we likely need a helper in Python that we can call.
-
 	PyObject *mro = type->tp_mro;
 	Py_ssize_t sz = PyTuple_Size(mro);
 
@@ -882,34 +876,26 @@ static PyObject* probe(PyTypeObject *type)
 /** Code to determine what interfaces are required based on the
  * dunder methods.
  */
-static PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
+static PyObject* module_probe(PyObject *module, PyObject *obj)
 {
 	JP_PY_TRY("probe");
-	PyTypeObject *type = Py_TYPE(other);
+	PyTypeObject *type = Py_TYPE(obj);
 
 	// We would start by checking the cache here
 	JPPyObject cached = JPPyObject::use(PyObject_GetItem(_cacheDict, (PyObject*) type));
 	if (cached.isValid())
 		return cached.keep();
 	PyErr_Clear();
-	return probe(type);
+	return PyJPModule_probe(type);
 	JP_PY_CATCH(nullptr);
 }
 
-static PyObject* PyJPModule_pyobject(PyObject *module, PyObject *args_in)
+PyObject* PyJPModule_pyobject(PyTypeObject *target_type, PyObject *object_to_cast)
 {
 	JP_PY_TRY("PyJPModule_pyobject");
-	JPJavaFrame frame = JPJavaFrame::outer();
-
-	PyObject* target_type = nullptr;
-	PyObject* object_to_cast = nullptr;
-
-	// Parse the incoming arguments: Type first, Object second
-	if (!PyArg_ParseTuple(args_in, "OO", &target_type, &object_to_cast))
-		return nullptr;
 
 	// Probe using the targeted type class to find matching method definitions
-	JPPyObject probe_result = JPPyObject::accept(PyJPModule_probe(module, object_to_cast));
+	JPPyObject probe_result = JPPyObject::accept(PyJPModule_probe(Py_TYPE(object_to_cast)));
 	if (!probe_result.isValid())
 		return nullptr;
 
@@ -934,12 +920,29 @@ static PyObject* PyJPModule_pyobject(PyObject *module, PyObject *args_in)
 	// Fetch the live JNI local/global reference structure
 	jvalue v = proxy->getProxy();
 
-	JPClass* targetClass = PyJPClass_getJPClass(target_type); 
+	JPClass* targetClass = PyJPClass_getJPClass((PyObject*) target_type); 
 	if (targetClass == nullptr)
 		return nullptr;
 
 	// Convert using the exact target class type, not a generic context type!
+	JPJavaFrame frame = JPJavaFrame::outer();
+	JPClass* clz = frame.findClassForObject(v.l);
 	return targetClass->convertToPythonObject(frame, v, true).keep();
+	JP_PY_CATCH(nullptr);
+}
+
+static PyObject* module_pyobject(PyObject *module, PyObject *args_in)
+{
+	JP_PY_TRY("PyJPModule_pyobject");
+
+	PyObject* target_type = nullptr;
+	PyObject* object_to_cast = nullptr;
+
+	// Parse the incoming arguments: Type first, Object second
+	if (!PyArg_ParseTuple(args_in, "OO", &target_type, &object_to_cast))
+		return nullptr;
+
+	return PyJPModule_pyobject((PyTypeObject*)target_type, object_to_cast);
 	JP_PY_CATCH(nullptr);
 }
 
@@ -1166,8 +1169,8 @@ static PyMethodDef moduleMethods[] = {
 	{"fault", (PyCFunction) PyJPModule_fault, METH_O, ""},
 #endif
 	{"examine", (PyCFunction) examine, METH_O, ""},
-	{"probe", (PyCFunction) PyJPModule_probe, METH_O, ""},
-	{"pyobject", (PyCFunction) PyJPModule_pyobject, METH_VARARGS, ""},
+	{"probe", (PyCFunction) module_probe, METH_O, ""},
+	{"pyobject", (PyCFunction) module_pyobject, METH_VARARGS, ""},
 
 	// sentinel
 	{nullptr}
