@@ -213,29 +213,6 @@ void JPypeException::convertJavaToPython()
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-// We are going to use this to get over the border eventually
-static PyObject* getExceptionInstance() 
-{
-#if PY_VERSION_HEX >= 0x030C0000
-	// 3.12+ : Returns the actual exception instance directly
-	return PyErr_GetRaisedException();
-#else
-	PyObject *type, *value, *traceback;
-	PyErr_Fetch(&type, &value, &traceback);
-	// If it's just a type, we need to instantiate it to get an instance
-	PyErr_NormalizeException(&type, &value, &traceback);
-	
-	if (traceback != nullptr) {
-		PyException_SetTraceback(value, traceback);
-		Py_DECREF(traceback);
-	}
-	Py_XDECREF(type);
-	
-	// Now 'value' is the single exception object (instance)
-	return value;
-#endif
-}
-
 static void fail(JPJavaFrame& frame, const char *msg)
 {
 	JPContext *context = frame.getContext();
@@ -249,12 +226,33 @@ void JPypeException::convertPythonToJava()
 	JPContext *context = frame.getContext();
 	jthrowable th;
 
+	JPPyObject exc;
+#if PY_VERSION_HEX >= 0x030C0000
+	exc = JPPyObject::claim(PyErr_GetRaisedException()); // Clear the exception state
+#else
+	// Pre-3.12: Fetch the exception details (all returned as NEW references)
+	PyObject *type = nullptr, *value = nullptr, *traceback = nullptr;
+	PyErr_Fetch(&type, &value, &traceback); // Clear the exception data
 
-	JPPyErrFrame eframe;
-	if (eframe.good && isJavaThrowable(eframe.m_ExceptionClass.get()))
+	if (type == nullptr)
 	{
-		eframe.good = false;
-		JPValue* javaExc = PyJPValue_getJavaSlot(eframe.m_ExceptionValue.get());
+		fail(frame, "Python exception type was null");
+		return;
+	}
+	
+	// Normalizes type/value into a proper instance (modifies references in-place)
+	PyErr_NormalizeException(&type, &value, &traceback);
+	if (traceback != nullptr) {
+		PyException_SetTraceback(value, traceback);
+		Py_DECREF(traceback);
+	}
+	Py_XDECREF(type);
+	exc = JPPyObject::claim(value);
+#endif
+
+	if (isJavaThrowable((PyObject*) Py_TYPE(exc.get())))
+	{
+		JPValue* javaExc = PyJPValue_getJavaSlot(exc.get());
 		if (javaExc != nullptr)
 		{
 			th = (jthrowable) javaExc->getJavaObject();
@@ -264,37 +262,19 @@ void JPypeException::convertPythonToJava()
 		}
 	}
 
-#if 1
-	if (eframe.m_ExceptionClass.get() != nullptr) {
-		PyObject* c_repr = PyObject_Repr(eframe.m_ExceptionClass.get());
-		PyObject* v_repr = PyObject_Repr(eframe.m_ExceptionValue.get());
-		
-		printf("DEBUG BOOTSTRAP:\n");
-		printf("  Class: %s\n", c_repr ? PyUnicode_AsUTF8(c_repr) : "NULL");
-		printf("  Value: %s\n", v_repr ? PyUnicode_AsUTF8(v_repr) : "NULL");
-		
-		Py_XDECREF(c_repr);
-		Py_XDECREF(v_repr);
-	} else {
-		printf("DEBUG BOOTSTRAP: Exception state is empty (NULL pointers).\n");
-	}
-#endif
+#if 0
+	PyObject* c_repr = PyObject_Repr((PyObject*) Py_TYPE(exc.get()));
+	PyObject* v_repr = PyObject_Repr(exc.get());
 	
-	// 1. Extract the active exception instance. 
-	// JPPyErrFrame automatically normalizes the exception into m_ExceptionValue.
-	PyObject* exc = eframe.m_ExceptionValue.get();
-	if (exc == nullptr)
-	{
-		// Safety drain: If the exception frame is mysteriously empty, throw a runtime fallback
-		fail(frame, "Python exception state was null");
-		return;
-	}
+	printf("DEBUG BOOTSTRAP:\n");
+	printf("  Class: %s\n", c_repr ? PyUnicode_AsUTF8(c_repr) : "NULL");
+	printf("  Value: %s\n", v_repr ? PyUnicode_AsUTF8(v_repr) : "NULL");
+	
+	Py_XDECREF(c_repr);
+	Py_XDECREF(v_repr);
+#endif
 
-	// 2. Clear the Python error indicator so we can safely invoke Python functions 
-	// without triggering an "Exception ignored" warning or cross-contaminating states.
-	eframe.clear();
-
-	// 3. Locate and invoke our Python module's conversion engine: _jpype._pyexc_convert
+	// Locate and invoke our Python module's conversion engine: _jpype._pyexc_convert
 	// We fetch the module function directly via the shared JPContext
 	PyObject* pyexc_convert_fn = context->m_PyExcConvert; 
 	if (pyexc_convert_fn == nullptr)
@@ -305,7 +285,7 @@ void JPypeException::convertPythonToJava()
 
 	// Execute the Python conversion method: _pyexc_convert(exc)
 	// This returns our normalized _jpype._JProxy instance wrapping the Java Throwable
-	JPPyObject proxy_res = JPPyObject::claim(PyObject_CallFunctionObjArgs(pyexc_convert_fn, exc, nullptr));
+	JPPyObject proxy_res = JPPyObject::claim(PyObject_CallFunctionObjArgs(pyexc_convert_fn, exc.get(), nullptr));
 	if (proxy_res.isNull())
 	{
 		// If Python code raises an unhandled exception during conversion, it's trapped here
@@ -313,7 +293,7 @@ void JPypeException::convertPythonToJava()
 		return;
 	}
 
-	// 4. Peel back the Python wrapper layers to find the core JPValue slot
+	// Peel back the Python wrapper layers to find the core JPValue slot
 	JPValue* javaExc = PyJPValue_getJavaSlot(proxy_res.get());
 	if (javaExc == nullptr)
 	{
@@ -331,7 +311,7 @@ void JPypeException::convertPythonToJava()
 
 	// 5. Register the reference cleanup path
 	// Ties the lifespan of the underlying Python exception instance to the life of the Java Throwable proxy
-	frame.registerRef((jobject) th, exc);
+	frame.registerRef((jobject) th, exc.keep());
 
 	// 6. Push the finalized exception across the JNI bridge into the JVM execution context
 	JP_TRACE("Throwing Java", frame.toString(th));

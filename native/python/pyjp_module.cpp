@@ -918,7 +918,7 @@ static PyObject* PyJPModule_pyobject(PyObject *module, PyObject *args_in)
 	PyObject* meth = PyTuple_GetItem(probe_result.get(), 1);
 
 	// Pack arguments securely: (object_to_cast, dispatch_meth, target_jcls, convert_flag)
-	JPPyObject proxy_args = JPPyObject::accept(PyTuple_Pack(4, object_to_cast, meth, jcls, Py_True));
+	JPPyObject proxy_args = JPPyObject::accept(PyTuple_Pack(5, object_to_cast, meth, jcls, Py_True, Py_True));
 	if (!proxy_args.isValid())
 		return nullptr;
 

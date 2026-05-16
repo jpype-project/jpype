@@ -56,11 +56,19 @@ public:
 	JPPyObject getCallable(PyObject* name, int& addSelf) override;
 } ;
 
-class JPProxyIndirect : public JPProxy
+class JPProxyIndirectAttr : public JPProxy
 {
 public:
-	JPProxyIndirect(PyJPProxy* inst, JPClassList& intf);
-	~JPProxyIndirect() override;
+	JPProxyIndirectAttr(PyJPProxy* inst, JPClassList& intf);
+	~JPProxyIndirectAttr() override;
+	JPPyObject getCallable(PyObject* name, int& addSelf) override;
+} ;
+
+class JPProxyIndirectDict : public JPProxy
+{
+public:
+	JPProxyIndirectDict(PyJPProxy* inst, JPClassList& intf);
+	~JPProxyIndirectDict() override;
 	JPPyObject getCallable(PyObject* name, int& addSelf) override;
 } ;
 
