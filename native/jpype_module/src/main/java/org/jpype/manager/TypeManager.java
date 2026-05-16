@@ -37,6 +37,7 @@ import org.jpype.JPypeContext;
 import org.jpype.JPypeUtilities;
 import org.jpype.proxy.JPypeProxyInstance;
 import java.util.logging.Level;
+import python.lang.PyObject;
 
 /**
  *
@@ -86,7 +87,7 @@ public class TypeManager
         Void.class, Boolean.class, Byte.class, Character.class,
         Short.class, Integer.class, Long.class, Float.class, Double.class,
         String.class, JPypeProxyInstance.class,
-        Method.class, Field.class
+        Method.class, Field.class, PyObject.class
       };
       for (Class c : cls)
       {

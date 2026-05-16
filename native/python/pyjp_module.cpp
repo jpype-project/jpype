@@ -18,6 +18,7 @@
 #include "pyjp.h"
 #include "jp_primitive_accessor.h"
 #include "jp_gc.h"
+#include "jp_proxy.h"
 
 #ifdef WIN32
 #include <Windows.h>
@@ -272,7 +273,7 @@ PyTypeObject* PyJP_GetNumPyBaseType(PyTypeObject* type)
 	// 1. Check the Gate using cached generic position
 	// If n < 2, it's a raw object/type.
 	// If the item at (n - _numpy_genericpos) isn't generic, it's not NumPy.
-	if (n < _numpy_genericpos || 
+	if (n < _numpy_genericpos ||
 			PyTuple_GET_ITEM(mro, n - _numpy_genericpos) != _numpy_generic_type)
 		return nullptr;
 
@@ -281,7 +282,7 @@ PyTypeObject* PyJP_GetNumPyBaseType(PyTypeObject* type)
 	// The base type is always at index (n - _numpy_typepos).
 	if (n >= _numpy_typepos && _numpy_typepos > 0)
 		return (PyTypeObject*) PyTuple_GET_ITEM(mro, n - _numpy_typepos);
-    
+	
 	// 3. Fallback for types with shallower MROs (like bool_ or generic itself)
 	return type;
 }
@@ -673,28 +674,12 @@ static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
-/** Code to determine what interfaces are required based on the
- * dunder methods.
- */
-static PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
+static PyObject* probe(PyTypeObject *type)
 {
-	JP_PY_TRY("probe");
-	PyTypeObject *type;
-	if (PyType_Check(other))
-		type = (PyTypeObject*) other;
-	else
-		type = Py_TYPE(other);
-
-	// We would start by checking the cache here
-	JPPyObject cached = JPPyObject::use(PyObject_GetItem(_cacheDict, (PyObject*) type));
-	if (cached.isValid())
-		return cached.keep();
-	PyErr_Clear();
-
 	// FIXME First we should ask Java if there is a known interface set to use that will allow use to support numpy.ndarray
-	// The problem is we want to get the most advanced binding so we would need to take each type from the mro 
-    // with its canonical name and set it to Java as a string to see if it comes back with a wrapper.
-    // If we get a hit we just need to collect up a list of bindings and add it to the cache
+	// The problem is we want to get the most advanced binding so we would need to take each type from the mro
+	// with its canonical name and set it to Java as a string to see if it comes back with a wrapper.
+	// If we get a hit we just need to collect up a list of bindings and add it to the cache
 	// This step is likely more complex that can be done in C binds for now so we likely need a helper in Python that we can call.
 
 	PyObject *mro = type->tp_mro;
@@ -789,85 +774,85 @@ static PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
 	// Add all the protocols
 	// For this section we do not care if a prototocol addition fails, so
 	// we must only clean up the extra references rather than produce an error.
-	if (is_callable) 
+	if (is_callable)
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "callable"));
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
-	if (is_buffer) 
+	if (is_buffer)
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "buffer"));
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
-	if (is_sequence) 
+	if (is_sequence)
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "sequence"));
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
-	if (is_mapping) 
+	if (is_mapping)
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "mapping"));
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
-	if (is_iterable) 
+	if (is_iterable)
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "iterable"));
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
-	if (is_iterator) 
+	if (is_iterator)
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "iter"));
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
-	if (is_generator) 
+	if (is_generator)
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "generator"));
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
-	if (is_coroutine) 
+	if (is_coroutine)
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "coroutine"));
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
-	if (is_awaitable) 
+	if (is_awaitable)
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "awaitable"));
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
-	if (is_set) 
+	if (is_set)
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "abstract_set"));
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
-	if (is_collection) 
+	if (is_collection)
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "collection"));
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
-	if (is_container) 
+	if (is_container)
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "container"));
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
-	if (as_index) 
+	if (as_index)
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "index"));
 		if (cls.isValid())
 			PyList_Append(interfaces.get(), cls.get());
 	}
-	if (as_int || as_float) 
+	if (as_int || as_float)
 	{
 		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "number"));
 		if (cls.isValid())
@@ -958,40 +943,107 @@ static PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
 
 	// Set the items in the result tuple
 	PyTuple_SetItem(result.get(), 0, existing_interfaces.keep()); // Steals reference
-	PyTuple_SetItem(result.get(), 1, existing_methods.keep());    // Steals reference
+	PyTuple_SetItem(result.get(), 1, existing_methods.keep());	// Steals reference
 
 	// Insert the result into _cacheDict
 	if (PyObject_SetItem(_cacheDict, (PyObject*) type, result.get()) == -1)
 		return nullptr;
 
 	return result.keep();
+}
+
+/** Code to determine what interfaces are required based on the
+ * dunder methods.
+ */
+static PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
+{
+	JP_PY_TRY("probe");
+	PyTypeObject *type;
+	if (PyType_Check(other))
+		type = (PyTypeObject*) other;
+	else
+		type = Py_TYPE(other);
+
+	// We would start by checking the cache here
+	JPPyObject cached = JPPyObject::use(PyObject_GetItem(_cacheDict, (PyObject*) type));
+	if (cached.isValid())
+		return cached.keep();
+	PyErr_Clear();
+	return probe(type);
+	JP_PY_CATCH(nullptr);
+}
+
+static PyObject* PyJPModule_pyobject(PyObject *module, PyObject *args_in)
+{
+	JP_PY_TRY("PyJPModule_pyobject");
+	JPJavaFrame frame = JPJavaFrame::outer();
+
+	PyObject* target_type = nullptr;
+	PyObject* object_to_cast = nullptr;
+
+	// Parse the incoming arguments: Type first, Object second
+	if (!PyArg_ParseTuple(args_in, "OO", &target_type, &object_to_cast))
+		return nullptr;
+
+	// Probe using the targeted type class to find matching method definitions
+	JPPyObject probe_result = JPPyObject::accept(PyJPModule_probe(module, object_to_cast));
+	if (!probe_result.isValid())
+		return nullptr;
+
+	// Extract the resolved Java class and method pointers from the probe tuple
+	PyObject* jcls = PyTuple_GetItem(probe_result.get(), 0);
+	PyObject* meth = PyTuple_GetItem(probe_result.get(), 1);
+
+	// Pack arguments securely: (object_to_cast, dispatch_meth, target_jcls, convert_flag)
+	JPPyObject proxy_args = JPPyObject::accept(PyTuple_Pack(4, object_to_cast, meth, jcls, Py_True));
+	if (!proxy_args.isValid())
+		return nullptr;
+
+	// Create the specialized JPProxy type instance
+	JPPyObject proxy_instance = JPPyObject::accept(PyJPProxy_Type->tp_new(PyJPProxy_Type, proxy_args.get(), nullptr));
+	if (!proxy_instance.isValid())
+		return nullptr;
+
+	JPProxy *proxy = PyJPProxy_getJPProxy(proxy_instance.get());
+	if (proxy == nullptr)
+		return nullptr;
+
+	// Fetch the live JNI local/global reference structure
+	jvalue v = proxy->getProxy();
+
+	JPClass* targetClass = PyJPClass_getJPClass(target_type); 
+	if (targetClass == nullptr)
+		return nullptr;
+
+	// Convert using the exact target class type, not a generic context type!
+	return targetClass->convertToPythonObject(frame, v, true).keep();
 	JP_PY_CATCH(nullptr);
 }
 
 static void PyJPModule_InitNumpy()
 {
-    PyObject *numpy = PyImport_ImportModule("numpy");
-    if (numpy == nullptr) 
-    {
-        PyErr_Clear();
-        return;
-    }
+	PyObject *numpy = PyImport_ImportModule("numpy");
+	if (numpy == nullptr)
+	{
+		PyErr_Clear();
+		return;
+	}
 
-    // Do it one by one. If one fails, you can actually handle it.
-    _numpy_generic_type = PyObject_GetAttrString(numpy, "generic");
-    _numpy_bool_type    = PyObject_GetAttrString(numpy, "bool_");
-    _numpy_int8_type   = PyObject_GetAttrString(numpy, "int8");
-    _numpy_int16_type   = PyObject_GetAttrString(numpy, "int16");
-    _numpy_int32_type   = PyObject_GetAttrString(numpy, "int32");
+	// Do it one by one. If one fails, you can actually handle it.
+	_numpy_generic_type = PyObject_GetAttrString(numpy, "generic");
+	_numpy_bool_type	= PyObject_GetAttrString(numpy, "bool_");
+	_numpy_int8_type   = PyObject_GetAttrString(numpy, "int8");
+	_numpy_int16_type   = PyObject_GetAttrString(numpy, "int16");
+	_numpy_int32_type   = PyObject_GetAttrString(numpy, "int32");
 
-    // Check for nulls BEFORE you try to access internals
-    if (_numpy_int32_type && _numpy_generic_type)
-    {
-        _numpy_typepos = PyTuple_GET_SIZE(((PyTypeObject*)_numpy_int32_type)->tp_mro);
-        _numpy_genericpos = PyTuple_GET_SIZE(((PyTypeObject*)_numpy_generic_type)->tp_mro);
-    }
+	// Check for nulls BEFORE you try to access internals
+	if (_numpy_int32_type && _numpy_generic_type)
+	{
+		_numpy_typepos = PyTuple_GET_SIZE(((PyTypeObject*)_numpy_int32_type)->tp_mro);
+		_numpy_genericpos = PyTuple_GET_SIZE(((PyTypeObject*)_numpy_generic_type)->tp_mro);
+	}
 
-    Py_DECREF(numpy);
+	Py_DECREF(numpy);
 }
 
 #if 1
@@ -1122,6 +1174,7 @@ static PyMethodDef moduleMethods[] = {
 #endif
 	{"examine", (PyCFunction) examine, METH_O, ""},
 	{"probe", (PyCFunction) PyJPModule_probe, METH_O, ""},
+	{"pyobject", (PyCFunction) PyJPModule_pyobject, METH_VARARGS, ""},
 
 	// sentinel
 	{nullptr}
@@ -1163,8 +1216,8 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyModule_AddObject(module, "__builtins__", builtins);
 
 	_strings_dict = PyDict_New();
-    // Add to module so it's visible/reachable and cleared on shutdown
-    PyModule_AddObject(module, "_strings", _strings_dict);
+	// Add to module so it's visible/reachable and cleared on shutdown
+	PyModule_AddObject(module, "_strings", _strings_dict);
 	Py_JP_CALL = PyUnicode_InternFromString("__call__");
 
 	PyJPClassMagic = PyDict_New();
@@ -1200,7 +1253,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_internal_JPypeStringManager_get(JNIEnv *e
 		JPPyCallAcquire callback;
 		string str = frame.toStringUTF8(name);
 		auto len = static_cast<Py_ssize_t>(str.size());
-    	JPPyObject bytes = JPPyObject::call(PyBytes_FromStringAndSize(str.c_str(), len));
+		JPPyObject bytes = JPPyObject::call(PyBytes_FromStringAndSize(str.c_str(), len));
 		PyObject* pyStr = PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict");
 		PyUnicode_InternInPlace(&pyStr);
 		PyObject* canonical = PyDict_SetDefault(_strings_dict, pyStr, pyStr);

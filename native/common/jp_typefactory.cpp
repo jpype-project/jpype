@@ -287,6 +287,10 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 		return (jlong) (context->_java_lang_reflect_Field
 			= new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
 
+	if (className == "python.lang.PyObject")
+		return (jlong) (context->_python_lang_PyObject
+			= new JPObjectType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
+	
 	std::stringstream ss;
 	ss << "Special class not defined for " << className;
 	JP_RAISE(PyExc_RuntimeError, ss.str());

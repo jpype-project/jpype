@@ -193,6 +193,7 @@ public:
 	JPClass* _java_lang_Throwable{};
 	JPStringType* _java_lang_String{};
 	JPClass* _java_nio_ByteBuffer{};
+	JPClass* _python_lang_PyObject{};
 
 private:
 
