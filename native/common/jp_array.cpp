@@ -29,7 +29,7 @@ JPArray::JPArray(JPJavaFrame& frame, const JPValue &value)
 {
 	m_Class = dynamic_cast<JPArrayClass*>( value.getClass());
 	JP_TRACE_IN("JPArray::JPArray");
-	ASSERT_NOT_NULL(m_Class);
+	ASSERT_NOT_NULL(m_Class, "JPArray::JPArray");
 	JP_TRACE(m_Class->toString());
 
 	// We will use this during range checks, so cache it

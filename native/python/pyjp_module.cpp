@@ -35,6 +35,8 @@ PyObject* _numpy_int8_type  = nullptr;
 PyObject* _numpy_int16_type = nullptr;
 PyObject* _numpy_int32_type = nullptr;
 
+static PyObject* protocol_pipeline[15] = {nullptr};
+
 
 extern void PyJPArray_initType(PyObject* module);
 extern void PyJPBuffer_initType(PyObject* module);
@@ -83,6 +85,17 @@ PyObject* _JMethodAnnotations = nullptr;
 PyObject* _JMethodCode = nullptr;
 PyObject* _JObjectKey = nullptr;
 PyObject* _JVMNotRunning = nullptr;
+
+static PyObject* abc_sequence = nullptr;
+static PyObject* abc_mapping = nullptr;
+static PyObject* abc_generator = nullptr;
+static PyObject* abc_iterator = nullptr;
+static PyObject* abc_iterable = nullptr;
+static PyObject* abc_coroutine = nullptr;
+static PyObject* abc_awaitable = nullptr;
+static PyObject* abc_set = nullptr;
+static PyObject* abc_collection = nullptr;
+static PyObject* abc_container = nullptr;
 
 // Lookup tables
 static PyObject *_concreteDict = nullptr;
@@ -685,20 +698,14 @@ static PyObject* probe(PyTypeObject *type)
 	PyObject *mro = type->tp_mro;
 	Py_ssize_t sz = PyTuple_Size(mro);
 
-	JPPyObject abc = JPPyObject::call(PyImport_ImportModule("collections.abc")); // Call returns a new reference
-	JPPyObject abc_sequence = JPPyObject::use(PyObject_GetAttrString(abc.get(), "Sequence"));
-	JPPyObject abc_mapping = JPPyObject::use(PyObject_GetAttrString(abc.get(), "Mapping"));
-	JPPyObject abc_generator = JPPyObject::use(PyObject_GetAttrString(abc.get(), "Generator"));
-	JPPyObject abc_iterator = JPPyObject::use(PyObject_GetAttrString(abc.get(), "Iterator"));
-	JPPyObject abc_iterable = JPPyObject::use(PyObject_GetAttrString(abc.get(), "Iterable"));
-	JPPyObject abc_coroutine = JPPyObject::use(PyObject_GetAttrString(abc.get(), "Coroutine"));
-	JPPyObject abc_awaitable = JPPyObject::use(PyObject_GetAttrString(abc.get(), "Awaitable"));
-	JPPyObject abc_set = JPPyObject::use(PyObject_GetAttrString(abc.get(), "Set"));
-	JPPyObject abc_collection = JPPyObject::use(PyObject_GetAttrString(abc.get(), "Collection"));
-	JPPyObject abc_container = JPPyObject::use(PyObject_GetAttrString(abc.get(), "Container"));
-	JPPyObject typing = JPPyObject::call(PyImport_ImportModule("typing")); // Call returns a new reference
-	// Buffer appears in 3.12 so will probe dunder instead
+	// Safety check: Ensure our late-binding ready() milestone was reached
+	if (abc_sequence == nullptr)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "JPype Engine Error: ready() checkpoint was not initialized.");
+		return nullptr;
+	}
 
+	// Buffer appears in 3.12 so will probe dunder instead
 	bool is_callable = (type->tp_call != nullptr);
 	bool is_buffer = (type->tp_as_buffer != nullptr);
 
@@ -714,19 +721,21 @@ static PyObject* probe(PyTypeObject *type)
 		|| (type->tp_as_number->nb_xor != nullptr));
 	bool as_matrix = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_matrix_multiply != nullptr);
 
-	bool as_resource = (PyObject_HasAttrString((PyObject*)type, "__enter__")!=0);
-	bool as_index = (PyObject_HasAttrString((PyObject*)type, "__index__")!=0);
+	bool as_resource = (PyObject_HasAttrString((PyObject*)type, "__enter__") != 0);
+	bool as_index = (PyObject_HasAttrString((PyObject*)type, "__index__") != 0);
 
-	bool is_collection = (PyObject_IsSubclass((PyObject*)type, abc_collection.get())!=0);
-	bool is_container = (PyObject_IsSubclass((PyObject*)type, abc_container.get())!=0);
-	bool is_sequence = (PyObject_IsSubclass((PyObject*)type, abc_sequence.get())!=0);
-	bool is_mapping = (PyObject_IsSubclass((PyObject*)type, abc_mapping.get())!=0);
-	bool is_set = (PyObject_IsSubclass((PyObject*)type, abc_set.get())!=0);
-	bool is_generator = (PyObject_IsSubclass((PyObject*)type, abc_generator.get())!=0);
-	bool is_iterable = (PyObject_IsSubclass((PyObject*)type, abc_iterable.get())!=0);
-	bool is_iterator = (PyObject_IsSubclass((PyObject*)type, abc_iterator.get())!=0);
-	bool is_awaitable = (PyObject_IsSubclass((PyObject*)type, abc_awaitable.get())!=0);
-	bool is_coroutine = (PyObject_IsSubclass((PyObject*)type, abc_coroutine.get())!=0);
+	// High-speed subclass validations utilizing our pre-cached global ABC objects
+	bool is_collection = (PyObject_IsSubclass((PyObject*)type, abc_collection) != 0);
+	bool is_container  = (PyObject_IsSubclass((PyObject*)type, abc_container) != 0);
+	bool is_sequence   = (PyObject_IsSubclass((PyObject*)type, abc_sequence) != 0);
+	bool is_mapping	= (PyObject_IsSubclass((PyObject*)type, abc_mapping) != 0);
+	bool is_set		= (PyObject_IsSubclass((PyObject*)type, abc_set) != 0);
+	bool is_generator  = (PyObject_IsSubclass((PyObject*)type, abc_generator) != 0);
+	bool is_iterable   = (PyObject_IsSubclass((PyObject*)type, abc_iterable) != 0);
+	bool is_iterator   = (PyObject_IsSubclass((PyObject*)type, abc_iterator) != 0);
+	bool is_awaitable  = (PyObject_IsSubclass((PyObject*)type, abc_awaitable) != 0);
+	bool is_coroutine  = (PyObject_IsSubclass((PyObject*)type, abc_coroutine) != 0);
+	
 	bool nb_and = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_and != nullptr);
 	bool nb_or  = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_or != nullptr);
 	bool nb_xor = (type->tp_as_number != nullptr) && (type->tp_as_number->nb_xor != nullptr);
@@ -766,106 +775,24 @@ static PyObject* probe(PyTypeObject *type)
 
 	JPPyObject cls;
 	JPPyObject interfaces = JPPyObject::accept(PyList_New(0));
+
 	// We always add PyObject methods
 	PyObject *object = PyDict_GetItem(_concreteDict, (PyObject*) &PyBaseObject_Type); // borrowed
 	if (object != nullptr)
 		PyList_Append(interfaces.get(), object);
 
-	// Add all the protocols
-	// For this section we do not care if a prototocol addition fails, so
-	// we must only clean up the extra references rather than produce an error.
-	if (is_callable)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "callable"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-	if (is_buffer)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "buffer"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-	if (is_sequence)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "sequence"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-	if (is_mapping)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "mapping"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-	if (is_iterable)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "iterable"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-	if (is_iterator)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "iter"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-	if (is_generator)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "generator"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-	if (is_coroutine)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "coroutine"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-	if (is_awaitable)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "awaitable"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-	if (is_set)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "abstract_set"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-	if (is_collection)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "collection"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-	if (is_container)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "container"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-	if (as_index)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "index"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-	if (as_int || as_float)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "number"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-	// Dict and Type have this odd combination
-	if (!as_int && !as_float && nb_or)
-	{
-		cls = JPPyObject::use(PyDict_GetItemString(_protocolDict, "combinable"));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
+	bool flags[15] = {
+		is_callable, is_buffer, is_sequence, is_mapping,
+		is_iterable, is_iterator, is_generator, is_coroutine,
+		is_awaitable, is_set, is_collection, is_container,
+		as_index, (as_int || as_float), (!as_int && !as_float && nb_or) 
+	};
 
+	for (int i = 0; i < 15; ++i)
+	{
+		if (flags[i] && protocol_pipeline[i] != nullptr)
+			PyList_Append(interfaces.get(), protocol_pipeline[i]);
+	}
 
 	// We look to see if there is a concrete method
 	if (sz > 1)
@@ -958,11 +885,7 @@ static PyObject* probe(PyTypeObject *type)
 static PyObject* PyJPModule_probe(PyObject *module, PyObject *other)
 {
 	JP_PY_TRY("probe");
-	PyTypeObject *type;
-	if (PyType_Check(other))
-		type = (PyTypeObject*) other;
-	else
-		type = Py_TYPE(other);
+	PyTypeObject *type = Py_TYPE(other);
 
 	// We would start by checking the cache here
 	JPPyObject cached = JPPyObject::use(PyObject_GetItem(_cacheDict, (PyObject*) type));
@@ -1138,6 +1061,75 @@ static PyObject *PyJPModule_bootstrap(PyObject *module)
 }
 #endif
 
+static PyObject* PyJPModule_ready(PyObject* self, PyObject* args)
+{
+	JP_TRACE_IN("PyJPModule_ready");
+	
+	JPContext* context = JPContext_global;
+	if (context == nullptr || !context->isRunning())
+	{
+		PyErr_SetString(PyExc_RuntimeError, "JPype engine context is not active.");
+		return nullptr;
+	}
+
+	// 1. Resolve our module properties dictionary
+	PyObject* module_dict = PyModule_GetDict(self);
+	if (module_dict == nullptr)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "Failed to extract extension module state.");
+		return nullptr;
+	}
+
+	// Late-bind our newly added C++ context exception converter callback
+	PyObject* exc_func = PyDict_GetItemString(module_dict, "_pyexc_convert");
+	if (exc_func != nullptr)
+	{
+		Py_XINCREF(exc_func);
+		if (context->m_PyExcConvert != nullptr)
+			Py_DECREF(context->m_PyExcConvert);
+		context->m_PyExcConvert = exc_func;
+	}
+
+	// 2. Safely resolve external collections.abc types
+	PyObject* abc_module = PyImport_ImportModule("collections.abc");
+	if (abc_module != nullptr)
+	{
+		// Since loadResources didn't cover external module types, resolve them here.
+		// Note: abc_sequence, abc_mapping, etc., should be declared as global PyObject* variables at the top of your file
+		abc_sequence   = PyObject_GetAttrString(abc_module, "Sequence");
+		abc_mapping	= PyObject_GetAttrString(abc_module, "Mapping");
+		abc_generator  = PyObject_GetAttrString(abc_module, "Generator");
+		abc_iterator   = PyObject_GetAttrString(abc_module, "Iterator");
+		abc_iterable   = PyObject_GetAttrString(abc_module, "Iterable");
+		abc_coroutine  = PyObject_GetAttrString(abc_module, "Coroutine");
+		abc_awaitable  = PyObject_GetAttrString(abc_module, "Awaitable");
+		abc_set		= PyObject_GetAttrString(abc_module, "Set");
+		abc_collection = PyObject_GetAttrString(abc_module, "Collection");
+		abc_container  = PyObject_GetAttrString(abc_module, "Container");
+		Py_DECREF(abc_module);
+	}
+
+	if (_protocolDict != nullptr)
+	{
+		// These must match the order of the flags defined in probe
+		const char* names[] = {
+			"callable", "buffer", "sequence", "mapping", "iterable",
+			"iter", "generator", "coroutine", "awaitable", "abstract_set",
+			"collection", "container", "index", "number", "combinable"
+		};
+
+		for (int i = 0; i < 15; ++i)
+		{
+			PyObject* proto = PyDict_GetItemString(_protocolDict, names[i]);
+			Py_XINCREF(proto);
+			protocol_pipeline[i] = proto;
+		}
+	}
+
+	Py_RETURN_NONE;
+	JP_TRACE_OUT;
+}
+
 static PyMethodDef moduleMethods[] = {
 	// Startup and initialization
 	{"isStarted", (PyCFunction) PyJPModule_isStarted, METH_NOARGS, ""},
@@ -1145,6 +1137,7 @@ static PyMethodDef moduleMethods[] = {
 	{"bootstrap", (PyCFunction) PyJPModule_bootstrap, METH_NOARGS, ""},
 #else
 	{"startup", (PyCFunction) PyJPModule_startup, METH_VARARGS, ""},
+	{"ready", (PyCFunction)PyJPModule_ready, METH_NOARGS, "Signal bootstrap completion" },
 	//	{"attach", (PyCFunction) (&PyJPModule_attach), METH_VARARGS, ""},
 	{"shutdown", (PyCFunction) PyJPModule_shutdown, METH_VARARGS, ""},
 #endif

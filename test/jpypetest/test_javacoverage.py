@@ -40,7 +40,6 @@ class JavaCoverageTestCase(common.JPypeTestCase):
             JArray(JObject, 2)([JArray(JObject)(0)])), None)
         self.assertEqual(self.inst.collectRectangular(
             JArray(JObject)([None, None])), None)
-        self.assertEqual(self.inst.getExcValue(None), 0)
 
     def testReference(self):
         JPypeReference = JClass('org.jpype.ref.JPypeReference')

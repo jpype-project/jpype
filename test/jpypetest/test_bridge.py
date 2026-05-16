@@ -17,6 +17,7 @@
 # *****************************************************************************
 from jpype.types import *
 from jpype import java
+import _jpype
 import common
 
 class MyTest():
@@ -52,12 +53,12 @@ class JBridgeTestCase(common.JPypeTestCase):
         self.PyZip = JClass("python.lang.PyZip")
 
         # Protocols
-        self.PyIter = JClass("python.protocol.PyIter")
-        self.PyIterable = JClass("python.protocol.PyIterable")
-        self.PyAttributes = JClass("python.protocol.PyAttributes")
-        self.PyMapping = JClass("python.protocol.PyMapping")
-        self.PyNumber = JClass("python.protocol.PyNumber")
-        self.PySequence = JClass("python.protocol.PySequence")
+        self.PyIter = JClass("python.lang.PyIter")
+        self.PyIterable = JClass("python.lang.PyIterable")
+        self.PyAttributes = JClass("python.lang.PyAttributes")
+        self.PyMapping = JClass("python.lang.PyMapping")
+        self.PyNumber = JClass("python.lang.PyNumber")
+        self.PySequence = JClass("python.lang.PySequence")
 
     def testByteArray(self):
         obj = bytearray()
@@ -171,10 +172,10 @@ class JBridgeTestCase(common.JPypeTestCase):
         self.assertIsInstance(self.PyZip@obj, self.PyZip)
 
     def testBackend(self):
-        built = JClass("org.jpype.bridge.BuiltIn")
+        built = JClass("python.lang.PyBuiltIn")
 
         self.assertIsInstance(built.list(java.util.Arrays.asList("A","B","C")), list)
-        self.assertIsInstance(built.list("A","B","C"), list)
+        self.assertIsInstance(built.list(self.PyObject@["A","B","C"]), list)
         self.assertIsInstance(built.str(self.PyString@"hello"), str)
 
         o = MyTest()
@@ -196,7 +197,7 @@ class JBridgeTestCase(common.JPypeTestCase):
         setattr(o, "A", 1)
         setattr(o, "B", 2)
         j = self.PyObject@o
-        a = self.PyAttributes@(j.asAttributes())
+        a = j.getAttributes()
         #print(dir(a))
         self.assertEqual(a.get("A"), 1)
         self.assertEqual(a.get("B"), 2)
@@ -207,5 +208,15 @@ class JBridgeTestCase(common.JPypeTestCase):
         self.assertEqual(a.dict(), {"A":1, "B":3}) 
         a.remove("B")  
         self.assertFalse(a.has("B"))
+
+    def testExc(self):
+        exc = _jpype._pyexc_convert(ValueError("nbar"))
+        cls = JClass("python.exceptions.PyValueError")
+        self.assertIsInstance(exc, cls)
+
+    def testExcBad(self):
+        with self.assertRaises(JClass("python.exceptions.PyAssertionError")):
+            raise _jpype._pyexc_convert(object())
+
 
 

@@ -82,7 +82,7 @@ JPPyObject JPPyObject::accept(PyObject* obj)
 JPPyObject JPPyObject::claim(PyObject* obj)
 {
 	JP_TRACE_PY("pyref new(claim)", obj);
-	ASSERT_NOT_NULL(obj);
+	ASSERT_NOT_NULL(obj, "pyref new(claim)");
 	assertValid(obj);
 	return JPPyObject(obj);
 }
@@ -98,7 +98,7 @@ JPPyObject JPPyObject::call(PyObject* obj)
 {
 	JP_TRACE_PY("pyref new(call)", obj);
 	JP_PY_CHECK();
-	ASSERT_NOT_NULL(obj);
+	ASSERT_NOT_NULL(obj, "pyref new(call)");
 	assertValid(obj);
 	return JPPyObject(obj);
 }
@@ -306,7 +306,7 @@ JPPyObject JPPyString::fromStringUTF8(const string& str)
 string JPPyString::asStringUTF8(PyObject* pyobj)
 {
 	JP_TRACE_IN("JPPyUnicode::asStringUTF8");
-	ASSERT_NOT_NULL(pyobj);
+	ASSERT_NOT_NULL(pyobj, "JPPyUnicode::asStringUTF8");
 
 	if (PyUnicode_Check(pyobj))
 	{

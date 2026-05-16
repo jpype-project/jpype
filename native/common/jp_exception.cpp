@@ -19,6 +19,7 @@
 
 #include "jpype.h"
 #include "jp_exception.h"
+#include "jp_proxy.h"
 #include "pyjp.h"
 
 static_assert(std::is_nothrow_copy_constructible<JPypeException>::value,
@@ -116,21 +117,28 @@ void JPypeException::convertJavaToPython()
 	jthrowable th = m_Throwable.get();
 	jvalue v;
 	v.l = th;
-	// GCOVR_EXCL_START
-	// This is condition is only hit if something fails during the initial boot
-	if (context->getJavaContext() == nullptr || context->m_Context_GetExcClassID == nullptr)
+
+	if (context->m_ProxyType_UnwrapPythonExceptionID != nullptr)
 	{
-		PyErr_SetString(PyExc_SystemError, frame.toString(th).c_str());
-		return;
+		jlong py_instance_ptr = frame.CallStaticLongMethodA(
+			(jclass) context->m_ProxyTypeClass.get(), 
+			context->m_ProxyType_UnwrapPythonExceptionID, 
+			&v
+		);  // borrowed reference, lifespan held by th
+
+
+		if (py_instance_ptr != 0)
+		{
+			JPProxy* jp_proxy = (JPProxy*) py_instance_ptr;
+			PyJPProxy* py_proxy = jp_proxy->m_Instance;
+			PyObject* exc = py_proxy->m_Target;
+			// Restore the original exception into Python's error registers
+			PyErr_SetObject((PyObject*) Py_TYPE(exc), exc);
+			JP_TRACE("Successfully unwrapped and restored Python exception from Java proxy");
+			return;
+		}
 	}
-	// GCOVR_EXCL_STOP
-	jlong pycls = frame.CallLongMethodA(context->getJavaContext(), context->m_Context_GetExcClassID, &v);
-	if (pycls != 0)
-	{
-		jlong value = frame.CallLongMethodA(context->getJavaContext(), context->m_Context_GetExcValueID, &v);
-		PyErr_SetObject((PyObject*) pycls, (PyObject*) value);
-		return;
-	}
+
 	JP_TRACE("Check typemanager");
 	// GCOVR_EXCL_START
 	if (!context->isRunning())
@@ -228,12 +236,20 @@ static PyObject* getExceptionInstance()
 #endif
 }
 
+static void fail(JPJavaFrame& frame, const char *msg)
+{
+	JPContext *context = frame.getContext();
+	frame.ThrowNew((jclass) context->m_RuntimeException.get(), msg);
+}
+
 void JPypeException::convertPythonToJava()
 {
 	JP_TRACE_IN("JPypeException::convertPythonToJava");
 	JPJavaFrame frame = JPJavaFrame::outer();
 	JPContext *context = frame.getContext();
 	jthrowable th;
+
+
 	JPPyErrFrame eframe;
 	if (eframe.good && isJavaThrowable(eframe.m_ExceptionClass.get()))
 	{
@@ -246,12 +262,6 @@ void JPypeException::convertPythonToJava()
 			frame.Throw(th);
 			return;
 		}
-	}
-
-	if (context->m_Context_CreateExceptionID == nullptr)
-	{
-		frame.ThrowNew(frame.FindClass("java/lang/RuntimeException"), std::runtime_error::what());
-		return;
 	}
 
 #if 1
@@ -269,20 +279,64 @@ void JPypeException::convertPythonToJava()
 		printf("DEBUG BOOTSTRAP: Exception state is empty (NULL pointers).\n");
 	}
 #endif
+	
+	// 1. Extract the active exception instance. 
+	// JPPyErrFrame automatically normalizes the exception into m_ExceptionValue.
+	PyObject* exc = eframe.m_ExceptionValue.get();
+	if (exc == nullptr)
+	{
+		// Safety drain: If the exception frame is mysteriously empty, throw a runtime fallback
+		fail(frame, "Python exception state was null");
+		return;
+	}
 
-
-
-	// Otherwise
-	jvalue v[2];
-	v[0].j = (jlong) eframe.m_ExceptionClass.get();
-	v[1].j = (jlong) eframe.m_ExceptionValue.get();
-	th = (jthrowable) frame.CallObjectMethodA(context->getJavaContext(),
-			context->m_Context_CreateExceptionID, v);
-	frame.registerRef((jobject) th, eframe.m_ExceptionClass.get());
-	frame.registerRef((jobject) th, eframe.m_ExceptionValue.get());
+	// 2. Clear the Python error indicator so we can safely invoke Python functions 
+	// without triggering an "Exception ignored" warning or cross-contaminating states.
 	eframe.clear();
+
+	// 3. Locate and invoke our Python module's conversion engine: _jpype._pyexc_convert
+	// We fetch the module function directly via the shared JPContext
+	PyObject* pyexc_convert_fn = context->m_PyExcConvert; 
+	if (pyexc_convert_fn == nullptr)
+	{
+		fail(frame, "JPype Engine Error: _pyexc_convert not found");
+		return;
+	}
+
+	// Execute the Python conversion method: _pyexc_convert(exc)
+	// This returns our normalized _jpype._JProxy instance wrapping the Java Throwable
+	JPPyObject proxy_res = JPPyObject::claim(PyObject_CallFunctionObjArgs(pyexc_convert_fn, exc, nullptr));
+	if (proxy_res.isNull())
+	{
+		// If Python code raises an unhandled exception during conversion, it's trapped here
+		fail(frame, "JPype Engine Error: Exception conversion failed");
+		return;
+	}
+
+	// 4. Peel back the Python wrapper layers to find the core JPValue slot
+	JPValue* javaExc = PyJPValue_getJavaSlot(proxy_res.get());
+	if (javaExc == nullptr)
+	{
+		fail(frame, "JPype Engine Error: Proxy carried no Java slot");
+		return;
+	}
+
+	// Extract the raw JNI handle out of the slot
+	th = (jthrowable) javaExc->getJavaObject();
+	if (th == nullptr)
+	{
+		fail(frame, "JPype Engine Error: Underlying JNI handle is null");
+		return;
+	}
+
+	// 5. Register the reference cleanup path
+	// Ties the lifespan of the underlying Python exception instance to the life of the Java Throwable proxy
+	frame.registerRef((jobject) th, exc);
+
+	// 6. Push the finalized exception across the JNI bridge into the JVM execution context
+	JP_TRACE("Throwing Java", frame.toString(th));
 	frame.Throw(th);
-	JP_TRACE_OUT; // GCOVR_EXCL_LINE
+	JP_TRACE_OUT;
 }
 
 void JPypeException::toPython()

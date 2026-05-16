@@ -53,7 +53,7 @@ void JPField::setStaticField(JPJavaFrame& frame, PyObject *pyobj)
 JPPyObject JPField::getField(JPJavaFrame& frame, jobject inst)
 {
 	JP_TRACE_IN("JPField::getAttribute");
-	ASSERT_NOT_NULL(m_Type);
+	ASSERT_NOT_NULL(m_Type, "JPField::getAttribute");
 	JP_TRACE("field type", m_Type->getCanonicalName());
 	return m_Type->getField(frame, inst, m_FieldID);
 	JP_TRACE_OUT;

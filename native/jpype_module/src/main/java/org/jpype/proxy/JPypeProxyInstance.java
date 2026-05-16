@@ -12,7 +12,7 @@ public class JPypeProxyInstance implements InvocationHandler
 
   static final TypeManager manager = JPypeContext.getInstance().getTypeManager();
   private final JPypeProxyType type;
-  private final long instance;
+  final long instance; // JPProxy*
 
   public JPypeProxyInstance(JPypeProxyType type, long instance)
   {

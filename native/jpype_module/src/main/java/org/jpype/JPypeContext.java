@@ -474,25 +474,6 @@ public class JPypeContext
     }
   }
 
-  public long getExcClass(Throwable th)
-  {
-    if (th instanceof PyExceptionProxy)
-      return ((PyExceptionProxy) th).cls;
-    return 0;
-  }
-
-  public long getExcValue(Throwable th)
-  {
-    if (th instanceof PyExceptionProxy)
-      return ((PyExceptionProxy) th).value;
-    return 0;
-  }
-
-  private Exception createException(long l0, long l1)
-  {
-    return new PyExceptionProxy(l0, l1);
-  }
-
   private boolean order(Buffer b)
   {
     if (b instanceof java.nio.ByteBuffer)

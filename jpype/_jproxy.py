@@ -183,16 +183,25 @@ def _convertInterfaces(intf):
     return tuple(actualIntf)
 
 
-class _JFromDict(object):
-    def __init__(self, dict):
-        self.dict = dict
+class _JAttrDictAdapter:
+    """Wraps any object to look like a flat dictionary for method lookups, 
+    properly traversing the entire MRO and descriptor space.
+    """
+    def __init__(self, obj):
+        self._obj = obj
 
-    def __getattribute__(self, name):
+    def __getitem__(self, key):
         try:
-            return object.__getattribute__(self, 'dict')[name]
-        except KeyError:
-            pass
-        raise AttributeError("attribute not found")
+            # This safely traverses parent classes, properties, and slots
+            return getattr(self._obj, key)
+        except AttributeError:
+            raise KeyError(key)
+
+    def __contains__(self, key):
+        return hasattr(self._obj, key)
+
+    def get(self, key, default=None):
+        return getattr(self._obj, key, default)
 
 
 class JProxy(_jpype._JProxy):
@@ -229,12 +238,12 @@ class JProxy(_jpype._JProxy):
         # it will be passed as self.  Its presence in Python when 
         # returned will be given by convert.
         if dict is not None:
-            return _jpype._JProxy(inst, _JFromDict(dict), actualIntf, convert)
+            return _jpype._JProxy(inst, dict, actualIntf, convert)
 
         # (obsolete) Use a Python object with the same methods as the interface.
         # This form as mostly be replaced by @JImplements form.
         if inst is not None:
-            return _jpype._JProxy.__new__(cls, inst, inst, actualIntf, convert)
+            return _jpype._JProxy.__new__(cls, _JAttrDictAdapter(inst), inst, actualIntf, convert)
 
         raise TypeError("a dict or inst must be specified")
 

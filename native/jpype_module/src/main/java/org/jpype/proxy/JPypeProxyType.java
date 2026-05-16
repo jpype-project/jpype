@@ -2,6 +2,7 @@
 package org.jpype.proxy;
 
 import java.lang.invoke.MethodHandle;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Collections;
@@ -85,7 +86,7 @@ public class JPypeProxyType
       long[] paramTypes = new long[params.length];
       for (int i = 0; i < params.length; i++)
         paramTypes[i] = tm.findClass(params[i]);
-      
+
       MethodHandle defaultHandle = null;
       if (method.isDefault())
         defaultHandle = getDefaultHandle(method.getDeclaringClass(), method, java.lang.invoke.MethodHandles.class);
@@ -105,7 +106,37 @@ public class JPypeProxyType
     JPypeReferenceQueue.getInstance().registerRef(proxy, instance, cleanup);
     return proxy;
   }
-  
+
   native MethodHandle getDefaultHandle(Class<?> cls, Method method, Class<?> mhCls);
 
+  @SuppressWarnings("unused")
+  private static long unwrapPythonException(Throwable throwable)
+  {
+    if (throwable == null)
+      return 0;
+    if (throwable instanceof python.exceptions.PyBaseException)
+      return unwrap(((python.exceptions.PyBaseException) throwable).get());
+    if (throwable instanceof python.lang.PyExc)
+      return unwrap(throwable);
+    return 0;
+  }
+
+  private static long unwrap(Object obj)
+  {
+    if (!Proxy.isProxyClass(obj.getClass()))
+      return 0;
+
+    try
+    {
+      InvocationHandler handler = Proxy.getInvocationHandler(obj);
+      if (handler instanceof JPypeProxyInstance)
+      {
+        JPypeProxyInstance jpypeHandler = (JPypeProxyInstance) handler;
+        return jpypeHandler.instance;
+      }
+    } catch (IllegalArgumentException e)
+    {
+    }
+    return 0;
+  }
 }

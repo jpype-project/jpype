@@ -231,9 +231,6 @@ private:
 	jmethodID m_Context_collectRectangularID{};
 	jmethodID m_Context_assembleID{};
 	jmethodID m_String_ToCharArrayID{};
-	jmethodID m_Context_CreateExceptionID{};
-	jmethodID m_Context_GetExcClassID{};
-	jmethodID m_Context_GetExcValueID{};
 	jmethodID m_Context_ClearInterruptID{};
 	jmethodID m_CompareToID{};
 	jmethodID m_Buffer_IsReadOnlyID{};
@@ -246,10 +243,12 @@ private:
 	jmethodID m_Context_GetFunctionalID{};
 
 	friend class JPProxy;
+	friend class JPypeException;
 	JPClassRef m_ProxyFactoryClass;
 	jmethodID  m_ProxyFactory_getProxyTypeID{};
 	JPClassRef m_ProxyTypeClass;
 	jmethodID  m_ProxyType_newInstanceID{};
+	jmethodID  m_ProxyType_UnwrapPythonExceptionID{};
 
 	jmethodID m_Context_IsPackageID{};
 	jmethodID m_Context_GetPackageID{};
@@ -269,6 +268,7 @@ public:
 
 	// This will gather C++ resources to clean up after shutdown.
 	std::list<JPResource*> m_Resources;
+	PyObject* m_PyExcConvert{};
 } ;
 
 extern "C" JPContext* JPContext_global;

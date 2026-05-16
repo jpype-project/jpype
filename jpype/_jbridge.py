@@ -17,6 +17,7 @@
 # *****************************************************************************
 import _jpype
 from . import _jclass
+from . import _jpackage
 from . import _jproxy
 from . import types as _jtypes
 from . import _jcustomizer
@@ -25,6 +26,7 @@ import itertools
 import inspect
 import functools
 from typing import MutableMapping, Callable, List
+import builtins
 
 __all__: List[str] = []
 
@@ -35,6 +37,7 @@ JOverride = _jclass.JOverride
 JConversion = _jcustomizer.JConversion
 JClass = _jclass.JClass
 JString = _jpype.JString
+JPackage = _jpackage.JPackage
 
 ###################################################################################
 # Set up methods binds from Java to Python
@@ -44,7 +47,6 @@ JString = _jpype.JString
 # FOLLOW THE NAMING SCHEME
 # USE A DIRECT BUILTIN IF IT HAS THE RIGHT LOGIC
 
-as_pyobject = None
 
 # Attribute helpers
 def _attr(name):
@@ -354,9 +356,12 @@ _PyComplexMethods: MutableMapping[str, Callable] = {
 }
 
 
+def _getMessage(x):
+    return str(x.args[0]) if x.args else str(x)
+
 ### Concrete types
 _PyExcMethods: MutableMapping[str, Callable] = {
-    "getMessage": str,
+    "getMessage": _getMessage,
 }
 
 _PySliceMethods: MutableMapping[str, Callable] = {
@@ -802,7 +807,23 @@ _PyRangeMethods: MutableMapping[str, Callable] = {
 _PyCombinableMethods: MutableMapping[str, Callable] = {
     "or": lambda x,y: x|y
 }
- 
+
+def _pyexc_resolve(exc):
+    if isinstance(exc, BaseException):
+        cls = exc.__class__
+    elif isinstance(exc, type) and issubclass(exc, BaseException):
+        cls = exc
+    else:
+        return None
+    if cls in _jpype._exc:
+        return _jpype._exc[cls]
+    for m in cls.__mro__:
+        if issubclass(m, BaseException) and m in _jpype._exc:
+            return _jpype._exc[m]
+    return None
+_jpype._pyexc_resolve = _pyexc_resolve
+
+
 
 def initialize():
     # Install the handler
@@ -854,6 +875,7 @@ def initialize():
     _PySubscript = JClass("python.lang.PySubscript")
     _PyMutableSet = JClass("python.lang.PyMutableSet")
     _PyCombinable = JClass("python.lang.PyCombinable")
+    _RuntimeException = JClass("java.lang.RuntimeException")
 
     #############################################################################
     # Add all of the concrete types to the _concrete interfaces list.
@@ -979,7 +1001,28 @@ def initialize():
     @JConversion(_PySequence, instanceof=object)
     def _jconvert(jcls, obj):
         jinf, meth = _jpype.probe(obj)
+        print(type(obj),":",jcls, jinf, flush=True)
         return jcls@JProxy(jinf, dict=meth, inst=obj, convert=True)
+
+    _jpype._exc = {}
+    jexc = JClass("python.exceptions.PyBaseException")
+    jpkg = JPackage("python.exceptions")
+    for i in dir(jpkg):
+        clz = getattr(jpkg, i)
+        if issubclass(clz, jexc):
+            exc = getattr(builtins,i[2:])
+            _jpype._exc[exc] = clz
+
+    # This is always called with exception from toJava() so it must be an exception type
+    def _pyexc_convert(value):
+        cls = value.__class__
+        if cls in _jpype._exc:
+            return _jpype._exc[cls](_jpype.pyobject(_PyExc, value))
+        for m in cls.__mro__:
+            if m in _jpype._exc:
+                return _jpype._exc[m](_jpype.pyobject(_PyExc, value))
+        return _pyexc_convert(AssertionError(f"JPype Internal Error: Exception type '{type(value).__name__}' bypassed upstream guards but matches no registered Java exception proxy."))
+    _jpype._pyexc_convert = _pyexc_convert
 
     # Create a dispatch which will bind Python concrete types to Java.
     # Most of the time people won't see them, but we can add Java interfaces to 
@@ -1005,12 +1048,10 @@ def initialize():
 
         # See if there is a more advanced wrapper we can apply
         jcls, meth = _jpype.probe(obj)
-        print(type(obj),":",jcls, flush=True)
+        #print(type(obj),":",jcls, flush=True)
         return JProxy(jcls, dict=meth, inst=obj, convert=True)
 
-    global as_pyobject
-    as_pyobject = functools.partial(_pyobject, _PyObject)
-
+    _jpype.ready()
     bridge.setBackend(backend)
 
     @JConversion(_PyObject, instanceof=_jpype._JObject)
