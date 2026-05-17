@@ -168,7 +168,7 @@ public class Interpreter
       throw new RuntimeException("Backend reconfigured");
     LOGGER.log(Level.INFO, "Backend installed");
     backend = entry;
-    stop = backend.object();
+//    stop = backend.object();  DEBUG
   }
 
   /**

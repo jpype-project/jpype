@@ -84,10 +84,9 @@ public class TypeManager
       isStarted = true;
       isShutdown = false;
       
-      EnumSet<Kind> flags = EnumSet.of(Kind.SPECIAL);
 
       // Create the required minimum classes
-      this.java_lang_Object = createOrdinaryClass(Object.class, flags);
+      this.java_lang_Object = createOrdinaryClass(Object.class, EnumSet.of(Kind.SPECIAL));
 
       // Note that order is very important when creating these initial wrapper
       // types. If something inherits from another type then the super class
@@ -103,7 +102,7 @@ public class TypeManager
       };
       for (Class<?> c : cls)
       {
-        createOrdinaryClass(c, flags);
+        createOrdinaryClass(c, EnumSet.of(Kind.SPECIAL, Kind.BASES));
       }
 
       // Create the primitive types

@@ -49,14 +49,24 @@ public final class JPypeProxyType
     this.interfaces = interfaces;
     this.cleanup = cleanup;
 
-    // Resolve ClassLoader
-    ClassLoader tempCl = ClassLoader.getSystemClassLoader();
+    // Pin the loader to the org.jpype module loader as the baseline default
+    ClassLoader tempCl = JPypeProxyType.class.getClassLoader();
+    if (tempCl == null)
+      tempCl = ClassLoader.getSystemClassLoader();
+
+    // Only override if an interface explicitly comes from an independent classloader
     for (Class<?> cls : interfaces)
     {
       ClassLoader icl = cls.getClassLoader();
-      if (icl != null && icl != tempCl)
-        tempCl = icl;
+      System.out.println("INTF " + cls + " " + icl + " "+ cls.getModule());
+//      // Ignore the bootstrap loader (null) and our own loader
+//      if (icl != null && icl != tempCl && icl != ClassLoader.getSystemClassLoader())
+//      {
+//        tempCl = icl;
+//        break; // Stop if we hit an explicit custom application/plugin loader
+//      }
     }
+    System.out.println("CLASSLOADED " + JPypeProxyType.class.getClassLoader() + " " + tempCl);
     this.cl = tempCl;
 
     // Build the instance-specific cache
@@ -141,8 +151,8 @@ public final class JPypeProxyType
     }
     return 0;
   }
-  
-    // exports to JNI
+
+  // exports to JNI
   @SuppressWarnings("unused")
   private static long getInstance(Object obj)
   {
@@ -151,7 +161,7 @@ public final class JPypeProxyType
     InvocationHandler handler = Proxy.getInvocationHandler(obj);
     if (!(handler instanceof JPypeProxyInstance))
       return 0L;
-    JPypeProxyInstance proxy = ((JPypeProxyInstance) handler);    
+    JPypeProxyInstance proxy = ((JPypeProxyInstance) handler);
     return proxy.instance;
   }
 

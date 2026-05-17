@@ -893,6 +893,16 @@ static PyObject* module_probe(PyObject *module, PyObject *obj)
 PyObject* PyJPModule_pyobject(PyTypeObject *target_type, PyObject *object_to_cast)
 {
 	JP_PY_TRY("PyJPModule_pyobject");
+	printf("PYOBJECT %s %s\n", target_type->tp_name, Py_TYPE(object_to_cast)->tp_name);
+
+	JPClass* targetClass = PyJPClass_getJPClass((PyObject*) target_type); 
+	JPJavaFrame frame = JPJavaFrame::outer();
+	if (object_to_cast == Py_None)
+	{
+		jvalue v;
+		v.l = 0;
+		return targetClass->convertToPythonObject(frame, v, true).keep();
+	}
 
 	// Probe using the targeted type class to find matching method definitions
 	JPPyObject probe_result = JPPyObject::accept(PyJPModule_probe(Py_TYPE(object_to_cast)));
@@ -920,13 +930,15 @@ PyObject* PyJPModule_pyobject(PyTypeObject *target_type, PyObject *object_to_cas
 	// Fetch the live JNI local/global reference structure
 	jvalue v = proxy->getProxy();
 
-	JPClass* targetClass = PyJPClass_getJPClass((PyObject*) target_type); 
 	if (targetClass == nullptr)
 		return nullptr;
 
 	// Convert using the exact target class type, not a generic context type!
-	JPJavaFrame frame = JPJavaFrame::outer();
 	JPClass* clz = frame.findClassForObject(v.l);
+	printf("Actual %s  Target %s\n", clz->getName().c_str(), targetClass->getName().c_str());
+	printf("  Order %d %d\n", 
+		frame.IsAssignableFrom(clz->getJavaClass(), targetClass->getJavaClass()),
+		frame.IsAssignableFrom(targetClass->getJavaClass(), clz->getJavaClass()));
 	return targetClass->convertToPythonObject(frame, v, true).keep();
 	JP_PY_CATCH(nullptr);
 }
@@ -941,7 +953,8 @@ static PyObject* module_pyobject(PyObject *module, PyObject *args_in)
 	// Parse the incoming arguments: Type first, Object second
 	if (!PyArg_ParseTuple(args_in, "OO", &target_type, &object_to_cast))
 		return nullptr;
-
+	
+	// FIXME we need to set an exception if we are passing out nullptr
 	return PyJPModule_pyobject((PyTypeObject*)target_type, object_to_cast);
 	JP_PY_CATCH(nullptr);
 }

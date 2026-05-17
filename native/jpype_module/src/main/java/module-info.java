@@ -32,4 +32,6 @@ module org.jpype {
   exports org.jpype.ref;
   exports python.lang;
   exports python.exceptions;
+  
+  opens python.lang;
 }

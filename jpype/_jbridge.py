@@ -179,6 +179,10 @@ def _mapping_retain_all_values(obj, collection):
         del obj[k]
     return bool(to_remove)
 
+def _newList():
+    print("HERE")
+    return []
+
 _PyJPBackendMethods: MutableMapping[str, Callable] = {
     # Core constructors / builtins
     "asDouble": float,
@@ -242,7 +246,7 @@ _PyJPBackendMethods: MutableMapping[str, Callable] = {
     "newFloat": float,
     "newFrozenSet": frozenset,
     "newInt": int,
-    "newList": lambda: [],
+    "newList": _newList,
     "newListFromArray": _new_list_from_array,
     "newListFromIterable": list,
     "newSet": lambda: set(),
@@ -995,14 +999,20 @@ def initialize():
     @JConversion(_PyIterable, attribute="__iter__")
     @JConversion(_PyIter, attribute="__next__")
     # Bind the protocols
-    @JConversion(_PyCallable, instanceof=object)
-    @JConversion(_PyMapping, instanceof=object)
-    @JConversion(_PyNumber, instanceof=object)
-    @JConversion(_PySequence, instanceof=object)
+    #@JConversion(_PyCallable, instanceof=object)
+    #@JConversion(_PyMapping, instanceof=object)
+    #@JConversion(_PyNumber, instanceof=object)
+    #@JConversion(_PySequence, instanceof=object)
     def _jconvert(jcls, obj):
-        jinf, meth = _jpype.probe(obj)
-        print(type(obj),":",jcls, jinf, flush=True)
-        return jcls@JProxy(jinf, dict=meth, inst=obj, convert=True)
+        return _jpype.pyobject(jcls, obj)
+
+    # Next we bind the dispatch to the Java types using the dispatch
+    @JConversion(_PyObject, instanceof=object)
+    def _pyobject(jcls, obj):
+        if isinstance(obj, _jpype._JObject):
+            return _PyJavaObject(obj)
+        return _jpype.pyobject(jcls, obj)
+
 
     _jpype._exc = {}
     jexc = JClass("python.exceptions.PyBaseException")
@@ -1023,29 +1033,6 @@ def initialize():
                 return _jpype._exc[m](_jpype.pyobject(_PyExc, value))
         return _pyexc_convert(AssertionError(f"JPype Internal Error: Exception type '{type(value).__name__}' bypassed upstream guards but matches no registered Java exception proxy."))
     _jpype._pyexc_convert = _pyexc_convert
-
-    # Create a dispatch which will bind Python concrete types to Java.
-    # Most of the time people won't see them, but we can add Java interfaces to 
-    # make those objects become Java like.
-    _conversionDispatch = {
-        bytes: _PyBytes,
-        dict: _PyDict,
-        list: _PyList,
-        memoryview: _PyMemoryView,
-        str:  _PyString,
-        tuple: _PyTuple,
-        type: _PyType,
-        int: _PyInt,
-        float: _PyFloat,
-        zip: _PyZip,
-    }
-
-    # Next we bind the dispatch to the Java types using the dispatch
-    @JConversion(_PyObject, instanceof=object)
-    def _pyobject(jcls, obj):
-        if isinstance(obj, _jpype._JObject):
-            return _PyJavaObject(obj)
-        return _jpype.pyobject(jcls, obj)
 
     _jpype.ready()
     bridge.setBackend(backend)

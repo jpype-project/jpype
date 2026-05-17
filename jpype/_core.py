@@ -380,6 +380,8 @@ def startJVM(
     else:
         extra_jvm_args.append(f'-Djava.class.path={cp_string}')
 
+    print("\n".join(extra_jvm_args))
+
     try:
         import locale
         # Gather a list of locale settings that Java may override (excluding LC_ALL)
