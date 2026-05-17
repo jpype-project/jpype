@@ -1045,11 +1045,7 @@ def initialize():
     def _pyobject(jcls, obj):
         if isinstance(obj, _jpype._JObject):
             return _PyJavaObject(obj)
-
-        # See if there is a more advanced wrapper we can apply
-        jcls, meth = _jpype.probe(obj)
-        #print(type(obj),":",jcls, flush=True)
-        return JProxy(jcls, dict=meth, inst=obj, convert=True)
+        return _jpype.pyobject(jcls, obj)
 
     _jpype.ready()
     bridge.setBackend(backend)

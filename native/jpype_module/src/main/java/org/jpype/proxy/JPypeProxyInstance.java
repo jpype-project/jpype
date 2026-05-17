@@ -20,6 +20,11 @@ public class JPypeProxyInstance implements InvocationHandler
     this.instance = instance;
   }
 
+  public JPypeProxyType getType()
+  {
+    return type;
+  }
+
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable
   {
@@ -61,16 +66,6 @@ public class JPypeProxyInstance implements InvocationHandler
     throw new NoSuchMethodError(method.getName());
   }
 
-  // exports to JNI
-  private static long getInstance(Object obj)
-  {
-    if (obj == null || !Proxy.isProxyClass(obj.getClass()))
-      return 0L;
-    InvocationHandler handler = Proxy.getInvocationHandler(obj);
-    if (handler instanceof JPypeProxyInstance)
-      return ((JPypeProxyInstance) handler).instance;
-    return 0L;
-  }
 
   private static final int INITIAL_SIZE = 16;
 
@@ -79,6 +74,8 @@ public class JPypeProxyInstance implements InvocationHandler
   /**
    * Ensures the current thread's cache is at least 'requiredSize'. Returns the
    * (possibly new) array.
+   *
+   * @return
    */
   public static long[] get(int requiredSize)
   {

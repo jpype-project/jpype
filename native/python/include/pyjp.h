@@ -109,7 +109,6 @@ struct PyJPProxy
 	JPProxy* m_Proxy;
 	PyObject* m_Target;
 	PyObject* m_Dispatch;
-	bool m_Convert;
 } ;
 
 struct JPConversionInfo

@@ -67,15 +67,14 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	}
 
     if (dispatch == Py_None)
-        self->m_Proxy = new JPProxyDirect(self, interfaces);
+        self->m_Proxy = new JPProxyDirect(self, interfaces, convert!=0);
     else if (dict_dispatch != 0)
-        self->m_Proxy = new JPProxyIndirectDict(self, interfaces);
+        self->m_Proxy = new JPProxyIndirectDict(self, interfaces, convert!=0);
     else
-        self->m_Proxy = new JPProxyIndirectAttr(self, interfaces);
+        self->m_Proxy = new JPProxyIndirectAttr(self, interfaces, convert!=0);
 
 	self->m_Target = instance;
 	self->m_Dispatch = dispatch;
-	self->m_Convert = (convert != 0);
 	Py_INCREF(self->m_Target);
 	Py_INCREF(self->m_Dispatch);
 

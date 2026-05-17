@@ -115,7 +115,6 @@ public:
 		self->m_Proxy = new JPProxyFunctional(self, cl);
 		self->m_Target = match.object;
 		self->m_Dispatch = match.object;
-		self->m_Convert = true;
 		Py_INCREF(self->m_Target);
 		Py_INCREF(self->m_Dispatch);
 		jvalue v = self->m_Proxy->getProxy();

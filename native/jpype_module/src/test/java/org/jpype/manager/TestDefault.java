@@ -62,8 +62,5 @@ public class TestDefault
     System.out.println(Object.class.getSimpleName());
     System.out.println(Object.class.getName());
     System.out.println(Object.class.getCanonicalName());
-
-    EnumSet<ModifierCode> set = EnumSet.of(ModifierCode.PUBLIC, ModifierCode.CTOR);
-    System.out.println(set);
   }
 }

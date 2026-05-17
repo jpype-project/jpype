@@ -60,7 +60,7 @@ public class TypeFactoryHarness implements TypeFactory, TypeAudit
 //<editor-fold desc="class" defaultstate="collapsed">
   @Override
   public long defineArrayClass(
-          Class cls,
+          Class<?> cls,
           String name,
           long superClass,
           long componentPtr,

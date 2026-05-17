@@ -249,6 +249,7 @@ private:
 	JPClassRef m_ProxyTypeClass;
 	jmethodID  m_ProxyType_newInstanceID{};
 	jmethodID  m_ProxyType_UnwrapPythonExceptionID{};
+	jmethodID  m_ProxyType_GetInstanceID{};
 
 	jmethodID m_Context_IsPackageID{};
 	jmethodID m_Context_GetPackageID{};

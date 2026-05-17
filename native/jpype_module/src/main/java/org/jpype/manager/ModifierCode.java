@@ -39,6 +39,7 @@ public enum ModifierCode
   VARARGS(0x0080),
   ENUM(0x4000),
   ABSTRACT(0x0400),
+  
   // Special flags for classes required for JPype
   SPECIAL(0x00010000),
   THROWABLE(0x00020000),
@@ -50,6 +51,7 @@ public enum ModifierCode
   COMPARABLE(0x00800000),
   BUFFER(0x01000000),
   PYTHON(0x02000000),
+  CONVERT(0x04000000),
   CTOR(0x10000000),
   BEAN_ACCESSOR(0x20000000),
   BEAN_MUTATOR(0x40000000);

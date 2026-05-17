@@ -12,11 +12,12 @@ import org.jpype.JPypeContext;
 import org.jpype.manager.TypeManager;
 import org.jpype.ref.JPypeReferenceQueue;
 
-public class JPypeProxyType
+public final class JPypeProxyType
 {
 
   // Static cache for standard Object methods to avoid re-resolving them
   private static final Map<Method, JPypeMethodDescriptor> OBJECT_METHOD_CACHE = new HashMap<>();
+  private final boolean convert;
   private final Class<?>[] interfaces;
   private final ClassLoader cl;
   final long cleanup;
@@ -25,6 +26,8 @@ public class JPypeProxyType
   /**
    * Initializes the static cache for Object methods. This happens once when the
    * class is loaded.
+   *
+   * @param tm
    */
   public static void init(TypeManager tm)
   {
@@ -42,10 +45,11 @@ public class JPypeProxyType
     }
   }
 
-  public JPypeProxyType(long cleanup, Class<?>[] interfaces)
+  public JPypeProxyType(long cleanup, Class<?>[] interfaces, boolean convert)
   {
     this.interfaces = interfaces;
     this.cleanup = cleanup;
+    this.convert = convert;
 
     // Resolve ClassLoader
     ClassLoader tempCl = ClassLoader.getSystemClassLoader();
@@ -72,6 +76,11 @@ public class JPypeProxyType
     }
 
     this.methodCache = Collections.unmodifiableMap(tempMap);
+  }
+
+  public boolean getConvert()
+  {
+    return this.convert;
   }
 
   private void populateCache(TypeManager tm, Method[] methods, Map<Method, JPypeMethodDescriptor> map)
@@ -115,13 +124,13 @@ public class JPypeProxyType
     if (throwable == null)
       return 0;
     if (throwable instanceof python.exceptions.PyBaseException)
-      return unwrap(((python.exceptions.PyBaseException) throwable).get());
+      return unwrapObject(((python.exceptions.PyBaseException) throwable).get());
     if (throwable instanceof python.lang.PyExc)
-      return unwrap(throwable);
+      return unwrapObject(throwable);
     return 0;
   }
 
-  private static long unwrap(Object obj)
+  private static long unwrapObject(Object obj)
   {
     if (!Proxy.isProxyClass(obj.getClass()))
       return 0;
@@ -139,4 +148,17 @@ public class JPypeProxyType
     }
     return 0;
   }
+  
+    // exports to JNI
+  @SuppressWarnings("unused")
+  private static long getInstance(Object obj)
+  {
+    if (obj == null || !Proxy.isProxyClass(obj.getClass()))
+      return 0L;
+    InvocationHandler handler = Proxy.getInvocationHandler(obj);
+    if (handler instanceof JPypeProxyInstance)
+      return ((JPypeProxyInstance) handler).instance;
+    return 0L;
+  }
+
 }

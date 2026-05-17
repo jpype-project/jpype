@@ -19,6 +19,7 @@
 #include "jp_field.h"
 #include "jp_methoddispatch.h"
 #include "jp_method.h"
+#include "jp_proxy.h"
 
 JPClass::JPClass(
 		const string& name,
@@ -322,6 +323,7 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 {
 	JP_TRACE_IN("JPClass::convertToPythonObject");
 	JPClass *cls = this;
+	JPContext* context = JPContext_global;
 	if (!cast)
 	{
 		//  Returning None likely incorrect from java prospective.
@@ -347,6 +349,20 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 		cls = frame.findClassForObject(value.l);
 		if (cls != this)
 			return cls->convertToPythonObject(frame, value, true);
+	}
+
+	// Special path for proxy that need automatic unwrapping
+	if (isConvert())
+	{
+		jlong hostPtr = frame.CallStaticLongMethodA(context->m_ProxyTypeClass.get(), context->m_ProxyType_GetInstanceID, &value);
+		JPProxy *proxy = (JPProxy*) hostPtr;
+		PyJPProxy *pproxy = proxy->m_Instance;
+		if (pproxy->m_Target != Py_None)
+		{
+			return JPPyObject::use(pproxy->m_Target);
+		}
+		else
+			return JPPyObject::use((PyObject*) pproxy);
 	}
 
 	JPPyObject obj;

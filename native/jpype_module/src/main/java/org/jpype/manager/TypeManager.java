@@ -22,11 +22,13 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.nio.Buffer;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -55,6 +57,13 @@ public class TypeManager
   // during shutdown
   final private Destroyer destroyer = new Destroyer();
 
+  public enum Kind
+  {
+    SPECIAL,
+    BASES,
+    CONVERT;
+  }
+
   public TypeManager()
   {
   }
@@ -65,6 +74,7 @@ public class TypeManager
   }
 
 //<editor-fold desc="interface">
+  @SuppressWarnings("UseSpecificCatch")
   public synchronized void init()
   {
     try
@@ -73,15 +83,17 @@ public class TypeManager
         throw new RuntimeException("Cannot be restarted");
       isStarted = true;
       isShutdown = false;
+      
+      EnumSet<Kind> flags = EnumSet.of(Kind.SPECIAL);
 
       // Create the required minimum classes
-      this.java_lang_Object = createClass(Object.class, true);
+      this.java_lang_Object = createOrdinaryClass(Object.class, flags);
 
       // Note that order is very important when creating these initial wrapper
       // types. If something inherits from another type then the super class
       // will be created without the special flag and the type system won't
       // be able to handle the duplicate type properly.
-      Class[] cls =
+      Class<?>[] cls =
       {
         Class.class, Number.class, CharSequence.class, Throwable.class,
         Void.class, Boolean.class, Byte.class, Character.class,
@@ -89,9 +101,9 @@ public class TypeManager
         String.class, JPypeProxyInstance.class,
         Method.class, Field.class, PyObject.class
       };
-      for (Class c : cls)
+      for (Class<?> c : cls)
       {
-        createClass(c, true);
+        createOrdinaryClass(c, flags);
       }
 
       // Create the primitive types
@@ -114,6 +126,14 @@ public class TypeManager
     }
   }
 
+  private synchronized long checkCache(Class<?> cls)
+  {
+    ClassDescriptor ptr = this.classMap.get(cls);
+    if (ptr != null)
+      return ptr.classPtr;
+    return 0;
+  }
+
   /**
    * Find a wrapper for a class.
    * <p>
@@ -122,38 +142,53 @@ public class TypeManager
    * @param cls
    * @return the JPClass, or 0 it one cannot be created.
    */
-  public synchronized long findClass(Class<?> cls)
+  public synchronized long createClass(Class<?> cls, EnumSet<Kind> flags)
   {
     if (cls == null)
       return 0;
     if (this.isShutdown)
       return 0;
 
-    long out;
+    // We must double check in case of race conditions here
+    long out = this.checkCache(cls);
+    if (out != 0)
+      return out;
+
     if (cls.isSynthetic() && cls.getSimpleName().contains("$Lambda$"))
     {
       // If is it lambda, we need a special wrapper
       // we don't want to create a class each time in that case.
       // Thus use the parent interface for this class
-      out = getClass(cls.getInterfaces()[0]).classPtr;
+      out = createOrdinaryClass(cls.getInterfaces()[0], flags).classPtr;
     } else if (cls.isAnonymousClass())
     {
       // This one is more of a burden.  It depends what whether is was
       // anonymous extends or implements.
       if (cls.getInterfaces().length == 1)
-        out = getClass(cls.getInterfaces()[0]).classPtr;
+        out = createOrdinaryClass(cls.getInterfaces()[0], flags).classPtr;
       else
       {
-        ClassDescriptor parent = getClass(cls.getSuperclass());
+        ClassDescriptor parent = createOrdinaryClass(cls.getSuperclass(), flags);
         out = createAnonymous(parent);
       }
+    } else if (cls.isArray())
+    {
+      out = this.createArrayClass(cls).classPtr;
     } else
     {
       // Just a regular class
-      out = getClass(cls).classPtr;
+      out = createOrdinaryClass(cls, flags).classPtr;
     }
 
     return out;
+  }
+
+  public long findClass(Class<?> cls)
+  {
+    long found = checkCache(cls);
+    if (found != 0)
+      return found;
+    return this.createClass(cls, EnumSet.of(Kind.BASES));
   }
 
   /**
@@ -167,7 +202,11 @@ public class TypeManager
     Class<?> cls = lookupByName(name);
     if (cls == null)
       return 0;
-    return this.findClass(cls);
+    long found = checkCache(cls);
+    if (found != 0)
+      return found;
+
+    return this.createClass(cls, EnumSet.of(Kind.BASES));
   }
 
   public Class<?> lookupByName(String name)
@@ -239,7 +278,7 @@ public class TypeManager
       {
         sb.append(".");
         sb.append(parts[i]);
-        Class<?> cls = Class.forName(sb.toString());
+//        Class<?> cls = Class.forName(sb.toString());
         for (int j = i + 1; j < parts.length; ++j)
         {
           sb.append("$");
@@ -261,7 +300,7 @@ public class TypeManager
     long returnType = 0;
     if (method instanceof Method)
     {
-      returnType = getClass(((Method) method).getReturnType()).classPtr;
+      returnType = findClass(((Method) method).getReturnType());
     }
 
     Class<?>[] params = method.getParameterTypes();
@@ -270,7 +309,7 @@ public class TypeManager
     if (!Modifier.isStatic(method.getModifiers()) && !(method instanceof Constructor))
     {
       paramPtrs = new long[params.length + 1];
-      paramPtrs[0] = getClass(method.getDeclaringClass()).classPtr;
+      paramPtrs[0] = findClass(method.getDeclaringClass());
       i++;
     } else
     {
@@ -280,7 +319,7 @@ public class TypeManager
     // Copy in the parameters
     for (Class<?> p : params)
     {
-      paramPtrs[i] = getClass(p).classPtr;
+      paramPtrs[i] = findClass(p);
       i++;
     }
 
@@ -321,13 +360,28 @@ public class TypeManager
       return 0;
 
     Class<?> cls = object.getClass();
- //   if (Proxy.isProxyClass(cls)
- //           && (Proxy.getInvocationHandler(object) instanceof JPypeProxyInstance))
- //   {
-//      return this.findClass(JPypeProxyInstance.class);
-//    }
+    long found = checkCache(cls);
+    if (found != 0)
+      return found;
+    
 
-    return this.findClass(cls);
+    boolean convert = false;
+    if (Proxy.isProxyClass(cls))
+    {
+      InvocationHandler ih = Proxy.getInvocationHandler(object);
+      if (ih instanceof JPypeProxyInstance)
+      {
+        JPypeProxyInstance pi = (JPypeProxyInstance) ih;
+        convert = pi.getType().getConvert();
+      }
+    }
+    
+    final EnumSet<Kind> flags;
+    if (convert)
+      flags = EnumSet.of(Kind.BASES, Kind.CONVERT);
+    else
+      flags = EnumSet.of(Kind.BASES);
+    return this.createClass(cls, flags);
   }
 
   /**
@@ -371,38 +425,7 @@ public class TypeManager
 //</editor-fold>
 //<editor-fold desc="classes" defaultstate="defaultstate">
 
-  private ClassDescriptor getClass(Class cls)
-  {
-    if (cls == null)
-      return null;
-
-    // Look up the current description
-    ClassDescriptor ptr = this.classMap.get(cls);
-    if (ptr != null)
-      return ptr;
-
-    // If we can't find it create a new class
-    return createClass(cls, false);
-  }
-
-  /**
-   * Allocate a new wrapper for a java class.
-   * <p>
-   * Boxed types require special handlers, as does java.lang.String
-   *
-   * @param cls is the Java class to wrap.
-   * @param special marks class as requiring a specialized C++ wrapper.
-   * @return a C++ wrapper handle for a jp_classtype
-   */
-  private ClassDescriptor createClass(Class<?> cls, boolean special)
-  {
-    if (cls.isArray())
-      return this.createArrayClass(cls);
-
-    return createOrdinaryClass(cls, special, true);
-  }
-
-  private ClassDescriptor createOrdinaryClass(Class<?> cls, boolean special, boolean bases)
+  private ClassDescriptor createOrdinaryClass(Class<?> cls, EnumSet<Kind> kind)
   {
     // Verify the class will be loadable prior to creating the class.
     // If we fail to do this then the class may end up crashing later when the
@@ -414,25 +437,24 @@ public class TypeManager
     // Make sure all base classes are loaded
     Class<?> superClass = cls.getSuperclass();
     Class<?>[] interfaces = cls.getInterfaces();
-    ClassDescriptor[] parents = new ClassDescriptor[interfaces.length + 1];
+//    ClassDescriptor[] parents = new ClassDescriptor[interfaces.length + 1];
     long[] interfacesPtr = null;
     long superClassPtr = 0;
     superClassPtr = 0;
     if (superClass != null)
     {
-      parents[0] = this.getClass(superClass);
-      superClassPtr = parents[0].classPtr;
+//      parents[0] = this.getClassDescriptor(superClass);
+      superClassPtr = findClass(superClass);
     }
 
-    if (bases)
+    if (kind.contains(Kind.BASES))
     {
       interfacesPtr = new long[interfaces.length];
 
       // Make sure all interfaces are loaded.
       for (int i = 0; i < interfaces.length; ++i)
       {
-        parents[i + 1] = this.getClass(interfaces[i]);
-        interfacesPtr[i] = parents[i + 1].classPtr;
+        interfacesPtr[i] = findClass(interfaces[i]);
       }
     } else
     {
@@ -441,7 +463,7 @@ public class TypeManager
 
     // Set up the modifiers
     int modifiers = cls.getModifiers() & 0xffff;
-    if (special)
+    if (kind.contains(Kind.SPECIAL))
       modifiers |= ModifierCode.SPECIAL.value;
     if (Throwable.class.isAssignableFrom(cls))
       modifiers |= ModifierCode.THROWABLE.value;
@@ -453,6 +475,8 @@ public class TypeManager
       modifiers |= ModifierCode.BUFFER.value | ModifierCode.SPECIAL.value;
     if (PyObject.class.isAssignableFrom(cls))
       modifiers |= ModifierCode.PYTHON.value;
+    if (kind.contains(Kind.CONVERT))
+      modifiers |= ModifierCode.CONVERT.value;
 
     // Check if is Functional class
     Method method = JPypeUtilities.getFunctionalInterfaceMethod(cls);
@@ -493,7 +517,7 @@ public class TypeManager
   {
     // Array classes are simple, we just need the component type
     Class componentType = cls.getComponentType();
-    long componentTypePtr = this.getClass(componentType).classPtr;
+    long componentTypePtr = findClass(componentType);
 
     int modifiers = cls.getModifiers() & 0xffff;
     String name = cls.getName();
@@ -524,7 +548,7 @@ public class TypeManager
     long classPtr = typeFactory.definePrimitive(
             name,
             cls,
-            this.getClass(boxed).classPtr,
+            findClass(boxed),
             cls.getModifiers() & 0xffff);
     this.classMap.put(cls, new ClassDescriptor(cls, classPtr, null));
   }
@@ -581,7 +605,7 @@ public class TypeManager
               desc.classPtr,
               field.getName(),
               field,
-              getClass(field.getType()).classPtr,
+              findClass(field.getType()),
               field.getModifiers() & 0xffff);
     }
     desc.fields = fieldPtr;

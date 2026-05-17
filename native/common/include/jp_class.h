@@ -75,6 +75,10 @@ public:
 		return JPModifier::isPython(m_Modifiers);
 	}
 
+	bool isConvert() const
+	{
+		return JPModifier::isConvert(m_Modifiers);
+	}
 
 	bool isThrowable() const
 	{
