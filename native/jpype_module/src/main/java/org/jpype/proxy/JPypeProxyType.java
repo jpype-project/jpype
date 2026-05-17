@@ -155,10 +155,16 @@ public final class JPypeProxyType
   {
     if (obj == null || !Proxy.isProxyClass(obj.getClass()))
       return 0L;
+    System.out.println("GET INSTANCE "+ obj.getClass());
     InvocationHandler handler = Proxy.getInvocationHandler(obj);
-    if (handler instanceof JPypeProxyInstance)
-      return ((JPypeProxyInstance) handler).instance;
-    return 0L;
+    if (!(handler instanceof JPypeProxyInstance))
+      return 0L;
+    
+    JPypeProxyInstance proxy = ((JPypeProxyInstance) handler);
+    System.out.println(" convert="+ proxy.getType().convert);
+    System.out.println(" instance="+ proxy.instance);
+    
+    return proxy.instance;
   }
 
 }

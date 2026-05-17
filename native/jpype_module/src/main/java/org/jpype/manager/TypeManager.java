@@ -61,7 +61,7 @@ public class TypeManager
   {
     SPECIAL,
     BASES,
-    CONVERT;
+    PROXY;
   }
 
   public TypeManager()
@@ -362,25 +362,21 @@ public class TypeManager
     Class<?> cls = object.getClass();
     long found = checkCache(cls);
     if (found != 0)
-      return found;
-    
+      return found; 
 
-    boolean convert = false;
+    boolean proxy = false;
     if (Proxy.isProxyClass(cls))
     {
       InvocationHandler ih = Proxy.getInvocationHandler(object);
-      if (ih instanceof JPypeProxyInstance)
-      {
-        JPypeProxyInstance pi = (JPypeProxyInstance) ih;
-        convert = pi.getType().getConvert();
-      }
+      proxy = (ih instanceof JPypeProxyInstance);
     }
     
     final EnumSet<Kind> flags;
-    if (convert)
-      flags = EnumSet.of(Kind.BASES, Kind.CONVERT);
+    if (proxy)
+      flags = EnumSet.of(Kind.BASES, Kind.PROXY);
     else
       flags = EnumSet.of(Kind.BASES);
+    System.out.println("FIND CLASS FOR "+cls+ " " + flags);
     return this.createClass(cls, flags);
   }
 
@@ -475,8 +471,8 @@ public class TypeManager
       modifiers |= ModifierCode.BUFFER.value | ModifierCode.SPECIAL.value;
     if (PyObject.class.isAssignableFrom(cls))
       modifiers |= ModifierCode.PYTHON.value;
-    if (kind.contains(Kind.CONVERT))
-      modifiers |= ModifierCode.CONVERT.value;
+    if (kind.contains(Kind.PROXY))
+      modifiers |= ModifierCode.PROXY.value;
 
     // Check if is Functional class
     Method method = JPypeUtilities.getFunctionalInterfaceMethod(cls);

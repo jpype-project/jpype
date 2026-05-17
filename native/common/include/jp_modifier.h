@@ -171,7 +171,7 @@ inline bool isPython(jlong modifier)
 	return (modifier & 0x02000000) == 0x02000000;
 }
 
-inline bool isConvert(jlong modifier)
+inline bool isProxy(jlong modifier)
 {
 	return (modifier & 0x04000000) == 0x04000000;
 }

@@ -352,15 +352,13 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 	}
 
 	// Special path for proxy that need automatic unwrapping
-	if (isConvert())
+	if (isProxy())
 	{
 		jlong hostPtr = frame.CallStaticLongMethodA(context->m_ProxyTypeClass.get(), context->m_ProxyType_GetInstanceID, &value);
 		JPProxy *proxy = (JPProxy*) hostPtr;
 		PyJPProxy *pproxy = proxy->m_Instance;
-		if (pproxy->m_Target != Py_None)
-		{
+		if (pproxy->m_Convert && pproxy->m_Target != Py_None)
 			return JPPyObject::use(pproxy->m_Target);
-		}
 		else
 			return JPPyObject::use((PyObject*) pproxy);
 	}

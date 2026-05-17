@@ -3,7 +3,6 @@ package org.jpype.proxy;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import org.jpype.JPypeContext;
 import org.jpype.manager.TypeManager;
 
@@ -53,7 +52,7 @@ public class JPypeProxyInstance implements InvocationHandler
     // Resolve method parameter and return types
     // The type resolution logic remains, but uses the shared context
     Object result = hostInvoke(md.name, instance, md.returnType, scratch, args, sz);
-
+ 
     if (result != scratch)
       return result;
 

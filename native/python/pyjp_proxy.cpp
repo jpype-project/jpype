@@ -127,6 +127,7 @@ static PyObject *PyJPProxy_inst(PyJPProxy *self, void *context)
 
 static PyObject *PyJPProxy_equals(PyJPProxy *self, PyObject *other)
 {
+	printf("EQUALS %s %s %p %p\n", Py_TYPE(self)->tp_name, Py_TYPE(self)->tp_name, self, other);
 	return PyObject_RichCompare((PyObject*) self, other, Py_EQ);
 }
 

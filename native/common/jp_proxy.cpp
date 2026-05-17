@@ -222,6 +222,7 @@ JPProxy::JPProxy(PyJPProxy* inst, JPClassList& intf, bool convert)
 {
 	JP_TRACE_IN("JPProxy::JPProxy");
 	JPJavaFrame frame = JPJavaFrame::outer();
+	inst->m_Convert = convert;
 
 	// 1. Pack interfaces into a Class[] array
 	jobjectArray ar = frame.NewObjectArray((int) intf.size(),

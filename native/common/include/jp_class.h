@@ -75,9 +75,9 @@ public:
 		return JPModifier::isPython(m_Modifiers);
 	}
 
-	bool isConvert() const
+	bool isProxy() const
 	{
-		return JPModifier::isConvert(m_Modifiers);
+		return JPModifier::isProxy(m_Modifiers);
 	}
 
 	bool isThrowable() const
