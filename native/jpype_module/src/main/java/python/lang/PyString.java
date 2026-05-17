@@ -38,7 +38,7 @@ public interface PyString extends PyObject, CharSequence
    * @param sequence is the input sequence to convert into a PyString.
    * @return a PyString instance representing the given sequence.
    */
-  public static PyString from(CharSequence sequence)
+  public static PyString of(CharSequence sequence)
   {
     return PyBuiltIn.str(sequence);
   }

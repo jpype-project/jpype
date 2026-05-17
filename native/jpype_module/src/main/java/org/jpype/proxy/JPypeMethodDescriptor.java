@@ -29,13 +29,15 @@ public class JPypeMethodDescriptor
   final long returnType;
   final long[] parameterTypes;
   final MethodHandle defaultHandler;
+  final boolean bypass;
 
-  JPypeMethodDescriptor(String name, long returnType, long[] parameterTypes, MethodHandle defaultHandler)
+  JPypeMethodDescriptor(String name, long returnType, long[] parameterTypes, MethodHandle defaultHandler, boolean bypass)
   {
     this.name = JPypeStringManager.get(name);
     this.returnType = returnType;
     this.parameterTypes = parameterTypes;
     this.defaultHandler = defaultHandler;
+    this.bypass = bypass;
   }
 
 }

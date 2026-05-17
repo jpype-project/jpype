@@ -1,4 +1,3 @@
-// --- file: python/lang/PySized.java ---
 /*
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy of
@@ -14,26 +13,20 @@
  * 
  *  See NOTICE file for details.
  */
-package python.lang;
+package org.jpype.annotation;
 
-import org.jpype.annotation.Bypass;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
+// 1. Set the retention policy to RUNTIME
 /**
- * Protocol for Python objects are sized.
+ *
+ * @author nelson85
  */
-public interface PySized extends PyObject
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Bypass
 {
-
-  @Bypass
-  default int size()
-  {
-    return PyBuiltIn.len(this);
-  }
-
-  @Bypass
-  default boolean isEmpty()
-  {
-    return size() == 0;
-  }
-
 }

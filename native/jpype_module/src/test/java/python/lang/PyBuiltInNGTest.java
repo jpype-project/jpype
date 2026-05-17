@@ -172,7 +172,7 @@ public class PyBuiltInNGTest extends PyTestHarness
             + "obj_existing = BuiltinAttrTest2()\n"
             + "obj_existing.name = 'alice'\n");
     PyObject obj = (PyObject) context.eval("obj_existing");
-    PyObject fallback = PyString.from("fallback");
+    PyObject fallback = PyString.of("fallback");
 
     PyObject result = PyBuiltIn.getattrDefault(obj, "name", fallback);
 
@@ -188,7 +188,7 @@ public class PyBuiltInNGTest extends PyTestHarness
             + "    pass\n"
             + "obj_default = BuiltinAttrTest()\n");
     PyObject obj = (PyObject) context.eval("obj_default");
-    PyObject fallback = PyString.from("fallback");
+    PyObject fallback = PyString.of("fallback");
     PyObject result = PyBuiltIn.getattrDefault(obj, "missing", fallback);
 
     System.out.println(result.equals(fallback));
@@ -308,7 +308,7 @@ public class PyBuiltInNGTest extends PyTestHarness
   {
     PyList list = PyBuiltIn.list(Arrays.asList("a"));
     PyIter<PyObject> iter = PyBuiltIn.iter(list);
-    PyObject stop = PyString.from("stop");
+    PyObject stop = PyString.of("stop");
 
     assertEquals(PyBuiltIn.next(iter, stop).toString(), "a");
     assertEquals(PyBuiltIn.next(iter, stop), stop);

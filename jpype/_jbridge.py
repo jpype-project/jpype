@@ -179,10 +179,6 @@ def _mapping_retain_all_values(obj, collection):
         del obj[k]
     return bool(to_remove)
 
-def _newList():
-    print("HERE")
-    return []
-
 _PyJPBackendMethods: MutableMapping[str, Callable] = {
     # Core constructors / builtins
     "asDouble": float,
@@ -246,7 +242,7 @@ _PyJPBackendMethods: MutableMapping[str, Callable] = {
     "newFloat": float,
     "newFrozenSet": frozenset,
     "newInt": int,
-    "newList": _newList,
+    "newList": lambda: [],
     "newListFromArray": _new_list_from_array,
     "newListFromIterable": list,
     "newSet": lambda: set(),
@@ -998,6 +994,7 @@ def initialize():
     # Bind dunder
     @JConversion(_PyIterable, attribute="__iter__")
     @JConversion(_PyIter, attribute="__next__")
+    @JConversion(_PyCallable, attribute="__call__")
     # Bind the protocols
     #@JConversion(_PyCallable, instanceof=object)
     #@JConversion(_PyMapping, instanceof=object)

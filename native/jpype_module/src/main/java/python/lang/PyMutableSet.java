@@ -16,20 +16,24 @@
  */
 package python.lang;
 
+import org.jpype.annotation.Bypass;
 import static python.lang.PyBuiltIn.backend;
 
 /**
  *
+ * @param <T>
  */
 public interface PyMutableSet<T extends PyObject> extends PyAbstractSet<T>
 {
 
+  @Bypass
   @Override
   default boolean contains(Object obj)
   {
     return backend().contains(this, obj);
   }
 
+    @Bypass
   @Override
   default int size()
   {

@@ -16,6 +16,8 @@
  */
 package python.lang;
 
+import org.jpype.annotation.Bypass;
+
 /**
  * PyObject is a representation of a generic object in Python.
  *
@@ -41,6 +43,7 @@ public interface PyObject
    *
    * @return an attribute protocol.
    */
+    @Bypass
   default PyAttributes getAttributes()
   {
     return new PyAttributes(this);

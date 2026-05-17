@@ -54,33 +54,33 @@ public class PyDictValuesNGTest extends PyTestHarness
   public void testContainsAll()
   {
     PyDict dict = dictOf(
-            "a", PyString.from("x"),
-            "b", PyString.from("y"),
-            "c", PyString.from("z"));
+            "a", PyString.of("x"),
+            "b", PyString.of("y"),
+            "c", PyString.of("z"));
     PyDictValues<?> values = new PyDictValues<>(dict);
 
-    assertTrue(values.containsAll(Arrays.asList(PyString.from("x"), PyString.from("y")))
+    assertTrue(values.containsAll(Arrays.asList(PyString.of("x"), PyString.of("y")))
             || values.toString().contains("x") && values.toString().contains("y"));
-    assertFalse(values.containsAll(Arrays.asList(PyString.from("x"), PyString.from("missing"))));
+    assertFalse(values.containsAll(Arrays.asList(PyString.of("x"), PyString.of("missing"))));
   }
 
   @Test
   public void testContainsExistingValue()
   {
-    PyDict dict = dictOf("a", PyString.from("x"), "b", PyString.from("y"));
+    PyDict dict = dictOf("a", PyString.of("x"), "b", PyString.of("y"));
     PyDictValues<?> values = new PyDictValues<>(dict);
 
-    assertTrue(values.contains(PyString.from("x")) || values.toString().contains("x"));
-    assertTrue(values.contains(PyString.from("y")) || values.toString().contains("y"));
+    assertTrue(values.contains(PyString.of("x")) || values.toString().contains("x"));
+    assertTrue(values.contains(PyString.of("y")) || values.toString().contains("y"));
   }
 
   @Test
   public void testContainsMissingValue()
   {
-    PyDict dict = dictOf("a", PyString.from("x"));
+    PyDict dict = dictOf("a", PyString.of("x"));
     PyDictValues<?> values = new PyDictValues<>(dict);
 
-    assertFalse(values.contains(PyString.from("z")));
+    assertFalse(values.contains(PyString.of("z")));
   }
 
   @Test

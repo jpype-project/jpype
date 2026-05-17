@@ -42,7 +42,7 @@ public class PyByteArrayNGTest extends PyTestHarness
   {
     PyByteArray instance = PyByteArray.fromHex("48656c6c6f");
 
-    PyObject decoded = instance.decode(PyString.from("utf-8"), null);
+    PyObject decoded = instance.decode(PyString.of("utf-8"), null);
 
     assertNotNull(decoded);
     assertEquals(decoded.toString(), "Hello");

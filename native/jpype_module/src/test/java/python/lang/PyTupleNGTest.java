@@ -116,13 +116,13 @@ public class PyTupleNGTest
   public void testAddThrowsException()
   {
     PyTuple tuple = PyTuple.of("a", "b");
-    tuple.add(PyString.from("a"));
+    tuple.add(PyString.of("a"));
   }
 
   @Test(expectedExceptions = UnsupportedOperationException.class)
   public void testAddThrowsException2()
   {
     PyTuple tuple = PyTuple.of("a", "b");
-    tuple.add(1, PyString.from("a"));
+    tuple.add(1, PyString.of("a"));
   }
 }

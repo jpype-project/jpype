@@ -24,6 +24,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.jpype.annotation.Bypass;
 import static python.lang.PyBuiltIn.backend;
 
 /**
@@ -76,17 +77,6 @@ public interface PyTuple extends PySequence<PyObject>
 {
 
   /**
-   * Creates a new {@code PyTuple} from a variable number of elements.
-   *
-   * @param values the elements to include in the tuple
-   * @return a new {@code PyTuple} containing the specified elements
-   */
-  public static PyTuple of(Object... values)
-  {
-    return PyBuiltIn.tuple(values);
-  }
-
-  /**
    * Creates a new {@code PyTuple} from an {@link Iterable}.
    *
    * @param values an iterator providing the elements to include in the tuple
@@ -108,11 +98,23 @@ public interface PyTuple extends PySequence<PyObject>
     return (PyType) PyBuiltIn.eval("tuple", null, null);
   }
 
+  /**
+   * Creates a new {@code PyTuple} from a variable number of elements.
+   *
+   * @param values the elements to include in the tuple
+   * @return a new {@code PyTuple} containing the specified elements
+   */
+  public static PyTuple of(Object... values)
+  {
+    return PyBuiltIn.tuple(values);
+  }
+
   // --- Mutating methods (throw UnsupportedOperationException) ---
   /**
    * Throws {@link UnsupportedOperationException} because {@code PyTuple} is
    * immutable.
    */
+  @Bypass
   @Override
   default boolean add(PyObject e)
   {
@@ -123,6 +125,7 @@ public interface PyTuple extends PySequence<PyObject>
    * Throws {@link UnsupportedOperationException} because {@code PyTuple} is
    * immutable.
    */
+  @Bypass
   @Override
   default void add(int index, PyObject element)
   {
@@ -133,6 +136,7 @@ public interface PyTuple extends PySequence<PyObject>
    * Throws {@link UnsupportedOperationException} because {@code PyTuple} is
    * immutable.
    */
+  @Bypass
   @Override
   default boolean addAll(Collection<? extends PyObject> c)
   {
@@ -143,6 +147,7 @@ public interface PyTuple extends PySequence<PyObject>
    * Throws {@link UnsupportedOperationException} because {@code PyTuple} is
    * immutable.
    */
+  @Bypass
   @Override
   default boolean addAll(int index, Collection<? extends PyObject> c)
   {
@@ -153,11 +158,13 @@ public interface PyTuple extends PySequence<PyObject>
    * Throws {@link UnsupportedOperationException} because {@code PyTuple} is
    * immutable.
    */
+  @Bypass
   @Override
   default void clear()
   {
     throw new UnsupportedOperationException("PyTuple is immutable.");
   }
+
 
   // --- Non-mutating methods ---
   /**
@@ -167,6 +174,7 @@ public interface PyTuple extends PySequence<PyObject>
    * @return {@code true} if the tuple contains the object, {@code false}
    * otherwise
    */
+  @Bypass
   @Override
   default boolean contains(Object obj)
   {
@@ -180,6 +188,7 @@ public interface PyTuple extends PySequence<PyObject>
    * @return {@code true} if the tuple contains all elements in the collection,
    * {@code false} otherwise
    */
+  @Bypass
   @Override
   default boolean containsAll(Collection<?> c)
   {
@@ -214,6 +223,7 @@ public interface PyTuple extends PySequence<PyObject>
    * @return {@code true} if the tuple contains no elements, {@code false}
    * otherwise
    */
+  @Bypass
   @Override
   default boolean isEmpty()
   {
@@ -225,6 +235,7 @@ public interface PyTuple extends PySequence<PyObject>
    *
    * @return an iterator over the elements in the tuple
    */
+  @Bypass
   @Override
   default Iterator<PyObject> iterator()
   {
@@ -236,6 +247,7 @@ public interface PyTuple extends PySequence<PyObject>
    *
    * @return a list iterator starting at the beginning of the tuple
    */
+  @Bypass
   @Override
   default ListIterator<PyObject> listIterator()
   {
@@ -250,6 +262,7 @@ public interface PyTuple extends PySequence<PyObject>
    * @return a list iterator starting at the specified index
    * @throws IndexOutOfBoundsException if the index is out of range
    */
+  @Bypass
   @Override
   default ListIterator<PyObject> listIterator(int index)
   {
@@ -261,14 +274,51 @@ public interface PyTuple extends PySequence<PyObject>
   }
 
   /**
+   * Returns a parallel {@link Stream} over the elements in the tuple.
+   *
+   * @return a parallel stream of the tuple elements
+   */
+  @Bypass
+  @Override
+  default Stream<PyObject> parallelStream()
+  {
+    return StreamSupport.stream(this.spliterator(), true);
+  }
+
+  /**
    * Returns the number of elements in the tuple.
    *
    * @return the number of elements in the tuple
    */
+  @Bypass
   @Override
   default int size()
   {
     return backend().len(this);
+  }
+
+  /**
+   * Returns a {@link Spliterator} over the elements in the tuple.
+   *
+   * @return a spliterator for the tuple elements
+   */
+  @Bypass
+  @Override
+  default Spliterator<PyObject> spliterator()
+  {
+    return Spliterators.spliterator(this, Spliterator.ORDERED);
+  }
+
+  /**
+   * Returns a sequential {@link Stream} over the elements in the tuple.
+   *
+   * @return a sequential stream of the tuple elements
+   */
+  @Bypass
+  @Override
+  default Stream<PyObject> stream()
+  {
+    return StreamSupport.stream(this.spliterator(), false);
   }
 
   /**
@@ -283,36 +333,4 @@ public interface PyTuple extends PySequence<PyObject>
   @Override
   PyTuple subList(int fromIndex, int toIndex);
 
-  /**
-   * Returns a sequential {@link Stream} over the elements in the tuple.
-   *
-   * @return a sequential stream of the tuple elements
-   */
-  @Override
-  default Stream<PyObject> stream()
-  {
-    return StreamSupport.stream(this.spliterator(), false);
-  }
-
-  /**
-   * Returns a parallel {@link Stream} over the elements in the tuple.
-   *
-   * @return a parallel stream of the tuple elements
-   */
-  @Override
-  default Stream<PyObject> parallelStream()
-  {
-    return StreamSupport.stream(this.spliterator(), true);
-  }
-
-  /**
-   * Returns a {@link Spliterator} over the elements in the tuple.
-   *
-   * @return a spliterator for the tuple elements
-   */
-  @Override
-  default Spliterator<PyObject> spliterator()
-  {
-    return Spliterators.spliterator(this, Spliterator.ORDERED);
-  }
 }

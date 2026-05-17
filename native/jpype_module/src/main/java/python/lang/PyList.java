@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import org.jpype.annotation.Bypass;
 import static python.lang.PyBuiltIn.backend;
 
 /**
@@ -122,6 +123,7 @@ public interface PyList extends PySequence<PyObject>
    * @return {@code true} if the list was modified as a result of this
    * operation.
    */
+    @Bypass
   @Override
   default boolean addAll(Collection<? extends PyObject> c)
   {
@@ -138,6 +140,7 @@ public interface PyList extends PySequence<PyObject>
    * @return {@code true} if the list was modified as a result of this
    * operation.
    */
+    @Bypass
   @Override
   default boolean addAll(int index, Collection<? extends PyObject> c)
   {
@@ -176,6 +179,7 @@ public interface PyList extends PySequence<PyObject>
    * @return {@code true} if the list contains all elements, {@code false}
    * otherwise.
    */
+    @Bypass
   @Override
   default boolean containsAll(Collection<?> c)
   {
@@ -223,6 +227,7 @@ public interface PyList extends PySequence<PyObject>
    *
    * @return {@code true} if the list is empty, {@code false} otherwise.
    */
+    @Bypass
   @Override
   default boolean isEmpty()
   {
@@ -234,6 +239,7 @@ public interface PyList extends PySequence<PyObject>
    *
    * @return an {@link Iterator} for the list elements.
    */
+    @Bypass
   @Override
   default Iterator<PyObject> iterator()
   {
@@ -245,6 +251,7 @@ public interface PyList extends PySequence<PyObject>
    *
    * @return a list iterator starting at the beginning of the tuple
    */
+    @Bypass
   @Override
   default ListIterator<PyObject> listIterator()
   {
@@ -259,6 +266,7 @@ public interface PyList extends PySequence<PyObject>
    * @return a list iterator starting at the specified index
    * @throws IndexOutOfBoundsException if the index is out of range
    */
+    @Bypass
   @Override
   default ListIterator<PyObject> listIterator(int index)
   {
@@ -275,6 +283,7 @@ public interface PyList extends PySequence<PyObject>
    * @param o the object to remove.
    * @return {@code true} if the object was removed, {@code false} otherwise.
    */
+    @Bypass
   @Override
   default boolean remove(Object o)
   {
@@ -287,6 +296,7 @@ public interface PyList extends PySequence<PyObject>
    * @param index the position of the element to remove.
    * @return the {@link PyObject} that was removed.
    */
+    @Bypass
   @Override
   default PyObject remove(int index)
   {
@@ -390,6 +400,7 @@ public interface PyList extends PySequence<PyObject>
    *
    * @return an array containing all elements in the list.
    */
+    @Bypass
   @Override
   default Object[] toArray()
   {
@@ -414,6 +425,7 @@ public interface PyList extends PySequence<PyObject>
    * is not a supertype of the runtime getType of every element in the list.
    * @throws NullPointerException if the specified array is {@code null}.
    */
+    @Bypass
   @Override
   default <T> T[] toArray(T[] a)
   {

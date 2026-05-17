@@ -277,7 +277,7 @@ public class TypeManager
       {
         sb.append(".");
         sb.append(parts[i]);
-//        Class<?> cls = Class.forName(sb.toString());
+        Class.forName(sb.toString());
         for (int j = i + 1; j < parts.length; ++j)
         {
           sb.append("$");

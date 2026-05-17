@@ -18,6 +18,7 @@ package python.lang;
 
 import java.util.Iterator;
 import java.util.Set;
+import org.jpype.annotation.Bypass;
 import static python.lang.PyBuiltIn.backend;
 
 /**
@@ -66,6 +67,7 @@ public interface PyAbstractSet<T extends PyObject> extends PyCollection<T>, Set<
    * @return {@code true} if the object is contained in the set; {@code false}
    * otherwise
    */
+  @Bypass
   @Override
   default boolean contains(Object obj)
   {
@@ -81,6 +83,7 @@ public interface PyAbstractSet<T extends PyObject> extends PyCollection<T>, Set<
    * @return {@code true} if the set contains no elements; {@code false}
    * otherwise
    */
+    @Bypass
   @Override
   default boolean isEmpty()
   {
@@ -96,6 +99,7 @@ public interface PyAbstractSet<T extends PyObject> extends PyCollection<T>, Set<
    *
    * @return a Java iterator for this set
    */
+    @Bypass
   @Override
   default Iterator<T> iterator()
   {
@@ -111,6 +115,7 @@ public interface PyAbstractSet<T extends PyObject> extends PyCollection<T>, Set<
    *
    * @return the number of elements in the set
    */
+    @Bypass
   @Override
   default int size()
   {

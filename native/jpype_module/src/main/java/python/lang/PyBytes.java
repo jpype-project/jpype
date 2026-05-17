@@ -16,6 +16,7 @@
  */
 package python.lang;
 
+import org.jpype.annotation.Bypass;
 import static python.lang.PyBuiltIn.backend;
 
 /**
@@ -123,18 +124,21 @@ public interface PyBytes extends PyObject, PyBuffer, PySequence<PyInt>
    */
   PyString decode(CharSequence encoding, CharSequence errors);
 
+    @Bypass
   @Override
   default PyInt get(int index)
   {
     return (PyInt) PyBuiltIn.backend().getitemSequence(this, index);
   }
 
+    @Bypass
   @Override
   default PyInt remove(int index)
   {
     throw new UnsupportedOperationException("bytes object does not support removal");
   }
 
+    @Bypass
   @Override
   default PyInt set(int index, PyInt value)
   {
@@ -146,6 +150,7 @@ public interface PyBytes extends PyObject, PyBuffer, PySequence<PyInt>
    *
    * @return the length of the bytearray object, measured in bytes.
    */
+    @Bypass
   @Override
   default int size()
   {

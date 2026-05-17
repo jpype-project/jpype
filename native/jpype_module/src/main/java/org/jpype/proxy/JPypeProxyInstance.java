@@ -32,6 +32,8 @@ public class JPypeProxyInstance implements InvocationHandler
       throw new RuntimeException("Proxy called during shutdown");
 
     JPypeMethodDescriptor md = type.getMethodDescriptor(method);
+    if (md.bypass)
+      return md.defaultHandler.bindTo(proxy).invokeWithArguments(args);
 
     long[] scratch = md.parameterTypes;
     int sz = 0;

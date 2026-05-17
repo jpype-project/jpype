@@ -16,6 +16,10 @@ import java.util.function.Predicate;
 public class JPypeUtilities
 {
 
+  private JPypeUtilities()
+  {
+  }
+          
   // a functional interface can only re-declare a public non-final method from Object
   // this should end up being an array of equals, hashCode and toString
   private static final Method[] OBJECT_METHODS

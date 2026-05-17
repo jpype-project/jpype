@@ -893,7 +893,6 @@ static PyObject* module_probe(PyObject *module, PyObject *obj)
 PyObject* PyJPModule_pyobject(PyTypeObject *target_type, PyObject *object_to_cast)
 {
 	JP_PY_TRY("PyJPModule_pyobject");
-	printf("PYOBJECT %s %s\n", target_type->tp_name, Py_TYPE(object_to_cast)->tp_name);
 
 	JPClass* targetClass = PyJPClass_getJPClass((PyObject*) target_type); 
 	JPJavaFrame frame = JPJavaFrame::outer();
@@ -935,10 +934,6 @@ PyObject* PyJPModule_pyobject(PyTypeObject *target_type, PyObject *object_to_cas
 
 	// Convert using the exact target class type, not a generic context type!
 	JPClass* clz = frame.findClassForObject(v.l);
-	printf("Actual %s  Target %s\n", clz->getName().c_str(), targetClass->getName().c_str());
-	printf("  Order %d %d\n", 
-		frame.IsAssignableFrom(clz->getJavaClass(), targetClass->getJavaClass()),
-		frame.IsAssignableFrom(targetClass->getJavaClass(), clz->getJavaClass()));
 	return targetClass->convertToPythonObject(frame, v, true).keep();
 	JP_PY_CATCH(nullptr);
 }

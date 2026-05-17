@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.Future;
+import org.jpype.annotation.Bypass;
 import static python.lang.PyBuiltIn.backend;
 
 /**
@@ -45,6 +46,7 @@ public interface PyCallable extends PyObject
    *
    * @return a new {@link CallBuilder} instance associated with this callable
    */
+    @Bypass
   default CallBuilder call()
   {
     return new CallBuilder(this);
@@ -58,6 +60,7 @@ public interface PyCallable extends PyObject
    * @param kwargs the keyword arguments as a {@link PyDict}
    * @return the result of the call as a {@link PyObject}
    */
+    @Bypass
   default PyObject call(PyTuple args, PyDict kwargs)
   {
     return backend().call(this, args, kwargs);
@@ -69,6 +72,7 @@ public interface PyCallable extends PyObject
    * @param args the positional arguments as a {@link PyTuple}
    * @return the result of the call as a {@link PyObject}
    */
+    @Bypass
   default PyObject call(PyTuple args)
   {
     return backend().call(this, args, null);
@@ -81,6 +85,7 @@ public interface PyCallable extends PyObject
    * @param args the positional arguments as a Java array
    * @return the result of the call as a {@link PyObject}
    */
+    @Bypass
   default PyObject call(Object... args)
   {
     return backend().call(this, PyTuple.of(args), null);
@@ -94,6 +99,7 @@ public interface PyCallable extends PyObject
    * @param kwargs the keyword arguments as a {@link PyDict}
    * @return a {@link Future} representing the result of the asynchronous call
    */
+    @Bypass
   default Future<PyObject> callAsync(PyTuple args, PyDict kwargs)
   {
     return backend().callAsync(this, args, kwargs);
@@ -108,6 +114,7 @@ public interface PyCallable extends PyObject
    * complete
    * @return a {@link Future} representing the result of the asynchronous call
    */
+    @Bypass
   default Future<PyObject> callAsyncWithTimeout(PyTuple args, PyDict kwargs, long timeout)
   {
     return backend().callAsyncWithTimeout(this, args, kwargs, timeout);
@@ -119,6 +126,7 @@ public interface PyCallable extends PyObject
    * @param kwargs the keyword arguments as a {@link PyDict}
    * @return the result of the call as a {@link PyObject}
    */
+    @Bypass
   default PyObject callWithKwargs(PyDict kwargs)
   {
     return backend().call(this, PyTuple.of(), kwargs);
@@ -131,6 +139,7 @@ public interface PyCallable extends PyObject
    * @return the docstring as a {@link String}, or {@code null} if no
    * documentation is available
    */
+    @Bypass
   default String getDocString()
   {
     return backend().getDocString(this);
@@ -141,6 +150,7 @@ public interface PyCallable extends PyObject
    *
    * @return the signature as a {@link PyObject}
    */
+    @Bypass
   default PyObject getSignature()
   {
     return backend().getSignature(this);
@@ -151,6 +161,7 @@ public interface PyCallable extends PyObject
    *
    * @return {@code true} if the object is callable, {@code false} otherwise
    */
+    @Bypass
   default boolean isCallable()
   {
     return backend().isCallable(this);

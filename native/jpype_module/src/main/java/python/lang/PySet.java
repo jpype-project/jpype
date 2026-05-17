@@ -25,6 +25,7 @@ import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import org.jpype.annotation.Bypass;
 import static python.lang.PyBuiltIn.backend;
 
 /**
@@ -92,6 +93,7 @@ public interface PySet extends PyAbstractSet<PyObject>
    * @return {@code true} if the set was modified as a result of this operation,
    * {@code false} otherwise
    */
+  @Bypass
   @Override
   default boolean addAll(Collection<? extends PyObject> collection)
   {
@@ -124,6 +126,7 @@ public interface PySet extends PyAbstractSet<PyObject>
    * @return {@code true} if the set contains all elements, {@code false}
    * otherwise
    */
+  @Bypass
   @Override
   default boolean containsAll(Collection<?> collection)
   {
@@ -210,6 +213,7 @@ public interface PySet extends PyAbstractSet<PyObject>
    * @return {@code true} if the set contains no elements, {@code false}
    * otherwise
    */
+  @Bypass
   @Override
   default boolean isEmpty()
   {
@@ -237,6 +241,7 @@ public interface PySet extends PyAbstractSet<PyObject>
    *
    * @return an iterator for the set
    */
+  @Bypass
   @Override
   default Iterator<PyObject> iterator()
   {
@@ -248,6 +253,7 @@ public interface PySet extends PyAbstractSet<PyObject>
    *
    * @return a parallel stream of the set's elements
    */
+  @Bypass
   @Override
   default Stream<PyObject> parallelStream()
   {
@@ -267,6 +273,7 @@ public interface PySet extends PyAbstractSet<PyObject>
    * @param o the element to remove
    * @return {@code true} if the set was modified, {@code false} otherwise
    */
+  @Bypass
   @Override
   default boolean remove(Object o)
   {
@@ -282,6 +289,7 @@ public interface PySet extends PyAbstractSet<PyObject>
    * @return {@code true} if the set was modified as a result of this operation,
    * {@code false} otherwise
    */
+  @Bypass
   @Override
   default boolean removeAll(Collection<?> collection)
   {
@@ -300,6 +308,7 @@ public interface PySet extends PyAbstractSet<PyObject>
    * @return {@code true} if the set was modified as a result of this operation,
    * {@code false} otherwise
    */
+  @Bypass
   @Override
   default boolean retainAll(Collection<?> collection)
   {
@@ -323,6 +332,7 @@ public interface PySet extends PyAbstractSet<PyObject>
    *
    * @return a spliterator for the set
    */
+  @Bypass
   @Override
   default Spliterator<PyObject> spliterator()
   {
@@ -334,6 +344,7 @@ public interface PySet extends PyAbstractSet<PyObject>
    *
    * @return a sequential stream of the set's elements
    */
+  @Bypass
   @Override
   default Stream<PyObject> stream()
   {
@@ -362,6 +373,7 @@ public interface PySet extends PyAbstractSet<PyObject>
    *
    * @return an array containing the set's elements
    */
+  @Bypass
   @Override
   default Object[] toArray()
   {
@@ -376,6 +388,7 @@ public interface PySet extends PyAbstractSet<PyObject>
    * @param <T> the getType of the array elements
    * @return an array containing the set's elements
    */
+  @Bypass
   @Override
   default <T> T[] toArray(T[] a)
   {

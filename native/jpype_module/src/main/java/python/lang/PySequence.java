@@ -18,6 +18,7 @@ package python.lang;
 
 import java.util.Iterator;
 import java.util.List;
+import org.jpype.annotation.Bypass;
 import static python.lang.PyBuiltIn.backend;
 
 /**
@@ -32,7 +33,7 @@ import static python.lang.PyBuiltIn.backend;
  */
 public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
 {
-
+  @Bypass
   @Override
   default boolean contains(Object obj)
   {
@@ -47,6 +48,7 @@ public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
    * @param index the index of the item to retrieve
    * @return the item at the specified index as a {@link PyObject}
    */
+    @Bypass
   @Override
   @SuppressWarnings("unchecked")
   default T get(int index)
@@ -63,6 +65,7 @@ public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
    * @param index the {@link PyIndex} representing the item or slice to retrieve
    * @return the item or slice as a {@link PyObject}
    */
+    @Bypass
   default PyObject get(PySubscript index)
   {
     return backend().getitemMappingObject(this, index);
@@ -81,17 +84,20 @@ public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
    * @throws IllegalArgumentException if the type does not support tuple
    * assignment.
    */
+    @Bypass
   default PyObject get(PySubscript... indices)
   {
     return backend().getitemMappingObject(this, PyBuiltIn.indices(indices));
   }
 
+    @Bypass
   @Override
   default boolean isEmpty()
   {
     return size() == 0;
   }
 
+    @Bypass
   @Override
   default Iterator<T> iterator()
   {
@@ -131,6 +137,7 @@ public interface PySequence<T extends PyObject> extends PyCollection<T>, List<T>
    *
    * @return the number of items in the sequence
    */
+    @Bypass
   @Override
   default int size()
   {

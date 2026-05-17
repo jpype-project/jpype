@@ -136,11 +136,15 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyInstance_hos
 			PyObject* pyMethodName = reinterpret_cast<PyObject*>(cname);
 			JPPyObject callable(proxy->getCallable(pyMethodName, addSelf));
 
+			// Find the return type
+			auto* returnClass = (JPClass*) returnTypePtr;
+			JP_TRACE("Get return type", returnClass->getCanonicalName());
+
 #if 0
 			// Get the name attribute from the callable
 			const char* nameStr = PyUnicode_AsUTF8(pyMethodName);
 			if (nameStr) {
-				printf("DEBUG: Calling Python method: callable=%p %s:%s\n", callable.get(), Py_TYPE(proxy->m_Instance->m_Target)->tp_name, nameStr);
+				printf("DEBUG: Calling Python method: %s callable=%p %s:%s\n", returnClass->getCanonicalName().c_str(), callable.get(), Py_TYPE(proxy->m_Instance->m_Target)->tp_name, nameStr);
 				fflush(stdout);
 			}
 #endif
@@ -148,10 +152,6 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyInstance_hos
 			// If method can't be called, throw an exception
 			if (callable.isNull() || callable.get() == Py_None)
 				return parameterTypePtrs;
-
-			// Find the return type
-			auto* returnClass = (JPClass*) returnTypePtr;
-			JP_TRACE("Get return type", returnClass->getCanonicalName());
 
 			// convert the arguments into a python list
 			JP_TRACE("Convert arguments");
@@ -188,7 +188,6 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyInstance_hos
 				res2.l = boxed->box(frame, res);
 				return frame.keep(res2.l);
 			}
-
 			if (returnClass->findJavaConversion(returnMatch) == JPMatch::_none)
 			{
 				JP_TRACE("Cannot convert");

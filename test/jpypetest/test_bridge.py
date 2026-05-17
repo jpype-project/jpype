@@ -95,7 +95,7 @@ class JBridgeTestCase(common.JPypeTestCase):
         obj = iter([1,2,3,4])
         self.assertEqual(self.PyIter._canConvertToJava(obj), "implicit")
         self.assertIsInstance(self.PyIter@obj, self.PyIter)
-        
+      
         def even(s):
             return s%2==0
 
@@ -117,8 +117,8 @@ class JBridgeTestCase(common.JPypeTestCase):
 #        while jiter1.hasNext():
 #            jiter1.append(jiter1.next())
 #        self.assertEqual(l, [1,2,3,4])
-            
-        
+          
+      
 
     def testList(self):
         obj = list()
@@ -201,13 +201,13 @@ class JBridgeTestCase(common.JPypeTestCase):
         #print(dir(a))
         self.assertEqual(a.get("A"), 1)
         self.assertEqual(a.get("B"), 2)
-        a.set("B",3)  # Note we end up with a Java Integer here
-        self.assertTrue(a.has("B")) 
-        self.assertEqual(a.get("B").get(), 3)  # Use get() to unwrap the Integer
-        self.assertFalse(a.has("C")) 
-        self.assertEqual(a.dict(), {"A":1, "B":3}) 
-        a.remove("B")  
-        self.assertFalse(a.has("B"))
+        a.put("B",3)  # Note we end up with a Java Integer here
+        self.assertTrue(a.contains("B")) 
+        self.assertEqual(a.get("B"), 3)
+        self.assertFalse(a.contains("C")) 
+        self.assertEqual(a.asDict(), {"A":1, "B":3}) 
+        a.remove("B")
+        self.assertFalse(a.contains("B"))
 
     def testExc(self):
         exc = _jpype._pyexc_convert(ValueError("nbar"))

@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
+import org.jpype.annotation.Bypass;
 import static python.lang.PyBuiltIn.backend;
 
 /**
@@ -125,6 +126,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    *
    * @return the removed {@link PyObject}.
    */
+    @Bypass
   default PyObject pop()
   {
     throw new UnsupportedOperationException("Frozenset does not support modification");
@@ -154,6 +156,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    *
    * @return an {@link Iterator} for the elements in this set.
    */
+    @Bypass
   @Override
   default Iterator<PyObject> iterator()
   {
@@ -165,6 +168,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    *
    * @return an array containing all elements in this set.
    */
+    @Bypass
   @Override
   default Object[] toArray()
   {
@@ -179,6 +183,7 @@ public interface PyFrozenSet extends PyObject, Set<PyObject>
    * @param <T> the getType of the array elements.
    * @return an array containing all elements in this set.
    */
+    @Bypass
   @Override
   default <T> T[] toArray(T[] reference)
   {

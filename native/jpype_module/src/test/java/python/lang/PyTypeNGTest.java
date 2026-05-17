@@ -80,7 +80,7 @@ public class PyTypeNGTest
   @Test
   public void testIsInstance()
   {
-    PyObject obj = PyString.from("test");
+    PyObject obj = PyString.of("test");
     PyType type = PyBuiltIn.type(obj);
     assertTrue(type.isInstance(obj));
     assertFalse(type.isInstance(dictType));

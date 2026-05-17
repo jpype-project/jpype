@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import org.jpype.bridge.Interpreter;
 import static python.lang.PyBuiltIn.backend;
+import org.jpype.annotation.Bypass;
 
 /**
  * Represents the Python concept of an iterator in Java.
@@ -101,6 +102,7 @@ public interface PyIter<T> extends PyObject
    * iterator. The decision to "tee" (duplicate) the iterator has not been
    * finalized.
    */
+    @Bypass
   default Iterator<T> iterator()
   {
     // It is not clear if we should tee the iterator here or not.
@@ -123,6 +125,7 @@ public interface PyIter<T> extends PyObject
    * indicates the end of the iteration.
    */
   @SuppressWarnings("unchecked")
+  @Bypass
   default T next()
   {
     PyObject out = backend().next(this, Interpreter.stop);
@@ -142,7 +145,8 @@ public interface PyIter<T> extends PyObject
    * @implNote Internally, this method calls
    * {@code backend().next(this, defaults)} to fetch the next element.
    */
-  @SuppressWarnings("unchecked")
+    @Bypass
+    @SuppressWarnings("unchecked")
   default T next(PyObject defaults)
   {
     return (T) backend().next(this, defaults);

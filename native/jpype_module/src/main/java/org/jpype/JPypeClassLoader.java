@@ -184,7 +184,7 @@ public class JPypeClassLoader extends URLClassLoader
    * @throws ClassFormatError if the class byte code was invalid.
    */
   @Override
-  public Class findClass(String name) throws ClassNotFoundException, ClassFormatError
+  public Class<?> findClass(String name) throws ClassNotFoundException, ClassFormatError
   {
     String aname = name.replace('.', '/') + ".class";
     URL url = this.getResource(aname);

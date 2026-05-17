@@ -11,6 +11,7 @@ import java.util.Map;
 import org.jpype.JPypeContext;
 import org.jpype.manager.TypeManager;
 import org.jpype.ref.JPypeReferenceQueue;
+import org.jpype.annotation.Bypass;
 
 public final class JPypeProxyType
 {
@@ -21,7 +22,7 @@ public final class JPypeProxyType
   private final ClassLoader cl;
   final long cleanup;
   final Map<Method, JPypeMethodDescriptor> methodCache;
-
+  
   /**
    * Initializes the static cache for Object methods. This happens once when the
    * class is loaded.
@@ -39,7 +40,7 @@ public final class JPypeProxyType
         long[] paramTypes = new long[params.length];
         for (int i = 0; i < params.length; i++)
           paramTypes[i] = tm.findClass(params[i]);
-        OBJECT_METHOD_CACHE.put(method, new JPypeMethodDescriptor(method.getName(), returnType, paramTypes, null));
+        OBJECT_METHOD_CACHE.put(method, new JPypeMethodDescriptor(method.getName(), returnType, paramTypes, null, false));
       }
     }
   }
@@ -58,15 +59,13 @@ public final class JPypeProxyType
     for (Class<?> cls : interfaces)
     {
       ClassLoader icl = cls.getClassLoader();
-      System.out.println("INTF " + cls + " " + icl + " "+ cls.getModule());
-//      // Ignore the bootstrap loader (null) and our own loader
-//      if (icl != null && icl != tempCl && icl != ClassLoader.getSystemClassLoader())
-//      {
-//        tempCl = icl;
-//        break; // Stop if we hit an explicit custom application/plugin loader
-//      }
+      // Ignore the bootstrap loader (null) and our own loader
+      if (icl != null && icl != tempCl && icl != ClassLoader.getSystemClassLoader())
+      {
+        tempCl = icl;
+        break; // Stop if we hit an explicit custom application/plugin loader
+      }
     }
-    System.out.println("CLASSLOADED " + JPypeProxyType.class.getClassLoader() + " " + tempCl);
     this.cl = tempCl;
 
     // Build the instance-specific cache
@@ -99,10 +98,11 @@ public final class JPypeProxyType
       for (int i = 0; i < params.length; i++)
         paramTypes[i] = tm.findClass(params[i]);
 
+      boolean bypass = (method.isAnnotationPresent(Bypass.class));
       MethodHandle defaultHandle = null;
       if (method.isDefault())
         defaultHandle = getDefaultHandle(method.getDeclaringClass(), method, java.lang.invoke.MethodHandles.class);
-      map.put(method, new JPypeMethodDescriptor(method.getName(), returnType, paramTypes, defaultHandle));
+      map.put(method, new JPypeMethodDescriptor(method.getName(), returnType, paramTypes, defaultHandle, bypass));
     }
   }
 

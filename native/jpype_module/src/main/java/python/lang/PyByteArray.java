@@ -16,6 +16,7 @@
  */
 package python.lang;
 
+import org.jpype.annotation.Bypass;
 import static python.lang.PyBuiltIn.backend;
 
 /**
@@ -121,18 +122,21 @@ public interface PyByteArray extends PyObject, PyBuffer, PySequence<PyInt>
    */
   PyObject decode(PyObject encoding, PyObject errors);
 
+    @Bypass
   @Override
   default PyInt get(PySubscript... indices)
   {
     throw new IllegalArgumentException("bytearray does not support tuple assignment");
   }
 
+    @Bypass
   @Override
   default PyInt get(PySubscript index)
   {
     return (PyInt) PyBuiltIn.backend().getitemMappingObject(this, index);
   }
 
+    @Bypass
   @Override
   default PyInt get(int index)
   {
@@ -144,17 +148,20 @@ public interface PyByteArray extends PyObject, PyBuffer, PySequence<PyInt>
 
   void remove(PySubscript index);
 
+    @Bypass
   @Override
   default PyInt set(int index, PyInt value)
   {
     return (PyInt) PyBuiltIn.backend().setitemSequence(this, index, value);
   }
 
+    @Bypass
   default void set(PySubscript index, PyObject values)
   {
     PyBuiltIn.backend().setitemMapping(this, index, values);
   }
 
+    @Bypass
   @Override
   default int size()
   {

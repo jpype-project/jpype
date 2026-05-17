@@ -16,6 +16,8 @@
  */
 package python.lang;
 
+import org.jpype.annotation.Bypass;
+
 /**
  * Java front-end interface for the Python `range` type.
  * <p>
@@ -147,6 +149,7 @@ public interface PyRange extends PyIter<PyInt>
    *
    * @return a {@link PyIterator} for the range object.
    */
+    @Bypass
   @Override
   default PyIterator<PyInt> iterator()
   {

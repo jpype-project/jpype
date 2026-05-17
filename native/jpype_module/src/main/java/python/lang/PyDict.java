@@ -19,6 +19,7 @@ package python.lang;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import org.jpype.annotation.Bypass;
 import static python.lang.PyBuiltIn.backend;
 
 /**
@@ -75,6 +76,7 @@ public interface PyDict extends PyObject, PyMapping<PyObject, PyObject>, PyCombi
   @Override
   public boolean containsValue(Object value);
 
+    @Bypass
   @Override
   default Set<Map.Entry<PyObject, PyObject>> entrySet()
   {
@@ -116,12 +118,14 @@ public interface PyDict extends PyObject, PyMapping<PyObject, PyObject>, PyCombi
   @Override
   PyObject getOrDefault(Object key, PyObject defaultValue);
 
+    @Bypass
   @Override
   default boolean isEmpty()
   {
     return size() == 0;
   }
 
+    @Bypass
   @Override
   default Set<PyObject> keySet()
   {
@@ -190,6 +194,7 @@ public interface PyDict extends PyObject, PyMapping<PyObject, PyObject>, PyCombi
    */
   PyObject setDefault(Object key, PyObject defaultValue);
 
+    @Bypass
   @Override
   default int size()
   {
@@ -213,6 +218,7 @@ public interface PyDict extends PyObject, PyMapping<PyObject, PyObject>, PyCombi
    */
   void update(Iterable<Map.Entry<Object, PyObject>> iterable);
 
+    @Bypass
   @Override
   default Collection<PyObject> values()
   {

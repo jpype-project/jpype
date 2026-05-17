@@ -16,14 +16,17 @@
  */
 package python.lang;
 
+import org.jpype.annotation.Bypass;
 import static python.lang.PyBuiltIn.backend;
 
 /**
  * Protocol for Python objects that have a `__contains__` method.
+ * @param <T>
  */
 public interface PyContainer<T extends PyObject> extends PyObject
 {
 
+  @Bypass
   default boolean contains(Object obj)
   {
     return backend().contains(this, obj);

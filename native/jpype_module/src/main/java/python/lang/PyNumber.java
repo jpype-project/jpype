@@ -16,6 +16,7 @@
  */
 package python.lang;
 
+import org.jpype.annotation.Bypass;
 import static python.lang.PyBuiltIn.backend;
 
 /**
@@ -284,6 +285,7 @@ public interface PyNumber extends PyObject, Comparable<Number>
    */
   boolean toBoolean();
 
+    @Bypass
   public default Number toNumber()
   {
     return Utility.toNumber(this);

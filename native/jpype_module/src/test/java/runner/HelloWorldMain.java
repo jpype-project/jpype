@@ -30,7 +30,7 @@ public class HelloWorldMain
               + "    pass\n"
               + "obj_default = BuiltinAttrTest()\n");
       PyObject obj = (PyObject) context.eval("obj_default");
-      PyObject fallback = PyString.from("fallback");
+      PyObject fallback = PyString.of("fallback");
 
       PyObject result = PyBuiltIn.getattrDefault(obj, "missing", fallback);
 

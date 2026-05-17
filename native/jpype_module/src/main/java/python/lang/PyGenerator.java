@@ -17,6 +17,7 @@
 package python.lang;
 
 import java.util.Iterator;
+import org.jpype.annotation.Bypass;
 
 /**
  * Represents a Python generator in the Java environment.
@@ -65,6 +66,7 @@ public interface PyGenerator<T extends PyObject> extends PyIter<T>
    *
    * @return a {@link Iterator} for iterating over the elements of the generator
    */
+    @Bypass
   @Override
   default Iterator<T> iterator()
   {

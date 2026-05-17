@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import org.jpype.annotation.Bypass;
 import static python.lang.PyBuiltIn.backend;
 
 /**
@@ -60,13 +61,14 @@ import static python.lang.PyBuiltIn.backend;
  */
 public interface PyMapping<K extends PyObject, V extends PyObject> extends PyCollection<K>, Map<K, V>
 {
-
+  @Bypass
   @Override
   default boolean contains(Object obj)
   {
     return backend().contains(this, obj);
   }
 
+    @Bypass
   @Override
   default Iterator<K> iterator()
   {
@@ -77,6 +79,7 @@ public interface PyMapping<K extends PyObject, V extends PyObject> extends PyCol
    * Removes all key-value pairs from this mapping. Equivalent to Python's
    * `clear()` method.
    */
+    @Bypass
   @Override
   default void clear()
   {
@@ -112,6 +115,7 @@ public interface PyMapping<K extends PyObject, V extends PyObject> extends PyCol
    * @return the value associated with the key, or null if the key is not
    * present.
    */
+    @Bypass
   @Override
   @SuppressWarnings("unchecked")
   default V get(Object key)
@@ -137,6 +141,7 @@ public interface PyMapping<K extends PyObject, V extends PyObject> extends PyCol
    *
    * @return true if the mapping is empty, false otherwise.
    */
+    @Bypass
   @Override
   default boolean isEmpty()
   {
@@ -149,6 +154,7 @@ public interface PyMapping<K extends PyObject, V extends PyObject> extends PyCol
    *
    * @return a set view of the keys.
    */
+    @Bypass
   @Override
   @SuppressWarnings("unchecked")
   default Set<K> keySet()
@@ -166,6 +172,7 @@ public interface PyMapping<K extends PyObject, V extends PyObject> extends PyCol
    * @return the previous value associated with the key, or null if there was no
    * mapping for the key.
    */
+    @Bypass
   @Override
   @SuppressWarnings("unchecked")
   default V put(K key, V value)
@@ -173,6 +180,7 @@ public interface PyMapping<K extends PyObject, V extends PyObject> extends PyCol
     return (V) backend().setitemFromObject(this, key, value);
   }
 
+    @Bypass
   default PyObject putAny(Object key, Object value)
   {
     return backend().setitemFromObject(this, key, value);
@@ -204,6 +212,7 @@ public interface PyMapping<K extends PyObject, V extends PyObject> extends PyCol
    *
    * @return the number of key-value pairs in the mapping.
    */
+    @Bypass
   @Override
   default int size()
   {
@@ -217,6 +226,7 @@ public interface PyMapping<K extends PyObject, V extends PyObject> extends PyCol
    *
    * @return a collection view of the values.
    */
+    @Bypass
   @Override
   default Collection<V> values()
   {
