@@ -76,4 +76,15 @@
                 <goal>-DskipTests</goal>
             </goals>
         </action>
+        <action>
+            <actionName>rebuild</actionName>
+            <packagings>
+                <packaging>*</packaging>
+            </packagings>
+            <goals>
+                <goal>clean</goal>
+                <goal>package</goal>
+                <goal>-DskipTests</goal>
+            </goals>
+        </action>
     </actions>

@@ -384,7 +384,7 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	jclass factoryClass = getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxyFactory");
 	m_ProxyFactoryClass = JPClassRef(frame, factoryClass);
 	m_ProxyFactory_getProxyTypeID = frame.GetStaticMethodID(factoryClass, "getProxyType",
-		"(J[Ljava/lang/Class;Z)Lorg/jpype/proxy/JPypeProxyType;");
+		"(J[Ljava/lang/Class;)Lorg/jpype/proxy/JPypeProxyType;");
 
 	jclass proxyTypeClass = getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxyType");
 	m_ProxyTypeClass = JPClassRef(frame, proxyTypeClass);

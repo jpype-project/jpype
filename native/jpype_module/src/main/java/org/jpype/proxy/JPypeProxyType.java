@@ -17,7 +17,6 @@ public final class JPypeProxyType
 
   // Static cache for standard Object methods to avoid re-resolving them
   private static final Map<Method, JPypeMethodDescriptor> OBJECT_METHOD_CACHE = new HashMap<>();
-  private final boolean convert;
   private final Class<?>[] interfaces;
   private final ClassLoader cl;
   final long cleanup;
@@ -45,11 +44,10 @@ public final class JPypeProxyType
     }
   }
 
-  public JPypeProxyType(long cleanup, Class<?>[] interfaces, boolean convert)
+  public JPypeProxyType(long cleanup, Class<?>[] interfaces)
   {
     this.interfaces = interfaces;
     this.cleanup = cleanup;
-    this.convert = convert;
 
     // Resolve ClassLoader
     ClassLoader tempCl = ClassLoader.getSystemClassLoader();
@@ -76,11 +74,6 @@ public final class JPypeProxyType
     }
 
     this.methodCache = Collections.unmodifiableMap(tempMap);
-  }
-
-  public boolean getConvert()
-  {
-    return this.convert;
   }
 
   private void populateCache(TypeManager tm, Method[] methods, Map<Method, JPypeMethodDescriptor> map)
@@ -155,15 +148,10 @@ public final class JPypeProxyType
   {
     if (obj == null || !Proxy.isProxyClass(obj.getClass()))
       return 0L;
-    System.out.println("GET INSTANCE "+ obj.getClass());
     InvocationHandler handler = Proxy.getInvocationHandler(obj);
     if (!(handler instanceof JPypeProxyInstance))
       return 0L;
-    
-    JPypeProxyInstance proxy = ((JPypeProxyInstance) handler);
-    System.out.println(" convert="+ proxy.getType().convert);
-    System.out.println(" instance="+ proxy.instance);
-    
+    JPypeProxyInstance proxy = ((JPypeProxyInstance) handler);    
     return proxy.instance;
   }
 

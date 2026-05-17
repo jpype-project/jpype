@@ -55,6 +55,10 @@ public class Html
             "th:td", "p:li"));
   }
 
+  private Html()
+  {
+  }
+
   public static Parser<Document> newParser()
   {
     return new HtmlParser();
@@ -73,11 +77,11 @@ public class Html
   static
   {
     // Use the class itself to get the resource, not the System ClassLoader
-    try (InputStream is = Html.class.getResourceAsStream("/org/jpype/html/entities.txt"))
+    try (InputStream is = Html.class.getResourceAsStream("/org/jpype/resources/entities.txt"))
     {
       if (is == null)
       {
-        throw new RuntimeException("Resource not found: org/jpype/html/entities.txt");
+        throw new RuntimeException("Resource not found: org/jpype/resources/entities.txt");
       }
       try (InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8); BufferedReader rd = new BufferedReader(isr))
       {
@@ -99,7 +103,7 @@ public class Html
     }
   }
 
- /*
+  /*
   static
   {
     ClassLoader cl = ClassLoader.getSystemClassLoader();
@@ -120,8 +124,7 @@ public class Html
       throw new RuntimeException(ex);
     }
   }
-*/
-
+   */
   public static String decode(String s)
   {
     if (!s.contains("&"))

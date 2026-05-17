@@ -231,10 +231,9 @@ JPProxy::JPProxy(PyJPProxy* inst, JPClassList& intf, bool convert)
 		frame.SetObjectArrayElement(ar, i, intf[i]->getJavaClass());
 
 	// 2. Get the ProxyInstance from the Factory (handles deduplication/caching)
-	jvalue v_factory[3];
+	jvalue v_factory[2];
 	v_factory[0].j = (jlong) &JPProxy::releaseProxyPython; // Cleanup pointer
 	v_factory[1].l = ar;
-    v_factory[2].z = convert; 
 
 	// Corrected JNI call for the static method
 	jobject proxyType = frame.CallStaticObjectMethodA(

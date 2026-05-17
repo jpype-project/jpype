@@ -23,8 +23,6 @@ public class JPypeProxyFactory
   private interface ProxyKey
   {
 
-    boolean getConvert();
-
     Class<?>[] getInterfaces();
   }
 
@@ -33,20 +31,19 @@ public class JPypeProxyFactory
    *
    * @param cleanup
    * @param interfaces
-   * @param convert flag to indicate that this type should be automatically unwrapped on return to python.
    * @return
    */
-  public static JPypeProxyType getProxyType(long cleanup, Class<?>[] interfaces, boolean convert)
+  public static JPypeProxyType getProxyType(long cleanup, Class<?>[] interfaces)
   {
-    return INSTANCE.getProxyTypeImpl(cleanup, interfaces, convert);
+    return INSTANCE.getProxyTypeImpl(cleanup, interfaces);
   }
 
-  JPypeProxyType getProxyTypeImpl(long cleanup, Class<?>[] interfaces, boolean convert)
+  JPypeProxyType getProxyTypeImpl(long cleanup, Class<?>[] interfaces)
   {
     Arrays.sort(interfaces, Comparator.comparing(Class::getName));
 
     // 1. Thread-local probe (Zero allocation)
-    ReusableKey probe = LOOKUP_KEY.get().set(interfaces, convert);
+    ReusableKey probe = LOOKUP_KEY.get().set(interfaces);
 
     JPypeProxyType existing = typeCache.get(probe);
 
@@ -55,12 +52,11 @@ public class JPypeProxyFactory
 
     // 2. Cache Miss (Allocation tax)
     Class<?>[] permanentArray = interfaces.clone();
-    InterfaceKey permanentKey = new InterfaceKey(permanentArray, convert);
+    InterfaceKey permanentKey = new InterfaceKey(permanentArray);
 
     JPypeProxyType out = typeCache.computeIfAbsent(permanentKey,
-            k -> new JPypeProxyType(cleanup, permanentArray, convert));
+            k -> new JPypeProxyType(cleanup, permanentArray));
     
-    System.out.println(out + " " + convert + " "+ out.getConvert());
     return out;
   }
 
@@ -69,19 +65,12 @@ public class JPypeProxyFactory
 
     private Class<?>[] ref;
     private int hash;
-    private boolean convert;
 
-    ReusableKey set(Class<?>[] interfaces, boolean convert)
+    ReusableKey set(Class<?>[] interfaces)
     {
       this.ref = interfaces;
-      this.hash = Arrays.hashCode(interfaces)+ Boolean.hashCode(convert);
+      this.hash = Arrays.hashCode(interfaces);
       return this;
-    }
-
-    @Override
-    public boolean getConvert()
-    {
-      return convert;
     }
 
     @Override
@@ -101,8 +90,6 @@ public class JPypeProxyFactory
     {
       if (!(obj instanceof ProxyKey))
         return false;
-      if (this.convert != ((ProxyKey) obj).getConvert())
-        return false;
       return Arrays.equals(this.ref, ((ProxyKey) obj).getInterfaces());
     }
   }
@@ -112,19 +99,11 @@ public class JPypeProxyFactory
 
     private final Class<?>[] interfaces;
     private final int hashCode;
-    private final boolean convert;
 
-    InterfaceKey(Class<?>[] interfaces, boolean convert)
+    InterfaceKey(Class<?>[] interfaces)
     {
       this.interfaces = interfaces;
       this.hashCode = Arrays.hashCode(interfaces);
-      this.convert = convert;
-    }
-
-    @Override
-    public boolean getConvert()
-    {
-      return convert;
     }
 
     @Override
@@ -145,8 +124,6 @@ public class JPypeProxyFactory
       if (this == obj)
         return true;
       if (!(obj instanceof ProxyKey))
-        return false;
-      if (this.convert != ((ProxyKey) obj).getConvert())
         return false;
       return Arrays.equals(this.interfaces, ((ProxyKey) obj).getInterfaces());
     }

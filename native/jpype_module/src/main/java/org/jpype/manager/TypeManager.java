@@ -376,7 +376,6 @@ public class TypeManager
       flags = EnumSet.of(Kind.BASES, Kind.PROXY);
     else
       flags = EnumSet.of(Kind.BASES);
-    System.out.println("FIND CLASS FOR "+cls+ " " + flags);
     return this.createClass(cls, flags);
   }
 

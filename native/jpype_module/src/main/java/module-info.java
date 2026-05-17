@@ -17,7 +17,7 @@
 
 
 module org.jpype {
-  requires java.xml;
+  requires transitive java.xml;
   requires java.sql;
   requires java.management;
   
