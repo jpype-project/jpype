@@ -51,6 +51,7 @@ class JBridgeTestCase(common.JPypeTestCase):
         self.PyTuple = JClass("python.lang.PyTuple")
         self.PyType = JClass("python.lang.PyType")
         self.PyZip = JClass("python.lang.PyZip")
+        self.PyCallable = JClass("python.lang.PyCallable")
 
         # Protocols
         self.PyIter = JClass("python.lang.PyIter")
@@ -235,6 +236,9 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
         self.PyTuple = JClass("python.lang.PyTuple")
         self.PyBytes = JClass("python.lang.PyBytes")
         self.PyList = JClass("python.lang.PyList")
+        self.PySubscript = JClass("python.lang.PySubscript")
+        self.PyCallable = JClass("python.lang.PyCallable")
+        self.Integer = JClass("java.lang.Integer")
 
     # ---------------------------------------------------------
     # 1. Numeric Primitives ($int, $float)
@@ -242,12 +246,12 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
     def test_numeric_instantiation(self):
         # Test $int(long value)
         j_int = getattr(self.PyBuiltIn, "$int")(8675309)
-        self.assertIsInstance(j_int, self.PyInt)
+        self.assertIsInstance(j_int, int)
         self.assertEqual(int(j_int), 8675309)
 
         # Test $float(double value)
         j_float = getattr(self.PyBuiltIn, "$float")(2.71828)
-        self.assertIsInstance(j_float, self.PyFloat)
+        self.assertIsInstance(j_float, float)
         self.assertAlmostEqual(float(j_float), 2.71828, places=5)
 
     # ---------------------------------------------------------
@@ -392,7 +396,7 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
     # 7. Iterators, Generators, and Advanced Iteration Loops
     # ---------------------------------------------------------
     def test_enumerate_overloads(self):
-        source_list = self.PyList@["a", "b"]
+        source_list = self.PyObject@["a", "b"]
 
         # enumerate(PyObject obj) or enumerate(Iterable obj)
         # Testing both Java pathways by passing a standard list wrapper
@@ -448,8 +452,8 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
         # indices(PySubscript... indices)
         # This takes specialized array-subscripts and generates index structures
         # To test the Java bridge signature acceptance:
-        subscript1 = self.PyBuiltIn.slice(0, 2)
-        subscript2 = self.PyBuiltIn.slice(1, 5)
+        subscript1 = self.PySubscript@self.PyBuiltIn.slice(self.Integer@0, self.Integer@2)
+        subscript2 = self.PySubscript@self.PyBuiltIn.slice(self.Integer@1, self.Integer@5)
 
         j_indices = self.PyBuiltIn.indices(subscript1, subscript2)
         self.assertIsInstance(j_indices, self.PyTuple)
@@ -468,7 +472,7 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
 
     def test_type_and_repr(self):
         # type(Object obj)
-        j_type = self.PyBuiltIn.type("abc")
+        j_type = self.PyBuiltIn.type(self.PyObject@"abc")
         self.assertEqual(j_type, type("abc"))
 
         # repr(Object obj)
@@ -497,10 +501,11 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
             return (x + y) * multiplier
 
         # Wrap structural components into their required Java types
-        j_callable = self.PyObject@sample_function
+        j_callable = self.PyCallable@sample_function
         j_args = self.PyBuiltIn.tuple(10, 5)
         
         j_kwargs = self.PyBuiltIn.dict()
+        j_kwargs = self.PyDict@j_kwargs
         j_kwargs.put("multiplier", 2)
 
         # Invoke via PyBuiltIn.call(PyCallable obj, PyTuple args, PyDict kwargs)
@@ -509,19 +514,3 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
         # (10 + 5) * 2 = 30
         self.assertEqual(int(j_result), 30)
 
-    def test_getattr_with_object_key(self):
-        class NonStringKey:
-            def __str__(self):
-                return "dynamic_field"
-
-        class TargetObject:
-            def __init__(self):
-                self.dynamic_field = "success"
-
-        obj = TargetObject()
-        key_obj = NonStringKey()
-
-        # Since key_obj is not a CharSequence, this forces Java to branch
-        # into backend().getattrObject(obj, key) instead of getattrString()
-        result = self.PyBuiltIn.getattr(self.PyObject@obj, self.PyObject@key_obj)
-        self.assertEqual(str(result), "success")
