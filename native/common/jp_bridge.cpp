@@ -144,15 +144,15 @@ static void dumpWideList(const char* name, const PyWideStringList* list)
 	}
 }
 
-void print_module_path(const char* name, PyObject* module) {
+void print_module_path(const char* name, PyObject* module)
+{
 	if (module != NULL) {
 		// Access the __file__ attribute
-		PyObject* file_path = PyObject_GetAttrString(module, "__file__");
-		if (file_path != NULL) {
+		JPPyObject file_path = JPPyObject::accept(PyObject_GetAttrString(module, "__file__"));
+		if (file_path.isNull()) {
 			// In Python 3, __file__ is a Unicode object
-			const char* path = PyUnicode_AsUTF8(file_path);
+			const char* path = PyUnicode_AsUTF8(file_path.get());
 			printf("Module [%s] loaded from: %s\n", name, path);
-			Py_DECREF(file_path);
 		} else {
 			printf("Module [%s] has no __file__ attribute (it might be built-in).\n", name);
 		}
@@ -197,52 +197,33 @@ static bool appendModulePathsToSysPath(JNIEnv* env, jobjectArray modulePath)
 	if (modulePath == nullptr)
 		return true;
 
-	PyObject* sys = PyImport_ImportModule("sys");
-	if (sys == nullptr)
+	// 1. Fetch sys.path safely. If either fails, call() throws and exits the block.
+	JPPyObject sys = JPPyObject::call(PyImport_ImportModule("sys"));
+	JPPyObject path = JPPyObject::call(PyObject_GetAttrString(sys.get(), "path"));
+	
+	if (!PyList_Check(path.get()))
 		return false;
-
-	PyObject* path = PyObject_GetAttrString(sys, "path");
-	Py_DECREF(sys);
-	if (path == nullptr || !PyList_Check(path))
-	{
-		Py_XDECREF(path);
-		return false;
-	}
 
 	jsize count = env->GetArrayLength(modulePath);
 	for (jsize i = 0; i < count; ++i)
 	{
 		jstring jpath = (jstring) env->GetObjectArrayElement(modulePath, i);
 		if (jpath == nullptr) continue;
-
-		// Use your existing helper to get a real wchar_t*
 		wchar_t* widePath = toWideString(env, jpath);
 		if (widePath == nullptr)
 		{
 			env->DeleteLocalRef(jpath);
-			Py_DECREF(path);
 			return false;
 		}
-
-		// Now Python is getting the 32-bit wchar_t it expects on Linux
 		PyObject* pyPath = PyUnicode_FromWideChar(widePath, -1);
-		
-		// Py_DecodeLocale uses PyMem_RawMalloc, so free it properly
-		PyMem_RawFree(widePath); 
+		PyMem_RawFree(widePath);
+		JPPyObject hold = JPPyObject::call(pyPath);
 		env->DeleteLocalRef(jpath);
-
-		if (pyPath == nullptr || PyList_Append(path, pyPath) < 0)
-		{
-			Py_XDECREF(pyPath);
-			Py_DECREF(path);
+		if (PyList_Append(path.get(), pyPath) < 0)
 			return false;
-		}
-		Py_DECREF(pyPath);
 	}
-	Py_DECREF(path);
 	return true;
 }
-
 
 /* Arguments we need to push in.
  * 
@@ -255,12 +236,7 @@ JNIEXPORT void JNICALL Java_org_jpype_bridge_Natives_start
 	jboolean isolated, jboolean faulthandler, jboolean quiet, jboolean verbose,
 	jboolean site_import, jboolean user_site, jboolean bytecode)
 {
-	PyObject* jpype = nullptr;
-	PyObject* jpypep = nullptr;
 	JPContext* context;
-	PyObject *obj;
-	PyObject *obj2;
-	PyObject *obj3;
 	PyStatus status;
 	PyConfig config;
 
@@ -353,9 +329,9 @@ success_config:
 			return;
 		}
 
-		jpype = PyImport_ImportModule("jpype");
-		jpypep = PyImport_ImportModule("_jpype");
-		if (jpypep == NULL)
+		JPPyObject jpype = JPPyObject::accept(PyImport_ImportModule("jpype"));
+		JPPyObject jpypep = JPPyObject::accept(PyImport_ImportModule("_jpype"));
+		if (!jpypep.isValid())
 		{
 			printf("missing _jpype\n");
 			fflush(stdout);
@@ -364,7 +340,7 @@ success_config:
 		}
 		
 		// Import the Python side to create the hooks
-		if (jpype == NULL)
+		if (!jpype.isValid())
 		{
 			printf("missing jpype\n");
 			fflush(stdout);
@@ -376,7 +352,7 @@ success_config:
 		//print_module_path("jpype", jpype);
 		//print_module_path("_jpype", jpypep);
 
-		PyJPModule_loadResources(jpypep);
+		PyJPModule_loadResources(jpypep.get());
 
 		// Then attach the private module to the JVM
 		context = JPContext_global;
@@ -385,22 +361,10 @@ success_config:
 		JPJavaFrame frame = JPJavaFrame::external(env);
 		
 		// Initialize the resources in the jpype module
-		obj = PyObject_GetAttrString(jpype, "_core");
-		obj2 = PyObject_GetAttrString(obj, "initializeResources");
-		obj3 = PyTuple_New(0);
-		PyObject* out = PyObject_Call(obj2, obj3, NULL);
-		if (out == NULL) {
-			// This will print the full Python traceback to your console
-			PyErr_Print(); 
-		} else {
-			Py_DECREF(out); // Don't forget to decref the result on success!
-		}
-		Py_DECREF(obj);
-		Py_DECREF(obj2);
-		Py_DECREF(obj3);
-
-		Py_DECREF(jpype);
-		Py_DECREF(jpypep);
+		JPPyObject obj = JPPyObject::call(PyObject_GetAttrString(jpype.get(), "_core"));
+		JPPyObject obj2 = JPPyObject::call(PyObject_GetAttrString(obj.get(), "initializeResources"));
+		JPPyObject obj3 = JPPyObject::call(PyTuple_New(0));
+		JPPyObject out = JPPyObject::call(PyObject_Call(obj2.get(), obj3.get(), NULL));
 
 		// Next, we need to release the state so we can return to Java.
 		PyGILState_Release(gstate);

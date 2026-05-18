@@ -39,7 +39,6 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	int convert = 0;
 	if (!PyArg_ParseTuple(args, "OOO|p", &instance, &dispatch, &pyintf, &convert))
 		return nullptr;
-	bool dict_dispatch = (dispatch!=Py_None);
 
 	// Pack interfaces
 	if (!PySequence_Check(pyintf))
@@ -66,15 +65,21 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 		interfaces.push_back(cls);
 	}
 
-    if (dispatch == Py_None)
-        self->m_Proxy = new JPProxyDirect(self, interfaces, convert!=0);
-    else if (dict_dispatch != 0)
+	// 4 cases land here 
+	//   @JImplements (None, None, actualIntf, True)
+	//   Dict (instance, dict, actualIntf, True)
+	//   Dict (None, dict, actualIntf, True)
+	//   Attr (instance, None, actualIntf, True)
+    if (dispatch != Py_None)
         self->m_Proxy = new JPProxyIndirectDict(self, interfaces, convert!=0);
-    else
+    else if (instance !=Py_None)
         self->m_Proxy = new JPProxyIndirectAttr(self, interfaces, convert!=0);
+    else
+        self->m_Proxy = new JPProxyDirect(self, interfaces, convert!=0);
 
 	self->m_Target = instance;
-	self->m_Dispatch = dict_dispatch?dispatch:instance;
+	self->m_Dispatch = (dispatch != Py_None) ? dispatch : instance;
+
 	Py_INCREF(self->m_Target);
 	Py_INCREF(self->m_Dispatch);
 

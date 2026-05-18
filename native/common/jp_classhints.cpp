@@ -1008,16 +1008,16 @@ public:
 		if (!probe_result.isValid())
 			return match.type = JPMatch::_none;
 			
-		PyObject* intf = PyTuple_GetItem(probe_result.get(), 0);
+		JPPyObject intf = JPPyObject::use(PyTuple_GetItem(probe_result.get(), 0));
 		PyObject* target = (PyObject*) cls->getHost();
 
-		if (!PyTuple_Check(intf))
+		if (!PyTuple_Check(intf.get()))
 			return match.type = JPMatch::_none;
 
-		Py_ssize_t size = PyTuple_Size(intf);
+		Py_ssize_t size = PyTuple_Size(intf.get());
 		for (Py_ssize_t i = 0; i < size; ++i)
 		{
-			if (PyTuple_GetItem(intf, i) == (PyObject*)target)
+			if (PyTuple_GetItem(intf.get(), i) == (PyObject*)target)
 			{
 				JP_TRACE("implicit python");
 				match.conversion = this;
@@ -1037,9 +1037,9 @@ public:
 		jvalue v;
 		v.l = 0;
 		JPPyObject probe_result = JPPyObject::accept(PyJPModule_probe(Py_TYPE(match.object)));
-		PyObject* jcls = PyTuple_GetItem(probe_result.get(), 0);
-		PyObject* meth = PyTuple_GetItem(probe_result.get(), 1);
-		JPPyObject proxy_args = JPPyObject::accept(PyTuple_Pack(4, match.object, meth, jcls, Py_True));
+		JPPyObject jcls = JPPyObject::use(PyTuple_GetItem(probe_result.get(), 0));
+		JPPyObject meth = JPPyObject::use(PyTuple_GetItem(probe_result.get(), 1));
+		JPPyObject proxy_args = JPPyObject::accept(PyTuple_Pack(4, match.object, meth.get(), jcls.get(), Py_True));
 		if (!proxy_args.isValid())
 			return v;
 		JPPyObject proxy_instance = JPPyObject::accept(PyJPProxy_Type->tp_new(PyJPProxy_Type, proxy_args.get(), nullptr));

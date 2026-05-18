@@ -306,9 +306,9 @@ JPProxyIndirectAttr::~JPProxyIndirectAttr() = default;
 JPProxyIndirectDict::~JPProxyIndirectDict() = default;
 JPProxyFunctional::~JPProxyFunctional() = default;
 
-JPPyObject JPProxyDirect::getCallable(PyObject* pyname, int& addSelf)
+JPPyObject JPProxyDirect::getCallable(PyObject* name, int& addSelf)
 {
-	return JPPyObject::accept(PyObject_GetAttr((PyObject*) m_Instance, pyname));
+	return JPPyObject::accept(PyObject_GetAttr((PyObject*) m_Instance, name));
 }
 
 JPPyObject JPProxyIndirectAttr::getCallable(PyObject* name, int& addSelf)

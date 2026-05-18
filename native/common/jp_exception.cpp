@@ -25,6 +25,37 @@
 static_assert(std::is_nothrow_copy_constructible<JPypeException>::value,
 			  "S must be nothrow copy constructible");
 
+#if PY_VERSION_HEX < 0x030C0000
+// --- Emulation Layer for Python 3.6 - 3.11 ---
+inline PyObject* PyErr_GetRaisedException()
+{
+    PyObject *type = nullptr, *value = nullptr, *traceback = nullptr;
+    PyErr_Fetch(&type, &value, &traceback);
+    if (type == nullptr)
+        return nullptr;
+    PyErr_NormalizeException(&type, &value, &traceback);
+    if (traceback != nullptr)
+    {
+        PyException_SetTraceback(value, traceback);
+        Py_DECREF(traceback);
+    }
+    Py_DECREF(type);
+    return value;
+}
+
+inline void PyErr_SetRaisedException(PyObject* exc)
+{
+    if (exc == nullptr)
+    {
+        PyErr_Clear();
+        return;
+    }
+    PyObject* traceback = PyException_GetTraceback(exc); // Returns a new reference
+    Py_INCREF(Py_TYPE(exc));
+    PyErr_Restore((PyObject*)Py_TYPE(exc), exc, traceback);
+}
+#endif
+
 PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace);
 
 JPypeException::JPypeException(JPJavaFrame &frame, jthrowable th, const JPStackInfo& stackInfo)
@@ -226,30 +257,7 @@ void JPypeException::convertPythonToJava()
 	JPContext *context = frame.getContext();
 	jthrowable th;
 
-	JPPyObject exc;
-#if PY_VERSION_HEX >= 0x030C0000
-	exc = JPPyObject::claim(PyErr_GetRaisedException()); // Clear the exception state
-#else
-	// Pre-3.12: Fetch the exception details (all returned as NEW references)
-	PyObject *type = nullptr, *value = nullptr, *traceback = nullptr;
-	PyErr_Fetch(&type, &value, &traceback); // Clear the exception data
-
-	if (type == nullptr)
-	{
-		fail(frame, "Python exception type was null");
-		return;
-	}
-	
-	// Normalizes type/value into a proper instance (modifies references in-place)
-	PyErr_NormalizeException(&type, &value, &traceback);
-	if (traceback != nullptr) {
-		PyException_SetTraceback(value, traceback);
-		Py_DECREF(traceback);
-	}
-	Py_XDECREF(type);
-	exc = JPPyObject::claim(value);
-#endif
-
+	JPPyObject exc = JPPyObject::claim(PyErr_GetRaisedException()); // Clear the exception state
 	if (isJavaThrowable((PyObject*) Py_TYPE(exc.get())))
 	{
 		JPValue* javaExc = PyJPValue_getJavaSlot(exc.get());
@@ -263,15 +271,11 @@ void JPypeException::convertPythonToJava()
 	}
 
 #if 0
-	PyObject* c_repr = PyObject_Repr((PyObject*) Py_TYPE(exc.get()));
-	PyObject* v_repr = PyObject_Repr(exc.get());
-	
+	JPPyObject c_repr = JPPyObject::claim(PyObject_Repr((PyObject*) Py_TYPE(exc.get())));
+	JPPyObject repr = JPPyObject::claim(PyObject_Repr(exc.get()));
 	printf("DEBUG BOOTSTRAP:\n");
-	printf("  Class: %s\n", c_repr ? PyUnicode_AsUTF8(c_repr) : "NULL");
-	printf("  Value: %s\n", v_repr ? PyUnicode_AsUTF8(v_repr) : "NULL");
-	
-	Py_XDECREF(c_repr);
-	Py_XDECREF(v_repr);
+	printf("  Class: %s\n", c_repr.isValid() ? PyUnicode_AsUTF8(c_repr.get()) : "NULL");
+	printf("  Value: %s\n", v_repr.isValid() ? PyUnicode_AsUTF8(v_repr.get()) : "NULL");
 #endif
 
 	// Locate and invoke our Python module's conversion engine: _jpype._pyexc_convert
@@ -319,6 +323,8 @@ void JPypeException::convertPythonToJava()
 	JP_TRACE_OUT;
 }
 
+
+
 void JPypeException::toPython()
 {
 	const char* mesg = nullptr;
@@ -354,34 +360,16 @@ void JPypeException::toPython()
 		{
 			std::stringstream ss;
 			ss << "JVM DLL not found: " << mesg;
-			PyObject* val = Py_BuildValue("(iz)", m_Error.i,
-					ss.str().c_str());
-			if (val != nullptr)
-			{
-				PyObject* exc = PyObject_Call(PyExc_OSError, val, nullptr);
-				Py_DECREF(val);
-				if (exc != nullptr)
-				{
-					PyErr_SetObject(PyExc_OSError, exc);
-					Py_DECREF(exc);
-				}
-			}
+			JPPyObject val = JPPyObject::call(Py_BuildValue("(iz)", m_Error.i, ss.str().c_str()));
+			JPPyObject exc = JPPyObject::call(PyObject_Call(PyExc_OSError, val.get(), nullptr));
+			PyErr_SetObject(PyExc_OSError, exc.get());
 		} else if (m_Type == JPError::_os_error_windows)
 		{
 			std::stringstream ss;
-			ss << "JVM DLL not found: " << mesg;
-			PyObject* val = Py_BuildValue("(izzi)", 2,
-					ss.str().c_str(), NULL, m_Error.i);
-			if (val != nullptr)
-			{
-				PyObject* exc = PyObject_Call(PyExc_OSError, val, nullptr);
-				Py_DECREF(val);
-				if (exc != nullptr)
-				{
-					PyErr_SetObject(PyExc_OSError, exc);
-					Py_DECREF(exc);
-				}
-			}
+            ss << "JVM DLL not found: " << mesg;
+            JPPyObject val = JPPyObject::call(Py_BuildValue("(izzi)", 2, ss.str().c_str(), NULL, m_Error.i));
+            JPPyObject exc = JPPyObject::call(PyObject_Call(PyExc_OSError, val.get(), nullptr));
+            PyErr_SetObject(PyExc_OSError, exc.get());
 		}// GCOVR_EXCL_STOP
 
 		else if (m_Type == JPError::_python_exc)
@@ -400,40 +388,52 @@ void JPypeException::toPython()
 		// Attach our info as the cause
 		if (_jp_cpp_exceptions)
 		{
-			JPPyErrFrame eframe;
-			eframe.normalize();
-			JPPyObject args = JPPyObject::call(Py_BuildValue("(s)", "C++ Exception"));
-			JPPyObject trace = JPPyObject::call(PyTrace_FromJPStackTrace(m_Trace));
-			JPPyObject cause = JPPyObject::accept(PyObject_Call(PyExc_Exception, args.get(), nullptr));
-			if (!cause.isNull())
-			{
-				PyException_SetTraceback(cause.get(), trace.get());
-				PyException_SetCause(eframe.m_ExceptionValue.get(), cause.keep());
-			}
+            JPPyObject activeException = JPPyObject::claim(PyErr_GetRaisedException());
+            if (activeException.isValid())
+            {
+                JPPyObject args = JPPyObject::call(Py_BuildValue("(s)", "C++ Exception"));
+                JPPyObject trace = JPPyObject::call(PyTrace_FromJPStackTrace(m_Trace));
+                JPPyObject cause = JPPyObject::call(PyObject_Call(PyExc_Exception, args.get(), nullptr));
+                
+                PyException_SetTraceback(cause.get(), trace.get());
+                PyException_SetCause(activeException.get(), cause.keep());
+                PyErr_SetRaisedException(activeException.keepNull());
+            }
 		}
 	}// GCOVR_EXCL_START
 	catch (JPypeException& ex)
 	{
 		// Print our parting words
-		JPTracer::trace("Fatal error in exception handling");
-		JPTracer::trace("Handling:", mesg);
-		JPTracer::trace("Type:", m_Error.l);
-		if (ex.m_Type == JPError::_python_error)
-		{
-			JPPyErrFrame eframe;
-			JPTracer::trace("Inner Python:", ((PyTypeObject*) eframe.m_ExceptionClass.get())->tp_name);
-			return;  // Let these go to Python, so we can see the error
-		} else if (ex.m_Type == JPError::_java_error)
-			JPTracer::trace("Inner Java:", ex.what());
-		else
-			JPTracer::trace("Inner:", ex.what());
+        JPTracer::trace("Fatal error in exception handling");
+        JPTracer::trace("Handling:", mesg);
+        JPTracer::trace("Type:", m_Error.l);
+        
+        if (ex.m_Type == JPError::_python_error)
+        {
+            // 1. Snatch the exception instance cleanly from the stack (Python 3.12 style)
+            JPPyObject activeException = JPPyObject::claim(PyErr_GetRaisedException());
+            if (activeException.isValid())
+            {
+                // 2. Safe type tracking: Get the type name directly from the instance object layout
+                const char* typeName = Py_TYPE(activeException.get())->tp_name;
+                JPTracer::trace("Inner Python:", typeName);
+                
+                // 3. Put it right back onto the Python error stack undisturbed
+                PyErr_SetRaisedException(activeException.keepNull());
+            }
+            return;  // Let these go to Python, so we can see the error
+        } 
+        else if (ex.m_Type == JPError::_java_error)
+            JPTracer::trace("Inner Java:", ex.what());
+        else
+            JPTracer::trace("Inner:", ex.what());
 
-		JPStackInfo info = ex.m_Trace.front();
-		JPTracer::trace(info.getFile(), info.getFunction(), info.getLine());
+        JPStackInfo info = ex.m_Trace.front();
+        JPTracer::trace(info.getFile(), info.getFunction(), info.getLine());
 
-		// Heghlu'meH QaQ jajvam!
-		PyErr_SetString(PyExc_RuntimeError, "Fatal error occurred");
-		return;
+        // Heghlu'meH QaQ jajvam! ("Today is a good day to die!")
+        PyErr_SetString(PyExc_RuntimeError, "Fatal error occurred");
+        return;
 	} catch (...)
 	{
 		// urp?!

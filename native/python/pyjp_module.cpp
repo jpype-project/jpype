@@ -651,26 +651,34 @@ PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 
 // GCOVR_EXCL_START
 
+
 PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 {
-	JPContext *context = PyJPModule_getContext();
-	JPGCStats stats;
-	context->m_GC->getStats(stats);
-	PyObject *out = PyDict_New();
-	PyObject *res;
-	PyDict_SetItemString(out, "current", res = PyLong_FromSsize_t((Py_ssize_t)(stats.current_rss)));
-	Py_DECREF(res);
-	PyDict_SetItemString(out, "java", res = PyLong_FromSsize_t((Py_ssize_t)(stats.java_rss)));
-	Py_DECREF(res);
-	PyDict_SetItemString(out, "python", res = PyLong_FromSsize_t((Py_ssize_t)(stats.python_rss)));
-	Py_DECREF(res);
-	PyDict_SetItemString(out, "max", res = PyLong_FromSsize_t((Py_ssize_t)(stats.max_rss)));
-	Py_DECREF(res);
-	PyDict_SetItemString(out, "min", res = PyLong_FromSsize_t((Py_ssize_t)(stats.min_rss)));
-	Py_DECREF(res);
-	PyDict_SetItemString(out, "triggered", res = PyLong_FromSsize_t((Py_ssize_t)(stats.python_triggered)));
-	Py_DECREF(res);
-	return out;
+    JPContext *context = PyJPModule_getContext();
+    JPGCStats stats;
+    context->m_GC->getStats(stats);
+
+    // 1. Secure the dictionary allocation immediately
+    JPPyObject out = JPPyObject::call(PyDict_New());
+
+    // 2. Explicitly sequence the allocations on the stack.
+    //    Each container is guaranteed to stay alive until the loop/function block ends,
+    //    meaning the reference count remains perfectly stable while PyDict runs.
+    JPPyObject value   = JPPyObject::call(PyLong_FromSsize_t((Py_ssize_t)stats.current_rss));
+    PyDict_SetItemString(out.get(), "current", value.get());
+    value      = JPPyObject::call(PyLong_FromSsize_t((Py_ssize_t)stats.java_rss));
+    PyDict_SetItemString(out.get(), "java", value.get());
+    value    = JPPyObject::call(PyLong_FromSsize_t((Py_ssize_t)stats.python_rss));
+    PyDict_SetItemString(out.get(), "python", value.get());
+    value   = JPPyObject::call(PyLong_FromSsize_t((Py_ssize_t)stats.max_rss));
+    PyDict_SetItemString(out.get(), "max", value.get());
+    value   = JPPyObject::call(PyLong_FromSsize_t((Py_ssize_t)stats.min_rss));
+    PyDict_SetItemString(out.get(), "min", value.get());
+    value = JPPyObject::call(PyLong_FromSsize_t((Py_ssize_t)stats.python_triggered));
+    PyDict_SetItemString(out.get(), "triggered", value.get());
+
+    // 3. Hand ownership back to Python cleanly
+    return out.keep();
 }
 // GCOVR_EXCL_STOP
 
@@ -780,7 +788,6 @@ static void interrogate(JPPyObject& interfaces, PyTypeObject *type)
 
 bool finalizeInterfaces(JPPyObject& existing_interfaces, JPPyObject& interfaces)
 {
-	printf("finalize interfaces\n");
 	// Convert the list of interfaces into a tuple
 	//   ::call will throw so no need to check isValid
 	JPPyObject interfaces_tuple = JPPyObject::call(PyList_AsTuple(interfaces.get())); // Convert list to tuple
@@ -806,7 +813,6 @@ bool finalizeInterfaces(JPPyObject& existing_interfaces, JPPyObject& interfaces)
 
 bool finalizeMethods(JPPyObject& existing_methods, JPPyObject& existing_interfaces)
 {
-	printf("finalize methods %s\n", Py_TYPE(existing_interfaces.get())->tp_name);
 	// First consult the methods cache for the tuple
 	PyObject* methods_item = PyDict_GetItem(_cacheMethodsDict, existing_interfaces.get()); // Borrowed reference
 	if (methods_item == nullptr)
@@ -960,7 +966,6 @@ static PyObject* module_probe(PyObject *module, PyObject *obj)
 {
 	JP_PY_TRY("probe");
 	PyTypeObject *type = Py_TYPE(obj);
-
 	PyObject* result = PyJPModule_probe(type);
 	
 	// Safety check: If a nullptr comes back, ensure the exception state is set!
@@ -997,27 +1002,26 @@ PyObject* PyJPModule_pyobject(PyTypeObject *target_type, PyObject *object_to_cas
 		return nullptr;
 
 	// Extract the resolved Java class and method pointers from the probe tuple
-	PyObject* jcls = PyTuple_GetItem(probe_result.get(), 0);
-	PyObject* meth = PyTuple_GetItem(probe_result.get(), 1);
+	JPPyObject jcls = JPPyObject::use(PyTuple_GetItem(probe_result.get(), 0));
+	JPPyObject meth = JPPyObject::use(PyTuple_GetItem(probe_result.get(), 1));
 
 	// =========================================================================
 	// PRE-FLIGHT OPTIMIZATION: Verify target_type matches the probe capabilities
 	// =========================================================================
 	bool type_matched = false;
-
-	if (PyTuple_Check(jcls))
+	if (PyTuple_Check(jcls.get()))
 	{
-		Py_ssize_t size = PyTuple_Size(jcls);
+		Py_ssize_t size = PyTuple_Size(jcls.get());
 		for (Py_ssize_t i = 0; i < size; ++i)
 		{
-			if (PyTuple_GetItem(jcls, i) == (PyObject*)target_type)
+			if (PyTuple_GetItem(jcls.get(), i) == (PyObject*)target_type)
 			{
 				type_matched = true;
 				break;
 			}
 		}
 	}
-	else if (jcls == (PyObject*)target_type)
+	else if (jcls.get() == (PyObject*)target_type)
 	{
 		type_matched = true;
 	}
@@ -1036,7 +1040,7 @@ PyObject* PyJPModule_pyobject(PyTypeObject *target_type, PyObject *object_to_cas
 	// =========================================================================
 
 	// Pack arguments securely: (object_to_cast, dispatch_meth, target_jcls, convert_flag)
-	JPPyObject proxy_args = JPPyObject::accept(PyTuple_Pack(4, object_to_cast, meth, jcls, Py_True));
+	JPPyObject proxy_args = JPPyObject::accept(PyTuple_Pack(4, object_to_cast, meth.get(), jcls.get(), Py_True));
 	if (!proxy_args.isValid())
 		return nullptr;
 
@@ -1091,7 +1095,6 @@ static PyObject* module_pyobject(PyObject *module, PyObject *args_in)
 		{
 			PyTypeObject* target_py_type = (PyTypeObject*)target_type;
 			PyTypeObject* source_py_type = Py_TYPE(object_to_cast);
-			
 			PyErr_Format(PyExc_TypeError, 
 				"JPype Bridge Error: Failed to cast Python object of type '%s' to target Java proxy type '%s' without setting an explicit exception.", 
 				source_py_type->tp_name, 
@@ -1107,19 +1110,16 @@ static PyObject* module_pyobject(PyObject *module, PyObject *args_in)
 
 static void PyJPModule_InitNumpy()
 {
-	PyObject *numpy = PyImport_ImportModule("numpy");
-	if (numpy == nullptr)
-	{
-		PyErr_Clear();
+	JPPyObject numpy = JPPyObject::accept(PyImport_ImportModule("numpy"));
+	if (numpy.isNull())
 		return;
-	}
 
 	// Do it one by one. If one fails, you can actually handle it.
-	_numpy_generic_type = PyObject_GetAttrString(numpy, "generic");
-	_numpy_bool_type	= PyObject_GetAttrString(numpy, "bool_");
-	_numpy_int8_type   = PyObject_GetAttrString(numpy, "int8");
-	_numpy_int16_type   = PyObject_GetAttrString(numpy, "int16");
-	_numpy_int32_type   = PyObject_GetAttrString(numpy, "int32");
+	_numpy_generic_type = PyObject_GetAttrString(numpy.get(), "generic");
+	_numpy_bool_type	= PyObject_GetAttrString(numpy.get(), "bool_");
+	_numpy_int8_type   = PyObject_GetAttrString(numpy.get(), "int8");
+	_numpy_int16_type   = PyObject_GetAttrString(numpy.get(), "int16");
+	_numpy_int32_type   = PyObject_GetAttrString(numpy.get(), "int32");
 
 	// Check for nulls BEFORE you try to access internals
 	if (_numpy_int32_type && _numpy_generic_type)
@@ -1127,8 +1127,6 @@ static void PyJPModule_InitNumpy()
 		_numpy_typepos = PyTuple_GET_SIZE(((PyTypeObject*)_numpy_int32_type)->tp_mro);
 		_numpy_genericpos = PyTuple_GET_SIZE(((PyTypeObject*)_numpy_generic_type)->tp_mro);
 	}
-
-	Py_DECREF(numpy);
 }
 
 #if 1
@@ -1243,32 +1241,30 @@ static PyObject* PyJPModule_ready(PyObject* self, PyObject* args)
 	}
 
 	// Late-bind our newly added C++ context exception converter callback
-	PyObject* exc_func = PyDict_GetItemString(module_dict, "_pyexc_convert");
-	if (exc_func != nullptr)
+	JPPyObject exc_func = JPPyObject::use(PyDict_GetItemString(module_dict, "_pyexc_convert"));
+	if (exc_func.isValid())
 	{
-		Py_XINCREF(exc_func);
 		if (context->m_PyExcConvert != nullptr)
 			Py_DECREF(context->m_PyExcConvert);
-		context->m_PyExcConvert = exc_func;
+		context->m_PyExcConvert = exc_func.keep();
 	}
 
 	// 2. Safely resolve external collections.abc types
-	PyObject* abc_module = PyImport_ImportModule("collections.abc");
-	if (abc_module != nullptr)
+	JPPyObject abc_module = JPPyObject::accept(PyImport_ImportModule("collections.abc"));
+	if (abc_module.isValid())
 	{
 		// Since loadResources didn't cover external module types, resolve them here.
 		// Note: abc_sequence, abc_mapping, etc., should be declared as global PyObject* variables at the top of your file
-		abc_sequence   = PyObject_GetAttrString(abc_module, "Sequence");
-		abc_mapping	= PyObject_GetAttrString(abc_module, "Mapping");
-		abc_generator  = PyObject_GetAttrString(abc_module, "Generator");
-		abc_iterator   = PyObject_GetAttrString(abc_module, "Iterator");
-		abc_iterable   = PyObject_GetAttrString(abc_module, "Iterable");
-		abc_coroutine  = PyObject_GetAttrString(abc_module, "Coroutine");
-		abc_awaitable  = PyObject_GetAttrString(abc_module, "Awaitable");
-		abc_set		= PyObject_GetAttrString(abc_module, "Set");
-		abc_collection = PyObject_GetAttrString(abc_module, "Collection");
-		abc_container  = PyObject_GetAttrString(abc_module, "Container");
-		Py_DECREF(abc_module);
+		abc_sequence   = PyObject_GetAttrString(abc_module.get(), "Sequence");
+		abc_mapping	= PyObject_GetAttrString(abc_module.get(), "Mapping");
+		abc_generator  = PyObject_GetAttrString(abc_module.get(), "Generator");
+		abc_iterator   = PyObject_GetAttrString(abc_module.get(), "Iterator");
+		abc_iterable   = PyObject_GetAttrString(abc_module.get(), "Iterable");
+		abc_coroutine  = PyObject_GetAttrString(abc_module.get(), "Coroutine");
+		abc_awaitable  = PyObject_GetAttrString(abc_module.get(), "Awaitable");
+		abc_set		= PyObject_GetAttrString(abc_module.get(), "Set");
+		abc_collection = PyObject_GetAttrString(abc_module.get(), "Collection");
+		abc_container  = PyObject_GetAttrString(abc_module.get(), "Container");
 	}
 
 	if (_protocolDict != nullptr)
@@ -1409,7 +1405,11 @@ JNIEXPORT jlong JNICALL Java_org_jpype_internal_JPypeStringManager_get(JNIEnv *e
 		string str = frame.toStringUTF8(name);
 		auto len = static_cast<Py_ssize_t>(str.size());
 		JPPyObject bytes = JPPyObject::call(PyBytes_FromStringAndSize(str.c_str(), len));
+
+		// This messes with ownership so it is dangerout to apply as RAII
 		PyObject* pyStr = PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict");
+		if (pyStr == nullptr)
+			JP_RAISE_PYTHON();
 		PyUnicode_InternInPlace(&pyStr);
 		PyObject* canonical = PyDict_SetDefault(_strings_dict, pyStr, pyStr);
 		Py_XINCREF(canonical);
