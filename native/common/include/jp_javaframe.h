@@ -79,10 +79,10 @@ public:
 	 * @throws JPypeException if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
-	static JPJavaFrame inner(int size = LOCAL_FRAME_DEFAULT)
-	{
-		return {nullptr, size, false};
-	}
+//	static JPJavaFrame inner(int size = LOCAL_FRAME_DEFAULT)
+//	{
+//		return {nullptr, size, false};
+//	}
 
 	/** Create a new JavaFrame when called from Java.
 	 *
@@ -123,7 +123,7 @@ public:
 	 * Further calls to the frame will still suceed as we do not
 	 * check for operation on a closed frame, but is not advised.
 	 */
-	jobject keep(jobject);
+//	jobject keep(jobject);
 
 	/** Create a new global reference to a java object.
 	 *

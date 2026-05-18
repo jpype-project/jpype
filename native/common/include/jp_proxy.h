@@ -32,7 +32,7 @@ public:
 		return m_InterfaceClasses;
 	}
 
-	jvalue getProxy();
+	jvalue getProxy(JPJavaFrame& frame);
 
 	virtual JPPyObject getCallable(PyObject* name, int& addSelf) = 0;
 	static void releaseProxyPython(void* host);

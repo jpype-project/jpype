@@ -186,6 +186,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	JP_TRACE("offset", match.m_Offset == 1);
 	JP_TRACE("arguments length", len);
 	JP_TRACE("types length", tlen);
+
 	if (match.m_IsVarIndirect)
 	{
 		JP_TRACE("Pack indirect varargs");

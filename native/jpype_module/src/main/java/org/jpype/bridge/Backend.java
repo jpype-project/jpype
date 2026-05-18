@@ -128,10 +128,7 @@ public interface Backend
   PyObject getattrDefault(PyObject obj, Object key, PyObject defaultValue);
 
   // Get an attribute from a Python object by key.
-  PyObject getattrObject(PyObject obj, Object key);
-
-  // Get an attribute from a Python object by name.
-  PyObject getattrString(Object obj, CharSequence attrName);
+  PyObject getattr(PyObject obj, Object key);
 
   // Get an item from a Python mapping object by key.
   PyObject getitemMappingObject(Object obj, Object key);

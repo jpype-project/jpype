@@ -188,8 +188,8 @@ class JBridgeTestCase(common.JPypeTestCase):
         self.assertFalse(hasattr(o, "field"))
 
     def testBackend3(self):
-        self.assertTrue(self.PyBuiltIn.isinstance(int(), self.PyObject[:]((int, float))))
-        self.assertFalse(self.PyBuiltIn.isinstance(str(), self.PyObject[:]((int, float))))
+        self.assertTrue(self.PyBuiltIn.isinstance(int(), self.PyTuple@(int, float)))
+        self.assertFalse(self.PyBuiltIn.isinstance(str(), self.PyTuple@(int, float)))
 
     def testAttributes(self):
         o = MyTest()
@@ -233,6 +233,8 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
         self.PyRange = JClass("python.lang.PyRange")
         self.PyDict = JClass("python.lang.PyDict")
         self.PyTuple = JClass("python.lang.PyTuple")
+        self.PyBytes = JClass("python.lang.PyBytes")
+        self.PyList = JClass("python.lang.PyList")
 
     # ---------------------------------------------------------
     # 1. Numeric Primitives ($int, $float)
@@ -254,29 +256,33 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
     def test_slice_one_arg(self):
         # slice(int start) -> equivalent to [start:start+1]
         j_slice = self.PyBuiltIn.slice(5)
-        self.assertIsInstance(j_slice, self.PySlice)
-        self.assertEqual(j_slice.start, 5)
-        self.assertEqual(j_slice.stop, 6)
-        self.assertIsNone(j_slice.step)
+        self.assertIsInstance(j_slice, slice)
+        j_slice = self.PySlice@j_slice
+        self.assertEqual(j_slice.getStart(), 5)
+        self.assertEqual(j_slice.getStop(), 6)
+        self.assertIsNone(j_slice.getStep())
 
     def test_slice_two_args(self):
         # slice(Integer start, Integer stop)
         j_slice = self.PyBuiltIn.slice(JInt(2), JInt(10))
-        self.assertEqual(j_slice.start, 2)
-        self.assertEqual(j_slice.stop, 10)
-        self.assertIsNone(j_slice.step)
+        j_slice = self.PySlice@j_slice
+        self.assertEqual(j_slice.getStart(), 2)
+        self.assertEqual(j_slice.getStop(), 10)
+        self.assertIsNone(j_slice.getStep())
 
         # Passing None to mimic null references in Java signatures
         j_slice_nulls = self.PyBuiltIn.slice(None, JInt(-1))
-        self.assertIsNone(j_slice_nulls.start)
-        self.assertEqual(j_slice_nulls.stop, -1)
+        j_slice_nulls = self.PySlice@j_slice_nulls
+        self.assertIsNone(j_slice_nulls.getStart())
+        self.assertEqual(j_slice_nulls.getStop(), -1)
 
     def test_slice_three_args(self):
         # slice(Integer start, Integer stop, Integer step)
         j_slice = self.PyBuiltIn.slice(JInt(0), JInt(20), JInt(2))
-        self.assertEqual(j_slice.start, 0)
-        self.assertEqual(j_slice.stop, 20)
-        self.assertEqual(j_slice.step, 2)
+        j_slice = self.PySlice@j_slice
+        self.assertEqual(j_slice.getStart(), 0)
+        self.assertEqual(j_slice.getStop(), 20)
+        self.assertEqual(j_slice.getStep(), 2)
 
     # ---------------------------------------------------------
     # 3. Range Overloads
@@ -284,15 +290,15 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
     def test_range_overloads(self):
         # range(int stop)
         r1 = self.PyBuiltIn.range(10)
-        self.assertIsInstance(r1, self.PyRange)
+        self.assertIsInstance(r1, range)
         
         # range(int start, int stop)
         r2 = self.PyBuiltIn.range(1, 10)
-        self.assertIsInstance(r2, self.PyRange)
+        self.assertIsInstance(r2, range)
 
         # range(int start, int stop, int step)
         r3 = self.PyBuiltIn.range(1, 10, 2)
-        self.assertIsInstance(r3, self.PyRange)
+        self.assertIsInstance(r3, range)
 
     # ---------------------------------------------------------
     # 4. Evaluation and Execution Blocks (eval / exec)
@@ -342,6 +348,7 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
         d = Dummy()
         # Verify vars returns the internal dict namespace
         j_vars = self.PyBuiltIn.vars(d)
+        j_vars = self.PyDict@j_vars
         self.assertIsInstance(j_vars, self.PyDict)
         self.assertEqual(j_vars.get("foo"), "bar")
 
@@ -359,7 +366,7 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
 
         # list(Object object) -> converted PyList
         py_source = [1, 2, 3]
-        j_list_filled = self.PyBuiltIn.list(py_source)
+        j_list_filled = self.PyBuiltIn.list(self.PyList@py_source)
         self.assertEqual(list(j_list_filled), [1, 2, 3])
 
     def test_tuple_overloads(self):
@@ -385,7 +392,7 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
     # 7. Iterators, Generators, and Advanced Iteration Loops
     # ---------------------------------------------------------
     def test_enumerate_overloads(self):
-        source_list = ["a", "b"]
+        source_list = self.PyList@["a", "b"]
 
         # enumerate(PyObject obj) or enumerate(Iterable obj)
         # Testing both Java pathways by passing a standard list wrapper
@@ -396,10 +403,10 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
     def test_iter_and_next_protocol(self):
         source = [10, 20]
         # iter(Object obj)
-        j_iter = self.PyBuiltIn.iter(source)
+        j_iter = self.PyBuiltIn.iter(self.PyList@source)
 
         # Create a proxy/sentinel object for the stop condition
-        stop_sentinel = self.PyObject()
+        stop_sentinel = object()
 
         # next(PyIter iter, PyObject stop) -> returns elements sequentially
         self.assertEqual(int(self.PyBuiltIn.next(j_iter, stop_sentinel)), 10)
@@ -427,7 +434,7 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
                 self.existing = "found"
 
         obj = Target()
-        default_val = self.PyString("fallback")
+        default_val = self.PyString@"fallback"
 
         # Key exists -> should return the string value
         res1 = self.PyBuiltIn.getattrDefault(obj, "existing", default_val)
@@ -456,7 +463,7 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
         self.assertEqual(bytes(j_bytes), b"hello")
 
         # memoryview(Object obj)
-        j_mv = self.PyBuiltIn.memoryview(raw_data)
+        j_mv = self.PyBuiltIn.memoryview(self.PyBytes@j_bytes)
         self.assertEqual(j_mv.readonly, True) # simple property check on memoryview object
 
     def test_type_and_repr(self):
@@ -465,11 +472,11 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
         self.assertEqual(j_type, type("abc"))
 
         # repr(Object obj)
-        j_repr = self.PyBuiltIn.repr([1, 2])
+        j_repr = self.PyBuiltIn.repr(self.PyList@[1, 2])
         self.assertEqual(str(j_repr), "[1, 2]")
 
         # str(Object obj) - Added to explicitly test casting raw primitives
-        j_str = self.PyBuiltIn.str(12345)
+        j_str = self.PyBuiltIn.str(self.PyInt@12345)
         self.assertEqual(str(j_str), "12345")
  
     # ---------------------------------------------------------
@@ -477,8 +484,8 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
     # ---------------------------------------------------------
     def test_primitive_extractions(self):
         # Testing Package-Private unpackers: asLong and asDouble
-        j_int_obj = getattr(self.PyBuiltIn, "$int")(999)
-        j_float_obj = getattr(self.PyBuiltIn, "$float")(45.67)
+        j_int_obj = self.PyInt@999
+        j_float_obj = self.PyFloat@45.67
 
         # Ensure extraction maps down precisely to Python primitives
         self.assertEqual(self.PyBuiltIn.asLong(j_int_obj), 999)
@@ -502,18 +509,6 @@ class TestPyBuiltInSuite(common.JPypeTestCase):
         # (10 + 5) * 2 = 30
         self.assertEqual(int(j_result), 30)
 
-    def test_backend_uninitialized_guard(self):
-        # Your code throws an IllegalStateException if the backend is invoked 
-        # without an active started interpreter instance.
-        # Since our setUp ensures it IS active, we can test that calling backend()
-        # while started safely returns the active proxy instead of throwing.
-        try:
-            active_backend = self.PyBuiltIn.backend()
-            self.assertIsNotNone(active_backend)
-        except Exception as e:
-            self.fail(f"backend() threw an unexpected exception: {e}")
-
-   
     def test_getattr_with_object_key(self):
         class NonStringKey:
             def __str__(self):

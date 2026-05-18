@@ -1054,7 +1054,7 @@ PyObject* PyJPModule_pyobject(PyTypeObject *target_type, PyObject *object_to_cas
 		return nullptr;
 
 	// Fetch the live JNI local/global reference structure
-	jvalue v = proxy->getProxy();
+	jvalue v = proxy->getProxy(frame);
 
 	if (targetClass == nullptr)
 		return nullptr;

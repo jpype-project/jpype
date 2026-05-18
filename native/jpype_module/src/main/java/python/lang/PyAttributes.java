@@ -191,7 +191,13 @@ public class PyAttributes implements Map<PyObject, PyObject>
   @Override
   public PyObject get(Object key)
   {
-    return PyBuiltIn.getattr(obj, key);
+    if (key == null)
+      return null;
+    if (key instanceof CharSequence)
+      return PyBuiltIn.getattr(obj, (CharSequence) key);
+    if (key instanceof PyString)
+      return PyBuiltIn.getattr(obj, (PyString) key);
+    return PyBuiltIn.getattr(obj, key.toString());
   }
 
   /**

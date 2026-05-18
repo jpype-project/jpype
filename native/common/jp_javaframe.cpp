@@ -71,18 +71,18 @@ JPContext* JPJavaFrame::getContext()
 	return JPContext_global;
 }
 
-jobject JPJavaFrame::keep(jobject obj)
-{
-	if (m_Outer)
-		JP_RAISE(PyExc_SystemError, "Keep on outer frame");
-	JP_FRAME_CHECK();
-	m_Popped = true;
-	JP_TRACE_JAVA("Keep", obj);
-	JP_TRACE_JAVA("~JavaFrame (keep)", (jobject) - 2);
-	obj = m_Env->PopLocalFrame(obj);
-	JP_TRACE_JAVA("Return", obj);
-	return obj;
-}
+//jobject JPJavaFrame::keep(jobject obj)
+//{
+//	if (m_Outer)
+//		JP_RAISE(PyExc_SystemError, "Keep on outer frame");
+//	JP_FRAME_CHECK();
+//	m_Popped = true;
+//	JP_TRACE_JAVA("Keep", obj);
+//	JP_TRACE_JAVA("~JavaFrame (keep)", (jobject) - 2);
+//	obj = m_Env->PopLocalFrame(obj);
+//	JP_TRACE_JAVA("Return", obj);
+//	return obj;
+//}
 
 JPJavaFrame::~JPJavaFrame()
 {
@@ -1188,12 +1188,11 @@ jobject JPJavaFrame::callMethod(jobject method, jobject obj, jobject args)
 	JPContext* context = getContext();
 	if (context->m_CallMethodID == nullptr)
 		return nullptr;
-	JPJavaFrame frame(*this);
 	jvalue v[3];
 	v[0].l = method;
 	v[1].l = obj;
 	v[2].l = args;
-	return frame.keep(frame.CallObjectMethodA(context->m_Reflector.get(), context->m_CallMethodID, v));
+	return CallObjectMethodA(context->m_Reflector.get(), context->m_CallMethodID, v);
 	JP_TRACE_OUT;
 }
 

@@ -186,7 +186,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyInstance_hos
 				auto *boxed =  dynamic_cast<JPBoxedType *>( (dynamic_cast<JPPrimitiveType*>( returnClass))->getBoxedClass(frame));
 				jvalue res2;
 				res2.l = boxed->box(frame, res);
-				return frame.keep(res2.l);
+				return res2.l;
 			}
 			if (returnClass->findJavaConversion(returnMatch) == JPMatch::_none)
 			{
@@ -196,7 +196,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyInstance_hos
 
 			JP_TRACE("Convert return to", returnClass->getCanonicalName());
 			jvalue res = returnMatch.convert();
-			return frame.keep(res.l);
+			return res.l;
 		} catch (JPypeException& ex)
 		{
 			JP_TRACE("JPypeException raised");
@@ -263,10 +263,9 @@ void JPProxy::releaseProxyPython(void* host)
 	Py_XDECREF(((JPProxy*) host)->m_Instance);
 }
 
-jvalue JPProxy::getProxy()
+jvalue JPProxy::getProxy(JPJavaFrame& frame)
 {
 	JP_TRACE_IN("JPProxy::getProxy");
-	JPJavaFrame frame = JPJavaFrame::inner();
 
 	// We reuse the reference but to avoid loops we use weak referencing
 	jobject instance = nullptr;
@@ -285,7 +284,7 @@ jvalue JPProxy::getProxy()
 	}
 	
 	jvalue out;
-	out.l = frame.keep(instance);
+	out.l = instance;
 	return out;
 	JP_TRACE_OUT;
 }

@@ -162,7 +162,7 @@ public:
 		JPProxy *proxy = PyJPProxy_getJPProxy(ret.get());
 		if (proxy != nullptr)
 		{
-			jvalue v = proxy->getProxy();
+			jvalue v = proxy->getProxy(*(match.frame));
 			JP_TRACE("Proxy", v.l);
 			v.l = match.frame->NewLocalRef(v.l);
 			return v;
@@ -417,14 +417,14 @@ public:
 
 	jvalue convert(JPMatch &match) override
 	{
-		JPJavaFrame frame(*match.frame);
+		JPJavaFrame& frame = *(match.frame);
 		jvalue res;
 		Py_ssize_t size = 0;
 		char *buffer = nullptr;
 		PyBytes_AsStringAndSize(match.object, &buffer, &size); // internal reference
 		jbyteArray byteArray = frame.NewByteArray((jsize) size);
 		frame.SetByteArrayRegion(byteArray, 0, (jsize) size, (jbyte*) buffer);
-		res.l = frame.keep(byteArray);
+		res.l = byteArray;
 		return res;
 	}
 } _byteArrayConversion;
@@ -479,14 +479,14 @@ public:
 	jvalue convert(JPMatch &match) override
 	{
 		JP_TRACE_IN("JPConversionBuffer::convert");
-		JPJavaFrame frame(*match.frame);
+		JPJavaFrame& frame = *(match.frame);
 		jvalue res;
 		auto *acls = (JPArrayClass *) match.closure;
 		auto length = (jsize) PySequence_Length(match.object);
 		JPClass *ccls = acls->getComponentType();
 		jarray array = ccls->newArrayOf(frame, (jsize) length);
 		ccls->setArrayRange(frame, array, 0, length, 1, match.object);
-		res.l = frame.keep(array);
+		res.l = array;
 		return res;
 		JP_TRACE_OUT;
 	}
@@ -541,14 +541,14 @@ public:
 
 	jvalue convert(JPMatch &match) override
 	{
-		JPJavaFrame frame(*match.frame);
+		JPJavaFrame& frame = *(match.frame);
 		jvalue res;
 		auto *acls = (JPArrayClass *) match.closure;
 		auto length = (jsize) PySequence_Length(match.object);
 		JPClass *ccls = acls->getComponentType();
 		jarray array = ccls->newArrayOf(frame, (jsize) length);
 		ccls->setArrayRange(frame, array, 0, length, 1, match.object);
-		res.l = frame.keep(array);
+		res.l = array;
 		return res;
 	}
 } _sequenceConversion;
@@ -990,7 +990,7 @@ public:
 
 	jvalue convert(JPMatch &match) override
 	{
-		return PyJPProxy_getJPProxy(match.object)->getProxy();
+		return PyJPProxy_getJPProxy(match.object)->getProxy(*(match.frame));
 	}
 } _proxyConversion;
 
@@ -1048,7 +1048,7 @@ public:
 		JPProxy *proxy = PyJPProxy_getJPProxy(proxy_instance.get());
 		if (proxy == nullptr)
 			return v;
-		return proxy->getProxy();
+		return proxy->getProxy(*(match.frame));
 	}
 } _pythonConversion;
 
@@ -1077,10 +1077,11 @@ public:
 	{
 		JPContext *context = JPContext_global;
 		jvalue value = match.slot->getValue();
+		jvalue out;
 		jclass cls = context->m_PyJavaObjectClass.get();
 		jmethodID mid = context->m_PyJavaObject_wrap;
-		value.l = match.frame->CallStaticObjectMethodA(cls, mid, &value);
-		return value;
+		out.l = match.frame->CallStaticObjectMethodA(cls, mid, &value);
+		return out;
 	}
 } _j2pythonConversion;
 

@@ -124,4 +124,5 @@ jpype_jar.vcxproj.filters
 project/clgc.c
 project/input.sh
 x64/
+RelWithDebInfo/
 

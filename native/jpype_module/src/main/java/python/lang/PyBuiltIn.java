@@ -30,6 +30,7 @@ public class PyBuiltIn
 {
 
   static Backend instance;
+  
 
   /**
    * Creates a new Python float object.
@@ -53,12 +54,12 @@ public class PyBuiltIn
     return backend().newInt(value);
   }
 
-  static double asDouble(PyObject obj)
+  public static double asDouble(PyObject obj)
   {
     return backend().asDouble(obj);
   }
 
-  static long asLong(PyObject obj)
+  public static long asLong(PyObject obj)
   {
     return backend().asLong(obj);
   }
@@ -182,11 +183,11 @@ public class PyBuiltIn
    * @param globals the global namespace as a {@link PyDict}.
    * @param locals the local namespace as a {@link PyMapping}.
    */
-  public static void exec(CharSequence statement, PyDict globals, PyMapping locals)
+  public static void exec(CharSequence statement, PyDict globals, PyMapping<?,?> locals)
   {
-    backend().eval(statement, globals, locals);
+    backend().exec(statement, globals, locals);
   }
-
+  
   /**
    * Retrieves the value of an attribute from a Python object.
    *
@@ -194,11 +195,14 @@ public class PyBuiltIn
    * @param key the name of the attribute to retrieve.
    * @return the value of the attribute as a {@link PyObject}.
    */
-  public static PyObject getattr(PyObject obj, Object key)
+  public static PyObject getattr(PyObject obj, PyString key)
   {
-    if (key instanceof CharSequence)
-      return backend().getattrString(obj, (CharSequence) key);
-    return backend().getattrObject(obj, key);
+    return backend().getattr(obj, key);
+  }
+
+  public static PyObject getattr(PyObject obj, CharSequence key)
+  {
+    return backend().getattr(obj, key);
   }
 
   public static PyObject getattrDefault(PyObject obj, Object key, PyObject defaultValue)
@@ -320,6 +324,10 @@ public class PyBuiltIn
   public static PyObject next(PyIter iter, PyObject stop)
   {
     return backend().next(iter, stop);
+  }
+  public static PyObject object()
+  {
+    return backend().object();
   }
 
   /**
@@ -501,6 +509,11 @@ public class PyBuiltIn
    * @throws NullPointerException if the provided object is {@code null}
    */
   public static PyDict vars(Object obj)
+  {
+    return backend().vars(obj);
+  }
+  
+  public static PyDict vars(PyObject obj)
   {
     return backend().vars(obj);
   }

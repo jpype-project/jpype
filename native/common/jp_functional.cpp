@@ -107,7 +107,6 @@ public:
 	{
 		auto *cls = (JPFunctional*) match.closure;
 		JP_TRACE_IN("JPConversionFunctional::convert");
-		JPJavaFrame frame = JPJavaFrame::inner();
 		auto *self = (PyJPProxy*) PyJPProxy_Type->tp_alloc(PyJPProxy_Type, 0);
 		JP_PY_CHECK();
 		JPClassList cl;
@@ -117,8 +116,7 @@ public:
 		self->m_Dispatch = match.object;
 		Py_INCREF(self->m_Target);
 		Py_INCREF(self->m_Dispatch);
-		jvalue v = self->m_Proxy->getProxy();
-		v.l = frame.keep(v.l);
+		jvalue v = self->m_Proxy->getProxy(*(match.frame));
 		Py_DECREF(self);
 		return v;
 		JP_TRACE_OUT;  // GCOVR_EXCL_LINE
