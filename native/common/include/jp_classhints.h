@@ -121,5 +121,7 @@ extern JPConversion *boxLongConversion;
 extern JPConversion *boxDoubleConversion;
 extern JPConversion *unboxConversion;
 extern JPConversion *proxyConversion;
+extern JPConversion *pythonConversion;
+extern JPConversion *j2pythonConversion;
 
 #endif /* JP_CLASSHINTS_H */

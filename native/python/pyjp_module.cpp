@@ -687,18 +687,8 @@ static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
-PyObject* PyJPModule_probe(PyTypeObject *type)
+static void interrogate(JPPyObject& interfaces, PyTypeObject *type)
 {
-	PyObject *mro = type->tp_mro;
-	Py_ssize_t sz = PyTuple_Size(mro);
-
-	// Safety check: Ensure our late-binding ready() milestone was reached
-	if (abc_sequence == nullptr)
-	{
-		PyErr_SetString(PyExc_RuntimeError, "JPype Engine Error: ready() checkpoint was not initialized.");
-		return nullptr;
-	}
-
 	// Buffer appears in 3.12 so will probe dunder instead
 	bool is_callable = (type->tp_call != nullptr);
 	bool is_buffer = (type->tp_as_buffer != nullptr);
@@ -768,7 +758,6 @@ PyObject* PyJPModule_probe(PyTypeObject *type)
 #endif
 
 	JPPyObject cls;
-	JPPyObject interfaces = JPPyObject::accept(PyList_New(0));
 
 	// We always add PyObject methods
 	PyObject *object = PyDict_GetItem(_concreteDict, (PyObject*) &PyBaseObject_Type); // borrowed
@@ -787,28 +776,22 @@ PyObject* PyJPModule_probe(PyTypeObject *type)
 		if (flags[i] && protocol_pipeline[i] != nullptr)
 			PyList_Append(interfaces.get(), protocol_pipeline[i]);
 	}
+}
 
-	// We look to see if there is a concrete method
-	if (sz > 1)
-	{
-		PyObject *primary = PyTuple_GetItem(mro, sz-2); // borrowed
-		cls = JPPyObject::use(PyDict_GetItem(_concreteDict, primary));
-		if (cls.isValid())
-			PyList_Append(interfaces.get(), cls.get());
-	}
-
+bool finalizeInterfaces(JPPyObject& existing_interfaces, JPPyObject& interfaces)
+{
+	printf("finalize interfaces\n");
 	// Convert the list of interfaces into a tuple
 	//   ::call will throw so no need to check isValid
 	JPPyObject interfaces_tuple = JPPyObject::call(PyList_AsTuple(interfaces.get())); // Convert list to tuple
 
 	// Perform lookup in _cacheInterfacesDict
 	PyObject* item = PyDict_GetItem(_cacheInterfacesDict, interfaces_tuple.get()); // Borrowed reference
-	JPPyObject existing_interfaces;
 	if (item == nullptr)
 	{
 		// If the tuple does not exist, insert it as both the key and value
 		if (PyDict_SetItem(_cacheInterfacesDict, interfaces_tuple.get(), interfaces_tuple.get()) == -1)
-			return nullptr;
+			return false;
 
 		// Wrap the newly inserted item in JPPyObject
 		existing_interfaces = JPPyObject::use(interfaces_tuple.get());
@@ -818,36 +801,40 @@ PyObject* PyJPModule_probe(PyTypeObject *type)
 		// Wrap the borrowed reference
 		existing_interfaces = JPPyObject::use(item);
 	}
+	return true;
+}
 
+bool finalizeMethods(JPPyObject& existing_methods, JPPyObject& existing_interfaces)
+{
+	printf("finalize methods %s\n", Py_TYPE(existing_interfaces.get())->tp_name);
 	// First consult the methods cache for the tuple
-	PyObject* methods_item = PyDict_GetItem(_cacheMethodsDict, interfaces_tuple.get()); // Borrowed reference
-	JPPyObject existing_methods;
+	PyObject* methods_item = PyDict_GetItem(_cacheMethodsDict, existing_interfaces.get()); // Borrowed reference
 	if (methods_item == nullptr)
 	{
 		// Create a new dictionary for methods
 		JPPyObject new_methods = JPPyObject::call(PyDict_New());
 
 		// Iterate through the tuple and update methods
-		PyObject* it = interfaces_tuple.get();
+		PyObject* it = existing_interfaces.get();
 		Py_ssize_t tuple_size = PyTuple_Size(it);
 		for (Py_ssize_t i = 0; i < tuple_size; ++i)
 		{
 			PyObject* interf = PyTuple_GetItem(it, i); // Borrowed reference
 			if (interf == nullptr)
-				return nullptr;
+				return false;
 
 			PyObject* methods_item = PyDict_GetItem(_methodsDict, interf); // Borrowed reference
 			if (methods_item != nullptr)
 			{
 				JPPyObject methods = JPPyObject::use(methods_item);
 				if (PyDict_Update(new_methods.get(), methods.get()) == -1)
-					return nullptr;
+					return false;
 			}
 		}
 
 		// Insert the new methods dictionary into _cacheMethodsDict
-		if (PyDict_SetItem(_cacheMethodsDict, interfaces_tuple.get(), new_methods.get()) == -1)
-			return nullptr;
+		if (PyDict_SetItem(_cacheMethodsDict, existing_interfaces.get(), new_methods.get()) == -1)
+			return false;
 
 		existing_methods = new_methods;
 	}
@@ -856,17 +843,110 @@ PyObject* PyJPModule_probe(PyTypeObject *type)
 		// Wrap the borrowed reference
 		existing_methods = JPPyObject::use(methods_item);
 	}
+	return true;
+}
 
-	// Create the result tuple
+
+// Returns a new reference and can set exceptions
+PyObject* PyJPModule_probe(PyTypeObject *type)
+{
+	// We would start by checking the cache here
+	JPPyObject cached = JPPyObject::use(PyObject_GetItem(_cacheDict, (PyObject*) type));
+	if (cached.isValid())
+		return cached.keep();
+	PyErr_Clear();
+
+	// Safety check: Ensure our late-binding ready() milestone was reached
+	if (abc_sequence == nullptr)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "JPype Engine Error: ready() checkpoint was not initialized.");
+		return nullptr;
+	}
+
+	// So first method is to search for a concrete which isn't object
+	PyObject *mro = type->tp_mro;
+	Py_ssize_t sz = PyTuple_Size(mro);
+
+	JPPyObject interfaces = JPPyObject::accept(PyList_New(0));
+	JPPyObject existing_interfaces;
+	JPPyObject existing_methods;
+
+	// 2. SHORT-CIRCUIT MECHANISM: Scan MRO for an exact concrete match
+	// Skip the very last element (which is always 'object')
+	PyObject *concrete_match = nullptr;
+#if 0
+	for (Py_ssize_t i = 0; i < sz - 1; ++i)
+	{
+		PyObject *mro_class = PyTuple_GetItem(mro, i); // borrowed
+		PyObject *found = PyDict_GetItem(_concreteDict, mro_class); // borrowed
+
+		if (found != nullptr)
+		{
+			concrete_match = found;
+			break;
+		}
+	}
+#endif
+
+	if (concrete_match != nullptr)
+	{
+		// Extract the JPClass definition matching the targeted type
+		// Note: Replacing 'target_type' with your function argument variable '(PyObject*)type'
+		JPClass* targetClass = PyJPClass_getJPClass((PyObject*) type);
+		if (targetClass == nullptr)
+		{
+			// If the type mapping data isn't initialized yet, clear error and force fallback
+			PyErr_Clear();
+			concrete_match = nullptr; 
+		}
+		else
+		{
+			// Append the concrete base interface behavior we matched in the MRO
+			PyList_Append(interfaces.get(), concrete_match);
+
+			// Fetch the explicit list of Java interfaces this class is specified to support
+			const vector<JPClass*>& intf_list = targetClass->getInterfaces();
+			for (JPClass* intf : intf_list)
+			{
+				// Convert the native JPClass pointer back into its corresponding PyObject container
+				PyTypeObject* py_intf = intf->getHost();
+				PyList_Append(interfaces.get(), (PyObject*) py_intf);
+			}
+		}
+	}
+	// If not found anywhere in the concrete dictionary, we determine capabilities the hard way
+	else
+	{
+		// Fallback to structural duck-typing analysis
+		interrogate(interfaces, type);
+
+		// FIXME remove this once we confirm the interface lists are all synced up
+		// We look to see if there is a concrete method
+		if (sz > 1)
+		{
+			PyObject *primary = PyTuple_GetItem(mro, sz-2); // borrowed
+			JPPyObject cls = JPPyObject::use(PyDict_GetItem(_concreteDict, primary));
+			if (cls.isValid())
+				PyList_Append(interfaces.get(), cls.get());
+		}
+	}
+
+	// Process pipeline compilation stages safely tracking return results
+	if (!finalizeInterfaces(existing_interfaces, interfaces))
+		return nullptr;
+
+	if (!finalizeMethods(existing_methods, existing_interfaces))
+		return nullptr; 
+
+	// Build the final target tuple package
 	JPPyObject result = JPPyObject::call(PyTuple_New(2));
 	if (!result.isValid())
 		return nullptr;
 
-	// Set the items in the result tuple
-	PyTuple_SetItem(result.get(), 0, existing_interfaces.keep()); // Steals reference
-	PyTuple_SetItem(result.get(), 1, existing_methods.keep());	// Steals reference
+	PyTuple_SetItem(result.get(), 0, existing_interfaces.keep()); // Reference transferred
+	PyTuple_SetItem(result.get(), 1, existing_methods.keep());	
 
-	// Insert the result into _cacheDict
+	// Cache the resolved blueprint for instantaneous future lookups
 	if (PyObject_SetItem(_cacheDict, (PyObject*) type, result.get()) == -1)
 		return nullptr;
 
@@ -881,19 +961,27 @@ static PyObject* module_probe(PyObject *module, PyObject *obj)
 	JP_PY_TRY("probe");
 	PyTypeObject *type = Py_TYPE(obj);
 
-	// We would start by checking the cache here
-	JPPyObject cached = JPPyObject::use(PyObject_GetItem(_cacheDict, (PyObject*) type));
-	if (cached.isValid())
-		return cached.keep();
-	PyErr_Clear();
-	return PyJPModule_probe(type);
+	PyObject* result = PyJPModule_probe(type);
+	
+	// Safety check: If a nullptr comes back, ensure the exception state is set!
+	if (result == nullptr)
+	{
+		if (!PyErr_Occurred())
+		{
+			PyErr_Format(PyExc_RuntimeError, 
+				"JPype Engine Error: Probe failed for type '%s' without setting an explicit exception.", 
+				type->tp_name);
+		}
+		return nullptr;
+	}
+
+	return result;
 	JP_PY_CATCH(nullptr);
 }
 
+// Returns a new reference and can set exceptions
 PyObject* PyJPModule_pyobject(PyTypeObject *target_type, PyObject *object_to_cast)
 {
-	JP_PY_TRY("PyJPModule_pyobject");
-
 	JPClass* targetClass = PyJPClass_getJPClass((PyObject*) target_type); 
 	JPJavaFrame frame = JPJavaFrame::outer();
 	if (object_to_cast == Py_None)
@@ -912,8 +1000,43 @@ PyObject* PyJPModule_pyobject(PyTypeObject *target_type, PyObject *object_to_cas
 	PyObject* jcls = PyTuple_GetItem(probe_result.get(), 0);
 	PyObject* meth = PyTuple_GetItem(probe_result.get(), 1);
 
+	// =========================================================================
+	// PRE-FLIGHT OPTIMIZATION: Verify target_type matches the probe capabilities
+	// =========================================================================
+	bool type_matched = false;
+
+	if (PyTuple_Check(jcls))
+	{
+		Py_ssize_t size = PyTuple_Size(jcls);
+		for (Py_ssize_t i = 0; i < size; ++i)
+		{
+			if (PyTuple_GetItem(jcls, i) == (PyObject*)target_type)
+			{
+				type_matched = true;
+				break;
+			}
+		}
+	}
+	else if (jcls == (PyObject*)target_type)
+	{
+		type_matched = true;
+	}
+
+	if (!type_matched)
+	{
+		// Extract names cleanly for the user
+		const char* source_name = Py_TYPE(object_to_cast)->tp_name;
+		const char* target_name = target_type->tp_name;
+
+		PyErr_Format(PyExc_TypeError, 
+			"Type mismatch on cast: Python object of type '%s' does not satisfy type '%s'.", 
+			source_name, target_name);
+		return nullptr;
+	}
+	// =========================================================================
+
 	// Pack arguments securely: (object_to_cast, dispatch_meth, target_jcls, convert_flag)
-	JPPyObject proxy_args = JPPyObject::accept(PyTuple_Pack(5, object_to_cast, meth, jcls, Py_True, Py_True));
+	JPPyObject proxy_args = JPPyObject::accept(PyTuple_Pack(4, object_to_cast, meth, jcls, Py_True));
 	if (!proxy_args.isValid())
 		return nullptr;
 
@@ -933,9 +1056,16 @@ PyObject* PyJPModule_pyobject(PyTypeObject *target_type, PyObject *object_to_cas
 		return nullptr;
 
 	// Convert using the exact target class type, not a generic context type!
+	// FIXME we can make this more efficient by passing the class to the backend and get 0 if the cast would fail
 	JPClass* clz = frame.findClassForObject(v.l);
+	if (frame.IsAssignableFrom(clz->getJavaClass(), targetClass->getJavaClass()) != 1)
+	{
+		// We constructed an object BUT sadly it did not fit the needs
+		PyErr_SetString(PyExc_TypeError, "Type mismatch on cast");
+		return nullptr;
+	}
+
 	return targetClass->convertToPythonObject(frame, v, true).keep();
-	JP_PY_CATCH(nullptr);
 }
 
 static PyObject* module_pyobject(PyObject *module, PyObject *args_in)
@@ -946,13 +1076,34 @@ static PyObject* module_pyobject(PyObject *module, PyObject *args_in)
 	PyObject* object_to_cast = nullptr;
 
 	// Parse the incoming arguments: Type first, Object second
+	// Note: PyArg_ParseTuple sets its own exception (TypeError) on failure,
+	// so returning nullptr here is perfectly safe.
 	if (!PyArg_ParseTuple(args_in, "OO", &target_type, &object_to_cast))
 		return nullptr;
-	
-	// FIXME we need to set an exception if we are passing out nullptr
-	return PyJPModule_pyobject((PyTypeObject*)target_type, object_to_cast);
+
+	// Execute the core bridge casting routine
+	PyObject* result = PyJPModule_pyobject((PyTypeObject*)target_type, object_to_cast);
+
+	// Defensive Guard: Ensure an exception is set if a nullptr bubbles up
+	if (result == nullptr)
+	{
+		if (!PyErr_Occurred())
+		{
+			PyTypeObject* target_py_type = (PyTypeObject*)target_type;
+			PyTypeObject* source_py_type = Py_TYPE(object_to_cast);
+			
+			PyErr_Format(PyExc_TypeError, 
+				"JPype Bridge Error: Failed to cast Python object of type '%s' to target Java proxy type '%s' without setting an explicit exception.", 
+				source_py_type->tp_name, 
+				target_py_type->tp_name);
+		}
+		return nullptr;
+	}
+
+	return result;
 	JP_PY_CATCH(nullptr);
 }
+
 
 static void PyJPModule_InitNumpy()
 {

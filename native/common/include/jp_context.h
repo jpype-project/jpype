@@ -260,6 +260,8 @@ public:
 	jmethodID m_Context_GetStackFrameID{};
 	void onShutdown();
 
+	JPClassRef m_PyJavaObjectClass;
+	jmethodID m_PyJavaObject_wrap{};
 private:
 	bool m_Running{};
 	bool m_ConvertStrings{};

@@ -934,7 +934,7 @@ public:
 		JPContext *context = JPContext_global;
 		if (context == nullptr)
 			return match.type = JPMatch::_none;
-		JPValue *slot = match.slot;
+		JPValue *slot = match.getJavaSlot();
 		auto *pcls = dynamic_cast<JPPrimitiveType*>( cls);
 		if (slot->getClass() != pcls->getBoxedClass(*match.frame))
 			return match.type = JPMatch::_none;
@@ -994,6 +994,96 @@ public:
 	}
 } _proxyConversion;
 
+class JPConversionPython : public JPConversion
+{
+public:
+
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	{
+		JP_TRACE_IN("JPConversionPython::matches");
+		if (match.frame == nullptr)
+			return match.type = JPMatch::_none;
+
+		JPPyObject probe_result = JPPyObject::accept(PyJPModule_probe(Py_TYPE(match.object)));
+		if (!probe_result.isValid())
+			return match.type = JPMatch::_none;
+			
+		PyObject* intf = PyTuple_GetItem(probe_result.get(), 0);
+		PyObject* target = (PyObject*) cls->getHost();
+
+		if (!PyTuple_Check(intf))
+			return match.type = JPMatch::_none;
+
+		Py_ssize_t size = PyTuple_Size(intf);
+		for (Py_ssize_t i = 0; i < size; ++i)
+		{
+			if (PyTuple_GetItem(intf, i) == (PyObject*)target)
+			{
+				JP_TRACE("implicit python");
+				match.conversion = this;
+				return match.type = JPMatch::_implicit;
+			}
+		}
+		return match.type = JPMatch::_none;
+		JP_TRACE_OUT;
+	}
+
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
+	{
+	}
+
+	jvalue convert(JPMatch &match) override
+	{
+		jvalue v;
+		v.l = 0;
+		JPPyObject probe_result = JPPyObject::accept(PyJPModule_probe(Py_TYPE(match.object)));
+		PyObject* jcls = PyTuple_GetItem(probe_result.get(), 0);
+		PyObject* meth = PyTuple_GetItem(probe_result.get(), 1);
+		JPPyObject proxy_args = JPPyObject::accept(PyTuple_Pack(4, match.object, meth, jcls, Py_True));
+		if (!proxy_args.isValid())
+			return v;
+		JPPyObject proxy_instance = JPPyObject::accept(PyJPProxy_Type->tp_new(PyJPProxy_Type, proxy_args.get(), nullptr));
+		if (!proxy_instance.isValid())
+			return v;
+		JPProxy *proxy = PyJPProxy_getJPProxy(proxy_instance.get());
+		if (proxy == nullptr)
+			return v;
+		return proxy->getProxy();
+	}
+} _pythonConversion;
+
+class JPConversionJavaPython : public JPConversion
+{
+public:
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	{
+		JP_TRACE_IN("JPConversionJavaPython::matches");
+		JPValue *value = match.getJavaSlot();
+		if (value == nullptr || match.frame == nullptr || value->getClass() == nullptr)
+			return match.type = JPMatch::_none;
+		// No double wrapping allowed
+		if (value->getClass()->isPython())
+			return match.type = JPMatch::_none;
+		match.conversion = this;
+		return match.type = JPMatch::_implicit;
+		JP_TRACE_OUT;
+	}
+
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
+	{
+	}
+
+	jvalue convert(JPMatch &match) override
+	{
+		JPContext *context = JPContext_global;
+		jvalue value = match.slot->getValue();
+		jclass cls = context->m_PyJavaObjectClass.get();
+		jmethodID mid = context->m_PyJavaObject_wrap;
+		value.l = match.frame->CallStaticObjectMethodA(cls, mid, &value);
+		return value;
+	}
+} _j2pythonConversion;
+
 JPConversion *hintsConversion = &_hintsConversion;
 JPConversion *charArrayConversion = &_charArrayConversion;
 JPConversion *byteArrayConversion = &_byteArrayConversion;
@@ -1011,3 +1101,5 @@ JPConversion *boxLongConversion = &_boxLongConversion;
 JPConversion *boxDoubleConversion = &_boxDoubleConversion;
 JPConversion *unboxConversion = &_unboxConversion;
 JPConversion *proxyConversion = &_proxyConversion;
+JPConversion *pythonConversion = &_pythonConversion;
+JPConversion *j2pythonConversion = &_j2pythonConversion;

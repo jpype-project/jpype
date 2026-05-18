@@ -70,7 +70,7 @@ def _createJProxyDeferred(cls, *intf):
         if actualIntf is None:
             actualIntf = _prepareInterfaces(cls, intf)
             tp.__jpype_interfaces__ = actualIntf
-        return _jpype._JProxy.__new__(tp, None, None, actualIntf, True, False)
+        return _jpype._JProxy.__new__(tp, None, None, actualIntf, True)
 
     members = {'__new__': new}
     # Return the augmented class
@@ -88,7 +88,7 @@ def _createJProxy(cls, *intf):
     actualIntf = _prepareInterfaces(cls, intf)
 
     def new(tp, *args, **kwargs):
-        self = _jpype._JProxy.__new__(tp, None, None, actualIntf, True, False)
+        self = _jpype._JProxy.__new__(tp, None, None, actualIntf, True)
         tp.__init__(self, *args, **kwargs)
         return self
 
@@ -217,12 +217,12 @@ class JProxy(_jpype._JProxy):
         # it will be passed as self.  Its presence in Python when 
         # returned will be given by convert.
         if dict is not None:
-            return _jpype._JProxy.__new__(cls, inst, dict, actualIntf, convert, True)
+            return _jpype._JProxy.__new__(cls, inst, dict, actualIntf, convert)
 
         # (obsolete) Use a Python object with the same methods as the interface.
         # This form as mostly be replaced by @JImplements form.
         if inst is not None:
-            return _jpype._JProxy.__new__(cls, inst, inst, actualIntf, convert, False)
+            return _jpype._JProxy.__new__(cls, inst, None, actualIntf, convert)
 
         raise TypeError("a dict or inst must be specified")
 

@@ -397,6 +397,13 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	);
 	m_ProxyType_GetInstanceID = frame.GetStaticMethodID(proxyTypeClass, "getInstance", "(Ljava/lang/Object;)J");
 
+	jclass wrapperClass = getClassLoader()->findClass(frame, "python.lang.PyJavaObject");
+	m_PyJavaObjectClass = JPClassRef(frame, wrapperClass);
+	m_PyJavaObject_wrap = frame.GetStaticMethodID(
+        wrapperClass,
+        "wrap",
+        "(Ljava/lang/Object;)Ljava/lang/Object;");
+
 	m_GC->init(frame);
 
 	_java_nio_ByteBuffer = frame.findClassByName("java.nio.ByteBuffer");

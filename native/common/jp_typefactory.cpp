@@ -40,6 +40,9 @@
 #include "jp_doubletype.h"
 #include "jp_functional.h"
 #include "jp_proxy.h"
+#include "jp_interfacetype.h"
+#include "jp_pybasetype.h"
+#include "jp_pythontype.h"
 
 void JPTypeFactory_rethrow(JPJavaFrame& frame)
 {
@@ -176,8 +179,18 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	if (interfacePtrs != nullptr)
 		convert(frame, interfacePtrs, interfaces);
 	JPClass* result = nullptr;
+
+
 	if (!JPModifier::isSpecial(modifiers))
 	{
+		// Python types require special handling
+		if (JPModifier::isPython(modifiers))
+			return (jlong) new JPPythonType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+
+		// Interfaces can use Proxy
+		if (JPModifier::isInterface(modifiers))
+			return (jlong) new JPInterfaceType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+
 		// Create a normal class
 		return (jlong) new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
 	}
@@ -289,7 +302,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 
 	if (className == "python.lang.PyObject")
 		return (jlong) (context->_python_lang_PyObject
-			= new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
+			= new JPPybaseType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
 	
 	std::stringstream ss;
 	ss << "Special class not defined for " << className;

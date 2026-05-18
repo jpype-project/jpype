@@ -833,14 +833,8 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 	JPClass *type = self->m_Class;
 	JPValue *val = PyJPValue_getJavaSlot(other);
 
-	// First we need to find out if it is a Python request 
-	if (type->isPython())
-	{
-		if (val == nullptr)
-			return PyJPModule_pyobject((PyTypeObject*) self, other);
-	}
 	// Cast on non-Java
-	else if (val == nullptr || val->getClass()->isPrimitive())
+	if (val == nullptr || val->getClass()->isPrimitive() || type->isPython())
 	{
 		JPMatch match(&frame, other);
 		type->findJavaConversion(match);

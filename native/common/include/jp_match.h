@@ -38,7 +38,7 @@ public:
 	/**
 	 * Get the Java slot associated with the Python object.
 	 *
-	 * Thus uses caching.
+	 * This uses caching.
 	 *
 	 * @return the Java slot or 0 if not available.
 	 */

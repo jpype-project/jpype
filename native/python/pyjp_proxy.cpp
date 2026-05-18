@@ -37,9 +37,9 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 	PyObject *dispatch;
 	PyObject *pyintf;
 	int convert = 0;
-	int dict_dispatch = 0;
-	if (!PyArg_ParseTuple(args, "OOO|pp", &instance, &dispatch, &pyintf, &convert, &dict_dispatch))
+	if (!PyArg_ParseTuple(args, "OOO|p", &instance, &dispatch, &pyintf, &convert))
 		return nullptr;
+	bool dict_dispatch = (dispatch!=Py_None);
 
 	// Pack interfaces
 	if (!PySequence_Check(pyintf))
@@ -74,7 +74,7 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
         self->m_Proxy = new JPProxyIndirectAttr(self, interfaces, convert!=0);
 
 	self->m_Target = instance;
-	self->m_Dispatch = dispatch;
+	self->m_Dispatch = dict_dispatch?dispatch:instance;
 	Py_INCREF(self->m_Target);
 	Py_INCREF(self->m_Dispatch);
 

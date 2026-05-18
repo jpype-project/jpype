@@ -971,49 +971,7 @@ def initialize():
     _jpype._methods[_PyCombinable] = _PyCombinableMethods
 
     ###################################################################################
-    # Construct conversions between concrete types and protocols.
-    #
-    # This is a trivial task as we have JProxy which can add an interface to any Python
-    # object.  We just need to make it tag in such a way that it automatically unwraps
-    # back to Python when passed from Java.
-
-    # Bind the concrete types
-    @JConversion(_PyBytes, instanceof=bytes)
-    @JConversion(_PyByteArray, instanceof=bytearray)
-    @JConversion(_PyComplex, instanceof=complex)
-    @JConversion(_PyDict, instanceof=dict)
-    @JConversion(_PyEnumerate, instanceof=enumerate)
-    @JConversion(_PyExc, instanceof=BaseException)
-    @JConversion(_PyList, instanceof=list)
-    @JConversion(_PyMemoryView, instanceof=memoryview)
-    @JConversion(_PyRange, instanceof=range)
-    @JConversion(_PySet, instanceof=set)
-    @JConversion(_PySlice, instanceof=slice)
-    @JConversion(_PyString, instanceof=str)
-    @JConversion(_PyTuple, instanceof=tuple)
-    @JConversion(_PyType, instanceof=type)
-    @JConversion(_PyZip, instanceof=zip)
-    @JConversion(_PyInt, instanceof=int)
-    @JConversion(_PyFloat, instanceof=float)
-    # Bind dunder
-    @JConversion(_PyIterable, attribute="__iter__")
-    @JConversion(_PyIter, attribute="__next__")
-    @JConversion(_PyCallable, attribute="__call__")
-    # Bind the protocols
-    #@JConversion(_PyCallable, instanceof=object)
-    #@JConversion(_PyMapping, instanceof=object)
-    #@JConversion(_PyNumber, instanceof=object)
-    #@JConversion(_PySequence, instanceof=object)
-    def _jconvert(jcls, obj):
-        return _jpype.pyobject(jcls, obj)
-
-    # Next we bind the dispatch to the Java types using the dispatch
-    @JConversion(_PyObject, instanceof=object)
-    def _pyobject(jcls, obj):
-        if isinstance(obj, _jpype._JObject):
-            return _PyJavaObject(obj)
-        return _jpype.pyobject(jcls, obj)
-
+    # Bind the exception types
 
     _jpype._exc = {}
     jexc = JClass("python.exceptions.PyBaseException")
@@ -1035,9 +993,6 @@ def initialize():
         return _pyexc_convert(AssertionError(f"JPype Internal Error: Exception type '{type(value).__name__}' bypassed upstream guards but matches no registered Java exception proxy."))
     _jpype._pyexc_convert = _pyexc_convert
 
+    # We have everything setup 
     _jpype.ready()
     bridge.setBackend(backend)
-
-    @JConversion(_PyObject, instanceof=_jpype._JObject)
-    def _pyobject(jcls, obj):
-        return _PyJavaObject(obj)

@@ -62,11 +62,18 @@ public class PyJavaObject implements PyObject
     return Objects.equals(this.obj_, other.obj_);
   }
 
+  @Override
   public String toString()
   {
     if (this.obj_ == null)
       return "null";
     return obj_.toString();
+  }
+  
+  @SuppressWarnings("unused")
+  private static Object wrap(Object obj)
+  {
+    return new PyJavaObject(obj);
   }
 
 }

@@ -16,9 +16,9 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
-#include "jp_objecttype.h"
+#include "jp_interfacetype.h"
 
-JPObjectType::JPObjectType(JPJavaFrame& frame,
+JPInterfaceType::JPInterfaceType(JPJavaFrame& frame,
 		jclass clss,
 		const string& name,
 		JPClass* super,
@@ -28,20 +28,16 @@ JPObjectType::JPObjectType(JPJavaFrame& frame,
 {
 }
 
-JPObjectType::~JPObjectType()
+JPInterfaceType::~JPInterfaceType()
 = default;
 
-JPMatch::Type JPObjectType::findJavaConversion(JPMatch& match)
+JPMatch::Type JPInterfaceType::findJavaConversion(JPMatch& match)
 {
 	// Rules for java.lang.Object
-	JP_TRACE_IN("JPObjectType::canConvertToJava");
+	JP_TRACE_IN("JPInterfaceType::canConvertToJava");
 	if (nullConversion->matches(this, match)
-			|| javaObjectAnyConversion->matches(this, match)
-			|| stringConversion->matches(this, match)
-			|| boxBooleanConversion->matches(this, match)
-			|| boxLongConversion->matches(this, match)
-			|| boxDoubleConversion->matches(this, match)
-			|| classConversion->matches(this, match)
+			|| objectConversion->matches(this, match)
+			|| proxyConversion->matches(this, match)
 			|| hintsConversion->matches(this, match)
 			)
 		return match.type;
@@ -49,16 +45,12 @@ JPMatch::Type JPObjectType::findJavaConversion(JPMatch& match)
 	JP_TRACE_OUT;
 }
 
-void JPObjectType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
+void JPInterfaceType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JP_TRACE_IN("JPObjectType::getConversionInfo");
+	JP_TRACE_IN("JPInterfaceType::getConversionInfo");
 	nullConversion->getInfo(frame, this, info);
 	objectConversion->getInfo(frame, this, info);
-	stringConversion->getInfo(frame, this, info);
-	boxBooleanConversion->getInfo(frame, this, info);
-	boxLongConversion->getInfo(frame, this, info);
-	boxDoubleConversion->getInfo(frame, this, info);
-	classConversion->getInfo(frame, this, info);
+	proxyConversion->getInfo(frame, this, info);
 	hintsConversion->getInfo(frame, this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 	JP_TRACE_OUT;
