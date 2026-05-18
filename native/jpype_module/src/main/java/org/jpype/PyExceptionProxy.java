@@ -1,8 +1,8 @@
+// --- file: org/jpype/PyExceptionProxy.java ---
 package org.jpype;
 
 /**
  *
- * @author nelson85
  */
 public class PyExceptionProxy extends RuntimeException
 {

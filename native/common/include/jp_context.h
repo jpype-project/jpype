@@ -121,6 +121,7 @@ public:
 	void startJVM(const string& vmPath, const StringVector& args,
 			bool ignoreUnrecognized, bool convertStrings, bool interrupt);
 	void attachJVM(JNIEnv* env);
+	void detachJVM();
 	void initializeResources(JNIEnv* env, bool interrupt);
 	void shutdownJVM(bool destroyJVM, bool freeJVM);
 	void attachCurrentThread();
@@ -192,6 +193,7 @@ public:
 	JPClass* _java_lang_Throwable{};
 	JPStringType* _java_lang_String{};
 	JPClass* _java_nio_ByteBuffer{};
+	JPClass* _python_lang_PyObject{};
 
 private:
 
@@ -199,6 +201,7 @@ private:
 
 	jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args){};
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms){};
+	jint(JNICALL * GetDefaultJavaVMInitArgs_Method)(void *args){};
 
 private:
 
@@ -228,9 +231,6 @@ private:
 	jmethodID m_Context_collectRectangularID{};
 	jmethodID m_Context_assembleID{};
 	jmethodID m_String_ToCharArrayID{};
-	jmethodID m_Context_CreateExceptionID{};
-	jmethodID m_Context_GetExcClassID{};
-	jmethodID m_Context_GetExcValueID{};
 	jmethodID m_Context_ClearInterruptID{};
 	jmethodID m_CompareToID{};
 	jmethodID m_Buffer_IsReadOnlyID{};
@@ -241,10 +241,15 @@ private:
 	jmethodID m_Throwable_GetCauseID{};
 	jmethodID m_Throwable_GetMessageID{};
 	jmethodID m_Context_GetFunctionalID{};
+
 	friend class JPProxy;
-	JPClassRef m_ProxyClass;
-	jmethodID m_Proxy_NewID{};
-	jmethodID m_Proxy_NewInstanceID{};
+	friend class JPypeException;
+	JPClassRef m_ProxyFactoryClass;
+	jmethodID  m_ProxyFactory_getProxyTypeID{};
+	JPClassRef m_ProxyTypeClass;
+	jmethodID  m_ProxyType_newInstanceID{};
+	jmethodID  m_ProxyType_UnwrapPythonExceptionID{};
+	jmethodID  m_ProxyType_GetInstanceID{};
 
 	jmethodID m_Context_IsPackageID{};
 	jmethodID m_Context_GetPackageID{};
@@ -255,6 +260,8 @@ public:
 	jmethodID m_Context_GetStackFrameID{};
 	void onShutdown();
 
+	JPClassRef m_PyJavaObjectClass;
+	jmethodID m_PyJavaObject_wrap{};
 private:
 	bool m_Running{};
 	bool m_ConvertStrings{};
@@ -264,6 +271,7 @@ public:
 
 	// This will gather C++ resources to clean up after shutdown.
 	std::list<JPResource*> m_Resources;
+	PyObject* m_PyExcConvert{};
 } ;
 
 extern "C" JPContext* JPContext_global;

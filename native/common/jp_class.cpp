@@ -1,3 +1,4 @@
+// --- file: common/jp_class.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -18,6 +19,7 @@
 #include "jp_field.h"
 #include "jp_methoddispatch.h"
 #include "jp_method.h"
+#include "jp_proxy.h"
 
 JPClass::JPClass(
 		const string& name,
@@ -68,7 +70,7 @@ void JPClass::ensureMembers(JPJavaFrame& frame)
 {
 	JPContext* context = JPContext_global;
 	JPTypeManager* typeManager = context->getTypeManager();
-	typeManager->populateMembers(this);
+	typeManager->populateMembers(frame, this);
 }
 
 void JPClass::assignMembers(JPMethodDispatch* ctor,
@@ -321,6 +323,7 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 {
 	JP_TRACE_IN("JPClass::convertToPythonObject");
 	JPClass *cls = this;
+	JPContext* context = JPContext_global;
 	if (!cast)
 	{
 		//  Returning None likely incorrect from java prospective.
@@ -346,6 +349,18 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 		cls = frame.findClassForObject(value.l);
 		if (cls != this)
 			return cls->convertToPythonObject(frame, value, true);
+	}
+
+	// Special path for proxy that need automatic unwrapping
+	if (isProxy())
+	{
+		jlong hostPtr = frame.CallStaticLongMethodA(context->m_ProxyTypeClass.get(), context->m_ProxyType_GetInstanceID, &value);
+		JPProxy *proxy = (JPProxy*) hostPtr;
+		PyJPProxy *pproxy = proxy->m_Instance;
+		if (pproxy->m_Convert && pproxy->m_Target != Py_None)
+			return JPPyObject::use(pproxy->m_Target);
+		else
+			return JPPyObject::use((PyObject*) pproxy);
 	}
 
 	JPPyObject obj;
@@ -393,6 +408,7 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 	JP_TRACE_IN("JPClass::findJavaConversion");
 	if (nullConversion->matches(this, match)
 			|| objectConversion->matches(this, match)
+			|| pythonConversion->matches(this, match)
 			|| proxyConversion->matches(this, match)
 			|| hintsConversion->matches(this, match))
 		return match.type;
@@ -412,12 +428,11 @@ PyObject* JPClass::getHints()
 	return m_Hints.get();
 }
 
-void JPClass::getConversionInfo(JPConversionInfo &info)
+void JPClass::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPClass::getConversionInfo");
-	JPJavaFrame frame = JPJavaFrame::outer();
-	objectConversion->getInfo(this, info);
-	hintsConversion->getInfo(this, info);
+	objectConversion->getInfo(frame, this, info);
+	hintsConversion->getInfo(frame, this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 	JP_TRACE_OUT;
 }

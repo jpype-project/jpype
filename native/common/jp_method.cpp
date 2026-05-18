@@ -1,3 +1,4 @@
+// --- file: common/jp_method.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -80,7 +81,7 @@ JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVect
 JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, bool callInstance,
 		JPPyObjectVector& arg)
 {
-	ensureTypeCache();
+	ensureTypeCache(frame);
 
 	JP_TRACE_IN("JPMethod::matches");
 	methodMatch.m_Overload = this;
@@ -185,6 +186,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	JP_TRACE("offset", match.m_Offset == 1);
 	JP_TRACE("arguments length", len);
 	JP_TRACE("types length", tlen);
+
 	if (match.m_IsVarIndirect)
 	{
 		JP_TRACE("Pack indirect varargs");
@@ -333,10 +335,9 @@ JPValue JPMethod::invokeConstructor(JPJavaFrame& frame, JPMethodMatch& match, JP
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
-string JPMethod::matchReport(JPPyObjectVector& args)
+string JPMethod::matchReport(JPJavaFrame& frame, JPPyObjectVector& args)
 {
-	ensureTypeCache();
-	JPJavaFrame frame = JPJavaFrame::outer();
+	ensureTypeCache(frame);
 	std::stringstream res;
 
 	res << m_ReturnType->getCanonicalName() << " (";
@@ -391,10 +392,10 @@ bool JPMethod::checkMoreSpecificThan(JPMethod* other) const
 	return false;
 }
 
-void JPMethod::ensureTypeCache()
+void JPMethod::ensureTypeCache(JPJavaFrame& frame)
 {
 	if (m_ReturnType != (JPClass*) (-1))
 		return;
 
-	JPContext_global->getTypeManager()->populateMethod(this, m_Method.get());
+	JPContext_global->getTypeManager()->populateMethod(frame, this, m_Method.get());
 }

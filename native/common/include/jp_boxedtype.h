@@ -39,7 +39,7 @@ public:
 	~JPBoxedType() override;
 
 	JPMatch::Type findJavaConversion(JPMatch &match) override;
-	void getConversionInfo(JPConversionInfo &info) override;
+	void getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info) override;
 
 	JPPrimitiveType* getPrimitive()
 	{

@@ -1,3 +1,4 @@
+// --- file: org/jpype/JPypeSignal.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -47,8 +48,8 @@ public class JPypeSignal
   {
     try
     {
-      Class Signal = Class.forName("sun.misc.Signal");
-      Class SignalHandler = Class.forName("sun.misc.SignalHandler");
+      Class<?> Signal = Class.forName("sun.misc.Signal");
+      Class<?> SignalHandler = Class.forName("sun.misc.SignalHandler");
       main = Thread.currentThread();
       Method method = Signal.getMethod("handle", Signal, SignalHandler);
       Object intr = Signal.getDeclaredConstructor(String.class).newInstance("INT");

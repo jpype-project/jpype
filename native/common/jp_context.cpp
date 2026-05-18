@@ -1,3 +1,4 @@
+// --- file: common/jp_context.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -93,10 +94,16 @@ void JPContext::loadEntryPoints(const string& path)
 {
 	JP_TRACE_IN("JPContext::loadEntryPoints");
 	JPPlatformAdapter *platform = JPPlatformAdapter::getAdapter();
-	// Load symbols from the shared library
 	platform->loadLibrary((char*) path.c_str());
-	CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *) )platform->getSymbol("JNI_CreateJavaVM");
-	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))platform->getSymbol("JNI_GetCreatedJavaVMs");
+	CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *) )
+		platform->getSymbol("JNI_CreateJavaVM");
+	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))
+		platform->getSymbol("JNI_GetCreatedJavaVMs");
+	GetDefaultJavaVMInitArgs_Method = (jint(JNICALL *)(void *))
+		platform->getSymbol("JNI_GetDefaultJavaVMInitArgs");
+
+	if (CreateJVM_Method == nullptr || GetDefaultJavaVMInitArgs_Method == nullptr)
+		JP_RAISE(PyExc_RuntimeError, "JVM shared library is missing required JNI symbols");
 	JP_TRACE_OUT;
 }
 
@@ -118,6 +125,16 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		(void) ex;
 		throw;
 	}
+
+	JavaVMInitArgs scout;
+	scout.version = 0x00090000; // JNI_VERSION_21 (JDK 21)
+	if (GetDefaultJavaVMInitArgs_Method(&scout) != JNI_OK)
+		JP_RAISE(PyExc_RuntimeError, "Java version too old. Java 9 or later is required");
+
+	bool isJDK21 = false;
+	scout.version = 0x00150000; // JNI_VERSION_21 (JDK 21)
+	if (GetDefaultJavaVMInitArgs_Method(&scout) == JNI_OK)
+		isJDK21 = true;
 
 	// Determine the memory requirements
 #define PAD(x) ((x+31)&~31)
@@ -145,13 +162,28 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	jniArgs->nOptions = (jint) args.size();
 	JP_TRACE("NumOptions", jniArgs->nOptions);
 	size_t j = sblock;
+	jint currentOption = 0;
 	for (size_t i = 0; i < args.size(); i++)
 	{
-		JP_TRACE("Option", args[i]);
-		strncpy(&block[j], args[i].c_str(), args[i].size());
-		jniArgs->options[i].optionString = (char*) &block[j];
-		j += PAD(args[i].size()+1);
+		const string& opt = args[i];
+		// CHOP: If not JDK 21, specifically kill native-access even if it's there
+		if (!isJDK21 && opt.find("--enable-native-access") == 0)
+		{
+			JP_TRACE("Chopping JDK21 option", opt);
+			continue;
+		}
+
+		// Pack the valid option
+		JP_TRACE("Packing Option", opt);
+		strncpy(&block[j], opt.c_str(), opt.size());
+		jniArgs->options[currentOption].optionString = (char*) &block[j];
+		
+		j += PAD(opt.size() + 1);
+		currentOption++;
 	}
+
+	// Finalize the count based on what actually survived the chop
+	jniArgs->nOptions = currentOption;
 
 	// Launch the JVM
 	JNIEnv* env = nullptr;
@@ -173,7 +205,6 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	}
 
 	// Mark running for assert
-	m_Running = true;
 
 	jint jni_version = env->GetVersion();
 	if (jni_version < 0x00090000)
@@ -191,6 +222,13 @@ void JPContext::attachJVM(JNIEnv* env)
 	m_Embedded = true;
 #endif
 	initializeResources(env, false);
+}
+
+void JPContext::detachJVM()
+{
+	printf("DETACH\n");
+	m_JavaVM = nullptr;
+	m_Running = false;
 }
 
 std::string getShared() 
@@ -225,6 +263,7 @@ std::string getShared()
 
 void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 {
+	m_Running = true;
 	JPJavaFrame frame = JPJavaFrame::external(env);
 	// This is the only frame that we can use until the system
 	// is initialized.  Any other frame creation will result in an error.
@@ -268,25 +307,24 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 			"(Ljava/lang/Throwable;Ljava/lang/Throwable;)[Ljava/lang/Object;");
 
 	jmethodID startMethod = frame.GetStaticMethodID(contextClass, "createContext",
-			"(JLjava/lang/ClassLoader;Ljava/lang/String;Z)Lorg/jpype/JPypeContext;");
+			"(Ljava/lang/ClassLoader;Ljava/lang/String;Z)Lorg/jpype/JPypeContext;");
 
 	// Launch
-	jvalue val[4];
-	val[0].j = (jlong) this;
-	val[1].l = m_ClassLoader->getBootLoader();
-	val[2].l = nullptr;
-	val[3].z = interrupt;
+	jvalue val[3];
+	val[0].l = m_ClassLoader->getBootLoader();
+	val[1].l = nullptr;
+	val[2].z = interrupt;
 
 	if (!m_Embedded)
 	{
 		std::string shared = getShared();
-		val[2].l = frame.fromStringUTF8(shared);
+		val[1].l = frame.fromStringUTF8(shared);
 	}
 
 	// Required before launch
 	m_Context_GetFunctionalID = frame.GetStaticMethodID(contextClass,
 			"getFunctional",
-			"(Ljava/lang/Class;)Ljava/lang/String;");
+			"(Ljava/lang/Class;)J");
 
 	m_JavaContext = JPObjectRef(frame, frame.CallStaticObjectMethodA(contextClass, startMethod, val));
 
@@ -313,12 +351,6 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 			"assemble",
 			"([ILjava/lang/Object;)Ljava/lang/Object;");
 
-	m_Context_CreateExceptionID = frame.GetMethodID(contextClass, "createException",
-			"(JJ)Ljava/lang/Exception;");
-	m_Context_GetExcClassID = frame.GetMethodID(contextClass, "getExcClass",
-			"(Ljava/lang/Throwable;)J");
-	m_Context_GetExcValueID = frame.GetMethodID(contextClass, "getExcValue",
-			"(Ljava/lang/Throwable;)J");
 	m_Context_OrderID = frame.GetMethodID(contextClass, "order", "(Ljava/nio/Buffer;)Z");
 	m_Context_IsPackageID = frame.GetMethodID(contextClass, "isPackage", "(Ljava/lang/String;)Z");
 	m_Context_GetPackageID = frame.GetMethodID(contextClass, "getPackage", "(Ljava/lang/String;)Lorg/jpype/pkg/JPypePackage;");
@@ -348,18 +380,33 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	m_CompareToID = frame.GetMethodID(comparableClass, "compareTo",
 			"(Ljava/lang/Object;)I");
 
-	jclass proxyClass = getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxy");
-	m_ProxyClass = JPClassRef(frame, proxyClass);
-	m_Proxy_NewID = frame.GetStaticMethodID(m_ProxyClass.get(),
-			"newProxy",
-			"(Lorg/jpype/JPypeContext;JJ[Ljava/lang/Class;)Lorg/jpype/proxy/JPypeProxy;");
-	m_Proxy_NewInstanceID = frame.GetMethodID(m_ProxyClass.get(),
-			"newInstance",
-			"()Ljava/lang/Object;");
+	// Look up the class once
+	jclass factoryClass = getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxyFactory");
+	m_ProxyFactoryClass = JPClassRef(frame, factoryClass);
+	m_ProxyFactory_getProxyTypeID = frame.GetStaticMethodID(factoryClass, "getProxyType",
+		"(J[Ljava/lang/Class;)Lorg/jpype/proxy/JPypeProxyType;");
+
+	jclass proxyTypeClass = getClassLoader()->findClass(frame, "org.jpype.proxy.JPypeProxyType");
+	m_ProxyTypeClass = JPClassRef(frame, proxyTypeClass);
+
+	m_ProxyType_newInstanceID = frame.GetMethodID(proxyTypeClass, "newInstance", "(J)Ljava/lang/Object;");
+	m_ProxyType_UnwrapPythonExceptionID = frame.GetStaticMethodID(
+		proxyTypeClass, 
+		"unwrapPythonException", 
+		"(Ljava/lang/Throwable;)J" // Takes java.lang.Throwable, returns a long (PyObject*)
+	);
+	m_ProxyType_GetInstanceID = frame.GetStaticMethodID(proxyTypeClass, "getInstance", "(Ljava/lang/Object;)J");
+
+	jclass wrapperClass = getClassLoader()->findClass(frame, "python.lang.PyJavaObject");
+	m_PyJavaObjectClass = JPClassRef(frame, wrapperClass);
+	m_PyJavaObject_wrap = frame.GetStaticMethodID(
+        wrapperClass,
+        "wrap",
+        "(Ljava/lang/Object;)Ljava/lang/Object;");
 
 	m_GC->init(frame);
 
-	_java_nio_ByteBuffer = this->getTypeManager()->findClassByName("java.nio.ByteBuffer");
+	_java_nio_ByteBuffer = frame.findClassByName("java.nio.ByteBuffer");
 
 	// Testing code to make sure C++ exceptions are handled.
 	// FIXME find a way to call this from instrumentation.
@@ -375,6 +422,8 @@ void JPContext::onShutdown()
 void JPContext::shutdownJVM(bool destroyJVM, bool freeJVM)
 {
 	JP_TRACE_IN("JPContext::shutdown");
+	if (m_Embedded)
+		JP_RAISE(PyExc_RuntimeError, "Attempt to shutdown embedded JVM");
 	if (m_JavaVM == nullptr)
 		JP_RAISE(PyExc_RuntimeError, "Attempt to shutdown without a live JVM");
 	//	if (m_Embedded)
@@ -458,6 +507,7 @@ JNIEnv* JPContext::getEnv()
 	JNIEnv* env = nullptr;
 	if (m_JavaVM == nullptr)
 	{
+		assertJVMRunning(this, JP_STACKINFO());
 		JP_RAISE(PyExc_RuntimeError, "JVM is null");
 	}
 
@@ -472,6 +522,7 @@ JNIEnv* JPContext::getEnv()
 		res = m_JavaVM->AttachCurrentThreadAsDaemon((void**) &env, nullptr);
 		if (res != JNI_OK)
 		{
+			assertJVMRunning(this, JP_STACKINFO());
 			JP_RAISE(PyExc_RuntimeError, "Unable to attach to local thread");
 		}
 	}
@@ -479,9 +530,9 @@ JNIEnv* JPContext::getEnv()
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeContext_onShutdown
-(JNIEnv *env, jobject obj, jlong contextPtr)
+(JNIEnv *env, jobject obj)
 {
-	((JPContext*) contextPtr)->onShutdown();
+	JPContext_global->onShutdown();
 }
 
 /**********************************************************************

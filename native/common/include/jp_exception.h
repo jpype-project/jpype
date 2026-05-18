@@ -69,7 +69,21 @@ _os_error_windows,
 // Macro to use when hardening code
 //   Most of these will be removed after core is debugged, but
 //   a few are necessary to handle off normal conditions.
-#define ASSERT_NOT_NULL(X) {if ((X)==NULL) { JP_RAISE(PyExc_RuntimeError,  "Null Pointer Exception");} }
+
+// The helper macros required to force the preprocessor to stringify the expansion, 
+// rather than stringifying the tokens "__LINE__" or "__FILE__" directly.
+#define STRINGIFY_HELPER(x) #x
+#define TO_STRING(x) STRINGIFY_HELPER(x)
+
+// Now you can use standard string compile-time merging!
+#define ASSERT_NOT_NULL(X, Location) \
+    do { \
+        if ((X) == nullptr) { \
+            PyErr_SetString(PyExc_RuntimeError, \
+                "Null Pointer Exception at " Location " (" #X " is null) [" __FILE__ ":" TO_STRING(__LINE__) "]"); \
+            JP_RAISE_PYTHON(); \
+        } \
+    } while (0)
 
 // Macro to add stack trace info when multiple paths lead to the same trouble spot
 #define JP_CATCH catch (JPypeException& ex) { ex.from(JP_STACKINFO()); throw; }

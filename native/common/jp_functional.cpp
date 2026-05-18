@@ -1,3 +1,4 @@
+// --- file: common/jp_functional.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -95,7 +96,7 @@ public:
 		return match.type = JPMatch::_implicit;
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyObject *typing = PyImport_AddModule("jpype.protocol");
 		JPPyObject proto = JPPyObject::call(PyObject_GetAttrString(typing, "Callable"));
@@ -106,7 +107,6 @@ public:
 	{
 		auto *cls = (JPFunctional*) match.closure;
 		JP_TRACE_IN("JPConversionFunctional::convert");
-		JPJavaFrame frame = JPJavaFrame::inner();
 		auto *self = (PyJPProxy*) PyJPProxy_Type->tp_alloc(PyJPProxy_Type, 0);
 		JP_PY_CHECK();
 		JPClassList cl;
@@ -114,11 +114,9 @@ public:
 		self->m_Proxy = new JPProxyFunctional(self, cl);
 		self->m_Target = match.object;
 		self->m_Dispatch = match.object;
-		self->m_Convert = true;
 		Py_INCREF(self->m_Target);
 		Py_INCREF(self->m_Dispatch);
-		jvalue v = self->m_Proxy->getProxy();
-		v.l = frame.keep(v.l);
+		jvalue v = self->m_Proxy->getProxy(*(match.frame));
 		Py_DECREF(self);
 		return v;
 		JP_TRACE_OUT;  // GCOVR_EXCL_LINE
@@ -137,10 +135,10 @@ JPMatch::Type JPFunctional::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
-void JPFunctional::getConversionInfo(JPConversionInfo &info)
+void JPFunctional::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPJPFunctional::getConversionInfo");
-	JPClass::getConversionInfo(info);
-	functional_conversion.getInfo(this, info);
+	JPClass::getConversionInfo(frame, info);
+	functional_conversion.getInfo(frame, this, info);
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }

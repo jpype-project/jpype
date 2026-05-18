@@ -1,3 +1,4 @@
+// --- file: common/jp_reference_queue.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -50,6 +51,9 @@ JNIEXPORT void JNICALL Java_org_jpype_ref_JPypeReferenceNative_removeHostReferen
 	// Exceptions are not allowed here
 	try
 	{
+		JPContext* context = JPContext_global;
+		if (context == nullptr || !context->isRunning())
+			return;
 		JPJavaFrame frame = JPJavaFrame::external(env);
 		JPPyCallAcquire callback;
 		if (cleanup != 0)
@@ -71,6 +75,8 @@ JNIEXPORT void JNICALL Java_org_jpype_ref_JPypeReferenceNative_wake
 	try
 	{
 		JPContext* context = JPContext_global;
+		if (context == nullptr || !context->isRunning())
+			return;
 		context->m_GC->triggered();
 	} catch (...) // GCOVR_EXCL_LINE
 	{

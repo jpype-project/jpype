@@ -1,3 +1,4 @@
+// --- file: common/jp_methoddispatch.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -239,14 +240,14 @@ bool JPMethodDispatch::matches(JPJavaFrame& frame, JPPyObjectVector& args, bool 
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
-string JPMethodDispatch::matchReport(JPPyObjectVector& args)
+string JPMethodDispatch::matchReport(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	std::stringstream res;
 	res << "Match report for method " << m_Name << ", has " << m_Overloads.size() << " overloads." << std::endl;
 
 	for (auto current : m_Overloads)
 	{
-			res << "  " << current->matchReport(args);
+			res << "  " << current->matchReport(frame, args);
 	}
 	return res.str();
 }

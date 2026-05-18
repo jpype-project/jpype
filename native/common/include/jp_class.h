@@ -70,6 +70,16 @@ public:
 		return JPModifier::isFinal(m_Modifiers);
 	}
 
+	bool isPython() const
+	{
+		return JPModifier::isPython(m_Modifiers);
+	}
+
+	bool isProxy() const
+	{
+		return JPModifier::isProxy(m_Modifiers);
+	}
+
 	bool isThrowable() const
 	{
 		return JPModifier::isThrowable(m_Modifiers);
@@ -125,7 +135,7 @@ public:
 	 */
 	virtual JPMatch::Type findJavaConversion(JPMatch& match);
 
-	virtual void getConversionInfo(JPConversionInfo &info);
+	virtual void getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info);
 
 	/** Create a new Python object to wrap a Java value.
 	 *

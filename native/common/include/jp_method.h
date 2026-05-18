@@ -89,7 +89,7 @@ public:
 
 	string toString() const;
 
-	string matchReport(JPPyObjectVector& args);
+	string matchReport(JPJavaFrame& frame, JPPyObjectVector& args);
 	bool checkMoreSpecificThan(JPMethod* other) const;
 
 	jobject getJava()
@@ -100,8 +100,8 @@ public:
     JPMethod& operator=(const JPMethod&) = delete;
 
 private:
-	void packArgs(JPJavaFrame &frame, JPMethodMatch &match, vector<jvalue> &v, JPPyObjectVector &arg);
-	void ensureTypeCache();
+	void packArgs(JPJavaFrame& frame, JPMethodMatch &match, vector<jvalue> &v, JPPyObjectVector &arg);
+	void ensureTypeCache(JPJavaFrame& frame);
 
 	JPMethod(const JPMethod& o);
 
