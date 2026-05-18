@@ -146,6 +146,7 @@ set(JPYPE_NATIVE_SRC
         native/common/jp_floattype.cpp
         native/common/jp_functional.cpp
         native/common/jp_gc.cpp
+        native/common/jp_interfacetype.cpp
         native/common/jp_inttype.cpp
         native/common/jp_javaframe.cpp
         native/common/jp_longtype.cpp
@@ -157,6 +158,8 @@ set(JPYPE_NATIVE_SRC
         native/common/jp_platform.cpp
         native/common/jp_primitivetype.cpp
         native/common/jp_proxy.cpp
+        native/common/jp_pybasetype.cpp
+        native/common/jp_pythontype.cpp
         native/common/jp_reference_queue.cpp
         native/common/jp_shorttype.cpp
         native/common/jp_stringtype.cpp
