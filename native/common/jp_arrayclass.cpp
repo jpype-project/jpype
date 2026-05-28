@@ -1,3 +1,4 @@
+// --- file: common/jp_arrayclass.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -50,14 +51,13 @@ JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPArrayClass::getConversionInfo(JPConversionInfo &info)
+void JPArrayClass::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
-	objectConversion->getInfo(this, info);
-	charArrayConversion->getInfo(this, info);
-	byteArrayConversion->getInfo(this, info);
-	sequenceConversion->getInfo(this, info);
-	hintsConversion->getInfo(this, info);
+	objectConversion->getInfo(frame, this, info);
+	charArrayConversion->getInfo(frame, this, info);
+	byteArrayConversion->getInfo(frame, this, info);
+	sequenceConversion->getInfo(frame, this, info);
+	hintsConversion->getInfo(frame, this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }
 

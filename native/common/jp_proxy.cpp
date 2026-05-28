@@ -1,3 +1,4 @@
+// --- file: common/jp_proxy.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -22,16 +23,17 @@
 #include "jp_boxedtype.h"
 #include "jp_functional.h"
 
-JPPyObject getArgs(jlongArray parameterTypePtrs,
-		jobjectArray args, PyObject* self, int addSelf)
+extern "C" PyObject *Py_JP_CALL;
+
+JPPyObject getArgs(JPJavaFrame& frame, jlongArray parameterTypePtrs,
+		jobjectArray args, PyObject* self, int addSelf, jsize argLen)
 {
 	JP_TRACE_IN("JProxy::getArgs");
-	JPJavaFrame frame = JPJavaFrame::outer();
-	jsize argLen = frame.GetArrayLength(parameterTypePtrs);
 	jsize extra = addSelf?1:0;
 	JPPyObject pyargs = JPPyObject::call(PyTuple_New(argLen+extra));
 	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, parameterTypePtrs,
 			&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
+	JPContext *context = frame.getContext();
 
 	if (addSelf)
 	{
@@ -42,25 +44,72 @@ JPPyObject getArgs(jlongArray parameterTypePtrs,
 	for (jsize i = 0; i < argLen; i++)
 	{
 		jobject obj = frame.GetObjectArrayElement(args, i);
-		JPClass* type = frame.findClassForObject(obj);
-		if (type == nullptr)
-			type = reinterpret_cast<JPClass*> (types[i]);
+		JPClass* type = reinterpret_cast<JPClass*> (types[i]);
 		JPValue val = type->getValueFromObject(frame, JPValue(type, obj));
-		PyTuple_SetItem(pyargs.get(), i+extra, type->convertToPythonObject(frame, val, false).keep());
+		// We know the exact type here so we can use cast (except for String which must take slow path)
+		PyTuple_SetItem(pyargs.get(), i+extra, type->convertToPythonObject(frame, val, type!=(JPClass*) (context->_java_lang_String)).keep());
+		frame.DeleteLocalRef(obj);
 	}
 	return pyargs;
 	JP_TRACE_OUT;
 }
 
-extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
+
+// Consider using a Multirelease Jar to skip this starting in 16
+extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyType_getDefaultHandle(
+	JNIEnv *env, jclass clazz, jclass iface, jobject method, jclass mhClass)
+{
+	JPJavaFrame frame = JPJavaFrame::external(env);
+	try {
+#if 1
+		// Until we drop Java 11 we are stuck with this extreme unfriendly code
+		jclass lookupClass = env->FindClass("java/lang/invoke/MethodHandles$Lookup");
+		jfieldID implLookupField = env->GetStaticFieldID(lookupClass, "IMPL_LOOKUP", "Ljava/lang/invoke/MethodHandles$Lookup;");
+		jobject trustedLookup = env->GetStaticObjectField(lookupClass, implLookupField);
+		jmethodID unreflectMethod = env->GetMethodID(lookupClass, "unreflectSpecial", 
+			"(Ljava/lang/reflect/Method;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;");
+		jobject methodHandle = env->CallObjectMethod(trustedLookup, unreflectMethod, method, iface);
+#else
+		// Until we drop Java 15 we are stuck with this backdoor (after 15 we can use the safe method in Java)
+		jmethodID lookupMethod = env->GetStaticMethodID(mhClass, "lookup", 
+			"()Ljava/lang/invoke/MethodHandles$Lookup;");
+		jobject lookupObj = env->CallStaticObjectMethod(mhClass, lookupMethod);
+		jclass lookupClass = env->GetObjectClass(lookupObj);
+		jmethodID unreflectMethod = env->GetMethodID(lookupClass, "unreflectSpecial", 
+			"(Ljava/lang/reflect/Method;Ljava/lang/Class;)Ljava/lang/invoke/MethodHandle;");
+		jobject methodHandle = env->CallObjectMethod(lookupObj, unreflectMethod, method, iface);
+#endif
+
+		if (env->ExceptionCheck())
+		{
+			env->ExceptionDescribe(); // Useful for debugging the "Pile of Pain"
+			return nullptr;
+		}
+
+		return methodHandle; 
+	}
+	catch (JPypeException& ex) {
+		// Fallback for safety
+		return nullptr;
+	}
+}
+
+extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxyInstance_hostInvoke(
 		JNIEnv *env, jclass clazz,
-		jlong contextPtr, jstring name,
+		jlong cname,
 		jlong hostObj,
 		jlong returnTypePtr,
 		jlongArray parameterTypePtrs,
 		jobjectArray args,
-		jobject missing)
+		jsize sz)
 {
+	if (JPContext_global == nullptr || !JPContext_global->isRunning())
+	{
+		jclass ise = env->FindClass("java/lang/IllegalStateException");
+		env->ThrowNew(ise, "JPype Proxy invoked after the Python Interpreter was terminated.");
+		return nullptr; 
+	}
+
 	JPJavaFrame frame = JPJavaFrame::external(env);
 
 	// We need the resources to be held for the full duration of the proxy.
@@ -81,25 +130,32 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 			}
 			// GCOVR_EXCL_STOP
 
-			string cname = frame.toStringUTF8(name);
-			JP_TRACE("Get callable for", cname);
-
 			// Get the callable object
 			int addSelf = 0;
 			JPProxy* proxy = (JPProxy*) hostObj;
-			JPPyObject callable(proxy->getCallable(cname, addSelf));
-
-			// If method can't be called, throw an exception
-			if (callable.isNull() || callable.get() == Py_None)
-                return missing;
+			PyObject* pyMethodName = reinterpret_cast<PyObject*>(cname);
+			JPPyObject callable(proxy->getCallable(pyMethodName, addSelf));
 
 			// Find the return type
 			auto* returnClass = (JPClass*) returnTypePtr;
 			JP_TRACE("Get return type", returnClass->getCanonicalName());
 
+#if 0
+			// Get the name attribute from the callable
+			const char* nameStr = PyUnicode_AsUTF8(pyMethodName);
+			if (nameStr) {
+				printf("DEBUG: Calling Python method: %s callable=%p %s:%s\n", returnClass->getCanonicalName().c_str(), callable.get(), Py_TYPE(proxy->m_Instance->m_Target)->tp_name, nameStr);
+				fflush(stdout);
+			}
+#endif
+
+			// If method can't be called, throw an exception
+			if (callable.isNull() || callable.get() == Py_None)
+				return parameterTypePtrs;
+
 			// convert the arguments into a python list
 			JP_TRACE("Convert arguments");
-			JPPyObject pyargs = getArgs(parameterTypePtrs, args, proxy->m_Instance->m_Target, addSelf);
+			JPPyObject pyargs = getArgs(frame, parameterTypePtrs, args, proxy->m_Instance->m_Target, addSelf, sz);
 
 			JP_TRACE("Call Python");
 			JPPyObject returnValue = JPPyObject::call(PyObject_Call(callable.get(), pyargs.get(), nullptr));
@@ -130,9 +186,8 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 				auto *boxed =  dynamic_cast<JPBoxedType *>( (dynamic_cast<JPPrimitiveType*>( returnClass))->getBoxedClass(frame));
 				jvalue res2;
 				res2.l = boxed->box(frame, res);
-				return frame.keep(res2.l);
+				return res2.l;
 			}
-
 			if (returnClass->findJavaConversion(returnMatch) == JPMatch::_none)
 			{
 				JP_TRACE("Cannot convert");
@@ -141,7 +196,7 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 
 			JP_TRACE("Convert return to", returnClass->getCanonicalName());
 			jvalue res = returnMatch.convert();
-			return frame.keep(res.l);
+			return res.l;
 		} catch (JPypeException& ex)
 		{
 			JP_TRACE("JPypeException raised");
@@ -158,31 +213,35 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 	catch (...) // JP_TRACE_OUT implies a throw but that is not allowed. 
 	{}
 	return NULL;
+
 }
 
-JPProxy::JPProxy(PyJPProxy* inst, JPClassList& intf)
+JPProxy::JPProxy(PyJPProxy* inst, JPClassList& intf, bool convert)
 : m_Instance(inst), m_InterfaceClasses(intf)
 {
 	JP_TRACE_IN("JPProxy::JPProxy");
 	JPJavaFrame frame = JPJavaFrame::outer();
+	inst->m_Convert = convert;
 
-	// Convert the interfaces to a Class[]
+	// 1. Pack interfaces into a Class[] array
 	jobjectArray ar = frame.NewObjectArray((int) intf.size(),
 			JPContext_global->_java_lang_Class->getJavaClass(), nullptr);
 	for (unsigned int i = 0; i < intf.size(); i++)
-	{
 		frame.SetObjectArrayElement(ar, i, intf[i]->getJavaClass());
-	}
-	jvalue v[4];
-	v[0].l = JPContext_global->getJavaContext();
-	v[1].j = (jlong) this;
-	v[2].j = (jlong) & JPProxy::releaseProxyPython;
-	v[3].l = ar;
 
-	// Create the proxy
-	jobject proxy = frame.CallStaticObjectMethodA(JPContext_global->m_ProxyClass.get(),
-			JPContext_global->m_Proxy_NewID, v);
-	m_Proxy = JPObjectRef(proxy);
+	// 2. Get the ProxyInstance from the Factory (handles deduplication/caching)
+	jvalue v_factory[2];
+	v_factory[0].j = (jlong) &JPProxy::releaseProxyPython; // Cleanup pointer
+	v_factory[1].l = ar;
+
+	// Corrected JNI call for the static method
+	jobject proxyType = frame.CallStaticObjectMethodA(
+		JPContext_global->m_ProxyFactoryClass.get(),
+		JPContext_global->m_ProxyFactory_getProxyTypeID, 
+		v_factory);
+
+	// 3. Store the Type reference for later instance creation
+	m_ProxyType = JPObjectRef(proxyType); 
 	m_Ref = nullptr;
 	JP_TRACE_OUT;
 }
@@ -192,9 +251,7 @@ JPProxy::~JPProxy()
 	try
 	{
 		if (m_Ref != nullptr && JPContext_global->isRunning())
-		{
 			JPContext_global->getEnv()->DeleteWeakGlobalRef(m_Ref);
-		}
 	} catch (JPypeException &ex)  // GCOVR_EXCL_LINE
 	{
 		// Cannot throw
@@ -206,33 +263,33 @@ void JPProxy::releaseProxyPython(void* host)
 	Py_XDECREF(((JPProxy*) host)->m_Instance);
 }
 
-jvalue JPProxy::getProxy()
+jvalue JPProxy::getProxy(JPJavaFrame& frame)
 {
 	JP_TRACE_IN("JPProxy::getProxy");
-	JPJavaFrame frame = JPJavaFrame::inner();
 
+	// We reuse the reference but to avoid loops we use weak referencing
 	jobject instance = nullptr;
 	if (m_Ref != nullptr)
-	{
 		instance = frame.NewLocalRef(m_Ref);
-	}
 
 	if (instance == nullptr)
 	{
-		// Use the proxy to make an instance
-		JP_TRACE("Create handler");
+		JP_TRACE("Create new instance from Type");
 		Py_INCREF(m_Instance);
-		instance = frame.CallObjectMethodA(m_Proxy.get(),
-				JPContext_global->m_Proxy_NewInstanceID, nullptr);
+		jvalue v[1];
+		v[0].j = (jlong) this;
+		instance = frame.CallObjectMethodA(m_ProxyType.get(),
+				JPContext_global->m_ProxyType_newInstanceID, v);
 		m_Ref = frame.NewWeakGlobalRef(instance);
 	}
+	
 	jvalue out;
-	out.l = frame.keep(instance);
+	out.l = instance;
 	return out;
 	JP_TRACE_OUT;
 }
 
-JPProxyType::JPProxyType(JPJavaFrame& frame,
+JPProxyInstance::JPProxyInstance(JPJavaFrame& frame,
 		jclass clss,
 		const string& name,
 		JPClass* super,
@@ -240,83 +297,52 @@ JPProxyType::JPProxyType(JPJavaFrame& frame,
 		jint modifiers)
 : JPClass(frame, clss, name, super, interfaces, modifiers)
 {
-	jclass proxyClass = frame.FindClass("java/lang/reflect/Proxy");
-	m_ProxyClass = JPClassRef(frame, proxyClass);
-	m_GetInvocationHandlerID = frame.GetStaticMethodID(proxyClass, "getInvocationHandler",
-			"(Ljava/lang/Object;)Ljava/lang/reflect/InvocationHandler;");
-	m_InstanceID = frame.GetFieldID(clss, "instance", "J");
 }
 
-JPProxyType::~JPProxyType()
-= default;
+JPProxyInstance::~JPProxyInstance() = default;
+JPProxyDirect::~JPProxyDirect() = default;
+JPProxyIndirectAttr::~JPProxyIndirectAttr() = default;
+JPProxyIndirectDict::~JPProxyIndirectDict() = default;
+JPProxyFunctional::~JPProxyFunctional() = default;
 
-JPPyObject JPProxyType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
+JPPyObject JPProxyDirect::getCallable(PyObject* name, int& addSelf)
 {
-	JP_TRACE_IN("JPProxyType::convertToPythonObject");
-	jobject ih = frame.CallStaticObjectMethodA(m_ProxyClass.get(),
-			m_GetInvocationHandlerID, &val);
-
-	JPProxy *proxy = (JPProxy*) frame.GetLongField(ih, m_InstanceID);
-	PyJPProxy *pproxy = proxy->m_Instance;
-
-	// Is it a native Python object
-	if (pproxy->m_Convert && pproxy->m_Target != Py_None)
-		return JPPyObject::use(pproxy->m_Target);
-
-	// Is it a user extended class
-	if (pproxy->m_Dispatch == Py_None)
-		return JPPyObject::use((PyObject*) pproxy);
-
-	// Return the Proxy itself
-	JP_TRACE("Target", pproxy);
-	return JPPyObject::use((PyObject*) pproxy);
-	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
+	return JPPyObject::accept(PyObject_GetAttr((PyObject*) m_Instance, name));
 }
 
-JPProxyDirect::JPProxyDirect(PyJPProxy* inst, JPClassList& intf)
-: JPProxy(inst, intf)
+JPPyObject JPProxyIndirectAttr::getCallable(PyObject* name, int& addSelf)
 {
-}
-
-JPProxyDirect::~JPProxyDirect()
-= default;
-
-JPPyObject JPProxyDirect::getCallable(const string& cname, int& addSelf)
-{
-	return JPPyObject::accept(PyObject_GetAttrString((PyObject*) m_Instance, cname.c_str()));
-}
-
-JPProxyIndirect::JPProxyIndirect(PyJPProxy* inst, JPClassList& intf)
-: JPProxy(inst, intf)
-{
-}
-
-JPProxyIndirect::~JPProxyIndirect()
-= default;
-
-JPPyObject JPProxyIndirect::getCallable(const string& cname, int& addSelf)
-{
-	JPPyObject out = JPPyObject::accept(PyObject_GetAttrString(m_Instance->m_Dispatch, cname.c_str()));
+	JPPyObject out = JPPyObject::accept(PyObject_GetAttr(m_Instance->m_Dispatch, name));
 	if (!out.isNull())
 	{
 		addSelf = (m_Instance->m_Dispatch != m_Instance->m_Target) && (m_Instance->m_Target != Py_None);
 		return out;
 	}
-	return JPPyObject::accept(PyObject_GetAttrString((PyObject*) m_Instance, cname.c_str()));
+	return JPPyObject::accept(PyObject_GetAttr((PyObject*) m_Instance, name));
+}
+
+JPPyObject JPProxyIndirectDict::getCallable(PyObject* name, int& addSelf)
+{
+    JPPyObject out = JPPyObject::use(PyDict_GetItem(m_Instance->m_Dispatch, name));
+	if (!out.isNull())
+    {
+        addSelf = (m_Instance->m_Dispatch != m_Instance->m_Target) && (m_Instance->m_Target != Py_None);
+        return out;
+    }
+    return JPPyObject::accept(PyObject_GetAttr((PyObject*) m_Instance, name));
 }
 
 JPProxyFunctional::JPProxyFunctional(PyJPProxy* inst, JPClassList& intf)
-: JPProxy(inst, intf)
+: JPProxy(inst, intf, true)
 {
 	m_Functional = dynamic_cast<JPFunctional*>( intf[0]);
 }
 
-JPProxyFunctional::~JPProxyFunctional()
-= default;
-
-JPPyObject JPProxyFunctional::getCallable(const string& cname, int& addSelf)
+JPPyObject JPProxyFunctional::getCallable(PyObject* name, int& addSelf)
 {
-	if (cname == m_Functional->getMethod())
-		return JPPyObject::accept(PyObject_GetAttrString(m_Instance->m_Dispatch, "__call__"));
-	return JPPyObject::accept(PyObject_GetAttrString((PyObject*) m_Instance, cname.c_str()));
+	if (name == m_Functional->getMethod())
+		return JPPyObject::accept(PyObject_GetAttr(m_Instance->m_Dispatch, Py_JP_CALL));
+	return JPPyObject::accept(PyObject_GetAttr((PyObject*) m_Instance, name));
 }
+
+

@@ -1,3 +1,4 @@
+// --- file: python/pyjp_proxy.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -64,13 +65,21 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 		interfaces.push_back(cls);
 	}
 
-	if (dispatch == Py_None)
-		self->m_Proxy = new JPProxyDirect(self, interfaces);
-	else
-		self->m_Proxy = new JPProxyIndirect(self, interfaces);
+	// 4 cases land here 
+	//   @JImplements (None, None, actualIntf, True)
+	//   Dict (instance, dict, actualIntf, True)
+	//   Dict (None, dict, actualIntf, True)
+	//   Attr (instance, None, actualIntf, True)
+    if (dispatch != Py_None)
+        self->m_Proxy = new JPProxyIndirectDict(self, interfaces, convert!=0);
+    else if (instance !=Py_None)
+        self->m_Proxy = new JPProxyIndirectAttr(self, interfaces, convert!=0);
+    else
+        self->m_Proxy = new JPProxyDirect(self, interfaces, convert!=0);
+
 	self->m_Target = instance;
-	self->m_Dispatch = dispatch;
-	self->m_Convert = (convert != 0);
+	self->m_Dispatch = (dispatch != Py_None) ? dispatch : instance;
+
 	Py_INCREF(self->m_Target);
 	Py_INCREF(self->m_Dispatch);
 

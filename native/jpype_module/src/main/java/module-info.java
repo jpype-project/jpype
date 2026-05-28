@@ -1,3 +1,4 @@
+// --- file: module-info.java ---
 /*****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -15,12 +16,13 @@
 **************************************************************************** */
 
 
-module jpype {
-  requires java.xml;
+module org.jpype {
+  requires transitive java.xml;
   requires java.sql;
   requires java.management;
   
   exports org.jpype;
+  exports org.jpype.bridge;
   exports org.jpype.html;
   exports org.jpype.javadoc;
   exports org.jpype.manager;
@@ -28,4 +30,8 @@ module jpype {
   exports org.jpype.pkg;
   exports org.jpype.proxy;
   exports org.jpype.ref;
+  exports python.lang;
+  exports python.exceptions;
+  
+  opens python.lang;
 }

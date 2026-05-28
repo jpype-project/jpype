@@ -23,7 +23,7 @@ public:
 
 	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) = 0;
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) = 0;
+	virtual void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) = 0;
 
 	virtual jvalue convert(JPMatch &match) = 0;
 } ;
@@ -32,7 +32,7 @@ class JPIndexConversion : public JPConversion
 {
 public:
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override;
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override;
 
 } ;
 
@@ -40,7 +40,7 @@ class JPNumberConversion : public JPIndexConversion
 {
 public:
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override;
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override;
 
 } ;
 
@@ -48,7 +48,7 @@ class JPConversionJavaValue : public JPConversion
 {
 public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override;
-	void getInfo(JPClass *cls, JPConversionInfo &info) override;
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override;
 	jvalue convert(JPMatch &match) override;
 } ;
 
@@ -96,7 +96,7 @@ public:
 
 	void excludeConversion(PyObject* type);
 
-	void getInfo(JPClass *cls, JPConversionInfo &info);
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info);
 
 	bool m_ConvertJava;
 private:
@@ -121,5 +121,7 @@ extern JPConversion *boxLongConversion;
 extern JPConversion *boxDoubleConversion;
 extern JPConversion *unboxConversion;
 extern JPConversion *proxyConversion;
+extern JPConversion *pythonConversion;
+extern JPConversion *j2pythonConversion;
 
 #endif /* JP_CLASSHINTS_H */

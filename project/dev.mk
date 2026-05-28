@@ -3,13 +3,16 @@ PYTHON := python3
 PIP := $(PYTHON) -m pip
 IVY_VER := 2.5.3
 IVY_JAR := lib/ivy-$(IVY_VER).jar
+JAR_SRC  := native/build/lib/org.jpype.jar
+JAR_DEST := org.jpype.jar
 
 # Sources
 PY_SRC := $(shell find jpype -name "*.py" 2>/dev/null)
 CPP_SRC := $(shell find native -name "*.cpp" -o -name "*.h" 2>/dev/null)
+JAVA_SRC := $(shell find native/jpype_module/src/main/java -name "*.java" 2>/dev/null)
 SENTINEL := .build_history
 
-.PHONY: all clean compile test-java test-python
+.PHONY: all clean compile test-java test-python jar
 
 # Default target
 all: resolve $(SENTINEL)
@@ -23,11 +26,19 @@ $(IVY_JAR):
 	@echo "Downloading Ivy..."
 	wget --no-clobber "https://repo1.maven.org/maven2/org/apache/ivy/ivy/$(IVY_VER)/ivy-$(IVY_VER).jar" -P lib
 
+# Build the JAR using Ant
+org.jpype.jar: $(JAVA_SRC)
+	@echo "Building core JAR via Ant..."
+	cd native && ant
+	cp $(JAR_SRC) $(JAR_DEST)
 
-$(SENTINEL): pyproject.toml $(PY_SRC) $(CPP_SRC)
+jar: org.jpype.jar
+
+$(SENTINEL): pyproject.toml $(PY_SRC) $(CPP_SRC) org.jpype.jar
 	@echo "Changes detected. Rebuilding project..."
 	$(PIP) install -v --no-build-isolation -e . \
 		--config-settings=cmake.define.BUILD_TEST_HARNESS=ON \
+        --config-settings=cmake.define.CMAKE_BUILD_TYPE=RelWithDebInfo \
 		--config-settings=cmake.verbose=true \
 		--config-settings=editable.mode=inplace
 	@touch $(SENTINEL)

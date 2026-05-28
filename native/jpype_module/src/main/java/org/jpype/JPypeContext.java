@@ -1,3 +1,4 @@
+// --- file: org/jpype/JPypeContext.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -34,6 +35,9 @@ import org.jpype.manager.TypeManager;
 import org.jpype.pkg.JPypePackage;
 import org.jpype.pkg.JPypePackageManager;
 import org.jpype.ref.JPypeReferenceQueue;
+import java.util.logging.Logger;
+import org.jpype.proxy.JPypeProxyType;
+import org.jpype.internal.JPypeStringManager;
 
 /**
  * Context for JPype.
@@ -64,17 +68,14 @@ import org.jpype.ref.JPypeReferenceQueue;
  * contents of JPJni.
  *
  *
- *
- * @author nelson85
  */
 public class JPypeContext
 {
 
-  public final String VERSION = "1.7.2.dev0";
+  public static final String VERSION = "1.7.2.dev0";
 
   private static final JPypeContext INSTANCE = new JPypeContext();
   // This is the C++ portion of the context.
-  private long context;
   private TypeFactory typeFactory;
   private TypeManager typeManager;
   private JPypeClassLoader classLoader;
@@ -89,6 +90,13 @@ public class JPypeContext
     return INSTANCE;
   }
 
+  public static final Logger LOGGER = Logger.getLogger(JPypeContext.class.getName());
+
+  public static Logger getLogger()
+  {
+    return LOGGER;
+  }
+
   /**
    * Start the JPype system.
    *
@@ -96,7 +104,7 @@ public class JPypeContext
    * @param loader is the classloader holding JPype resources.
    * @return the created context.
    */
-  private static JPypeContext createContext(long context, ClassLoader loader, String nativeLib, boolean interrupt) throws Throwable
+  private static JPypeContext createContext(ClassLoader loader, String nativeLib, boolean interrupt) throws Throwable
   {
     try
     {
@@ -104,10 +112,9 @@ public class JPypeContext
       {
         System.load(nativeLib);
       }
-      INSTANCE.context = context;
       INSTANCE.classLoader = (JPypeClassLoader) loader;
       INSTANCE.typeFactory = new TypeFactoryNative();
-      INSTANCE.typeManager = new TypeManager(context, INSTANCE.typeFactory);
+      INSTANCE.typeManager = new TypeManager(INSTANCE.typeFactory);
       INSTANCE.initialize(interrupt);
 
       try
@@ -139,6 +146,8 @@ public class JPypeContext
   {
     // Okay everything is setup so lets give it a go.
     this.typeManager.init();
+    JPypeProxyType.init(this.typeManager);
+
     JPypeReferenceQueue.getInstance().start();
     if (!interrupt)
       JPypeSignal.installHandlers();
@@ -227,7 +236,7 @@ public class JPypeContext
       }
 
       // Inform Python no more calls are permitted
-      onShutdown(this.context);
+      onShutdown();
       Thread.yield();
 
     } catch (Throwable th)
@@ -268,7 +277,7 @@ public class JPypeContext
 
   }
 
-  private static native void onShutdown(long ctxt);
+  private static native void onShutdown();
 
   public void addShutdownHook(Thread th)
   {
@@ -283,16 +292,6 @@ public class JPypeContext
       return true;
     } else
       return Runtime.getRuntime().removeShutdownHook(th);
-  }
-
-  /**
-   * Get the C++ portion.
-   *
-   * @return
-   */
-  public long getContext()
-  {
-    return context;
   }
 
   public ClassLoader getClassLoader()
@@ -327,7 +326,7 @@ public class JPypeContext
   /**
    * Helper function for collect rectangular,
    */
-  private static boolean collect(List l, Object o, int q, int[] shape, int d)
+  private static boolean collect(List<Object> l, Object o, int q, int[] shape, int d)
   {
     if (Array.getLength(o) != shape[q])
       return false;
@@ -475,25 +474,6 @@ public class JPypeContext
     }
   }
 
-  public long getExcClass(Throwable th)
-  {
-    if (th instanceof PyExceptionProxy)
-      return ((PyExceptionProxy) th).cls;
-    return 0;
-  }
-
-  public long getExcValue(Throwable th)
-  {
-    if (th instanceof PyExceptionProxy)
-      return ((PyExceptionProxy) th).value;
-    return 0;
-  }
-
-  private Exception createException(long l0, long l1)
-  {
-    return new PyExceptionProxy(l0, l1);
-  }
-
   private boolean order(Buffer b)
   {
     if (b instanceof java.nio.ByteBuffer)
@@ -533,10 +513,10 @@ public class JPypeContext
    * @param cls
    * @return
    */
-  public static String getFunctional(Class cls)
+  public static long getFunctional(Class cls)
   {
     Method m = JPypeUtilities.getFunctionalInterfaceMethod(cls);
-    return m != null ? m.getName() : null;
+    return m != null ? JPypeStringManager.get(m.getName()) : 0;
   }
 
   /**
@@ -590,7 +570,7 @@ public class JPypeContext
     // We can only go through this point single file.
     synchronized (this.typeFactory)
     {
-      this.typeFactory.newWrapper(context, l);
+      this.typeFactory.newWrapper(l);
     }
   }
 

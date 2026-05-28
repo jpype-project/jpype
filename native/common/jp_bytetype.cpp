@@ -1,3 +1,4 @@
+// --- file: common/jp_bytetype.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -71,11 +72,11 @@ public:
 		return JPMatch::_implicit; // stop the search
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = JPContext_global;
 		PyList_Append(info.exact, (PyObject*) context->_byte->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 
 } jbyteConversion;
@@ -96,12 +97,11 @@ JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPByteType::getConversionInfo(JPConversionInfo &info)
+void JPByteType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
-	jbyteConversion.getInfo(this, info);
-	byteConversion.getInfo(this, info);
-	byteNumberConversion.getInfo(this, info);
+	jbyteConversion.getInfo(frame, this, info);
+	byteConversion.getInfo(frame, this, info);
+	byteNumberConversion.getInfo(frame, this, info);
 	PyList_Append(info.ret, (PyObject*) JPContext_global->_int->getHost());
 }
 
@@ -245,20 +245,18 @@ void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 	frame.SetByteArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-void JPByteType::getView(JPArrayView& view)
+void JPByteType::getView(JPJavaFrame& frame, JPArrayView& view)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	view.m_Memory = (void*) frame.GetByteArrayElements(
 			(jbyteArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "b";
 	view.m_Buffer.itemsize = sizeof (jbyte);
 }
 
-void JPByteType::releaseView(JPArrayView& view)
+void JPByteType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseByteArrayElements((jbyteArray) view.m_Array->getJava(),
 				(jbyte*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

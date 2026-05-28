@@ -1,3 +1,4 @@
+// --- file: python/pyjp_method.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -332,7 +333,8 @@ PyObject *PyJPMethod_matchReport(PyJPMethod *self, PyObject *args)
 	JP_PY_TRY("PyJPMethod_matchReport");
 	PyJPModule_getContext();
 	JPPyObjectVector vargs(args);
-	string report = self->m_Method->matchReport(vargs);
+	JPJavaFrame frame = JPJavaFrame::outer();
+	string report = self->m_Method->matchReport(frame, vargs);
 	return JPPyString::fromStringUTF8(report).keep();
 	JP_PY_CATCH(nullptr);
 }

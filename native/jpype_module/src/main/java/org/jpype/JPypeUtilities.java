@@ -1,3 +1,4 @@
+// --- file: org/jpype/JPypeUtilities.java ---
 package org.jpype;
 
 import java.lang.invoke.MethodHandle;
@@ -11,9 +12,14 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.function.Predicate;
 
+@SuppressWarnings("unchecked")
 public class JPypeUtilities
 {
 
+  private JPypeUtilities()
+  {
+  }
+          
   // a functional interface can only re-declare a public non-final method from Object
   // this should end up being an array of equals, hashCode and toString
   private static final Method[] OBJECT_METHODS
@@ -21,11 +27,11 @@ public class JPypeUtilities
                   .filter(m -> !Modifier.isFinal(m.getModifiers()))
                   .toArray(Method[]::new);
 
-  private static final Predicate<Class> isSealed;
+  private static final Predicate<Class<?>> isSealed;
 
   static
   {
-    Predicate<Class> result = null;
+    Predicate<Class<?>> result = null;
     try
     {
       Method m = Class.class.getMethod("isSealed");

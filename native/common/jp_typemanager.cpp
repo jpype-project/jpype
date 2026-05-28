@@ -1,3 +1,4 @@
+// --- file: common/jp_typemanager.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -31,20 +32,18 @@ JPTypeManager::JPTypeManager(JPJavaFrame& frame)
 	JP_TRACE_OUT;
 }
 
-JPClass* JPTypeManager::findClass(jclass obj)
+JPClass* JPTypeManager::findClass(JPJavaFrame &frame, jclass obj)
 {
 	JP_TRACE_IN("JPTypeManager::findClass");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val;
 	val.l = obj;
 	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClass, &val));
 	JP_TRACE_OUT;
 }
 
-JPClass* JPTypeManager::findClassByName(const string& name)
+JPClass* JPTypeManager::findClassByName(JPJavaFrame& frame, const string& name)
 {
 	JP_TRACE_IN("JPTypeManager::findClassByName");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val;
 	val.l = (jobject) frame.fromStringUTF8(name);
 	auto* out = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
@@ -58,10 +57,9 @@ JPClass* JPTypeManager::findClassByName(const string& name)
 	JP_TRACE_OUT;
 }
 
-JPClass* JPTypeManager::findClassForObject(jobject obj)
+JPClass* JPTypeManager::findClassForObject(JPJavaFrame &frame, jobject obj)
 {
 	JP_TRACE_IN("JPTypeManager::findClassForObject");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val;
 	val.l = obj;
 	auto *cls = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassForObject, &val));
@@ -71,10 +69,9 @@ JPClass* JPTypeManager::findClassForObject(jobject obj)
 	JP_TRACE_OUT;
 }
 
-void JPTypeManager::populateMethod(void* method, jobject obj)
+void JPTypeManager::populateMethod(JPJavaFrame& frame, void* method, jobject obj)
 {
 	JP_TRACE_IN("JPTypeManager::populateMethod");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val[2];
 	val[0].j = (jlong) method;
 	val[1].l = obj;
@@ -83,10 +80,9 @@ void JPTypeManager::populateMethod(void* method, jobject obj)
 	JP_TRACE_OUT;
 }
 
-void JPTypeManager::populateMembers(JPClass* cls)
+void JPTypeManager::populateMembers(JPJavaFrame& frame, JPClass* cls)
 {
 	JP_TRACE_IN("JPTypeManager::populateMembers");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val[1];
 	val[0].l = (jobject) cls->getJavaClass();
 	frame.CallVoidMethodA(m_JavaTypeManager.get(), m_PopulateMembers, val);

@@ -1,3 +1,4 @@
+// --- file: common/jp_shorttype.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -90,13 +91,13 @@ public:
 		return JPMatch::_implicit;  //short cut further checks
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		JPContext *context = JPContext_global;
 		PyList_Append(info.exact, (PyObject*) context->_short->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 
 
@@ -118,12 +119,11 @@ JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPShortType::getConversionInfo(JPConversionInfo &info)
+void JPShortType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
-	jshortConversion.getInfo(this, info);
-	shortConversion.getInfo(this, info);
-	shortNumberConversion.getInfo(this, info);
+	jshortConversion.getInfo(frame, this, info);
+	shortConversion.getInfo(frame, this, info);
+	shortNumberConversion.getInfo(frame, this, info);
 	PyList_Append(info.ret, (PyObject*) JPContext_global->_short->getHost());
 }
 
@@ -268,20 +268,18 @@ void JPShortType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject
 	frame.SetShortArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-void JPShortType::getView(JPArrayView& view)
+void JPShortType::getView(JPJavaFrame& frame, JPArrayView& view)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	view.m_Memory = (void*) frame.GetShortArrayElements(
 			(jshortArray) view.m_Array->getJava(), &view.m_IsCopy);
 	view.m_Buffer.format = "h";
 	view.m_Buffer.itemsize = sizeof (jshort);
 }
 
-void JPShortType::releaseView(JPArrayView& view)
+void JPShortType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseShortArrayElements((jshortArray) view.m_Array->getJava(),
 				(jshort*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)

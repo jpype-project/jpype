@@ -128,6 +128,7 @@ set(JPYPE_NATIVE_SRC
         native/common/jp_arrayclass.cpp
         native/common/jp_booleantype.cpp
         native/common/jp_boxedtype.cpp
+        native/common/jp_bridge.cpp
         native/common/jp_buffer.cpp
         native/common/jp_buffertype.cpp
         native/common/jp_bytetype.cpp
@@ -145,6 +146,7 @@ set(JPYPE_NATIVE_SRC
         native/common/jp_floattype.cpp
         native/common/jp_functional.cpp
         native/common/jp_gc.cpp
+        native/common/jp_interfacetype.cpp
         native/common/jp_inttype.cpp
         native/common/jp_javaframe.cpp
         native/common/jp_longtype.cpp
@@ -156,6 +158,8 @@ set(JPYPE_NATIVE_SRC
         native/common/jp_platform.cpp
         native/common/jp_primitivetype.cpp
         native/common/jp_proxy.cpp
+        native/common/jp_pybasetype.cpp
+        native/common/jp_pythontype.cpp
         native/common/jp_reference_queue.cpp
         native/common/jp_shorttype.cpp
         native/common/jp_stringtype.cpp
@@ -224,4 +228,39 @@ if(SKBUILD)
 else()
     message(DEBUG "no skbuild env")
 endif()
+
+# 1. Define the Bootstrap Source
+set(JPYPE_BOOTSTRAP_SRC
+    native/bootstrap/ejp_natives.cpp
+)
+
+# 2. Add the Library as a Python Module
+Python3_add_library(_jpyne MODULE ${JPYPE_BOOTSTRAP_SRC})
+target_link_libraries(_jpyne PRIVATE Python3::Module)
+
+# 3. Configure Properties (Mirroring the main module)
+set_target_properties(_jpyne PROPERTIES
+    PREFIX "" 
+    OUTPUT_NAME "_jpyne"
+)
+
+# 4. Apply Platform-Specific Suffixes and Options
+if(WIN32)
+    set_target_properties(_jpyne PROPERTIES SUFFIX ".pyd")
+    target_compile_definitions(_jpyne PRIVATE WIN32=1)
+    # Ensure symbols like Java_org_jpype_bridge_BootstrapLoader_loadLibrary are visible
+    set_target_properties(_jpyne PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+else()
+    target_link_libraries(_jpyne PRIVATE dl)
+    set_target_properties(_jpyne PROPERTIES SUFFIX ".so")
+endif()
+
+# 5. Installation for Wheel Building (scikit-build-core)
+if(SKBUILD)
+    install(TARGETS _jpyne
+            LIBRARY DESTINATION ${DEST_EXTENSION}
+            RUNTIME DESTINATION ${DEST_EXTENSION}
+    )
+endif()
+
 
