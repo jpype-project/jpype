@@ -1,3 +1,4 @@
+// --- file: org/jpype/manager/ModifierCode.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -23,7 +24,6 @@ import java.util.EnumSet;
  * <p>
  * These pretty much match Java plus a few codes we need.
  *
- * @author nelson85
  */
 public enum ModifierCode
 {

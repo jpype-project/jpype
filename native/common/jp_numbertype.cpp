@@ -1,3 +1,4 @@
+// --- file: common/jp_numbertype.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -45,14 +46,13 @@ JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
 	JP_TRACE_OUT;
 }
 
-void JPNumberType::getConversionInfo(JPConversionInfo &info)
+void JPNumberType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPNumberType::getConversionInfo");
-	JPJavaFrame frame = JPJavaFrame::outer();
-	javaNumberAnyConversion->getInfo(this, info);
-	boxLongConversion->getInfo(this, info);
-	boxDoubleConversion->getInfo(this, info);
-	hintsConversion->getInfo(this, info);
+	javaNumberAnyConversion->getInfo(frame, this, info);
+	boxLongConversion->getInfo(frame, this, info);
+	boxDoubleConversion->getInfo(frame, this, info);
+	hintsConversion->getInfo(frame, this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 	JP_TRACE_OUT;
 }

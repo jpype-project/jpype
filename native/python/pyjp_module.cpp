@@ -1,3 +1,4 @@
+// --- file: python/pyjp_module.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -807,6 +808,8 @@ static struct PyModuleDef moduledef = {
 
 PyObject *PyJPModule = nullptr;
 JPContext* JPContext_global = nullptr;
+PyObject *Py_JP_CALL = nullptr;
+static PyObject *_strings_dict = nullptr; // Initialized as PyDict_New() in module init
 
 PyMODINIT_FUNC PyInit__jpype()
 {
@@ -829,6 +832,11 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyObject *builtins = PyEval_GetBuiltins();
 	Py_INCREF(builtins);
 	PyModule_AddObject(module, "__builtins__", builtins);
+
+	_strings_dict = PyDict_New();
+    // Add to module so it's visible/reachable and cleared on shutdown
+    PyModule_AddObject(module, "_strings", _strings_dict);
+	Py_JP_CALL = PyUnicode_InternFromString("__call__");
 
 	PyJPClassMagic = PyDict_New();
 	// Initialize each of the python extension types
@@ -853,6 +861,31 @@ PyMODINIT_FUNC PyInit__jpype()
 	return module;
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
+
+JNIEXPORT jlong JNICALL Java_org_jpype_internal_JPypeStringManager_get(JNIEnv *env, jclass obj, jstring name)
+{
+	JPJavaFrame frame = JPJavaFrame::external(env);
+	try {
+		if (name == nullptr) return 0;
+
+		JPPyCallAcquire callback;
+		string str = frame.toStringUTF8(name);
+		auto len = static_cast<Py_ssize_t>(str.size());
+    	JPPyObject bytes = JPPyObject::call(PyBytes_FromStringAndSize(str.c_str(), len));
+		PyObject* pyStr = PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict");
+		PyUnicode_InternInPlace(&pyStr);
+		PyObject* canonical = PyDict_SetDefault(_strings_dict, pyStr, pyStr);
+		Py_XINCREF(canonical);
+		Py_DECREF(pyStr);
+		return reinterpret_cast<jlong>(canonical);
+	} catch (JPypeException& ex) {
+		ex.toJava();
+	} catch (...) {
+		env->ThrowNew(JPContext_global->m_RuntimeException.get(), "unknown error");
+	}
+	return 0;
+}
+
 
 #ifdef __cplusplus
 }
@@ -1018,3 +1051,4 @@ void PyJPModule_installGC(PyObject* module)
 	PyList_Append(callbacks.get(), collect.get());
 	JP_PY_CHECK();
 }
+

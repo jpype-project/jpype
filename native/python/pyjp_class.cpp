@@ -1,3 +1,4 @@
+// --- file: python/pyjp_class.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -627,7 +628,8 @@ static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 	info.exact = exact.get();
 	info.expl = expl.get();
 	info.none = none.get();
-	self->m_Class->getConversionInfo(info);
+	JPJavaFrame frame = JPJavaFrame::outer();
+	self->m_Class->getConversionInfo(frame, info);
 	PyObject_SetAttrString(hints.get(), "returns", ret.get());
 	PyObject_SetAttrString(hints.get(), "implicit", implicit.get());
 	PyObject_SetAttrString(hints.get(), "exact", exact.get());

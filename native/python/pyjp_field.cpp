@@ -1,3 +1,4 @@
+// --- file: python/pyjp_field.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -42,14 +43,14 @@ static PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 	if (hasInterrupt())
 		frame.clearInterrupt(false);
 	if (self->m_Field->isStatic())
-		return self->m_Field->getStaticField().keep();
+		return self->m_Field->getStaticField(frame).keep();
 	if (obj == nullptr)
 		JP_RAISE(PyExc_AttributeError, "Field is not static");
 	JPValue *jval = PyJPValue_getJavaSlot(obj);
 	if (jval == nullptr)
 		JP_RAISE(PyExc_AttributeError, "Field requires instance value");
 
-	return self->m_Field->getField(jval->getValue().l).keep();
+	return self->m_Field->getField(frame, jval->getValue().l).keep();
 	JP_PY_CATCH(nullptr);
 }
 
@@ -64,7 +65,7 @@ static int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 	}
 	if (self->m_Field->isStatic())
 	{
-		self->m_Field->setStaticField(pyvalue);
+		self->m_Field->setStaticField(frame, pyvalue);
 		return 0;
 	}
 	if (obj == Py_None || PyJPClass_Check(obj))
@@ -78,7 +79,7 @@ static int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 		PyErr_Format(PyExc_AttributeError, "Field requires instance value, not '%s'", Py_TYPE(obj)->tp_name);
 		return -1;
 	}
-	self->m_Field->setField(jval->getValue().l, pyvalue);
+	self->m_Field->setField(frame, jval->getValue().l, pyvalue);
 	return 0;
 	JP_PY_CATCH(-1);
 }

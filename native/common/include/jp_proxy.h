@@ -23,7 +23,7 @@ class JPFunctional;
 class JPProxy
 {
 public:
-	friend class JPProxyType;
+	friend class JPProxyInstance;
 	JPProxy(PyJPProxy* inst, JPClassList& intf);
 	virtual ~JPProxy();
 
@@ -34,7 +34,7 @@ public:
 
 	jvalue getProxy();
 
-	virtual JPPyObject getCallable(const string& cname, int& addSelf) = 0;
+	virtual JPPyObject getCallable(PyObject* name, int& addSelf) = 0;
 	static void releaseProxyPython(void* host);
 
 	PyJPProxy* getInstance()
@@ -43,7 +43,7 @@ public:
 	}
 
 	PyJPProxy*    m_Instance;
-	JPObjectRef   m_Proxy;
+	JPObjectRef   m_ProxyType;
 	JPClassList   m_InterfaceClasses;
 	jweak         m_Ref;
 } ;
@@ -53,7 +53,7 @@ class JPProxyDirect : public JPProxy
 public:
 	JPProxyDirect(PyJPProxy* inst, JPClassList& intf);
 	~JPProxyDirect() override;
-	JPPyObject getCallable(const string& cname, int& addSelf) override;
+	JPPyObject getCallable(PyObject* name, int& addSelf) override;
 } ;
 
 class JPProxyIndirect : public JPProxy
@@ -61,7 +61,7 @@ class JPProxyIndirect : public JPProxy
 public:
 	JPProxyIndirect(PyJPProxy* inst, JPClassList& intf);
 	~JPProxyIndirect() override;
-	JPPyObject getCallable(const string& cname, int& addSelf) override;
+	JPPyObject getCallable(PyObject* name, int& addSelf) override;
 } ;
 
 class JPProxyFunctional : public JPProxy
@@ -69,31 +69,30 @@ class JPProxyFunctional : public JPProxy
 public:
 	JPProxyFunctional(PyJPProxy* inst, JPClassList& intf);
 	~JPProxyFunctional() override;
-	JPPyObject getCallable(const string& cname, int& addSelf) override;
+	JPPyObject getCallable(PyObject* name, int& addSelf) override;
 private:
 	JPFunctional *m_Functional;
 } ;
 
 /** Special wrapper for round trip returns
  */
-class JPProxyType : public JPClass
+class JPProxyInstance : public JPClass
 {
 public:
-	JPProxyType(JPJavaFrame& frame,
+	JPProxyInstance(JPJavaFrame& frame,
 			jclass clss,
 			const string& name,
 			JPClass* super,
 			JPClassList& interfaces,
 			jint modifiers);
-	~ JPProxyType() override;
+	~JPProxyInstance() override;
 
 public: // JPClass implementation
 	JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 
 private:
 	JPClassRef m_ProxyClass;
-	jmethodID  m_GetInvocationHandlerID;
-	jfieldID   m_InstanceID;
+	jmethodID  m_GetInstanceID;
 } ;
 
 #endif // JPPROXY_H
