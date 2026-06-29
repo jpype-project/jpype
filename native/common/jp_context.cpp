@@ -193,22 +193,29 @@ void JPContext::attachJVM(JNIEnv* env)
 	initializeResources(env, false);
 }
 
-std::string getShared() 
+std::string getShared()
 {
 #ifdef WIN32
-	// Windows specific
-	char path[MAX_PATH];
+	wchar_t wpath[MAX_PATH];
 	HMODULE hm = NULL;
-	if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | 
+	if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
 		GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-		(LPCSTR) &getShared, &hm) != 0 &&
-		GetModuleFileName(hm, path, sizeof(path)) != 0)
+		(LPCWSTR) &getShared, &hm) != 0 &&
+		GetModuleFileNameW(hm, wpath, MAX_PATH) != 0)
 	{
-		// This is needed when there is no-ascii characters in path
-		char shortPathBuffer[MAX_PATH];
-		long len = GetShortPathName(path, shortPathBuffer, MAX_PATH);
-		if (len != 0)
-			return std::string(shortPathBuffer);
+		wchar_t wShortPath[MAX_PATH];
+		long len = GetShortPathNameW(wpath, wShortPath, MAX_PATH);
+		wchar_t* finalWPath = (len != 0) ? wShortPath : wpath;
+		int utf8Len = WideCharToMultiByte(CP_UTF8, 0, finalWPath, -1, NULL, 0, NULL, NULL);
+		if (utf8Len > 0) {
+			std::string result(utf8Len - 1, '\0');
+			WideCharToMultiByte(CP_UTF8, 0, finalWPath, -1, &result[0], utf8Len, NULL, NULL);
+			return result;
+		} else {
+			std::cout << "[ERROR] WideCharToMultiByte failed." << std::endl;
+		}
+	} else {
+		std::cout << "[ERROR] GetModuleFileNameW failed." << std::endl;
 	}
 #else
 	// Linux specific
@@ -485,22 +492,22 @@ extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeContext_onShutdown
 }
 
 /**********************************************************************
- * Interrupts are complex.   Both Java and Python want to handle the 
- * interrupt, but only one can be in control.  Java starts later and 
+ * Interrupts are complex.   Both Java and Python want to handle the
+ * interrupt, but only one can be in control.  Java starts later and
  * installs its handler over Python as a chain.  If Java handles it then
  * the JVM will terminate which leaves Python with a bunch of bad
  * references which tends to lead to segfaults.  So we need to disable
- * the Java one by routing it back to Python.  But if we do so then 
+ * the Java one by routing it back to Python.  But if we do so then
  * Java wont respect Ctrl+C.  So we need to handle the interrupt, convert
- * it to a wait interrupt so that Java can break at the next I/O and 
+ * it to a wait interrupt so that Java can break at the next I/O and
  * then trip Python signal handler so the Python gets the interrupt.
  *
  * But this leads to a few race conditions.
  *
- * If the control is in Java then it will get the interrupt next time 
+ * If the control is in Java then it will get the interrupt next time
  * it hits Python code when the returned object is checked resulting
  * InterruptedException.  Now we have two exceptions on the stack,
- * the one from Java and the one from Python.  We check to see if 
+ * the one from Java and the one from Python.  We check to see if
  * Python has a pending interrupt and eat the Java one.
  *
  * If the control is in Java and it hits an I/O call.  This generates
