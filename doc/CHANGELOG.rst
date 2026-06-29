@@ -11,6 +11,8 @@ Latest Changes:
 
   - Fixed caching issue with method overloading for functors. #1366
 
+  - Fixed issue with library loading on Chinese systems. #1380
+
 - **1.7.1 - 2026-05-06**
 
   - Binaries for OSX ARM64.
