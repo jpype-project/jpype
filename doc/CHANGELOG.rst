@@ -6,7 +6,9 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 Latest Changes:
 
 - **1.7.2.dev0**
- 
+
+  - Fixed memory leak with int and float conversions. #1379
+
   - Fixed instablity in threading for method dispatch. #1366
 
   - Fixed caching issue with method overloading for functors. #1366

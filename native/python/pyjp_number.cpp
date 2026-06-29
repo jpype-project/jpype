@@ -399,7 +399,8 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 		jlong l = 0;
 		if (value.getValue().l != nullptr)
 			l = frame.CallBooleanMethodA(value.getJavaObject(), context->_java_lang_Boolean->m_BooleanValueID, nullptr);
-		JPPyObject args = JPPyTuple_Pack(PyLong_FromLongLong(l));
+		JPPyObject ln = JPPyObject::call(PyLong_FromLongLong(l));
+		JPPyObject args = JPPyTuple_Pack(ln.get());
 		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args.get(), nullptr));
 	}
 	if (PyObject_IsSubclass(wrapper.get(), (PyObject*) & PyLong_Type))
@@ -410,7 +411,8 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 			auto* jb = dynamic_cast<JPBoxedType*>( value.getClass());
 			l = frame.CallLongMethodA(value.getJavaObject(), jb->m_LongValueID, nullptr);
 		}
-		JPPyObject args = JPPyTuple_Pack(PyLong_FromLongLong(l));
+		JPPyObject ln = JPPyObject::call(PyLong_FromLongLong(l));
+		JPPyObject args = JPPyTuple_Pack(ln.get());
 		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args.get(), nullptr));
 	}
 	if (PyObject_IsSubclass(wrapper.get(), (PyObject*) & PyFloat_Type))
@@ -421,7 +423,8 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 			auto* jb = dynamic_cast<JPBoxedType*>( value.getClass());
 			l = frame.CallDoubleMethodA(value.getJavaObject(), jb->m_DoubleValueID, nullptr);
 		}
-		JPPyObject args = JPPyTuple_Pack(PyFloat_FromDouble(l));
+		JPPyObject ln = JPPyObject::call(PyFloat_FromDouble(l));
+		JPPyObject args = JPPyTuple_Pack(ln.get());
 		return JPPyObject::call(PyFloat_Type.tp_new((PyTypeObject*) wrapper.get(), args.get(), nullptr));
 	}
 	JP_RAISE(PyExc_TypeError, "unable to convert");  //GCOVR_EXCL_LINE
