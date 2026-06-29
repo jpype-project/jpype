@@ -353,4 +353,48 @@ public class Test1
     public static class DefaultC implements IDefaultC {
     }
     //*/
+
+    // Edge case: Fixed-arity vs varargs with same parameter count
+    public String testFixedVsVarArgs(String s, String t)
+    {
+      return "String,String";
+    }
+
+    public String testFixedVsVarArgs(String s, String... args)
+    {
+      return "String,String...";
+    }
+
+    // Edge case: More parameters than varargs minimum
+    public String testExpandedVsVarArgs(String s, String t, String u)
+    {
+      return "String,String,String";
+    }
+
+    public String testExpandedVsVarArgs(String s, String... args)
+    {
+      return "String,String...";
+    }
+
+    // Edge case: Minimum parameters (no varargs used)
+    public String testMinimalVsVarArgs(String s)
+    {
+      return "String";
+    }
+
+    public String testMinimalVsVarArgs(String s, String... args)
+    {
+      return "String,String...";
+    }
+
+    // Edge case: Two varargs with different specificity
+    public String testVarArgsVsVarArgs(String s, Object... args)
+    {
+      return "String,Object...";
+    }
+
+    public String testVarArgsVsVarArgs(String s, String... args)
+    {
+      return "String,String...";
+    }
 }

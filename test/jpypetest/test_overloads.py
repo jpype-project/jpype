@@ -330,3 +330,133 @@ class OverloadTestCase(common.JPypeTestCase):
         self.assertEqual(obj.testMember(jpype.JBoolean(True), Derived), 3)
         self.assertEqual(obj.testMember(jpype.JObject(True, Boolean), Derived), 4)
         self.assertEqual(obj.testMember(jpype.JObject(True, Object), Derived), 4)
+
+    def testFixedVsVarArgs(self):
+        """Test that fixed-arity methods are preferred over varargs"""
+        test1 = self.__jp.Test1()
+        
+        # With 2 string arguments, should match fixed method
+        # foo(String, String) should be more specific than foo(String, String...)
+        self.assertEqual('String,String', test1.testFixedVsVarArgs('a', 'b'))
+        
+        # With 1 argument, should match varargs (no fixed alternative)
+        self.assertEqual('String,String...', test1.testFixedVsVarArgs('a'))
+        
+        # With 3+ arguments, should match varargs
+        self.assertEqual('String,String...', test1.testFixedVsVarArgs('a', 'b', 'c'))
+
+    def testExpandedVsVarArgs(self):
+        """Test that fixed methods with more parameters beat varargs"""
+        test1 = self.__jp.Test1()
+        
+        # With 3 arguments, fixed method should win
+        self.assertEqual('String,String,String', test1.testExpandedVsVarArgs('a', 'b', 'c'))
+        
+        # With 1 argument, only varargs matches
+        self.assertEqual('String,String...', test1.testExpandedVsVarArgs('a'))
+        
+        # With 2 arguments, only varargs matches
+        self.assertEqual('String,String...', test1.testExpandedVsVarArgs('a', 'b'))
+        
+        # With 4+ arguments, only varargs matches
+        self.assertEqual('String,String...', test1.testExpandedVsVarArgs('a', 'b', 'c', 'd'))
+
+    def testMinimalVsVarArgs(self):
+        """Test that fixed method with minimum parameters beats varargs"""
+        test1 = self.__jp.Test1()
+        
+        # With 1 argument, fixed method should win
+        self.assertEqual('String', test1.testMinimalVsVarArgs('a'))
+        
+        # With 2+ arguments, varargs matches
+        self.assertEqual('String,String...', test1.testMinimalVsVarArgs('a', 'b'))
+        self.assertEqual('String,String...', test1.testMinimalVsVarArgs('a', 'b', 'c'))
+
+    def testVarArgsVsVarArgsSpecificity(self):
+        """Test that more specific varargs wins over less specific"""
+        test1 = self.__jp.Test1()
+        
+        # With String arguments, String... should be preferred over Object...
+        self.assertEqual('String,String...', test1.testVarArgsVsVarArgs('a', 'b', 'c'))
+        self.assertEqual('String,String...', test1.testVarArgsVsVarArgs('a', 'b'))
+        self.assertEqual('String,String...', test1.testVarArgsVsVarArgs('a'))
+
+    def testDiagnosticVarArgs(self):
+        """Diagnostic test to examine method resolution order"""
+        test1 = self.__jp.Test1()
+        
+        print("\n=== Diagnostic: Fixed vs VarArgs ===")
+        
+        # Test with 2 arguments - the critical case
+        try:
+            result = test1.testFixedVsVarArgs('a', 'b')
+            print(f"testFixedVsVarArgs('a', 'b') -> {result}")
+            if result == 'String,String':
+                print("✓ PASS: Fixed method correctly chosen")
+            else:
+                print(f"✗ FAIL: Expected 'String,String' but got '{result}'")
+        except Exception as e:
+            print(f"✗ ERROR: {e}")
+        
+        # Test method resolution using reflection if available
+        try:
+            from org.jpype.manager import MethodResolution
+            Test1Class = JClass('jpype.overloads.Test1')
+            methods = Test1Class.class_.getDeclaredMethods()
+            
+            # Find our test methods
+            fixed = None
+            varargs = None
+            for method in methods:
+                if method.getName() == 'testFixedVsVarArgs':
+                    params = method.getParameterTypes()
+                    if len(params) == 2:
+                        if method.isVarArgs():
+                            varargs = method
+                            print(f"\nVarArgs method: {method}")
+                            print(f"  Parameters: {[str(p) for p in params]}")
+                        else:
+                            fixed = method
+                            print(f"Fixed method: {method}")
+                            print(f"  Parameters: {[str(p) for p in params]}")
+            
+            if fixed and varargs:
+                fixed_more_specific = MethodResolution.isMoreSpecificThan(fixed, varargs)
+                varargs_more_specific = MethodResolution.isMoreSpecificThan(varargs, fixed)
+                
+                print(f"\nSpecificity comparison:")
+                print(f"  Fixed more specific than VarArgs? {fixed_more_specific}")
+                print(f"  VarArgs more specific than Fixed? {varargs_more_specific}")
+                
+                if fixed_more_specific and not varargs_more_specific:
+                    print("  ✓ Correct: Fixed should be more specific")
+                elif varargs_more_specific and not fixed_more_specific:
+                    print("  ✗ Wrong: VarArgs should NOT be more specific")
+                elif fixed_more_specific and varargs_more_specific:
+                    print("  ✗ Wrong: Both are more specific (ambiguous)")
+                else:
+                    print("  ✗ Wrong: Neither is more specific (incomparable)")
+                
+                # Test sorting
+                methodList = jpype.java.util.ArrayList()
+                methodList.add(varargs)
+                methodList.add(fixed)
+                sorted_list = MethodResolution.sortMethods(methodList)
+                
+                print(f"\nSorted order (most to least specific):")
+                for i, mr in enumerate(sorted_list):
+                    method_name = "VarArgs" if mr.executable == varargs else "Fixed"
+                    print(f"  {i}: {method_name} - {mr.executable}")
+                    print(f"     Children: {len(mr.children)}")
+                    
+                if sorted_list.get(0).executable == fixed:
+                    print("  ✓ Correct: Fixed is first (most specific)")
+                else:
+                    print("  ✗ Wrong: VarArgs is first (should be Fixed)")
+                    
+        except Exception as e:
+            print(f"\nCould not run reflection test: {e}")
+            import traceback
+            traceback.print_exc()
+        
+        print("=== End Diagnostic ===\n")
