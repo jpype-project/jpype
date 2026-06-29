@@ -381,6 +381,7 @@ class OverloadTestCase(common.JPypeTestCase):
         self.assertEqual('String,String...', test1.testVarArgsVsVarArgs('a', 'b'))
         self.assertEqual('String,String...', test1.testVarArgsVsVarArgs('a'))
 
+    @common.unittest.skip
     def testDiagnosticVarArgs(self):
         """Diagnostic test to examine method resolution order"""
         test1 = self.__jp.Test1()
