@@ -11,6 +11,8 @@ Latest Changes:
 
   - Fixed instablity in threading for method dispatch. #1366
 
+  - Fixed overloading ambiguity issue. #1371
+
   - Fixed caching issue with method overloading for functors. #1366
 
   - Fixed issue with library loading on Chinese systems. #1380

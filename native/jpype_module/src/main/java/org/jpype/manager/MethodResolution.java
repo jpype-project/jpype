@@ -188,7 +188,6 @@ public class MethodResolution
     //       foo(Arg0, Arg1, Arg1+)
     if (method1.isVarArgs() && method2.isVarArgs())
     {
-      // Punt on this as there are too many different cases
       return isMoreSpecificThan(param1, param2);
     }
 
@@ -203,7 +202,9 @@ public class MethodResolution
 
       // Less arguments, chop the list 
       if (n1 - 1 == n2)
-        return isMoreSpecificThan(param1.subList(0, n2), param2);
+      {
+        return false;
+      }
 
       // Same arguments
       if (n1 == n2)
@@ -223,15 +224,10 @@ public class MethodResolution
       // More arguments
       if (n1 < n2)
       {
-        // Grow the list
-        List<Class<?>> q = new ArrayList<>(param1);
-        q.set(n1 - 1, cls2);
-        for (int i = n1; i < n2; ++i)
-          q.add(cls2);
-        return isMoreSpecificThan(q, param2);
+        return false;
       }
     }
-
+    
     if (method2.isVarArgs())
     {
       int n1 = param1.size();
@@ -241,32 +237,59 @@ public class MethodResolution
       Class<?> cls = param2.get(n2 - 1);
       Class<?> cls2 = cls.getComponentType();
 
-      // Less arguments, chop the list
-      if (n2 - 1 == n1)
-        return isMoreSpecificThan(param1, param2.subList(0, n2));
+      // Case 1: Fixed method has fewer params
+      if (n1 < n2 - 1)
+        return false;
 
-      // Same arguments
+      // Case 2: Fixed method has exactly minimum params (excluding varargs)
+      if (n1 == n2 - 1)
+        return isMoreSpecificThan(param1, param2.subList(0, n1));
+
+      // Case 3: Same number of params
       if (n1 == n2)
       {
-        List<Class<?>> q = new ArrayList<>(param2);
-        q.set(n2 - 1, cls2);
+        // Compare all fixed params except last
+        for (int i = 0; i < n1 - 1; ++i)
+        {
+          if (!isAssignableTo(param1.get(i), param2.get(i)))
+            return false;
+        }
 
-        // Compare both ways
-        return isMoreSpecificThan(param1, param2) || isMoreSpecificThan(param1, q);
+        Class<?> lastFixed = param1.get(n1 - 1);
+
+        // The fixed method is more specific if its last parameter
+        // is assignable to the varargs component type
+        // This means foo(String, String) is more specific than foo(String, String...)
+        boolean canMatchExpanded = isAssignableTo(lastFixed, cls2);
+
+        // Also check if it can match as array: foo(String, String[]) vs foo(String, String...)
+        boolean canMatchArray = isAssignableTo(lastFixed, cls);
+
+        // Fixed method is more specific if it can match either way
+        return canMatchExpanded || canMatchArray;
       }
 
-      // More arguments
-      if (n2 < n1)
+      // Case 4: Fixed method has more params
+      if (n1 > n2)
       {
-        // Grow the list
-        List<Class<?>> q = new ArrayList<>(param2);
-        q.set(n2 - 1, cls2);
-        for (int i = n2; i < n1; ++i)
-          q.add(cls2);
-        return isMoreSpecificThan(param1, q);
+        // Check fixed params up to varargs position
+        for (int i = 0; i < n2 - 1; ++i)
+        {
+          if (!isAssignableTo(param1.get(i), param2.get(i)))
+            return false;
+        }
+
+        // All remaining fixed params must be assignable to component type
+        for (int i = n2 - 1; i < n1; ++i)
+        {
+          if (!isAssignableTo(param1.get(i), cls2))
+            return false;
+        }
+
+        return true;
       }
     }
-
+ 
     return isMoreSpecificThan(param1, param2);
   }
 
