@@ -167,7 +167,7 @@ def _jclassDoc(cls):
     out = []
     if not hasattr(cls, "__javadoc__"):
         jde = JClass("org.jpype.javadoc.JavadocExtractor")()
-        jd = jde.getDocumentation(cls)
+        jd = jde.getDocumentation(cls.class_)
         if jd is not None:
             setattr(cls, "__javadoc__", jd)
             if jd.description is not None:
