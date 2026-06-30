@@ -6097,6 +6097,47 @@ Thus it appears prohibitive to support multiple JVMs in the JPype
 class model.
 
 
+.. _miscellaneous_topics_jpype_known_limitations_java_library_path:
+
+Modifying java.library.path at runtime
+---------------------------------------
+
+The JVM property ``java.library.path`` specifies directories to search for native
+libraries when using ``System.loadLibrary()``. This path is read by the JVM only
+during startup and cannot be modified at runtime after the JVM has been started.
+
+This is a limitation of the JVM itself, not JPype. While various workarounds
+exist that use reflection to modify private JVM fields, these are fragile hacks
+that rely on internal implementation details and are not supported.
+
+The recommended approach for loading native libraries dynamically is to use
+``System.load()`` with absolute paths instead of ``System.loadLibrary()``:
+
+.. code-block:: python
+
+    import jpype
+    import jpype.imports
+    from java.lang import System
+
+    # Load a native library with an absolute path
+    System.load('/absolute/path/to/library.so')
+
+This approach works at any time after JVM startup and does not depend on
+``java.library.path``. If you need to set ``java.library.path`` for third-party
+libraries, it must be configured when calling ``startJVM()``:
+
+.. code-block:: python
+
+    import jpype
+
+    jpype.startJVM('-Djava.library.path=/path/to/native/libs')
+
+Note that this limitation makes it difficult to use multiple Python packages
+that each wrap different Java libraries requiring different native library
+paths in the same process, as only one ``java.library.path`` can be set at
+JVM startup.
+
+
 .. _miscellaneous_topics_jpype_known_limitations_errors_reported_by_python_fault_handler:
 
 Errors reported by Python fault handler
