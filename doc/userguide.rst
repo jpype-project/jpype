@@ -1181,9 +1181,10 @@ JVM effectively.
    To ensure smooth data exchange, consider the following strategies:
 
    1. **Use NumPy Arrays**: NumPy arrays integrate seamlessly with JPype and
-      allow fast, memory-efficient data transfers to Java. For example, a
-      NumPy array can be mapped directly to a Java primitive array, enabling
-      high-speed operations without unnecessary copying.
+      allow fast, memory-efficient data transfers to Java. For small to medium
+      arrays, use ``JArray.of()`` to convert NumPy arrays to Java arrays.
+      For large arrays, use direct buffers via ``jpype.nio.convertToDirectBuffer()``
+      to enable zero-copy access where both languages operate on the same memory.
 
    2. **Leverage Java Buffers**: Java's `nio` buffers provide a mechanism for
       shared memory between Python and Java. These buffers are particularly
@@ -4217,8 +4218,9 @@ This enables efficient bulk data transfer for rectangular arrays.
 Transferring Arrays to Java
 ---------------------------
 
-NumPy arrays can be transferred to Java using the `JArray.of` function. This maps
-the structure of a NumPy array to a Java multidimensional array.
+NumPy arrays can be transferred to Java using the ``JArray.of()`` function. This
+**creates a copy** of the NumPy array as a Java multidimensional array. For zero-copy
+access to large arrays, see the section on "Zero-Copy Access to NumPy Arrays from Java".
 
 **Example: Transferring a NumPy Array to Java**
 
@@ -4241,6 +4243,357 @@ the structure of a NumPy array to a Java multidimensional array.
 **Constraints**:
 - The NumPy array must be rectangular. Jagged arrays are not supported.
 - Data types must be compatible with Java primitives (e.g., `np.float64` → `double`).
+
+**Important**: ``JArray.of()`` creates a **copy** of the NumPy array data. For
+large arrays where copying is expensive, see the next section on zero-copy access
+using direct buffers.
+
+
+
+.. _working_with_numpy_zero_copy_access:
+
+Zero-Copy Access to NumPy Arrays from Java
+-------------------------------------------
+
+For large NumPy arrays, copying data with ``JArray.of()`` can be memory-intensive
+and slow. JPype provides zero-copy access to NumPy arrays through Java's direct
+buffer mechanism. This allows Java code to read and write directly to the NumPy
+array's memory without any data duplication.
+
+**When to Use Zero-Copy vs Copying**:
+
+- **Use JArray.of() (copying)** when:
+
+  - Arrays are small or medium-sized
+  - You need a true Java array type (``double[]``, ``int[][]``, etc.)
+  - Java code expects standard array syntax (``array[i][j]``)
+  - The data will be modified independently in Java and Python
+
+- **Use Direct Buffers (zero-copy)** when:
+
+  - Arrays are very large (avoiding copy saves memory)
+  - You want changes in Java to be visible in Python (shared memory)
+  - You're willing to write custom index calculation code in Java
+  - You're working with 1D contiguous arrays or can handle strided access
+
+
+.. _working_with_numpy_zero_copy_1d_arrays:
+
+Zero-Copy Access for 1D Arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For 1D arrays, zero-copy access is achieved by creating a shared memory buffer and
+wrapping it as both a Java buffer and a NumPy array. This allows both to operate on
+the same physical memory without copying.
+
+**Method 1: Python bytearray as the backing store (Recommended)**
+
+.. code-block:: python
+
+   import jpype
+   import numpy as np
+
+   # Start the JVM
+   jpype.startJVM()
+
+   # Create Python buffer as the backing store
+   size = 5
+   py_buffer = bytearray(size * 8)  # 5 doubles * 8 bytes each
+
+   # Wrap as Java direct buffer (zero-copy!)
+   java_buffer = jpype.nio.convertToDirectBuffer(py_buffer)
+   double_buffer = java_buffer.asDoubleBuffer()
+
+   # Create NumPy array viewing the same memory
+   np_array = np.asarray(double_buffer)
+
+   # Initialize data through NumPy
+   np_array[:] = [1.0, 2.0, 3.0, 4.0, 5.0]
+
+   # Java can now read/write the array without copying
+   print(f"Size: {double_buffer.capacity()}")  # Output: 5
+   print(f"First element: {double_buffer.get(0)}")  # Output: 1.0
+
+   # Modifications in Java are visible in NumPy
+   double_buffer.put(0, 999.0)
+   print(f"NumPy array: {np_array}")  # Output: [999. 2. 3. 4. 5.]
+
+   # Modifications in NumPy are visible in Java
+   np_array[1] = 888.0
+   print(f"Java buffer[1]: {double_buffer.get(1)}")  # Output: 888.0
+
+**Why Method 1 is recommended**: The Python ``bytearray`` owns the memory, so it
+remains valid even after the JVM shuts down. This prevents crashes from accessing
+invalid memory.
+
+
+**Method 2: Java-allocated buffer**
+
+.. code-block:: python
+
+   import jpype
+   import numpy as np
+
+   jpype.startJVM()
+
+   # Allocate buffer in Java
+   java_buffer = jpype.java.nio.ByteBuffer.allocateDirect(40)  # 5 doubles * 8 bytes
+   double_buffer = java_buffer.asDoubleBuffer()
+
+   # Create NumPy array backed by the Java buffer
+   np_array = np.asarray(double_buffer)
+
+   # Set values through NumPy
+   np_array[:] = [10.0, 20.0, 30.0, 40.0, 50.0]
+
+   # Java sees the changes
+   print(f"Java buffer[0]: {double_buffer.get(0)}")  # Output: 10.0
+
+   # Java modifications visible in NumPy
+   double_buffer.put(0, 100.0)
+   print(f"NumPy array: {np_array}")  # Output: [100. 20. 30. 40. 50.]
+
+**Warning**: With Method 2, if the JVM shuts down, the NumPy array becomes invalid
+and accessing it may crash Python. Only use this approach if the JVM lifetime
+exceeds the array lifetime.
+
+
+**How it works**:
+
+1. Create a shared memory buffer (Python ``bytearray`` or Java ``ByteBuffer.allocateDirect``)
+2. Wrap it as a typed buffer (``asDoubleBuffer()``, ``asIntBuffer()``, etc.)
+3. Create NumPy array with ``np.asarray(typed_buffer)``
+4. All three objects (backing buffer, Java buffer, NumPy array) now share memory
+
+**Requirements for zero-copy access**:
+
+- Use ``np.asarray()`` on the Java typed buffer (not on the bytearray)
+- Keep the backing buffer (bytearray or Java ByteBuffer) alive
+- Be careful with JVM shutdown if using Java-allocated buffers
+
+
+.. _working_with_numpy_zero_copy_multidimensional:
+
+Zero-Copy Access for Multi-Dimensional Arrays
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For multi-dimensional arrays, you need to handle index calculations manually in Java,
+since Java buffers are fundamentally 1D. This is more complex but avoids copying
+large datasets.
+
+**Example: Zero-Copy 2D Array Access**
+
+.. code-block:: python
+
+   import jpype
+   import numpy as np
+
+   jpype.startJVM()
+
+   # Create a 2D NumPy array (100x100, C-contiguous) with shared memory
+   rows, cols = 100, 100
+   py_buffer = bytearray(rows * cols * 8)  # 8 bytes per double
+
+   # Create Java buffer
+   java_buffer = jpype.nio.convertToDirectBuffer(py_buffer)
+   double_buffer = java_buffer.asDoubleBuffer()
+
+   # Create NumPy array viewing the same memory
+   np_array = np.asarray(double_buffer).reshape(rows, cols)
+
+   # Initialize with test data
+   for i in range(rows):
+       for j in range(cols):
+           np_array[i, j] = i * cols + j
+
+   # Get strides for index calculation
+   row_stride = np_array.strides[0] // np_array.itemsize
+   col_stride = np_array.strides[1] // np_array.itemsize
+
+   # Example Java wrapper class for convenient access
+   # (you would define this in Java, shown here conceptually)
+   java_code = """
+   public class Matrix2D {
+       private java.nio.DoubleBuffer buffer;
+       private int rows, cols, rowStride, colStride;
+
+       public Matrix2D(java.nio.DoubleBuffer buf, int r, int c, int rs, int cs) {
+           this.buffer = buf;
+           this.rows = r;
+           this.cols = c;
+           this.rowStride = rs;
+           this.colStride = cs;
+       }
+
+       public double get(int i, int j) {
+           return buffer.get(i * rowStride + j * colStride);
+       }
+
+       public void set(int i, int j, double value) {
+           buffer.put(i * rowStride + j * colStride, value);
+       }
+   }
+   """
+
+   # Access directly in Python with Java buffer API
+   # For element at [row][col]: index = row * row_stride + col * col_stride
+   element = double_buffer.get(5 * row_stride + 10 * col_stride)
+   print(f"Element [5][10]: {element}")  # Same as np_array[5, 10]
+
+   # Modifications in Java are visible in NumPy
+   double_buffer.put(5 * row_stride + 10 * col_stride, -999.0)
+   print(f"NumPy [5][10]: {np_array[5, 10]}")  # Output: -999.0
+
+   # Modifications in NumPy are visible in Java
+   np_array[5, 10] = 777.0
+   element = double_buffer.get(5 * row_stride + 10 * col_stride)
+   print(f"Java sees: {element}")  # Output: 777.0
+
+**Key considerations for multi-dimensional arrays**:
+
+- **Memory layout**: Create as 1D NumPy array first, then reshape - NumPy will use C-contiguous layout
+- **Strides**: NumPy's stride information tells you the memory offset between elements
+- **C-order vs Fortran-order**: Use C-contiguous layout (default when reshaping)
+- **Index calculation**: In C-order, 2D index is ``i * row_stride + j``; 3D is ``i * d1_stride + j * d2_stride + k``
+- **For C-contiguous arrays**: ``row_stride = num_cols``, ``col_stride = 1``
+
+
+.. _working_with_numpy_zero_copy_checking_contiguity:
+
+Checking Array Contiguity
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before using zero-copy access, verify that your NumPy array is contiguous:
+
+.. code-block:: python
+
+   import numpy as np
+
+   # Create a 2D array
+   array_2d = np.arange(100).reshape(10, 10)
+
+   # Check if contiguous
+   print(f"C-contiguous: {array_2d.flags.c_contiguous}")  # True for whole array
+
+   # Row slices are contiguous
+   row = array_2d[5, :]
+   print(f"Row contiguous: {row.flags.c_contiguous}")  # True
+
+   # Column slices are NOT contiguous in C-order
+   col = array_2d[:, 5]
+   print(f"Column contiguous: {col.flags.c_contiguous}")  # False
+
+   # Make non-contiguous array contiguous
+   if not col.flags.c_contiguous:
+       col = np.ascontiguousarray(col)  # This makes a copy!
+
+   # Now it's safe for zero-copy access
+   buffer = jpype.nio.convertToDirectBuffer(col.data)
+
+
+.. _working_with_numpy_zero_copy_complete_example:
+
+Complete Example: Processing Large Arrays in Java
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Here's a complete example showing how to process a large NumPy array in Java
+without copying:
+
+.. code-block:: python
+
+   import jpype
+   import numpy as np
+
+   jpype.startJVM()
+
+   def create_shared_array(size):
+       """Create a NumPy array that shares memory with a Java buffer."""
+       # Create Python buffer
+       py_buffer = bytearray(size * 8)  # 8 bytes per double
+
+       # Create Java buffer (zero-copy wrapper)
+       java_buffer = jpype.nio.convertToDirectBuffer(py_buffer)
+       double_buffer = java_buffer.asDoubleBuffer()
+
+       # Create NumPy array viewing the same memory
+       np_array = np.asarray(double_buffer)
+
+       return np_array, double_buffer
+
+   def compute_sum_in_java(double_buffer):
+       """Sum array elements using Java."""
+       total = 0.0
+       for i in range(double_buffer.capacity()):
+           total += double_buffer.get(i)
+       return total
+
+   # Create a large shared array
+   large_array, java_buffer = create_shared_array(1_000_000)
+
+   # Initialize with random data through NumPy
+   large_array[:] = np.random.rand(1_000_000)
+
+   # Compute sum in both Python and Java
+   print(f"NumPy sum: {np.sum(large_array):.6f}")
+   print(f"Java sum: {compute_sum_in_java(java_buffer):.6f}")
+
+   # Both operate on the same memory - no copy made!
+   # Modify in Java
+   java_buffer.put(0, 999.0)
+   print(f"After Java modification, NumPy[0]: {large_array[0]}")  # Output: 999.0
+
+
+**Example: Accessing Existing NumPy Array from Java**
+
+If you already have a NumPy array and want Java to access it, you have two choices:
+
+.. code-block:: python
+
+   import jpype
+   import numpy as np
+
+   jpype.startJVM()
+
+   existing_array = np.random.rand(1000)
+
+   # Option 1: Zero-copy (create new shared array and copy data once)
+   py_buffer = bytearray(existing_array.nbytes)
+   java_buffer = jpype.nio.convertToDirectBuffer(py_buffer)
+   double_buffer = java_buffer.asDoubleBuffer()
+   shared_array = np.asarray(double_buffer)
+   shared_array[:] = existing_array  # Copy data once
+   # Now Java and NumPy share memory going forward
+
+   # Option 2: Simple copy using JArray.of()
+   java_array = jpype.JArray.of(existing_array)
+   # Java has independent copy, changes don't affect NumPy array
+
+
+.. _working_with_numpy_zero_copy_summary:
+
+Summary: Copying vs Zero-Copy
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+**JArray.of() - Copying Approach**:
+
+- ✓ Simple, works with all array shapes
+- ✓ Results in true Java arrays (``double[][]``, etc.)
+- ✓ Standard Java array syntax in Java code
+- ✗ Copies data (memory overhead for large arrays)
+- ✗ Changes in Java don't affect Python array
+
+**Direct Buffers - Zero-Copy Approach**:
+
+- ✓ No memory copying (fast for large arrays)
+- ✓ Changes visible in both Java and Python
+- ✓ Memory efficient for large datasets
+- ✗ Requires manual index calculations for multi-dimensional arrays
+- ✗ Must ensure array is contiguous
+- ✗ More complex to use in Java code
+
+Choose based on your performance requirements and array sizes. For most use cases
+under 100MB, the simplicity of ``JArray.of()`` outweighs the copy cost. For larger
+arrays or when shared memory is needed, direct buffers are the right choice.
 
 
 
