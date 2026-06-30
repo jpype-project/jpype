@@ -73,6 +73,24 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 			JP_RAISE(PyExc_TypeError, "Class must be array type");
 		if (arrayClass2 != arrayClass)
 			JP_RAISE(PyExc_TypeError, "Array class mismatch");
+
+		// Check if the input is a PyJPArray and if it's a slice
+		// If so, we need to clone it to get the actual sliced elements
+		if (PyObject_IsInstance(v, (PyObject*) PyJPArray_Type))
+		{
+			JPArray* srcArray = ((PyJPArray*) v)->m_Array;
+			if (srcArray->isSlice())
+			{
+				// Create a new array with the correct length and copy elements
+				jsize sliceLength = srcArray->getLength();
+				JPValue newArray = arrayClass->newArray(frame, sliceLength);
+				((PyJPArray*) self)->m_Array = new JPArray(newArray);
+				((PyJPArray*) self)->m_Array->setRange(0, sliceLength, 1, v);
+				PyJPValue_assignJavaSlot(frame, self, newArray);
+				return 0;
+			}
+		}
+
 		((PyJPArray*) self)->m_Array = new JPArray(*value);
 		PyJPValue_assignJavaSlot(frame, self, *value);
 		return 0;
@@ -163,7 +181,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 
 		slicelength = PySlice_AdjustIndices(length, &start, &stop, step);
 
-        if (slicelength <= 0)
+		if (slicelength <= 0)
 		{
 			// This should point to a null array so we don't hold worthless
 			// memory, but this is a low priority
@@ -229,7 +247,7 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 
 		slicelength = PySlice_AdjustIndices(length, &start, &stop, step);
 
-        if (slicelength <= 0)
+		if (slicelength <= 0)
 			return 0;
 
 		self->m_Array->setRange((jsize) start, (jsize) slicelength, (jsize) step,  value);
@@ -414,10 +432,10 @@ static PyGetSetDef arrayGetSets[] = {
 };
 
 static PyType_Slot arraySlots[] = {
-	{ Py_tp_new,      (void*) PyJPArray_new},
-	{ Py_tp_init,     (void*) PyJPArray_init},
+	{ Py_tp_new,	  (void*) PyJPArray_new},
+	{ Py_tp_init,	 (void*) PyJPArray_init},
 	{ Py_tp_dealloc,  (void*) PyJPArray_dealloc},
-	{ Py_tp_repr,     (void*) PyJPArray_repr},
+	{ Py_tp_repr,	 (void*) PyJPArray_repr},
 	{ Py_tp_methods,  (void*) &arrayMethods},
 	{ Py_mp_subscript, (void*) &PyJPArray_getItem},
 	{ Py_sq_length,   (void*) &PyJPArray_len},
