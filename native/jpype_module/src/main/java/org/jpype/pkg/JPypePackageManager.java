@@ -469,9 +469,12 @@ public class JPypePackageManager
       // Java 8 bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8131067
       // Zip file system provider returns doubly % encoded URIs. We resolve this
       // by re-encoding the URI after decoding it.
+      //
+      // Replace "+" with its URL-encoded representation to avoid conversion to
+      // a space and ensure correct round-trip encoding.
       uri = new URI(
               uri.getScheme(),
-              URLDecoder.decode(uri.getSchemeSpecificPart(), StandardCharsets.UTF_8),
+              URLDecoder.decode(uri.getSchemeSpecificPart().replace("+", "%2b"), StandardCharsets.UTF_8),
               uri.getFragment()
       );
 
