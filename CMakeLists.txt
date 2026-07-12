@@ -39,7 +39,6 @@ set(DEST_JAR_FN "${DEST_JAR}/org.jpype.jar")
 
 message(STATUS "Destination Python extension: ${DEST_EXTENSION}")
 message(STATUS "Destination directory JAR: ${DEST_JAR_FN}")
-message(STATUS "Source JAR: ${SRC_JAR}")
 
 # We want to cache DEST_JAR, so people do not need a jdk, but only a c++ compiler to build jpype.
 if(EXISTS "${SRC_JAR}")
@@ -47,11 +46,14 @@ if(EXISTS "${SRC_JAR}")
     file(COPY_FILE "${SRC_JAR}" "${DEST_JAR_FN}")
 else()
     message(STATUS "Source JAR ${SRC_JAR} NOT found.")
+    if(NOT ENABLE_BUILD_JAR)
+        message(FATAL_ERROR "JAR building disabled, but no cached jar found!")
+    endif()
 endif()
 
 # by default, we gonna rebuild the jar
 if(ENABLE_BUILD_JAR AND NOT EXISTS "${SRC_JAR}")
-    message(STATUS "building JAR")
+    message(STATUS "Building JAR")
 
     find_program(ANT_EXECUTABLE ant REQUIRED)
     # this is the build artifact of Ant.
