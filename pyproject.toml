@@ -78,6 +78,8 @@ editable.mode = "inplace"
 # todo: try out automatic rebuild feature.
 #editable.rebuild = true
 
+
+
 sdist.include = [
     "native/**/*.h",
     "native/**/*.xml",
@@ -98,3 +100,7 @@ sdist.exclude = [
 # keep debug info
 cmake.build-type = "RelWithDebInfo"
 install.strip = false
+
+[tool.scikit-build.cmake.define]
+ENABLE_BUILD_JAR = "OFF"
+BUILD_TEST_HARNESS = "OFF"
