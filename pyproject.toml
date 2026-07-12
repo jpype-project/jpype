@@ -78,8 +78,23 @@ editable.mode = "inplace"
 # todo: try out automatic rebuild feature.
 #editable.rebuild = true
 
-sdist.exclude = [".azure", ".github"]
+sdist.include = [
+    "native/**/*.h",
+    "native/**/*.xml",
+    "native/**/*.java",
+    "native/**/*.jar",
+    "*.rst",
+    "doc/*",
+    "test/**",
+    "org.jpype.jar",
+]
 
+sdist.exclude = [
+    "test/classes/**",
+    ".azure",
+    ".github",
+    "project/",
+]
 # keep debug info
 cmake.build-type = "RelWithDebInfo"
 install.strip = false
