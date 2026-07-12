@@ -8,10 +8,11 @@ option(BUILD_TEST_HARNESS "Build the Java test harness" ON)
 # Optionally set Python GIL disabled flag
 # set(PY_GIL_DISABLED ON)
 set(CMAKE_CXX_STANDARD 14)
+set(SRC_JAR "${CMAKE_CURRENT_SOURCE_DIR}/org.jpype.jar")
 
 find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
 find_package(Python3 COMPONENTS Development.Embed)
-find_package(Java REQUIRED COMPONENTS Development)
+find_package(Java COMPONENTS Development) # java is optional, if the cached JAR does not exist.
 find_package(JNI)
 
 if(JNI_FOUND)
@@ -34,11 +35,23 @@ else()
     set(DEST_EXTENSION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
-message(STATUS "Destination Python extension: ${DEST_EXTENSION}")
-message(STATUS "Destination JAR: ${DEST_JAR}")
+set(DEST_JAR_FN "${DEST_JAR}/org.jpype.jar")
 
-if(ENABLE_BUILD_JAR)
-    message(DEBUG "build jar")
+message(STATUS "Destination Python extension: ${DEST_EXTENSION}")
+message(STATUS "Destination directory JAR: ${DEST_JAR_FN}")
+message(STATUS "Source JAR: ${SRC_JAR}")
+
+# We want to cache DEST_JAR, so people do not need a jdk, but only a c++ compiler to build jpype.
+if(EXISTS "${SRC_JAR}")
+    message(STATUS "FOUND ${SRC_JAR}. Using from cache.")
+    file(COPY_FILE "${SRC_JAR}" "${DEST_JAR_FN}")
+else()
+    message(STATUS "Source JAR ${SRC_JAR} NOT found.")
+endif()
+
+# by default, we gonna rebuild the jar
+if(ENABLE_BUILD_JAR AND NOT EXISTS "${SRC_JAR}")
+    message(STATUS "building JAR")
 
     find_program(ANT_EXECUTABLE ant REQUIRED)
     # this is the build artifact of Ant.
@@ -72,7 +85,6 @@ if(ENABLE_BUILD_JAR)
     )
 endif()
 
-
 if(ENABLE_TRACING)
     add_compile_definitions(JP_TRACING_ENABLE)
 endif()
@@ -98,7 +110,7 @@ if(ENABLE_COVERAGE)
     add_link_options(--coverage)
 endif()
 
-if(BUILD_TEST_HARNESS)
+if(BUILD_TEST_HARNESS) # This requires a JDK of course.
     find_program(ANT_EXECUTABLE ant REQUIRED)
     
     # We define a representative output file to help CMake track dependencies
