@@ -23,8 +23,8 @@ class JPFunctional;
 class JPProxy
 {
 public:
-	friend class JPProxyType;
-	JPProxy(PyJPProxy* inst, JPClassList& intf);
+	friend class JPProxyInstance;
+	JPProxy(JPJavaFrame& frame, PyJPProxy* inst, JPClassList& intf, bool convert);
 	virtual ~JPProxy();
 
 	const JPClassList& getInterfaces() const
@@ -32,9 +32,9 @@ public:
 		return m_InterfaceClasses;
 	}
 
-	jvalue getProxy();
+	jvalue getProxy(JPJavaFrame& frame);
 
-	virtual JPPyObject getCallable(const string& cname, int& addSelf) = 0;
+	virtual JPPyObject getCallable(JPContext* context, PyObject* name, int& addSelf) = 0;
 	static void releaseProxyPython(void* host);
 
 	PyJPProxy* getInstance()
@@ -43,57 +43,67 @@ public:
 	}
 
 	PyJPProxy*    m_Instance;
-	JPObjectRef   m_Proxy;
+	jref          m_ProxyType;
 	JPClassList   m_InterfaceClasses;
 	jweak         m_Ref;
+	JPContext*    m_Context;
 } ;
 
 class JPProxyDirect : public JPProxy
 {
 public:
-	JPProxyDirect(PyJPProxy* inst, JPClassList& intf);
+	JPProxyDirect(JPJavaFrame& frame, PyJPProxy* inst, JPClassList& intf, bool convert)
+		: JPProxy(frame, inst, intf, convert) {}
 	~JPProxyDirect() override;
-	JPPyObject getCallable(const string& cname, int& addSelf) override;
+	JPPyObject getCallable(JPContext* context, PyObject* name, int& addSelf) override;
 } ;
 
-class JPProxyIndirect : public JPProxy
+class JPProxyIndirectAttr : public JPProxy
 {
 public:
-	JPProxyIndirect(PyJPProxy* inst, JPClassList& intf);
-	~JPProxyIndirect() override;
-	JPPyObject getCallable(const string& cname, int& addSelf) override;
+	JPProxyIndirectAttr(JPJavaFrame& frame, PyJPProxy* inst, JPClassList& intf, bool convert)
+		: JPProxy(frame, inst, intf, convert) {}
+	~JPProxyIndirectAttr() override;
+	JPPyObject getCallable(JPContext* context, PyObject* name, int& addSelf) override;
+} ;
+
+class JPProxyIndirectDict : public JPProxy
+{
+public:
+	JPProxyIndirectDict(JPJavaFrame& frame, PyJPProxy* inst, JPClassList& intf, bool convert)
+		: JPProxy(frame, inst, intf, convert) {}
+	~JPProxyIndirectDict() override;
+	JPPyObject getCallable(JPContext* context, PyObject* name, int& addSelf) override;
 } ;
 
 class JPProxyFunctional : public JPProxy
 {
 public:
-	JPProxyFunctional(PyJPProxy* inst, JPClassList& intf);
+	JPProxyFunctional(JPJavaFrame& frame, PyJPProxy* inst, JPClassList& intf);
 	~JPProxyFunctional() override;
-	JPPyObject getCallable(const string& cname, int& addSelf) override;
+	JPPyObject getCallable(JPContext* context, PyObject* name, int& addSelf) override;
 private:
 	JPFunctional *m_Functional;
 } ;
 
 /** Special wrapper for round trip returns
  */
-class JPProxyType : public JPClass
+class JPProxyInstance : public JPClass
 {
 public:
-	JPProxyType(JPJavaFrame& frame,
+	JPProxyInstance(JPJavaFrame& frame,
 			jclass clss,
 			const string& name,
 			JPClass* super,
 			JPClassList& interfaces,
 			jint modifiers);
-	~ JPProxyType() override;
+	~JPProxyInstance() override;
 
 public: // JPClass implementation
-	JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
+//	JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 
 private:
-	JPClassRef m_ProxyClass;
-	jmethodID  m_GetInvocationHandlerID;
-	jfieldID   m_InstanceID;
+	jclass m_ProxyClass; // FIXME I think this goes away
 } ;
 
 #endif // JPPROXY_H

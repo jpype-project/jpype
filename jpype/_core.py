@@ -22,6 +22,7 @@ import os
 from pathlib import Path
 import sys
 import typing
+import weakref
 
 import _jpype
 from . import types as _jtypes
@@ -29,6 +30,7 @@ from . import _classpath
 from . import _jcustomizer
 from . import _jinit
 from . import _pykeywords
+from . import _jbridge
 
 from ._jvmfinder import *
 
@@ -207,12 +209,40 @@ def _findTemp():  # pragma: no cover
         return d
     raise RuntimeError("Unable to find non-ansii path.")
 
+def _findSupport() -> tuple[str, typing.Optional[str]]:
+    """Find the JPype JAR and shadow it to a temp path if the path is non-ASCII."""
+    support_lib_p = Path(__file__).resolve().parent.parent / "org.jpype.jar"
+    if not support_lib_p.exists():
+        raise RuntimeError(f"Unable to find support library at {support_lib_p}")
+
+    support_lib = str(support_lib_p)
+    tmp = None
+
+    if not support_lib.isascii():
+        import tempfile
+        import shutil
+        # Mirroring the _findTemp logic from your _core.py
+        fd, path = tempfile.mkstemp(dir=_findTemp(), suffix=".jar")
+        if not path.isascii():
+            raise ValueError("Unable to find ascii temp directory.")
+        shutil.copyfile(support_lib, path)
+        support_lib = path
+        tmp = path
+        os.close(fd)
+    
+    return support_lib, tmp
+
 
 def startJVM(
     *jvmargs: str,
     jvmpath: typing.Optional[_PathOrStr] = None,
     classpath: typing.Union[typing.Sequence[_PathOrStr],
                             _PathOrStr, None] = None,
+    modulepath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
+    add_modules: typing.Union[typing.Sequence[str], str, None] = None,
+    add_opens: typing.Union[typing.Sequence[str], str, None] = None,
+    add_exports: typing.Union[typing.Sequence[str], str, None] = None,
+    add_reads: typing.Union[typing.Sequence[str], str, None] = None,
     ignoreUnrecognized: bool = False,
     convertStrings: bool = False,
     interrupt: bool = not interactive(),
@@ -249,16 +279,11 @@ def startJVM(
         transfer control to Python rather than halting.  If
         not specified will be False if Python is started as
         an interactive shell.
-
     Raises:
       OSError: if the JVM cannot be started or is already running.
       TypeError: if a keyword argument conflicts with the positional arguments.
 
      """
-
-# Code for 1.6
-#    modulepath: typing.Union[typing.Sequence[_PathOrStr], _PathOrStr, None] = None,
-
     if _jpype.isStarted():
         raise OSError('JVM is already started')
     global _JVM_started
@@ -285,82 +310,76 @@ def startJVM(
 
     # Handle strings and list of strings.
     extra_jvm_args: list[str] = []
+    support_lib, tmp = _findSupport()
 
-    # Classpath handling
-    old_classpath = _getOption(jvm_args, "-Djava.class.path", _classpath._SEP)
-    if old_classpath:
-        # Old style, specified in the arguments
-        if classpath is not None:
-            # Cannot apply both styles, conflict
-            raise TypeError('classpath specified twice')
-        classpath = old_classpath
-    elif classpath is None:
-        # Not specified at all, use the default classpath.
-        classpath = _classpath.getClassPath()
+    # --- 2. Build Module Path ---
+    user_mp = _expandClassPath(modulepath) if modulepath else []
+    arg_mp = _getOption(jvm_args, "--module-path", _classpath._SEP)
+    full_module_path = [support_lib] + user_mp + (arg_mp if isinstance(arg_mp, list) else [arg_mp] if arg_mp else [])
+    extra_jvm_args.append(f'--module-path={_classpath._SEP.join(full_module_path)}')
 
-# todo: this should be activated now.
-# Code for 1.6 release when we add module support
-#    # Modulepath handling
-#    old_modulepath = _getOption(jvm_args, "--module-path", _classpath._SEP)
-#    if old_modulepath:
-#        # Old style, specified in the arguments
-#        if modulepath is not None:
-#            # Cannot apply both styles, conflict
-#            raise TypeError('modulepath specified twice')
-#        modulepath = old_modulepath
-#    if modulepath is not None:
-#        mp = _classpath._SEP.join(_expandClassPath(modulepath))
-#        extra_jvm_args += ['--module-path=%s'%mp ]
+    # --- 3. Mandatory & User Modules/Opens/Exports ---
+    def _merge_options(user_val, mandatory_vals, flag):
+        combined = set(mandatory_vals + (_expandClassPath(user_val) if user_val else []))
+        for item in combined:
+            extra_jvm_args.append(f"{flag}={item}")
 
-    # Get the support library
-    support_lib_p = Path(__file__).resolve().parent.parent / "org.jpype.jar"
-    if not support_lib_p.exists():  # pragma: no cover
-        raise RuntimeError(
-            f"Unable to find org.jpype.jar support library at {support_lib_p}")
-    # convert to string for passing to JVM instantiation.
-    support_lib = str(support_lib_p)
+    # Modules
+    _merge_options(add_modules, ["org.jpype"], "--add-modules")
 
-    system_class_loader = _getOption(
-        jvm_args, "-Djava.system.class.loader", keep=True)
+    # Reads (Required so the named module org.jpype can see the classpath)
+    mandatory_reads = [
+        "org.jpype=ALL-UNNAMED",
+    ]
+    _merge_options(add_reads, mandatory_reads, "--add-reads")
+    
+    # Opens (Required for JNI/TypeManager to access internals)
+    mandatory_opens = [
+        "java.base/java.lang=org.jpype",
+        "java.base/java.util=org.jpype",
+        "java.base/java.nio=org.jpype",
+        "org.jpype/org.jpype=ALL-UNNAMED",
+        "org.jpype/org.jpype.proxy=ALL-UNNAMED",
+        "org.jpype/org.jpype.manager=ALL-UNNAMED",
+    ]
+    _merge_options(add_opens, mandatory_opens, "--add-opens")
 
-    java_class_path = _expandClassPath(classpath)
-    java_class_path.append(support_lib)
-    java_class_path = list(filter(len, java_class_path))
-    classpath = _classpath._SEP.join(java_class_path)
-    tmp = None
+    # Exports
+    if add_exports:
+        _merge_options(add_exports, [], "--add-exports")
 
-    # Make sure our module is always on the classpath
-    if not classpath.isascii():
+    # Native Access (JDK 21+)
+    extra_jvm_args.append("--enable-native-access=org.jpype")
+    if os.path.exists("logging.jpype"):
+        extra_jvm_args.append("-Djava.util.logging.config.file=logging.jpype")
+
+    # --- 4. Classpath Handling ---
+    # Retrieve user-defined classpath
+    old_cp = _getOption(jvm_args, "-Djava.class.path", _classpath._SEP)
+    if old_cp and classpath is not None:
+        raise TypeError('classpath specified twice')
+   
+    system_class_loader = _getOption(jvm_args, "-Djava.system.class.loader", keep=True) 
+    final_classpath = _expandClassPath(classpath if classpath is not None else (old_cp or _classpath.getClassPath()))
+    cp_string = _classpath._SEP.join(final_classpath)
+
+    if final_classpath and not cp_string.isascii():
+        # RESTORED SAFETY CHECK:
+        # https://bugs.openjdk.org/browse/JDK-8079633
         if system_class_loader:
-            # https://bugs.openjdk.org/browse/JDK-8079633?jql=text%20~%20%22ParseUtil%22
             raise ValueError(
                 "system classloader cannot be specified with non ascii characters in the classpath")
 
-        # If we are not installed on an ascii path then we will need to copy the jar to a new location
-        if not support_lib.isascii(): # pragma: no cover
-            import tempfile
-            import shutil
-            fd, path = tempfile.mkstemp(dir=_findTemp())
-            if not path.isascii():
-                raise ValueError("Unable to find ascii temp directory.")
-            shutil.copyfile(support_lib, path)
-            support_lib = path
-            tmp = path
-            os.close(fd)
-            # Don't remove
-
-        # ok, setup the jpype system classloader and add to the path after startup
-        # this guarentees all classes have the same permissions as they did in the past
+        # Custom Classloader logic for non-ascii user paths
         from urllib.parse import quote
         extra_jvm_args += [
-            '-Djava.system.class.loader=org.jpype.JPypeClassLoader',
-            '-Djava.class.path=%s' % support_lib,
-            '-Djpype.class.path=%s' % quote(classpath),
+            '-Djava.system.class.loader=org.jpype.internal.DynamicClassLoader',
+            '-Djpype.class.path=%s' % quote(cp_string),
+            '-Djava.class.path=', # Keep CP empty to force our loader
             '-Xshare:off'
         ]
     else:
-        # no problems
-        extra_jvm_args += ['-Djava.class.path=%s' % classpath]
+        extra_jvm_args.append(f'-Djava.class.path={cp_string}')
 
     try:
         import locale
@@ -369,6 +388,7 @@ def startJVM(
             locale) if i.startswith('LC_') and i != 'LC_ALL']
         # Keep the current locale settings, else Java will replace them.
         prior = [locale.getlocale(i) for i in categories]
+
         # Start the JVM
         _jpype.startup(jvmpath, tuple(jvm_args + extra_jvm_args),
                        ignoreUnrecognized, convertStrings, interrupt, tmp)
@@ -435,6 +455,8 @@ def initializeResources():
     _jtypes.JLong.class_ = _jpype._java_lang_Long.TYPE
     _jtypes.JFloat.class_ = _jpype._java_lang_Float.TYPE
     _jtypes.JDouble.class_ = _jpype._java_lang_Double.TYPE
+
+    # Update hints
     _jtypes.JBoolean._hints = _jcustomizer.getClassHints("boolean")
     _jtypes.JByte._hints = _jcustomizer.getClassHints("byte")
     _jtypes.JChar._hints = _jcustomizer.getClassHints("char")
@@ -446,7 +468,6 @@ def initializeResources():
 
     # Table for automatic conversion to objects "JObject(value, type)"
     _jpype._object_classes = {}
-    # These need to be deprecated so that we can support casting Python objects
     _jpype._object_classes[bool] = _jpype._java_lang_Boolean
     _jpype._object_classes[int] = _jpype._java_lang_Long
     _jpype._object_classes[float] = _jpype._java_lang_Double
@@ -477,13 +498,15 @@ def initializeResources():
     _jpype._type_classes[_jpype.JString] = _jpype._java_lang_String
     _jpype._type_classes[_jpype.JObject] = _jpype._java_lang_Object
     _jpype._type_classes[_jpype.JClass] = _jpype._java_lang_Class
-    _jinit.runJVMInitializers()
 
-    _jpype.JClass('org.jpype.JPypeKeywords').setKeywords(
+    _jpype.JClass('org.jpype.internal.Keywords').setKeywords(
         list(_pykeywords._KEYWORDS))
 
-    _jpype.JPypeContext = _jpype.JClass('org.jpype.JPypeContext').getInstance()
+    _jpype.JPypeContext = _jpype.context()
     _jpype.JPypeClassLoader = _jpype.JPypeContext.getClassLoader()
+
+    _jbridge.initialize()
+    _jinit.runJVMInitializers()
 
     # Everything succeeded so started is now true.
     _JVM_started = True
@@ -616,10 +639,57 @@ def getJVMVersion():
 class _JRuntime(object):
     # We need to redirect hooks so that we control the order
     def addShutdownHook(self, thread):
-        return _jpype.JClass("org.jpype.JPypeContext").getInstance().addShutdownHook(thread)
+        return _jpype.JPypeContext.addShutdownHook(thread)
 
     def removeShutdownHook(self, thread):
-        return _jpype.JClass("org.jpype.JPypeContext").getInstance().removeShutdownHook(thread)
+        return _jpype.JPypeContext.removeShutdownHook(thread)
 
 
 _jpype.JVMNotRunning = JVMNotRunning
+
+# Support for Java bridge code
+# Dictionary of Python types to Java Interfaces
+# These are created here as placeholders, then populated in _jbridge.initialize()
+_jpype._concrete = {}
+_jpype._protocol = {}
+_jpype._methods = {}
+
+# SPI lazy registration (see plan/SPI.md): dict[str module -> dict[str
+# className -> (javaInterface, methodsSource)]], populated at startup by
+# _jbridge._installer_register_lazy_class from each provider's
+# getLazyResources(), and drained by _LazyCache below the first time a
+# matching type is actually probed.
+_jpype._lazy_pending = {}
+
+
+class _LazyCache(weakref.WeakKeyDictionary):
+    """_jpype._cache, extended to resolve SPI lazy registrations on miss.
+
+    WeakKeyDictionary.__getitem__ does its own dict lookup and raises
+    KeyError directly - it does not consult a subclass's __missing__ - so
+    the hook has to override __getitem__ itself. PyJP_probe (pyjp_probe.cpp)
+    reads this via PyObject_GetItem, catches the KeyError, and falls
+    through unchanged to its normal _concrete MRO scan - so all this needs
+    to do is get _jpype._concrete/_jpype._methods populated for `type_`
+    before re-raising; it never builds the probe's result tuple itself.
+    """
+
+    def __getitem__(self, type_):
+        try:
+            return weakref.WeakKeyDictionary.__getitem__(self, type_)
+        except KeyError:
+            pending = _jpype._lazy_pending
+            if pending:
+                for modname in {c.__module__ for c in type_.__mro__} & pending.keys():
+                    for clsname, (javaInterface, methodsSource) in pending.pop(modname).items():
+                        _jbridge._installer_register_class(modname, clsname, javaInterface, methodsSource)
+            raise
+
+
+# Dictionary of Type to Tuple(Interface[], Dict)
+_jpype._cache = _LazyCache()
+# Dictionary of Tuple(Interface[]) to Tuple(Interface[])
+_jpype._cache_interfaces = {}
+_jpype._cache_methods = {}
+# Dictionary of Tuple(Interface) to Dict
+_jpype._methods = {}

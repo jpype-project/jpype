@@ -2,14 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.jpype</groupId>
-    <artifactId>jpype</artifactId>
+    <artifactId>org.jpype</artifactId>
     <version>1.7.2.dev0</version>
     <packaging>jar</packaging>
     <dependencies>
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>6.8.1</version>
+            <version>7.3.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -39,14 +39,49 @@
                         <configuration>
                             <!-- Specify the source file to compile -->
                             <includes>
-                                <include>exclude/org/jpype/Reflector0.java</include>
+                                <include>exclude/org/jpype/internal/Reflector0.java</include>
                             </includes>
                             <!-- Output directory for compiled class -->
                             <outputDirectory>${project.build.directory}/classes/META-INF/versions/0</outputDirectory>
                         </configuration>
                     </execution>
                 </executions>
+                <configuration>
+                    <compilerArgs>
+                        <arg>-Xlint</arg>
+                    </compilerArgs>
+                </configuration>
             </plugin>
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <showSuccess>true</showSuccess>
+                    <trimStackTrace>true</trimStackTrace>
+                    <properties>
+                        <property>
+                            <name>verbose</name>
+                            <value>2</value>
+                        </property>
+                    </properties>
+                    <systemPropertyVariables>
+                        <java.util.logging.config.file>${project.basedir}/logging.properties</java.util.logging.config.file>
+                        <jpype.path>../..</jpype.path>
+                        <jpype.nocache>false</jpype.nocache>
+                        <python.executable>python3.12</python.executable>
+                        <python.config.home>/usr</python.config.home>
+                    </systemPropertyVariables>
+                    <argLine>
+                        --enable-native-access=ALL-UNNAMED
+                        --enable-native-access=org.jpype
+                        --module-path=${project.build.directory}/${project.build.finalName}.jar
+                        --add-modules=org.jpype
+                    </argLine>
+                </configuration>
+            </plugin>
+
         </plugins>
     </build>
     <name>jpype_module</name>

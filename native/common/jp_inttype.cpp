@@ -1,3 +1,4 @@
+// --- file: common/jp_inttype.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -19,8 +20,8 @@
 #include "jp_primitive_accessor.h"
 #include "jp_inttype.h"
 
-JPIntType::JPIntType()
-: JPPrimitiveType("int")
+JPIntType::JPIntType(JPJavaFrame& frame, jclass cls)
+: JPPrimitiveType(frame, cls, "int")
 {
 }
 
@@ -45,7 +46,7 @@ JPPyObject JPIntType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool
 JPValue JPIntType::getValueFromObject(JPJavaFrame& frame, const JPValue& obj)
 {
 	jvalue v;
-	jobject jo = obj.getValue().l;
+	jobject jo = obj.getJavaObject(frame);
 	auto* jb = dynamic_cast<JPBoxedType*>( frame.findClassForObject(jo));
 	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, nullptr);
 	return JPValue(this, v);
@@ -93,14 +94,14 @@ public:
 		return JPMatch::_implicit;  //short cut further checks
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
-		JPContext *context = JPContext_global;
+		JPContext *context = frame.getContext();
 		PyList_Append(info.exact, (PyObject*) context->_int->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_short->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 
 } jintConversion;
@@ -121,13 +122,12 @@ JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPIntType::getConversionInfo(JPConversionInfo &info)
+void JPIntType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
-	jintConversion.getInfo(this, info);
-	intConversion.getInfo(this, info);
-	intNumberConversion.getInfo(this, info);
-	PyList_Append(info.ret, (PyObject*) JPContext_global->_int->getHost());
+	jintConversion.getInfo(frame, this, info);
+	intConversion.getInfo(frame, this, info);
+	intNumberConversion.getInfo(frame, this, info);
+	PyList_Append(info.ret, (PyObject*) frame.getContext()->_int->getHost());
 }
 
 jarray JPIntType::newArrayOf(JPJavaFrame& frame, jsize sz)
@@ -174,7 +174,7 @@ JPPyObject JPIntType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmet
 
 void JPIntType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match(&frame, obj);
+	JPMatch match(frame, obj);
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
 	type_t val = field(match.convert());
@@ -183,7 +183,7 @@ void JPIntType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObj
 
 void JPIntType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match(&frame, obj);
+	JPMatch match(frame, obj);
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
 	type_t val = field(match.convert());
@@ -264,29 +264,27 @@ JPPyObject JPIntType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 
 void JPIntType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	JPMatch match(&frame, obj);
+	JPMatch match(frame, obj);
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
 	type_t val = field(match.convert());
 	frame.SetIntArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-void JPIntType::getView(JPArrayView& view)
+void JPIntType::getView(JPJavaFrame& frame, JPArrayView& view)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	view.m_IsCopy = false;
 	view.m_Memory = (void*) frame.GetIntArrayElements(
-			(jintArray) view.m_Array->getJava(), &view.m_IsCopy);
+			(jintArray) view.m_Array->getJava(frame), &view.m_IsCopy);
 	view.m_Buffer.format = "=i";
 	view.m_Buffer.itemsize = sizeof (jint);
 }
 
-void JPIntType::releaseView(JPArrayView& view)
+void JPIntType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
-		frame.ReleaseIntArrayElements((jintArray) view.m_Array->getJava(),
+		frame.ReleaseIntArrayElements((jintArray) view.m_Array->getJava(frame),
 				(jint*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)
 	{

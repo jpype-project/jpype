@@ -1,3 +1,4 @@
+// --- file: common/jp_reference_queue.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -21,9 +22,6 @@
 #include "jp_gc.h"
 #include "pyjp.h"
 
-static jobject s_ReferenceQueue = nullptr;
-static jmethodID s_ReferenceQueueRegisterMethod = nullptr;
-
 extern "C"
 {
 
@@ -35,23 +33,33 @@ static void releasePython(void* host)
 /*
  * Class:     org_jpype_ref_JPypeReferenceQueue
  * Method:    init
- * Signature: (Ljava/lang/Object;Ljava/lang/reflect/Method;)V
+ * Signature: (JLjava/lang/Object;Ljava/lang/reflect/Method;)V
  */
-JNIEXPORT void JNICALL Java_org_jpype_ref_JPypeReferenceNative_init
-(JNIEnv *env, jclass clazz, jobject refqueue, jobject registerID)
+JNIEXPORT void JNICALL Java_org_jpype_ref_NativeReference_init
+(JNIEnv *env, jclass clazz, jlong ctx, jobject refqueue, jobject registerID)
 {
-	s_ReferenceQueue = env->NewGlobalRef(refqueue);
-	s_ReferenceQueueRegisterMethod = env->FromReflectedMethod(registerID);
+	auto *context = (JPContext*) ctx;
+	// Per-context field (not a file-scope static) - each subinterpreter's
+	// NativeReferenceQueue gets its own binding here instead of clobbering
+	// a single process-wide slot.  Released in JPContext::detachJVM().
+	context->m_ReferenceQueue = env->NewGlobalRef(refqueue);
+	context->m_ReferenceQueueRegisterMethod = env->FromReflectedMethod(registerID);
 }
 
-JNIEXPORT void JNICALL Java_org_jpype_ref_JPypeReferenceNative_removeHostReference
-(JNIEnv *env, jclass, jlong host, jlong cleanup)
+JNIEXPORT void JNICALL Java_org_jpype_ref_NativeReference_removeHostReference
+(JNIEnv *env, jclass, jlong ctx, jlong host, jlong cleanup)
 {
 	// Exceptions are not allowed here
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::external(env);
-		JPPyCallAcquire callback;
+		auto *context = (JPContext*) ctx;
+		if (context == nullptr || !context->isRunning())
+			return;
+		// Skip cleanup if Python is shutting down - phantom refs fire during JVM shutdown
+		if (context->modulestate->is_shutting_down)
+			return;
+		JPJavaFrame frame = JPJavaFrame::external(env, context);
+		JPPyCallAcquire callback(context->modulestate);
 		if (cleanup != 0)
 		{
 			auto func = (JCleanupHook) cleanup;
@@ -64,13 +72,19 @@ JNIEXPORT void JNICALL Java_org_jpype_ref_JPypeReferenceNative_removeHostReferen
 
 /** Triggered whenever the sentinel is deleted
  */
-JNIEXPORT void JNICALL Java_org_jpype_ref_JPypeReferenceNative_wake
-(JNIEnv *env, jclass clazz)
+JNIEXPORT void JNICALL Java_org_jpype_ref_NativeReference_wake
+(JNIEnv *env, jclass clazz, jlong ctx)
 {
 	// Exceptions are not allowed here
 	try
 	{
-		JPContext* context = JPContext_global;
+		auto *context = (JPContext*) ctx;
+		if (context == nullptr || !context->isRunning())
+			return;
+		// Skip GC trigger if Python is shutting down
+		if (context->modulestate->is_shutting_down)
+			return;
+		JPPyCallAcquire callback(context->modulestate);
 		context->m_GC->triggered();
 	} catch (...) // GCOVR_EXCL_LINE
 	{
@@ -102,9 +116,10 @@ void JPReferenceQueue::registerRef(JPJavaFrame &frame, jobject obj, void* host, 
 	args[1].j = (jlong) host;
 	args[2].j = (jlong) func;
 
-	if (s_ReferenceQueue == nullptr)
+	JPContext* context = frame.getContext();
+	if (context->m_ReferenceQueue == nullptr)
 		JP_RAISE(PyExc_SystemError, "Memory queue not installed");
 	JP_TRACE("Register reference");
-	frame.CallVoidMethodA(s_ReferenceQueue, s_ReferenceQueueRegisterMethod, args);
+	frame.CallVoidMethodA(context->m_ReferenceQueue, context->m_ReferenceQueueRegisterMethod, args);
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }

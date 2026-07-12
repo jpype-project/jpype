@@ -1,3 +1,4 @@
+// --- file: common/jp_convert.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -25,8 +26,8 @@ class Half
 {
 public:
 	static jvalue convert(void* c)
-    {
-        uint16_t i = *(uint16_t*) c;
+	{
+		uint16_t i = *(uint16_t*) c;
 		uint32_t sign = (i&0x8000)>>15;
 		uint32_t exp  = (i&0x7C00)>>10;
 		uint32_t frac = (i&0x03ff);
@@ -42,7 +43,7 @@ public:
 				count = count | (count >> 2);
 				count = count | (count >> 4);
 				count = count | (count >> 8);
-				int zeros = std::bitset<32>(~count).count();
+				int zeros = std::bitset<32>(static_cast<uint32_t>(~count)).count();
 				exp = 127-zeros+7;
 				exp <<= 23;
 				frac <<= zeros-8;

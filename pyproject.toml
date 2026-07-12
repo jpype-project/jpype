@@ -55,7 +55,8 @@ homepage = "https://github.com/jpype-project/jpype"
 
 [[tool.mypy.overrides]]
 module = [
-    "_jpype", # todo: add a proper _jpype.pyi file
+    "_jpype",
+    "_jpyne",
     "commonx",
     "brokenx",
     "java.*",
@@ -73,8 +74,13 @@ testpaths = ["test", "jpype/_pyinstaller"]
 [tool.scikit-build]
 build.verbose = true
 logging.level = "INFO"
-wheel.packages = ["jpype", "jpype._pyinstaller", "_jpype"]
-editable.mode = "inplace"
+wheel.packages = ["jpype", "jpype._pyinstaller", "_jpype", "_jpyne"]
+editable.mode = "redirect"
+# Per-Python/per-platform build directory (see jpype_build_env_gotchas memory
+# for why: without this, in-source builds reuse stale CMakeFiles/ object
+# caches across Python version switches and can silently link the wrong
+# Python.h).
+build-dir = "build/{wheel_tag}"
 # todo: try out automatic rebuild feature.
 #editable.rebuild = true
 

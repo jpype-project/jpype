@@ -45,11 +45,16 @@ public:
 	// Classloader for Proxy
 	jobject getBootLoader();
 
+	/** Release this context's per-context globals (m_BootLoader).
+	 *
+	 * Called from JPContext::detachJVM().  m_ClassClass/m_SystemClassLoader
+	 * are process-wide immortals (see jp_classloader.cpp) and are never
+	 * released.
+	 */
+	void release(JPContext* context);
+
 private:
-	JPClassRef m_ClassClass;
-	JPObjectRef m_SystemClassLoader;
-	JPObjectRef m_BootLoader;
-	jmethodID m_ForNameID;
+	jobject m_BootLoader;
 } ;
 
 #endif // _JPCLASSLOADER_H_

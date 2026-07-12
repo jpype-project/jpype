@@ -1,3 +1,4 @@
+// --- file: common/jp_typefactory.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -39,6 +40,9 @@
 #include "jp_doubletype.h"
 #include "jp_functional.h"
 #include "jp_proxy.h"
+#include "jp_interfacetype.h"
+#include "jp_pybasetype.h"
+#include "jp_pythontype.h"
 
 void JPTypeFactory_rethrow(JPJavaFrame& frame)
 {
@@ -47,11 +51,11 @@ void JPTypeFactory_rethrow(JPJavaFrame& frame)
 		throw;
 	} catch (JPypeException& ex)
 	{
-		ex.toJava();
+		ex.toJava(frame);
 	} catch (...)  // GCOVR_EXCL_LINE
 	{
 		// GCOVR_EXCL_START
-		frame.ThrowNew(frame.getContext()->m_RuntimeException.get(),
+		frame.ThrowNew(frame.getContext()->m_RuntimeException,
 				"unknown error occurred");
 		// GCOVR_EXCL_STOP
 	}
@@ -88,23 +92,30 @@ extern "C"
 {
 
 JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_newWrapper(
-		JNIEnv *env, jobject self, jlong contextPtr, jlong jcls)
+		JNIEnv *env, jobject self,
+		jlong ctx,
+		jlong jcls)
 {
-	JPJavaFrame frame = JPJavaFrame::external(env);
+	auto *context = (JPContext*) ctx;
+	JPJavaFrame frame = JPJavaFrame::external(env, context);
+	JPPyCallAcquire callback(context->modulestate);
+
 	JP_JAVA_TRY("JPTypeFactory_newWrapper");
-	JPPyCallAcquire callback;
 	auto* cls = (JPClass*) jcls;
 	PyJPClass_hook(frame, cls);
 	JP_JAVA_CATCH();  // GCOVR_EXCL_LINE
 }
 
 JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_destroy(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
+		jlong ctx,
 		jlongArray resources,
 		jint sz)
 {
-	JPJavaFrame frame = JPJavaFrame::external(env);
-	auto* context = frame.getContext();
+	auto *context = (JPContext*) ctx;
+	JPJavaFrame frame = JPJavaFrame::external(env, context);
+	JPPyCallAcquire callback(context->modulestate);
+
 	JP_JAVA_TRY("JPTypeFactory_destroy");
 	JPPrimitiveArrayAccessor<jlongArray, jlong*> accessor(frame, resources,
 			&JPJavaFrame::GetLongArrayElements, &JPJavaFrame::ReleaseLongArrayElements);
@@ -118,13 +129,15 @@ JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_destroy(
 }
 
 JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethodDispatch(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
+		jlong ctx,
 		jlong clsPtr,
 		jstring name,
 		jlongArray overloadPtrs,
 		jint modifiers)
 {
-	JPJavaFrame frame = JPJavaFrame::external(env);
+	auto *context = (JPContext*) ctx;
+	JPJavaFrame frame = JPJavaFrame::external(env, context);
 	JP_JAVA_TRY("JPTypeFactory_defineMethodDispatch");
 	auto* cls = (JPClass*) clsPtr;
 	JPMethodList overloadList;
@@ -137,14 +150,18 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethodDis
 }
 
 JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineArrayClass(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
+		jlong ctx,
 		jclass cls,
 		jstring name,
 		jlong superClass,
 		jlong componentClass,
 		jint modifiers)
 {
-	JPJavaFrame frame = JPJavaFrame::external(env);
+	auto *context = (JPContext*) ctx;
+	JPJavaFrame frame = JPJavaFrame::external(env, context);
+	JPPyCallAcquire callback(context->modulestate);
+
 	JP_JAVA_TRY("JPTypeFactory_defineArrayClass");
 	string cname = frame.toStringUTF8(name);
 	JP_TRACE(cname);
@@ -158,7 +175,8 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineArrayClas
 }
 
 JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectClass(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
+		jlong ctx,
 		jclass cls,
 		jstring name,
 		jlong superClass,
@@ -166,17 +184,29 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 		jint modifiers)
 {
 	// All resources are created here are owned by Java and deleted by Java shutdown routine
-	JPJavaFrame frame = JPJavaFrame::external(env);
-	auto* context = frame.getContext();
-	JP_JAVA_TRY("JPTypeFactory_defineObjectClass");
+	auto *context = (JPContext*) ctx;
+	JPJavaFrame frame = JPJavaFrame::external(env, context);
 	string className = frame.toStringUTF8(name);
+
+	JPPyCallAcquire callback(context->modulestate);
+
+	JP_JAVA_TRY("JPTypeFactory_defineObjectClass");
 	JP_TRACE(className);
 	JPClassList interfaces;
 	if (interfacePtrs != nullptr)
 		convert(frame, interfacePtrs, interfaces);
 	JPClass* result = nullptr;
+
 	if (!JPModifier::isSpecial(modifiers))
 	{
+		// Python types require special handling
+		if (JPModifier::isPython(modifiers))
+			return (jlong) new JPPythonType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+
+		// Interfaces can use Proxy
+		if (JPModifier::isInterface(modifiers))
+			return (jlong) new JPInterfaceType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+
 		// Create a normal class
 		return (jlong) new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
 	}
@@ -211,70 +241,61 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	// Register the box types
 	if (className == "java.lang.Void")
 	{
-		context->_void = new JPVoidType();
 		return (jlong) (context->_java_lang_Void
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_void));
 	}
 	if (className == "java.lang.Boolean")
 	{
-		context->_boolean = new JPBooleanType();
 		return (jlong) (context->_java_lang_Boolean
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_boolean));
 	}
 	if (className == "java.lang.Byte")
 	{
-		context->_byte = new JPByteType();
 		return (jlong) (context->_java_lang_Byte
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_byte));
 	}
 	if (className == "java.lang.Character")
 	{
-		context->_char = new JPCharType();
 		return (jlong) (context->_java_lang_Character
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_char));
 	}
 	if (className == "java.lang.Short")
 	{
-		context->_short = new JPShortType();
 		return (jlong) (context->_java_lang_Short
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_short));
 	}
 	if (className == "java.lang.Integer")
 	{
-		context->_int = new JPIntType();
 		return (jlong) (context->_java_lang_Integer
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_int));
 	}
 	if (className == "java.lang.Long")
 	{
-		context->_long = new JPLongType();
 		return (jlong) (context->_java_lang_Long
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_long));
 	}
 	if (className == "java.lang.Float")
 	{
-		context->_float = new JPFloatType();
 		return (jlong) (context->_java_lang_Float
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_float));
 	}
 	if (className == "java.lang.Double")
 	{
-		context->_double = new JPDoubleType();
 		return (jlong) (context->_java_lang_Double
 				= new JPBoxedType(frame, cls, className,
 				(JPClass*) superClass, interfaces, modifiers, context->_double));
 	}
-	if (className == "org.jpype.proxy.JPypeProxy")
+	if (className == "org.jpype.proxy.ProxyInstance")
 		return (jlong)
-		new JPProxyType(frame, cls, className,
+		new JPProxyInstance(frame, cls, className,
 			(JPClass*) superClass, interfaces, modifiers);
 
 	// Register reflection types for later use
@@ -286,6 +307,10 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 		return (jlong) (context->_java_lang_reflect_Field
 			= new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
 
+	if (className == "python.lang.PyObject")
+		return (jlong) (context->_python_lang_PyObject
+			= new JPPybaseType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers));
+	
 	std::stringstream ss;
 	ss << "Special class not defined for " << className;
 	JP_RAISE(PyExc_RuntimeError, ss.str());
@@ -294,61 +319,61 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 }
 
 JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_definePrimitive(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
+		jlong ctx,
 		jstring name,
 		jclass cls,
-		jlong boxedPtr,
 		jint modifiers)
 {
+	auto *context = (JPContext*) ctx;
+	JPJavaFrame frame = JPJavaFrame::external(env, context);
 	// These resources are created by the boxed types
-	JPJavaFrame frame = JPJavaFrame::external(env);
-	auto* context = frame.getContext();
 	JP_JAVA_TRY("JPTypeFactory_definePrimitive");
 	string cname = frame.toStringUTF8(name);
 	JP_TRACE(cname);
 	if (cname == "void")
 	{
-		context->_void->setClass(frame, cls);
+		context->_void = new JPVoidType(frame, cls);
 		return (jlong) (context->_void);
 	}
 	if (cname == "byte")
 	{
-		context->_byte->setClass(frame, cls);
+		context->_byte = new JPByteType(frame, cls);
 		return (jlong) (context->_byte);
 	}
 	if (cname == "boolean")
 	{
-		context->_boolean->setClass(frame, cls);
+		context->_boolean = new JPBooleanType(frame, cls);
 		return (jlong) (context->_boolean);
 	}
 	if (cname == "char")
 	{
-		context->_char->setClass(frame, cls);
+		context->_char = new JPCharType(frame, cls);
 		return (jlong) (context->_char);
 	}
 	if (cname == "short")
 	{
-		context->_short->setClass(frame, cls);
+		context->_short = new JPShortType(frame, cls);
 		return (jlong) (context->_short);
 	}
 	if (cname == "int")
 	{
-		context->_int->setClass(frame, cls);
+		context->_int = new JPIntType(frame, cls);
 		return (jlong) (context->_int);
 	}
 	if (cname == "long")
 	{
-		context->_long->setClass(frame, cls);
+		context->_long = new JPLongType(frame, cls);
 		return (jlong) (context->_long);
 	}
 	if (cname == "float")
 	{
-		context->_float->setClass(frame, cls);
+		context->_float = new JPFloatType(frame, cls);
 		return (jlong) (context->_float);
 	}
 	if (cname == "double")
 	{
-		context->_double->setClass(frame, cls);
+		context->_double = new JPDoubleType(frame, cls);
 		return (jlong) (context->_double);
 	}
 	return 0;
@@ -357,13 +382,14 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_definePrimitive
 
 JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_assignMembers(
 		JNIEnv *env, jobject self,
-		jlong contextPtr,
+		jlong ctx,
 		jlong clsPtr,
 		jlong ctorMethod,
 		jlongArray methodPtrs,
 		jlongArray fieldPtrs)
 {
-	JPJavaFrame frame = JPJavaFrame::external(env);
+	auto *context = (JPContext*) ctx;
+	JPJavaFrame frame = JPJavaFrame::external(env, context);
 	JP_JAVA_TRY("JPTypeFactory_assignMembers");
 	auto* cls = (JPClass*) clsPtr;
 	JPMethodDispatchList methodList;
@@ -380,14 +406,16 @@ JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_assignMembers(
 }
 
 JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineField(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
+		jlong ctx,
 		jlong cls,
 		jstring name,
 		jobject field,
 		jlong fieldType,
 		jint modifiers)
 {
-	JPJavaFrame frame = JPJavaFrame::external(env);
+	auto *context = (JPContext*) ctx;
+	JPJavaFrame frame = JPJavaFrame::external(env, context);
 	JP_JAVA_TRY("JPTypeFactory_defineField");
 	string cname = frame.toStringUTF8(name);
 	JP_TRACE("class", cls);
@@ -404,12 +432,14 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineField(
 }
 
 JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethod(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
+		jlong ctx,
 		jlong cls, jstring name,
 		jobject method,
 		jlongArray overloadList, jint modifiers)
 {
-	JPJavaFrame frame = JPJavaFrame::external(env);
+	auto *context = (JPContext*) ctx;
+	JPJavaFrame frame = JPJavaFrame::external(env, context);
 	JP_JAVA_TRY("JPTypeFactory_defineMethod");
 	jmethodID mid = frame.FromReflectedMethod(method);
 	JPMethodList cover;
@@ -427,13 +457,15 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethod(
 }
 
 JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_populateMethod(
-		JNIEnv *env, jobject self, jlong contextPtr,
+		JNIEnv *env, jobject self,
+		jlong ctx,
 		jlong method,
 		jlong returnType,
 		jlongArray argumentTypes
 		)
 {
-	JPJavaFrame frame = JPJavaFrame::external(env);
+	auto *context = (JPContext*) ctx;
+	JPJavaFrame frame = JPJavaFrame::external(env, context);
 	JP_JAVA_TRY("JPTypeFactory_populateMethod");
 	JPClassList cargs;
 	convert(frame, argumentTypes, cargs);

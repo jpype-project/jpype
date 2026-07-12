@@ -1,3 +1,4 @@
+// --- file: common/jp_gc.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,10 +15,27 @@
    See NOTICE file for details.
  *****************************************************************************/
 #include <Python.h>
+#include <mutex>
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_reference_queue.h"
 #include "jp_gc.h"
+
+// True process-wide global (like s_ClassClass in jp_classloader.cpp) -
+// java.lang.System is the same object regardless of context.  Never
+// released - it lives for the process.
+static jclass s_SystemClass = nullptr;
+static jmethodID s_GcMethodID = nullptr;
+
+static void bindImmortals(JPJavaFrame& frame)
+{
+	static std::once_flag lookupOnce;
+	std::call_once(lookupOnce, [&frame]()
+	{
+		s_SystemClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/System"));
+		s_GcMethodID = frame.GetStaticMethodID(s_SystemClass, "gc", "()V");
+	});
+}
 
 #ifdef WIN32
 #define USE_PROCESS_INFO
@@ -106,19 +124,17 @@ void JPGarbageCollection::triggered()
 		java_count++;
 
 		// Lock Python so we call trigger a GC
-		JPPyCallAcquire callback;
 		PyGC_Collect();
 	}
 }
 
-JPGarbageCollection::JPGarbageCollection()
+JPGarbageCollection::JPGarbageCollection(JPContext* context)
 {
 	running = false;
 	in_python_gc = false;
 	java_triggered = false;
 	python_gc = nullptr;
-	_SystemClass = nullptr;
-	_gcMethodID = nullptr;
+	m_Context = context;
 
 	last_python = 0;
 	last_java = 0;
@@ -137,23 +153,21 @@ void JPGarbageCollection::init(JPJavaFrame& frame)
 	statm_fd = open("/proc/self/statm", O_RDONLY);
 	page_size = getpagesize();
 #endif
-	// Get the Python garbage collector
-	JPPyObject gc = JPPyObject::call(PyImport_ImportModule("gc"));
-	python_gc = gc.keep();
+	m_Context = frame.getContext();
+	PyJPModuleState* st = m_Context->modulestate;
 
-	// Find the callbacks
-	JPPyObject callbacks = JPPyObject::call(PyObject_GetAttrString(python_gc, "callbacks"));
-
-	// Hook up our callback
-	JPPyObject collect = JPPyObject::call(PyObject_GetAttrString(PyJPModule, "_collect"));
-	PyList_Append(callbacks.get(), collect.get());
-	JP_PY_CHECK();
+	// Defensive check to ensure state resources are fully populated
+	if (st != nullptr && st->gc_callbacks != nullptr && st->collect != nullptr)
+	{
+		// Hook up our callback directly using the pre-pinned state vector
+		PyList_Append(st->gc_callbacks, st->collect);
+		JP_PY_CHECK();
+	}
 
 	// Get the Java System gc so we can trigger
-	_SystemClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/System"));
-	_gcMethodID = frame.GetStaticMethodID(_SystemClass, "gc", "()V");
+	bindImmortals(frame);
 
-	jclass ctxt = JPContext_global->m_ContextClass.get();
+	jclass ctxt = frame.getContext()->m_ContextClass;
 	_ContextClass = ctxt;
 	_totalMemoryID = frame.GetStaticMethodID(ctxt, "getTotalMemory", "()J");
 	_freeMemoryID = frame.GetStaticMethodID(ctxt, "getFreeMemory", "()J");
@@ -268,8 +282,8 @@ void JPGarbageCollection::onEnd()
 			// Move up the low water
 			low_water = (low_water + high_water) / 2;
 			// Don't reset the limit if it was count triggered
-			JPJavaFrame frame = JPJavaFrame::outer();
-			frame.CallStaticVoidMethodA(_SystemClass, _gcMethodID, nullptr);
+			JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+			frame.CallStaticVoidMethodA(s_SystemClass, s_GcMethodID, nullptr);
 			python_triggered++;
 		}
 	}

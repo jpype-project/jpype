@@ -19,14 +19,15 @@
 class JPMonitor
 {
 public:
-	JPMonitor(jobject obj);
+	JPMonitor(JPJavaFrame& frame, jobject obj);
 	virtual ~JPMonitor();
 
 	void enter();
 	void exit();
 
 private:
-	JPObjectRef m_Value;
+	JPContext* m_Context;
+	jref m_Value;
 } ;
 
 #endif // _JPMONITOR_H_

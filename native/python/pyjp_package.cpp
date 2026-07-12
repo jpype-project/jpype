@@ -1,3 +1,4 @@
+// --- file: python/pyjp_package.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -22,8 +23,6 @@
 extern "C"
 {
 #endif
-PyTypeObject *PyJPPackage_Type = nullptr;
-static PyObject *PyJPPackage_Dict = nullptr;
 
 static PyObject *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
@@ -32,8 +31,22 @@ static PyObject *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject *k
 	if (!PyArg_Parse(args, "(U)", &name))
 		return nullptr;
 
+	// Extract the subinterpreter module state directly from the type object!
+	// This is tricky because we have potential paths to _JPackage
+	// The one coming from user JPackage requests and those created as part of the module system.
+	PyJPModuleState* st;
+	if (type->tp_base->tp_flags & Py_TPFLAGS_HEAPTYPE)
+		st = reinterpret_cast<PyJPModuleState*>(PyType_GetModuleState(type->tp_base));
+	else
+		st = reinterpret_cast<PyJPModuleState*>(PyType_GetModuleState(type));
+	if (st == nullptr)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "JPype module state is not available from type");
+		return nullptr;
+	}
+
 	// Check the cache
-	PyObject *obj = PyDict_GetItem(PyJPPackage_Dict, name);
+	PyObject *obj = PyDict_GetItem(st->package_dict, name);
 	if (obj != nullptr)
 	{
 		Py_INCREF(obj);
@@ -41,62 +54,104 @@ static PyObject *PyJPPackage_new(PyTypeObject *type, PyObject *args, PyObject *k
 	}
 
 	// Otherwise create a new object
-	PyObject *self = PyModule_Type.tp_new(PyJPPackage_Type, args, nullptr);
+	PyObject *self = PyModule_Type.tp_new(type, args, nullptr);
 	int rc = PyModule_Type.tp_init(self, args, nullptr);
 	if (rc != 0)
 	{
-		// If we fail clean up the mess.
 		Py_DECREF(self);
 		return nullptr;
 	}
 
+	PyObject *dict = PyModule_GetDict(self);
+	if (dict != nullptr)
+	{
+		PyObject* capsule = PyCapsule_New(st, "_jpype._instance_state", nullptr);
+		if (capsule != nullptr)
+		{
+			PyDict_SetItemString(dict, "_module_state", capsule);
+			Py_DECREF(capsule);
+		}
+	}
+
 	// Place in cache
-	PyDict_SetItem(PyJPPackage_Dict, name, self);
+	PyDict_SetItem(st->package_dict, name, self);
 	return self;
-	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);
+}
+
+static int PyJPPackage_init(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+	JP_PY_TRY("PyJPPackage_init");
+	PyObject *dict = PyModule_GetDict(self);
+	if (dict != nullptr && PyDict_GetItemString(dict, "_module_state") != nullptr)
+	{
+		return 0; 
+	}
+	PyObject *strict_obj = nullptr;
+	static char *kwlist[] = {"", "strict", nullptr}; // First arg is name positional-only or positional
+	PyObject *name = nullptr;
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "U|O", kwlist, &name, &strict_obj))
+	{
+		return -1;
+	}
+
+	return PyModule_Type.tp_init(self, args, nullptr);
+	
+	JP_PY_CATCH(-1);
 }
 
 static void dtor(PyObject *self)
 {
-	// No need for exception if JVM is not running.
-	JPContext *context = JPContext_global;
-	if (context == nullptr || !context->isRunning())
+	JP_PY_TRY("PyJPPackage_dtor");
+	void* payload = PyCapsule_GetPointer(self, nullptr);
+	if (payload == nullptr)
+	{
+		PyErr_Clear();
 		return;
-	auto jo = (jobject) PyCapsule_GetPointer(self, nullptr);
-	if (jo == nullptr)
-		return;
-	JPJavaFrame frame = JPJavaFrame::outer();
-	frame.DeleteGlobalRef(jo);
+	}
+	jref ref{(long)(intptr_t) payload};
+	tryRelease(ref);
+	JP_PY_CATCH_NONE();
 }
 
 static jobject getPackage(JPJavaFrame &frame, PyObject *self)
 {
 	PyObject *dict = PyModule_GetDict(self); // borrowed
 	PyObject *capsule = PyDict_GetItemString(dict, "_jpackage"); // borrowed
-	jobject jo;
 	if (capsule != nullptr)
 	{
-		jo = (jobject) PyCapsule_GetPointer(capsule, nullptr);
-		return jo;
+		jref ref{(long)(intptr_t) PyCapsule_GetPointer(capsule, nullptr)};
+		return frame.retrieveGlobal(ref);
 	}
 
 	const char *name = PyModule_GetName(self);
 	// Attempt to load the object.
-	jo =	frame.getPackage(name);
+	jobject jo = frame.getPackage(name);
 
 	// Found it, use it.
 	if (jo != nullptr)
 	{
-		jo = frame.NewGlobalRef(jo);
-		capsule = PyCapsule_New(jo, nullptr, dtor);
+		jref ref = frame.storeGlobal(jo);
+		capsule = PyCapsule_New((void*)(intptr_t) ref.value, nullptr, dtor);
 		PyDict_SetItemString(dict, "_jpackage", capsule); // no steal
-		//		Py_DECREF(capsule);
-		return jo;
+		return frame.retrieveGlobal(ref);
 	}
 
 	// Otherwise, this is a bad package.
 	PyErr_Format(PyExc_AttributeError, "Java package '%s' is not valid", name);
 	return nullptr;
+}
+
+static PyJPModuleState* getstate(PyObject* self)
+{
+	PyObject *dict = PyModule_GetDict(self);
+	PyJPModuleState* st = nullptr;
+	if (dict == nullptr)
+		return nullptr;
+	PyObject* capsule = PyDict_GetItemString(dict, "_module_state");
+	if (capsule == nullptr)
+		return nullptr;
+	return reinterpret_cast<PyJPModuleState*>(PyCapsule_GetPointer(capsule, "_jpype._instance_state"));
 }
 
 /**
@@ -122,7 +177,6 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 	PyObject *dict = PyModule_GetDict(self);
 	if (dict != nullptr)
 	{
-		// Check the cache
 		PyObject *out = PyDict_GetItem(PyModule_GetDict(self), attr);
 		if (out != nullptr)
 		{
@@ -132,12 +186,20 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 	}
 
 	string attrName = JPPyString::asStringUTF8(attr).c_str();
-	// Check for private attribute
 	if (attrName.compare(0, 2, "__") == 0)
-		return PyObject_GenericGetAttr((PyObject*) self, attr);
+		return PyObject_GenericGetAttr(self, attr);
 
-	// Check for JVM running first
-	JPContext* context = JPContext_global;
+	auto* st = getstate(self);
+	if (st == nullptr)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "JPype module state is not available from object type");
+		return nullptr;
+	}
+
+	JPContext* context = st->context;
+	if (context == nullptr)
+		return nullptr;
+
 	if (!context->isRunning())
 	{
 		PyErr_Format(PyExc_RuntimeError,
@@ -145,7 +207,8 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 				PyModule_GetName(self), attr);
 		return nullptr;
 	}
-	JPJavaFrame frame = JPJavaFrame::outer();
+
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jobject pkg = getPackage(frame, self);
 	if (pkg == nullptr)
 		return nullptr;
@@ -155,10 +218,9 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 	try
 	{
 		obj = frame.getPackageObject(pkg, attrName);
-	}		catch (JPypeException& ex)
+	} catch (JPypeException& ex)
 	{
 		JPPyObject h = JPPyObject::accept(PyObject_GetAttrString(self, "_handler"));
-		// If something fails, we need to go to a handler
 		if (!h.isNull())
 		{
 			ex.toPython();
@@ -169,36 +231,33 @@ static PyObject *PyJPPackage_getattro(PyObject *self, PyObject *attr)
 			PyObject *rc = PyObject_Call(h.get(), tuple0.get(), nullptr);
 			if (rc == nullptr)
 				return nullptr;
-			Py_DECREF(rc); // GCOVR_EXCL_LINE
+			Py_DECREF(rc);
 		}
-		throw; // GCOVR_EXCL_LINE
+		throw;
 	}
+
 	if (obj == nullptr)
 	{
 		PyErr_Format(PyExc_AttributeError, "Java package '%s' has no attribute '%U'",
-				PyModule_GetName(self), attr);
+				PyModule_GetName((PyObject*) self), attr);
 		return nullptr;
-	} else if (frame.IsInstanceOf(obj, context->_java_lang_Class->getJavaClass()))
+	} else if (frame.IsInstanceOf(obj, context->_java_lang_Class->getJavaClass(frame)))
 		out = PyJPClass_create(frame, frame.findClass((jclass) obj));
-	else if (frame.IsInstanceOf(obj, context->_java_lang_String->getJavaClass()))
+	else if (frame.IsInstanceOf(obj, context->_java_lang_String->getJavaClass(frame)))
 	{
 		JPPyObject u = JPPyObject::call(PyUnicode_FromFormat("%s.%U",
-				PyModule_GetName(self), attr));
+				PyModule_GetName((PyObject*) self), attr));
 		JPPyObject args = JPPyTuple_Pack(u.get());
-		out = JPPyObject::call(PyObject_Call((PyObject*) PyJPPackage_Type, args.get(), nullptr));
+		out = JPPyObject::call(PyObject_Call((PyObject*) context->modulestate->PyJPPackage_Type, args.get(), nullptr));
 	} else
 	{
-		// We should be able to handle Python classes, datafiles, etc,
-		// but that will take time to implement.  In principle, things
-		// that are not packages or classes should appear as Buffers or
-		// some other resource type.
 		PyErr_Format(PyExc_AttributeError, "'%U' is unknown object type in Java package", attr);
 		return nullptr;
 	}
-	// Cache the item for now
-	PyDict_SetItem(dict, attr, out.get()); // no steal
+
+	PyDict_SetItem(dict, attr, out.get());
 	return out.keep();
-	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);
 }
 
 /**
@@ -250,7 +309,13 @@ static PyObject *PyJPPackage_path(PyObject *self)
 static PyObject *PyJPPackage_dir(PyObject *self)
 {
 	JP_PY_TRY("PyJPPackage_dir");
-	JPJavaFrame frame = JPJavaFrame::outer();
+	auto* st = getstate(self);
+	if (st == nullptr)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "JPype module state is not available from object type");
+		return nullptr;
+	}
+	JPJavaFrame frame = JPJavaFrame::outer(st->context);
 	jobject pkg = getPackage(frame, self);
 	if (pkg == nullptr)
 		return nullptr;
@@ -310,43 +375,49 @@ static PyGetSetDef packageGetSets[] = {
 };
 
 static PyType_Slot packageSlots[] = {
-	{Py_tp_new,      (void*) PyJPPackage_new},
+	{Py_tp_new, (void*) PyJPPackage_new},
+	{Py_tp_init, (void*) PyJPPackage_init},
 	{Py_tp_traverse, (void*) PyJPPackage_traverse},
-	{Py_tp_clear,    (void*) PyJPPackage_clear},
-	{Py_tp_getattro, (void*) PyJPPackage_getattro},
-	{Py_tp_str,      (void*) PyJPPackage_str},
-	{Py_tp_repr,     (void*) PyJPPackage_repr},
-	{Py_tp_call,     (void*) PyJPPackage_call},
+	{Py_tp_clear, (void*) PyJPPackage_clear},
+	{Py_tp_getattro,(void*) PyJPPackage_getattro},
+	{Py_tp_str, (void*) PyJPPackage_str},
+	{Py_tp_repr, (void*) PyJPPackage_repr},
+	{Py_tp_call, (void*) PyJPPackage_call},
 	{Py_nb_matrix_multiply, (void*) PyJPPackage_cast},
 	{Py_nb_inplace_matrix_multiply, (void*) PyJPPackage_castEq},
-	{Py_tp_methods,  (void*) packageMethods},
-	{Py_tp_getset,   (void*) packageGetSets},
+	{Py_tp_methods, (void*) packageMethods},
+	{Py_tp_getset, (void*) packageGetSets},
 	{0}
 };
 
 static PyType_Spec packageSpec = {
 	"_jpype._JPackage",
-	-1,
+	0,
 	0,
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC,
 	packageSlots
 };
 
-#ifdef __cplusplus
-}
-#endif
-
-void PyJPPackage_initType(PyObject* module)
+void PyJPPackage_initType(PyObject* module, PyJPModuleState* st)
 {
 	// Inherit from module.
 	JPPyObject bases = JPPyTuple_Pack(&PyModule_Type);
-	packageSpec.basicsize = PyModule_Type.tp_basicsize;
-	PyJPPackage_Type = (PyTypeObject*) PyType_FromSpecWithBases(&packageSpec, bases.get());
+	
+	st->PyJPPackage_Type = (PyTypeObject*) PyType_FromModuleAndSpec(module, &packageSpec, bases.get());
 	JP_PY_CHECK();
-	PyModule_AddObject(module, "_JPackage", (PyObject*) PyJPPackage_Type);
+	
+	PyModule_AddObject(module, "_JPackage", (PyObject*) st->PyJPPackage_Type);
+	Py_INCREF((PyObject*) st->PyJPPackage_Type);
 	JP_PY_CHECK();
 
 	// Set up a dictionary so we can reuse packages
-	PyJPPackage_Dict = PyDict_New();
-	PyModule_AddObject(module, "_packages", PyJPPackage_Dict);
+	st->package_dict = PyDict_New();
+	JP_PY_CHECK();
+	PyModule_AddObject(module, "_packages", st->package_dict);
+	Py_INCREF(st->package_dict);
 }
+
+
+#ifdef __cplusplus
+}
+#endif

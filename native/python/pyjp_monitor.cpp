@@ -1,3 +1,4 @@
+// --- file: python/pyjp_monitor.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -27,17 +28,16 @@ struct PyJPMonitor
 {
 	PyObject_HEAD
 	JPMonitor *m_Monitor;
+	PyJPModuleState* m_State;
 } ;
 
 static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_init");
 	self->m_Monitor = nullptr;
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer();
+	self->m_State = nullptr;
 
 	PyObject* value;
-
 	if (!PyArg_ParseTuple(args, "O", &value))
 		return -1;
 
@@ -48,7 +48,22 @@ static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 		return -1;
 	}
 
-	if (v1->getClass() == context->_java_lang_String)
+	// Safely extract the module state using the fixed mro[-2] pattern
+	PyTypeObject* type = Py_TYPE(self);
+    PyJPModuleState* st = nullptr;
+    Py_ssize_t mro_size = PyTuple_GET_SIZE(type->tp_mro);
+    PyTypeObject* target_type = (PyTypeObject*)PyTuple_GET_ITEM(type->tp_mro, mro_size - 2);
+    if (target_type->tp_flags & Py_TPFLAGS_HEAPTYPE) 
+       st = reinterpret_cast<PyJPModuleState*>(PyType_GetModuleState(target_type));
+    if (st == nullptr)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "JPype module state is not available from proxy MRO anchor");
+        return -1;
+    }
+    self->m_State = st;
+    JPJavaFrame frame = JPJavaFrame::outer(st->context);
+
+	if (v1->getClass() == st->context->_java_lang_String)
 	{
 		PyErr_SetString(PyExc_TypeError, "Java strings cannot be used to synchronize.");
 		return -1;
@@ -60,13 +75,13 @@ static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 		return -1;
 	}
 
-	if (v1->getValue().l == nullptr)
+	if (v1->isJavaNull())
 	{
 		PyErr_SetString(PyExc_TypeError, "Java null cannot be used to synchronize.");
 		return -1;
 	}
 
-	self->m_Monitor = new JPMonitor(v1->getValue().l);
+	self->m_Monitor = new JPMonitor(frame, v1->getJavaObject(frame));
 	return 0;
 	JP_PY_CATCH(-1);
 }
@@ -89,7 +104,7 @@ static PyObject *PyJPMonitor_str(PyJPMonitor *self)
 static PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_enter");
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(self->m_State->context);
 	self->m_Monitor->enter();
 	Py_RETURN_NONE;
 	JP_PY_CATCH(nullptr);
@@ -98,7 +113,7 @@ static PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
 static PyObject *PyJPMonitor_exit(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_exit");
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(self->m_State->context);
 	self->m_Monitor->exit();
 	Py_RETURN_NONE;
 	JP_PY_CATCH(nullptr);
@@ -111,9 +126,9 @@ static PyMethodDef monitorMethods[] = {
 };
 
 static PyType_Slot monitorSlots[] = {
-	{ Py_tp_init,     (void*) PyJPMonitor_init},
+	{ Py_tp_init,	 (void*) PyJPMonitor_init},
 	{ Py_tp_dealloc,  (void*) PyJPMonitor_dealloc},
-	{ Py_tp_str,      (void*) PyJPMonitor_str},
+	{ Py_tp_str,	  (void*) PyJPMonitor_str},
 	{ Py_tp_methods,  (void*) &monitorMethods},
 	{0}
 };
@@ -126,16 +141,21 @@ PyType_Spec PyJPMonitorSpec = {
 	monitorSlots
 };
 
-PyTypeObject* PyJPMonitor_Type = nullptr;
+void PyJPMonitor_initType(PyObject* module, PyJPModuleState* st)
+{
+#if PY_VERSION_HEX >= 0x030A0000
+    st->PyJPMonitor_Type = (PyTypeObject*) PyType_FromModuleAndSpec(module, &PyJPMonitorSpec, nullptr);
+#else
+    st->PyJPMonitor_Type = (PyTypeObject*) PyType_FromSpecWithBases(&PyJPMonitorSpec, nullptr);
+#endif
+    JP_PY_CHECK(); // GCOVR_EXCL_LINE
+    Py_INCREF((PyObject*) st->PyJPMonitor_Type);
+    PyModule_AddObject(module, "_JMonitor", (PyObject*) st->PyJPMonitor_Type);
+    JP_PY_CHECK(); // GCOVR_EXCL_LINE
+}
 
 #ifdef __cplusplus
 }
 #endif
 
-void PyJPMonitor_initType(PyObject* module)
-{
-	PyJPMonitor_Type = (PyTypeObject*) PyType_FromSpec(&PyJPMonitorSpec);
-	JP_PY_CHECK(); // GCOVR_EXCL_LINE
-	PyModule_AddObject(module, "_JMonitor", (PyObject*) PyJPMonitor_Type);
-	JP_PY_CHECK(); // GCOVR_EXCL_LINE
-}
+

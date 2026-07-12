@@ -1,3 +1,4 @@
+// --- file: org/jpype/pickle/Encoder.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -20,8 +21,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 
 /**
- *
- * @author Karl Einar Nelson
+ * Support class for the Python JPickler class.
  */
 public class Encoder
 {

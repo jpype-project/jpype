@@ -4,35 +4,25 @@ set -e -x
 # Ensure the package name is available (usually passed from Azure env)
 package_name=${package_name:-jpype1}
 
-# BUILD_PY_VERSIONS: space-separated minor versions to build.
-# e.g. "38 39" or "310 311 312 313 314"
-# Defaults to modern versions if not passed in.
-if [ -n "$BUILD_PY_VERSIONS" ]; then
-    IFS=' ' read -r -a include_versions <<< "$BUILD_PY_VERSIONS"
-else
-    include_versions=("310" "311" "312" "313" "314")
-fi
-
-echo "Building for Python versions: ${include_versions[*]}"
-
 pys=()
 echo "Available Python bins in ManyLinux image:"
 ls -d /opt/python/cp*/bin
 
 for pybin in /opt/python/cp*/bin; do
+    # Get the directory name (e.g., cp310-cp310)
     dir=$(basename $(dirname "$pybin"))
-    matched=false
-    for v in "${include_versions[@]}"; do
-        if [[ "$dir" =~ ^cp${v}- ]]; then
-            matched=true
-            break
-        fi
-    done
-    if $matched; then
-        echo "Including: $dir"
+
+    # EXCLUSION LOGIC:
+    # Drop EOL versions (3.6, 3.7, 3.8, 3.9)
+    # Note: 3.9 is EOL as of late 2025, but keep it if your users require it.
+    if [[ "$dir" =~ ^cp3(6|7|8|9)- ]]; then
+        echo "Skipping legacy version: $dir"
+        continue
+    fi
+
+    # Include 3.10, 3.11, 3.12, 3.13, 3.14
+    if [[ "$dir" =~ ^cp3(10|11|12|13|14) ]]; then
         pys+=("$pybin")
-    else
-        echo "Skipping:  $dir"
     fi
 done
 

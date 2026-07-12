@@ -1,3 +1,4 @@
+// --- file: common/jp_typemanager.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -18,6 +19,7 @@
 
 JPTypeManager::JPTypeManager(JPJavaFrame& frame)
 {
+	m_JavaTypeManager = nullptr;
 	JP_TRACE_IN("JPTypeManager::init");
 	jclass cls = frame.getContext()->getClassLoader()->findClass(frame, "org.jpype.manager.TypeManager");
 	m_FindClass = frame.GetMethodID(cls, "findClass", "(Ljava/lang/Class;)J");
@@ -25,29 +27,29 @@ JPTypeManager::JPTypeManager(JPJavaFrame& frame)
 	m_FindClassForObject = frame.GetMethodID(cls, "findClassForObject", "(Ljava/lang/Object;)J");
 	m_PopulateMethod = frame.GetMethodID(cls, "populateMethod", "(JLjava/lang/reflect/Executable;)V");
 	m_PopulateMembers = frame.GetMethodID(cls, "populateMembers", "(Ljava/lang/Class;)V");
-    m_InterfaceParameterCount = frame.GetMethodID(cls, "interfaceParameterCount", "(Ljava/lang/Class;)I");
+	m_InterfaceParameterCount = frame.GetMethodID(cls, "interfaceParameterCount", "(Ljava/lang/Class;)I");
 
 	// The object instance will be loaded later
 	JP_TRACE_OUT;
 }
 
-JPClass* JPTypeManager::findClass(jclass obj)
+JPClass* JPTypeManager::findClass(JPJavaFrame &frame, jclass obj)
 {
 	JP_TRACE_IN("JPTypeManager::findClass");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val;
 	val.l = obj;
-	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClass, &val));
+	JPPyCallRelease release;
+	return (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager, m_FindClass, &val));
 	JP_TRACE_OUT;
 }
 
-JPClass* JPTypeManager::findClassByName(const string& name)
+JPClass* JPTypeManager::findClassByName(JPJavaFrame& frame, const string& name)
 {
 	JP_TRACE_IN("JPTypeManager::findClassByName");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val;
 	val.l = (jobject) frame.fromStringUTF8(name);
-	auto* out = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassByName, &val));
+	JPPyCallRelease release;
+	auto* out = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager, m_FindClassByName, &val));
 	if (out == nullptr)
 	{
 		std::stringstream err;
@@ -58,47 +60,46 @@ JPClass* JPTypeManager::findClassByName(const string& name)
 	JP_TRACE_OUT;
 }
 
-JPClass* JPTypeManager::findClassForObject(jobject obj)
+JPClass* JPTypeManager::findClassForObject(JPJavaFrame &frame, jobject obj)
 {
 	JP_TRACE_IN("JPTypeManager::findClassForObject");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val;
 	val.l = obj;
-	auto *cls = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager.get(), m_FindClassForObject, &val));
+	JPPyCallRelease release;
+	auto *cls = (JPClass*) (frame.CallLongMethodA(m_JavaTypeManager, m_FindClassForObject, &val));
 	frame.check();
 	JP_TRACE("ClassName", cls == NULL ? "null" : cls->getCanonicalName());
 	return cls;
 	JP_TRACE_OUT;
 }
 
-void JPTypeManager::populateMethod(void* method, jobject obj)
+void JPTypeManager::populateMethod(JPJavaFrame& frame, void* method, jobject obj)
 {
 	JP_TRACE_IN("JPTypeManager::populateMethod");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val[2];
 	val[0].j = (jlong) method;
 	val[1].l = obj;
 	JP_TRACE("Method", method);
-	frame.CallVoidMethodA(m_JavaTypeManager.get(), m_PopulateMethod, val);
+	JPPyCallRelease release;
+	frame.CallVoidMethodA(m_JavaTypeManager, m_PopulateMethod, val);
 	JP_TRACE_OUT;
 }
 
-void JPTypeManager::populateMembers(JPClass* cls)
+void JPTypeManager::populateMembers(JPJavaFrame& frame, JPClass* cls)
 {
 	JP_TRACE_IN("JPTypeManager::populateMembers");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val[1];
-	val[0].l = (jobject) cls->getJavaClass();
-	frame.CallVoidMethodA(m_JavaTypeManager.get(), m_PopulateMembers, val);
+	val[0].l = (jobject) cls->getJavaClass(frame);
+	JPPyCallRelease release;
+	frame.CallVoidMethodA(m_JavaTypeManager, m_PopulateMembers, val);
 	JP_TRACE_OUT;
 }
 
-int JPTypeManager::interfaceParameterCount(JPClass *cls)
+int JPTypeManager::interfaceParameterCount(JPJavaFrame& frame, JPClass *cls)
 {
 	JP_TRACE_IN("JPTypeManager::interfaceParameterCount");
-	JPJavaFrame frame = JPJavaFrame::outer();
 	jvalue val[1];
-	val[0].l = (jobject) cls->getJavaClass();
-	return frame.CallIntMethodA(m_JavaTypeManager.get(), m_InterfaceParameterCount, val);
+	val[0].l = (jobject) cls->getJavaClass(frame);
+	return frame.CallIntMethodA(m_JavaTypeManager, m_InterfaceParameterCount, val);
 	JP_TRACE_OUT;
 }

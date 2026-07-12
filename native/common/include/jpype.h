@@ -122,8 +122,6 @@ using jconverter = jvalue (*)(void *) ;
  */
 extern jconverter getConverter(const char* from, int itemsize, const char* to);
 
-extern bool _jp_cpp_exceptions;
-
 // Types
 class JPClass;
 class JPValue;
@@ -154,6 +152,25 @@ using JPClassList = vector<JPClass *>;
 using JPFieldList = vector<JPField *>;
 using JPMethodDispatchList = vector<JPMethodDispatch *>;
 using JPMethodList = vector<JPMethod *>;
+
+/**
+ * Opaque handle to a Java object held in a Java-side pool
+ * (org.jpype.ref.GlobalPool), owned by one interpreter's NativeContext.
+ *
+ * Replaces a long-held jobject/jclass/jarray/jthrowable field on a C++
+ * object (JPClass, JPMethod, JPField, ...): ordinary Java reachability
+ * from that pool keeps the object alive, so no NewGlobalRef/
+ * DeleteGlobalRef is needed for it. A jref is not itself a valid JNI
+ * value - never pass .value into a JNI call directly. Treat it like a
+ * weak reference: promote it to a local ref via
+ * JPJavaFrame::retrieveGlobal() each time it's actually needed for a
+ * call, and release it (from anywhere, e.g. a destructor with no frame
+ * in hand) via tryRelease().
+ */
+struct jref
+{
+	long value = 0;
+};
 
 class JPResource
 {

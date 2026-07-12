@@ -5,6 +5,7 @@
 
 	<!-- src can't be "java" as it breaks nose tests -->
 	<property name="src" location="jpype_module/src/main/java"/>
+    <property name="resources" location="jpype_module/src/main/resources"/>
 	<property name="build" location="build"/>
 
 	<target name="test" depends="compile">
@@ -16,6 +17,12 @@
 		<mkdir dir="${build}/classes/META-INF/versions"/>
 		<mkdir dir="${build}/classes/META-INF/versions/0"/>
 		<mkdir dir="${build}/lib"/>
+
+        <copy todir="${build}/classes" failonerror="false">
+            <fileset dir="${resources}">
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
 		<javac destdir="${build}/classes"
 			source="${JAVA_VERSION}"
 			target="${JAVA_VERSION}"

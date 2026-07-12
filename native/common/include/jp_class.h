@@ -21,8 +21,10 @@
 class JPClass : public JPResource
 {
 public:
-	// Special entry point for JVM independent entities
-	JPClass(const string& name, jint modifiers);
+	JPClass(JPJavaFrame& frame,
+			jclass clss,
+			const string& name, 
+			jint modifiers);
 	JPClass(JPJavaFrame& context,
 			jclass clss,
 			const string& name,
@@ -40,25 +42,33 @@ public:
 
 	void setHints(PyObject* host);
 
-	PyObject* getHints();
+	PyObject* getHints(JPJavaFrame& frame);
+	
+	JPContext* getContext()
+	{
+		return m_Context;
+	}
+
+	/** Resolves this class's Java jclass to a local reference scoped to
+	 * frame. m_Class is a jref, not a live JNI value - see jpype.h.
+	 */
+	jclass getJavaClass(JPJavaFrame& frame) const;
 
 public:
 	void ensureMembers(JPJavaFrame& frame);
-
-	jclass getJavaClass() const;
 
 	void assignMembers(JPMethodDispatch* ctor,
 			JPMethodDispatchList& methods,
 			JPFieldList& fields);
 
-	string toString() const;
+	string toString(JPJavaFrame& frame) const;
 
-	string getCanonicalName() const
+	string getCanonicalName(JPJavaFrame& frame) const
 	{
 		return m_CanonicalName;
 	}
 
-	string getName() const;
+	string getName(JPJavaFrame& frame) const;
 
 	bool isAbstract() const
 	{
@@ -68,6 +78,16 @@ public:
 	bool isFinal() const
 	{
 		return JPModifier::isFinal(m_Modifiers);
+	}
+
+	bool isPython() const
+	{
+		return JPModifier::isPython(m_Modifiers);
+	}
+
+	bool isProxy() const
+	{
+		return JPModifier::isProxy(m_Modifiers);
 	}
 
 	bool isThrowable() const
@@ -125,7 +145,7 @@ public:
 	 */
 	virtual JPMatch::Type findJavaConversion(JPMatch& match);
 
-	virtual void getConversionInfo(JPConversionInfo &info);
+	virtual void getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info);
 
 	/** Create a new Python object to wrap a Java value.
 	 *
@@ -199,7 +219,8 @@ public:
 	}
 
 protected:
-	JPClassRef           m_Class;
+	JPContext*           m_Context;
+	jref                 m_Class;
 	JPClass*             m_SuperClass;
 	JPClassList          m_Interfaces;
 	JPMethodDispatch*    m_Constructors;

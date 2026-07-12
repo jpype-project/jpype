@@ -43,7 +43,7 @@
 #ifndef __FUNCTION_NAME__
 #ifdef WIN32   //WINDOWS
 #define __FUNCTION_NAME__   __FUNCTION__
-#else          //*NIX
+#else		  //*NIX
 #define __FUNCTION_NAME__   __func__
 #endif
 #endif
@@ -69,7 +69,21 @@ _os_error_windows,
 // Macro to use when hardening code
 //   Most of these will be removed after core is debugged, but
 //   a few are necessary to handle off normal conditions.
-#define ASSERT_NOT_NULL(X) {if ((X)==NULL) { JP_RAISE(PyExc_RuntimeError,  "Null Pointer Exception");} }
+
+// The helper macros required to force the preprocessor to stringify the expansion, 
+// rather than stringifying the tokens "__LINE__" or "__FILE__" directly.
+#define STRINGIFY_HELPER(x) #x
+#define TO_STRING(x) STRINGIFY_HELPER(x)
+
+// Now you can use standard string compile-time merging!
+#define ASSERT_NOT_NULL(X, Location) \
+	do { \
+		if ((X) == nullptr) { \
+			PyErr_SetString(PyExc_RuntimeError, \
+				"Null Pointer Exception at " Location " (" #X " is null) [" __FILE__ ":" TO_STRING(__LINE__) "]"); \
+			JP_RAISE_PYTHON(); \
+		} \
+	} while (0)
 
 // Macro to add stack trace info when multiple paths lead to the same trouble spot
 #define JP_CATCH catch (JPypeException& ex) { ex.from(JP_STACKINFO()); throw; }
@@ -107,8 +121,8 @@ using JPStackTrace = vector<JPStackInfo>;
 
 typedef union
 {
-    int  i;
-    void*  l;
+	int  i;
+	void*  l;
 } JPErrorUnion;
 
 /**
@@ -125,16 +139,18 @@ public:
 	JPypeException(int type, void* error, const JPStackInfo& stackInfo);
 	JPypeException(int type, void* error, const string& msn, const JPStackInfo& stackInfo);
 	JPypeException(int type, const string& msn, int error, const JPStackInfo& stackInfo);
-    // The copy constructor for an object thrown as an exception must be declared noexcept, including any implicitly-defined copy constructors.
-    // Any function declared noexcept that terminates by throwing an exception violates ERR55-CPP. Honor exception specifications.
-    JPypeException(const JPypeException &ex) noexcept;
+	// The copy constructor for an object thrown as an exception must be declared noexcept, including any implicitly-defined copy constructors.
+	// Any function declared noexcept that terminates by throwing an exception violates ERR55-CPP. Honor exception specifications.
+	JPypeException(const JPypeException &ex) noexcept;
 	JPypeException& operator = (const JPypeException& ex);
-	~JPypeException() override = default;
+	~JPypeException() override;
 
 	void from(const JPStackInfo& info);
 
+	// This one is called only when there was a Java exception set which captures the context
 	void convertJavaToPython();
-	void convertPythonToJava();
+	void convertPythonToJava(JPJavaFrame& frame);
+	string toString();
 
 	/** Transfer handling of this exception to python.
 	 *
@@ -144,7 +160,7 @@ public:
 	void toPython();
 
 	/** Transfer handling of this exception to java. */
-	void toJava();
+	void toJava(JPJavaFrame& frame);
 
 	int getExceptionType() const
 	{
@@ -153,14 +169,15 @@ public:
 
 	jthrowable getThrowable()
 	{
-		return m_Throwable.get();
+		return m_Throwable;
 	}
 
 private:
 	int m_Type;
+	JPContext* m_Context;
 	JPErrorUnion m_Error{};
 	JPStackTrace m_Trace;
-	JPThrowableRef m_Throwable;
+	jthrowable m_Throwable;
 	std::string m_Message;
 };
 

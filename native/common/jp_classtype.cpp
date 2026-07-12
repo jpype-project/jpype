@@ -1,3 +1,4 @@
+// --- file: common/jp_classtype.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -44,12 +45,11 @@ JPMatch::Type JPClassType::findJavaConversion(JPMatch& match)
 	JP_TRACE_OUT;
 }
 
-void JPClassType::getConversionInfo(JPConversionInfo &info)
+void JPClassType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
-	nullConversion->getInfo(this, info);
-	objectConversion->getInfo(this, info);
-	classConversion->getInfo(this, info);
-	hintsConversion->getInfo(this, info);
+	nullConversion->getInfo(frame, this, info);
+	objectConversion->getInfo(frame, this, info);
+	classConversion->getInfo(frame, this, info);
+	hintsConversion->getInfo(frame, this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 }

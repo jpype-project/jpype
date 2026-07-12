@@ -1,0 +1,26 @@
+kind: class
+module: collections
+class: Counter
+interface: python.collections.PyCounter
+---
+def _map_to_dict(m):
+    d = {}
+    for k, v in m.entrySet():
+        d[k] = v
+    return d
+
+
+def _subtract(x, other):
+    if hasattr(other, "entrySet"):
+        other = _map_to_dict(other)
+    x.subtract(other)
+
+
+METHODS = {
+    ".mostCommonAllRaw": lambda x: x.most_common(),
+    ".mostCommonRaw": lambda x, n: x.most_common(int(n)),
+    ".elementsRaw": lambda x: iter(x.elements()),
+    ".subtract": _subtract,
+    ".total": lambda x: x.total(),
+    ".getCount": lambda x, key: int(x[key]),
+}

@@ -46,11 +46,12 @@ static const int LOCAL_FRAME_DEFAULT = 8;
 class JPJavaFrame
 {
 	JNIEnv* m_Env;
+	JPContext* m_Context;
 	bool m_Popped;
 	bool m_Outer;
 
 private:
-	JPJavaFrame(JNIEnv* env, int size, bool outer);
+	JPJavaFrame(JNIEnv* env, JPContext* ctx, int size, bool outer);
 
 public:
 
@@ -65,9 +66,9 @@ public:
 	 * @throws JPypeException if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
-	static JPJavaFrame outer(int size = LOCAL_FRAME_DEFAULT)
+	static JPJavaFrame outer(JPContext* ctx, int size = LOCAL_FRAME_DEFAULT)
 	{
-		return {nullptr, size, true};
+		return {nullptr, ctx, size, true};
 	}
 
 	/** Create a new JavaFrame when called internal when
@@ -79,10 +80,10 @@ public:
 	 * @throws JPypeException if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
-	static JPJavaFrame inner(int size = LOCAL_FRAME_DEFAULT)
-	{
-		return {nullptr, size, false};
-	}
+//	static JPJavaFrame inner(int size = LOCAL_FRAME_DEFAULT)
+//	{
+//		return {nullptr, size, false};
+//	}
 
 	/** Create a new JavaFrame when called from Java.
 	 *
@@ -94,9 +95,9 @@ public:
 	 * @throws JPypeException if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
-	static JPJavaFrame external(JNIEnv* env, int size = LOCAL_FRAME_DEFAULT)
+	static JPJavaFrame external(JNIEnv* env, JPContext* ctx, int size = LOCAL_FRAME_DEFAULT)
 	{
-		return {env, size, false};
+		return {env, ctx, size, false};
 	}
 
 	JPJavaFrame(const JPJavaFrame& frame);
@@ -108,8 +109,6 @@ public:
 	 * by the keep method will be kept alive.
 	 */
 	~JPJavaFrame();
-
-	JPContext* getContext();
 
 	void check();
 
@@ -123,7 +122,7 @@ public:
 	 * Further calls to the frame will still suceed as we do not
 	 * check for operation on a closed frame, but is not advised.
 	 */
-	jobject keep(jobject);
+//	jobject keep(jobject);
 
 	/** Create a new global reference to a java object.
 	 *
@@ -154,9 +153,26 @@ public:
 	jweak NewWeakGlobalRef(jobject obj);
 	void DeleteWeakGlobalRef(jweak obj);
 
+	/** Stores obj in this frame's interpreter's Java-side GlobalPool
+	 * (org.jpype.internal.NativeContext#storeGlobal) and returns a handle
+	 * for it, in place of a JNI NewGlobalRef.
+	 */
+	jref storeGlobal(jobject obj);
+
+	/** Resolves a handle from storeGlobal() back to a local reference
+	 * scoped to this frame (org.jpype.internal.NativeContext#retrieveGlobal),
+	 * or nullptr if it's stale/foreign/already released.
+	 */
+	jobject retrieveGlobal(jref ref);
+
 	JNIEnv* getEnv() const
 	{
 		return m_Env;
+	}
+	JPContext* getContext() const
+	{
+		// We can add guard statements here.
+		return m_Context;
 	}
 
 	string toString(jobject o);
@@ -182,14 +198,14 @@ public:
 	jstring fromStringUTF8(const string& str);
 	jobject callMethod(jobject method, jobject obj, jobject args);
 	jobject toCharArray(jstring jstr);
-	string getFunctional(jclass c);
+	PyObject* getFunctional(jclass c);
 
 	JPClass *findClass(jclass obj);
 	JPClass *findClassByName(const string& name);
 	JPClass *findClassForObject(jobject obj);
 
-    // not implemented
-    JPJavaFrame& operator= (const JPJavaFrame& frame) = delete;
+	// not implemented
+	JPJavaFrame& operator= (const JPJavaFrame& frame) = delete;
 
 private:
 	jint PushLocalFrame(jint);

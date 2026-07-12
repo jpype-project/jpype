@@ -23,11 +23,11 @@ class JPArray;
 class JPArrayView
 {
 public:
-	explicit JPArrayView(JPArray* array);
-	JPArrayView(JPArray* array, jobject collection);
+	JPArrayView(JPJavaFrame& frame, JPArray* array);
+	JPArrayView(JPJavaFrame& frame, JPArray* array, jobject collection);
 	~JPArrayView();
 	void reference();
-	bool unreference();
+	bool unreference(JPJavaFrame& frame);
 public:
 	JPArray *m_Array;
 	void *m_Memory{};
@@ -46,7 +46,7 @@ class JPArray
 {
 	friend class JPArrayView;
 public:
-	explicit JPArray(const JPValue& array);
+	JPArray(JPJavaFrame& frame, const JPValue& array);
 	JPArray(JPArray* cls, jsize start, jsize stop, jsize step);
 	virtual~ JPArray();
 
@@ -56,9 +56,9 @@ public:
 	}
 
 	jsize     getLength() const;
-	void       setRange(jsize start, jsize length, jsize step, PyObject* val);
-	JPPyObject getItem(jsize ndx);
-	void       setItem(jsize ndx, PyObject*);
+	void       setRange(JPJavaFrame& frame, jsize start, jsize length, jsize step, PyObject* val);
+	JPPyObject getItem(JPJavaFrame& frame, jsize ndx);
+	void       setItem(JPJavaFrame& frame, jsize ndx, PyObject*);
 
 	/**
 	 *  Create a shallow copy of an array.
@@ -76,14 +76,14 @@ public:
 		return m_Slice;
 	}
 
-	jarray     getJava()
+	jarray     getJava(JPJavaFrame& frame)
 	{
-		return m_Object.get();
+		return (jarray) frame.retrieveGlobal(m_Object);
 	}
 
 private:
 	JPArrayClass* m_Class;
-	JPArrayRef    m_Object;
+	jref          m_Object;
 	jsize         m_Start;
 	jsize         m_Step;
 	jsize         m_Length;

@@ -1,0 +1,19 @@
+kind: class
+module: datetime
+class: datetime
+interface: python.datetime.PyDateTime
+---
+def _utc_offset_seconds(x):
+    off = x.utcoffset()
+    return int(off.total_seconds()) if off is not None else None
+
+
+METHODS = {
+    ".hour": lambda x: x.hour,
+    ".minute": lambda x: x.minute,
+    ".second": lambda x: x.second,
+    ".microsecond": lambda x: x.microsecond,
+    ".isAware": lambda x: x.tzinfo is not None,
+    ".utcOffsetSeconds": _utc_offset_seconds,
+    ".timestamp": lambda x: x.timestamp(),
+}

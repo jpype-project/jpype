@@ -20,7 +20,7 @@
 class JPPrimitiveType : public JPClass
 {
 protected:
-	explicit JPPrimitiveType(const string& name);
+	explicit JPPrimitiveType(JPJavaFrame& frame, jclass cls, const string& name);
 	~JPPrimitiveType() override;
 
 public:
@@ -34,11 +34,11 @@ public:
 
 	void setClass(JPJavaFrame& frame, jclass o)
 	{
-		m_Class = JPClassRef(frame, o);
+		m_Class = frame.storeGlobal(o);
 	}
 
-	virtual void getView(JPArrayView& view) = 0;
-	virtual void releaseView(JPArrayView& view) = 0;
+	virtual void getView(JPJavaFrame& frame, JPArrayView& view) = 0;
+	virtual void releaseView(JPJavaFrame& frame, JPArrayView& view) = 0;
 	virtual const char* getBufferFormat() = 0;
 	virtual Py_ssize_t getItemSize() = 0;
 	virtual void copyElements(JPJavaFrame &frame,

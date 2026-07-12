@@ -1,3 +1,4 @@
+// --- file: python/pyjp_proxy.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -46,7 +47,6 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 		return nullptr;
 	}
 
-	JPJavaFrame frame = JPJavaFrame::outer();
 	JPClassList interfaces;
 	JPPySequence intf = JPPySequence::use(pyintf);
 	jlong len = intf.size();
@@ -64,13 +64,35 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 		interfaces.push_back(cls);
 	}
 
-	if (dispatch == Py_None)
-		self->m_Proxy = new JPProxyDirect(self, interfaces);
+	// Safely extract the module state using the fixed mro[-2] pattern
+    PyJPModuleState* st = nullptr;
+    Py_ssize_t mro_size = PyTuple_GET_SIZE(type->tp_mro);
+    PyTypeObject* target_type = (PyTypeObject*)PyTuple_GET_ITEM(type->tp_mro, mro_size - 2);
+    if (target_type->tp_flags & Py_TPFLAGS_HEAPTYPE) 
+       st = reinterpret_cast<PyJPModuleState*>(PyType_GetModuleState(target_type));
+    if (st == nullptr)
+    {
+        PyErr_SetString(PyExc_RuntimeError, "JPype module state is not available from proxy MRO anchor");
+        return nullptr;
+    }
+    self->m_State = st;
+    JPJavaFrame frame = JPJavaFrame::outer(st->context);
+
+	// 4 cases land here
+	//   @JImplements (None, None, actualIntf, True)
+	//   Dict (instance, dict, actualIntf, True)
+	//   Dict (None, dict, actualIntf, True)
+	//   Attr (instance, None, actualIntf, True)
+	if (dispatch != Py_None)
+		self->m_Proxy = new JPProxyIndirectDict(frame, self, interfaces, convert!=0);
+	else if (instance != Py_None)
+		self->m_Proxy = new JPProxyIndirectAttr(frame, self, interfaces, convert!=0);
 	else
-		self->m_Proxy = new JPProxyIndirect(self, interfaces);
+		self->m_Proxy = new JPProxyDirect(frame, self, interfaces, convert!=0);
+
 	self->m_Target = instance;
-	self->m_Dispatch = dispatch;
-	self->m_Convert = (convert != 0);
+	self->m_Dispatch = (dispatch != Py_None) ? dispatch : instance;
+
 	Py_INCREF(self->m_Target);
 	Py_INCREF(self->m_Dispatch);
 
@@ -107,7 +129,7 @@ void PyJPProxy_dealloc(PyJPProxy* self)
 
 static PyObject *PyJPProxy_class(PyJPProxy *self, void *context)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(self->m_State->context);
 	JPClass* cls = self->m_Proxy->getInterfaces()[0];
 	return PyJPClass_create(frame, cls).keep();
 }
@@ -154,16 +176,15 @@ static PyGetSetDef proxyGetSets[] = {
 };
 
 static PyType_Slot proxySlots[] = {
-	{ Py_tp_new,      (void*) PyJPProxy_new},
+	{ Py_tp_new,	  (void*) PyJPProxy_new},
 	{ Py_tp_dealloc,  (void*) PyJPProxy_dealloc},
 	{ Py_tp_traverse, (void*) PyJPProxy_traverse},
-	{ Py_tp_clear,    (void*) PyJPProxy_clear},
+	{ Py_tp_clear,	(void*) PyJPProxy_clear},
 	{ Py_tp_getset,   (void*) proxyGetSets},
 	{ Py_tp_methods,  (void*) proxyMethods},
 	{0}
 };
 
-PyTypeObject *PyJPProxy_Type = nullptr;
 PyType_Spec PyJPProxySpec = {
 	"_jpype._JProxy",
 	sizeof (PyJPProxy),
@@ -172,22 +193,29 @@ PyType_Spec PyJPProxySpec = {
 	proxySlots
 };
 
-#ifdef __cplusplus
-}
-#endif
 
-void PyJPProxy_initType(PyObject* module)
+void PyJPProxy_initType(PyObject* module, PyJPModuleState* st)
 {
 	JPPyObject bases = JPPyTuple_Pack(&PyBaseObject_Type);
-	PyJPProxy_Type = (PyTypeObject*) PyType_FromSpecWithBases(&PyJPProxySpec, bases.get());
+#if PY_VERSION_HEX >= 0x030A0000
+	st->PyJPProxy_Type = (PyTypeObject*) PyType_FromModuleAndSpec(module, &PyJPProxySpec, bases.get());
+#else
+	st->PyJPProxy_Type = (PyTypeObject*) PyType_FromSpecWithBases(&PyJPProxySpec, bases.get());
+#endif
 	JP_PY_CHECK();
-	PyModule_AddObject(module, "_JProxy", (PyObject*) PyJPProxy_Type);
+	Py_INCREF((PyObject*) st->PyJPProxy_Type);
+	PyModule_AddObject(module, "_JProxy", (PyObject*) st->PyJPProxy_Type);
 	JP_PY_CHECK();
 }
 
-JPProxy *PyJPProxy_getJPProxy(PyObject* obj)
+JPProxy *PyJPProxy_getJPProxy(PyJPModuleState* st, PyObject* obj)
 {
-	if (PyObject_IsInstance(obj, (PyObject*) PyJPProxy_Type))
+	if (PyObject_IsInstance(obj, (PyObject*) st->PyJPProxy_Type))
 		return ((PyJPProxy*) obj)->m_Proxy;
 	return nullptr;
 }
+
+#ifdef __cplusplus
+}
+#endif
+ 

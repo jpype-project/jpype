@@ -60,10 +60,52 @@ public:
 		return m_Value;
 	}
 
-	jobject getJavaObject() const;
+	/** Persistent, pool-tracked handle - used when a JPValue is embedded as
+	 * a Python object's Java binding slot (see PyJPValue_assignJavaSlot)
+	 * and must survive past any single frame. Never dereference m_Ref
+	 * directly; it is only meaningful via GlobalPool routing.
+	 */
+	static JPValue fromGlobal(JPClass* clazz, jref ref)
+	{
+		JPValue out;
+		out.m_Class = clazz;
+		out.m_Ref = ref;
+		return out;
+	}
 
-    // Cast operators to jvalue.
-    // TODO: these could be explicit too, right?
+	jref getRef() const
+	{
+		return m_Ref;
+	}
+
+	/** Resolve this value's Java object, whichever form it is stored in:
+	 * a transient local ref (m_Value.l, the common "no memory management"
+	 * case documented on this class) or a persistent pool-tracked handle
+	 * (m_Ref, from fromGlobal()). This is the one blessed way to read an
+	 * object out of a JPValue - do not read .getValue().l directly, since
+	 * that silently misses the persistent case.
+	 */
+	jobject getJavaObject(JPJavaFrame& frame) const
+	{
+		if (m_Ref.value != 0)
+			return frame.retrieveGlobal(m_Ref);
+		return m_Value.l;
+	}
+
+	/** Cheap "is this Java object null" check that needs no frame/JNI call.
+	 * GlobalPool special-cases null to the handle 0 rather than allocating
+	 * a slot (see GlobalPool.add), so a persistent value is null iff its
+	 * handle is 0 - same bit pattern a never-pooled/transient value uses
+	 * for "no object" (m_Value.l == nullptr). Only meaningful for
+	 * non-primitive values.
+	 */
+	bool isJavaNull() const
+	{
+		return m_Ref.value == 0 && m_Value.l == nullptr;
+	}
+
+	// Cast operators to jvalue.
+	// TODO: these could be explicit too, right?
 	operator jvalue&()
 	{
 		return m_Value;
@@ -74,16 +116,10 @@ public:
 		return m_Value;
 	}
 
-    // TODO: never used.
-	JPValue& global(JPJavaFrame& frame)
-	{
-		m_Value.l = frame.NewGlobalRef(m_Value.l);
-		return *this;
-	}
-
 private:
 	JPClass* m_Class{};
 	jvalue  m_Value{};
+	jref m_Ref{};
 } ;
 
 #endif // _JPVALUE_H_

@@ -1,0 +1,7 @@
+kind: class
+module: _io
+class: BufferedReader
+interface: python.io.PyBufferedReader
+lazy: true
+---
+METHODS = {}

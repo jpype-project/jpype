@@ -20,7 +20,7 @@ class JPFloatType : public JPPrimitiveType
 {
 public:
 
-	JPFloatType();
+	JPFloatType(JPJavaFrame& frame, jclass cls);
 	~JPFloatType() override;
 
 	using type_t = jfloat;
@@ -38,7 +38,7 @@ public:
 
 	JPClass* getBoxedClass(JPJavaFrame& frame) const override;
 	JPMatch::Type findJavaConversion(JPMatch &match) override;
-	void getConversionInfo(JPConversionInfo &info) override;
+	void getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info) override;
 	JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 	JPValue     getValueFromObject(JPJavaFrame& frame, const JPValue& obj) override;
 
@@ -76,8 +76,8 @@ public:
 		return (jdouble) field(v);
 	}
 
-	void getView(JPArrayView& view) override;
-	void releaseView(JPArrayView& view) override;
+	void getView(JPJavaFrame& frame, JPArrayView& view) override;
+	void releaseView(JPJavaFrame& frame, JPArrayView& view) override;
 	const char* getBufferFormat() override;
 	Py_ssize_t getItemSize() override;
 	void copyElements(JPJavaFrame &frame,

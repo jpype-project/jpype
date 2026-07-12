@@ -1,3 +1,4 @@
+// --- file: org/jpype/pickle/Decoder.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -18,6 +19,9 @@ package org.jpype.pickle;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
+/**
+ * Support class for the Python JPickler class.
+ */
 public class Decoder
 {
 

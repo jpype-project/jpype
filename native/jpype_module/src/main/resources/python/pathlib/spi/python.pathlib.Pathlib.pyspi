@@ -1,0 +1,13 @@
+kind: backend
+interface: python.pathlib.Pathlib
+---
+import pathlib
+
+
+def _path(first, *more):
+    return pathlib.Path(str(first), *[str(m) for m in more])
+
+
+METHODS = {
+    "path": _path,
+}

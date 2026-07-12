@@ -32,7 +32,7 @@ public:
 			jint modifiers);
 
 	~JPMethodDispatch() override;
-    JPMethodDispatch(const JPMethodDispatch& method) = delete;
+	JPMethodDispatch(const JPMethodDispatch& method) = delete;
 	JPMethodDispatch& operator=(const JPMethodDispatch& method) = delete;
 
 public:
@@ -63,7 +63,7 @@ public:
 	JPValue invokeConstructor(JPJavaFrame& frame, JPPyObjectVector& vargs);
 	bool matches(JPJavaFrame& frame, JPPyObjectVector& args, bool instance);
 
-	string matchReport(JPPyObjectVector& sequence);
+	string matchReport(JPJavaFrame& frame, JPPyObjectVector& sequence);
 
 	const JPMethodList& getMethodOverloads()
 	{
@@ -78,10 +78,10 @@ private:
 	 */
 	bool findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch, JPPyObjectVector& vargs, bool searchInstance, bool raise);
 
-	JPClass*      m_Class;
-	string        m_Name;
-	JPMethodList  m_Overloads;
-	jlong         m_Modifiers;
+	JPClass* m_Class;
+	string m_Name;
+	JPMethodList m_Overloads;
+	jlong m_Modifiers;
 	std::atomic<JPMethod*> m_LastOverload{nullptr};
 } ;
 

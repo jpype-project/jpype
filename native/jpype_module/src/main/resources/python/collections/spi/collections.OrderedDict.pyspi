@@ -1,0 +1,17 @@
+kind: class
+module: collections
+class: OrderedDict
+interface: python.collections.PyOrderedDict
+---
+def _move_to_end(x, key, last=True):
+    x.move_to_end(key, bool(last))
+
+
+def _pop_item_last(x, last):
+    return x.popitem(bool(last))
+
+
+METHODS = {
+    ".moveToEnd": _move_to_end,
+    ".popItem": _pop_item_last,
+}

@@ -1,3 +1,4 @@
+// --- file: module-info.java ---
 /*****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -15,17 +16,51 @@
 **************************************************************************** */
 
 
-module jpype {
-  requires java.xml;
+module org.jpype {
+  requires transitive java.xml;
   requires java.sql;
   requires java.management;
-  
-  exports org.jpype;
+  requires transitive java.logging;
+  requires java.scripting;
+
+  // ==========================================
+  // PUBLIC USER API
+  // ==========================================
+  exports org.jpype;                    // Crucial for NativeContext & PyExceptionProxy
+  exports org.jpype.annotation;         // For extension modules
+  exports org.jpype.pickle;             // For data serialization pipelines
+  exports org.jpype.pkg;                // For interacting with Python package spaces
+  exports org.jpype.script;             // JSR-223 javax.script.ScriptEngine compatibility shim
+
+  // Python wrapper language spaces
+  exports python.lang;
+  exports python.exceptions;
+  exports python.collections;            // PyDeque, PyCounter, PyOrderedDict, PyDefaultDict - SPI-backed, see PyCollectionsWrapperService
+  exports python.io;
+  exports python.datetime;               // PyDate, PyDateTime, PyTimeDelta - SPI-backed, see PyDatetimeWrapperService
+  exports python.pathlib;                // PyPath - SPI-backed, see PyPathlibWrapperService
+  exports python.decimal;                // PyDecimal - SPI-backed, see PyDecimalWrapperService
+
+  // Documentation and Tooling
   exports org.jpype.html;
   exports org.jpype.javadoc;
-  exports org.jpype.manager;
-  exports org.jpype.pickle;
-  exports org.jpype.pkg;
-  exports org.jpype.proxy;
-  exports org.jpype.ref;
+
+  // ==========================================
+  // SPI
+  // ==========================================
+  uses org.jpype.WrapperService;
+  provides org.jpype.WrapperService with python.io.PyIOWrapperService,
+          python.collections.PyCollectionsWrapperService,
+          python.datetime.PyDatetimeWrapperService,
+          python.pathlib.PyPathlibWrapperService,
+          python.decimal.PyDecimalWrapperService;
+  provides javax.script.ScriptEngineFactory with org.jpype.script.JPypeScriptEngineFactory;
+
+  // ==========================================
+  // REFLECTION / REFLECTIVE ACCESS
+  // ==========================================
+  opens python.lang;
+  opens python.io;
+  opens python.collections;
+  exports org.jpype.internal to java.base;
 }

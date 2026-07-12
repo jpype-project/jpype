@@ -1,3 +1,4 @@
+// --- file: common/jp_tracer.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -51,7 +52,7 @@ std::mutex trace_lock;
 #define JPYPE_TRACING_OUTPUT std::cerr
 static int INDENT_WIDTH = 2;
 static const char *INDENT =
-		"                                                                                ";
+		"																				";
 
 static void jpype_indent(int space)
 {
@@ -151,12 +152,12 @@ void JPypeTracer::tracePythonObject(const char* msg, PyObject* ref)
 	{
 		std::stringstream str;
 		str << msg << " " << (void*) ref << " "<<
-    #ifndef Py_GIL_DISABLED
-        Py_REFCNT(ref)
-    #else
-        -1
-    #endif
-        << " " << Py_TYPE(ref)->tp_name;
+	#ifndef Py_GIL_DISABLED
+		Py_REFCNT(ref)
+	#else
+		-1
+	#endif
+		<< " " << Py_TYPE(ref)->tp_name;
 		JPypeTracer::trace1("PY", str.str().c_str());
 
 	} else

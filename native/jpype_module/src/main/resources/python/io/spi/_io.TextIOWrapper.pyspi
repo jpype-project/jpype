@@ -1,0 +1,10 @@
+kind: class
+module: _io
+class: TextIOWrapper
+interface: python.io.PyTextIOWrapper
+lazy: true
+---
+METHODS = {
+    ".line_buffering": lambda x: x.line_buffering,
+    ".write_through": lambda x: x.write_through,
+}

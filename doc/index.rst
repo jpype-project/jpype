@@ -25,6 +25,7 @@ Parts of the documentation
    api
    dbapi2
    imports
+   spi
    android
    CHANGELOG
    develguide

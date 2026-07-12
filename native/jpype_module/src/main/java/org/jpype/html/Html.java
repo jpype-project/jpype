@@ -1,3 +1,4 @@
+// --- file: org/jpype/html/Html.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -25,13 +26,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import org.jpype.JPypeContext;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 
 public class Html
 {
-
+  final static Logger LOGGER = Logger.getLogger(Html.class.getName());
   public final static HashSet<String> VOID_ELEMENTS = new HashSet<>();
   public final static HashSet<String> OPTIONAL_ELEMENTS = new HashSet<>();
   public final static HashSet<String> OPTIONAL_CLOSE = new HashSet<>();
@@ -55,6 +57,10 @@ public class Html
             "th:td", "p:li"));
   }
 
+  private Html()
+  {
+  }
+
   public static Parser<Document> newParser()
   {
     return new HtmlParser();
@@ -70,6 +76,36 @@ public class Html
 //<editor-fold desc="decode" defaultstate="collapsed">
   public static Map<String, Integer> ENTITIES = new HashMap<>();
 
+  static
+  {
+    // Use the class itself to get the resource, not the System ClassLoader
+    try (InputStream is = Html.class.getResourceAsStream("/org/jpype/resources/entities.txt"))
+    {
+      if (is == null)
+      {
+        throw new RuntimeException("Resource not found: org/jpype/resources/entities.txt");
+      }
+      try (InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8); BufferedReader rd = new BufferedReader(isr))
+      {
+        String line;
+        while ((line = rd.readLine()) != null)
+        {
+          if (line.startsWith("#") || line.trim().isEmpty())
+            continue;
+          String[] parts = line.split("\\s+");
+          if (parts.length >= 2)
+          {
+            ENTITIES.put(parts[0], Integer.parseInt(parts[1]));
+          }
+        }
+      }
+    } catch (IOException ex)
+    {
+      LOGGER.log(Level.SEVERE, "Failed to load HTML entities", ex);
+    }
+  }
+
+  /*
   static
   {
     ClassLoader cl = ClassLoader.getSystemClassLoader();
@@ -90,7 +126,7 @@ public class Html
       throw new RuntimeException(ex);
     }
   }
-
+   */
   public static String decode(String s)
   {
     if (!s.contains("&"))

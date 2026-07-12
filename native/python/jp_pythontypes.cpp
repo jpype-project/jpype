@@ -1,3 +1,4 @@
+// --- file: python/jp_pythontypes.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -15,6 +16,7 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
+#include <patchlevel.h> // For PY_VERSION_HEX
 
 /****************************************************************************
  * Base object
@@ -36,7 +38,7 @@ static void assertValid(PyObject *obj)
 	JP_RAISE(PyExc_SystemError, "Deleted reference");
 	// GCOVR_EXCL_STOP
 #else
-    return; // GIL is disabled; we assume obj is valid
+	return; // GIL is disabled; we assume obj is valid
 #endif
 }
 
@@ -81,7 +83,7 @@ JPPyObject JPPyObject::accept(PyObject* obj)
 JPPyObject JPPyObject::claim(PyObject* obj)
 {
 	JP_TRACE_PY("pyref new(claim)", obj);
-	ASSERT_NOT_NULL(obj);
+	ASSERT_NOT_NULL(obj, "pyref new(claim)");
 	assertValid(obj);
 	return JPPyObject(obj);
 }
@@ -97,7 +99,7 @@ JPPyObject JPPyObject::call(PyObject* obj)
 {
 	JP_TRACE_PY("pyref new(call)", obj);
 	JP_PY_CHECK();
-	ASSERT_NOT_NULL(obj);
+	ASSERT_NOT_NULL(obj, "pyref new(call)");
 	assertValid(obj);
 	return JPPyObject(obj);
 }
@@ -305,7 +307,7 @@ JPPyObject JPPyString::fromStringUTF8(const string& str)
 string JPPyString::asStringUTF8(PyObject* pyobj)
 {
 	JP_TRACE_IN("JPPyUnicode::asStringUTF8");
-	ASSERT_NOT_NULL(pyobj);
+	ASSERT_NOT_NULL(pyobj, "JPPyUnicode::asStringUTF8");
 
 	if (PyUnicode_Check(pyobj))
 	{
@@ -390,28 +392,113 @@ void JPPyErr::restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JP
 	PyErr_Restore(exceptionClass.keepNull(), exceptionValue.keepNull(), exceptionTrace.keepNull());
 }
 
-JPPyCallAcquire::JPPyCallAcquire()
+
+#if PY_VERSION_HEX<0x030c0000
+// Python < 3.12: Simple GIL state API works for everything
+JPPyCallAcquire::JPPyCallAcquire(PyJPModuleState* st)
 {
-	m_State = (long) PyGILState_Ensure();
+	// If interpreter is shutting down, don't acquire GIL - mark as cancelled
+	if (st->is_shutting_down)
+	{
+		m_NewState = -1;
+		return;
+	}
+	m_NewState = (long) PyGILState_Ensure();
+}
+
+void JPPyCallAcquire::cancel()
+{
+	m_NewState = -1; // Sentinel value to skip release
 }
 
 JPPyCallAcquire::~JPPyCallAcquire()
 {
-	PyGILState_Release((PyGILState_STATE) m_State);
+	// If cancelled (m_NewState == -1), don't call Python API
+	if (m_NewState != -1)
+		PyGILState_Release((PyGILState_STATE)m_NewState);
 }
 
-// This is used when leaving python from to perform some
+#else
+// Python 3.12+: Need different approaches for main vs subinterpreter
+extern "C" PyThreadState* _PyThreadState_GetCurrent(void);
+
+JPPyCallAcquire::JPPyCallAcquire(PyJPModuleState* st)
+{
+    // If interpreter is shutting down, don't acquire GIL - mark as cancelled
+    if (st->is_shutting_down)
+    {
+        m_NewState = nullptr;
+        m_UseGILState = false;
+        return;
+    }
+
+    // For main interpreter, use simple GIL state API (works reliably)
+    if (st->is_main_interpreter)
+    {
+        m_NewState = (PyThreadState*)(long) PyGILState_Ensure();
+        m_UseGILState = true;
+        return;
+    }
+
+    // For subinterpreter: manual thread state management
+    PyThreadState *tstate = _PyThreadState_GetCurrent();
+
+    // Check if we already have the right interpreter
+    if (tstate != nullptr && tstate->interp == st->interp_state)
+    {
+        // Already in correct interpreter, do nothing
+        m_NewState = nullptr;
+        m_UseGILState = false;
+    }
+    else
+    {
+        // Need to create a thread state for this subinterpreter
+        // The quirk: we must hold a valid state while creating the new one
+        m_NewState = PyThreadState_New(st->interp_state);
+        m_PriorState = PyThreadState_Swap(m_NewState);
+        m_UseGILState = false;
+    }
+}
+
+void JPPyCallAcquire::cancel()
+{
+    // Set sentinel values to skip release in destructor
+    m_NewState = nullptr;
+    m_UseGILState = false;
+}
+
+JPPyCallAcquire::~JPPyCallAcquire()
+{
+    // If cancelled (m_NewState set by cancel()), skip Python API calls
+    if (m_UseGILState)
+    {
+        PyGILState_Release((PyGILState_STATE)(long)m_NewState);
+    }
+    else if (m_NewState != nullptr)
+    {
+        // PyThreadState_Clear() requires the GIL held with m_NewState as the
+        // *current* thread state (it Py_DECREFs objects the state owns,
+        // which needs a live attached tstate) - so it must run before we
+        // swap away from it. Swapping first (as a prior version of this code
+        // did) detaches/releases the GIL, leaving the current thread state
+        // NULL, so Clear()'s internal decrefs crash with "the function must
+        // be called with the GIL held ... the current Python thread state is
+        // NULL". Clear while still current, then swap back, then delete.
+        PyThreadState_Clear(m_NewState);
+        PyThreadState_Swap(m_PriorState);
+        PyThreadState_Delete(m_NewState);
+    }
+}
+#endif
 
 JPPyCallRelease::JPPyCallRelease()
 {
-	// Release the lock and set the thread state to NULL
-	m_State1 = PyEval_SaveThread();
+	m_SavedState = PyEval_SaveThread();
 }
 
 JPPyCallRelease::~JPPyCallRelease()
 {
-	// Re-acquire the lock
-	PyEval_RestoreThread(m_State1);
+	PyEval_RestoreThread(m_SavedState);
 }
 
 JPPyBuffer::JPPyBuffer(PyObject* obj, int flags)

@@ -1,3 +1,4 @@
+// --- file: common/jp_monitor.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -16,25 +17,29 @@
 #include "jpype.h"
 #include "jp_monitor.h"
 
-JPMonitor::JPMonitor(jobject value) : m_Value(value)
+JPMonitor::JPMonitor(JPJavaFrame& frame, jobject value)
 {
+	m_Context = frame.getContext();
+	m_Value = frame.storeGlobal(value);
 }
 
 JPMonitor::~JPMonitor()
-= default;
+{
+	tryRelease(m_Value);
+}
 
 void JPMonitor::enter()
 {
 	// This can hold off for a while so we need to release resource
 	// so that we don't dead lock.
 	JPPyCallRelease call;
-	JPJavaFrame frame = JPJavaFrame::outer();
-	frame.MonitorEnter(m_Value.get());
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+	frame.MonitorEnter(frame.retrieveGlobal(m_Value));
 }
 
 void JPMonitor::exit()
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
-	frame.MonitorExit(m_Value.get());
+	JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+	frame.MonitorExit(frame.retrieveGlobal(m_Value));
 }
 

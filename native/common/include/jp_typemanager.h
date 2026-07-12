@@ -36,21 +36,26 @@ public:
 	 *
 	 * The pointer returned is NOT owned by the caller
 	 */
-	JPClass* findClass(jclass cls);
-	JPClass* findClassByName(const string& str);
-	JPClass* findClassForObject(jobject obj);
-	void populateMethod(void* method, jobject obj);
-	void populateMembers(JPClass* cls);
-    int interfaceParameterCount(JPClass* cls);
+	JPClass* findClass(JPJavaFrame& frame, jclass cls);
+	JPClass* findClassByName(JPJavaFrame& frame, const string& str);
+	JPClass* findClassForObject(JPJavaFrame& frame, jobject obj);
+	void populateMethod(JPJavaFrame& frame, void* method, jobject obj);
+	void populateMembers(JPJavaFrame& frame, JPClass* cls);
+	int interfaceParameterCount(JPJavaFrame& frame, JPClass* cls);
+
+	bool isReady()
+	{
+		return m_JavaTypeManager!=nullptr;
+	}
 
 private:
-	JPObjectRef m_JavaTypeManager;
+	jobject m_JavaTypeManager;
 	jmethodID m_FindClass;
 	jmethodID m_FindClassByName;
 	jmethodID m_FindClassForObject;
 	jmethodID m_PopulateMethod;
 	jmethodID m_PopulateMembers;
-    jmethodID m_InterfaceParameterCount;
+	jmethodID m_InterfaceParameterCount;
 } ;
 
 #endif // _JPCLASS_H_

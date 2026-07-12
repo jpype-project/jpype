@@ -38,13 +38,13 @@ public:
 	 */
 	virtual ~JPField();
 
-    // disallow copying.
-    JPField(const JPField&) = delete;
-    JPField& operator=(const JPField&) = delete;
+	// disallow copying.
+	JPField(const JPField&) = delete;
+	JPField& operator=(const JPField&) = delete;
 
-	jobject getJavaObject()
+	jobject getJavaObject(JPJavaFrame& frame)
 	{
-		return this->m_Field.get();
+		return frame.retrieveGlobal(this->m_Field);
 	}
 
 	const string& getName() const
@@ -52,11 +52,11 @@ public:
 		return m_Name;
 	}
 
-	JPPyObject getStaticField();
-	void     setStaticField(PyObject *pyobj);
+	JPPyObject getStaticField(JPJavaFrame& frame);
+	void	 setStaticField(JPJavaFrame& frame, PyObject *pyobj);
 
-	JPPyObject getField(jobject inst);
-	void     setField(jobject inst, PyObject *pyobj);
+	JPPyObject getField(JPJavaFrame& frame, jobject inst);
+	void	 setField(JPJavaFrame& frame, jobject inst, PyObject *pyobj);
 
 	bool isFinal() const
 	{
@@ -74,12 +74,12 @@ public:
 	}
 
 private:
-	string           m_Name;
-	JPClass*         m_Class;
-	JPObjectRef      m_Field;
-	jfieldID         m_FieldID;
-	JPClass*         m_Type;
-	jint             m_Modifiers;
+	string m_Name;
+	JPClass* m_Class;
+	jref m_Field;
+	jfieldID m_FieldID;
+	JPClass* m_Type;
+	jint m_Modifiers;
 } ;
 
 #endif // _JPFIELD_H_

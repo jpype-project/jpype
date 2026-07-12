@@ -18,61 +18,12 @@
 #include <jpype.h>
 #include <list>
 
-/** JPClass is a bit heavy when we just need to hold a
- * class reference.  It causes issues during bootstrap. Thus we
- * need a lightweight reference to a jclass.
- */
-template <class jref>
-class JPRef
-{
-private:
-	jref m_Ref;
-
-public:
-
-	JPRef()
-	{
-		m_Ref = 0;
-	}
-
-	JPRef(jref obj)
-	{
-		m_Ref = 0;
-		JPJavaFrame frame = JPJavaFrame::outer();
-		m_Ref = (jref) frame.NewGlobalRef((jobject) obj);
-	}
-
-	JPRef(JPJavaFrame& frame, jref obj)
-	{
-
-		m_Ref = 0;
-		m_Ref = (jref) frame.NewGlobalRef((jobject) obj);
-	}
-
-	JPRef(const JPRef& other);
-
-	~JPRef();
-
-	JPRef& operator=(const JPRef& other);
-
-	jref get() const
-	{
-		return m_Ref;
-	}
-} ;
-
-using JPClassRef = JPRef<jclass>;
-using JPObjectRef = JPRef<jobject>;
-using JPArrayRef = JPRef<jarray>;
-using JPThrowableRef = JPRef<jthrowable>;
-
 class JPStackInfo;
 class JPGarbageCollection;
 
 void assertJVMRunning(JPContext* context, const JPStackInfo& info);
 
-int hasInterrupt();
-
+struct PyJPModuleState;
 /**
  * A Context encapsulates the Java virtual machine, the Java classes required
  * to function, and the JPype services created for that machine.
@@ -81,7 +32,7 @@ int hasInterrupt();
  *  - Java context is shared with all objects that exist in a virtual machine.
  *  - Java environment exists for each thread for each machine.
  *  - Java frames exist in the stack holding the local variables that
- *    method.
+ *	method.
  * Frames and Environments should never be held longer than the duration of
  * a method.
  *
@@ -112,15 +63,16 @@ public:
 	friend class JPypeException;
 	friend class JPClass;
 
-	JPContext();
+	JPContext(PyJPModuleState *state);
 	virtual ~JPContext();
-    JPContext(const JPContext& orig) = delete;
+	JPContext(const JPContext& orig) = delete;
 
-    // JVM control functions
+	// JVM control functions
 	bool isRunning();
 	void startJVM(const string& vmPath, const StringVector& args,
 			bool ignoreUnrecognized, bool convertStrings, bool interrupt);
 	void attachJVM(JNIEnv* env);
+	void detachJVM();
 	void initializeResources(JNIEnv* env, bool interrupt);
 	void shutdownJVM(bool destroyJVM, bool freeJVM);
 	void attachCurrentThread();
@@ -128,8 +80,9 @@ public:
 	bool isThreadAttached();
 	void detachCurrentThread();
 
-	JNIEnv* getEnv();
+	PyJPModuleState *modulestate;
 
+	JNIEnv* getEnv();
 	JavaVM* getJavaVM()
 	{
 		return m_JavaVM;
@@ -137,7 +90,7 @@ public:
 
 	jobject getJavaContext()
 	{
-		return m_JavaContext.get();
+		return m_JavaContext;
 	}
 
 	/** Release a global reference checking for shutdown.
@@ -148,7 +101,6 @@ public:
 	void ReleaseGlobalRef(jobject obj);
 
 	// JPype services
-
 	JPTypeManager* getTypeManager()
 	{
 		return m_TypeManager;
@@ -191,132 +143,113 @@ public:
 	JPClass* _java_lang_reflect_Method{};
 	JPClass* _java_lang_Throwable{};
 	JPStringType* _java_lang_String{};
-	JPClass* _java_nio_ByteBuffer{};
+	//JPClass* _java_nio_ByteBuffer{};
+	JPClass* _python_lang_PyObject{};
 
 private:
 
+	// Launch facilities
 	void loadEntryPoints(const string& path);
-
 	jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args){};
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms){};
-
-private:
-
+	jint(JNICALL * GetDefaultJavaVMInitArgs_Method)(void *args){};
 	JavaVM *m_JavaVM{};
-
-	// Java half
-	JPObjectRef m_JavaContext;
 
 	// Services
 	JPTypeManager *m_TypeManager{};
 	JPClassLoader *m_ClassLoader{};
 
 public:
-	JPClassRef m_ContextClass;
-	JPClassRef m_RuntimeException;
-
-private:
-	JPClassRef m_Array;
-	JPObjectRef m_Reflector;
+	jobject m_Interpreter;
+	jclass m_RuntimeException;
+	jclass m_Array;
 
 	// Java Functions
+	jmethodID m_Array_NewInstanceID{};
+	jmethodID m_Buffer_IsReadOnlyID{};
+	jmethodID m_Buffer_AsReadOnlyID{};
+	jmethodID m_Class_GetNameID{};
+	jmethodID m_CompareToID{};
 	jmethodID m_Object_ToStringID{};
 	jmethodID m_Object_EqualsID{};
 	jmethodID m_Object_HashCodeID{};
-	jmethodID m_CallMethodID{};
-	jmethodID m_Class_GetNameID{};
-	jmethodID m_Context_collectRectangularID{};
-	jmethodID m_Context_assembleID{};
-	jmethodID m_String_ToCharArrayID{};
-	jmethodID m_Context_CreateExceptionID{};
-	jmethodID m_Context_GetExcClassID{};
-	jmethodID m_Context_GetExcValueID{};
-	jmethodID m_Context_ClearInterruptID{};
-	jmethodID m_CompareToID{};
-	jmethodID m_Buffer_IsReadOnlyID{};
-	jmethodID m_Buffer_AsReadOnlyID{};
-	jmethodID m_Context_OrderID{};
 	jmethodID m_Object_GetClassID{};
-	jmethodID m_Array_NewInstanceID{};
+	jmethodID m_String_ToCharArrayID{};
 	jmethodID m_Throwable_GetCauseID{};
 	jmethodID m_Throwable_GetMessageID{};
-	jmethodID m_Context_GetFunctionalID{};
-	friend class JPProxy;
-	JPClassRef m_ProxyClass;
-	jmethodID m_Proxy_NewID{};
-	jmethodID m_Proxy_NewInstanceID{};
 
+	// --- Package Bindings ---
+	jobject m_JavaContext;
+	jclass m_ContextClass;
+	jmethodID m_Context_ClearInterruptID{};
+	jmethodID m_Context_GetFunctionalID{};
 	jmethodID m_Context_IsPackageID{};
 	jmethodID m_Context_GetPackageID{};
 	jmethodID m_Package_GetObjectID{};
 	jmethodID m_Package_GetContentsID{};
 	jmethodID m_Context_NewWrapperID{};
-public:
-	jmethodID m_Context_GetStackFrameID{};
+	jmethodID m_Context_StoreGlobalID{};
+	jmethodID m_Context_RetrieveGlobalID{};
+
+	// --- Support Utilities ---
+	jclass	m_SupportClass;
+	jmethodID m_Support_GetStackFrameID{};
+	jmethodID m_Support_collectRectangularID{};
+	jmethodID m_Support_assembleID{};
+	jmethodID m_Support_OrderID{};
+	jmethodID m_Support_GetTotalMemoryID{};
+	jmethodID m_Support_GetFreeMemoryID{};
+	jmethodID m_Support_GetMaxMemoryID{};
+	jmethodID m_Support_GetUsedMemoryID{};
+	jmethodID m_Support_GetHeapMemoryID{};
+
+	// --- Proxy Management (Refactored for NativeContext_2.java) ---
+	friend class JPProxy;
+	friend class JPypeException;
+	jobject   m_JavaProxyFactory; // Holds the instance extracted from the context getter
+	jclass	m_ProxyFactoryClass;
+	jmethodID m_ProxyFactory_getProxyTypeID{};
+	jclass	m_ProxyTypeClass;
+	jmethodID m_ProxyType_newInstanceID{};
+	jmethodID m_ProxyType_UnwrapPythonExceptionID{};
+	jmethodID m_ProxyType_GetInstanceID{};
+
+	jobject m_Reflector;
+	jmethodID m_Reflector_CallMethodID{};  // Cleaned up naming match
 	void onShutdown();
+
+	jclass m_PyJavaObjectClass;
+	jmethodID m_PyJavaObject_wrap{};
+
+	// --- Reference Queue (per-context, see jp_reference_queue.cpp) ---
+	jobject m_ReferenceQueue;
+	jmethodID m_ReferenceQueueRegisterMethod{};
 
 private:
 	bool m_Running{};
 	bool m_ConvertStrings{};
 	bool m_Embedded;
+
+
 public:
 	JPGarbageCollection *m_GC;
 
 	// This will gather C++ resources to clean up after shutdown.
 	std::list<JPResource*> m_Resources;
-} ;
+	PyObject* m_PyExcConvert{};
 
-extern "C" JPContext* JPContext_global;
+	int interruptState;
+	bool hasInterrupt()
+	{
+		return interruptState!=0;
+	}
 
+};
+
+extern void tryRelease(jref ref) ;
 extern void JPRef_failed();
 
 // GCOVR_EXCL_START
 // Not currently used
-
-template<class jref>
-JPRef<jref>::JPRef(const JPRef& other)
-{
-	if (JPContext_global != nullptr)
-	{
-		JPJavaFrame frame = JPJavaFrame::external(JPContext_global->getEnv());
-		m_Ref = static_cast<jref>(frame.NewGlobalRef(other.m_Ref));
-	} else
-	{
-		JPRef_failed();
-	}
-}
-// GCOVR_EXCL_STOP
-
-template<class jref>
-JPRef<jref>::~JPRef()
-{
-	if (m_Ref != 0)
-	{
-		JPContext_global->ReleaseGlobalRef((jobject) m_Ref);
-	}
-}
-
-template<class jref>
-JPRef<jref>& JPRef<jref>::operator=(const JPRef<jref>& other)
-{
-	if (other.m_Ref == m_Ref)
-		return *this;
-	// m_Context may or may not be set up here, so we need to use a
-	// different frame for unreferencing and referencing
-	if (JPContext_global != nullptr && m_Ref != 0)
-	{  // GCOVR_EXCL_START
-		// This code is not currently used.
-		JPJavaFrame frame = JPJavaFrame::external(JPContext_global->getEnv());
-		if (m_Ref != 0)
-			frame.DeleteGlobalRef((jobject) m_Ref);
-	}  // GCOVR_EXCL_STOP
-	m_Ref = other.m_Ref;
-	if (JPContext_global != nullptr && m_Ref != 0)
-	{
-		JPJavaFrame frame = JPJavaFrame::external(JPContext_global->getEnv());
-		m_Ref = (jref) frame.NewGlobalRef((jobject) m_Ref);
-	}
-	return *this;
-}
 
 #endif /* JP_CONTEXT_H */

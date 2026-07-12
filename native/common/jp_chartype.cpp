@@ -1,3 +1,4 @@
+// --- file: common/jp_chartype.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -20,8 +21,8 @@
 #include "jp_chartype.h"
 #include "jp_boxedtype.h"
 
-JPCharType::JPCharType()
-: JPPrimitiveType("char")
+JPCharType::JPCharType(JPJavaFrame& frame, jclass cls)
+: JPPrimitiveType(frame, cls, "char")
 {
 }
 
@@ -50,7 +51,7 @@ JPPyObject JPCharType::convertToPythonObject(JPJavaFrame& frame, jvalue val, boo
 {
 	//	if (!cast)
 	//	{
-	JPPyObject out = JPPyObject::call(PyJPChar_Create((PyTypeObject*) _JChar, val.c));
+	JPPyObject out = JPPyObject::call(PyJPChar_Create((PyTypeObject*) frame.getContext()->modulestate->JChar, val.c));
 	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
 	return out;
 	//	}
@@ -62,7 +63,7 @@ JPPyObject JPCharType::convertToPythonObject(JPJavaFrame& frame, jvalue val, boo
 JPValue JPCharType::getValueFromObject(JPJavaFrame& frame, const JPValue& obj)
 {
 	jvalue v;
-	field(v) = frame.CallCharMethodA(obj.getValue().l, frame.getContext()->_java_lang_Character->m_CharValueID, nullptr);
+	field(v) = frame.CallCharMethodA(obj.getJavaObject(frame), frame.getContext()->_java_lang_Character->m_CharValueID, nullptr);
 	return JPValue(this, v);
 }
 
@@ -81,7 +82,7 @@ public:
 		JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
 		PyList_Append(info.implicit, (PyObject*) & PyUnicode_Type);
 	}
@@ -115,11 +116,11 @@ public:
 		return JPMatch::_implicit; // stop the search
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
-		JPContext *context = JPContext_global;
+		JPContext *context = frame.getContext();
 		PyList_Append(info.exact, (PyObject*) context->_char->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 
 } asJCharConversion;
@@ -139,12 +140,11 @@ JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPCharType::getConversionInfo(JPConversionInfo &info)
+void JPCharType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
-	asJCharConversion.getInfo(this, info);
-	asCharConversion.getInfo(this, info);
-	PyList_Append(info.ret, (PyObject*) JPContext_global->_char->getHost());
+	asJCharConversion.getInfo(frame, this, info);
+	asCharConversion.getInfo(frame, this, info);
+	PyList_Append(info.ret, (PyObject*) frame.getContext()->_char->getHost());
 }
 
 jarray JPCharType::newArrayOf(JPJavaFrame& frame, jsize sz)
@@ -191,7 +191,7 @@ JPPyObject JPCharType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jme
 
 void JPCharType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match(&frame, obj);
+	JPMatch match(frame, obj);
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java char");
 	type_t val = field(match.convert());
@@ -200,7 +200,7 @@ void JPCharType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyOb
 
 void JPCharType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match(&frame, obj);
+	JPMatch match(frame, obj);
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java char");
 	type_t val = field(match.convert());
@@ -241,28 +241,26 @@ JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 
 void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	JPMatch match(&frame, obj);
+	JPMatch match(frame, obj);
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java char");
 	type_t val = field(match.convert());
 	frame.SetCharArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-void JPCharType::getView(JPArrayView& view)
+void JPCharType::getView(JPJavaFrame& frame, JPArrayView& view)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	view.m_Memory = (void*) frame.GetCharArrayElements(
-			(jcharArray) view.m_Array->getJava(), &view.m_IsCopy);
+			(jcharArray) view.m_Array->getJava(frame), &view.m_IsCopy);
 	view.m_Buffer.format = "H";
 	view.m_Buffer.itemsize = sizeof (jchar);
 }
 
-void JPCharType::releaseView(JPArrayView& view)
+void JPCharType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
-		frame.ReleaseCharArrayElements((jcharArray) view.m_Array->getJava(),
+		frame.ReleaseCharArrayElements((jcharArray) view.m_Array->getJava(frame),
 				(jchar*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (JPypeException&)
 	{

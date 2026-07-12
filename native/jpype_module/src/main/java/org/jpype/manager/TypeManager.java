@@ -1,3 +1,4 @@
+// --- file: org/jpype/manager/TypeManager.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -21,20 +22,26 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.nio.Buffer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
-import org.jpype.JPypeContext;
-import org.jpype.JPypeUtilities;
-import org.jpype.proxy.JPypeProxy;
+import org.jpype.internal.NativeContext;
+import org.jpype.internal.Functional;
+import org.jpype.internal.NativeLauncherControl;
+import org.jpype.proxy.ProxyInstance;
+import python.lang.PyObject;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -42,30 +49,50 @@ import org.jpype.proxy.JPypeProxy;
 public class TypeManager
 {
 
-  public long context = 0;
+  final static Logger LOGGER = Logger.getLogger(TypeManager.class.getName());
+//  private final NativeContext context;
+  private final long address;
+  private NativeContext context;
   public boolean isStarted = false;
   public boolean isShutdown = false;
-  public HashMap<Class, ClassDescriptor> classMap = new HashMap<>();
+  public HashMap<Class<?>, ClassDescriptor> classMap = new HashMap<>();
   public TypeFactory typeFactory = null;
   public TypeAudit audit = null;
   private ClassDescriptor java_lang_Object;
   // For reasons that are less than clear, this object cannot be created
   // during shutdown
-  private Destroyer destroyer = new Destroyer();
+  final private Destroyer destroyer = new Destroyer();
+  final ClassLoader classLoader;
 
-  public TypeManager()
+  public enum Kind
   {
+    SPECIAL,
+    BASES,
+    PROXY;
   }
 
-  public TypeManager(long context, TypeFactory typeFactory)
+  public TypeManager(NativeContext ctx, TypeFactory typeFactory)
   {
-    this.context = context;
+    this.context = ctx;
+    if (ctx !=null)
+    {
+    this.address = ctx.address();
+    this.classLoader = ctx.getClassLoader();
+    }
+    else
+    {
+      // This is used in unittesting, but it avoids all methods that call context.
+      this.address = 0L;
+      this.classLoader = null;
+    }
     this.typeFactory = typeFactory;
   }
 
 //<editor-fold desc="interface">
+  @SuppressWarnings("UseSpecificCatch")
   public synchronized void init()
   {
+    LOGGER.log(Level.INFO, "Initializing TypeManager for native address: 0x{0}", Long.toHexString(this.address));
     try
     {
       if (isStarted)
@@ -74,42 +101,68 @@ public class TypeManager
       isShutdown = false;
 
       // Create the required minimum classes
-      this.java_lang_Object = createClass(Object.class, true);
+      this.java_lang_Object = createOrdinaryClass(Object.class, EnumSet.of(Kind.SPECIAL));
 
       // Note that order is very important when creating these initial wrapper
       // types. If something inherits from another type then the super class
       // will be created without the special flag and the type system won't
       // be able to handle the duplicate type properly.
-      Class[] cls =
+      Class<?>[] cls =
       {
         Class.class, Number.class, CharSequence.class, Throwable.class,
-        Void.class, Boolean.class, Byte.class, Character.class,
-        Short.class, Integer.class, Long.class, Float.class, Double.class,
-        String.class, JPypeProxy.class,
-        Method.class, Field.class
+        String.class, ProxyInstance.class, Method.class, Field.class, PyObject.class
       };
-      for (Class c : cls)
+      for (Class<?> c : cls)
       {
-        createClass(c, true);
+        createOrdinaryClass(c, EnumSet.of(Kind.SPECIAL, Kind.BASES));
       }
 
       // Create the primitive types
       // Link boxed and primitive types so that the wrappers can find them.
-      createPrimitive("void", Void.TYPE, Void.class);
-      createPrimitive("boolean", Boolean.TYPE, Boolean.class);
-      createPrimitive("byte", Byte.TYPE, Byte.class);
-      createPrimitive("char", Character.TYPE, Character.class);
-      createPrimitive("short", Short.TYPE, Short.class);
-      createPrimitive("int", Integer.TYPE, Integer.class);
-      createPrimitive("long", Long.TYPE, Long.class);
-      createPrimitive("float", Float.TYPE, Float.class);
-      createPrimitive("double", Double.TYPE, Double.class);
+      createPrimitive("void", Void.TYPE);
+      createPrimitive("boolean", Boolean.TYPE);
+      createPrimitive("byte", Byte.TYPE);
+      createPrimitive("char", Character.TYPE);
+      createPrimitive("short", Short.TYPE);
+      createPrimitive("int", Integer.TYPE);
+      createPrimitive("long", Long.TYPE);
+      createPrimitive("float", Float.TYPE);
+      createPrimitive("double", Double.TYPE);
+
+      Class<?>[] boxed =
+      {
+        Void.class, Boolean.class, Byte.class, Character.class,
+        Short.class, Integer.class, Long.class, Float.class, Double.class,
+      };
+      for (Class<?> c : boxed)
+      {
+        createOrdinaryClass(c, EnumSet.of(Kind.SPECIAL, Kind.BASES));
+      }
+
     } catch (Throwable ex)
     {
       // We can't get debugging information at this point in the process.
-      ex.printStackTrace();
+      LOGGER.log(Level.SEVERE, "error in init", ex);
       throw ex;
     }
+
+    // Control is back on the Java thread here. Every class creation above
+    // crossed into native code and back (typeFactory.defineObjectClass et
+    // al.), each a potential GIL acquire/release boundary. A leak here is
+    // invisible to grep and would only otherwise surface as a hang when a
+    // second thread later tries to acquire the GIL.
+    if (NativeLauncherControl.isGilHeld())
+    {
+      LOGGER.severe("GIL still held on calling thread after TypeManager.init() - leaked GIL acquire in class definition path.");
+    }
+  }
+
+  private synchronized long checkCache(Class<?> cls)
+  {
+    ClassDescriptor ptr = this.classMap.get(cls);
+    if (ptr != null)
+      return ptr.classPtr;
+    return 0;
   }
 
   /**
@@ -120,38 +173,53 @@ public class TypeManager
    * @param cls
    * @return the JPClass, or 0 it one cannot be created.
    */
-  public synchronized long findClass(Class<?> cls)
+  public synchronized long createClass(Class<?> cls, EnumSet<Kind> flags)
   {
     if (cls == null)
       return 0;
     if (this.isShutdown)
       return 0;
 
-    long out;
+    // We must double check in case of race conditions here
+    long out = this.checkCache(cls);
+    if (out != 0)
+      return out;
+
     if (cls.isSynthetic() && cls.getSimpleName().contains("$Lambda$"))
     {
       // If is it lambda, we need a special wrapper
       // we don't want to create a class each time in that case.
       // Thus use the parent interface for this class
-      out = getClass(cls.getInterfaces()[0]).classPtr;
+      out = createOrdinaryClass(cls.getInterfaces()[0], flags).classPtr;
     } else if (cls.isAnonymousClass())
     {
       // This one is more of a burden.  It depends what whether is was
       // anonymous extends or implements.
       if (cls.getInterfaces().length == 1)
-        out = getClass(cls.getInterfaces()[0]).classPtr;
+        out = createOrdinaryClass(cls.getInterfaces()[0], flags).classPtr;
       else
       {
-        ClassDescriptor parent = getClass(cls.getSuperclass());
+        ClassDescriptor parent = createOrdinaryClass(cls.getSuperclass(), flags);
         out = createAnonymous(parent);
       }
+    } else if (cls.isArray())
+    {
+      out = this.createArrayClass(cls).classPtr;
     } else
     {
       // Just a regular class
-      out = getClass(cls).classPtr;
+      out = createOrdinaryClass(cls, flags).classPtr;
     }
 
     return out;
+  }
+
+  public long findClass(Class<?> cls)
+  {
+    long found = checkCache(cls);
+    if (found != 0)
+      return found;
+    return this.createClass(cls, EnumSet.of(Kind.BASES));
   }
 
   /**
@@ -165,12 +233,15 @@ public class TypeManager
     Class<?> cls = lookupByName(name);
     if (cls == null)
       return 0;
-    return this.findClass(cls);
+    long found = checkCache(cls);
+    if (found != 0)
+      return found;
+
+    return this.createClass(cls, EnumSet.of(Kind.BASES));
   }
 
   public Class<?> lookupByName(String name)
   {
-    ClassLoader classLoader = JPypeContext.getInstance().getClassLoader();
 
     // Handle arrays
     if (name.endsWith("[]"))
@@ -237,7 +308,7 @@ public class TypeManager
       {
         sb.append(".");
         sb.append(parts[i]);
-        Class<?> cls = Class.forName(sb.toString());
+        Class.forName(sb.toString());
         for (int j = i + 1; j < parts.length; ++j)
         {
           sb.append("$");
@@ -259,7 +330,7 @@ public class TypeManager
     long returnType = 0;
     if (method instanceof Method)
     {
-      returnType = getClass(((Method) method).getReturnType()).classPtr;
+      returnType = findClass(((Method) method).getReturnType());
     }
 
     Class<?>[] params = method.getParameterTypes();
@@ -268,7 +339,7 @@ public class TypeManager
     if (!Modifier.isStatic(method.getModifiers()) && !(method instanceof Constructor))
     {
       paramPtrs = new long[params.length + 1];
-      paramPtrs[0] = getClass(method.getDeclaringClass()).classPtr;
+      paramPtrs[0] = findClass(method.getDeclaringClass());
       i++;
     } else
     {
@@ -278,16 +349,16 @@ public class TypeManager
     // Copy in the parameters
     for (Class<?> p : params)
     {
-      paramPtrs[i] = getClass(p).classPtr;
+      paramPtrs[i] = findClass(p);
       i++;
     }
 
     try
     {
-      typeFactory.populateMethod(context, wrapper, returnType, paramPtrs);
+      typeFactory.populateMethod(address, wrapper, returnType, paramPtrs);
     } catch (Exception ex)
     {
-      ex.printStackTrace();
+      LOGGER.log(Level.SEVERE, "error in populateMethod", ex);
     }
   }
 
@@ -314,18 +385,29 @@ public class TypeManager
    */
   public long findClassForObject(Object object) throws InterruptedException
   {
-    JPypeContext.clearInterrupt(true);
+    if (Thread.currentThread().isInterrupted())
+      context.clearInterrupt(true);
     if (object == null)
       return 0;
 
-    Class cls = object.getClass();
-    if (Proxy.isProxyClass(cls)
-            && (Proxy.getInvocationHandler(object) instanceof JPypeProxy))
+    Class<?> cls = object.getClass();
+    long found = checkCache(cls);
+    if (found != 0)
+      return found;
+
+    boolean proxy = false;
+    if (Proxy.isProxyClass(cls))
     {
-      return this.findClass(JPypeProxy.class);
+      InvocationHandler ih = Proxy.getInvocationHandler(object);
+      proxy = (ih instanceof ProxyInstance);
     }
 
-    return this.findClass(cls);
+    final EnumSet<Kind> flags;
+    if (proxy)
+      flags = EnumSet.of(Kind.BASES, Kind.PROXY);
+    else
+      flags = EnumSet.of(Kind.BASES);
+    return this.createClass(cls, flags);
   }
 
   /**
@@ -369,39 +451,12 @@ public class TypeManager
 //</editor-fold>
 //<editor-fold desc="classes" defaultstate="defaultstate">
 
-  private ClassDescriptor getClass(Class cls)
+  private ClassDescriptor createOrdinaryClass(Class<?> cls, EnumSet<Kind> kind)
   {
-    if (cls == null)
-      return null;
-
-    // Look up the current description
-    ClassDescriptor ptr = this.classMap.get(cls);
-    if (ptr != null)
-      return ptr;
-
-    // If we can't find it create a new class
-    return createClass(cls, false);
-  }
-
-  /**
-   * Allocate a new wrapper for a java class.
-   * <p>
-   * Boxed types require special handlers, as does java.lang.String
-   *
-   * @param cls is the Java class to wrap.
-   * @param special marks class as requiring a specialized C++ wrapper.
-   * @return a C++ wrapper handle for a jp_classtype
-   */
-  private ClassDescriptor createClass(Class<?> cls, boolean special)
-  {
-    if (cls.isArray())
-      return this.createArrayClass(cls);
-
-    return createOrdinaryClass(cls, special, true);
-  }
-
-  private ClassDescriptor createOrdinaryClass(Class<?> cls, boolean special, boolean bases)
-  {
+    if (LOGGER.isLoggable(Level.FINE))
+    {
+      LOGGER.log(Level.FINE, "Creating ordinary class wrapper for: {0}", cls.getName());
+    }
     // Verify the class will be loadable prior to creating the class.
     // If we fail to do this then the class may end up crashing later when the
     // members get populated which could leave us in a bad state.
@@ -412,25 +467,24 @@ public class TypeManager
     // Make sure all base classes are loaded
     Class<?> superClass = cls.getSuperclass();
     Class<?>[] interfaces = cls.getInterfaces();
-    ClassDescriptor[] parents = new ClassDescriptor[interfaces.length + 1];
-    long[] interfacesPtr = null;
-    long superClassPtr = 0;
+//    ClassDescriptor[] parents = new ClassDescriptor[interfaces.length + 1];
+    long[] interfacesPtr;
+    long superClassPtr;
     superClassPtr = 0;
     if (superClass != null)
     {
-      parents[0] = this.getClass(superClass);
-      superClassPtr = parents[0].classPtr;
+//      parents[0] = this.getClassDescriptor(superClass);
+      superClassPtr = findClass(superClass);
     }
 
-    if (bases)
+    if (kind.contains(Kind.BASES))
     {
       interfacesPtr = new long[interfaces.length];
 
       // Make sure all interfaces are loaded.
       for (int i = 0; i < interfaces.length; ++i)
       {
-        parents[i + 1] = this.getClass(interfaces[i]);
-        interfacesPtr[i] = parents[i + 1].classPtr;
+        interfacesPtr[i] = findClass(interfaces[i]);
       }
     } else
     {
@@ -439,7 +493,7 @@ public class TypeManager
 
     // Set up the modifiers
     int modifiers = cls.getModifiers() & 0xffff;
-    if (special)
+    if (kind.contains(Kind.SPECIAL))
       modifiers |= ModifierCode.SPECIAL.value;
     if (Throwable.class.isAssignableFrom(cls))
       modifiers |= ModifierCode.THROWABLE.value;
@@ -449,9 +503,16 @@ public class TypeManager
       modifiers |= ModifierCode.COMPARABLE.value;
     if (Buffer.class.isAssignableFrom(cls))
       modifiers |= ModifierCode.BUFFER.value | ModifierCode.SPECIAL.value;
+    if (PyObject.class.isAssignableFrom(cls))
+      modifiers |= ModifierCode.PYTHON.value;
+    if (kind.contains(Kind.PROXY))
+      modifiers |= ModifierCode.PROXY.value;
 
     // Check if is Functional class
-    Method method = JPypeUtilities.getFunctionalInterfaceMethod(cls);
+    // PyObject is excluded: it structurally has a single non-Object abstract
+    // method (builtin()), which would otherwise misclassify it as functional
+    // and bypass the dedicated JPPybaseType conversion rules it requires.
+    Method method = (cls == PyObject.class) ? null : Functional.getFunctionalInterfaceMethod(cls);
     if (method != null)
       modifiers |= ModifierCode.FUNCTIONAL.value | ModifierCode.SPECIAL.value;
 
@@ -461,7 +522,7 @@ public class TypeManager
       name = cls.getName();
 
     // Create the JPClass
-    long classPtr = typeFactory.defineObjectClass(context, cls, name,
+    long classPtr = typeFactory.defineObjectClass(address, cls, name,
             superClassPtr,
             interfacesPtr,
             modifiers);
@@ -477,7 +538,8 @@ public class TypeManager
     if (parent.anonymous != 0)
       return parent.anonymous;
 
-    parent.anonymous = typeFactory.defineObjectClass(context,
+    parent.anonymous = typeFactory.defineObjectClass(
+            address,
             parent.cls, parent.cls.getCanonicalName() + "$Anonymous",
             parent.classPtr,
             null,
@@ -485,11 +547,11 @@ public class TypeManager
     return parent.anonymous;
   }
 
-  ClassDescriptor createArrayClass(Class cls)
+  ClassDescriptor createArrayClass(Class<?> cls)
   {
     // Array classes are simple, we just need the component type
-    Class componentType = cls.getComponentType();
-    long componentTypePtr = this.getClass(componentType).classPtr;
+    Class<?> componentType = cls.getComponentType();
+    long componentTypePtr = findClass(componentType);
 
     int modifiers = cls.getModifiers() & 0xffff;
     String name = cls.getName();
@@ -497,7 +559,7 @@ public class TypeManager
       modifiers |= ModifierCode.PRIMITIVE_ARRAY.value;
 
     long classPtr = typeFactory
-            .defineArrayClass(context, cls,
+            .defineArrayClass(address, cls,
                     cls.getCanonicalName(),
                     this.java_lang_Object.classPtr,
                     componentTypePtr,
@@ -515,19 +577,18 @@ public class TypeManager
    * @param cls
    * @param boxed
    */
-  private void createPrimitive(String name, Class cls, Class boxed)
+  private void createPrimitive(String name, Class<?> cls)
   {
-    long classPtr = typeFactory.definePrimitive(context,
-            name,
+    long classPtr = typeFactory.definePrimitive(
+            address, name,
             cls,
-            this.getClass(boxed).classPtr,
             cls.getModifiers() & 0xffff);
     this.classMap.put(cls, new ClassDescriptor(cls, classPtr, null));
   }
 
 //</editor-fold>
 //<editor-fold desc="members" defaultstate="collapsed">
-  public synchronized void populateMembers(Class cls)
+  public synchronized void populateMembers(Class<?> cls)
   {
     ClassDescriptor desc = this.classMap.get(cls);
     if (desc == null)
@@ -539,7 +600,7 @@ public class TypeManager
       createMembers(desc);
     } catch (Exception ex)
     {
-      ex.printStackTrace(System.out);
+      LOGGER.log(Level.SEVERE, "error in populate members", ex);
       throw ex;
     }
   }
@@ -555,8 +616,8 @@ public class TypeManager
       audit.verifyMembers(desc);
 
     // Pass this to JPype
-    this.typeFactory.assignMembers(context,
-            desc.classPtr,
+    this.typeFactory.assignMembers(
+            address, desc.classPtr,
             desc.constructorDispatch,
             desc.methodDispatch,
             desc.fields);
@@ -573,11 +634,11 @@ public class TypeManager
     int i = 0;
     for (Field field : fields)
     {
-      fieldPtr[i++] = this.typeFactory.defineField(context,
-              desc.classPtr,
+      fieldPtr[i++] = this.typeFactory.defineField(
+              address, desc.classPtr,
               field.getName(),
               field,
-              getClass(field.getType()).classPtr,
+              findClass(field.getType()),
               field.getModifiers() & 0xffff);
     }
     desc.fields = fieldPtr;
@@ -592,10 +653,10 @@ public class TypeManager
    */
   public void createConstructorDispatch(ClassDescriptor desc)
   {
-    Class cls = desc.cls;
+    Class<?> cls = desc.cls;
 
     // Get the list of declared constructors
-    LinkedList<Constructor> constructors
+    LinkedList<Constructor<?>> constructors
             = filterPublic(cls.getDeclaredConstructors());
 
     if (constructors.isEmpty())
@@ -609,7 +670,8 @@ public class TypeManager
 
     // Create the dispatch for it
     desc.constructorDispatch = typeFactory
-            .defineMethodDispatch(context,
+            .defineMethodDispatch(
+                    address,
                     desc.classPtr,
                     "<init>",
                     desc.constructors,
@@ -632,7 +694,7 @@ public class TypeManager
     long[] overloadPtrs = new long[overloads.size()];
     for (MethodResolution ov : overloads)
     {
-      Constructor constructor = (Constructor) ov.executable;
+      Constructor<?> constructor = (Constructor) ov.executable;
 
       int i = 0;
       long[] precedencePtrs = new long[ov.children.size()];
@@ -643,8 +705,8 @@ public class TypeManager
 
       int modifiers = constructor.getModifiers() & 0xffff;
       modifiers |= ModifierCode.CTOR.value;
-      ov.ptr = typeFactory.defineMethod(context,
-              desc.classPtr,
+      ov.ptr = typeFactory.defineMethod(
+              address, desc.classPtr,
               constructor.toString(),
               constructor,
               precedencePtrs,
@@ -719,7 +781,8 @@ public class TypeManager
     List<MethodResolution> overloads = MethodResolution.sortMethods(methods);
     long[] overloadPtrs = this.createMethods(desc, overloads);
 
-    long methodContainer = typeFactory.defineMethodDispatch(context,
+    long methodContainer = typeFactory.defineMethodDispatch(
+            address,
             desc.classPtr,
             key,
             overloadPtrs,
@@ -780,7 +843,8 @@ public class TypeManager
       if (isCallerSensitive(method))
         modifiers |= ModifierCode.CALLER_SENSITIVE.value;
 
-      ov.ptr = typeFactory.defineMethod(context,
+      ov.ptr = typeFactory.defineMethod(
+              address,
               desc.classPtr,
               method.toString(),
               method,
@@ -976,7 +1040,7 @@ public class TypeManager
         return;
       if (v.length > BLOCK_SIZE / 2)
       {
-        typeFactory.destroy(context, v, v.length);
+        typeFactory.destroy(address, v, v.length);
         return;
       }
       if (index + v.length > BLOCK_SIZE)
@@ -993,7 +1057,7 @@ public class TypeManager
 
     void flush()
     {
-      typeFactory.destroy(context, queue, index);
+      typeFactory.destroy(address, queue, index);
       index = 0;
     }
   }

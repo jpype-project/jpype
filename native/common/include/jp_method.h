@@ -49,7 +49,7 @@ public:
 	 */
 	JPMatch::Type matches(JPJavaFrame &frame, JPMethodMatch& match, bool isInstance, JPPyObjectVector& args);
 	JPPyObject invoke(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVector& arg, bool instance);
-	JPPyObject invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVector& arg, bool instance);
+	JPPyObject invokeCallerSensitive(JPJavaFrame& frame, JPMethodMatch& match, JPPyObjectVector& arg, bool instance);
 	JPValue invokeConstructor(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVector& arg);
 
 	bool isAbstract() const
@@ -89,32 +89,32 @@ public:
 
 	string toString() const;
 
-	string matchReport(JPPyObjectVector& args);
+	string matchReport(JPJavaFrame& frame, JPPyObjectVector& args);
 	bool checkMoreSpecificThan(JPMethod* other) const;
 
-	jobject getJava()
+	jobject getJava(JPJavaFrame& frame)
 	{
-		return m_Method.get();
+		return frame.retrieveGlobal(m_Method);
 	}
 
-    JPMethod& operator=(const JPMethod&) = delete;
+	JPMethod& operator=(const JPMethod&) = delete;
 
 private:
-	void packArgs(JPJavaFrame &frame, JPMethodMatch &match, vector<jvalue> &v, JPPyObjectVector &arg);
-	void ensureTypeCache();
+	void packArgs(JPJavaFrame& frame, JPMethodMatch &match, vector<jvalue> &v, JPPyObjectVector &arg);
+	void ensureTypeCache(JPJavaFrame& frame);
 
 	JPMethod(const JPMethod& o);
 
 private:
-	JPClass*                 m_Class{};
-	string                   m_Name;
-	JPObjectRef              m_Method;
-	jmethodID                m_MethodID{};
-	JPClass*                 m_ReturnType{};
-	JPClassList              m_ParameterTypes;
-	JPMethodList             m_MoreSpecificOverloads;
-	jint                     m_Modifiers{};
-	long                     m_Hash{-1};
+	JPClass*				 m_Class{};
+	string				   m_Name;
+	jref					 m_Method;
+	jmethodID				m_MethodID{};
+	JPClass*				 m_ReturnType{};
+	JPClassList			  m_ParameterTypes;
+	JPMethodList			 m_MoreSpecificOverloads;
+	jint					 m_Modifiers{};
+	long					 m_Hash{-1};
 } ;
 
 #endif // _JPMETHOD_H_

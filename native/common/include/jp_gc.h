@@ -30,7 +30,7 @@ class JPGarbageCollection
 {
 public:
 
-	explicit JPGarbageCollection();
+	explicit JPGarbageCollection(JPContext* context);
 
 	void init(JPJavaFrame& frame);
 
@@ -50,13 +50,12 @@ public:
 	void getStats(JPGCStats& stats);
 
 private:
+	JPContext* m_Context;
 	bool running;
 	bool in_python_gc;
 	bool java_triggered;
 	PyObject *python_gc;
-	jclass _SystemClass;
 	jclass _ContextClass;
-	jmethodID _gcMethodID;
 
 	jmethodID _totalMemoryID;
 	jmethodID _freeMemoryID;

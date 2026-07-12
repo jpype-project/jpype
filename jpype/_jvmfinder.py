@@ -317,7 +317,6 @@ def _checkJVMArch(jvmPath, maxsize=sys.maxsize):
     IMAGE_FILE_MACHINE_I386 = 332
     IMAGE_FILE_MACHINE_IA64 = 512
     IMAGE_FILE_MACHINE_AMD64 = 34404
-    IMAGE_FILE_MACHINE_ARM64 = 43620
 
     is64 = maxsize > 2**32
     with open(jvmPath, "rb") as f:
@@ -335,7 +334,7 @@ def _checkJVMArch(jvmPath, maxsize=sys.maxsize):
         if is64:
             raise JVMNotSupportedException(
                 "JVM mismatch, python is 64 bit and JVM is 32 bit.")
-    elif machine == IMAGE_FILE_MACHINE_IA64 or machine == IMAGE_FILE_MACHINE_AMD64 or machine == IMAGE_FILE_MACHINE_ARM64:
+    elif machine == IMAGE_FILE_MACHINE_IA64 or machine == IMAGE_FILE_MACHINE_AMD64:
         if not is64:
             raise JVMNotSupportedException(
                 "JVM mismatch, python is 32 bit and JVM is 64 bit.")

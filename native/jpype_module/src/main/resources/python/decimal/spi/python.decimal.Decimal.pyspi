@@ -1,0 +1,13 @@
+kind: backend
+interface: python.decimal.Decimal
+---
+import decimal
+
+
+def _decimal(value):
+    return decimal.Decimal(str(value))
+
+
+METHODS = {
+    "decimal": _decimal,
+}

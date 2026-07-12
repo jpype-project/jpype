@@ -1,3 +1,4 @@
+// --- file: common/jp_array.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -23,20 +24,20 @@
 // need to be careful to handle these properly.  We need to
 // carry them around so that we can match types.
 
-JPArray::JPArray(const JPValue &value)
-: m_Object((jarray) value.getValue().l)
+JPArray::JPArray(JPJavaFrame& frame, const JPValue &value)
 {
+	jarray arr = (jarray) value.getJavaObject(frame);
+	m_Object = frame.storeGlobal(arr);
 	m_Class = dynamic_cast<JPArrayClass*>( value.getClass());
-	JPJavaFrame frame = JPJavaFrame::outer();
 	JP_TRACE_IN("JPArray::JPArray");
-	ASSERT_NOT_NULL(m_Class);
+	ASSERT_NOT_NULL(m_Class, "JPArray::JPArray");
 	JP_TRACE(m_Class->toString());
 
 	// We will use this during range checks, so cache it
-	if (m_Object.get() == nullptr)
+	if (arr == nullptr)
 		m_Length = 0;  // GCOVR_EXCL_LINE
 	else
-		m_Length = frame.GetArrayLength(m_Object.get());
+		m_Length = frame.GetArrayLength(arr);
 
 	m_Step = 1;
 	m_Start = 0;
@@ -46,10 +47,11 @@ JPArray::JPArray(const JPValue &value)
 }
 
 JPArray::JPArray(JPArray* instance, jsize start, jsize stop, jsize step)
-: m_Object((jarray) instance->getJava())
 {
 	JP_TRACE_IN("JPArray::JPArraySlice");
 	m_Class = instance->m_Class;
+	JPJavaFrame frame = JPJavaFrame::outer(m_Class->getContext());
+	m_Object = frame.storeGlobal(instance->getJava(frame));
 	m_Step = step * instance->m_Step;
 	m_Start = instance->m_Start + instance->m_Step*start;
 	if (step > 0)
@@ -63,14 +65,16 @@ JPArray::JPArray(JPArray* instance, jsize start, jsize stop, jsize step)
 }
 
 JPArray::~JPArray()
-= default;
+{
+	tryRelease(m_Object);
+}
 
 jsize JPArray::getLength() const
 {
 	return m_Length;
 }
 
-void JPArray::setRange(jsize start, jsize length, jsize step, PyObject* val)
+void JPArray::setRange(JPJavaFrame& frame, jsize start, jsize length, jsize step, PyObject* val)
 {
 	JP_TRACE_IN("JPArray::setRange");
 
@@ -78,7 +82,6 @@ void JPArray::setRange(jsize start, jsize length, jsize step, PyObject* val)
 	if (!PySequence_Check(val))
 		JP_RAISE(PyExc_TypeError, "can only assign a sequence");
 
-	JPJavaFrame frame = JPJavaFrame::outer();
 	JPClass* compType = m_Class->getComponentType();
 	JPPySequence seq = JPPySequence::use(val);
 	long plength = (long) seq.size();
@@ -95,13 +98,12 @@ void JPArray::setRange(jsize start, jsize length, jsize step, PyObject* val)
 
 	JP_TRACE("Call component set range");
 	jsize i0 = m_Start + m_Step*start;
-	compType->setArrayRange(frame, m_Object.get(), i0, length, m_Step*step, val);
+	compType->setArrayRange(frame, (jarray) frame.retrieveGlobal(m_Object), i0, length, m_Step*step, val);
 	JP_TRACE_OUT;
 }
 
-void JPArray::setItem(jsize ndx, PyObject* val)
+void JPArray::setItem(JPJavaFrame& frame, jsize ndx, PyObject* val)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	JPClass* compType = m_Class->getComponentType();
 
 	if (ndx < 0)
@@ -110,12 +112,11 @@ void JPArray::setItem(jsize ndx, PyObject* val)
 	if (ndx >= m_Length || ndx < 0)
 		JP_RAISE(PyExc_IndexError, "java array assignment out of bounds");
 
-	compType->setArrayItem(frame, m_Object.get(), m_Start + ndx*m_Step, val);
+	compType->setArrayItem(frame, (jarray) frame.retrieveGlobal(m_Object), m_Start + ndx*m_Step, val);
 }
 
-JPPyObject JPArray::getItem(jsize ndx)
+JPPyObject JPArray::getItem(JPJavaFrame& frame, jsize ndx)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	JPClass* compType = m_Class->getComponentType();
 
 	if (ndx < 0)
@@ -126,28 +127,27 @@ JPPyObject JPArray::getItem(jsize ndx)
 		JP_RAISE(PyExc_IndexError, "array index out of bounds");
 	}
 
-	return compType->getArrayItem(frame, m_Object.get(), m_Start + ndx * m_Step);
+	return compType->getArrayItem(frame, (jarray) frame.retrieveGlobal(m_Object), m_Start + ndx * m_Step);
 }
 
 jarray JPArray::clone(JPJavaFrame& frame, PyObject* obj)
 {
 	JPValue value = m_Class->newArray(frame, m_Length);
 	JPClass* compType = m_Class->getComponentType();
-	auto out = (jarray) value.getValue().l;
+	auto out = (jarray) value.getJavaObject(frame);
 	compType->setArrayRange(frame, out, 0, m_Length, 1, obj);
 	return out;
 }
 
-JPArrayView::JPArrayView(JPArray* array)
+JPArrayView::JPArrayView(JPJavaFrame& frame, JPArray* array)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	m_Array = array;
 	m_RefCount = 0;
 	m_Buffer.obj = nullptr;
 	m_Buffer.ndim = 1;
 	m_Buffer.suboffsets = nullptr;
 	auto *type = dynamic_cast<JPPrimitiveType*>( array->getClass()->getComponentType());
-	type->getView(*this);
+	type->getView(frame, *this);
 	m_Strides[0] = m_Buffer.itemsize * array->m_Step;
 	m_Shape[0] = array->m_Length;
 	m_Buffer.buf = (char*) m_Memory + m_Buffer.itemsize * array->m_Start;
@@ -158,11 +158,10 @@ JPArrayView::JPArrayView(JPArray* array)
 	m_Owned = false;
 }
 
-JPArrayView::JPArrayView(JPArray* array, jobject collection)
+JPArrayView::JPArrayView(JPJavaFrame& frame, JPArray* array, jobject collection)
 {
 	JP_TRACE_IN("JPArrayView::JPArrayView");
 	// All of the work has already been done by org.jpype.Utilities
-	JPJavaFrame frame = JPJavaFrame::outer();
 	m_Array = array;
 
 	jint len = frame.GetArrayLength((jarray) collection);
@@ -240,11 +239,11 @@ void JPArrayView::reference()
 	m_RefCount++;
 }
 
-bool JPArrayView::unreference()
+bool JPArrayView::unreference(JPJavaFrame& frame)
 {
 	m_RefCount--;
 	auto *type = dynamic_cast<JPPrimitiveType*>( m_Array->getClass()->getComponentType());
 	if (m_RefCount == 0 && !m_Owned)
-		type->releaseView(*this);
+		type->releaseView(frame, *this);
 	return m_RefCount == 0;
 }

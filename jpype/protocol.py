@@ -18,6 +18,7 @@
 import _jpype
 import datetime
 import decimal
+import io
 import sys
 import _jpype
 from . import _jclass
@@ -69,6 +70,28 @@ def _JPathConvert(jcls, obj):
 @_jcustomizer.JConversion("java.io.File", instanceof=SupportsPath)
 def _JFileConvert(jcls, obj):
     return jcls(obj.__fspath__())
+
+
+# python.io fulfills java.io.InputStream/OutputStream by delegating through
+# python.io.PyBufferedIOBase.asInputStream()/asOutputStream() (see
+# native/jpype_module/src/main/java/python/io/PyBufferedIOBase.java). This
+# lets a plain Python io.BytesIO (or any io.BufferedIOBase) be passed
+# directly to a Java API expecting a stream - mainly useful for exercising
+# the python.io SPI wiring end-to-end from a launched script; see
+# test_io.py and plan/IO.md.
+
+
+@_jcustomizer.JConversion("java.io.InputStream", instanceof=io.BufferedIOBase)
+def _JInputStreamConvert(jcls, obj):
+    iface = _jclass.JClass("python.io.PyBufferedIOBase")
+    return _jpype.JObject(obj, iface).asInputStream()
+
+
+@_jcustomizer.JConversion("java.io.OutputStream", instanceof=io.BufferedIOBase)
+def _JOutputStreamConvert(jcls, obj):
+    iface = _jclass.JClass("python.io.PyBufferedIOBase")
+    return _jpype.JObject(obj, iface).asOutputStream()
+
 
 # To be added in 1.1.x
 

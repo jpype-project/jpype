@@ -1,3 +1,4 @@
+// --- file: common/jp_method.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -25,9 +26,9 @@ JPMethod::JPMethod(JPJavaFrame& frame,
 		jmethodID mid,
 		JPMethodList& moreSpecific,
 		jint modifiers)
-: m_Method(frame, mth)
 {
 	m_Class = claz;
+	m_Method = frame.storeGlobal(mth);
 	m_Name = name;
 	m_MethodID = mid;
 	m_MoreSpecificOverloads = moreSpecific;
@@ -36,7 +37,9 @@ JPMethod::JPMethod(JPJavaFrame& frame,
 }
 
 JPMethod::~JPMethod()
-= default;
+{
+	tryRelease(m_Method);
+}
 
 void JPMethod::setParameters(
 		JPClass *returnType,
@@ -80,7 +83,7 @@ JPMatch::Type matchVars(JPJavaFrame &frame, JPMethodMatch& match, JPPyObjectVect
 JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, bool callInstance,
 		JPPyObjectVector& arg)
 {
-	ensureTypeCache();
+	ensureTypeCache(frame);
 
 	JP_TRACE_IN("JPMethod::matches");
 	methodMatch.m_Overload = this;
@@ -185,6 +188,7 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	JP_TRACE("offset", match.m_Offset == 1);
 	JP_TRACE("arguments length", len);
 	JP_TRACE("types length", tlen);
+
 	if (match.m_IsVarIndirect)
 	{
 		JP_TRACE("Pack indirect varargs");
@@ -206,7 +210,7 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 	JP_TRACE_IN("JPMethod::invoke");
 	// Check if it is caller sensitive
 	if (isCallerSensitive())
-		return invokeCallerSensitive(match, arg, instance);
+		return invokeCallerSensitive(frame, match, arg, instance);
 
 	size_t alen = m_ParameterTypes.size();
 	JPClass* retType = m_ReturnType;
@@ -219,7 +223,7 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 	if (JPModifier::isStatic(m_Modifiers))
 	{
 		JP_TRACE("invoke static", m_Name);
-		jclass claz = m_Class->getJavaClass();
+		jclass claz = m_Class->getJavaClass(frame);
 		return retType->invokeStatic(frame, claz, m_MethodID, &v[0]);
 	} else
 	{
@@ -233,12 +237,12 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 			c = val.l;
 		} else
 		{
-			c = selfObj->getJavaObject();
+			c = selfObj->getJavaObject(frame);
 		}
 		jclass clazz = nullptr;
 		if (!isAbstract() && !instance)
 		{
-			clazz = m_Class->getJavaClass();
+			clazz = m_Class->getJavaClass(frame);
 			JP_TRACE("invoke nonvirtual", m_Name);
 		} else
 		{
@@ -249,11 +253,11 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
+JPPyObject JPMethod::invokeCallerSensitive(JPJavaFrame& outer, JPMethodMatch& match, JPPyObjectVector& arg, bool instance)
 {
 	JP_TRACE_IN("JPMethod::invokeCallerSensitive");
 	size_t alen = m_ParameterTypes.size();
-	JPJavaFrame frame = JPJavaFrame::outer((int) (8 + alen));
+	JPJavaFrame frame = JPJavaFrame::outer(outer.getContext(), (int) (8 + alen));
 	JPContext *context = frame.getContext();
 	JPClass* retType = m_ReturnType;
 
@@ -272,11 +276,11 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 		JPValue *selfObj = PyJPValue_getJavaSlot(arg[0]);
 		if (selfObj == nullptr)
 			JP_RAISE(PyExc_RuntimeError, "Null object"); // GCOVR_EXCL_LINE
-		self = selfObj->getJavaObject();
+		self = selfObj->getJavaObject(frame);
 	}
 
 	// Convert arguments
-	jobjectArray ja = frame.NewObjectArray((jsize) len, context->_java_lang_Object->getJavaClass(), nullptr);
+	jobjectArray ja = frame.NewObjectArray((jsize) len, context->_java_lang_Object->getJavaClass(frame), nullptr);
 	for (jsize i = 0; i < (jsize) len; ++i)
 	{
 		JPClass *cls = m_ParameterTypes[i + match.m_Skip - match.m_Offset];
@@ -284,7 +288,7 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 		{
 			auto* type = dynamic_cast<JPPrimitiveType*>( cls);
 			PyObject *u = arg[i + match.m_Skip];
-			JPMatch conv(&frame, u);
+			JPMatch conv(frame, u);
 			JPClass *boxed = type->getBoxedClass(frame);
 			boxed->findJavaConversion(conv);
 			jvalue v = conv.convert();
@@ -299,11 +303,11 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 	jobject o;
 	{
 		JPPyCallRelease call;
-		o =	 frame.callMethod(m_Method.get(), self, ja);
+		o =	 frame.callMethod(frame.retrieveGlobal(m_Method), self, ja);
 	}
 
 
-	JP_TRACE("ReturnType", retType->getCanonicalName());
+	JP_TRACE("ReturnType", retType->getCanonicalName(frame));
 
 	// Deal with the return
 	if (retType->isPrimitive())
@@ -329,17 +333,16 @@ JPValue JPMethod::invokeConstructor(JPJavaFrame& frame, JPMethodMatch& match, JP
 	vector<jvalue> v(alen + 1);
 	packArgs(frame, match, v, arg);
 	JPPyCallRelease call;
-	return JPValue(m_Class, frame.NewObjectA(m_Class->getJavaClass(), m_MethodID, &v[0]));
+	return JPValue(m_Class, frame.NewObjectA(m_Class->getJavaClass(frame), m_MethodID, &v[0]));
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
-string JPMethod::matchReport(JPPyObjectVector& args)
+string JPMethod::matchReport(JPJavaFrame& frame, JPPyObjectVector& args)
 {
-	ensureTypeCache();
-	JPJavaFrame frame = JPJavaFrame::outer();
+	ensureTypeCache(frame);
 	std::stringstream res;
 
-	res << m_ReturnType->getCanonicalName() << " (";
+	res << m_ReturnType->getCanonicalName(frame) << " (";
 
 	bool isFirst = true;
 	for (auto & m_ParameterType : m_ParameterTypes)
@@ -350,7 +353,7 @@ string JPMethod::matchReport(JPPyObjectVector& args)
 			continue;
 		}
 		isFirst = false;
-		res << m_ParameterType->getCanonicalName();
+		res << m_ParameterType->getCanonicalName(frame);
 	}
 
 	res << ") ==> ";
@@ -391,10 +394,10 @@ bool JPMethod::checkMoreSpecificThan(JPMethod* other) const
 	return false;
 }
 
-void JPMethod::ensureTypeCache()
+void JPMethod::ensureTypeCache(JPJavaFrame& frame)
 {
 	if (m_ReturnType != (JPClass*) (-1))
 		return;
 
-	JPContext_global->getTypeManager()->populateMethod(this, m_Method.get());
+	frame.getContext()->getTypeManager()->populateMethod(frame, this, frame.retrieveGlobal(m_Method));
 }

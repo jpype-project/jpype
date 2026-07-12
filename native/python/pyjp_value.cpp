@@ -1,3 +1,4 @@
+// --- file: python/pyjp_value.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -27,7 +28,7 @@ extern "C"
 #ifndef Py_SET_TYPE
 static inline void _Py_SET_TYPE(PyObject *ob, PyTypeObject *type)
 {
-    ob->ob_type = type;
+	ob->ob_type = type;
 }
 #define Py_SET_TYPE(ob, type) _Py_SET_TYPE((PyObject*)(ob), (type))
 #endif
@@ -39,11 +40,11 @@ static const char* JP_ALLOC_KEY = "_jpype_allocator";
 
 bool PyJPValue_hasJavaSlot(PyTypeObject* type)
 {
-       if (type == nullptr
-                       || type->tp_alloc != (allocfunc) PyJPValue_alloc
-                       || type->tp_finalize != (destructor) PyJPValue_finalize)
-               return false;  // GCOVR_EXCL_LINE
-       return true;
+	   if (type == nullptr
+					   || type->tp_alloc != (allocfunc) PyJPValue_alloc
+					   || type->tp_finalize != (destructor) PyJPValue_finalize)
+			   return false;  // GCOVR_EXCL_LINE
+	   return true;
 }
 
 Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self)
@@ -110,31 +111,55 @@ void PyJPValue_free(void* obj)
 	JP_PY_CATCH_NONE();
 }
 
+// Global controlled by context start/shutdown attach/detach
+#define USE_JNI_VERSION JNI_VERSION_1_4
+extern JavaVM* _JavaVM;
+
 void PyJPValue_finalize(void* obj)
 {
 	JP_PY_TRY("PyJPValue_finalize", obj);
-	JP_TRACE("type", Py_TYPE(obj)->tp_name);
+
+	// 1. Grab raw java slot payload
 	JPValue* value = PyJPValue_getJavaSlot((PyObject*) obj);
 	if (value == nullptr)
 		return;
 
-	// We can skip if the JVM is stopped.  No need for an exception here.
-	JPContext *context = JPContext_global;
-	if (context == nullptr || !context->isRunning())
+	// Safety net: if the JVM has completely detached or never started, bail early
+	if (_JavaVM == nullptr)
 		return;
 
-	// JVM is running so set up the frame.
-	JPJavaFrame frame = JPJavaFrame::outer();
-	JPClass* cls = value->getClass();
-	// This one can't check for initialized because we may need to delete a stale
-	// resource after shutdown.
-	if (cls != nullptr && context->isRunning() && !cls->isPrimitive())
+	// 3. Extract the thread-safe JNIEnv* for the CURRENT running thread
+	JNIEnv* env = nullptr;
+	jint env_result = _JavaVM->GetEnv((void**)&env, USE_JNI_VERSION);
+
+	if (env_result == JNI_EDETACHED)
 	{
-		JP_TRACE("Value", cls->getCanonicalName(), &(value->getValue()));
-		JP_TRACE("Dereference object");
-		context->ReleaseGlobalRef(value->getValue().l);
-		*value = JPValue();
+		// The current thread is not attached to the JVM.
+		// We must attach it to safely execute the DeleteGlobalRef.
+		if (_JavaVM->AttachCurrentThread((void**)&env, nullptr) != JNI_OK)
+			return;
 	}
+	else if (env_result != JNI_OK || env == nullptr)
+		return; // Something else is wrong, abort to avoid crashing.
+
+	// 4. Thread-safe execution boundary
+	JPClass* cls = value->getClass();
+	if (cls != nullptr && !cls->isPrimitive())
+	{
+		jref ref = value->getRef();
+		if (ref.value != 0)
+		{
+			// The thread is now guaranteed attached (see above), so this
+			// resolves through GlobalPool.tryRelease rather than a raw
+			// DeleteGlobalRef - safe to call from any interpreter's pool.
+			tryRelease(ref);
+			*value = JPValue();
+		}
+	}
+
+	// 5. Clean up the attachment if we had to borrow it
+	if (env_result == JNI_EDETACHED)
+		_JavaVM->DetachCurrentThread();
 	JP_PY_CATCH_NONE();
 }
 
@@ -142,14 +167,15 @@ void PyJPValue_finalize(void* obj)
 PyObject* PyJPValue_str(PyObject* self)
 {
 	JP_PY_TRY("PyJPValue_str", self);
-	JPContext *context = PyJPModule_getContext();
-	JPJavaFrame frame = JPJavaFrame::outer();
 	JPValue* value = PyJPValue_getJavaSlot(self);
 	if (value == nullptr)
 	{
 		PyErr_SetString(PyExc_TypeError, "Not a Java value");
 		return nullptr;
 	}
+
+	JPContext *context = PyJPObject_getContext(self);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	JPClass* cls = value->getClass();
 	if (cls->isPrimitive())
@@ -158,7 +184,7 @@ PyObject* PyJPValue_str(PyObject* self)
 		return nullptr;
 	}
 
-	if (value->getValue().l == nullptr)
+	if (value->isJavaNull())
 		return JPPyString::fromStringUTF8("null").keep();
 
 	if (cls == context->_java_lang_String)
@@ -173,7 +199,7 @@ PyObject* PyJPValue_str(PyObject* self)
 				Py_INCREF(cache);
 				return cache;
 			}
-			auto jstr = (jstring) value->getValue().l;
+			auto jstr = (jstring) value->getJavaObject(frame);
 			string str;
 			str = frame.toStringUTF8(jstr);
 			cache = JPPyString::fromStringUTF8(str).keep();
@@ -183,7 +209,7 @@ PyObject* PyJPValue_str(PyObject* self)
 	}
 
 	// In general toString is not immutable, so we won't cache it.
-	return JPPyString::fromStringUTF8(frame.toString(value->getValue().l)).keep();
+	return JPPyString::fromStringUTF8(frame.toString(value->getJavaObject(frame))).keep();
 	JP_PY_CATCH(nullptr);
 }
 
@@ -209,7 +235,8 @@ PyObject *PyJPValue_getattro(PyObject *obj, PyObject *name)
 		return attr.keep();
 
 	// Methods
-	if (Py_TYPE(attr.get()) == (PyTypeObject*) PyJPMethod_Type)
+	PyJPModuleState* st = ((PyJPClass*)Py_TYPE(obj))->m_State;
+	if (Py_TYPE(attr.get()) == (PyTypeObject*) st->PyJPMethod_Type)
 		return attr.keep();
 
 	// Don't allow properties to be rewritten
@@ -245,9 +272,6 @@ int PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value)
 	JP_PY_CATCH(-1);
 }
 
-#ifdef __cplusplus
-}
-#endif
 
 // These are from the internal methods when we already have the jvalue
 
@@ -274,9 +298,8 @@ void PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* self, const JPValue&
 	JPClass* cls = value.getClass();
 	if (cls != nullptr && !cls->isPrimitive())
 	{
-		jvalue q;
-		q.l = frame.NewGlobalRef(value.getValue().l);
-		*slot = JPValue(cls, q);
+		jref ref = frame.storeGlobal(value.getJavaObject(frame));
+		*slot = JPValue::fromGlobal(cls, ref);
 	} else
 		*slot = value;
 }
@@ -333,21 +356,21 @@ static PyType_Spec allocSpec = {
  */
 PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 {
-    JP_PY_TRY("PyJPValue_alloc");
+	JP_PY_TRY("PyJPValue_alloc");
 
 #if PY_VERSION_HEX >= 0x030d0000
-    if (PyType_HasFeature(type, Py_TPFLAGS_INLINE_VALUES)) {
-        PyErr_Format(PyExc_RuntimeError, "Unhandled object layout");
-        return nullptr;
-    }
+	if (PyType_HasFeature(type, Py_TPFLAGS_INLINE_VALUES)) {
+		PyErr_Format(PyExc_RuntimeError, "Unhandled object layout");
+		return nullptr;
+	}
 #endif
 
-    // 1. Get the thread-specific dictionary
-    PyObject* thread_dict = PyThreadState_GetDict();
-    if (thread_dict == nullptr) {
-        PyErr_SetString(PyExc_RuntimeError, "Python thread state is corrupt or shutting down");
-        return nullptr;
-    }
+	// 1. Get the thread-specific dictionary
+	PyObject* thread_dict = PyThreadState_GetDict();
+	if (thread_dict == nullptr) {
+		PyErr_SetString(PyExc_RuntimeError, "Python thread state is corrupt or shutting down");
+		return nullptr;
+	}
 
 	// 2. Retrieve or create the thread-local allocator template
 	PyTypeObject* local_alloc_type = (PyTypeObject*)PyDict_GetItemString(thread_dict, JP_ALLOC_KEY);
@@ -375,24 +398,27 @@ PyObject* PyJPValue_alloc(PyTypeObject* type, Py_ssize_t nitems)
 		Py_INCREF(local_alloc_type);
 
 
-    // 3. Mutate the thread-local type safely
-    local_alloc_type->tp_flags = type->tp_flags;
-    local_alloc_type->tp_basicsize = type->tp_basicsize + sizeof(JPValue);
-    local_alloc_type->tp_itemsize = type->tp_itemsize;
+	// 3. Mutate the thread-local type safely
+	local_alloc_type->tp_flags = type->tp_flags;
+	local_alloc_type->tp_basicsize = type->tp_basicsize + sizeof(JPValue);
+	local_alloc_type->tp_itemsize = type->tp_itemsize;
 
-    // 4. Perform the allocation
-    PyObject* obj = PyType_GenericAlloc(local_alloc_type, nitems);
+	// 4. Perform the allocation
+	PyObject* obj = PyType_GenericAlloc(local_alloc_type, nitems);
 	Py_DECREF(local_alloc_type);
 
-    if (obj == nullptr)
-        return nullptr;
+	if (obj == nullptr)
+		return nullptr;
 
-    // 5. Polymorph the object to the target type
-    Py_SET_TYPE(obj, type);
-    Py_INCREF(type);
+	// 5. Polymorph the object to the target type
+	Py_SET_TYPE(obj, type);
+	Py_INCREF(type);
 
-    JP_TRACE("alloc", type->tp_name, obj);
-    return obj;
-    JP_PY_CATCH(nullptr);
+	JP_TRACE("alloc", type->tp_name, obj);
+	return obj;
+	JP_PY_CATCH(nullptr);
 }
 
+#ifdef __cplusplus
+}
+#endif

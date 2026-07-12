@@ -1,3 +1,4 @@
+// --- file: python/pyjp_char.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -22,8 +23,6 @@
 extern "C"
 {
 #endif
-
-PyTypeObject *PyJPChar_Type = nullptr;
 
 struct PyJPChar
 {
@@ -57,7 +56,7 @@ static int isNull(JPValue *javaSlot)
 	if (javaSlot != nullptr )
 	{
 		JPClass *cls = javaSlot->getClass();
-		if (cls->isPrimitive() || javaSlot->getValue().l != nullptr)
+		if (cls->isPrimitive() || !javaSlot->isJavaNull())
 			return 0;
 	}
 	return 1;
@@ -155,9 +154,8 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 
 /** This one is just used for initializing so the local copy matches.
  */
-Py_UCS2 fromJPValue(const JPValue & value)
+static Py_UCS2 fromJPValue(JPJavaFrame& frame, const JPValue & value)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	JPClass* cls = value.getClass();
 	if (cls->isPrimitive())
 		return (Py_UCS2) (value.getValue().c);
@@ -170,7 +168,7 @@ Py_UCS2 fromJPValue(const JPValue & value)
 
 /** Get the value of the char.  Does not touch Java.
  */
-Py_UCS2 fromJPChar(PyJPChar *self)
+static Py_UCS2 fromJPChar(PyJPChar *self)
 {
 	if (_PyUnicode_STATE(self).ascii == 1)
 	{
@@ -208,7 +206,7 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	PyObject *in = PyTuple_GetItem(pyargs, 0);
 	Py_UCS4 cv = ord(in);
 
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPType_getContext(type));
 	if (cv != (Py_UCS4) - 1)
 	{
 		JPPyObject v = JPPyObject::call(PyLong_FromLong(cv));
@@ -232,7 +230,7 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 		return nullptr;
 	}
 
-	PyObject *self = PyJPChar_Create(type, fromJPValue(jv));
+	PyObject *self = PyJPChar_Create(type, fromJPValue(frame, jv));
 	JP_PY_CHECK();
 	PyJPValue_assignJavaSlot(frame, self, jv);
 	return self;
@@ -583,31 +581,31 @@ struct PyGetSetDef charGetSet[] = {
 };
 
 static PyType_Slot charSlots[] = {
-	{Py_tp_new,       (void*) PyJPChar_new},
+	{Py_tp_new,	   (void*) PyJPChar_new},
 	{Py_tp_methods,   (void*) charMethods},
-	{Py_tp_getset,    (void*) charGetSet},
-	{Py_tp_str,       (void*) PyJPChar_str},
-	{Py_tp_repr,      (void*) PyJPChar_repr},
-	{Py_nb_index,     (void*) PyJPChar_index},
+	{Py_tp_getset,	(void*) charGetSet},
+	{Py_tp_str,	   (void*) PyJPChar_str},
+	{Py_tp_repr,	  (void*) PyJPChar_repr},
+	{Py_nb_index,	 (void*) PyJPChar_index},
 #if PY_VERSION_HEX<0x03080000
-	{Py_nb_int,     (void*) PyJPChar_index},
+	{Py_nb_int,	 (void*) PyJPChar_index},
 #endif
-	{Py_nb_float,     (void*) PyJPChar_float},
+	{Py_nb_float,	 (void*) PyJPChar_float},
 	{Py_nb_absolute,  (void*) PyJPChar_abs},
-	{Py_nb_and,       (void*) PyJPChar_and},
-	{Py_nb_or,        (void*) PyJPChar_or},
-	{Py_nb_xor,       (void*) PyJPChar_xor},
-	{Py_nb_add,       (void*) PyJPChar_add},
+	{Py_nb_and,	   (void*) PyJPChar_and},
+	{Py_nb_or,		(void*) PyJPChar_or},
+	{Py_nb_xor,	   (void*) PyJPChar_xor},
+	{Py_nb_add,	   (void*) PyJPChar_add},
 	{Py_nb_subtract,  (void*) PyJPChar_subtract},
 	{Py_nb_multiply,  (void*) PyJPChar_mult},
-	{Py_nb_rshift,    (void*) PyJPChar_rshift},
-	{Py_nb_lshift,    (void*) PyJPChar_lshift},
+	{Py_nb_rshift,	(void*) PyJPChar_rshift},
+	{Py_nb_lshift,	(void*) PyJPChar_lshift},
 	{Py_tp_richcompare, (void*) PyJPJChar_compare},
-	{Py_tp_hash,      (void*) PyJPChar_hash},
-	{Py_nb_bool,      (void*) PyJPChar_bool},
+	{Py_tp_hash,	  (void*) PyJPChar_hash},
+	{Py_nb_bool,	  (void*) PyJPChar_bool},
 	{Py_nb_negative,  (void*) PyJPChar_neg},
 	{Py_nb_positive,  (void*) PyJPChar_pos},
-	{Py_nb_invert,    (void*) PyJPChar_inv},
+	{Py_nb_invert,	(void*) PyJPChar_inv},
 	{Py_nb_floor_divide, (void*) PyJPChar_floordiv},
 	{Py_nb_divmod, (void*) PyJPChar_divmod},
 	{Py_tp_getattro,  (void*) PyJPValue_getattro},
@@ -624,16 +622,18 @@ static PyType_Spec charSpec = {
 	charSlots
 };
 
+void PyJPChar_initType(PyObject* module, PyJPModuleState* st)
+{	
+	// We will inherit from str and JObject
+	JPPyObject bases = JPPyTuple_Pack(&PyUnicode_Type, st->PyJPObject_Type);
+	st->PyJPChar_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(module, &charSpec, bases.get());
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
+	Py_INCREF((PyObject*) st->PyJPChar_Type);
+	PyModule_AddObject(module, "_JChar", (PyObject*) st->PyJPChar_Type);
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
+}
+
 #ifdef __cplusplus
 }
 #endif
 
-void PyJPChar_initType(PyObject* module)
-{
-	// We will inherit from str and JObject
-	JPPyObject bases = JPPyTuple_Pack(&PyUnicode_Type, PyJPObject_Type);
-	PyJPChar_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&charSpec, bases.get());
-	JP_PY_CHECK(); // GCOVR_EXCL_LINE
-	PyModule_AddObject(module, "_JChar", (PyObject*) PyJPChar_Type);
-	JP_PY_CHECK(); // GCOVR_EXCL_LINE
-}

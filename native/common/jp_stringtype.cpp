@@ -1,3 +1,4 @@
+// --- file: common/jp_stringtype.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -67,13 +68,12 @@ JPMatch::Type JPStringType::findJavaConversion(JPMatch& match)
 	JP_TRACE_OUT; // GCOV_EXCL_LINE
 }
 
-void JPStringType::getConversionInfo(JPConversionInfo &info)
+void JPStringType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	JPContext* context = frame.getContext();
-	objectConversion->getInfo(this, info);
-	stringConversion->getInfo(this, info);
-	hintsConversion->getInfo(this, info);
+	objectConversion->getInfo(frame, this, info);
+	stringConversion->getInfo(frame, this, info);
+	hintsConversion->getInfo(frame, this, info);
 	if (context->getConvertStrings())
 		PyList_Append(info.ret, (PyObject*) & PyUnicode_Type); // GCOVR_EXCL_LINE
 	else

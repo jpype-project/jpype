@@ -1,0 +1,8 @@
+kind: class
+module: collections
+class: defaultdict
+interface: python.collections.PyDefaultDict
+---
+METHODS = {
+    ".defaultFactory": lambda x: x.default_factory,
+}

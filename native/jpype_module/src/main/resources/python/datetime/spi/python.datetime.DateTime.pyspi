@@ -1,0 +1,38 @@
+kind: backend
+interface: python.datetime.DateTime
+---
+import datetime
+
+
+def _date(y, mo, d):
+    return datetime.date(int(y), int(mo), int(d))
+
+
+def _today():
+    return datetime.date.today()
+
+
+def _date_time(y, mo, d, h, mi, s, micro):
+    return datetime.datetime(int(y), int(mo), int(d), int(h), int(mi), int(s), int(micro))
+
+
+def _date_time_from_epoch_seconds(epoch_seconds):
+    return datetime.datetime.fromtimestamp(float(epoch_seconds), tz=datetime.timezone.utc)
+
+
+def _now():
+    return datetime.datetime.now()
+
+
+def _time_delta(days, seconds, microseconds):
+    return datetime.timedelta(days=int(days), seconds=int(seconds), microseconds=int(microseconds))
+
+
+METHODS = {
+    "date": _date,
+    "today": _today,
+    "dateTime": _date_time,
+    "dateTimeFromEpochSeconds": _date_time_from_epoch_seconds,
+    "now": _now,
+    "timeDelta": _time_delta,
+}
