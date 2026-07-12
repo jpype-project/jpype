@@ -330,3 +330,19 @@ class OverloadTestCase(common.JPypeTestCase):
         self.assertEqual(obj.testMember(jpype.JBoolean(True), Derived), 3)
         self.assertEqual(obj.testMember(jpype.JObject(True, Boolean), Derived), 4)
         self.assertEqual(obj.testMember(jpype.JObject(True, Object), Derived), 4)
+    def testInterfaceOverload(self):
+        """Test issue #844: Overloaded methods across ancestor interfaces"""
+        InterfaceOverload = JClass("jpype.overloads.InterfaceOverload")
+
+        # Test that both overloads exist
+        obj = InterfaceOverload.BothOverloads()
+        obj.doStuff()  # Should not raise TypeError
+        obj.doStuff("test")  # Should not raise TypeError
+
+        # Test that correct overload is called
+        tracker = InterfaceOverload.CallTracker()
+        tracker.doStuff()
+        self.assertEqual(tracker.lastCall, "noargs")
+
+        tracker.doStuff("hello")
+        self.assertEqual(tracker.lastCall, "string:hello")
