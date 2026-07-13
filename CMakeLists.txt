@@ -119,6 +119,7 @@ if(ENABLE_COVERAGE)
     add_link_options(--coverage)
 endif()
 
+# todo: handle like build_jar, if javac is there just do it. disabled by pip build by default.
 if(BUILD_TEST_HARNESS) # This requires a JDK of course.
     find_program(ANT_EXECUTABLE ant REQUIRED)
     
