@@ -12,7 +12,7 @@ set(SRC_JAR "${CMAKE_CURRENT_SOURCE_DIR}/org.jpype.jar")
 
 find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
 find_package(Python3 COMPONENTS Development.Embed)
-find_package(Java COMPONENTS Development) # java is optional, if the cached JAR does not exist.
+find_package(Java COMPONENTS Development) # java is optional, if the cached JAR exists.
 find_package(JNI)
 
 if(JNI_FOUND)
@@ -44,15 +44,18 @@ message(STATUS "Destination directory JAR: ${DEST_JAR_FN}")
 if(EXISTS "${SRC_JAR}")
     message(STATUS "FOUND ${SRC_JAR}. Using from cache.")
     file(COPY_FILE "${SRC_JAR}" "${DEST_JAR_FN}")
+elif(Java_FOUND)
+    message(STATUS "No cached JAR found, Java toolchain available. Building JAR.")
+    set(ENABLE_BUILD_JAR ON CACHE BOOL "Build JAR automatically" FORCE)
 else()
     message(STATUS "Source JAR ${SRC_JAR} NOT found.")
     if(NOT ENABLE_BUILD_JAR)
-        message(FATAL_ERROR "JAR building disabled, but no cached jar found!")
+        message(FATAL_ERROR "JAR building disabled, but NO cached Jar and NO JDK found!")
     endif()
 endif()
 
-# by default, we gonna rebuild the jar
-if(ENABLE_BUILD_JAR AND NOT EXISTS "${SRC_JAR}")
+# Build Java support library
+if(ENABLE_BUILD_JAR)
     message(STATUS "Building JAR")
 
     find_program(ANT_EXECUTABLE ant REQUIRED)
