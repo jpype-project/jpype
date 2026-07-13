@@ -3,7 +3,7 @@ project(jpype-native)
 
 option(ENABLE_TRACING "Enable tracing in the extension" OFF)
 option(ENABLE_COVERAGE "Enable compilation for coverage measurement" OFF)
-option(ENABLE_BUILD_JAR "Enable building of the Java JAR" ON)
+option(ENABLE_BUILD_JAR "Enable building of the Java support library JAR" ON)
 option(BUILD_TEST_HARNESS "Build the Java test harness" ON)
 # Optionally set Python GIL disabled flag
 # set(PY_GIL_DISABLED ON)
@@ -12,12 +12,16 @@ set(SRC_JAR "${CMAKE_CURRENT_SOURCE_DIR}/org.jpype.jar")
 
 find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
 find_package(Python3 COMPONENTS Development.Embed)
-find_package(Java COMPONENTS Development) # java is optional, if the cached JAR exists.
+find_package(Java COMPONENTS Development) # Java is optional during the build process, if a cached JAR exists.
 find_package(JNI)
 
-if(JNI_FOUND)
-    message(STATUS "System JNI found successfully.")
-else()
+message(DEBUG "Java_FOUND='${Java_FOUND}'")
+message(DEBUG "Java_JAVA_EXECUTABLE='${Java_JAVA_EXECUTABLE}'")
+message(DEBUG "Java_JAVAC_EXECUTABLE='${Java_JAVAC_EXECUTABLE}'")
+message(DEBUG "Java_Development_FOUND='${Java_Development_FOUND}'")
+
+
+if(NOT JNI_FOUND)
     message(STATUS "System JNI headers not found. Falling back to bundled jni.h.")
     set(JNI_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/native/jni_include")
 endif()
@@ -35,7 +39,8 @@ else()
     set(DEST_EXTENSION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
-set(DEST_JAR_FN "${DEST_JAR}/org.jpype.jar")
+set(JPYPE_JAR_FN "org.jpype.jar")
+set(DEST_JAR_FN "${DEST_JAR}/${JPYPE_JAR_FN}")
 
 message(STATUS "Destination Python extension: ${DEST_EXTENSION}")
 message(STATUS "Destination directory JAR: ${DEST_JAR_FN}")
@@ -44,13 +49,12 @@ message(STATUS "Destination directory JAR: ${DEST_JAR_FN}")
 if(EXISTS "${SRC_JAR}")
     message(STATUS "FOUND ${SRC_JAR}. Using from cache.")
     file(COPY_FILE "${SRC_JAR}" "${DEST_JAR_FN}")
-elif(Java_FOUND)
-    message(STATUS "No cached JAR found, Java toolchain available. Building JAR.")
+elseif(Java_Development_FOUND)
+    message(STATUS "No cached JAR found, Java dev toolchain available. Forcing building JAR.")
     set(ENABLE_BUILD_JAR ON CACHE BOOL "Build JAR automatically" FORCE)
 else()
-    message(STATUS "Source JAR ${SRC_JAR} NOT found.")
     if(NOT ENABLE_BUILD_JAR)
-        message(FATAL_ERROR "JAR building disabled, but NO cached Jar and NO JDK found!")
+        message(FATAL_ERROR "JAR building disabled, but NO cached JAR and NO JDK found!")
     endif()
 endif()
 
@@ -60,7 +64,7 @@ if(ENABLE_BUILD_JAR)
 
     find_program(ANT_EXECUTABLE ant REQUIRED)
     # this is the build artifact of Ant.
-    set(JAR_OUTPUT "${CMAKE_SOURCE_DIR}/native/build/lib/org.jpype.jar")
+    set(JAR_OUTPUT "${CMAKE_SOURCE_DIR}/native/build/lib/${JPYPE_JAR_FN}")
 
     # we also need to copy the JAR_OUTPUT to CMAKE_CURRENT_BINARY_DIR
     add_custom_command(
@@ -73,7 +77,7 @@ if(ENABLE_BUILD_JAR)
     add_custom_target(jpype_jar ALL DEPENDS "${JAR_OUTPUT}")
 
     # Copy the Ant build artifact to current cmake output dir (required for editable installs).
-    set(DEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/org.jpype.jar")
+    set(DEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${JPYPE_JAR_FN}")
     add_custom_command(
             OUTPUT "${DEST_FILE}"
             COMMAND ${CMAKE_COMMAND} -E copy "${JAR_OUTPUT}" "${DEST_FILE}"
@@ -132,113 +136,4 @@ if(BUILD_TEST_HARNESS) # This requires a JDK of course.
     add_custom_target(build_tests ALL DEPENDS "${TEST_SENTINEL}")
 endif()
 
-
-# C++ Python extension
-include_directories(
-        native/common/include
-        native/python/include
-        ${JNI_INCLUDE_DIRS}
-)
-
-set(JPYPE_NATIVE_SRC
-        native/common/jp_array.cpp
-        native/common/jp_arrayclass.cpp
-        native/common/jp_booleantype.cpp
-        native/common/jp_boxedtype.cpp
-        native/common/jp_buffer.cpp
-        native/common/jp_buffertype.cpp
-        native/common/jp_bytetype.cpp
-        native/common/jp_chartype.cpp
-        native/common/jp_class.cpp
-        native/common/jp_classhints.cpp
-        native/common/jp_classloader.cpp
-        native/common/jp_classtype.cpp
-        native/common/jp_context.cpp
-        native/common/jp_convert.cpp
-        native/common/jp_doubletype.cpp
-        native/common/jp_encoding.cpp
-        native/common/jp_exception.cpp
-        native/common/jp_field.cpp
-        native/common/jp_floattype.cpp
-        native/common/jp_functional.cpp
-        native/common/jp_gc.cpp
-        native/common/jp_inttype.cpp
-        native/common/jp_javaframe.cpp
-        native/common/jp_longtype.cpp
-        native/common/jp_method.cpp
-        native/common/jp_methoddispatch.cpp
-        native/common/jp_monitor.cpp
-        native/common/jp_numbertype.cpp
-        native/common/jp_objecttype.cpp
-        native/common/jp_platform.cpp
-        native/common/jp_primitivetype.cpp
-        native/common/jp_proxy.cpp
-        native/common/jp_reference_queue.cpp
-        native/common/jp_shorttype.cpp
-        native/common/jp_stringtype.cpp
-        native/common/jp_tracer.cpp
-        native/common/jp_typefactory.cpp
-        native/common/jp_typemanager.cpp
-        native/common/jp_value.cpp
-        native/common/jp_voidtype.cpp
-        native/python/jp_pythontypes.cpp
-        native/python/pyjp_array.cpp
-        native/python/pyjp_buffer.cpp
-        native/python/pyjp_char.cpp
-        native/python/pyjp_class.cpp
-        native/python/pyjp_classhints.cpp
-        native/python/pyjp_field.cpp
-        native/python/pyjp_method.cpp
-        native/python/pyjp_module.cpp
-        native/python/pyjp_monitor.cpp
-        native/python/pyjp_number.cpp
-        native/python/pyjp_object.cpp
-        native/python/pyjp_package.cpp
-        native/python/pyjp_proxy.cpp
-        native/python/pyjp_value.cpp
-)
-
-Python3_add_library(_jpype MODULE ${JPYPE_NATIVE_SRC})
-target_link_libraries(_jpype PRIVATE Python3::Module)
-# Set target properties for scikit-build export
-set_target_properties(_jpype PROPERTIES
-        PREFIX ""  # remove 'lib' prefix
-)
-set_target_properties(_jpype PROPERTIES OUTPUT_NAME "_jpype")
-
-# Apply Windows-specific configuration
-if(WIN32)
-    # Define WIN32 macro (Windows-specific code)
-    target_compile_definitions(_jpype PRIVATE WIN32=1)
-    # Required: .pyd suffix
-    set_target_properties(_jpype PROPERTIES SUFFIX ".pyd")
-
-    # Required: export all symbols for Python module
-    set_target_properties(_jpype PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-
-    # Ensure /MD and exception model are set
-    target_compile_options(_jpype PRIVATE /EHsc /MD)
-else()
-    # Additional libraries for non-Windows
-    target_link_libraries(_jpype PRIVATE
-            dl # dynamic linker
-    )
-    # Keep frame pointers for better stack unwinding.
-    add_compile_options(-fno-omit-frame-pointer)
-
-    # even on OSX Python uses .so suffix instead of .dylib
-    set_target_properties(_jpype PROPERTIES SUFFIX ".so")
-endif()
-
-
-# Only stage the extension into the wheel if scikit-build-core is building
-if(SKBUILD)
-    message(STATUS "install _jpype extension to ${DEST_EXTENSION}")
-    install(TARGETS _jpype
-            LIBRARY DESTINATION ${DEST_EXTENSION}
-            RUNTIME DESTINATION ${DEST_EXTENSION}
-    )
-else()
-    message(DEBUG "no skbuild env")
-endif()
-
+add_subdirectory(native)
