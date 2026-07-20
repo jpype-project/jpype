@@ -27,9 +27,15 @@ import argparse
 import json
 import os
 import sys
+import time
 from pathlib import Path
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
+
+# Delay between per-item requests in refresh/update/cleanup's loops, so
+# checking a large local cache (one request per item) doesn't trip GitHub's
+# secondary rate limiting the way a burst of rapid sequential requests can.
+PER_ITEM_DELAY_SECONDS = 0.3
 
 
 REPO_OWNER = "jpype-project"
@@ -80,25 +86,38 @@ def fetch_comments(issue_number):
     return comments
 
 
-def fetch_issue_details(issue_number):
-    """Fetch a single issue's top-level data. Returns None if it doesn't exist or is a PR."""
+def fetch_issue_details(issue_number, retries=4):
+    """Fetch a single issue's top-level data. Returns None if it doesn't exist
+    or is a PR (both confirmed via a successful response, not a failure).
+    Any actual fetch failure (auth, rate limit, network) is NOT evidence the
+    issue is gone - re-raises so callers don't mistake "couldn't check" for
+    "confirmed gone" and delete good local data over a transient error.
+    Retries on 429 (secondary rate limiting from per-item loops), honoring
+    Retry-After if GitHub sends one."""
     url = f"{API_BASE}/issues/{issue_number}"
-    try:
-        with make_request(url) as response:
-            issue = json.loads(response.read().decode('utf-8'))
-            if 'pull_request' in issue:
+    for attempt in range(retries):
+        try:
+            with make_request(url) as response:
+                issue = json.loads(response.read().decode('utf-8'))
+                if 'pull_request' in issue:
+                    return None
+                return issue
+        except HTTPError as e:
+            if e.code == 404:
                 return None
-            return issue
-    except HTTPError as e:
-        if e.code == 404:
-            return None
-        print(f"    Warning: Failed to fetch issue #{issue_number}: {e.code}")
-        if e.code == 403:
-            print(f"    Rate limit hit. Set GITHUB_TOKEN environment variable to continue.")
-        return None
-    except URLError as e:
-        print(f"    Warning: Failed to fetch issue #{issue_number}: {e.reason}")
-        return None
+            if e.code == 429 and attempt < retries - 1:
+                wait = int(e.headers.get('Retry-After', 5))
+                print(f"    Rate limited fetching issue #{issue_number}, waiting {wait}s "
+                      f"(attempt {attempt + 1}/{retries})...")
+                time.sleep(wait)
+                continue
+            print(f"    Warning: Failed to fetch issue #{issue_number}: {e.code}")
+            if e.code == 403:
+                print(f"    Rate limit hit. Set GITHUB_TOKEN environment variable to continue.")
+            raise
+        except URLError as e:
+            print(f"    Warning: Failed to fetch issue #{issue_number}: {e.reason}")
+            raise
 
 
 def enrich_issue(issue):
@@ -261,10 +280,16 @@ def cmd_refresh(numbers):
 
     for issue_num in numbers:
         print(f"Refreshing issue #{issue_num}...")
-        issue = fetch_issue_details(issue_num)
+        try:
+            issue = fetch_issue_details(issue_num)
+        except (HTTPError, URLError):
+            print(f"  Issue #{issue_num}: fetch failed (see warning above) - left untouched locally.")
+            time.sleep(PER_ITEM_DELAY_SECONDS)
+            continue
         if issue is None:
-            print(f"  Issue #{issue_num} not found (deleted, a PR, or a bad number?) - left "
+            print(f"  Issue #{issue_num} not found (confirmed 404, or a PR) - left "
                   f"untouched locally. Run cleanup to prune it if it's gone for good.")
+            time.sleep(PER_ITEM_DELAY_SECONDS)
             continue
 
         enrich_issue(issue)
@@ -272,6 +297,7 @@ def cmd_refresh(numbers):
         local[issue_num] = issue
         refreshed += 1
         print(f"  → #{issue_num}: {issue['title']} ({issue['state']})")
+        time.sleep(PER_ITEM_DELAY_SECONDS)
 
     build_index_and_summary(local)
     print(f"\n✓ Refreshed {refreshed}/{len(numbers)} requested issues")
@@ -296,19 +322,34 @@ def cmd_cleanup():
         return
 
     removed = []
+    skipped = []
     kept = {}
     for issue_num in sorted(local.keys()):
         print(f"Checking issue #{issue_num}...")
-        issue = fetch_issue_details(issue_num)
+        try:
+            issue = fetch_issue_details(issue_num)
+        except (HTTPError, URLError):
+            # Couldn't confirm status (auth/rate-limit/network) - NOT evidence
+            # it's gone. Leave the cached copy exactly as it was.
+            print(f"  Could not confirm status for #{issue_num} - leaving it cached as-is.")
+            skipped.append(issue_num)
+            kept[issue_num] = local[issue_num]
+            time.sleep(PER_ITEM_DELAY_SECONDS)
+            continue
+
         if issue is None or issue.get('state') != 'open':
             removed.append(issue_num)
             remove_issue_file(issue_num)
         else:
             issue['comment_chain'] = local[issue_num].get('comment_chain', [])
             kept[issue_num] = issue
+        time.sleep(PER_ITEM_DELAY_SECONDS)
 
     build_index_and_summary(kept)
 
+    if skipped:
+        print(f"\n⚠ Could not confirm {len(skipped)} issue(s) (left untouched): "
+              f"{', '.join(f'#{n}' for n in skipped)}")
     if removed:
         print(f"\n✓ Removed {len(removed)} no-longer-open issue(s): {', '.join(f'#{n}' for n in removed)}")
     else:

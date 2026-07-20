@@ -27,9 +27,15 @@ import argparse
 import json
 import os
 import sys
+import time
 from pathlib import Path
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
+
+# Delay between per-item requests in refresh/update/cleanup's loops, so
+# checking a large local cache (one request per item) doesn't trip GitHub's
+# secondary rate limiting the way a burst of rapid sequential requests can.
+PER_ITEM_DELAY_SECONDS = 0.3
 
 
 REPO_OWNER = "jpype-project"
@@ -100,22 +106,34 @@ def fetch_commits(pr_number):
     return _fetch_paginated(f"{API_BASE}/pulls/{pr_number}/commits", "commits", pr_number)
 
 
-def fetch_pr_details(pr_number):
-    """Fetch a single PR's top-level data. Returns None if it doesn't exist."""
+def fetch_pr_details(pr_number, retries=4):
+    """Fetch a single PR's top-level data. Returns None only on a confirmed
+    404 (the PR number doesn't exist). Any other failure (auth, rate limit,
+    network) is NOT evidence the PR is gone - re-raises so callers don't
+    mistake "couldn't check" for "confirmed gone" and delete good local data
+    over a transient error. Retries on 429 (secondary rate limiting from
+    per-item loops), honoring Retry-After if GitHub sends one."""
     url = f"{API_BASE}/pulls/{pr_number}"
-    try:
-        with make_request(url) as response:
-            return json.loads(response.read().decode('utf-8'))
-    except HTTPError as e:
-        if e.code == 404:
-            return None
-        print(f"    Warning: Failed to fetch PR #{pr_number}: {e.code}")
-        if e.code == 403:
-            print(f"    Rate limit hit. Set GITHUB_TOKEN environment variable to continue.")
-        return None
-    except URLError as e:
-        print(f"    Warning: Failed to fetch PR #{pr_number}: {e.reason}")
-        return None
+    for attempt in range(retries):
+        try:
+            with make_request(url) as response:
+                return json.loads(response.read().decode('utf-8'))
+        except HTTPError as e:
+            if e.code == 404:
+                return None
+            if e.code == 429 and attempt < retries - 1:
+                wait = int(e.headers.get('Retry-After', 5))
+                print(f"    Rate limited fetching PR #{pr_number}, waiting {wait}s "
+                      f"(attempt {attempt + 1}/{retries})...")
+                time.sleep(wait)
+                continue
+            print(f"    Warning: Failed to fetch PR #{pr_number}: {e.code}")
+            if e.code == 403:
+                print(f"    Rate limit hit. Set GITHUB_TOKEN environment variable to continue.")
+            raise
+        except URLError as e:
+            print(f"    Warning: Failed to fetch PR #{pr_number}: {e.reason}")
+            raise
 
 
 def enrich_pr(pr):
@@ -313,10 +331,16 @@ def cmd_refresh(numbers):
 
     for pr_num in numbers:
         print(f"Refreshing PR #{pr_num}...")
-        pr = fetch_pr_details(pr_num)
+        try:
+            pr = fetch_pr_details(pr_num)
+        except (HTTPError, URLError):
+            print(f"  PR #{pr_num}: fetch failed (see warning above) - left untouched locally.")
+            time.sleep(PER_ITEM_DELAY_SECONDS)
+            continue
         if pr is None:
-            print(f"  PR #{pr_num} not found (deleted, or a bad number?) - left untouched locally. "
+            print(f"  PR #{pr_num} not found (confirmed 404) - left untouched locally. "
                   f"Run cleanup to prune it if it's gone for good.")
+            time.sleep(PER_ITEM_DELAY_SECONDS)
             continue
 
         enrich_pr(pr)
@@ -324,6 +348,7 @@ def cmd_refresh(numbers):
         local[pr_num] = pr
         refreshed += 1
         print(f"  → #{pr_num}: {pr['title']} ({pr['state']})")
+        time.sleep(PER_ITEM_DELAY_SECONDS)
 
     build_index_and_summary(local)
     print(f"\n✓ Refreshed {refreshed}/{len(numbers)} requested PRs")
@@ -348,10 +373,21 @@ def cmd_cleanup():
         return
 
     removed = []
+    skipped = []
     kept = {}
     for pr_num in sorted(local.keys()):
         print(f"Checking PR #{pr_num}...")
-        pr = fetch_pr_details(pr_num)
+        try:
+            pr = fetch_pr_details(pr_num)
+        except (HTTPError, URLError):
+            # Couldn't confirm status (auth/rate-limit/network) - NOT evidence
+            # it's gone. Leave the cached copy exactly as it was.
+            print(f"  Could not confirm status for #{pr_num} - leaving it cached as-is.")
+            skipped.append(pr_num)
+            kept[pr_num] = local[pr_num]
+            time.sleep(PER_ITEM_DELAY_SECONDS)
+            continue
+
         if pr is None or pr.get('state') != 'open':
             removed.append(pr_num)
             remove_pr_file(pr_num)
@@ -362,9 +398,13 @@ def cmd_cleanup():
             pr['reviews'] = local[pr_num].get('reviews', [])
             pr['commits'] = local[pr_num].get('commits', [])
             kept[pr_num] = pr
+        time.sleep(PER_ITEM_DELAY_SECONDS)
 
     build_index_and_summary(kept)
 
+    if skipped:
+        print(f"\n⚠ Could not confirm {len(skipped)} PR(s) (left untouched): "
+              f"{', '.join(f'#{n}' for n in skipped)}")
     if removed:
         print(f"\n✓ Removed {len(removed)} no-longer-open PR(s): {', '.join(f'#{n}' for n in removed)}")
     else:

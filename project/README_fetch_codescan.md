@@ -48,20 +48,26 @@ python3 project/fetch_codescan.py cleanup
 `refresh`/`update`/`cleanup` always rebuild `index.json`/`README.md` from the full local
 cache afterward, not just the numbers touched.
 
-## Authentication (Required, and a Stricter Scope Than the Sibling Scripts)
+## Authentication (Required, and More Than the Sibling Scripts Need)
 
-This endpoint needs a GitHub **classic** token with the **`security_events`** scope.
-The no-scope token that's enough for `fetch_prs.py`/`fetch_issues.py` is **not** enough
-here - GitHub returns `403 Resource not accessible by personal access token` if the scope
-is missing, even though the token works fine for issues/PRs.
+This endpoint needs more access than `fetch_prs.py`/`fetch_issues.py` require - a token
+that works fine for those can still get `403 Resource not accessible by personal access
+token` here. What to add depends on the token type:
+
+Both token types can be edited in place - no new token/secret needed, the existing
+`GITHUB_TOKEN` value keeps working once the permission is added:
+
+- **Classic token** (`ghp_...`): https://github.com/settings/tokens → the token → check
+  `security_events` → Update token.
+- **Fine-grained token** (`github_pat_...`): https://github.com/settings/personal-access-tokens
+  → the token → Repository permissions → "Code scanning alerts" → Read-only → Update token.
+  This is a separate per-repo permission, not a scope - it won't be listed anywhere near the
+  Issues/Pull requests permissions you likely already granted for the sibling scripts.
 
 ```bash
 export GITHUB_TOKEN=ghp_your_token_with_security_events_scope
 python3 project/fetch_codescan.py fetch
 ```
-
-To add the scope: https://github.com/settings/tokens → edit the token → check
-`security_events` → regenerate.
 
 ## Output Structure
 

@@ -38,9 +38,16 @@ import argparse
 import json
 import os
 import sys
+import time
 from pathlib import Path
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
+
+# Delay between per-item requests in refresh/update/cleanup's loops, so
+# checking a large local cache (one request per item) doesn't trip GitHub's
+# secondary rate limiting the way a burst of 100+ rapid sequential requests
+# did during testing.
+PER_ITEM_DELAY_SECONDS = 0.3
 
 
 REPO_OWNER = "jpype-project"
@@ -67,9 +74,11 @@ def make_request(url):
 
 def _explain_403(e):
     if e.code == 403:
-        print("    This endpoint needs a GitHub token with the `security_events` scope "
-              "(classic tokens) - a token that works fine for fetch_prs.py/fetch_issues.py "
-              "may still be rejected here. Regenerate the token with that scope added.")
+        print("    This endpoint needs elevated access beyond what fetch_prs.py/fetch_issues.py "
+              "require - a token that works fine for those may still be rejected here:")
+        print("      - Classic token (ghp_...): add the `security_events` scope.")
+        print("      - Fine-grained token (github_pat_...): add the repository permission "
+              "\"Code scanning alerts\" (Read-only), under the token's per-repo permissions.")
 
 
 def fetch_alerts(state="open"):
@@ -109,21 +118,33 @@ def fetch_alerts(state="open"):
     return alerts
 
 
-def fetch_alert_details(alert_number):
-    """Fetch a single alert's data. Returns None if it doesn't exist."""
+def fetch_alert_details(alert_number, retries=4):
+    """Fetch a single alert's data. Returns None only on a confirmed 404 (the
+    alert number doesn't exist). Any other failure (auth, rate limit, network)
+    is NOT evidence the alert is gone - re-raises so callers don't mistake
+    "couldn't check" for "confirmed gone" and delete good local data over a
+    transient error. Retries on 429 (secondary rate limiting from per-item
+    loops), honoring Retry-After if GitHub sends one."""
     url = f"{API_BASE}/code-scanning/alerts/{alert_number}"
-    try:
-        with make_request(url) as response:
-            return json.loads(response.read().decode('utf-8'))
-    except HTTPError as e:
-        if e.code == 404:
-            return None
-        print(f"    Warning: Failed to fetch alert #{alert_number}: {e.code}")
-        _explain_403(e)
-        return None
-    except URLError as e:
-        print(f"    Warning: Failed to fetch alert #{alert_number}: {e.reason}")
-        return None
+    for attempt in range(retries):
+        try:
+            with make_request(url) as response:
+                return json.loads(response.read().decode('utf-8'))
+        except HTTPError as e:
+            if e.code == 404:
+                return None
+            if e.code == 429 and attempt < retries - 1:
+                wait = int(e.headers.get('Retry-After', 5))
+                print(f"    Rate limited fetching alert #{alert_number}, waiting {wait}s "
+                      f"(attempt {attempt + 1}/{retries})...")
+                time.sleep(wait)
+                continue
+            print(f"    Warning: Failed to fetch alert #{alert_number}: {e.code}")
+            _explain_403(e)
+            raise
+        except URLError as e:
+            print(f"    Warning: Failed to fetch alert #{alert_number}: {e.reason}")
+            raise
 
 
 def load_local_alerts():
@@ -258,10 +279,16 @@ def cmd_refresh(numbers):
 
     for alert_num in numbers:
         print(f"Refreshing alert #{alert_num}...")
-        alert = fetch_alert_details(alert_num)
+        try:
+            alert = fetch_alert_details(alert_num)
+        except (HTTPError, URLError):
+            print(f"  Alert #{alert_num}: fetch failed (see warning above) - left untouched locally.")
+            time.sleep(PER_ITEM_DELAY_SECONDS)
+            continue
         if alert is None:
-            print(f"  Alert #{alert_num} not found - left untouched locally. "
+            print(f"  Alert #{alert_num} not found (confirmed 404) - left untouched locally. "
                   f"Run cleanup to prune it if it's gone for good.")
+            time.sleep(PER_ITEM_DELAY_SECONDS)
             continue
 
         write_alert_file(alert)
@@ -269,6 +296,7 @@ def cmd_refresh(numbers):
         refreshed += 1
         rule = alert.get('rule') or {}
         print(f"  → #{alert_num}: {rule.get('description')} ({alert['state']})")
+        time.sleep(PER_ITEM_DELAY_SECONDS)
 
     build_index_and_summary(local)
     print(f"\n✓ Refreshed {refreshed}/{len(numbers)} requested alerts")
@@ -293,18 +321,33 @@ def cmd_cleanup():
         return
 
     removed = []
+    skipped = []
     kept = {}
     for alert_num in sorted(local.keys()):
         print(f"Checking alert #{alert_num}...")
-        alert = fetch_alert_details(alert_num)
+        try:
+            alert = fetch_alert_details(alert_num)
+        except (HTTPError, URLError):
+            # Couldn't confirm status (auth/rate-limit/network) - NOT evidence
+            # it's gone. Leave the cached copy exactly as it was.
+            print(f"  Could not confirm status for #{alert_num} - leaving it cached as-is.")
+            skipped.append(alert_num)
+            kept[alert_num] = local[alert_num]
+            time.sleep(PER_ITEM_DELAY_SECONDS)
+            continue
+
         if alert is None or alert.get('state') != 'open':
             removed.append(alert_num)
             remove_alert_file(alert_num)
         else:
             kept[alert_num] = alert
+        time.sleep(PER_ITEM_DELAY_SECONDS)
 
     build_index_and_summary(kept)
 
+    if skipped:
+        print(f"\n⚠ Could not confirm {len(skipped)} alert(s) (left untouched): "
+              f"{', '.join(f'#{n}' for n in skipped)}")
     if removed:
         print(f"\n✓ Removed {len(removed)} no-longer-open alert(s): {', '.join(f'#{n}' for n in removed)}")
     else:
