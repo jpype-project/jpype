@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Fetch all pull requests from jpype-project/jpype GitHub repository.
-Saves PRs to ../pr/ directory as individual JSON files for analysis.
+Saves PRs to project/pr/ directory as individual JSON files for analysis.
 
 Usage:
   python3 fetch_prs.py [open|closed|all]
@@ -22,7 +22,7 @@ from urllib.error import HTTPError, URLError
 REPO_OWNER = "jpype-project"
 REPO_NAME = "jpype"
 API_BASE = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}"
-PRS_DIR = Path(__file__).parent.parent / "pr"
+PRS_DIR = Path(__file__).parent / "pr"
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 
 

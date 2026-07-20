@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Fetch all active (open) issues from jpype-project/jpype GitHub repository.
-Saves issues to ../issues/ directory as individual JSON files for analysis.
+Saves issues to project/issues/ directory as individual JSON files for analysis.
 
 Usage:
   python3 fetch_issues.py [open|closed|all]
@@ -22,7 +22,7 @@ from urllib.error import HTTPError, URLError
 REPO_OWNER = "jpype-project"
 REPO_NAME = "jpype"
 API_BASE = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}"
-ISSUES_DIR = Path(__file__).parent.parent / "issues"
+ISSUES_DIR = Path(__file__).parent / "issues"
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
 
 

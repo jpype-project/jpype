@@ -40,11 +40,11 @@ With authentication, you get **5000 requests/hour**.
 
 ## Output Structure
 
-All data is saved to the `issues/` directory (already in `.gitignore`):
+All data is saved to the `project/issues/` directory (already in `.gitignore`):
 
-- **`issues/README.md`** - Human-readable summary with links
-- **`issues/index.json`** - Structured index with metadata
-- **`issues/issue_*.json`** - Individual issue files with full data
+- **`project/issues/README.md`** - Human-readable summary with links
+- **`project/issues/index.json`** - Structured index with metadata
+- **`project/issues/issue_*.json`** - Individual issue files with full data
 
 ### Issue JSON Structure
 
@@ -79,11 +79,11 @@ export GITHUB_TOKEN=ghp_your_token
 python3 project/fetch_issues.py
 
 # Find issues with most comments
-jq '.[] | {number, title, comments}' issues/index.json | jq -s 'sort_by(.comments) | reverse | .[0:10]'
+jq '.[] | {number, title, comments}' project/issues/index.json | jq -s 'sort_by(.comments) | reverse | .[0:10]'
 
 # Search for keyword in issue bodies
-grep -l "performance" issues/issue_*.json
+grep -l "performance" project/issues/issue_*.json
 
 # Find all issues labeled "bug"
-jq '.[] | select(.labels | any(. == "bug")) | {number, title}' issues/index.json
+jq '.[] | select(.labels | any(. == "bug")) | {number, title}' project/issues/index.json
 ```

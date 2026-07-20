@@ -30,11 +30,11 @@ With authentication, you get **5000 requests/hour**. See the [fetch_issues READM
 
 ## Output Structure
 
-All data is saved to the `pr/` directory (already in `.gitignore`):
+All data is saved to the `project/pr/` directory (already in `.gitignore`):
 
-- **`pr/README.md`** - Human-readable summary with status, stats, and links
-- **`pr/index.json`** - Structured index with metadata
-- **`pr/pr_*.json`** - Individual PR files with complete data
+- **`project/pr/README.md`** - Human-readable summary with status, stats, and links
+- **`project/pr/index.json`** - Structured index with metadata
+- **`project/pr/pr_*.json`** - Individual PR files with complete data
 
 ### PR JSON Structure
 
@@ -108,43 +108,43 @@ Example structure:
 ### 1. See what features are in progress
 ```bash
 python3 project/fetch_prs.py open
-cat pr/README.md
+cat project/pr/README.md
 ```
 
 ### 2. Check PR review status
 ```bash
 # Find PRs awaiting review
-jq '.[] | select(.state == "open") | {number, title, reviews: (.reviews | length)}' pr/index.json
+jq '.[] | select(.state == "open") | {number, title, reviews: (.reviews | length)}' project/pr/index.json
 
 # Find approved but not merged
-jq -r '.[] | select(.reviews[] | select(.state == "APPROVED")) | "PR #\(.number): \(.title)"' pr/pr_*.json
+jq -r '.[] | select(.reviews[] | select(.state == "APPROVED")) | "PR #\(.number): \(.title)"' project/pr/pr_*.json
 ```
 
 ### 3. Track work by label
 ```bash
 # Find all "enhancement" PRs
-jq '.[] | select(.labels | any(. == "enhancement")) | {number, title, state}' pr/index.json
+jq '.[] | select(.labels | any(. == "enhancement")) | {number, title, state}' project/pr/index.json
 
 # Find "bug" fixes
-jq '.[] | select(.labels | any(. == "bug")) | {number, title, state}' pr/index.json
+jq '.[] | select(.labels | any(. == "bug")) | {number, title, state}' project/pr/index.json
 ```
 
 ### 4. Identify stale PRs
 ```bash
 # PRs not updated in 6+ months
-jq '.[] | select(.state == "open") | select(.updated_at < "2025-07-01") | {number, title, updated_at}' pr/index.json
+jq '.[] | select(.state == "open") | select(.updated_at < "2025-07-01") | {number, title, updated_at}' project/pr/index.json
 ```
 
 ### 5. Check PR size/complexity
 ```bash
 # Large PRs (>500 line changes)
-jq '.[] | select((.additions + .deletions) > 500) | {number, title, size: (.additions + .deletions)}' pr/index.json | jq -s 'sort_by(.size) | reverse'
+jq '.[] | select((.additions + .deletions) > 500) | {number, title, size: (.additions + .deletions)}' project/pr/index.json | jq -s 'sort_by(.size) | reverse'
 ```
 
 ### 6. Find PRs with unresolved discussions
 ```bash
 # PRs with many review comments (potential concerns)
-jq '.[] | select(.review_comments > 10) | {number, title, review_comments}' pr/index.json
+jq '.[] | select(.review_comments > 10) | {number, title, review_comments}' project/pr/index.json
 ```
 
 ## Example Workflow
@@ -157,24 +157,24 @@ export GITHUB_TOKEN=ghp_your_token
 python3 project/fetch_prs.py all
 
 # Get overview
-cat pr/README.md
+cat project/pr/README.md
 
 # Find what's ready to merge (approved, no draft)
-jq '.[] | select(.state == "open" and .draft == false) | {number, title}' pr/index.json
+jq '.[] | select(.state == "open" and .draft == false) | {number, title}' project/pr/index.json
 
 # Check specific PR details
-cat pr/pr_1391.json | jq '{title, state, additions, deletions, comments: (.comment_chain | length), reviews: (.reviews | length)}'
+cat project/pr/pr_1391.json | jq '{title, state, additions, deletions, comments: (.comment_chain | length), reviews: (.reviews | length)}'
 ```
 
 ## Integration with Issues
 
-Since you have both `issues/` and `pr/` directories:
+Since you have both `project/issues/` and `project/pr/` directories:
 
 ```bash
 # Find PRs that mention specific issue
-grep -l "#1234" pr/pr_*.json
+grep -l "#1234" project/pr/pr_*.json
 
 # Cross-reference: PRs addressing "performance" issues
-grep -l "performance" issues/issue_*.json
-grep -l "performance" pr/pr_*.json
+grep -l "performance" project/issues/issue_*.json
+grep -l "performance" project/pr/pr_*.json
 ```
