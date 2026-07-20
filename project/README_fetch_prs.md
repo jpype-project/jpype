@@ -15,6 +15,31 @@ python3 project/fetch_prs.py closed
 python3 project/fetch_prs.py all
 ```
 
+## Commands
+
+The bare `[open|closed|all]` form above is shorthand for `fetch [state]`. The full set of
+subcommands:
+
+```bash
+# Bulk (re)fetch by state - writes/overwrites what's fetched, leaves anything
+# already cached but not returned this run alone.
+python3 project/fetch_prs.py fetch [open|closed|all]
+
+# Re-fetch specific PR(s) by number and update them in place - e.g. after
+# force-pushing new commits to a PR branch and wanting the local cache to
+# reflect the new head/commits/state right away.
+python3 project/fetch_prs.py refresh 1385 [1234 ...]
+
+# Re-fetch every PR currently cached locally (refresh applied to all cached numbers).
+python3 project/fetch_prs.py update
+
+# Remove cached PRs that are no longer open on GitHub (merged, closed, or deleted).
+python3 project/fetch_prs.py cleanup
+```
+
+`refresh`/`update`/`cleanup` always rebuild `index.json`/`README.md` from the full local
+cache afterward, not just the numbers touched.
+
 ## Authentication (Recommended)
 
 GitHub's unauthenticated API has a limit of **60 requests/hour**. Since fetching PRs requires multiple requests per PR (comments, reviews, commits), you'll hit this limit quickly.

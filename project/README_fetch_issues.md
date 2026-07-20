@@ -15,6 +15,29 @@ python3 project/fetch_issues.py closed
 python3 project/fetch_issues.py all
 ```
 
+## Commands
+
+The bare `[open|closed|all]` form above is shorthand for `fetch [state]`. The full set of
+subcommands:
+
+```bash
+# Bulk (re)fetch by state - writes/overwrites what's fetched, leaves anything
+# already cached but not returned this run alone.
+python3 project/fetch_issues.py fetch [open|closed|all]
+
+# Re-fetch specific issue(s) by number and update them in place.
+python3 project/fetch_issues.py refresh 1234 [1235 ...]
+
+# Re-fetch every issue currently cached locally (refresh applied to all cached numbers).
+python3 project/fetch_issues.py update
+
+# Remove cached issues that are no longer open on GitHub (closed or deleted).
+python3 project/fetch_issues.py cleanup
+```
+
+`refresh`/`update`/`cleanup` always rebuild `index.json`/`README.md` from the full local
+cache afterward, not just the numbers touched.
+
 ## Avoiding Rate Limits
 
 GitHub's unauthenticated API has a limit of **60 requests/hour**. Since fetching comments requires one request per issue, you'll hit this limit quickly.
