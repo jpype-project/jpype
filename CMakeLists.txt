@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
+
+if(CMAKE_VERSION VERSION_LESS 3.25 AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    set(LINUX true)
+endif()
+
 project(jpype-native)
 
 option(ENABLE_TRACING "Enable tracing in the extension" OFF)
@@ -43,7 +48,7 @@ set(JPYPE_JAR_FN "org.jpype.jar")
 set(DEST_JAR_FN "${DEST_JAR}/${JPYPE_JAR_FN}")
 
 message(STATUS "Destination Python extension: ${DEST_EXTENSION}")
-message(STATUS "Destination directory JAR: ${DEST_JAR_FN}")
+message(STATUS "Destination JAR: ${DEST_JAR}")
 
 # We want to cache DEST_JAR, so people do not need a jdk, but only a c++ compiler to build jpype.
 if(EXISTS "${SRC_JAR}")

@@ -66,14 +66,6 @@ set_target_properties(_jpype PROPERTIES
 )
 set_target_properties(_jpype PROPERTIES OUTPUT_NAME "_jpype")
 
-# C++ Python extension
-include_directories(
-        common/include
-        python/include
-        ${JNI_INCLUDE_DIRS}
-)
-
-
 # Apply Windows-specific configuration
 if(WIN32)
     # Define WIN32 macro (Windows-specific code)
@@ -86,23 +78,34 @@ if(WIN32)
 
     # Ensure /MD and exception model are set
     target_compile_options(_jpype PRIVATE /EHsc /MD)
-else()
-    # Additional libraries for non-Windows
-    target_link_libraries(_jpype PRIVATE
-            dl # dynamic linker
+elseif(APPLE)
+    # 1. Force the compiler to target the native Apple libc++
+    target_compile_options(_jpype PRIVATE "-stdlib=libc++")
+    target_link_options(_jpype PRIVATE "-stdlib=libc++")
+
+    # 2. Tell the linker to prioritize dynamic lookup (.dylib) over static (.a)
+    target_link_options(_jpype PRIVATE "-Wl,-search_paths_first")
+    # Keep frame pointers for better stack unwinding.
+    add_compile_options(-fno-omit-frame-pointer)
+    add_custom_command(TARGET _jpype POST_BUILD
+            COMMAND sh -c "otool -L $<TARGET_FILE:_jpype> | grep -q libc++.1.dylib || (echo 'FATAL: _jpype.so not dynamically linked against libc++!' >&2 && exit 1)"
+            VERBATIM
     )
+elseif(LINUX OR UNIX) # make sure APPLE is handled before this.
+    target_link_libraries(_jpype PRIVATE dl)
+    target_link_options(_jpype PRIVATE "-Wl,-l:libstdc++.so.6")
+
     # Keep frame pointers for better stack unwinding.
     add_compile_options(-fno-omit-frame-pointer)
 
     # even on OSX Python uses .so suffix instead of .dylib
     set_target_properties(_jpype PROPERTIES SUFFIX ".so")
-endif()
 
-# Only stage the extension into the wheel if scikit-build-core is building
-if(SKBUILD)
-    message(STATUS "install _jpype extension to ${DEST_EXTENSION}")
-    install(TARGETS _jpype
-            LIBRARY DESTINATION ${DEST_EXTENSION}
-            RUNTIME DESTINATION ${DEST_EXTENSION}
+    # safe-guard to prevent static linkage of libstdc++
+    add_custom_command(TARGET _jpype POST_BUILD
+            COMMAND sh -c "readelf -d $<TARGET_FILE:_jpype> | grep -q libstdc++.so.6 || (echo 'FATAL: _jpype.so not dynamically linked against libstdc++!' >&2 && exit 1)"
+            VERBATIM
     )
+else()
+    message(WARNING "unhandled OS found!")
 endif()
