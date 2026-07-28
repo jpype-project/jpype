@@ -105,16 +105,23 @@ if(Java_Development_FOUND)
     set(BUILD_TEST_HARNESS ON CACHE BOOL "Build Test Java classes automatically" FORCE)
 endif()
 
+# fixme: if installed from sdist and run from git clone, the classes end up in the wheel and cannot be found.
+# 1. copy classes output to cwd?
+# 2. install classes somewhere and point conftest classpath towards it?
+#
 if(BUILD_TEST_HARNESS) # This requires a JDK of course.
     find_program(ANT_EXECUTABLE ant REQUIRED)
     
     # We define a representative output file to help CMake track dependencies
-    set(TEST_SENTINEL "${CMAKE_SOURCE_DIR}/test/classes/org/jpype/JPypeTest.class")
+    # todo: cmake_source_dir is in tmp, if installing from sdist!
+    set(TEST_HARNESS_OUTPUT ${CMAKE_CURRENT_LIST_DIR})
+    message(STATUS "test harness output: ${TEST_HARNESS_OUTPUT}")
+    set(TEST_SENTINEL "${TEST_HARNESS_OUTPUT}/test/classes/org/jpype/JPypeTest.class")
 
     add_custom_command(
         OUTPUT "${TEST_SENTINEL}"
         COMMAND "${ANT_EXECUTABLE}" -f "test/build.xml"
-        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        WORKING_DIRECTORY "${TEST_HARNESS_OUTPUT}"
         DEPENDS jpype_jar  # Ensure the main org.jpype.jar is built first
         COMMENT "Building JPype Java Test Harness via Ant"
     )
