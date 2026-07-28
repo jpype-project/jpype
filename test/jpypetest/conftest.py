@@ -49,10 +49,11 @@ def jvm_session(request):
     from pathlib import Path
     import logging
     import warnings
-    import faulthandler
+    #import faulthandler
 
     # This installs signal handlers before the JVM is started.
-    faulthandler.enable()
+    # Note, that these handler most likely will be overridden by the JVMs own handlers.
+    #faulthandler.enable()
 
 
     logging.basicConfig(level=logging.DEBUG)
