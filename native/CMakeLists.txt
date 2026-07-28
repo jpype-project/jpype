@@ -141,3 +141,13 @@ elseif(LINUX OR UNIX) # make sure APPLE is handled before this.
 else()
     message(WARNING "unhandled OS found!")
 endif()
+
+
+install(
+    TARGETS _jpype
+    LIBRARY DESTINATION ${DEST_EXTENSION} # Catches Linux/macOS (.so) and Windows MODULE (.pyd)
+    RUNTIME DESTINATION ${DEST_EXTENSION} # Catch-all for Windows just in case it treats the .pyd as a DLL
+
+    # We deliberately LEAVE OUT the ARCHIVE DESTINATION here.
+    # This prevents Windows from shoving the unnecessary .lib export file into your final Python wheel!
+)
