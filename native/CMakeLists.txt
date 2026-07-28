@@ -1,5 +1,11 @@
 # JPype C++ Python extension
 
+include_directories(
+        common/include
+        python/include
+        ${JNI_INCLUDE_DIRS}
+)
+
 set(JPYPE_NATIVE_SRC
         common/jp_array.cpp
         common/jp_arrayclass.cpp
