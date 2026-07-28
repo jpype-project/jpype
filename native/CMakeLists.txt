@@ -77,25 +77,15 @@ if(ENABLE_TRACING)
     add_compile_definitions(JP_TRACING_ENABLE)
 endif()
 
-if(ENABLE_COVERAGE)
-    if(NOT CMAKE_BUILD_TYPE)
-        message(STATUS "ENABLE_COVERAGE set — forcing Debug build for coverage correctness")
-        set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
-    elseif(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-        message(WARNING "ENABLE_COVERAGE set but CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}; coverage may be unreliable")
-    endif()
+# Bind coverage directly to the target
+if(ENABLE_COVERAGE AND NOT WIN32)
+    message(STATUS "Adding coverage instrumentation flags to _jpype")
 
-    add_compile_definitions(JP_INSTRUMENTATION)
-    message(STATUS "Adding coverage instrumentation flags")
-    if(MSVC)
-        warn("Coverage not supported on windows.")
-    endif()
-    # Enable debug symbols
-    add_compile_options(-ggdb)
+    target_compile_definitions(_jpype PRIVATE JP_INSTRUMENTATION)
 
-    # Enable coverage instrumentation (GCC/Clang)
-    add_compile_options(-O0 --coverage -ftest-coverage)
-    add_link_options(--coverage)
+    # Target-specific options are harder for CMake to overwrite
+    target_compile_options(_jpype PRIVATE -O0 --coverage -ftest-coverage -ggdb)
+    target_link_options(_jpype PRIVATE --coverage)
 endif()
 
 # Apply Windows-specific configuration

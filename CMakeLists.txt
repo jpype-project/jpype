@@ -44,6 +44,13 @@ else()
     set(DEST_EXTENSION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
+# we need to enforce debug builds, if we want to collect coverage.
+if(ENABLE_COVERAGE)
+    message(WARNING "ENABLE_COVERAGE set — forcing Debug build for coverage correctness")
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+
+
 set(JPYPE_JAR_FN "org.jpype.jar")
 set(DEST_JAR_FN "${DEST_JAR}/${JPYPE_JAR_FN}")
 
