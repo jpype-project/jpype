@@ -137,7 +137,7 @@ bool JPContext::isRunning()
 }
 
 /**
-	throw a JPypeException if the JVM is not started
+	throw a JPInternalError if the JVM is not started
  */
 void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 {
@@ -150,12 +150,12 @@ void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 
 	if (context == nullptr)
 	{
-		throw JPypeException(JPError::_python_exc, _JVMNotRunning, "Java Context is null", info);
+		throw JPInternalError(_JVMNotRunning, "Java Context is null", info);
 	}
 
 	if (!context->isRunning())
 	{
-		throw JPypeException(JPError::_python_exc, _JVMNotRunning, "Java Virtual Machine is not running", info);
+		throw JPInternalError(_JVMNotRunning, "Java Virtual Machine is not running", info);
 	}
 }
 
@@ -179,15 +179,8 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	m_ConvertStrings = convertStrings;
 
 	// Get the entry points in the shared library
-	try
-	{
-		JP_TRACE("Load entry points");
-		loadEntryPoints(vmPath);
-	} catch (JPypeException& ex)
-	{
-		(void) ex;
-		throw;
-	}
+	JP_TRACE("Load entry points");
+	loadEntryPoints(vmPath);
 
 	// Determine the memory requirements
 #define PAD(x) ((x+31)&~31)

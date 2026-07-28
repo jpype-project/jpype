@@ -142,9 +142,9 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 			JP_TRACE("Convert return to", returnClass->getCanonicalName());
 			jvalue res = returnMatch.convert();
 			return frame.keep(res.l);
-		} catch (JPypeException& ex)
+		} catch (JPBaseError& ex)
 		{
-			JP_TRACE("JPypeException raised");
+			JP_TRACE("JPBaseError raised");
 			ex.toJava();
 		} catch (...)  // GCOVR_EXCL_LINE
 		{
@@ -195,7 +195,7 @@ JPProxy::~JPProxy()
 		{
 			JPContext_global->getEnv()->DeleteWeakGlobalRef(m_Ref);
 		}
-	} catch (JPypeException &ex)  // GCOVR_EXCL_LINE
+	} catch (...)  // GCOVR_EXCL_LINE
 	{
 		// Cannot throw
 	}

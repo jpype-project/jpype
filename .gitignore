@@ -102,3 +102,5 @@ org.jpype.jar
 .build_history
 CLAUDE.md
 plan/
+project/issues
+project/pr
