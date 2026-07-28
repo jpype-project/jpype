@@ -73,6 +73,31 @@ set_target_properties(_jpype PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${DEST_EXTENSION}
 )
 
+if(ENABLE_TRACING)
+    add_compile_definitions(JP_TRACING_ENABLE)
+endif()
+
+if(ENABLE_COVERAGE)
+    if(NOT CMAKE_BUILD_TYPE)
+        message(STATUS "ENABLE_COVERAGE set — forcing Debug build for coverage correctness")
+        set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    elseif(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+        message(WARNING "ENABLE_COVERAGE set but CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}; coverage may be unreliable")
+    endif()
+
+    add_compile_definitions(JP_INSTRUMENTATION)
+    message(STATUS "Adding coverage instrumentation flags")
+    if(MSVC)
+        warn("Coverage not supported on windows.")
+    endif()
+    # Enable debug symbols
+    add_compile_options(-ggdb)
+
+    # Enable coverage instrumentation (GCC/Clang)
+    add_compile_options(-O0 --coverage -ftest-coverage)
+    add_link_options(--coverage)
+endif()
+
 # Apply Windows-specific configuration
 if(WIN32)
     # Define WIN32 macro (Windows-specific code)

@@ -9,7 +9,7 @@ project(jpype-native)
 option(ENABLE_TRACING "Enable tracing in the extension" OFF)
 option(ENABLE_COVERAGE "Enable compilation for coverage measurement" OFF)
 option(ENABLE_BUILD_JAR "Enable building of the Java support library JAR" ON)
-option(BUILD_TEST_HARNESS "Build the Java test harness" ON)
+option(BUILD_TEST_HARNESS "Enable building of the Java test harness" ON)
 # Optionally set Python GIL disabled flag
 # set(PY_GIL_DISABLED ON)
 set(CMAKE_CXX_STANDARD 14)
@@ -50,7 +50,7 @@ set(DEST_JAR_FN "${DEST_JAR}/${JPYPE_JAR_FN}")
 message(STATUS "Destination Python extension: ${DEST_EXTENSION}")
 message(STATUS "Destination JAR: ${DEST_JAR}")
 
-# We want to cache DEST_JAR, so people do not need a jdk, but only a c++ compiler to build jpype.
+# We want to cache DEST_JAR, so people do not need a JDK, but only a C++ compiler to build jpype.
 if(EXISTS "${SRC_JAR}")
     message(STATUS "FOUND ${SRC_JAR}. Using from cache.")
     file(COPY_FILE "${SRC_JAR}" "${DEST_JAR_FN}")
@@ -99,32 +99,12 @@ if(ENABLE_BUILD_JAR)
     )
 endif()
 
-if(ENABLE_TRACING)
-    add_compile_definitions(JP_TRACING_ENABLE)
+# If javac is there just do it. Disabled by pip build by default.
+if(Java_Development_FOUND)
+    message(STATUS "Forcing: Build Test Java classes, because JDK is available.")
+    set(BUILD_TEST_HARNESS ON CACHE BOOL "Build Test Java classes automatically" FORCE)
 endif()
 
-if(ENABLE_COVERAGE)
-    if(NOT CMAKE_BUILD_TYPE)
-        message(STATUS "ENABLE_COVERAGE set — forcing Debug build for coverage correctness")
-        set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
-    elseif(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-        message(WARNING "ENABLE_COVERAGE set but CMAKE_BUILD_TYPE is ${CMAKE_BUILD_TYPE}; coverage may be unreliable")
-    endif()
-
-    add_compile_definitions(JP_INSTRUMENTATION)
-    message(STATUS "Adding coverage instrumentation flags")
-    if(MSVC)
-        warn("Coverage not supported on windows.")
-    endif()
-    # Enable debug symbols
-    add_compile_options(-ggdb)
-
-    # Enable coverage instrumentation (GCC/Clang)
-    add_compile_options(-O0 --coverage -ftest-coverage)
-    add_link_options(--coverage)
-endif()
-
-# todo: handle like build_jar, if javac is there just do it. disabled by pip build by default.
 if(BUILD_TEST_HARNESS) # This requires a JDK of course.
     find_program(ANT_EXECUTABLE ant REQUIRED)
     
