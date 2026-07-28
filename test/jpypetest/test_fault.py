@@ -445,7 +445,8 @@ class FaultTestCase(common.JPypeTestCase):
     def testJPValue_finalize(self):
         _jpype.fault("PyJPValue_finalize")
         a = JInt(1)
-        del a  # lgtm [py/unnecessary-delete]
+        # codeql[py/unnecessary-delete]
+        del a
 
     @common.requireInstrumentation
     def testJPValue_str(self):

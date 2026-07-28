@@ -1,4 +1,3 @@
-import jpype
 from typing import Union
 
 
@@ -11,6 +10,7 @@ class Iterable:
 
     def __iter__(self):
         """ Iterate over the members on this collect. """
+        # codeql[py/ineffectual-statement]
         ...
 
 
@@ -27,10 +27,12 @@ class Collection:
         collection.
 
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def __delitem__(self, item):
         """ Collections do not support remove by index. """
+        # codeql[py/ineffectual-statement]
         ...
 
     def __contains__(self, item) -> bool:
@@ -47,6 +49,7 @@ class Collection:
         Returns:
            bool: True if the item is in the collection.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
 
@@ -65,6 +68,7 @@ class List(Collection):
         alter the original list.  Slice stepping is not supported for Java
         lists.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def __setitem__(self, index: Union[int, slice], value):
@@ -74,6 +78,7 @@ class List(Collection):
         ``list[i0:i1] = values`` to replace a section of a list with
         another list of values.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def __delitem__(self, idx: Union[int, slice]):
@@ -82,6 +87,7 @@ class List(Collection):
         Use ``del list[idx]`` to remove ont itme from the list or
         ``del list[i0:i1]`` to remove a section of the list.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def __reversed__(self):
@@ -89,6 +95,7 @@ class List(Collection):
 
         Use ``reversed(list)`` to traverse a list backwards.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def index(self, obj) -> int:
@@ -104,6 +111,7 @@ class List(Collection):
         Raises:
            ValueError: If the item is not on the list.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def count(self, obj):
@@ -116,6 +124,7 @@ class List(Collection):
         Returns:
             int: The number of times this object appears.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def insert(self, idx: int, obj):
@@ -128,6 +137,7 @@ class List(Collection):
         Raises:
             TypeError: If the object cannot be converted to Java.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def append(self, obj):
@@ -139,6 +149,7 @@ class List(Collection):
         Raises:
             TypeError: If the object cannot be converted to Java.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def reverse(self):
@@ -156,6 +167,7 @@ class List(Collection):
         Raises:
            TypeError: If the list to be added cannot be converted to Java.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def pop(self, idx=-1):
@@ -168,6 +180,7 @@ class List(Collection):
         Returns:
            The item or raises if index is outside of the list.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def __iadd__(self, obj):
@@ -176,6 +189,7 @@ class List(Collection):
         Use ``list += obj`` to append one item.  This is simply an alias
         for add.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def __add__(self, obj):
@@ -184,6 +198,7 @@ class List(Collection):
         Use ``list + seq`` to create a new list with additional members.
         This is only supported if the list can be cloned.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def remove(self, obj):
@@ -200,6 +215,7 @@ class List(Collection):
         Raises:
             ValueError: If the item is not present on the list.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
 
@@ -215,11 +231,13 @@ class Map:
 
         Use ``len(map)`` to get the number of items in the map.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def __iter__(self):
         """ Iterate the keys of the map.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def __delitem__(self, i):
@@ -228,6 +246,7 @@ class Map:
         Raises:
            TypeError: If the key cannot be converted to Java.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def __getitem__(self, ndx):
@@ -239,6 +258,7 @@ class Map:
            KeyError: If the key is not found in the map or the key
              cannot be converted to Java.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def __setitem__(self, key, value):
@@ -249,6 +269,7 @@ class Map:
         Raises:
            TypeError: If the key or value cannot be converted to Java.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def items(self):
@@ -257,6 +278,7 @@ class Map:
         The map entries are customized to appear as tuples with two 
         items.  Maps can traversed as key value pairs using ``map.items()``
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def keys(self) -> list:
@@ -267,6 +289,7 @@ class Map:
         Returns:
            list: A Python list holding all of the items.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
     def __contains__(self, item):
@@ -279,6 +302,7 @@ class Map:
         Returns:
           True is the key is found.
         """
+        # codeql[py/ineffectual-statement]
         ...
 
 
@@ -287,6 +311,7 @@ class Set(object):
 
     Java sets only provide the ability to delete items.
     """
+    # codeql[py/ineffectual-statement]
     ...
 
 
@@ -296,6 +321,7 @@ class Iterator:
     Java iterators act just like Python iterators for the 
     purposed of list comprehensions and foreach loops.
     """
+    # codeql[py/ineffectual-statement]
     ...
 
 
@@ -305,4 +331,5 @@ class Enumeration:
     Enumerations are used rarely in Java, but can be iterated like a Java
     iterable using Python.
     """
+    # codeql[py/ineffectual-statement]
     ...

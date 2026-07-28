@@ -224,7 +224,8 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 	{
 		JPValue *v1 = PyJPValue_getJavaSlot((PyObject*) self);
 		JPValue *v2 = PyJPValue_getJavaSlot((PyObject*) value);
-		if (frame.equals(v1->getJavaObject(), v2->getJavaObject()))
+		if (v1 != nullptr && v2 != nullptr
+				&& frame.equals(v1->getJavaObject(), v2->getJavaObject()))
 			JP_RAISE(PyExc_ValueError, "self assignment not support currently");
 	}
 

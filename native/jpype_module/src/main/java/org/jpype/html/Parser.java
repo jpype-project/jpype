@@ -57,7 +57,6 @@ public class Parser<T>
         int rc = channel.read(incoming);
         if (rc < 0)
           break;
-        int p = incoming.position();
         incoming.rewind();
         process(incoming, outgoing, rc);
       }

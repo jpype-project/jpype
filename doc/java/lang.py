@@ -32,4 +32,5 @@ class AutoCloseable:
         # Input stream closes at the end of the block.
 
     """
+    # codeql[py/ineffectual-statement]
     ...

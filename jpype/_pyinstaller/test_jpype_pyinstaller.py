@@ -2,6 +2,8 @@ import os
 from pathlib import Path
 from subprocess import run
 
+# sanity check jpype imports before the slow PyInstaller build
+# codeql[py/unused-import]
 import jpype
 import PyInstaller.__main__
 

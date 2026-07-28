@@ -129,7 +129,8 @@ class ArrayTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             ja = JArray(JInt, 2)(5)
             m = memoryview(ja)
-            del m  # lgtm [py/unnecessary-delete]
+            # codeql[py/unnecessary-delete]
+            del m
 
     @common.requireInstrumentation
     def testJPArrayPrimitive_getBuffer(self):
@@ -138,7 +139,8 @@ class ArrayTestCase(common.JPypeTestCase):
         def f():
             ja = JArray(JInt)(5)
             m = memoryview(ja)
-            del m  # lgtm [py/unnecessary-delete]
+            # codeql[py/unnecessary-delete]
+            del m
         with self.assertRaisesRegex(SystemError, "fault"):
             f()
         with self.assertRaises(BufferError):

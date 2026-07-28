@@ -225,6 +225,7 @@ class JVMFinder:
 
             # Look for the library file
             return self.find_libjvm(java_home)
+        return None
 
     def _get_from_known_locations(self):
         """
@@ -238,6 +239,7 @@ class JVMFinder:
             jvm = self.find_libjvm(home)
             if jvm is not None:
                 return jvm
+        return None
 
 
 class LinuxJVMFinder(JVMFinder):
@@ -255,7 +257,10 @@ class LinuxJVMFinder(JVMFinder):
     def __init__(self):
         super().__init__()
 
-        # Search methods
+        # Deliberately replaces JVMFinder's default _methods with this
+        # platform's own search order (see also DarwinJVMFinder and
+        # WindowsJVMFinder below) - not an accidental clobber.
+        # codeql[py/overwritten-inherited-attribute]
         self._methods = (self._get_from_java_home,
                          self._get_from_bin,
                          self._get_from_known_locations)
@@ -276,6 +281,7 @@ class LinuxJVMFinder(JVMFinder):
 
             # Look for the JVM library
             return self.find_libjvm(java_home)
+        return None
 
 
 class DarwinJVMFinder(LinuxJVMFinder):
@@ -293,6 +299,8 @@ class DarwinJVMFinder(LinuxJVMFinder):
         """
         super().__init__()
 
+        # Extends (not clobbers) LinuxJVMFinder's _methods list.
+        # codeql[py/overwritten-inherited-attribute]
         self._methods = list(self._methods)
         self._methods.append(self._javahome_binary)
 
@@ -310,6 +318,7 @@ class DarwinJVMFinder(LinuxJVMFinder):
         if Version('10.6') <= current:  # < Version('10.9'):
             return subprocess.check_output(
                 ['/usr/libexec/java_home']).strip()
+        return None
 
 
 def _checkJVMArch(jvmPath, maxsize=sys.maxsize):
@@ -356,7 +365,9 @@ class WindowsJVMFinder(JVMFinder):
     def __init__(self):
         super().__init__()
 
-        # Search methods
+        # Deliberately replaces JVMFinder's default _methods with this
+        # platform's own search order (see also LinuxJVMFinder above).
+        # codeql[py/overwritten-inherited-attribute]
         self._methods = (self._get_from_java_home, self._get_from_registry)
 
     def check(self, jvm):

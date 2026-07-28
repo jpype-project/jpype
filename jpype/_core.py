@@ -379,7 +379,7 @@ def startJVM(
             try:
                 locale.setlocale(i, j)
             except locale.Error:
-                pass
+                pass  # best-effort restore; a category we can't restore isn't fatal
 
         if minimum_version is not None:
             version = _jpype.JClass("java.lang.System").getProperty("java.version")
@@ -515,7 +515,7 @@ def _JTerminate():
         if jpype.config.onexit:
             _jpype.shutdown(jpype.config.destroy_jvm, False)
     except RuntimeError:
-        pass
+        pass  # we are exiting anyway, nothing to do about a shutdown failure here
 
 
 atexit.register(_JTerminate)

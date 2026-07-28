@@ -298,6 +298,8 @@ static PyObject* PyJPException_expandStacktrace(PyObject* self)
 	JP_PY_TRY("PyJPModule_expandStackTrace");
 	JPJavaFrame frame = JPJavaFrame::outer();
 	JPValue *val = PyJPValue_getJavaSlot(self);
+	if (val == nullptr)
+		JP_RAISE(PyExc_TypeError, "Java slot is not set on exception");
 
 	// These two are loop invariants and must match each time
 	auto th = (jthrowable) val->getValue().l;

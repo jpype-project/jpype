@@ -112,7 +112,9 @@ class _JList(object):
         elif hasattr(ndx, '__index__'):
             if ndx < 0:
                 ndx += self.size()
-            return self.remove_(_jtypes.JInt(ndx))
+            # __delitem__'s return value is never used by Python's `del`
+            # protocol; call for effect only.
+            self.remove_(_jtypes.JInt(ndx))
         else:
             raise TypeError("Incorrect arguments to del")
 
@@ -179,7 +181,7 @@ class _JList(object):
             if rc is True:
                 return
         except TypeError:
-            pass
+            pass  # wrong type can't be in the list either; fall through to the same error
         raise ValueError("item not in list")
 
 
@@ -209,7 +211,7 @@ class _JMap(object):
             if item is not None or self.containsKey(ndx):
                 return item
         except TypeError:
-            pass
+            pass  # wrong key type can't be present either; fall through to the same error
         raise KeyError('%s' % ndx)
 
     def __setitem__(self, ndx, v):

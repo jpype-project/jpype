@@ -787,7 +787,6 @@ static PyMethodDef moduleMethods[] = {
 	{"bootstrap", (PyCFunction) PyJPModule_bootstrap, METH_NOARGS, ""},
 #else
 	{"startup", (PyCFunction) PyJPModule_startup, METH_VARARGS, ""},
-	//	{"attach", (PyCFunction) (&PyJPModule_attach), METH_VARARGS, ""},
 	{"shutdown", (PyCFunction) PyJPModule_shutdown, METH_VARARGS, ""},
 #endif
 	{"_getClass", (PyCFunction) PyJPModule_getClass, METH_O, ""},
@@ -803,8 +802,6 @@ static PyMethodDef moduleMethods[] = {
 	{"detachThreadFromJVM", (PyCFunction) PyJPModule_detachThread, METH_NOARGS, ""},
 	{"attachThreadAsDaemon", (PyCFunction) PyJPModule_attachThreadAsDaemon, METH_NOARGS, ""},
 #endif
-
-	//{"dumpJVMStats", (PyCFunction) (&PyJPModule_dumpJVMStats), METH_NOARGS, ""},
 
 	{"convertToDirectBuffer", (PyCFunction) PyJPModule_convertToDirectByteBuffer, METH_VARARGS, ""},
 	{"arrayFromBuffer", (PyCFunction) PyJPModule_arrayFromBuffer, METH_VARARGS, ""},

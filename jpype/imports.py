@@ -77,7 +77,9 @@ def _keywordWrap(name):
 
 
 class JImportCustomizerProtocol(Protocol):
+    # codeql[py/ineffectual-statement]
     def canCustomize(self, name: str) -> bool: ...
+    # codeql[py/ineffectual-statement]
     def getSpec(self, name: str): ...
 
 

@@ -66,7 +66,8 @@ public:
 		m_Error = true;
 		try
 		{
-			throw; // lgtm [cpp/rethrow-no-exception]
+			// codeql[cpp/rethrow-no-exception]
+			throw;
 		} catch (JPypeException& ex)
 		{
 			ex.from(info);

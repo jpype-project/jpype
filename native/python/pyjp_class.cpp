@@ -1216,7 +1216,6 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 
 	// Attach the javaSlot
 	self->m_Class = cls;
-	//	self->m_Class->postLoad();
 	PyJPValue_assignJavaSlot(frame, (PyObject*) self, JPValue(context->_java_lang_Class,
 			(jobject) self->m_Class->getJavaClass()));
 

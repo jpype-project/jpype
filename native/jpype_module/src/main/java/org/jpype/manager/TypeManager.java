@@ -237,6 +237,15 @@ public class TypeManager
       {
         sb.append(".");
         sb.append(parts[i]);
+        // The 1-arg Class.forName forces a full class load (runs static
+        // initializers) as a needed side effect before the nested-class
+        // scan below can proceed correctly - the returned Class<?> itself
+        // is not what's needed here, and neither is the exception path
+        // alone. Do not "simplify" this to a bare Class.forName(...) call:
+        // this exact line has been caught between two static checkers
+        // before - one flags the unused variable, the other flags a call
+        // whose result isn't captured. Suppressed, not fixed, deliberately.
+        // codeql[java/local-variable-is-never-read]
         Class<?> cls = Class.forName(sb.toString());
         for (int j = i + 1; j < parts.length; ++j)
         {
