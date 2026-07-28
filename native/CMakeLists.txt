@@ -69,8 +69,9 @@ target_link_libraries(_jpype PRIVATE Python3::Module)
 # Set target properties for scikit-build export
 set_target_properties(_jpype PROPERTIES
         PREFIX ""  # remove 'lib' prefix
+        OUTPUT_NAME "_jpype"
+        LIBRARY_OUTPUT_DIRECTORY ${DEST_EXTENSION}
 )
-set_target_properties(_jpype PROPERTIES OUTPUT_NAME "_jpype")
 
 # Apply Windows-specific configuration
 if(WIN32)
