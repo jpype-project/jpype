@@ -51,6 +51,7 @@ def jvm_session(request):
     import warnings
     import faulthandler
 
+    # This installs signal handlers before the JVM is started.
     faulthandler.enable()
 
 
@@ -70,7 +71,7 @@ def jvm_session(request):
     logger.info("Running testsuite using JVM %s" % jvm_path)
     classpath_arg = "-Djava.class.path=%s"
     args = ["-ea", "-Xmx256M", "-Xms16M",
-            "-Xrs"  # disable signal handler for sigsegv, sigabrt
+            #"-Xrs"  # disable signal handler for sigsegv, sigabrt
             ]
     if checkjni:
         args.append("-Xcheck:jni")
