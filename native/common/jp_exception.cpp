@@ -40,6 +40,19 @@ JPypeException::JPypeException(int type, void* error, const JPStackInfo& stackIn
 {
 	JP_TRACE("EXCEPTION THROWN with error", error);
 	m_Error.l = error;
+	if (type == JPError::_python_error)
+	{
+		// Fetch and normalize the pending Python exception right now, at the
+		// moment of the throw, rather than leaving it live on the thread
+		// state for the whole C++ unwind (see m_PyExcValue in jp_exception.h
+		// for why). JPPyErrFrame::fetch() already removes it from the thread
+		// state; clear() below just stops its destructor from putting it
+		// straight back before we are ready for that in toPython()/toJava().
+		JPPyErrFrame eframe;
+		eframe.normalize();
+		m_PyExcValue = eframe.m_ExceptionValue;
+		eframe.clear();
+	}
 	from(stackInfo);
 }
 
@@ -65,7 +78,7 @@ JPypeException::JPypeException(int type,  const string& msn, int errType, const 
 
 JPypeException::JPypeException(const JPypeException &ex) noexcept
         : runtime_error(ex.what()), m_Type(ex.m_Type),  m_Error(ex.m_Error),
-        m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable)
+        m_Trace(ex.m_Trace), m_Throwable(ex.m_Throwable), m_PyExcValue(ex.m_PyExcValue)
 {
 }
 
@@ -79,6 +92,7 @@ JPypeException& JPypeException::operator = (const JPypeException& ex)
 	m_Trace = ex.m_Trace;
 	m_Throwable = ex.m_Throwable;
 	m_Error = ex.m_Error;
+	m_PyExcValue = ex.m_PyExcValue;
 	return *this;
 }
 // GCOVR_EXCL_STOP
@@ -87,6 +101,12 @@ void JPypeException::from(const JPStackInfo& info)
 {
 	JP_TRACE("EXCEPTION FROM: ", info.getFile(), info.getLine());
 	m_Trace.push_back(info);
+}
+
+void JPypeException::restorePythonError()
+{
+	if (m_Type == JPError::_python_error && m_PyExcValue.get() != nullptr)
+		JPPyErr::restore(m_PyExcValue);
 }
 
 bool isJavaThrowable(PyObject* exceptionClass)
@@ -211,9 +231,9 @@ void JPypeException::convertPythonToJava()
 	JPContext *context = frame.getContext();
 	jthrowable th;
 	JPPyErrFrame eframe;
-	if (eframe.good && isJavaThrowable(eframe.m_ExceptionClass.get()))
+	if (eframe.m_good && isJavaThrowable(eframe.m_ExceptionClass.get()))
 	{
-		eframe.good = false;
+		eframe.m_good = false;
 		JPValue* javaExc = PyJPValue_getJavaSlot(eframe.m_ExceptionValue.get());
 		if (javaExc != nullptr)
 		{
@@ -244,6 +264,47 @@ void JPypeException::convertPythonToJava()
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
+/**
+ * Print a user-facing crash banner for the deliberate fail-fast crashes
+ * below (JPypeException::toPython/toJava's catch blocks).
+ *
+ * These crashes fire only when JPype's own exception-conversion code -
+ * which is not allowed to fail - fails anyway, leaving interpreter/JNI
+ * error state too corrupted to unwind safely. Terminating immediately is
+ * safer than continuing to run on corrupted state, but from a user's
+ * perspective this looks exactly like a spontaneous segfault, so we say
+ * plainly what happened and how to report it, before the process dies.
+ *
+ * Coverage is excluded: exercising this path requires corrupting the
+ * interpreter state and killing the test process.
+ */
+// GCOVR_EXCL_START
+static void reportFatalFailFast(const char* detail)
+{
+	fprintf(stderr,
+			"================================================================================\n"
+			"JPype has hit an internal error it cannot safely recover from and must stop the\n"
+			"JVM immediately.\n"
+			"\n"
+			"This is not something you did wrong in your own code - it means JPype's own\n"
+			"exception-handling machinery hit a case it doesn't know how to handle. Please\n"
+			"help fix it by reporting this at:\n"
+			"\n"
+			"    https://github.com/jpype-project/jpype/issues\n"
+			"\n"
+			"along with the smallest script you can find that reproduces it, and the detail\n"
+			"below:\n"
+			"\n"
+			"    %s\n"
+			"\n"
+			"JPype is intentionally crashing now rather than continuing to run with\n"
+			"corrupted internal state.\n"
+			"================================================================================\n",
+			detail);
+	fflush(stderr);
+}
+// GCOVR_EXCL_STOP
+
 void JPypeException::toPython()
 {
 	const char* mesg = nullptr;
@@ -272,7 +333,11 @@ void JPypeException::toPython()
 			return;
 		} else if (m_Type == JPError::_python_error)
 		{
-			// Already on the stack
+			// Restore the exception fetched and normalized at the moment of
+			// the throw (see JPypeException's _python_error ctor). It was
+			// deliberately held off the thread state for the whole unwind so
+			// no incidental GC pass during that window could disturb it.
+			JPPyErr::restore(m_PyExcValue);
 		}// This section is only reachable during startup of the JVM.
 			// GCOVR_EXCL_START
 		else if (m_Type == JPError::_os_error_unix)
@@ -330,7 +395,12 @@ void JPypeException::toPython()
 			JPPyObject args = JPPyObject::call(Py_BuildValue("(s)", "C++ Exception"));
 			JPPyObject trace = JPPyObject::call(PyTrace_FromJPStackTrace(m_Trace));
 			JPPyObject cause = JPPyObject::accept(PyObject_Call(PyExc_Exception, args.get(), nullptr));
-			if (!cause.isNull())
+			// eframe.m_ExceptionValue can be null here - e.g. if the Python
+			// error state was already cleared by the time this runs (see
+			// JPPyErrFrame::normalize()'s own null-guard for the same class
+			// of issue) - PyException_SetCause requires a real exception
+			// instance as self and segfaults on null.
+			if (!cause.isNull() && eframe.m_ExceptionValue.get() != nullptr)
 			{
 				PyException_SetTraceback(cause.get(), trace.get());
 				PyException_SetCause(eframe.m_ExceptionValue.get(), cause.keep());
@@ -345,8 +415,13 @@ void JPypeException::toPython()
 		JPTracer::trace("Type:", m_Error.l);
 		if (ex.m_Type == JPError::_python_error)
 		{
-			JPPyErrFrame eframe;
-			JPTracer::trace("Inner Python:", ((PyTypeObject*) eframe.m_ExceptionClass.get())->tp_name);
+			// The inner exception was captured off the thread state at its
+			// own throw time (see JPypeException's _python_error ctor), not
+			// left sitting on the stack - trace from, then restore, the
+			// captured state directly rather than fetching.
+			JPTracer::trace("Inner Python:", ex.m_PyExcValue.get() != nullptr
+					? Py_TYPE(ex.m_PyExcValue.get())->tp_name : "(none!)");
+			JPPyErr::restore(ex.m_PyExcValue);
 			return;  // Let these go to Python, so we can see the error
 		} else if (ex.m_Type == JPError::_java_error)
 			JPTracer::trace("Inner Java:", ex.what());
@@ -365,6 +440,8 @@ void JPypeException::toPython()
 		JPTracer::trace("Fatal error in exception handling");
 
 		// You shall not pass!
+		reportFatalFailFast("An unexpected error occurred while converting a Java exception "
+				"back to Python (JPypeException::toPython).");
 		int *i = nullptr;
 		*i = 0;
 	}
@@ -397,6 +474,10 @@ void JPypeException::toJava()
 		{
 			JPPyCallAcquire callback;
 			JP_TRACE("Python exception");
+			// Restore what was fetched off the thread state at throw time
+			// (see JPypeException's _python_error ctor) - convertPythonToJava()
+			// expects to find the exception live on the thread state.
+			JPPyErr::restore(m_PyExcValue);
 			convertPythonToJava();
 			return;
 		}
@@ -423,6 +504,14 @@ void JPypeException::toJava()
 		JPTracer::trace(info.getFile(), info.getFunction(), info.getLine());
 
 		// Take one for the team.
+		{
+			std::stringstream detail;
+			detail << "A second error (\"" << ex.what() << "\") occurred while JPype was "
+					"converting a Python exception into its Java equivalent, at "
+					<< info.getFile() << ":" << info.getFunction() << ":" << info.getLine()
+					<< " (JPypeException::toJava).";
+			reportFatalFailFast(detail.str().c_str());
+		}
 		int *i = nullptr;
 		*i = 0;
 		// GCOVR_EXCL_STOP
@@ -433,6 +522,8 @@ void JPypeException::toJava()
 		JPTracer::trace("Fatal error in exception handling");
 
 		// It is pointless, I can't go on.
+		reportFatalFailFast("An unexpected, non-Python error occurred while JPype was "
+				"converting a Python exception into its Java equivalent (JPypeException::toJava).");
 		int *i = nullptr;
 		*i = 0;
 		// GCOVR_EXCL_STOP
@@ -493,7 +584,7 @@ PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace)
 	}
 	if (last_traceback == nullptr)
 		Py_RETURN_NONE;
-	return (PyObject*) last_traceback;
+	return last_traceback;
 }
 
 JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowable prev)

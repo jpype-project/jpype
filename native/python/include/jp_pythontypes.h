@@ -116,9 +116,7 @@ public:
 	 */
 	static JPPyObject call(PyObject* obj);
 
-	JPPyObject() : m_PyObject(nullptr)
-	{
-	}
+	JPPyObject() = default;
 
 	JPPyObject(const JPPyObject &self);
 
@@ -311,6 +309,15 @@ namespace JPPyErr
 {
 bool fetch(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace);
 void restore(JPPyObject& exceptionClass, JPPyObject& exceptionValue, JPPyObject& exceptionTrace);
+
+/** Restore a single already-normalized exception instance.
+ *
+ * Once normalized, the instance's class and traceback are recoverable
+ * from the instance itself (Py_TYPE() and PyException_GetTraceback()),
+ * so a normalized exception only needs one owned reference held for it,
+ * not three.
+ */
+void restore(JPPyObject& exceptionValue);
 }
 
 /** Memory management for handling a python exception currently in progress. */
@@ -320,7 +327,7 @@ public:
 	JPPyObject m_ExceptionClass;
 	JPPyObject m_ExceptionValue;
 	JPPyObject m_ExceptionTrace;
-	bool good;
+	bool m_good{false};
 
 	JPPyErrFrame();
 	~JPPyErrFrame();

@@ -260,8 +260,9 @@ static PyObject *PyJPPackage_dir(PyObject *self)
 	JPPyObject out = JPPyObject::call(PyList_New(len));
 	for (Py_ssize_t i = 0;  i < len; ++i)
 	{
-		string str = frame.toStringUTF8((jstring)
-				frame.GetObjectArrayElement((jobjectArray) o, (jsize) i));
+		jobject element = frame.GetObjectArrayElement((jobjectArray) o, (jsize) i);
+		string str = frame.toStringUTF8((jstring) element);
+		frame.DeleteLocalRef(element);
 		PyList_SetItem(out.get(), i, PyUnicode_FromFormat("%s", str.c_str()));
 	}
 	return out.keep();

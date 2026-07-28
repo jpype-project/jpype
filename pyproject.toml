@@ -66,7 +66,12 @@ module = [
 ignore_missing_imports = true
 
 [tool.pytest]
-addopts = ["--verbose"]
+# pytest's built-in faulthandler plugin calls faulthandler.enable() before the
+# JVM exists and faulthandler.disable() at exit, which reinstalls the pre-JVM
+# SIGSEGV handler over HotSpot's.  The JVM then dies on the first armed
+# safepoint poll during shutdown (random ~25% crash rate in CI).  Keep the
+# plugin off; conftest.py enables faulthandler itself before startJVM.
+addopts = ["--verbose", "-p", "no:faulthandler"]
 testpaths = ["test", "jpype/_pyinstaller"]
 
 

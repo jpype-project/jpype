@@ -100,3 +100,5 @@ cmake_install.cmake
 _jpype.so
 org.jpype.jar
 .build_history
+CLAUDE.md
+plan/

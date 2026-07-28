@@ -27,8 +27,9 @@
  * when returning to the native code.
  *
  * If we are returning to python, and it is a
- * - _python_error, then we assume that a python exception has already been
- *   placed in the python virtual machine.
+ * - _python_error, then the exception was fetched off the thread state and
+ *   normalized at the moment of the throw (not left live on the thread state
+ *   for the duration of the C++ unwind), and toPython()/toJava() restore it.
  * - _java_error, then we will convert it to a python object with the correct
  *   object type.
  * - otherwise, then we will convert it to the requested python error.
@@ -146,6 +147,15 @@ public:
 	/** Transfer handling of this exception to java. */
 	void toJava();
 
+	/** Put a captured _python_error exception back on the thread state.
+	 *
+	 * For callers that need the original Python exception live (e.g. to
+	 * chain it as a cause) before they finish handling this JPypeException
+	 * themselves, rather than going through toPython()/toJava(). No-op for
+	 * any other exception type, or if there is nothing captured.
+	 */
+	void restorePythonError();
+
 	int getExceptionType() const
 	{
 		return m_Type;
@@ -162,6 +172,18 @@ private:
 	JPStackTrace m_Trace;
 	JPThrowableRef m_Throwable;
 	std::string m_Message;
+
+	// For _python_error only: the exception is fetched and normalized at the
+	// moment of the throw (see JP_RAISE_PYTHON), not left live on the thread
+	// state for the length of the C++ unwind. A pending exception left on the
+	// thread state is visible to, and can be disturbed by, an incidental GC
+	// pass triggered anywhere during that unwind - fetching claims sole
+	// ownership so nothing else can touch it before toPython()/toJava()
+	// restore it. Only the (already-normalized) instance is held - its class
+	// and traceback are recoverable from the instance itself at restore time
+	// (see JPPyErr::restore(JPPyObject&)), so there's no need to separately
+	// hold references to them too.
+	JPPyObject m_PyExcValue;
 };
 
 #endif

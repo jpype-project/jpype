@@ -132,9 +132,14 @@ void PyJPModule_loadResources(PyObject* module)
 
 		_JObjectKey = PyCapsule_New(module, "constructor key", nullptr);
 
-	}	catch (JPypeException&)  // GCOVR_EXCL_LINE
+	}	catch (JPypeException& ex)  // GCOVR_EXCL_LINE
 	{
 		// GCOVR_EXCL_START
+		// PyJP_SetStringWithCause needs the original exception live on the
+		// thread state to chain it as a cause - restorePythonError() puts
+		// back what our throw-time-fetch fix (see jp_exception.cpp) deliberately
+		// held privately instead of leaving pending for the whole unwind.
+		ex.restorePythonError();
 		PyJP_SetStringWithCause(PyExc_RuntimeError, "JPype resource is missing");
 		JP_RAISE_PYTHON();
 		// GCOVR_EXCL_STOP
@@ -156,13 +161,19 @@ void PyJP_SetStringWithCause(PyObject *exception,
 	// See _PyErr_TrySetFromCause
 	PyObject *exc1, *val1, *tb1;
 	PyErr_Fetch(&exc1, &val1, &tb1);
-	PyErr_NormalizeException(&exc1, &val1, &tb1);
-	if (tb1 != nullptr)
+	// A caller may have nothing pending (e.g. it was already claimed
+	// elsewhere) - PyErr_NormalizeException() is a no-op on a null type,
+	// so exc1/val1 stay null too; guard rather than assume one is set.
+	if (exc1 != nullptr)
 	{
-		PyException_SetTraceback(val1, tb1);
-		Py_DECREF(tb1);
+		PyErr_NormalizeException(&exc1, &val1, &tb1);
+		if (tb1 != nullptr)
+		{
+			PyException_SetTraceback(val1, tb1);
+			Py_DECREF(tb1);
+		}
+		Py_DECREF(exc1);
 	}
-	Py_DECREF(exc1);
 	PyErr_SetString(exception, str);
 	PyObject *exc2, *val2, *tb2;
 	PyErr_Fetch(&exc2, &val2, &tb2);
@@ -581,6 +592,18 @@ static PyObject *PyJPModule_arrayFromBuffer(PyObject *module, PyObject *args, Py
 
 PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 {
+	// This is a gc.callbacks entry, invoked by Python's own cyclic GC
+	// whenever it happens to run - which can be in the middle of unwinding
+	// from an unrelated pending exception (GC isn't aware of, or triggered
+	// by, our own exception-handling code; enough temporary objects
+	// created/destroyed during unwind can cross its allocation threshold).
+	// The RSS-based bookkeeping in onStart/onEnd (including the JNI call to
+	// System.gc() onEnd may make) is a heuristic, not safety-critical - it's
+	// not worth the risk of touching Java/global state while some unrelated
+	// exception is already in flight on this thread, so just skip this
+	// invocation entirely rather than try to save/restore around it.
+	if (PyErr_Occurred())
+		Py_RETURN_NONE;
 	JPContext* context = JPContext_global;
 	if (!context->isRunning())
 		Py_RETURN_NONE;
