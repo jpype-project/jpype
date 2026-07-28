@@ -105,7 +105,7 @@ if(Java_Development_FOUND)
     set(BUILD_TEST_HARNESS ON CACHE BOOL "Build Test Java classes automatically" FORCE)
 endif()
 
-# fixme: if installed from sdist and run from git clone, the classes end up in the wheel and cannot be found.
+# fixme: if installed from sdist and run from git clone, the classes end up in the wheel (at least tmp build dir) and cannot be found.
 # 1. copy classes output to cwd?
 # 2. install classes somewhere and point conftest classpath towards it?
 #
