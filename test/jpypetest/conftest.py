@@ -67,9 +67,11 @@ def jvm_session(request):
     checkjni = request.config.getoption("--checkjni")
 
     root = Path(__file__).parent.resolve()
-    jpype.addClassPath(root / '../classes')
+    classes = root / '../classes'
+    assert classes.exists()
+    jpype.addClassPath(classes)
     jvm_path = jpype.getDefaultJVMPath()
-    logger.info("Running testsuite using JVM %s" % jvm_path)
+    logger.info("Running testsuite using JVM %s",jvm_path)
     classpath_arg = "-Djava.class.path=%s"
     args = ["-ea", "-Xmx256M", "-Xms16M",
             #"-Xrs"  # disable signal handler for sigsegv, sigabrt
