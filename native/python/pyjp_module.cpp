@@ -132,7 +132,7 @@ void PyJPModule_loadResources(PyObject* module)
 
 		_JObjectKey = PyCapsule_New(module, "constructor key", nullptr);
 
-	}	catch (JPypeException& ex)  // GCOVR_EXCL_LINE
+	}	catch (JPBaseError& ex)  // GCOVR_EXCL_LINE
 	{
 		// GCOVR_EXCL_START
 		// PyJP_SetStringWithCause needs the original exception live on the
@@ -888,7 +888,7 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 	try
 	{
 		throw;
-	} catch (JPypeException& ex)
+	} catch (JPBaseError& ex)
 	{
 		ex.from(info); // this likely wont be necessary, but for now we will add the entry point.
 		ex.toPython();
