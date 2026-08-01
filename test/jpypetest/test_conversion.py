@@ -45,8 +45,9 @@ class ConversionTestCase(common.JPypeTestCase):
         self.assertEqual(self.jc1._canConvertToJava(1), "none")
 
     def testCanConvertExplicit(self):
+        # Issue #1098: Python int now implicitly converts to Integer (via _derived level)
         self.assertEqual(
-            self.jc2._canConvertToJava(1), "explicit")
+            self.jc2._canConvertToJava(1), "implicit")
 
     def testCanConvertImplicit(self):
         self.assertEqual(
