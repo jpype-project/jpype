@@ -26,6 +26,25 @@ Latest Changes:
     where `tp_traverse`/`tp_clear` did not chain to `type`'s own
     implementation.
 
+  - Fixed a random segmentation fault at JVM shutdown when Python tooling
+    (such as pytest's built-in faulthandler plugin) restored pre-JVM signal
+    handlers over HotSpot's, leaving safepoint polls in compiled code
+    unserviced.  JPype now snapshots the JVM's fault handlers at startup,
+    reinstates them before shutdown if they were replaced, and restores the
+    pre-JVM handlers once the JVM is destroyed, making the JVM's lifetime
+    signal-handler transparent on POSIX systems.
+
+  - Refactored internal exception handling: replaced the single
+    ``JPypeException`` tag-plus-union class with distinct C++ types per
+    exception origin (``JPJavaError``, ``JPPythonError``,
+    ``JPInternalError``), so each type only carries the payload valid for
+    it instead of relying on convention. No user-facing behavior change;
+    done to prevent future bugs of the class fixed by #1415 below.
+
+  - Fixed a rare crash where Python's cyclic garbage collector firing
+    while a Python exception was mid-unwind through the reverse-bridge
+    C++ layer could corrupt the in-flight exception. #1415
+
   - Fixed memory leak with int and float conversions. #1379
 
   - Fixed instablity in threading for method dispatch. #1366
@@ -39,8 +58,12 @@ Latest Changes:
   - Fixed JArray constructor ignoring slice bounds when creating from sliced array. #845
 
   - Added jdk.zipfs module dependency to module-info for proper jlink/jdeps detection. #908
-  
+
   - Fixed overloaded methods from multiple interfaces not being detected. #844
+
+  - Improved implicit conversion from Python primitives to Java boxed types (Integer, Long, Short, Double, Float). #1098
+  
+  - Fixed ambiguous overload resolution for bytearray between byte[] and char[]. #598
 
 
 - **1.7.1 - 2026-05-06**

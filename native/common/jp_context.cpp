@@ -31,10 +31,80 @@
 #include <dlfcn.h>
 #endif // HPUX
 #include <errno.h>
+#include <signal.h>
+#include <stdio.h>
 #endif
 
 
 JPResource::~JPResource() = default;
+
+#ifndef WIN32
+// HotSpot depends on its own SIGSEGV/SIGBUS/SIGILL/SIGFPE handlers to service
+// safepoint polls and implicit null checks in compiled code.  Python tooling
+// that saves and restores signal handlers around the JVM's lifetime (e.g.
+// faulthandler via pytest's default plugin) reinstalls the pre-JVM handlers,
+// after which the first armed safepoint kills the process with a raw SIGSEGV.
+// Snapshot the handlers the JVM installs and reinstate them before driving
+// shutdown, which is when safepoints are guaranteed to arm.
+static const int jvmSignals[] = {SIGSEGV, SIGBUS, SIGILL, SIGFPE};
+static const size_t jvmSignalCount = sizeof (jvmSignals) / sizeof (jvmSignals[0]);
+static struct sigaction preJVMSignalSnapshot[jvmSignalCount];
+static struct sigaction jvmSignalSnapshot[jvmSignalCount];
+static bool preJVMSignalsSaved = false;
+static bool jvmSignalsSaved = false;
+
+static void snapshotSignals(struct sigaction* dest)
+{
+	// Querying a valid signal cannot fail, so no error handling here.
+	for (size_t i = 0; i < jvmSignalCount; i++)
+		sigaction(jvmSignals[i], nullptr, &dest[i]);
+}
+
+// sa_handler and sa_sigaction may share storage, so a handler must be read
+// from the field selected by SA_SIGINFO.
+static void* activeHandler(const struct sigaction& sa)
+{
+	if ((sa.sa_flags & SA_SIGINFO) != 0)
+		return (void*) sa.sa_sigaction;
+	return (void*) sa.sa_handler;
+}
+
+static void restoreJVMSignals()
+{
+	// Only reachable without a snapshot in embedded mode, where startJVM
+	// never ran; restoring a zeroed snapshot would install SIG_DFL and
+	// cause the very crash this guards against.
+	if (!jvmSignalsSaved)
+		return;  // GCOVR_EXCL_LINE
+	bool changed = false;
+	for (size_t i = 0; i < jvmSignalCount; i++)
+	{
+		struct sigaction current;
+		if (sigaction(jvmSignals[i], nullptr, &current) != 0)
+			continue;  // GCOVR_EXCL_LINE
+		if (activeHandler(current) == activeHandler(jvmSignalSnapshot[i]))
+			continue;
+		changed = true;
+		sigaction(jvmSignals[i], &jvmSignalSnapshot[i], nullptr);
+	}
+	if (changed)
+		fprintf(stderr, "JPype: the JVM's signal handlers were replaced while it was"
+				" running (faulthandler?); restoring them for JVM shutdown.\n");
+}
+
+// Once the JVM is destroyed its handlers point into a dead VM, so return the
+// process to the handlers it had before startJVM (faulthandler's, or the
+// defaults).  The JVM's lifetime is thereby handler-transparent.  Safe
+// because VM_Exit parks all remaining daemon threads at the final safepoint;
+// nothing executes Java code after DestroyJavaVM returns.
+static void restorePreJVMSignals()
+{
+	if (!preJVMSignalsSaved)
+		return;  // GCOVR_EXCL_LINE
+	for (size_t i = 0; i < jvmSignalCount; i++)
+		sigaction(jvmSignals[i], &preJVMSignalSnapshot[i], nullptr);
+}
+#endif
 
 
 #define USE_JNI_VERSION JNI_VERSION_1_4
@@ -67,7 +137,7 @@ bool JPContext::isRunning()
 }
 
 /**
-	throw a JPypeException if the JVM is not started
+	throw a JPInternalError if the JVM is not started
  */
 void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 {
@@ -80,12 +150,12 @@ void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 
 	if (context == nullptr)
 	{
-		throw JPypeException(JPError::_python_exc, _JVMNotRunning, "Java Context is null", info);
+		throw JPInternalError(_JVMNotRunning, "Java Context is null", info);
 	}
 
 	if (!context->isRunning())
 	{
-		throw JPypeException(JPError::_python_exc, _JVMNotRunning, "Java Virtual Machine is not running", info);
+		throw JPInternalError(_JVMNotRunning, "Java Virtual Machine is not running", info);
 	}
 }
 
@@ -109,15 +179,8 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	m_ConvertStrings = convertStrings;
 
 	// Get the entry points in the shared library
-	try
-	{
-		JP_TRACE("Load entry points");
-		loadEntryPoints(vmPath);
-	} catch (JPypeException& ex)
-	{
-		(void) ex;
-		throw;
-	}
+	JP_TRACE("Load entry points");
+	loadEntryPoints(vmPath);
 
 	// Determine the memory requirements
 #define PAD(x) ((x+31)&~31)
@@ -156,6 +219,10 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	// Launch the JVM
 	JNIEnv* env = nullptr;
 	JP_TRACE("Create JVM");
+#ifndef WIN32
+	snapshotSignals(preJVMSignalSnapshot);
+	preJVMSignalsSaved = true;
+#endif
 	try
 	{
 		CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) jniArgs);
@@ -174,6 +241,11 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 
 	// Mark running for assert
 	m_Running = true;
+
+#ifndef WIN32
+	snapshotSignals(jvmSignalSnapshot);
+	jvmSignalsSaved = true;
+#endif
 
 	jint jni_version = env->GetVersion();
 	if (jni_version < 0x00090000)
@@ -387,12 +459,23 @@ void JPContext::shutdownJVM(bool destroyJVM, bool freeJVM)
 	//	if (m_Embedded)
 	//		JP_RAISE(PyExc_RuntimeError, "Cannot shutdown from embedded Python");
 
+#ifndef WIN32
+	// Shutdown arms safepoints while hook threads run compiled code; make
+	// sure the JVM's signal handlers are still in place before starting.
+	restoreJVMSignals();
+#endif
+
 	// Wait for all non-demon threads to terminate
 	if (destroyJVM)
 	{
 		JP_TRACE("Destroy JVM");
-		JPPyCallRelease call;
-		m_JavaVM->DestroyJavaVM();
+		{
+			JPPyCallRelease call;
+			m_JavaVM->DestroyJavaVM();
+		}
+#ifndef WIN32
+		restorePreJVMSignals();
+#endif
 	}
 
 	// unload the jvm library

@@ -305,10 +305,9 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 	{
 		// Collect the members into a rectangular array if possible.
 		result = frame.collectRectangular(obj);
-	} catch (JPypeException &ex)
+	} catch (...)
 	{
 		// No matter what happens we are only allowed to throw BufferError
-		(void) ex;
 		PyErr_SetString(PyExc_BufferError, "Problem in Java buffer extraction");
 		return -1;
 	}
@@ -344,9 +343,8 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		view->obj = (PyObject*) self;
 		Py_INCREF(view->obj);
 		return 0;
-	} catch (JPypeException &ex) // GCOVR_EXCL_LINE
+	} catch (...) // GCOVR_EXCL_LINE
 	{
-		(void) ex;
 		// GCOVR_EXCL_START
 		// Release the partial buffer so we don't leak
 		PyJPArray_releaseBuffer(self, view);
@@ -405,9 +403,8 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		view->obj = (PyObject*) self;
 		Py_INCREF(view->obj);
 		return 0;
-	} catch (JPypeException &ex)
+	} catch (...)
 	{
-		(void) ex;
 		PyJPArray_releaseBuffer(self, view);
 
 		// We are only allowed to raise BufferError

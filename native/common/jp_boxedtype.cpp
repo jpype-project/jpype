@@ -73,7 +73,12 @@ JPMatch::Type JPBoxedType::findJavaConversion(JPMatch &match)
 		JP_TRACE("Primitive", match.type);
 		match.conversion = boxBooleanConversion;
 		match.closure = this;
+		// Issue #1098: Downgrade match quality by one level for boxing conversion
+		// This allows Python int/float to implicitly convert to boxed types
+		// while preserving the ability to disambiguate with explicit casts
 		if (match.type == JPMatch::_exact)
+			return match.type = JPMatch::_derived;
+		if (match.type > JPMatch::_explicit)
 			return match.type = JPMatch::_implicit;
 		return match.type = JPMatch::_explicit;
 	}

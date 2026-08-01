@@ -45,8 +45,9 @@ class ConversionTestCase(common.JPypeTestCase):
         self.assertEqual(self.jc1._canConvertToJava(1), "none")
 
     def testCanConvertExplicit(self):
+        # Issue #1098: Python int now implicitly converts to Integer (via _derived level)
         self.assertEqual(
-            self.jc2._canConvertToJava(1), "explicit")
+            self.jc2._canConvertToJava(1), "implicit")
 
     def testCanConvertImplicit(self):
         self.assertEqual(
@@ -150,3 +151,27 @@ class ConversionTestCase(common.JPypeTestCase):
         self.assertEqual(jpype.JClass("java.lang.Object")._canConvertToJava(jpype.JClass("java.lang.String")("a")), "derived")
         # Test Java Object specific conversion
         self.assertEqual(jpype.JClass("java.util.List")._canConvertToJava(jpype.JClass("java.util.ArrayList")()), "derived")
+
+    def testBytearrayToByteArray(self):
+        """Test issue #598: bytearray should prefer byte[] over char[]"""
+        # Test that bytearray converts to byte[] with derived match
+        byte_array_class = JArray(JByte)
+        self.assertEqual(byte_array_class._canConvertToJava(bytearray([1, 2, 3])), "derived")
+
+        # Test actual conversion works
+        ba = bytearray([1, 2, 3, 4, 5])
+        ja = byte_array_class(ba)
+        self.assertEqual(len(ja), 5)
+        self.assertEqual(ja[0], 1)
+        self.assertEqual(ja[4], 5)
+
+    def testBytesToByteArray(self):
+        """Test that bytes still work for byte[] conversion"""
+        byte_array_class = JArray(JByte)
+        self.assertEqual(byte_array_class._canConvertToJava(bytes([1, 2, 3])), "implicit")
+
+        # Test actual conversion
+        b = bytes([1, 2, 3, 4, 5])
+        ja = byte_array_class(b)
+        self.assertEqual(len(ja), 5)
+        self.assertEqual(ja[0], 1)

@@ -49,7 +49,7 @@ public:
 		{
 			if (_array)
 				((&_frame)->*_release)(_array, _elem, JNI_ABORT);
-		}		catch (JPypeException&) // GCOVR_EXCL_LINE
+		}		catch (...) // GCOVR_EXCL_LINE
 		{
 			// We can't throw here because it would abort.
 			// But this is called on a non-op release, so
