@@ -137,7 +137,11 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 		_PyUnicode_STATE(self).ascii = 1;
 		_PyUnicode_STATE(self).kind = PyUnicode_1BYTE_KIND;
 
-		char *data = (char*) (((PyASCIIObject*) self) + 1);
+		// self's real allocation is sizeof(struct PyJPChar) -- a full
+		// PyCompactUnicodeObject plus m_Data[4] -- so indexing past the
+		// (smaller) PyASCIIObject header stays in-bounds, matching CPython's
+		// own PyUnicode_1BYTE_DATA for ascii-compact strings.
+		char *data = (char*) &((PyASCIIObject*) self)[1];
 		data[0] = (char) p;
 		data[1] = 0;
 	} else if (p < 256)
@@ -145,7 +149,10 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 		_PyUnicode_STATE(self).ascii = 0;
 		_PyUnicode_STATE(self).kind = PyUnicode_1BYTE_KIND;
 
-		char *data = (char*) ( ((PyCompactUnicodeObject*) self) + 1);
+		// See the ASCII branch above; here the data trails the full
+		// PyCompactUnicodeObject header, matching CPython's layout for
+		// compact non-ASCII 1-byte-kind strings.
+		char *data = (char*) &((PyCompactUnicodeObject*) self)[1];
 		data[0] = (char) p;
 		data[1] = 0;
 
@@ -160,7 +167,10 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 		_PyUnicode_STATE(self).ascii = 0;
 		_PyUnicode_STATE(self).kind = PyUnicode_2BYTE_KIND;
 
-		auto *data = (Py_UCS2*) ( ((PyCompactUnicodeObject*) self) + 1);
+		// Same reasoning as the Latin-1 branch above; m_Data[4] is sized
+		// exactly for this (worst-case, 2-byte-kind) offset, ending at
+		// sizeof(struct PyJPChar).
+		auto *data = (Py_UCS2*) &((PyCompactUnicodeObject*) self)[1];
 		data[0] = p;
 		data[1] = 0;
 #if PY_VERSION_HEX < 0x030c0000
