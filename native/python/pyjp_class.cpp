@@ -648,7 +648,11 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 #if PY_VERSION_HEX < 0x03090000
 	// This was required at one point but I don't know what version it applied to.
-	if (PyObject_IsSubclass((PyObject*) type, (PyObject*) PyJPException_Type))
+	// PyJPException_Type is null while it is itself under construction (see
+	// PyJPObject_initType), which this type-init path runs through too -- guard
+	// against that self-referential bootstrap case rather than dereferencing null.
+	if (PyJPException_Type != nullptr &&
+			PyObject_IsSubclass((PyObject*) type, (PyObject*) PyJPException_Type))
 	{
 		type->tp_new = PyJPException_Type->tp_new;
 	}

@@ -19,6 +19,14 @@
 #include "jpype.h"
 #include "jp_pythontypes.h"
 
+// Py_SET_TYPE became a public macro in CPython 3.9 (bpo-39573); before that,
+// Py_TYPE(obj) itself was an assignable lvalue macro. Needed for the
+// polymorph-back-to-canonical-type step in jp_class.cpp/pyjp_object.cpp on
+// Python 3.8, the oldest version this project still supports.
+#if PY_VERSION_HEX < 0x03090000
+#define Py_SET_TYPE(obj, type) ((Py_TYPE(obj) = (type)))
+#endif
+
 class JPStackInfo;
 #ifdef JP_TRACING_ENABLE
 #define JP_PY_TRY(...) \
