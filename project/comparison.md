@@ -59,7 +59,7 @@ found in this checkout, not a design gap like jpy's row above.
 | Feature | jpype | jpy | jep | pyjnius |
 |---|---|---|---|---|
 | Class hints / custom conversions (`@JConversion`) | Yes (54 tests) | No | No | No |
-| Buffer-protocol (numpy) array push, flat 1D | Yes, bulk path | Yes, but via a separate argument-matching fast path, not `jpy.array()` itself (see jpy section) | Yes, genuine bulk path | **No, rejected unconditionally** (`"Expecting a python list/tuple"`) |
+| Buffer-protocol (numpy) array push, flat 1D | Yes, bulk path, value-correct across ~14 source formats (see dtype matrix below) | Yes, via a separate argument-matching fast path, not `jpy.array()` itself -- **but with no dtype check: silently bit-reinterprets same-width dtype mismatches, see dtype matrix below** | Yes, genuine bulk path, but a closed 8-dtype allowlist (no `float16`) | **No, rejected unconditionally** (`"Expecting a python list/tuple"`) |
 | Buffer-protocol (numpy) array push, multi-dimensional (`int[][]`+) | Yes, bulk path (this session's follow-on) | No (`TypeError`, falls back to slower per-element path) | No (`TypeError: Error matching ndarray.dtype...`) | **No** (same blanket rejection as 1D) |
 | Per-class `findJavaConversion` caching w/ invalidation | Yes (this session) | N/A -- already unconditionally cheap per call | N/A -- short-circuits on arity before any per-arg work | Not applicable the same way; no equivalent caching opportunity found |
 
@@ -82,6 +82,71 @@ essentially the same failure shape (only a genuine Python `int`/`float`
 passes their fast dispatch, no numpy-aware fallback for `int`/`long`
 params) but fail with different, differently-worded errors.
 
+### Buffer dtype conversion: the full matrix, and a serious jpy correctness bug
+
+Requested explicitly this session ("check all the conversion types, not
+just float8 -- jpype has a very large number"). Tested every combination
+empirically, source-grounded where behavior needed explaining, not
+assumed from a single example.
+
+**jpype's real fast-path matrix is large and value-correct.** Its buffer
+dispatcher (`getConverter()`, `jp_convert.cpp`) recognizes 14 source
+buffer format codes -- `?`/`c`/`b` (bool/int8), `B` (uint8), `h`/`H`
+(int16/uint16), `i`/`l`/`I`/`L` (int32/uint32), `q`/`Q` (int64/uint64),
+`f`/`d` (float32/float64), `n`/`N` (native ssize_t/size_t) -- **and
+`e`, IEEE 754 half-precision (`float16`), via a dedicated hand-written
+bit-level decoder** (`Half<Convert<float>::toX>`, manually unpacks sign/
+exponent/fraction including subnormals, then reuses the same
+`Convert<float>::toX` machinery every other type shares) -- not a
+fallback, a genuine bulk fast path, contrary to what the previous
+revision of this doc assumed without checking. Tested all 12 realistic
+numpy dtypes (`bool`/`int8`/`uint8`/`int16`/`uint16`/`int32`/`uint32`/
+`int64`/`uint64`/`float16`/`float32`/`float64`) against all 8 Java
+primitive array types directly (`JArray(JType)(arr)`): **94 of 96
+combinations succeed with genuinely converted values** (confirmed
+`float32([1.0,2.0,3.0]) -> int[]` gives `[1, 2, 3]`, not bit garbage).
+The only 2 failures are `boolean`/`float*` → `char`, both sensible
+rejections (Java has no implicit boolean-to-char or float-to-char
+narrowing either). `float8_e4m3` (via `ml_dtypes`, since neither Java
+nor numpy has a native 8-bit float) is the one case with no recognized
+format code at all -- it still succeeds for `float`/`double` targets, but
+via the general per-element fallback (`ml_dtypes` scalars support
+Python's `__float__` protocol), not the buffer fast path, since `float8`
+isn't in the 14-format list above.
+
+**jpy's buffer path has no dtype/format check at all -- confirmed to
+silently corrupt data for same-width dtype mismatches.** Its argument
+buffer handler (`jpy_jtype.c` ~line 2026) does a raw `memcpy(arrayItems,
+pyBuffer->buf, itemCount*itemSize)` after checking only that the byte
+length matches -- it never inspects `pyBuffer->format`. Verified: passing
+`numpy.float32([1.0, 2.0, 3.0])` where `DeepBench.sumIntArray(int[])`
+expects an `int[]` returns `3217031168`, not an error and not `6` --
+that's the raw IEEE-754 bit patterns of `1.0f`/`2.0f`/`3.0f`
+reinterpreted as `int32` and summed (`1065353216 + 1073741824 +
+1077936128 = 3217031168`, confirmed by hand). This is a **silent
+correctness bug**, not a mere gap: it happens whenever the source dtype
+and the target's byte width match but the dtype itself doesn't
+(`float32`↔`int32`, `float64`↔`int64`) -- a plausible real mistake (wrong
+dtype passed to a Java-typed API) produces a plausible-looking wrong
+number with no error at all. Different-width mismatches are safely
+caught (`uint8`/`float16` → `int[]` both correctly raise "no matching
+Java method overloads found", since the byte-length check alone catches
+those) -- it's specifically the same-width, wrong-dtype case that's
+dangerous. Arguably worse than pyjnius's crash bug below: a crash is at
+least loud.
+
+**jep's numpy fast path is a safe, closed allowlist** -- confirmed
+`float32` → `int[]` and `float16` → `int[]` both cleanly fail
+(`"Error matching ndarray.dtype to Java primitive type"`), consistent
+with `convert_pyndarray_jprimitivearray`'s exact-match check against
+exactly 8 `NPY_*` constants (no `NPY_FLOAT16` in the list at all, so
+`float16` is a hard, permanent gap for jep, not just untested). No
+reinterpretation risk, since dtype identity is checked before any data
+is touched.
+
+**pyjnius**: rejects all numpy input unconditionally regardless of
+dtype (established earlier) -- trivially safe, trivially incapable.
+
 ### Other
 
 | Feature | jpype | jpy | jep | pyjnius |
@@ -90,6 +155,7 @@ params) but fail with different, differently-worded errors.
 | Caller-sensitive JDK method handling | Yes (20 tests) | No | No | No |
 | Javadoc-derived docstrings / Jedi / typing-stub generation | Yes (~37 tests) | No | No (bare `dir()` only) | No (bare `dir()` only, confirmed `__doc__ is None`) |
 | Rich JVM-finder / startup-options API | Yes | Different, narrower (`jpy.create_jvm`) | N/A -- embeds Python *inside* the JVM, reverse architecture | Auto-starts on first `autoclass()` call from a preset classpath (`jnius_config`) -- simplest of the four, but least configurable |
+| Late class loading (add a jar/path to the classpath *after* the JVM is already running) | Yes -- `addClassPath()` live-injects into `org.jpype.JPypeContext`'s custom classloader via JNI, a mechanism built specifically for this | No -- `jvm_classpath` is only settable as an argument to `init_jvm()`, no post-startup API found | No -- architecture mismatch, not just a missing feature: jep doesn't start its own JVM, it's embedded inside one already launched via `java -classpath ...`; `JepConfig.setClassLoader()` supplies a pre-built `ClassLoader` to a new sub-interpreter at construction time, not a live "add this jar now" call | No, and more deliberately than jpy/jep: `add_classpath()` calls `check_vm_running()` first and raises `ValueError` if the JVM has already started -- functionally identical to `set_classpath()`, both pre-startup only |
 
 ### Test suite size
 
