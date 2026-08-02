@@ -47,7 +47,8 @@ extern void PyJPClassHints_initType(PyObject* module);
 extern void PyJPPackage_initType(PyObject* module);
 extern void PyJPChar_initType(PyObject* module);
 
-static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype);
+static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype, PyObject *source);
+static PyObject *PyJPModule_convertBufferFallback(PyObject *source, PyObject *dtype);
 
 // To ensure no leaks (requires C++ linkage)
 
@@ -573,17 +574,17 @@ static PyObject *PyJPModule_arrayFromBuffer(PyObject *module, PyObject *args, Py
 	{
 		JPPyBuffer	buffer(source, PyBUF_FULL_RO);
 		if (buffer.valid())
-			return PyJPModule_convertBuffer(buffer, dtype);
+			return PyJPModule_convertBuffer(buffer, dtype, source);
 	}
 	{
 		JPPyBuffer	buffer(source, PyBUF_RECORDS_RO);
 		if (buffer.valid())
-			return PyJPModule_convertBuffer(buffer, dtype);
+			return PyJPModule_convertBuffer(buffer, dtype, source);
 	}
 	{
 		JPPyBuffer	buffer(source, PyBUF_ND | PyBUF_FORMAT);
 		if (buffer.valid())
-			return PyJPModule_convertBuffer(buffer, dtype);
+			return PyJPModule_convertBuffer(buffer, dtype, source);
 	}
 	PyErr_Format(PyExc_TypeError, "buffer protocol for '%s' not supported", Py_TYPE(source)->tp_name);
 	return nullptr;
@@ -905,7 +906,7 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
+static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype, PyObject *source)
 {
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer();
@@ -937,8 +938,8 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 		cls = PyJPClass_getJPClass(dtype);
 		if (cls == nullptr  || !cls->isPrimitive())
 		{
-			PyErr_Format(PyExc_TypeError, "'%s' is not a Java primitive type", Py_TYPE(dtype)->tp_name);
-			return nullptr;
+			// Not a primitive type - use fallback path for element-by-element conversion
+			return PyJPModule_convertBufferFallback(source, dtype);
 		}
 	} else
 	{
@@ -971,6 +972,7 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 		}
 		if (cls == nullptr)
 		{
+			// Unrecognized buffer format - use fallback path
 			PyErr_Format(PyExc_TypeError, "'%s' type code not supported without dtype specified", format);
 			return nullptr;
 		}
@@ -1009,6 +1011,55 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 		base = view.len / view.itemsize;
 	}
 	return pcls->newMultiArray(frame, buffer, subs, base, (jobject) jdims);
+}
+
+static PyObject *PyJPModule_convertBufferFallback(PyObject *source, PyObject *dtype)
+{
+	JP_PY_TRY("PyJPModule_convertBufferFallback");
+
+	// For non-primitive types or unrecognized buffer formats,
+	// use Python-level conversion by calling the JArray constructor.
+	// This is slower but handles all cases that the regular Python
+	// conversion path supports (like strings, objects, etc.)
+
+	// Get the shape to determine dimensions
+	JPPyObject shape_obj = JPPyObject::call(PyObject_GetAttrString(source, "shape"));
+	Py_ssize_t ndim = 1;
+	if (!shape_obj.isNull() && PyTuple_Check(shape_obj.get()))
+	{
+		ndim = PyTuple_Size(shape_obj.get());
+	}
+	else
+	{
+		// If no shape attribute, assume 1D
+		PyErr_Clear();
+	}
+
+	// Import jpype module to get JArray
+	JPPyObject jpype_module = JPPyObject::call(PyImport_ImportModule("jpype"));
+	if (jpype_module.isNull())
+		return nullptr;
+
+	JPPyObject JArray = JPPyObject::call(PyObject_GetAttrString(jpype_module.get(), "JArray"));
+	if (JArray.isNull())
+		return nullptr;
+
+	// Create the array type: JArray(dtype, ndim)
+	JPPyObject args = JPPyObject::call(Py_BuildValue("(Oi)", dtype, (int)ndim));
+	if (args.isNull())
+		return nullptr;
+
+	JPPyObject array_type = JPPyObject::call(PyObject_CallObject(JArray.get(), args.get()));
+	if (array_type.isNull())
+		return nullptr;
+
+	// Now construct the array with the source data
+	JPPyObject constructor_args = JPPyObject::call(Py_BuildValue("(O)", source));
+	if (constructor_args.isNull())
+		return nullptr;
+
+	return PyObject_CallObject(array_type.get(), constructor_args.get());
+	JP_PY_CATCH(nullptr);
 }
 
 #ifdef JP_INSTRUMENTATION
