@@ -30,6 +30,7 @@ DeepBench = jpype.JClass('jpype.benchmark.DeepBench')
 T0 = jpype.JClass('jpype.benchmark.DeepBench$T0')
 T15 = jpype.JClass('jpype.benchmark.DeepBench$T15')
 Callback = jpype.JClass('jpype.benchmark.DeepBench$Callback')
+ObjectCallback = jpype.JClass('jpype.benchmark.DeepBench$ObjectCallback')
 
 t0 = T0()
 t15 = T15()
@@ -77,6 +78,25 @@ def proxy_callback():
     return DeepBench.invokeCallback(proxy, 5)
 
 
+# Same idea, but with an Object-typed argument -- exercises jp_proxy.cpp's
+# getArgs() (its own findClassForObject call, separate from
+# JPClass::convertToPythonObject), unlike proxy_callback above (a
+# primitive int arg never goes through that code at all).
+@jpype.JImplements(ObjectCallback)
+class MyObjCallback:
+    @jpype.JOverride
+    def handle(self, o):
+        return o
+
+
+obj_proxy = MyObjCallback()
+callback_arg = jpype.JObject()
+
+
+def proxy_object_arg():
+    return DeepBench.invokeObjectCallback(obj_proxy, callback_arg)
+
+
 print("=== JPype: deep conversion paths ===")
 for name, fn in (
         ("overload x16, monomorphic", overload_monomorphic),
@@ -84,6 +104,7 @@ for name, fn in (
         ("int[] from list(100), fresh", array_arg),
         ("Object identity", object_identity),
         ("proxy callback (established)", proxy_callback),
+        ("proxy callback, Object arg", proxy_object_arg),
 ):
     best, median = timeit(fn)
     print(format_row(name, best, median))

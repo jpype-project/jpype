@@ -221,4 +221,28 @@ public class DeepBench
       sum += cb.run(i);
     return sum;
   }
+
+  // Regression coverage for jp_proxy.cpp's getArgs(): a proxy callback
+  // argument's runtime class isn't always the declared one -- covers both
+  // a genuinely null argument (GetObjectClass/IsSameObject must not be
+  // called on it) and a covariant one (declared Object, actual T15).
+  public interface ObjectCallback
+  {
+    Object handle(Object o);
+  }
+
+  public static Object invokeObjectCallbackWithNull(ObjectCallback cb)
+  {
+    return cb.handle(null);
+  }
+
+  public static Object invokeObjectCallbackWithSubtype(ObjectCallback cb)
+  {
+    return cb.handle(new T15());
+  }
+
+  public static Object invokeObjectCallback(ObjectCallback cb, Object o)
+  {
+    return cb.handle(o);
+  }
 }
