@@ -1,0 +1,64 @@
+"""Deeper conversion-chain benchmark, JPype side. Companion to
+bench_jpype.py, which only exercises trivial single-overload JDK calls.
+This one hits paths bench_jpype.py doesn't:
+
+  - overload resolution across 16 candidates (JPMethodDispatch::
+    findOverload), both a monomorphic call site (repeated same type,
+    should hit its existing single-slot m_LastOverload cache) and a
+    polymorphic one (alternating types, defeats that cache every call)
+  - array-argument conversion from a plain Python list (JPConversionSequence
+    in jp_classhints.cpp), which is inherently content-dependent and so
+    was NOT made cacheable by this session's JPClass::findJavaConversion
+    work -- every call re-walks the list.
+
+See README.md for jpy/jep equivalents and how to run all three together.
+
+Usage:
+    /path/to/venv/bin/python project/benchmark/bench_deep_jpype.py
+"""
+import sys
+import os
+
+sys.path.insert(0, os.path.dirname(__file__))
+from _common import timeit, format_row
+
+import jpype
+
+jpype.startJVM(classpath=['test/classes', 'test/harness'])
+
+DeepBench = jpype.JClass('jpype.benchmark.DeepBench')
+T0 = jpype.JClass('jpype.benchmark.DeepBench$T0')
+T15 = jpype.JClass('jpype.benchmark.DeepBench$T15')
+
+t0 = T0()
+t15 = T15()
+
+state = {'flip': False}
+
+
+def overload_monomorphic():
+    return DeepBench.call(t15)
+
+
+def overload_polymorphic():
+    state['flip'] = not state['flip']
+    return DeepBench.call(t0 if state['flip'] else t15)
+
+
+ARRAY = list(range(100))
+
+
+def array_arg():
+    return DeepBench.sumIntArray(ARRAY)
+
+
+print("=== JPype: deep conversion paths ===")
+for name, fn in (
+        ("overload x16, monomorphic", overload_monomorphic),
+        ("overload x16, polymorphic", overload_polymorphic),
+        ("int[] from list(100), fresh", array_arg),
+):
+    best, median = timeit(fn)
+    print(format_row(name, best, median))
+
+jpype.shutdownJVM()

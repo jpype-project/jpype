@@ -9,6 +9,18 @@ Integer(int)`, `new String(...)` + `.toString()`.
 `bench_classhints.py` is JPype-only (exercises the hint-list cache
 specifically; jpy/jep have no equivalent mechanism to compare against).
 
+`bench_deep_*.py` go past those trivial JDK-builtin calls into deeper
+conversion-chain paths, using the shared `jpype.benchmark.DeepBench` test
+class (test/harness/jpype/benchmark/DeepBench.java -- a plain compiled
+class with no jpype dependency, so all three libraries can put
+test/classes + test/harness directly on their classpath and call it):
+overload resolution across 16 candidates (both monomorphic and
+polymorphic call sites), and int[] argument conversion from a fresh
+Python list each call (JPConversionSequence in jp_classhints.cpp -- this
+one is content-dependent and was NOT made cacheable by the
+findJavaConversion work, so it's a real, unaddressed gap: jpy does the
+same conversion roughly 4x faster).
+
 Per this repo's CLAUDE.md, never install any of these into a real/shared
 Python environment -- always a disposable venv, one per library since
 they each embed their own JVM/native glue.
@@ -23,6 +35,7 @@ python3.12 -m venv /tmp/jpype-bench-venv
     --config-settings=cmake.define.BUILD_TEST_HARNESS=ON
 /tmp/jpype-bench-venv/bin/python project/benchmark/bench_jpype.py
 /tmp/jpype-bench-venv/bin/python project/benchmark/bench_classhints.py
+/tmp/jpype-bench-venv/bin/python project/benchmark/bench_deep_jpype.py
 ```
 
 ## jpy
@@ -34,6 +47,12 @@ python3.12 -m venv /tmp/jpy-bench-venv
 /tmp/jpy-bench-venv/bin/pip install /path/to/jpy/dist/jpy-*.whl
 cd /path/to/jpy && /tmp/jpy-bench-venv/bin/python \
     /path/to/jpype/project/benchmark/bench_jpy.py
+
+# bench_deep_jpy.py takes test/classes and test/harness as explicit args
+# since DeepBench needs to be on the JVM classpath jpy starts:
+cd /path/to/jpy && /tmp/jpy-bench-venv/bin/python \
+    /path/to/jpype/project/benchmark/bench_deep_jpy.py \
+    /path/to/jpype/test/classes /path/to/jpype/test/harness
 ```
 
 (jpy's `jpyutil.init_jvm` locates the JVM relative to cwd/JAVA_HOME; run
@@ -62,4 +81,11 @@ PYTHONPATH="$JEP_PKG_PARENT" java -classpath "$JEP_JAR" \
     -Djava.library.path="$JEP_LIB_DIR" jep.Run \
     project/benchmark/bench_jep.py /tmp/bench_jep_results.txt
 cat /tmp/bench_jep_results.txt
+
+# bench_deep_jep.py needs DeepBench on the classpath too:
+CP="$JEP_JAR:$(pwd)/test/classes:$(pwd)/test/harness"
+PYTHONPATH="$JEP_PKG_PARENT" java -classpath "$CP" \
+    -Djava.library.path="$JEP_LIB_DIR" jep.Run \
+    project/benchmark/bench_deep_jep.py /tmp/bench_deep_jep_results.txt
+cat /tmp/bench_deep_jep_results.txt
 ```
