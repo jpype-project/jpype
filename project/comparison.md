@@ -1,12 +1,15 @@
-# jpype vs. jpy vs. jep: feature comparison
+# jpype vs. jpy vs. jep vs. pyjnius: feature comparison
 
-Scoped to the question "if we ported jpype's test suite to jpy/jep, how much
-of it would even have something to run against" (see the testbench-porting
-discussion this doc grew out of). Everything below is grounded in reading
-each library's own source, not inferred from behavior or docs: jpy's C
-source (`~/devel/jpy/src/main/c`) and 21-file Python test suite, and jep's C
-source (`~/devel/jep/src/main/c`) and 34-file/247-test Python test suite.
-See `project/benchmark/RESULTS.md` for the jpype/jpy/jep speed comparison.
+Scoped to the question "if we ported jpype's test suite to jpy/jep/pyjnius,
+how much of it would even have something to run against" (see the
+testbench-porting discussion this doc grew out of). Everything below is
+grounded in reading each library's own source, not inferred from behavior
+or docs: jpy's C source (`~/devel/jpy/src/main/c`) and 21-file Python test
+suite, jep's C source (`~/devel/jep/src/main/c`) and 34-file/247-test Python
+test suite, and pyjnius's Cython source (`~/devel/pyjnius/jnius/*.pxi`,
+`reflect.py`) and 37-file/160-test Python test suite. See
+`project/benchmark/RESULTS.md` for the jpype/jpy/jep/pyjnius speed
+comparison.
 
 jpy is architecturally a thin C extension with essentially no Python-side
 wrapper layer. That's the source of most rows in its table below: jpype
@@ -17,7 +20,91 @@ give Java collections real Python protocol support (`pyjlist.c`,
 `pyjmap.c`, `pyjcollection.c`, `pyjiterable.c`) and both functional-interface
 duck typing and general multi-method proxy support (`pyjtype.c`'s
 `functionalInterface` detection, `jep/Proxy.java` + `java_access/Proxy.c`)
-— closer to jpype in scope than jpy is, though still narrower.
+— closer to jpype in scope than jpy is, though still narrower. pyjnius is
+closer still in *scope* (it has real collection-protocol, `Comparable`,
+functional-interface, and general-proxy support too, all confirmed working
+this session -- see below), but its multi-dimensional/buffer array support
+is the narrowest of the three, and its general-proxy implementation has a
+real, reproduced crash bug jpy/jep don't have.
+
+## Feature matrix: all four libraries
+
+A single-glance summary of the pairwise sections below, which have the
+full evidence/citations for every row here. "Yes"/"No" means fully
+working and verified (empirically this session, where practical) or
+confirmed absent from source; anything more nuanced gets a footnote.
+
+### Language / object-model integration
+
+| Feature | jpype | jpy | jep | pyjnius |
+|---|---|---|---|---|
+| Collection protocols (`List`/`Map`/`Iterator` as native Python `list`/`dict`/iterator) | Yes | No | Yes (`pyjlist.c`/`pyjmap.c`/etc.) | Yes (`protocol_map`) |
+| `Comparable`/`Iterable` duck-typing (`<`, `for x in`, `hash()`) | Yes | No | Yes | Yes (`protocol_map`) |
+| `AutoCloseable` → Python context manager (`with obj:`) | Yes (`jpype/_jio.py`) | No | Yes (`pyjautocloseable.c`) | Yes (`protocol_map`) |
+| Functional-interface duck typing (bare `lambda`/callable as a Java SAM arg, no proxy class needed) | Yes | No (explicit proxy object only) | Yes (`pyjtype.c`'s `functionalInterface`) | Yes (`jnius_conversion.pxi`) |
+| General proxy (Python object implementing an arbitrary Java interface) | Yes, multithread-safe | Broken in this checkout\* | Yes | Yes, but with a reproduced crash bug\*\* |
+
+\* jpy's `PyObject.createProxy()` exists but didn't produce a usable
+object from Python in this checkout (see jpy section below).
+
+\*\* pyjnius's proxy mechanism itself works for the common case, but a
+Python-implemented interface method receiving a **null** `Object`
+argument reliably segfaults the JVM (`jni_GetObjectClass` on a null
+jobject), and even the non-null case silently returns `None` instead of
+the real object -- see the dedicated bug section below. This is a defect
+found in this checkout, not a design gap like jpy's row above.
+
+### Conversion / arrays
+
+| Feature | jpype | jpy | jep | pyjnius |
+|---|---|---|---|---|
+| Class hints / custom conversions (`@JConversion`) | Yes (54 tests) | No | No | No |
+| Buffer-protocol (numpy) array push, flat 1D | Yes, bulk path | Yes, but via a separate argument-matching fast path, not `jpy.array()` itself (see jpy section) | Yes, genuine bulk path | **No, rejected unconditionally** (`"Expecting a python list/tuple"`) |
+| Buffer-protocol (numpy) array push, multi-dimensional (`int[][]`+) | Yes, bulk path (this session's follow-on) | No (`TypeError`, falls back to slower per-element path) | No (`TypeError: Error matching ndarray.dtype...`) | **No** (same blanket rejection as 1D) |
+| Per-class `findJavaConversion` caching w/ invalidation | Yes (this session) | N/A -- already unconditionally cheap per call | N/A -- short-circuits on arity before any per-arg work | Not applicable the same way; no equivalent caching opportunity found |
+
+### numpy scalar argument dispatch (`Math.max(int,int)`, i.e. an overloaded method)
+
+| numpy scalar type | jpype | jpy | jep | pyjnius |
+|---|---|---|---|---|
+| `numpy.int32` | OK | FAILS ("ambiguous Java method call") | OK | FAILS ("no matching method") |
+| `numpy.int64` | OK | FAILS (same) | OK | FAILS (same) |
+| `numpy.float32` | OK | FAILS (same) | FAILS ("cannot be interpreted as an integer") | FAILS (same) |
+| `numpy.float64` | OK | OK (genuine Python `float` subclass) | OK | OK (same reason) |
+
+All four verified empirically this session (not assumed from source
+alone). jpype is the only one that's fully correct across every numpy
+scalar type. jep is notably *better* than jpy/pyjnius here for integers
+(`int32`/`int64` both resolve correctly against `Math.max`'s overloads --
+`jep_numpy.c` has an explicit numpy-scalar path jpy/pyjnius lack) but has
+its *own*, different gap at `float32` specifically. jpy and pyjnius share
+essentially the same failure shape (only a genuine Python `int`/`float`
+passes their fast dispatch, no numpy-aware fallback for `int`/`long`
+params) but fail with different, differently-worded errors.
+
+### Other
+
+| Feature | jpype | jpy | jep | pyjnius |
+|---|---|---|---|---|
+| Pickling / `copyreg` support | Yes (9 tests) | No | No | No |
+| Caller-sensitive JDK method handling | Yes (20 tests) | No | No | No |
+| Javadoc-derived docstrings / Jedi / typing-stub generation | Yes (~37 tests) | No | No (bare `dir()` only) | No (bare `dir()` only, confirmed `__doc__ is None`) |
+| Rich JVM-finder / startup-options API | Yes | Different, narrower (`jpy.create_jvm`) | N/A -- embeds Python *inside* the JVM, reverse architecture | Auto-starts on first `autoclass()` call from a preset classpath (`jnius_config`) -- simplest of the four, but least configurable |
+
+### Test suite size
+
+| | jpype | jpy | jep | pyjnius |
+|---|---:|---:|---:|---:|
+| test files | 90 | 21 | 34 | 37 |
+| tests | 1,884 | 151 | 247 | 160 |
+
+Collection-protocol/Comparable/functional-interface/general-proxy support
+means jep and pyjnius both have *something* to port a meaningfully larger
+fraction of jpype's suite against than jpy does. `test_classhints.py`/
+`test_hints.py`/`test_customizer.py`, `test_pickle.py`/`test_serial.py`,
+and the introspection-ergonomics files are gaps for all three of
+jpy/jep/pyjnius. Multi-dimensional/buffer array tests are a gap for jpy
+(partial) and pyjnius (total) but not jep (partial, same as jpy).
 
 ## jpype vs. jpy
 
@@ -58,7 +145,7 @@ original ask, not because jpy lacks the feature.
 ### jpy suite-size context
 
 jpype: 1,884 tests across 90 files (~21k lines), `test/jpypetest/`.
-jpy: 21 Python test files total, `~/devel/jpy/src/test/python/`.
+jpy: 151 tests across 21 Python test files, `~/devel/jpy/src/test/python/`.
 
 Of jpype's suite, roughly 250+ tests exercise features with literally no
 jpy counterpart (the first table above) — those can't be "ported," only
@@ -127,3 +214,77 @@ above mean a meaningfully larger fraction of jpype's suite has *something*
 to port against for jep than for jpy — but `test_classhints.py`/
 `test_hints.py`/`test_customizer.py`, `test_pickle.py`/`test_serial.py`,
 and the introspection-ergonomics files remain gaps for jep too.
+
+## jpype vs. pyjnius
+
+### Features jpype has that pyjnius does not
+
+| Feature | jpype | pyjnius | Evidence |
+|---|---|---|---|
+| Class hints / custom conversions (`@JConversion`, `JConversionCustomizer`) | Full registration system (54 tests) | No equivalent subsystem | grep of `jnius/*.pxi`/`reflect.py` for hints/customizer/register-conversion machinery: nothing |
+| Multi-dimensional / buffer-protocol array push (`int[]`/`int[][]` etc. from an ndarray) | Bulk buffer path (`caching-multidim-push` branch), any dimension | Not supported at **any** dimension, including flat 1D — narrower than both jpy and jep, which at least accept a 1D buffer object | reproduced this session: `DeepBench.sumIntArray(numpy.arange(...))` raises `JavaException('Expecting a python list/tuple, got array(...)')` unconditionally, for any ndim |
+| Pickling / `copyreg` support for Java objects | `test_pickle.py`, `test_serial.py` (9 tests) | No equivalent | no `__reduce__`/pickle-registration logic in pyjnius's own source (the one `pickle` hit in the built `jnius.c` is Cython's own generated module boilerplate, not a feature) |
+| Introspection ergonomics: docstrings from Javadoc, Jedi/IDE completion, module/typing-stub generation | `test_docstring.py`, `test_jedi.py`, `test_repr.py`, `test_module.py`, `test_module2.py` (~37 tests) | Only bare `dir()` listing (method names visible, `__doc__` is `None` for every bound method, confirmed this session) — same situation as jep | no docstring-generation code found in `jnius/*.pxi`/`reflect.py` |
+| Caller-sensitive JDK method handling | `test_caller_sensitive.py` (20 tests) | Not handled as a distinct case | no reference found in pyjnius source |
+| Per-class conversion caching with generation-based invalidation | Yes (this session's `caching` branch) | Not applicable the same way — no equivalent per-call matching-cost problem was found to cache in the first place (see numpy-scalar-dispatch note below, which is a coverage gap, not a caching opportunity) | `jnius_conversion.pxi` read this session |
+
+### Features pyjnius has that jpy lacks (closer to jpype here, comparable to jep)
+
+Confirmed working empirically this session, not just found in source:
+
+| Feature | pyjnius | Evidence |
+|---|---|---|
+| Python collection protocols on `java.util.List`/`Map`/`Collection`/`Iterator`/`Map.Entry` | Real `__getitem__`/`__setitem__`/`__len__`/`__contains__`/`__iter__`, backed by the actual Java collection | `reflect.py`'s `protocol_map`, applied automatically inside `autoclass()` to every class whose hierarchy includes one of these interfaces; verified an `ArrayList`/`HashMap` support `len()`, indexing, iteration, and `in` directly |
+| `Comparable`/`Iterable` duck-typing | `__lt__`/`__gt__`/`__eq__`/etc. delegate to `compareTo`/`equals`; `__iter__` delegates to `iterator()` | same `protocol_map`; verified `Integer(3) < Integer(5)` works directly |
+| `AutoCloseable`/`Closeable` → Python context manager protocol | `__enter__`/`__exit__` delegate to `close()` | same `protocol_map` (jpype has this too, `jpype/_jio.py` -- not a jpype gap, just noting pyjnius has it as well, unlike the jpy/jep tables above which didn't need to call it out) |
+| Functional-interface duck typing (pass a Python `lambda`/callable directly as a Java SAM interface arg) | Supported | `jnius_conversion.pxi`'s functional-interface detection (~line 415-451); verified `DeepBench.invokeCallback(lambda x: x + 1, 5)` works directly, no proxy class needed |
+| General multi-method proxy (Python object implementing an arbitrary Java interface) | `PythonJavaClass` subclass + `@java_method('<jni-signature>')`, own test file (`test_proxy.py`) | present and works for the common case (verified `int`-arg callback) -- **but see the bug below**, unlike jep's proxy support, which has no equivalent defect found |
+
+### A real, reproduced defect in pyjnius's proxy implementation (not a feature gap — a bug)
+
+Unlike jpy's proxy gap (a construction-time failure, "no matching Java
+method overloads found" — see the jpy table above) and jep's proxy support
+(no defect found), pyjnius's general proxy mechanism has a genuine crash
+bug: a Python-implemented Java interface method receiving a genuinely
+**null** `Object` argument (`DeepBench.invokeObjectCallbackWithNull` —
+`jpype.benchmark.DeepBench`'s `ObjectCallback` methods exist specifically
+to cover this case, per `jp_proxy.cpp`'s own history) reliably segfaults
+the JVM with a native `SIGSEGV` in `jni_GetObjectClass`. Reproduced
+independently three times against a fresh build in a disposable venv
+(ruled out as stale-build-state first, per this repo's CLAUDE.md, before
+treating it as real). pyjnius's proxy-argument-marshalling code calls
+`GetObjectClass`/`IsSameObject` on the argument without a null check first
+— undefined behavior over JNI, not a usage error on this session's part.
+
+Even the non-crashing case (a real, non-null `Object` argument) doesn't
+work correctly: `invokeObjectCallback` silently returns `None` instead of
+the object the Python callback handed back — a separate, non-fatal
+correctness bug in the return-value path. See
+`project/benchmark/RESULTS.md`'s pyjnius section and
+`project/benchmark/pyjnius/proxy.py` for the full detail; that script
+deliberately never calls the null-argument variant.
+
+### Where pyjnius is faster/slower *because* of its own tradeoffs
+
+| Behavior | jpype | pyjnius |
+|---|---|---|
+| numpy scalar dispatch for `int`/`long` parameters | Resolves all numpy scalar types (`int32`/`int64`/`float32`/`float64`) correctly and unambiguously | Same underlying gap as jpy (no fallback for non-exact-Python-type numeric args on `int`/`long` params), but a cleaner failure mode: `Math.max(np.int32(3), 5)` raises `"No static methods called max in java/lang/Math matching your arguments... available: [...]"` — a plain "no match," not jpy's "ambiguous Java method call" |
+| Scalar/boxed/string/proxy call overhead generally | See `RESULTS.md` | Slowest of the four libraries on every boxed/string/proxy row measured this session, sometimes by 5-10x (`new Integer`: 7403ns vs. 840-1257ns elsewhere; `new String`+`.toString()`: 22349ns vs. 927-2512ns; proxy: 39412ns vs. 2240-2655ns) — flagged, not attributed to a specific mechanism at the source level the way the jpy/jep rows above were |
+
+### Not compared here (excluded, no pyjnius equivalent to port to)
+
+Same exclusion as jpy/jep: fault-injection (`test_fault.py`) and
+coverage-instrumentation tests (`test_coverage.py`, `test_javacoverage.py`)
+test jpype's own internals, not portable behavior.
+
+### pyjnius suite-size context
+
+pyjnius: 37 Python test files, 160 tests, `~/devel/pyjnius/tests/`. Between
+jpy's 21 files and jep's 34-file/247-test suite in file count, but fewer
+total tests than jep's. The collection-protocol/Comparable/functional-
+interface/general-proxy support above means pyjnius has *something* to
+port against for a comparably large slice of jpype's suite as jep does —
+but `test_classhints.py`/`test_hints.py`/`test_customizer.py`,
+`test_pickle.py`/`test_serial.py`, the introspection-ergonomics files, and
+(uniquely among the three) *any* multi-dimensional/buffer array test
+remain gaps for pyjnius.

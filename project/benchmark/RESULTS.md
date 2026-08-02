@@ -428,6 +428,124 @@ by 15-75x at every depth, while jpy's and jep's two pull columns stay
 within a small constant factor of each other throughout, same as in the
 flat table above.
 
+## pyjnius: a fourth library
+
+`project/benchmark/pyjnius/` adds pyjnius (Kivy's JNI-based bridge, built
+from `~/devel/pyjnius`, a Cython extension -- no prebuilt wheel existed,
+see README.md for the build) to every category above except
+`classhints.py` (jpype-only). ns/call, best-of-5.
+
+### Scalars, object, dispatch, proxy
+
+| category | operation | jpype | jpy | jep | pyjnius |
+|---|---|---:|---:|---:|---:|
+| int | `Math.max(int,int)` | 750 | 353 | 1299 | 1276 |
+| int | `new Integer(int)` | 840 | 479 | 1257 | 7403 |
+| double | `Math.sqrt(double)` | 690 | 393 | 645 | 497 |
+| double | `new Double(double)` | 918 | 506 | 1378 | 6765 |
+| string | `new String` + `.toString()` | 1022 | 927 | 2512 | 22349 |
+| object | `Object` identity (arg + return) | 995 | 730 | 1971 | 3763 |
+| method dispatch | overload x16, monomorphic | 686 | 370 | 4454 | 3858 |
+| method dispatch | overload x16, polymorphic | 925 | 456 | 4558 | 4000 |
+| proxy | callback, `int` arg | 2655 | N/A* | 2240 | 39412\*\*\* |
+
+pyjnius is the slowest of the four on every boxed/string/proxy row, often
+by a wide margin (`new Integer`: 7403 vs. 840-1257 elsewhere; `new
+String`+`.toString()`: 22349 vs. 927-2512; proxy: 39412 vs. 2240-2655).
+Not investigated down to the source level the jpy/jep comparisons above
+were -- flagging the gap, not attributing it to a specific mechanism.
+
+\*\*\* Only the `int`-arg proxy case is measured for pyjnius -- the
+`Object`-arg case (`invokeObjectCallback`) is not benchmarked because
+its null-argument variant (`invokeObjectCallbackWithNull`) reliably
+crashes the JVM with a native `SIGSEGV` in `jni_GetObjectClass`,
+reproduced independently three times against a fresh build in a
+disposable venv (ruled out as stale-build-state first, per this repo's
+CLAUDE.md). `DeepBench`'s `ObjectCallback` methods exist specifically to
+cover this case (see `jp_proxy.cpp`'s own history) -- a Python-side Java
+interface implementation receiving a genuinely null `Object` argument.
+This pyjnius checkout's proxy-argument-marshalling code calls
+`GetObjectClass`/`IsSameObject` on the argument without a null check
+first, which is undefined behavior over JNI. Even the *non-crashing*
+case (a real, non-null argument) doesn't work correctly either --
+`invokeObjectCallback` silently returns `None` instead of the object the
+Python callback handed back, a separate, non-fatal correctness bug in
+pyjnius's proxy return-value handling. This is a real finding about this
+pyjnius checkout, not a benchmark-setup issue.
+
+**numpy scalar dispatch** (mirroring the jpy finding earlier in this
+file): pyjnius has the same gap as jpy for `int`/`long` parameters --
+`Math.max(np.int32(3), 5)` fails -- but with a different, arguably
+clearer failure mode: `"No static methods called max in java/lang/Math
+matching your arguments... available: ['(JJ)J', '(II)I', '(DD)D',
+'(FF)F']"`, a plain "no match" error rather than jpy's "ambiguous" one.
+`np.float64` succeeds (genuinely a Python `float` subclass); single-
+overload methods (`Math.sqrt`) accept any numpy scalar type regardless,
+same reasoning as jpy's case.
+
+### Arrays: pyjnius has no `buffer->array` at all
+
+Confirmed empirically, not assumed: passing a numpy array anywhere a
+Java array argument is expected raises `JavaException('Expecting a
+python list/tuple, got array(...)')`, unconditionally, at every size and
+depth tried. This is stricter than jep (which has a real fast path for a
+flat 1D target) and stricter than jpy/jpype (both accept a buffer-
+protocol object at least for 1D). So only `list->array` push exists for
+pyjnius -- there's no `buffer->array` row to report.
+
+Pull is structurally different from the other three libraries too: a
+returned Java array comes back from pyjnius *already* a fully
+materialized, recursively-nested plain Python `list` -- confirmed
+(`type(DeepBench.make2DIntArray(4))` is `list`, and so is
+`type(DeepBench.make2DIntArray(4)[0])`). There's no wrapper array object
+to convert afterward, so `array->list` is just the raw return value, and
+`array->buffer` is that same value plus an extra `np.asarray()` step --
+strictly slower than `array->list` at every size/depth measured, since
+there's no bulk Java-array-to-numpy path to win with (unlike jpype's/
+jpy's `array->buffer`, which do have one, at least for 1D).
+
+**Flat (1D), list->array push** (`sumIntArray(list)`):
+
+| size | jpype | jpy | jep | pyjnius |
+|---:|---:|---:|---:|---:|
+| 100 | 3469 | 1313 | 1939 | 3068 |
+| 1,000 | 22032 | 8294 | 9574 | 25932 |
+| 10,000 | 211972 | 78342 | 86629 | 268303 |
+| 100,000 | 2007142 | 774569 | 840301 | 4520089 |
+
+**Flat (1D), pull** (`makeIntArray(n)`):
+
+| size | array->list (pyjnius) | array->buffer (pyjnius) |
+|---:|---:|---:|
+| 100 | 1234 | 3759 |
+| 1,000 | 10436 | 33889 |
+| 10,000 | 113502 | 351246 |
+| 100,000 | 1142328 | 4969111 |
+
+(compare against the four-library flat-pull tables in the "Array
+conversion suite" section above -- pyjnius's `array->list` is
+competitive with jpy's/jep's there, but its `array->buffer` never wins
+since it's just `array->list` plus a redundant conversion, unlike
+jpype's/jpy's real buffer reads.)
+
+**Multi-dimensional (2D-5D), list->array push** (`sum{2,3,4,5}DIntArray(nested_list)`):
+
+| dims | jpype | jpy | jep | pyjnius |
+|---:|---:|---:|---:|---:|
+| 2 | 16187 | 2226 | 5914 | 4867 |
+| 3 | 237328 | 18304 | 54016 | 41419 |
+| 4 | 3153538 | 179039 | 536362 | 418743 |
+| 5 | 39523608 | 1832619 | 5343343 | 4563869 |
+
+**Multi-dimensional (2D-5D), pull** (`make{2,3,4,5}DIntArray(10)`):
+
+| dims | array->list (pyjnius) | array->buffer (pyjnius) |
+|---:|---:|---:|
+| 2 | 2500 | 6124 |
+| 3 | 25676 | 59329 |
+| 4 | 357055 | 710086 |
+| 5 | 5127586 | 9973923 |
+
 ## Verification
 
 Every change above went through the full local suite (standard and
@@ -450,3 +568,11 @@ this table, not extrapolated: every `array_flat.py`/`array_multidim.py`
 in `project/benchmark/{jpype,jpy,jep}/` executed to completion (disposable
 venv for jpype, the prebuilt jpy wheel, jep's embedded-JVM launcher for
 jep) immediately before being recorded here.
+
+Same for the pyjnius section: built from source into its own disposable
+venv, every `project/benchmark/pyjnius/*.py` file executed to completion
+before its numbers were recorded, and the SIGSEGV finding was reproduced
+three separate times (once with a debug print inside the callback, once
+isolated to just the null-argument call, once to confirm the non-null
+call doesn't crash) before being written up as a real bug rather than a
+one-off fluke.

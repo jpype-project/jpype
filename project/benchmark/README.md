@@ -1,34 +1,36 @@
 # Cross-library call-overhead benchmarks
 
-Compares JPype's general per-call overhead against jpy and jep, to check
-whether the JPClass::findJavaConversion caching work
+Compares JPype's general per-call overhead against jpy, jep, and pyjnius,
+to check whether the JPClass::findJavaConversion caching work
 (native/common/include/jp_conversioncache.h) has closed the gap.
 
-Laid out as one directory per library -- `jpype/`, `jpy/`, `jep/` -- with
-matching filenames across all three, one file per benchmark category. To
-compare a category across libraries, just look at the same filename in
-each directory (e.g. `jpype/array_flat.py` vs `jpy/array_flat.py` vs
-`jep/array_flat.py`); a file missing from one directory is a documented
-gap (see below), not an oversight. Categories, and where each one lives:
+Laid out as one directory per library -- `jpype/`, `jpy/`, `jep/`,
+`pyjnius/` -- with matching filenames across all four, one file per
+benchmark category. To compare a category across libraries, just look at
+the same filename in each directory (e.g. `jpype/array_flat.py` vs
+`jpy/array_flat.py` vs `jep/array_flat.py` vs `pyjnius/array_flat.py`); a
+file missing from one directory, or a row missing from one file, is a
+documented gap (see below), not an oversight. Categories, and where each
+one lives:
 
-| file | category | jpype | jpy | jep |
-|---|---|---|---|---|
-| `int.py` | `Math.max(int,int)`, `new Integer(int)` | yes | yes | yes |
-| `double.py` | `Math.sqrt(double)`, `new Double(double)` | yes | yes | yes |
-| `strings.py` | `new String(...)` + `.toString()` | yes | yes | yes |
-| `object.py` | plain `Object` identity (arg + return) | yes | yes | yes |
-| `dispatch.py` | overload resolution x16, mono + polymorphic | yes | yes | yes |
-| `proxy.py` | established callback binding, int + Object arg | yes | -- | yes |
-| `array_flat.py` | 1D list->array/buffer->array, 100/1k/10k/100k elements | yes | yes | yes |
-| `array_multidim.py` | 2D-5D list->array/buffer->array, fixed element count | yes | yes | yes |
-| `classhints.py` | `@JConversion` hint-list cache scan | yes | -- | -- |
+| file | category | jpype | jpy | jep | pyjnius |
+|---|---|---|---|---|---|
+| `int.py` | `Math.max(int,int)`, `new Integer(int)` | yes | yes | yes | yes |
+| `double.py` | `Math.sqrt(double)`, `new Double(double)` | yes | yes | yes | yes |
+| `strings.py` | `new String(...)` + `.toString()` | yes | yes | yes | yes |
+| `object.py` | plain `Object` identity (arg + return) | yes | yes | yes | yes |
+| `dispatch.py` | overload resolution x16, mono + polymorphic | yes | yes | yes | yes |
+| `proxy.py` | established callback binding, int + Object arg | yes | -- | yes | int arg only\*\*\* |
+| `array_flat.py` | 1D list->array/buffer->array, 100/1k/10k/100k elements | yes | yes | yes | list->array only\*\*\*\* |
+| `array_multidim.py` | 2D-5D list->array/buffer->array, fixed element count | yes | yes | yes | list->array only\*\*\*\* |
+| `classhints.py` | `@JConversion` hint-list cache scan | yes | -- | -- | -- |
 
 `int.py`/`double.py`/`strings.py` are trivial single-overload JDK-builtin
 calls -- a baseline with no interesting conversion machinery behind it.
 `object.py`/`dispatch.py`/`proxy.py`/`array_*.py` all use the shared
 `jpype.benchmark.DeepBench` test class
 (test/harness/jpype/benchmark/DeepBench.java -- a plain compiled class
-with no jpype dependency, so all three libraries can put test/classes +
+with no jpype dependency, so all four libraries can put test/classes +
 test/harness directly on their classpath and call it) to exercise deeper
 conversion-chain paths: overload resolution across 16 candidates,
 Object-argument/return identity, a proxy callback (Java calling back into
@@ -64,6 +66,22 @@ multi-dimensional `buffer->array` push) not exist automatically at all --
 see the comments at the top of each script for specifics and, for jep,
 the manually-assembled workaround measured there instead.
 
+\*\*\*\* **pyjnius has no `buffer->array` push at all, at any size or
+depth** -- confirmed empirically, not assumed: passing a numpy array
+where a Java array argument is expected raises `JavaException('Expecting
+a python list/tuple, got array(...)')` unconditionally, stricter than
+jep (which at least has a real fast path for a flat 1D target) and
+stricter than jpy/jpype (both accept a buffer-protocol object). So
+`pyjnius/array_flat.py`/`array_multidim.py` only have three rows, not
+four: `list->array` push, and `array->list`/`array->buffer` pull. Pull
+is also structurally different from the other three libraries: a
+returned Java array comes back from pyjnius *already* a fully
+materialized, recursively-nested plain Python list -- there's no wrapper
+array object to convert afterward, so `array->list` there is just the
+raw return value, and `array->buffer` is that same value plus an extra
+`np.asarray()` step (never faster, since there's no bulk Java-array-to-
+numpy path to win with either).
+
 `classhints.py` is JPype-only (exercises the hint-list cache
 specifically; jpy/jep have no `@JConversion`-style extensible hint
 mechanism to compare against). Requires the test harness classes
@@ -86,6 +104,27 @@ Java interface differs and isn't drop-in comparable:
   isn't about calling the proxy's methods from Python either) -- this
   looks like a real gap/bug in this jpy checkout, not a usage error, so
   there's no `jpy/proxy.py`.
+- pyjnius: `PythonJavaClass` subclass + `@java_method('<jni-signature>')`,
+  also constructed once.
+
+\*\*\* **pyjnius's proxy Object-arg case is not benchmarked because it
+crashes the JVM.** `DeepBench.invokeObjectCallbackWithNull` (a
+Python-implemented Java interface method receiving a genuinely null
+`Object` argument -- exactly the case jp_proxy.cpp's own regression
+coverage exists for) reliably segfaults this pyjnius checkout with a
+native `SIGSEGV` in `jni_GetObjectClass`, reproduced independently three
+times against a fresh build in a disposable venv (ruled out as a
+stale-build artifact first, per this repo's CLAUDE.md, before treating it
+as a real finding). This pyjnius checkout's proxy-argument-marshalling
+code calls `GetObjectClass`/`IsSameObject` on the argument without
+checking for null first -- undefined behavior over JNI. Even the
+non-crashing case (a real, non-null `Object` argument) doesn't work
+correctly either: `invokeObjectCallback` silently returns `None` instead
+of the object the Python callback handed back, a separate (non-fatal)
+correctness bug in pyjnius's proxy return-value handling. Neither is
+worth a benchmark number, and the crash means `pyjnius/proxy.py` must
+never call the null-argument variant -- only the `int`-arg case
+(`invokeCallback`) is measured there.
 
 Per this repo's CLAUDE.md, never install any of these into a real/shared
 Python environment -- always a disposable venv, one per library since
@@ -159,4 +198,31 @@ PYTHONPATH="$JEP_PKG_PARENT" java -classpath "$CP" \
     -Djava.library.path="$JEP_LIB_DIR" jep.Run \
     project/benchmark/jep/dispatch.py /tmp/bench_jep_dispatch_results.txt
 cat /tmp/bench_jep_dispatch_results.txt
+```
+
+## pyjnius
+
+No prebuilt wheel in ~/devel/pyjnius -- it's a Cython extension
+(`jnius/jnius.pyx`), built from source. Needs `JAVA_HOME` pointing at a
+JDK (not just a JRE -- `setup.py` asserts this) and Cython pinned per
+`pyproject.toml` (`Cython~=3.1.2` at the time this was written).
+
+```
+python3.12 -m venv /tmp/pyjnius-bench-venv
+/tmp/pyjnius-bench-venv/bin/pip install --upgrade pip
+/tmp/pyjnius-bench-venv/bin/pip install "Cython~=3.1.2" setuptools wheel numpy
+cd ~/devel/pyjnius && /tmp/pyjnius-bench-venv/bin/pip install -e .
+
+# int.py/double.py/strings.py take no args -- unlike jpy/jep, pyjnius
+# auto-starts its embedded JVM on first autoclass() call and needs no
+# explicit init or shutdown call:
+/tmp/pyjnius-bench-venv/bin/python \
+    /path/to/jpype/project/benchmark/pyjnius/int.py
+
+# the rest need DeepBench on the classpath, set via jnius_config *before*
+# the first `from jnius import ...` -- these scripts take classes_dir/
+# harness_dir as optional positional args (defaulting to test/classes,
+# test/harness relative to cwd):
+cd /path/to/jpype && /tmp/pyjnius-bench-venv/bin/python \
+    project/benchmark/pyjnius/dispatch.py test/classes test/harness
 ```
