@@ -83,6 +83,19 @@ def proxy_callback():
     return DeepBench.invokeCallback(proxy, 5)
 
 
+class MyObjCallback:
+    def handle(self, o):
+        return o
+
+
+obj_proxy = jep.jproxy(MyObjCallback(), ["jpype.benchmark.DeepBench$ObjectCallback"])
+callback_arg = JObject()
+
+
+def proxy_object_arg():
+    return DeepBench.invokeObjectCallback(obj_proxy, callback_arg)
+
+
 with open(out_path, 'w') as f:
     f.write("=== jep: deep conversion paths ===\n")
     for name, fn in (
@@ -91,6 +104,7 @@ with open(out_path, 'w') as f:
             ("int[] from list(100), fresh", array_arg),
             ("Object identity", object_identity),
             ("proxy callback (established)", proxy_callback),
+            ("proxy callback, Object arg", proxy_object_arg),
     ):
         best, median = timeit(fn)
         f.write(format_row(name, best, median) + "\n")
