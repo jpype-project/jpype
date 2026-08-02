@@ -132,6 +132,28 @@ public:
 	 */
 	JPMatch::Type findJavaConversion(JPMatch& match);
 
+	/**
+	 * Cheap, type-only check for whether a single Python object matches
+	 * this class at some known quality, without going through the general
+	 * findJavaConversion dispatch (JPMatch construction, cache lookup,
+	 * matches() chain).
+	 *
+	 * Used by JPConversionSequence (jp_classhints.cpp) to fast-path the
+	 * common case of a homogeneous list of one recognized element type
+	 * (e.g. plain `int` for int[]): it tries this first, per element, and
+	 * only falls back to the general path (unchanged, fully correct) from
+	 * the point where an element doesn't satisfy it -- so a mixed list
+	 * only ever pays full price for its non-conforming tail, not the whole
+	 * list, and a fully homogeneous list never constructs a JPMatch at
+	 * all. Returns false (no opinion, always safe) by default; only worth
+	 * overriding where a raw C-API type check can stand in for a known
+	 * quality level.
+	 */
+	virtual bool fastElementCheck(PyObject* obj, JPMatch::Type& quality) const
+	{
+		return false;
+	}
+
 	/** Clear this class's cached findJavaConversion() results.
 	 *
 	 * Called lazily by findJavaConversion() itself when JPClassHints's

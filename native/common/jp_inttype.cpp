@@ -120,6 +120,18 @@ JPMatch::Type JPIntType::findJavaConversionImpl(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
+bool JPIntType::fastElementCheck(PyObject* obj, JPMatch::Type& quality) const
+{
+	// Matches intConversion's (JPConversionLong<JPIntType>) exact-type
+	// branch above -- PyLong_CheckExact is itself a Py_TYPE-slot check, so
+	// this is exactly as correct as the general path for this one case,
+	// just without constructing a JPMatch or going through the cache.
+	if (!PyLong_CheckExact(obj))
+		return false;
+	quality = JPMatch::_implicit;
+	return true;
+}
+
 void JPIntType::getConversionInfo(JPConversionInfo &info)
 {
 	JPJavaFrame frame = JPJavaFrame::outer();

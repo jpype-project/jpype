@@ -586,6 +586,23 @@ public:
 			// so we must hold the reference in a container while
 			// the match is caching it.
 			JPPyObject item = seq[i];
+
+			// Fast path: a raw type check standing in for a known quality,
+			// skipping JPMatch construction and the general
+			// findJavaConversion dispatch entirely. Falls through to the
+			// general path (unchanged) the moment an element doesn't
+			// qualify -- so a homogeneous list (the common case) never
+			// touches the slow path at all, and a mixed list only pays
+			// full price from the first non-conforming element onward, not
+			// for the whole list.
+			JPMatch::Type fastQuality;
+			if (componentType->fastElementCheck(item.get(), fastQuality))
+			{
+				if (fastQuality < match.type)
+					match.type = fastQuality;
+				continue;
+			}
+
 			JPMatch imatch(match.frame, item.get());
 			componentType->findJavaConversion(imatch);
 			if (imatch.type < match.type)
