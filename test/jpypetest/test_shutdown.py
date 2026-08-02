@@ -88,6 +88,64 @@ class ShutdownSignalWarningTest(unittest.TestCase):
         self.assertIn(b"PRE-JVM-RESTORED", result.stdout)
 
 
+class ShutdownParkedDaemonProxyTest(unittest.TestCase):
+    """A Python proxy invoked from a *daemon* Java thread can still be
+    blocked inside its Python callback when shutdownJVM() runs:
+    DestroyJavaVM() only waits for non-daemon Java threads, so it returns -
+    and frees every JPClass/context resource - while that thread is still
+    parked underneath it. Releasing the callback afterwards used to resume
+    execution on top of a destroyed JVM and segfault. JPype must instead
+    detect this in hostInvoke() and get the thread off the JVM permanently
+    (terminate it, or park it forever) rather than let it touch freed
+    state.  Run out-of-process since a regression here is a hard crash."""
+
+    def _run(self, action):
+        script = (
+            "import threading, time, jpype\n"
+            "from jpype import JImplements, JOverride\n"
+            "jpype.startJVM(convertStrings=False)\n"
+            "started = threading.Event()\n"
+            "release = threading.Event()\n"
+            "@JImplements(jpype.java.lang.Runnable)\n"
+            "class Parked:\n"
+            "    @JOverride\n"
+            "    def run(self):\n"
+            "        started.set()\n"
+            "        release.wait()\n"
+            f"        {action}\n"
+            "runnable = Parked()\n"
+            "jthread = jpype.java.lang.Thread(runnable)\n"
+            "jthread.setDaemon(True)\n"
+            "jthread.start()\n"
+            "assert started.wait(timeout=10)\n"
+            "time.sleep(0.2)\n"
+            "jpype.shutdownJVM()\n"
+            "release.set()\n"
+            "time.sleep(1)\n"
+            "print('SURVIVED')\n"
+        )
+        result = subprocess.run([sys.executable, "-c", script],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                timeout=60)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(b"SURVIVED", result.stdout)
+        self.assertIn(b"Application error, blocked python proxy attached as "
+                      b"a daemon thread and called after JVM shutdown",
+                      result.stderr)
+
+    def testRaiseAfterShutdown(self):
+        # Callback resumes and raises - exercises the exception-conversion
+        # path (JPPythonError::toJava), which needs the freed exception
+        # classes.
+        self._run("raise RuntimeError('boom after JVM destroyed')")
+
+    def testCallAfterShutdown(self):
+        # Callback resumes and makes a fresh JNI call - exercises the case
+        # where the callback doesn't merely return but tries to use the
+        # (destroyed) JVM again.
+        self._run("jpype.java.lang.System.currentTimeMillis()")
+
+
 @subrun.TestCase
 class ShutdownTest(unittest.TestCase):
 
