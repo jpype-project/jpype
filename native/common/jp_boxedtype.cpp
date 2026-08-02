@@ -122,9 +122,15 @@ JPPyObject JPBoxedType::convertToPythonObject(JPJavaFrame& frame, jvalue value, 
 			return JPPyObject::getNone();
 		}
 
-		cls = frame.findClassForObject(value.l);
-		if (cls != this)
-			return cls->convertToPythonObject(frame, value, true);
+		// See JPClass::convertToPythonObject's identical fast path: skip
+		// the findClassForObject JNI upcall when the runtime class is
+		// already known to be exactly this one.
+		if (!frame.IsSameObject(frame.GetObjectClass(value.l), getJavaClass()))
+		{
+			cls = frame.findClassForObject(value.l);
+			if (cls != this)
+				return cls->convertToPythonObject(frame, value, true);
+		}
 	}
 
 	JPPyObject wrapper = PyJPClass_create(frame, cls);

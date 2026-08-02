@@ -343,9 +343,18 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 			return JPPyObject::getNone();
 		}
 
-		cls = frame.findClassForObject(value.l);
-		if (cls != this)
-			return cls->convertToPythonObject(frame, value, true);
+		// findClassForObject is a JNI upcall into Java's TypeManager (a
+		// bytecode-level HashMap.get, not just a native call) -- for the
+		// very common case where the runtime class is exactly the
+		// declared one (no covariant override in play), a cheap
+		// GetObjectClass + IsSameObject against the class we already hold
+		// a global ref to answers the same question without it.
+		if (!frame.IsSameObject(frame.GetObjectClass(value.l), getJavaClass()))
+		{
+			cls = frame.findClassForObject(value.l);
+			if (cls != this)
+				return cls->convertToPythonObject(frame, value, true);
+		}
 	}
 
 	JPPyObject obj;
