@@ -354,3 +354,64 @@ but `test_classhints.py`/`test_hints.py`/`test_customizer.py`,
 `test_pickle.py`/`test_serial.py`, the introspection-ergonomics files, and
 (uniquely among the three) *any* multi-dimensional/buffer array test
 remain gaps for pyjnius.
+
+## Future: jpype's reverse-embedding direction (`origin/reverse`)
+
+**A wrong assumption got made in this doc's first pass, and it's worth
+recording plainly, because it's the kind of mistake an AI assistant
+reasoning about this codebase keeps being tempted to make again:** the
+initial write-up claimed jpype's architecture is permanently
+Python-hosts-the-JVM, and that jep's "embeds Python inside the JVM"
+niche — a pure Java application (`java -cp your_app.jar
+com.your.Main`) bringing up an embedded Python interpreter itself,
+Java as the host process, not Python — was therefore something no
+amount of jpype development could ever close. That claim was made
+without checking the `reverse` branch first, and it's false.
+
+`org.jpype.MainInterpreter` (`~/devel/jpype` on `origin/reverse`,
+`native/jpype_module/src/main/java/org/jpype/MainInterpreter.java`) is
+exactly that entry point — a Java-side singleton, "main entry point for
+interacting with the Python interpreter" per its own javadoc, that
+locates/probes/launches an embedded CPython interpreter from Java code,
+no Python process involved in starting anything. Demonstrated concretely
+by `native/jpype_module/src/test/java/runner/HelloWorldMain.java`, a
+pure `public static void main(String[] args)` with zero Python
+involvement in bootstrapping:
+
+```java
+public static void main(String[] args) {
+    MainInterpreter.getInstance().start(new String[0]);
+    Script context = new Script(MainInterpreter.getInstance());
+    context.exec("msg = 'Hello World from Python'");
+    PyObject msg = context.eval("msg");
+    ...
+}
+```
+
+It goes further than parity with jep: `org.jpype.script.JPypeScriptEngine`
+implements `javax.script.AbstractScriptEngine`/`Invocable` — the standard
+JSR-223 scripting API every JVM already has a pluggable-scripting-language
+story for (`ScriptEngineManager`). That's arguably a *more* idiomatic
+"Java embeds a scripting language" integration than jep's own bespoke API,
+since it's the interface Java itself defines for this exact use case.
+
+**Status, to avoid overclaiming the other direction**: `origin/reverse`
+is 190 commits ahead of `review` (the main branch) and not yet merged —
+substantial, apparently mature work (subinterpreters, cross-interpreter
+GC, an `InterpreterPipe`, `toPython()` conversions for
+`Instant`/`Path`/`File`/`BigDecimal`/dates, coverage raised to 90-100% on
+many modules per its own plan docs), but "future," not current `review`
+behavior, and not re-verified with the same empirical rigor (actually
+running it, checking edge cases) applied to jpy/jep/pyjnius throughout
+the rest of this document. Once merged, though, the conclusion changes
+concretely: jpype covers *both* embedding directions natively — its
+existing, dominant Python-hosts-Java strength (everything above), plus
+Java-hosts-Python via `MainInterpreter`/`JPypeScriptEngine` — where jep
+currently has the *only* other native story for the second direction, and
+jpy/pyjnius have neither.
+
+**The general lesson, stated for whoever (human or AI) reads this doc
+next**: "library X's architecture makes Y permanently impossible" is a
+claim that must be checked against that library's own branches/plans
+before being written down, not inferred from "that's not what the
+`review` branch does today." This doc got that wrong once already.
