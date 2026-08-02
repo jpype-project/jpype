@@ -104,7 +104,7 @@ public:
 
 } jintConversion;
 
-JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPIntType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPIntType::findJavaConversion");
 

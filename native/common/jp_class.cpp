@@ -410,9 +410,9 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
+JPMatch::Type JPClass::findJavaConversionImpl(JPMatch &match)
 {
-	JP_TRACE_IN("JPClass::findJavaConversion");
+	JP_TRACE_IN("JPClass::findJavaConversionImpl");
 	if (nullConversion->matches(this, match)
 			|| objectConversion->matches(this, match)
 			|| proxyConversion->matches(this, match)
@@ -420,6 +420,42 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 		return match.type;
 	JP_TRACE("No match");
 	return match.type = JPMatch::_none;
+	JP_TRACE_OUT;
+}
+
+void JPClass::clearConversionCache()
+{
+	m_ConversionCache.clear();
+}
+
+JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
+{
+	JP_TRACE_IN("JPClass::findJavaConversion");
+	if (m_ConversionCacheGeneration != JPClassHints::s_Generation)
+	{
+		m_ConversionCache.clear();
+		m_ConversionCacheGeneration = JPClassHints::s_Generation;
+	}
+
+	auto *type = Py_TYPE(match.object);
+	JPConversion *cachedConversion;
+	JPMatch::Type cachedType;
+	if (m_ConversionCache.lookup(type, cachedConversion, cachedType))
+	{
+		match.conversion = cachedConversion;
+		// See the comment on m_ConversionCache: every cacheable conversion
+		// uses closure == this, except this one fixed, known exception.
+		match.closure = (cachedConversion == boxBooleanConversion)
+				? (void*) JPContext_global->_java_lang_Boolean
+				: (void*) this;
+		return match.type = cachedType;
+	}
+
+	match.cacheable = true;
+	JPMatch::Type result = findJavaConversionImpl(match);
+	if (match.cacheable)
+		m_ConversionCache.store(type, match.conversion, result);
+	return result;
 	JP_TRACE_OUT;
 }
 

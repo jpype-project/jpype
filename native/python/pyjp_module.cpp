@@ -753,6 +753,13 @@ uint32_t _PyJPModule_fault_code = -1;
 
 static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
 {
+	// Arming (or disarming) a fault must force the next findJavaConversion
+	// resolution to actually run findJavaConversionImpl again -- otherwise a
+	// cache hit can silently skip right over the instrumented matches() call
+	// the test is targeting, leaving the fault armed-but-never-triggered to
+	// go off unexpectedly in some later, unrelated call. Reuse the same
+	// generation-counter invalidation JPClassHints mutation uses.
+	++JPClassHints::s_Generation;
 	if (args == Py_None)
 	{
 		_PyJPModule_fault_code = 0;

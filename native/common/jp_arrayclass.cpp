@@ -33,7 +33,7 @@ JPArrayClass::JPArrayClass(JPJavaFrame& frame,
 JPArrayClass::~JPArrayClass()
 = default;
 
-JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
+JPMatch::Type JPArrayClass::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPArrayClass::findJavaConversion");
 	if (nullConversion->matches(this, match)

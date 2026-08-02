@@ -30,7 +30,7 @@ JPNumberType::JPNumberType(JPJavaFrame& frame,
 JPNumberType::~JPNumberType()
 = default;
 
-JPMatch::Type JPNumberType::findJavaConversion(JPMatch& match)
+JPMatch::Type JPNumberType::findJavaConversionImpl(JPMatch& match)
 {
 	// Rules for java.lang.Object
 	JP_TRACE_IN("JPNumberType::canConvertToJava");

@@ -79,7 +79,7 @@ public:
 
 } jbyteConversion;
 
-JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPByteType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPByteType::findJavaConversion");
 

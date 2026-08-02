@@ -149,7 +149,7 @@ public:
 
 } asBooleanNumber;
 
-JPMatch::Type JPBooleanType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPBooleanType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPBooleanType::findJavaConversion", this);
 

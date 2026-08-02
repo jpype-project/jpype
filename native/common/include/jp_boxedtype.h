@@ -38,7 +38,7 @@ public:
 			JPPrimitiveType* primitiveType);
 	~JPBoxedType() override;
 
-	JPMatch::Type findJavaConversion(JPMatch &match) override;
+	JPMatch::Type findJavaConversionImpl(JPMatch &match) override;
 	void getConversionInfo(JPConversionInfo &info) override;
 
 	JPPrimitiveType* getPrimitive()
