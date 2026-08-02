@@ -536,3 +536,56 @@ next**: "library X's architecture makes Y permanently impossible" is a
 claim that must be checked against that library's own branches/plans
 before being written down, not inferred from "that's not what the
 `review` branch does today." This doc got that wrong once already.
+
+## Further out (speculative): J2NI, and what "JPype2" could mean
+
+**Flagged explicitly as speculative** -- this is a separate project
+(`~/javafx2/j2ni`, its own repo, own `pom.xml`), not a jpype branch, not
+found anywhere in jpype's own git history (checked every local and
+remote branch), and its own README says, verbatim: `**DRAFT**` --
+"most piece are drafted but getting all the definitions consistent and
+tested will take a while." Nothing below should be read as jpype's
+committed roadmap. It's included because it changes what "jpype ahead of
+jpy/jep/pyjnius" would eventually *mean*, if it lands.
+
+**What it is**: a proposed replacement for JNI itself, built on Java
+22+'s Foreign Function & Memory API (Project Panama) -- not a jpype
+feature, a rework of the layer every one of jpy/jep/pyjnius, *and
+jpype's own current codebase*, sits on top of. Concretely:
+
+- **Metadata-driven dispatch** (signature hashing, pre-cooked method
+  handles) instead of JNI's string-based method/field lookup.
+- **Query-View-Pull** bulk data transfer -- native code queries a "view"
+  (size, element type, writability) then pulls/pushes in bursts --
+  instead of JNI's pin-a-raw-pointer model.
+- **Process-agnostic identifiers** (`int64_t` handles, not raw
+  object-header pointers), explicitly so the same protocol works
+  whether native and JVM code share a process, share memory, or are
+  **separate, possibly remote processes**. `j2ni-remote` is a real,
+  bit-packed wire protocol for this (`FIXME.md` shows actual header-
+  layout tuning -- `(size:11)(routing:16)(ack:1)(op:12)(checksum:24)`,
+  with routing, opcodes, and checksums) -- not an in-process trampoline
+  at all. That's the part that makes the earlier "full CORBA" framing
+  of jpype's forward/reverse customizer symmetry more literal than it
+  first looked: an actual object broker over a wire, not just the same
+  *shape* of idea applied in-process.
+- Worth a passing note, not a pattern to lean on too hard: `FIXME.md`
+  mentions J2NI's own native-to-Java export surface "grows via the SPI
+  extension pattern" -- the same extensibility instinct as
+  `WrapperService`/`.pyspi` above, showing up independently in a
+  different project by evidently the same author.
+
+**The point, stated the way it was raised**: everything else in this
+"Future" section -- the reverse bridge, three embedding layers, the SPI,
+subinterpreters -- is jpype getting *more capable within the JNI-based
+architecture jpy/jep/pyjnius are also built on*. J2NI is not that kind of
+thing. If jpype's native layer is ever rebuilt on it, the comparison
+stops being "jpype has more features than the other three" and becomes
+"the other three are built on a 30-year-old ABI jpype no longer is" --
+memory-safety and cross-process/remote capability that isn't a row you
+can add to a feature-matrix table, because none of jpy/jep/pyjnius (or
+jpype's own `review` branch, today) have anything like it to compare
+against. That's a different kind of "ahead" than everything documented
+above it in this file -- a foundation-level jump, not an incremental one.
+Whether it ever ships as part of jpype is genuinely unknown from here;
+treat this section as a marker of direction, not a claim about outcome.
