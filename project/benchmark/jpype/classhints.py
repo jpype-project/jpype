@@ -3,18 +3,18 @@ JPClass::findJavaConversion (see native/common/include/jp_conversioncache.h).
 
 No equivalent exists in jpy/jep (neither has a @JConversion-style
 extensible hint mechanism), so this one isn't cross-library comparable --
-see bench_jpype.py/bench_jpy.py/bench_jep.py for that.
+no jpy/classhints.py or jep/classhints.py.
 
 Requires the test harness classes (jpype.classhints.Custom/ClassHintsTest,
 built via BUILD_TEST_HARNESS=ON) on the classpath.
 
 Usage:
-    /path/to/venv/bin/python project/benchmark/bench_classhints.py
+    /path/to/venv/bin/python project/benchmark/jpype/classhints.py
 """
 import sys
 import os
 
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from _common import timeit, format_row
 
 import jpype

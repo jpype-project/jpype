@@ -180,6 +180,17 @@ public class DeepBench
     return s;
   }
 
+  // Identity passthrough for a 1D int array -- used by jep/array_multidim.py
+  // to manually assemble a genuine multi-dimensional Java array one row at a
+  // time (jep's numpy fast path only ever targets a flat int[]; there's no
+  // way to bulk-load a multi-dim array in one call, so each leaf row is
+  // bulk-converted via this method instead, and the nesting above that is
+  // pure Python-side array construction -- see that file for details).
+  public static int[] identityIntArray(int[] a)
+  {
+    return a;
+  }
+
   public static long sumIntList(List<Integer> a)
   {
     long s = 0;
@@ -199,6 +210,97 @@ public class DeepBench
       for (int x : row)
         s += x;
     return s;
+  }
+
+  // 3D/4D/5D variants of sum2DIntArray -- see project/benchmark/bench_arrays_*.py,
+  // which sweeps nesting depth (holding total element count fixed) to isolate
+  // per-dimension conversion overhead from raw element count.
+  public static long sum3DIntArray(int[][][] a)
+  {
+    long s = 0;
+    for (int[][] plane : a)
+      for (int[] row : plane)
+        for (int x : row)
+          s += x;
+    return s;
+  }
+
+  public static long sum4DIntArray(int[][][][] a)
+  {
+    long s = 0;
+    for (int[][][] cube : a)
+      for (int[][] plane : cube)
+        for (int[] row : plane)
+          for (int x : row)
+            s += x;
+    return s;
+  }
+
+  public static long sum5DIntArray(int[][][][][] a)
+  {
+    long s = 0;
+    for (int[][][][] hcube : a)
+      for (int[][][] cube : hcube)
+        for (int[][] plane : cube)
+          for (int[] row : plane)
+            for (int x : row)
+              s += x;
+    return s;
+  }
+
+  // "make*IntArray" -- the Java-side counterpart of sum*IntArray, for
+  // benchmarking the opposite direction (a Java array's contents flowing
+  // back into Python as the method return value) at the same sizes/depths.
+  // Filled (not left zeroed) so a bulk buffer-protocol readback path can't
+  // be short-circuited by an all-zeroes special case on either side.
+  public static int[] makeIntArray(int n)
+  {
+    int[] a = new int[n];
+    for (int i = 0; i < n; i++)
+      a[i] = i;
+    return a;
+  }
+
+  public static int[][] make2DIntArray(int n)
+  {
+    int[][] a = new int[n][n];
+    for (int i = 0; i < n; i++)
+      for (int j = 0; j < n; j++)
+        a[i][j] = i * n + j;
+    return a;
+  }
+
+  public static int[][][] make3DIntArray(int n)
+  {
+    int[][][] a = new int[n][n][n];
+    for (int i = 0; i < n; i++)
+      for (int j = 0; j < n; j++)
+        for (int k = 0; k < n; k++)
+          a[i][j][k] = (i * n + j) * n + k;
+    return a;
+  }
+
+  public static int[][][][] make4DIntArray(int n)
+  {
+    int[][][][] a = new int[n][n][n][n];
+    for (int i = 0; i < n; i++)
+      for (int j = 0; j < n; j++)
+        for (int k = 0; k < n; k++)
+          for (int l = 0; l < n; l++)
+            a[i][j][k][l] = ((i * n + j) * n + k) * n + l;
+    return a;
+  }
+
+  public static int[][][][][] make5DIntArray(int n)
+  {
+    int[][][][][] a = new int[n][n][n][n][n];
+    for (int i = 0; i < n; i++)
+      for (int j = 0; j < n; j++)
+        for (int k = 0; k < n; k++)
+          for (int l = 0; l < n; l++)
+            for (int m = 0; m < n; m++)
+              a[i][j][k][l][m] = (((i * n + j) * n + k) * n + l) * n + m;
+    return a;
   }
 
   // "object" category: argument matching + return-value wrapping for a
