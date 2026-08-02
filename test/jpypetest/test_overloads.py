@@ -346,3 +346,51 @@ class OverloadTestCase(common.JPypeTestCase):
 
         tracker.doStuff("hello")
         self.assertEqual(tracker.lastCall, "string:hello")
+
+
+class OverloadDispatchCacheTestCase(common.JPypeTestCase):
+    """Regression tests for JPMethodDispatch::findOverload's single-slot
+    m_LastOverload cache.
+
+    That cache is keyed only on argument *types* (e.g. "the argument is a
+    list"), not content, so it's easy for a method to be called twice with
+    the same argument type where the second call's actual content doesn't
+    convert. Found via project/benchmark/bench_deep_jpype.py's array
+    benchmark: a first successful call primed the cache, and the second
+    (content-invalid) call incorrectly returned success with a corrupted
+    match instead of raising TypeError, because the cache-hit attempt left
+    bestMatch.m_Overload non-null even though it had failed, so both the
+    "first match" and "no matching overload" checks downstream were
+    fooled into thinking a real match had already been found.
+    """
+
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+        self.DeepBench = JClass('jpype.benchmark.DeepBench')
+
+    def testFailureAfterCachedSuccess(self):
+        # Prime the single-slot cache with a real, successful match.
+        self.assertEqual(self.DeepBench.sumIntArray(list(range(10))), 45)
+
+        # Same argument type (list), content that can't convert to int[] --
+        # must raise cleanly, not corrupt/crash.
+        with self.assertRaises(TypeError):
+            self.DeepBench.sumIntArray([1, 2, "notanumber", 4])
+
+        # Dispatch must still work correctly afterward: another failure,
+        # and a real success.
+        with self.assertRaises(TypeError):
+            self.DeepBench.sumIntArray([1, 2, "notanumber", 4])
+        self.assertEqual(self.DeepBench.sumIntArray(list(range(20))), 190)
+
+    def testMixedListStillWorks(self):
+        # bool fails PyLong_CheckExact (it's a distinct type from int in
+        # Python) but is still a valid int; a custom __index__ object is
+        # valid too. Both must still convert correctly, cached or not.
+        self.assertEqual(self.DeepBench.sumIntArray([1, 2, 3, True, 5]), 12)
+
+        class Indexable:
+            def __index__(self):
+                return 99
+        self.assertEqual(
+            self.DeepBench.sumIntArray([1, 2, Indexable()]), 102)
