@@ -96,9 +96,8 @@ int PyJPBuffer_getBuffer(PyJPBuffer *self, Py_buffer *view, int flags)
 		view->obj = (PyObject*) self;
 		Py_INCREF(view->obj);
 		return 0;
-	} catch (JPypeException &ex)  // GCOVR_EXCL_LINE
+	} catch (...)  // GCOVR_EXCL_LINE
 	{
-		(void) ex;
 		// GCOVR_EXCL_START
 		PyJPBuffer_releaseBuffer(self, view);
 

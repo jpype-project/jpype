@@ -39,7 +39,7 @@
 #ifndef JP_INSTRUMENTATION
 #define JP_TRACE_IN(...) try { do {} while (0)
 #endif
-#define JP_TRACE_OUT } catch (JPypeException &ex) { ex.from(JP_STACKINFO()); throw; }
+#define JP_TRACE_OUT } catch (JPBaseError &ex) { ex.from(JP_STACKINFO()); throw; }
 #define JP_TRACE(...)
 #define JP_TRACE_LOCKS(...)
 #define JP_TRACE_PY(m, obj)
@@ -67,7 +67,7 @@ public:
 		try
 		{
 			throw; // lgtm [cpp/rethrow-no-exception]
-		} catch (JPypeException& ex)
+		} catch (JPBaseError& ex)
 		{
 			ex.from(info);
 			throw;

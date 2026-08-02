@@ -15,6 +15,13 @@ Latest Changes:
     pre-JVM handlers once the JVM is destroyed, making the JVM's lifetime
     signal-handler transparent on POSIX systems.
 
+  - Refactored internal exception handling: replaced the single
+    ``JPypeException`` tag-plus-union class with distinct C++ types per
+    exception origin (``JPJavaError``, ``JPPythonError``,
+    ``JPInternalError``), so each type only carries the payload valid for
+    it instead of relying on convention. No user-facing behavior change;
+    done to prevent future bugs of the class fixed by #1415 below.
+
   - Fixed a rare crash where Python's cyclic garbage collector firing
     while a Python exception was mid-unwind through the reverse-bridge
     C++ layer could corrupt the in-flight exception. #1415
@@ -34,8 +41,12 @@ Latest Changes:
   - Fixed JArray constructor ignoring slice bounds when creating from sliced array. #845
 
   - Added jdk.zipfs module dependency to module-info for proper jlink/jdeps detection. #908
-  
+
   - Fixed overloaded methods from multiple interfaces not being detected. #844
+
+  - Improved implicit conversion from Python primitives to Java boxed types (Integer, Long, Short, Double, Float). #1098
+  
+  - Fixed ambiguous overload resolution for bytearray between byte[] and char[]. #598
 
 
 - **1.7.1 - 2026-05-06**
