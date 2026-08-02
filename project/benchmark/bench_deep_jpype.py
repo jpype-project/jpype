@@ -29,6 +29,7 @@ jpype.startJVM(classpath=['test/classes', 'test/harness'])
 DeepBench = jpype.JClass('jpype.benchmark.DeepBench')
 T0 = jpype.JClass('jpype.benchmark.DeepBench$T0')
 T15 = jpype.JClass('jpype.benchmark.DeepBench$T15')
+Callback = jpype.JClass('jpype.benchmark.DeepBench$Callback')
 
 t0 = T0()
 t15 = T15()
@@ -52,11 +53,37 @@ def array_arg():
     return DeepBench.sumIntArray(ARRAY)
 
 
+obj = jpype.JObject()
+
+
+def object_identity():
+    return DeepBench.identity(obj)
+
+
+# proxy: an @JImplements object constructed once (steady-state established
+# binding), not a bare Python function (which JPFunctional re-wraps fresh
+# on every conversion) -- see project/benchmark/README.md.
+@jpype.JImplements(Callback)
+class MyCallback:
+    @jpype.JOverride
+    def run(self, x):
+        return x + 1
+
+
+proxy = MyCallback()
+
+
+def proxy_callback():
+    return DeepBench.invokeCallback(proxy, 5)
+
+
 print("=== JPype: deep conversion paths ===")
 for name, fn in (
         ("overload x16, monomorphic", overload_monomorphic),
         ("overload x16, polymorphic", overload_polymorphic),
         ("int[] from list(100), fresh", array_arg),
+        ("Object identity", object_identity),
+        ("proxy callback (established)", proxy_callback),
 ):
     best, median = timeit(fn)
     print(format_row(name, best, median))

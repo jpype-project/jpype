@@ -36,7 +36,7 @@ def format_row(name, best, median):
     return f"{name:32s} best={best:8.1f} ns/call  median={median:8.1f} ns/call"
 
 
-from java.lang import Math, Integer, String
+from java.lang import Math, Integer, Double, String
 
 out_path = sys.argv[1] if len(sys.argv) > 1 else '/tmp/bench_jep_results.txt'
 
@@ -55,6 +55,18 @@ def box_integer():
     return Integer(i)
 
 
+def math_sqrt():
+    global i
+    i += 1
+    return Math.sqrt(float(i))
+
+
+def box_double():
+    global i
+    i += 1
+    return Double(float(i))
+
+
 def string_roundtrip():
     s = String("hello")
     return str(s)
@@ -65,6 +77,8 @@ with open(out_path, 'w') as f:
     for name, fn in (
             ("Math.max(int,int)", math_max),
             ("new Integer(int)", box_integer),
+            ("Math.sqrt(double)", math_sqrt),
+            ("new Double(double)", box_double),
             ("new String + toString", string_roundtrip),
     ):
         best, median = timeit(fn)

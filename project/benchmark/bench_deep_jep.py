@@ -34,6 +34,8 @@ def format_row(name, best, median):
 
 
 from jpype.benchmark import DeepBench
+from java.lang import Object as JObject
+import jep
 
 out_path = sys.argv[1] if len(sys.argv) > 1 else '/tmp/bench_deep_jep_results.txt'
 
@@ -59,12 +61,36 @@ def array_arg():
     return DeepBench.sumIntArray(ARRAY)
 
 
+obj = JObject()
+
+
+def object_identity():
+    return DeepBench.identity(obj)
+
+
+# proxy: jep.jproxy(pyobj, [interfaces]) creates the binding once; the
+# Callback interface is the same jpype.benchmark.DeepBench$Callback used
+# by bench_deep_jpype.py, so invokeCallback itself is identical.
+class MyCallback:
+    def run(self, x):
+        return x + 1
+
+
+proxy = jep.jproxy(MyCallback(), ["jpype.benchmark.DeepBench$Callback"])
+
+
+def proxy_callback():
+    return DeepBench.invokeCallback(proxy, 5)
+
+
 with open(out_path, 'w') as f:
     f.write("=== jep: deep conversion paths ===\n")
     for name, fn in (
             ("overload x16, monomorphic", overload_monomorphic),
             ("overload x16, polymorphic", overload_polymorphic),
             ("int[] from list(100), fresh", array_arg),
+            ("Object identity", object_identity),
+            ("proxy callback (established)", proxy_callback),
     ):
         best, median = timeit(fn)
         f.write(format_row(name, best, median) + "\n")

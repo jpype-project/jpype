@@ -22,6 +22,7 @@ import jpy
 DeepBench = jpy.get_type('jpype.benchmark.DeepBench')
 T0 = jpy.get_type('jpype.benchmark.DeepBench$T0')
 T15 = jpy.get_type('jpype.benchmark.DeepBench$T15')
+JObject = jpy.get_type('java.lang.Object')
 
 t0 = T0()
 t15 = T15()
@@ -45,11 +46,27 @@ def array_arg():
     return DeepBench.sumIntArray(ARRAY)
 
 
+obj = JObject()
+
+
+def object_identity():
+    return DeepBench.identity(obj)
+
+
+# No "proxy callback" entry here: jpy's PyObject.createProxy() mechanism
+# (the only one found for exposing a Python object as a Java interface)
+# didn't work from Python in this checkout -- the object it returns isn't
+# recognized as its interface type when passed to any Java method
+# ("no matching Java method overloads found"), even mirroring jpy's own
+# ReachabilityFenceTestFixture.stressProxy test pattern exactly. See
+# README.md.
+
 print("=== jpy: deep conversion paths ===")
 for name, fn in (
         ("overload x16, monomorphic", overload_monomorphic),
         ("overload x16, polymorphic", overload_polymorphic),
         ("int[] from list(100), fresh", array_arg),
+        ("Object identity", object_identity),
 ):
     best, median = timeit(fn)
     print(format_row(name, best, median))

@@ -187,4 +187,38 @@ public class DeepBench
       s += x;
     return s;
   }
+
+  // "object" category: argument matching + return-value wrapping for a
+  // plain Object, as opposed to a primitive/boxed/array/string value.
+  public static Object identity(Object o)
+  {
+    return o;
+  }
+
+  // "proxy" category: Java calling back into Python through an interface
+  // a Python object implements. Each library has its own mechanism for
+  // exposing a Python object as this interface (see
+  // project/benchmark/README.md); invokeCallback itself is the same call
+  // for all of them once that binding exists.
+  public interface Callback
+  {
+    int run(int x);
+  }
+
+  public static int invokeCallback(Callback cb, int x)
+  {
+    return cb.run(x);
+  }
+
+  // Loop-on-the-Java-side variant: needed for libraries (jpy) whose
+  // Python-side binding can't reliably call methods on a proxy object
+  // directly -- see project/benchmark/README.md. Divide the result's
+  // wall-clock time by iterations for a per-call figure.
+  public static long invokeCallbackLoop(Callback cb, int iterations)
+  {
+    long sum = 0;
+    for (int i = 0; i < iterations; i++)
+      sum += cb.run(i);
+    return sum;
+  }
 }

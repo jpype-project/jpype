@@ -15,11 +15,26 @@ class (test/harness/jpype/benchmark/DeepBench.java -- a plain compiled
 class with no jpype dependency, so all three libraries can put
 test/classes + test/harness directly on their classpath and call it):
 overload resolution across 16 candidates (both monomorphic and
-polymorphic call sites), and int[] argument conversion from a fresh
-Python list each call (JPConversionSequence in jp_classhints.cpp -- this
-one is content-dependent and was NOT made cacheable by the
-findJavaConversion work, so it's a real, unaddressed gap: jpy does the
-same conversion roughly 4x faster).
+polymorphic call sites), int[] argument conversion from a fresh Python
+list each call, plain-Object identity, and a proxy callback (Java calling
+back into an established Python-side binding).
+
+**proxy**: each library's mechanism for exposing a Python object as a
+Java interface differs and isn't drop-in comparable:
+- jpype: `@JImplements` on a class, constructed once -- steady-state,
+  matches an established callback binding (e.g. a Comparator used
+  repeatedly), not per-call proxy creation (a bare Python function would
+  measure that instead, since JPFunctional re-wraps one fresh each call).
+- jep: `jep.jproxy(pyobj, [interfaces])`, also constructed once.
+- jpy: `PyObject.createProxy(Class)`, called from Java in jpy's own
+  tests (`ReachabilityFenceTestFixture.stressProxy`). Calling it from
+  Python (`jpy.convert(obj, PyObject_type).createProxy(cls)`) produced an
+  object that jpy's own dispatcher then refuses to match against any
+  Java method ("no matching Java method overloads found"), including
+  `DeepBench.invokeCallbackLoop` (which loops entirely in Java, so it
+  isn't about calling the proxy's methods from Python either) -- this
+  looks like a real gap/bug in this jpy checkout, not a usage error, so
+  there's no `bench_deep_jpy.py` proxy entry.
 
 Per this repo's CLAUDE.md, never install any of these into a real/shared
 Python environment -- always a disposable venv, one per library since
