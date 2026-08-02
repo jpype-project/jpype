@@ -109,8 +109,11 @@ class JPContext
 {
 public:
 	friend class JPJavaFrame;
-	friend class JPypeException;
 	friend class JPClass;
+	// Free functions in jp_exception.cpp used by the JPBaseError hierarchy's
+	// toPython()/toJava() (see jp_error.h / plan/ExceptionRefactor.md).
+	friend void convertJavaToPython(jthrowable th);
+	friend void convertPythonToJava(const char* mesg);
 
 	JPContext();
 	virtual ~JPContext();
