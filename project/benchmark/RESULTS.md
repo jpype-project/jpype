@@ -209,6 +209,50 @@ either -- its own numpy-2D handling is slower than its plain
 nested-list conversion (5316 vs 2105), so it's paying buffer-inspection
 overhead without a matching payoff.
 
+### jpype vs. jep specifically
+
+jpype beats jep in 8 of the 12 comparable rows above (`int[][]` from
+numpy has no jep entry -- see above). Where jep wins, it's genuinely
+because it skips work jpype does -- confirmed by reading jep's own
+source, not inferred from the timing gap:
+
+- **Arrays** (`int[]` from list: 2029 vs 3192; `int[][]` from nested
+  list: 5875 vs 16122): jep's overload resolution
+  (`pyjmultimethod_call`, `src/main/c/Objects/pyjmultimethod.c:118-155`
+  in the jep checkout) first filters candidates by parameter count
+  alone -- no type inspection -- and only runs its per-argument
+  compatibility check (`PyJMethod_CheckArguments`) when *two or more*
+  candidates share that count. `DeepBench.sumIntArray`/`sum2DIntArray`
+  each have exactly one overload, so that check never runs at all for
+  them: jep goes straight from an arity match to `pyjmethod_call`
+  (`pyjmethod.c:284`), which converts each argument directly against
+  the one already-known parameter type, optimistically, raising only if
+  an element actually fails to convert. That's one pass over the data.
+  jpype's `JPMethod::matches()` always computes a full match quality
+  first (a complete scan of every array element via
+  `JPConversionSequence`, needed to correctly rank against sibling
+  overloads even when there happens to be only one), and only then does
+  `convert()` do a second full pass to actually build the array --
+  two traversals where jep does one, for exactly the case (no
+  competing overload) these benchmarks exercise.
+- **`Math.sqrt`** (645 vs 690, 7%): too small a gap to attribute to
+  this or anything else specific -- likely just noise.
+- **Proxy, `int` arg** (2240 vs 2655, 18%): not this mechanism -- both
+  sides have exactly one interface method here, so there's no
+  overload ambiguity to skip resolving on jpype's side either. More
+  likely explained by jep's reversed embedding architecture: it hosts
+  Python *inside* the JVM, so a Java-calls-Python callback is jep's
+  native direction, while jpype has to reach back out through JNI into
+  the interpreter hosting the JVM.
+
+This isn't true across the board, though: on the 16-overload dispatch
+benchmark, where every candidate shares the same arity, jep's fast
+filter can't help and it falls back to calling `PyJMethod_CheckArguments`
+repeatedly -- and there jpype is dramatically faster (686-925 vs
+4454-4558). The one-pass-vs-two-pass array gap above is a real,
+specific tradeoff for the no-ambiguity case, not evidence that jep's
+overload resolution is generally cheaper.
+
 ## Verification
 
 Every change above went through the full local suite (standard and
