@@ -364,3 +364,12 @@ PyObject *JPBooleanType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, i
 			buffer, subs, base, dims);
 	JP_TRACE_OUT;
 }
+
+jobject JPBooleanType::newMultiArrayObject(JPJavaFrame &frame, JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPBooleanType::newMultiArrayObject");
+	return convertMultiArrayObject<type_t>(
+			frame, this, &pack, converter,
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}

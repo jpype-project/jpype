@@ -87,6 +87,8 @@ public:
 
 	PyObject *newMultiArray(JPJavaFrame &frame,
 			JPPyBuffer &buffer, int subs, int base, jobject dims) override;
+	jobject newMultiArrayObject(JPJavaFrame &frame,
+			JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims) override;
 
 } ;
 

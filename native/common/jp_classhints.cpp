@@ -13,6 +13,7 @@
 
    See NOTICE file for details.
  *****************************************************************************/
+#include <cctype>
 #include <utility>
 
 #include <Python.h>
@@ -23,6 +24,8 @@
 #include "jp_stringtype.h"
 
 #include "pyjp.h"
+
+#include "jp_primitive_accessor.h"
 
 JPMatch::JPMatch() : conversion(nullptr), frame(nullptr), object(nullptr),
 					 type(JPMatch::_none), closure(nullptr), cacheable(true),
@@ -557,6 +560,113 @@ public:
 		JP_TRACE_OUT;
 	}
 }  _bufferConversion;
+
+// Fast path for multi-dimensional primitive arrays (int[][], double[][][],
+// ...) from a buffer-protocol object (a numpy ndarray, chiefly) whose ndim
+// matches the array nesting depth. Without this, JPArrayClass falls through
+// to sequenceConversion, which walks the outer dimension via Python-level
+// indexing (materializing a fresh sub-array/view object per row) and then
+// recurses into a separate JPConversionBuffer/setArrayRange call per row.
+// This instead traverses the buffer directly off its own shape/strides
+// (convertMultiArrayObject, shared with the explicit arrayFromBuffer()
+// call), with no per-row Python object churn.
+class JPConversionMultiArrayBuffer : public JPConversion
+{
+public:
+
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	{
+		JP_TRACE_IN("JPConversionMultiArrayBuffer::matches");
+		auto *acls = dynamic_cast<JPArrayClass*>( cls);
+		// Depth/leaf are precomputed once at class-construction time (see
+		// JPArrayClass's ctor) specifically so this common-case bailout
+		// (called for every array-typed argument, including plain lists
+		// that will never match here) stays a couple of field reads, not a
+		// dynamic_cast walk. A single dimension is already handled (faster,
+		// since it also covers non-buffer sequences too) by
+		// bufferConversion/setArrayRange's own buffer fast path -- this
+		// conversion only has something to offer starting at int[][] and
+		// deeper.
+		JPPrimitiveType *pcls = acls->getMultiArrayLeaf();
+		int depth = acls->getMultiArrayDepth();
+		if (pcls == nullptr || depth < 2)
+			return match.type = JPMatch::_none;
+
+		if (!PyObject_CheckBuffer(match.object))
+			return match.type = JPMatch::_none;
+
+		// Same flags as bufferConversion above: PyBUF_ND requires a
+		// C-contiguous view, so anything that can't provide one (e.g. a
+		// transposed numpy array) simply fails to match here and falls
+		// through to the general (always-correct) sequenceConversion.
+		JPPyBuffer buffer(match.object, PyBUF_ND | PyBUF_FORMAT);
+		if (!buffer.valid())
+		{
+			PyErr_Clear();
+			return match.type = JPMatch::_none;
+		}
+		Py_buffer &view = buffer.getView();
+		if (view.ndim != depth)
+			return match.type = JPMatch::_none;
+
+		char code[2] = {(char) tolower(pcls->getTypeCode()), 0};
+		const char *format = view.format != nullptr ? view.format : "B";
+		if (getConverter(format, (int) view.itemsize, code) == nullptr)
+			return match.type = JPMatch::_none;
+
+		// Depends on the buffer's shape/dtype, not just Py_TYPE(object).
+		match.cacheable = false;
+		match.closure = cls;
+		match.conversion = multiArrayBufferConversion;
+		return match.type = JPMatch::_implicit;
+		JP_TRACE_OUT;
+	}
+
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	{
+		// This will be covered by Sequence, same as bufferConversion above.
+	}
+
+	jvalue convert(JPMatch &match) override
+	{
+		JP_TRACE_IN("JPConversionMultiArrayBuffer::convert");
+		JPJavaFrame frame(*match.frame);
+		auto *acls = (JPArrayClass *) match.closure;
+		JPPrimitiveType *pcls = acls->getMultiArrayLeaf();
+
+		JPPyBuffer buffer(match.object, PyBUF_ND | PyBUF_FORMAT);
+		if (!buffer.valid())
+			JP_RAISE(PyExc_TypeError, "buffer protocol required");
+		Py_buffer &view = buffer.getView();
+
+		JPContext *context = frame.getContext();
+		auto jdims = (jintArray) context->_int->newArrayOf(frame, view.ndim);
+		{
+			JPPrimitiveArrayAccessor<jintArray, jint*> accessor(frame, jdims,
+					&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
+			jint *a = accessor.get();
+			for (int i = 0; i < view.ndim; ++i)
+				a[i] = (jint) view.shape[i];
+			accessor.commit();
+		}
+		Py_ssize_t subs = 1;
+		for (int i = 0; i < view.ndim - 1; ++i)
+			subs *= view.shape[i];
+		Py_ssize_t base = view.shape[view.ndim - 1];
+
+		char code[2] = {(char) tolower(pcls->getTypeCode()), 0};
+		const char *format = view.format != nullptr ? view.format : "B";
+		jconverter converter = getConverter(format, (int) view.itemsize, code);
+		if (converter == nullptr)
+			JP_RAISE(PyExc_TypeError, "No type converter found");
+
+		jvalue res;
+		res.l = frame.keep(pcls->newMultiArrayObject(frame, buffer, converter,
+				(int) subs, (int) base, (jobject) jdims));
+		return res;
+		JP_TRACE_OUT;
+	}
+} _multiArrayBufferConversion;
 
 class JPConversionSequence : public JPConversion
 {
@@ -1134,6 +1244,7 @@ JPConversion *hintsConversion = &_hintsConversion;
 JPConversion *charArrayConversion = &_charArrayConversion;
 JPConversion *byteArrayConversion = &_byteArrayConversion;
 JPConversion *bufferConversion = &_bufferConversion;
+JPConversion *multiArrayBufferConversion = &_multiArrayBufferConversion;
 JPConversion *sequenceConversion = &_sequenceConversion;
 JPConversion *nullConversion = &_nullConversion;
 JPConversion *classConversion = &_classConversion;

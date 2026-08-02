@@ -297,3 +297,12 @@ PyObject *JPByteType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int 
 			buffer, subs, base, dims);
 	JP_TRACE_OUT;
 }
+
+jobject JPByteType::newMultiArrayObject(JPJavaFrame &frame, JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPByteType::newMultiArrayObject");
+	return convertMultiArrayObject<type_t>(
+			frame, this, &pack, converter,
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}

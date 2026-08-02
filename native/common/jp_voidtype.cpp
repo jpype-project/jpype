@@ -158,4 +158,10 @@ PyObject *JPVoidType::newMultiArray(JPJavaFrame &frame,
 	return nullptr;
 }
 
+jobject JPVoidType::newMultiArrayObject(JPJavaFrame &frame,
+		JPPyBuffer& view, jconverter converter, int subs, int base, jobject dims)
+{
+	return nullptr;
+}
+
 // GCOVR_EXCL_STOP

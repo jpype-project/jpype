@@ -678,3 +678,54 @@ class ArrayTestCase(common.JPypeTestCase):
         np_array = np.array([[True, False], [False, True]])
         bool_2d = JArray(JBoolean, dims=2)(np_array)
         np.testing.assert_array_equal(np_array, bool_2d)
+
+    @common.requireNumpy
+    def testNumpyMultiDimBufferConversion(self):
+        """A C-contiguous numpy array whose ndim matches a multi-dimensional
+        primitive array's nesting depth should take the bulk buffer path
+        (JPConversionMultiArrayBuffer) rather than the general per-row
+        sequence path -- exercised here for several primitive types and
+        both 2D and 3D, checking the converted contents are correct."""
+        np_2d = np.arange(12, dtype=np.int32).reshape(3, 4)
+        j_2d = JArray(JInt, dims=2)(np_2d)
+        for i in range(3):
+            for j in range(4):
+                self.assertEqual(j_2d[i][j], np_2d[i, j])
+
+        np_3d = np.arange(24, dtype=np.float64).reshape(2, 3, 4)
+        j_3d = JArray(JDouble, dims=3)(np_3d)
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(j_3d[i][j][k], np_3d[i, j, k])
+
+    @common.requireNumpy
+    def testNumpyMultiDimBufferNonContiguousFallback(self):
+        """A transposed numpy array can't provide the C-contiguous buffer
+        the fast path requires, so this must fall back to the general
+        sequence-based conversion rather than raise or produce garbage."""
+        np_2d = np.arange(12, dtype=np.int32).reshape(3, 4).T
+        self.assertFalse(np_2d.flags['C_CONTIGUOUS'])
+        j_2d = JArray(JInt, dims=2)(np_2d)
+        for i in range(4):
+            for j in range(3):
+                self.assertEqual(j_2d[i][j], np_2d[i, j])
+
+    @common.requireNumpy
+    def testNumpyMultiDimBufferDtypeMismatch(self):
+        """A buffer whose element type has no Java primitive converter
+        (Python objects, here) must not be silently accepted by the fast
+        path -- it should fail the same way the general path would."""
+        np_2d = np.array([[object(), object()], [object(), object()]])
+        with self.assertRaises(TypeError):
+            JArray(JInt, dims=2)(np_2d)
+
+    def testRaggedNestedListStillWorks(self):
+        """A ragged (non-rectangular) nested list can't be described by a
+        Py_buffer at all, so it must keep going through the general
+        per-row sequence conversion unaffected by the new buffer fast
+        path."""
+        ragged = [[1, 2, 3], [4, 5]]
+        j_ragged = JArray(JInt, dims=2)(ragged)
+        self.assertEqual(list(j_ragged[0]), [1, 2, 3])
+        self.assertEqual(list(j_ragged[1]), [4, 5])

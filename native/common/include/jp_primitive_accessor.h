@@ -85,22 +85,23 @@ public:
 
 } ;
 
-template <class type_t> PyObject *convertMultiArray(
+// Traverses a Python buffer and packs it into a (possibly multi-dimensional)
+// Java primitive array, returning the raw local ref. Split out from
+// convertMultiArray below so callers that want the jvalue directly (the
+// general argument-conversion path, which mustn't round-trip through a
+// Python wrapper object just to unwrap it again) can use it without also
+// paying for convertToPythonObject. converter must already have been
+// resolved (see convertMultiArray) -- this half assumes it is valid.
+template <class type_t> jobject convertMultiArrayObject(
 		JPJavaFrame &frame,
 		JPPrimitiveType* cls,
 		void (*pack)(type_t*, jvalue),
-		const char* code,
+		jconverter converter,
 		JPPyBuffer &buffer,
 		int subs, int base, jobject dims)
 {
 	JPContext *context = frame.getContext();
 	Py_buffer& view = buffer.getView();
-	jconverter converter = getConverter(view.format, (int) view.itemsize, code);
-	if (converter == nullptr)
-	{
-		PyErr_Format(PyExc_TypeError, "No type converter found");
-		return nullptr;
-	}
 
 	// Reserve space for array.
 	auto contents = (jobjectArray) context->_java_lang_Object->newArrayOf(frame, subs);
@@ -160,7 +161,28 @@ template <class type_t> PyObject *convertMultiArray(
 	}
 
 	// Assemble it into a multidimensional array
-	jobject out = frame.assemble(dims, contents);
+	return frame.assemble(dims, contents);
+}
+
+template <class type_t> PyObject *convertMultiArray(
+		JPJavaFrame &frame,
+		JPPrimitiveType* cls,
+		void (*pack)(type_t*, jvalue),
+		const char* code,
+		JPPyBuffer &buffer,
+		int subs, int base, jobject dims)
+{
+	JPContext *context = frame.getContext();
+	Py_buffer& view = buffer.getView();
+	jconverter converter = getConverter(view.format, (int) view.itemsize, code);
+	if (converter == nullptr)
+	{
+		PyErr_Format(PyExc_TypeError, "No type converter found");
+		return nullptr;
+	}
+
+	jobject out = convertMultiArrayObject<type_t>(
+			frame, cls, pack, converter, buffer, subs, base, dims);
 
 	// Convert it to Python
 	JPClass *type = context->_java_lang_Object;
