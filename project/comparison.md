@@ -388,12 +388,117 @@ public static void main(String[] args) {
 }
 ```
 
-It goes further than parity with jep: `org.jpype.script.JPypeScriptEngine`
-implements `javax.script.AbstractScriptEngine`/`Invocable` — the standard
-JSR-223 scripting API every JVM already has a pluggable-scripting-language
-story for (`ScriptEngineManager`). That's arguably a *more* idiomatic
-"Java embeds a scripting language" integration than jep's own bespoke API,
-since it's the interface Java itself defines for this exact use case.
+It goes further than parity with jep: `origin/reverse` actually exposes
+**three separate, purpose-built embedding layers**, not one API wearing
+different hats. Each was checked individually against its own source,
+not assumed from the others:
+
+1. **JSR-223** (`org.jpype.script.JPypeScriptEngine`) — implements
+   `javax.script.AbstractScriptEngine`/`Invocable`, the standard scripting
+   API every JVM already has a pluggable-scripting-language story for
+   (`ScriptEngineManager`). Generic, not jpype-specific — any tooling that
+   already knows JSR-223 gets Python for free.
+2. **Context** (`org.jpype.Script`, built on `MainInterpreter`) — its own
+   javadoc calls it "a scope of variables in the Python interpreter... we
+   can consider these to be modules housed in Java space." Each `Script`
+   instance owns its own globals/locals `PyDict`, exposes `eval()`/
+   `exec()`/`importModule()`, and multiple `Script` instances can coexist
+   against one shared interpreter -- the same pattern other embedding
+   systems call a Context/session object (e.g. GraalVM's `Context`), not
+   just a thin exec/eval wrapper.
+3. **`python.lang`** — a genuinely large (54 files) typed Java class
+   library mirroring Python's own builtin type system directly:
+   `PyObject`, `PyDict`, `PyList`, `PySet`/`PyFrozenSet`,
+   `PyInt`/`PyFloat`/`PyComplex`, `PyString`/`PyBytes`/`PyByteArray`,
+   `PyGenerator`/`PyCoroutine`/`PyAwaitable`, `PyCallable`, iterators for
+   all of it, etc. Its `package-info.java` states the design intent
+   explicitly: implement Java collection interfaces where they don't
+   conflict with Python semantics, tight return types, loose parameter
+   types, fall back to `eval()` only when a wrapper can't express
+   something. Meant for direct, idiomatic object-level Java code -- no
+   string-based `exec`/`eval` required for most uses.
+
+For scale: jep has **no JSR-223 `ScriptEngine` implementation at all**
+(checked `~/devel/jep/src/main/java/jep/` -- no `javax.script` reference
+anywhere), and its public embedding surface is essentially one class
+(`Jep`, with `eval`/`exec`/`getValue`/`set`) plus its `pyj*` wrapper
+types -- not three separated, purpose-built layers. So once merged,
+jpype's Java-hosts-Python story isn't just parity with jep's -- it's a
+richer set of entry points than jep itself offers for that same
+direction.
+
+**A fourth thing, not checked until pointed at directly, that widens
+this further: a real, user-extensible SPI.** `python.lang`'s type
+hierarchy above covers Python's *builtins*. Beyond that,
+`org.jpype.WrapperService` (discovered via standard
+`java.util.ServiceLoader`, JPMS-compatible via `provides ... with` in
+`module-info.java`) is a genuine third-party plugin point: any Java
+library can expose *any* Python class as a typed Java interface by
+registering a provider and dropping one small declarative resource file
+per class (`.pyspi`: a `key: value` header naming the Python
+module/class/target Java interface, a `---` separator, then a Python
+source blob binding a `METHODS = {...}` dict) -- **no editing of
+jpype's own source required.** Concretely, e.g.
+`collections.deque.pyspi`:
+
+```
+kind: class
+module: collections
+class: deque
+interface: python.collections.PyDeque
+---
+METHODS = {
+    ".addFirst": lambda x, v: x.appendleft(v),
+    ".removeFirst": lambda x: x.popleft(),
+    ".size": len,
+    ...
+}
+```
+
+-- mapping Python's `deque` onto a Java interface using *`java.util.Deque`'s
+own method names* (`addFirst`/`removeFirst`), so Java code gets a
+collection that feels native, backed transparently by the real Python
+object. jpype ships five built-in providers this way already (not
+hypothetical -- 27 `.pyspi` files, 475/475 tests passing per
+`plan/archive/SPI.md`'s status line): `python.io` (the full `io`/`_io`
+hierarchy -- `BytesIO`/`StringIO`/`FileIO`/`BufferedReader`/`Writer`/
+`TextIOWrapper`/etc.), `python.collections` (`ChainMap`/`Counter`/
+`OrderedDict`/`defaultdict`/`deque`), `python.datetime` (`date`/
+`datetime`/`timedelta`), `python.decimal` (`Decimal`), `python.pathlib`
+(`PosixPath`/`WindowsPath`).
+
+None of jpy/jep/pyjnius have anything resembling this. jep's collection
+support (`pyjlist.c`/`pyjmap.c`/etc.) and pyjnius's `protocol_map`
+(`reflect.py`) are both real and both confirmed working earlier in this
+doc -- but both are fixed, hardcoded in each library's own source. A
+third party cannot add jep or pyjnius support for a new Python stdlib or
+third-party class (say, exposing `numpy.ndarray` as a proper typed Java
+interface) without patching jep's or pyjnius's own C/Cython source and
+rebuilding the extension. jpype's SPI turns that into a one-file,
+no-recompile, ordinary-Java-service-provider addition. jpy has no
+collection-protocol support at all to compare against (established
+earlier in this doc), let alone an extension mechanism for one.
+
+**The key point this adds up to: the reverse direction wasn't just given
+a feature set, it was given parity of *extensibility* with the forward
+direction jpype already had -- deliberately, not as an accidental
+byproduct.** jpype's forward direction (Python customizing how a Java
+class looks to Python) has always had exactly this shape:
+`jpype/_jcustomizer.py`'s `JImplementationFor(javaClassName)`/
+`JConversion(cls, ...)` -- a string-named target Java class, a decorator
+registering a prototype whose methods get copied onto (or converted to)
+that class's wrapper, applied retroactively even if the class is already
+loaded. Every Python-side customizer referenced throughout this document
+(`_JCharArray` on `byte[]`/`char[]`, the `toPython()` conventions on
+`java.io` streams) is built on exactly this mechanism. `WrapperService`/
+`.pyspi` is the same idea, same shape, opposite direction: string-named
+target Python module/class, a declarative method binding to a named
+Java interface, discovered and replayed at startup instead of hardcoded.
+Not a new kind of extensibility invented for the reverse bridge -- the
+existing forward-direction pattern, mirrored, so that neither direction
+is stuck with a closed, hardcoded set of supported types while the other
+gets a real plugin point. That symmetry is the thing jep's and pyjnius's
+architectures don't have on *either* side, let alone both.
 
 **Status, to avoid overclaiming the other direction**: `origin/reverse`
 is 190 commits ahead of `review` (the main branch) and not yet merged —
@@ -403,12 +508,28 @@ GC, an `InterpreterPipe`, `toPython()` conversions for
 many modules per its own plan docs), but "future," not current `review`
 behavior, and not re-verified with the same empirical rigor (actually
 running it, checking edge cases) applied to jpy/jep/pyjnius throughout
-the rest of this document. Once merged, though, the conclusion changes
-concretely: jpype covers *both* embedding directions natively — its
-existing, dominant Python-hosts-Java strength (everything above), plus
-Java-hosts-Python via `MainInterpreter`/`JPypeScriptEngine` — where jep
-currently has the *only* other native story for the second direction, and
-jpy/pyjnius have neither.
+the rest of this document.
+
+**Correction to the correction**: jep is not the *only* other library
+with a native Java-hosts-Python story -- jpy has its own, independent
+of jep's, and this doc almost repeated the exact mistake above a second
+time by not checking jpy for it too. `org.jpy.PyLib.startPython()`/
+`stopPython()`/`isPythonRunning()` (jpy's own core native-bridge class)
+let a pure Java application embed and control a Python interpreter
+directly, demonstrated by a real JUnit test with zero Python bootstrap
+(`src/test/java/org/jpy/EmbeddableTestJunit.java` ->
+`EmbeddableTest`'s `PyLibControl` inner class, `~/devel/jpy`). So the
+accurate three-way picture is: jep's architecture *is* Java-hosts-Python
+(its native, primary direction); jpy has it as a secondary, less-
+documented capability alongside its usual Python-hosts-Java mode;
+pyjnius has neither -- checked its Java sources specifically for this and
+found only test fixtures and the `PythonJavaClass` proxy-callback
+machinery, nothing resembling an embeddable launcher. Once `origin/reverse`
+merges, jpype covers *both* embedding directions natively too -- the
+ground jep and jpy each independently stake out on the Java-hosts-Python
+side, plus jpype's own dominant Python-hosts-Java strength (everything
+above), while pyjnius remains the only one of the four with just one
+direction.
 
 **The general lesson, stated for whoever (human or AI) reads this doc
 next**: "library X's architecture makes Y permanently impossible" is a
