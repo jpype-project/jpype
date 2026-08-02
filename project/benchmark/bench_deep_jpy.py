@@ -11,6 +11,7 @@ import os
 sys.path.insert(0, os.path.dirname(__file__))
 from _common import timeit, format_row
 
+import numpy as np
 import jpyutil
 
 classes_dir = sys.argv[1] if len(sys.argv) > 1 else 'test/classes'
@@ -46,6 +47,27 @@ def array_arg():
     return DeepBench.sumIntArray(ARRAY)
 
 
+NUMPY_ARRAY = np.arange(100, dtype=np.int32)
+
+
+def array_arg_buffer():
+    return DeepBench.sumIntArray(NUMPY_ARRAY)
+
+
+NESTED_LIST = [list(range(10)) for _ in range(10)]
+
+
+def array_arg_2d_list():
+    return DeepBench.sum2DIntArray(NESTED_LIST)
+
+
+NUMPY_2D = np.arange(100, dtype=np.int32).reshape(10, 10)
+
+
+def array_arg_2d_buffer():
+    return DeepBench.sum2DIntArray(NUMPY_2D)
+
+
 obj = JObject()
 
 
@@ -66,6 +88,9 @@ for name, fn in (
         ("overload x16, monomorphic", overload_monomorphic),
         ("overload x16, polymorphic", overload_polymorphic),
         ("int[] from list(100), fresh", array_arg),
+        ("int[] from numpy(100), fresh", array_arg_buffer),
+        ("int[][] from nested list(10x10), fresh", array_arg_2d_list),
+        ("int[][] from numpy(10x10), fresh", array_arg_2d_buffer),
         ("Object identity", object_identity),
 ):
     best, median = timeit(fn)

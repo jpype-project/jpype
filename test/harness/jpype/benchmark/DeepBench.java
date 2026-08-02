@@ -188,6 +188,19 @@ public class DeepBench
     return s;
   }
 
+  // 2D variant of sumIntArray -- component type is itself int[], so
+  // conversion recurses through the array-conversion machinery once per
+  // outer element in addition to the per-element work each inner array
+  // already does.
+  public static long sum2DIntArray(int[][] a)
+  {
+    long s = 0;
+    for (int[] row : a)
+      for (int x : row)
+        s += x;
+    return s;
+  }
+
   // "object" category: argument matching + return-value wrapping for a
   // plain Object, as opposed to a primitive/boxed/array/string value.
   public static Object identity(Object o)
