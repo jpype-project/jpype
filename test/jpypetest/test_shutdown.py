@@ -89,17 +89,44 @@ class ShutdownSignalWarningTest(unittest.TestCase):
 
 
 class ShutdownParkedDaemonProxyTest(unittest.TestCase):
-    """A Python proxy invoked from a *daemon* Java thread can still be
-    blocked inside its Python callback when shutdownJVM() runs:
-    DestroyJavaVM() only waits for non-daemon Java threads, so it returns -
-    and frees every JPClass/context resource - while that thread is still
-    parked underneath it. Releasing the callback afterwards used to resume
+    """A Python proxy invoked from a *daemon* thread can still be blocked
+    inside its Python callback when shutdownJVM() runs: DestroyJavaVM()
+    only waits for non-daemon Java threads, so it returns - and frees every
+    JPClass/context resource - while that thread is still parked
+    underneath it. Releasing the callback afterwards used to resume
     execution on top of a destroyed JVM and segfault. JPype must instead
     detect this in hostInvoke() and get the thread off the JVM permanently
     (terminate it, or park it forever) rather than let it touch freed
-    state.  Run out-of-process since a regression here is a hard crash."""
+    state.  Run out-of-process since a regression here is a hard crash.
 
-    def _run(self, action):
+    Covers both ways a thread can end up daemon-attached and parked inside
+    hostInvoke():
+      - java.lang.Thread(runnable): a JVM-native thread, never previously
+        seen by Python, that calls straight into the proxy (Java -> Python).
+      - a plain Python threading.Thread that calls into Java through a
+        Java-typed reference to the same proxy, which routes back into the
+        same callback on that same OS thread (Python -> Java -> Python).
+        This thread auto-attaches as a daemon via JPContext::getEnv()'s
+        AttachCurrentThreadAsDaemon fallback the first time it touches
+        Java, so it is exposed to the same race, but arrives at
+        hostInvoke() with GIL/thread-state history a java.lang.Thread never
+        has (it already had a live PyThreadState before touching Java)."""
+
+    _SPAWN_JAVA_THREAD = (
+        "jthread = jpype.java.lang.Thread(runnable)\n"
+        "jthread.setDaemon(True)\n"
+        "jthread.start()\n"
+    )
+
+    _SPAWN_PYTHON_THREAD = (
+        "jrunnable = jpype.java.lang.Runnable @ runnable\n"
+        "def worker():\n"
+        "    jrunnable.run()\n"
+        "jthread = threading.Thread(target=worker, daemon=True)\n"
+        "jthread.start()\n"
+    )
+
+    def _run(self, action, spawn):
         script = (
             "import threading, time, jpype\n"
             "from jpype import JImplements, JOverride\n"
@@ -114,9 +141,7 @@ class ShutdownParkedDaemonProxyTest(unittest.TestCase):
             "        release.wait()\n"
             f"        {action}\n"
             "runnable = Parked()\n"
-            "jthread = jpype.java.lang.Thread(runnable)\n"
-            "jthread.setDaemon(True)\n"
-            "jthread.start()\n"
+            f"{spawn}"
             "assert started.wait(timeout=10)\n"
             "time.sleep(0.2)\n"
             "jpype.shutdownJVM()\n"
@@ -133,17 +158,27 @@ class ShutdownParkedDaemonProxyTest(unittest.TestCase):
                       b"a daemon thread and called after JVM shutdown",
                       result.stderr)
 
-    def testRaiseAfterShutdown(self):
+    def testRaiseAfterShutdownJavaThread(self):
         # Callback resumes and raises - exercises the exception-conversion
         # path (JPPythonError::toJava), which needs the freed exception
         # classes.
-        self._run("raise RuntimeError('boom after JVM destroyed')")
+        self._run("raise RuntimeError('boom after JVM destroyed')",
+                  self._SPAWN_JAVA_THREAD)
 
-    def testCallAfterShutdown(self):
+    def testCallAfterShutdownJavaThread(self):
         # Callback resumes and makes a fresh JNI call - exercises the case
         # where the callback doesn't merely return but tries to use the
         # (destroyed) JVM again.
-        self._run("jpype.java.lang.System.currentTimeMillis()")
+        self._run("jpype.java.lang.System.currentTimeMillis()",
+                  self._SPAWN_JAVA_THREAD)
+
+    def testRaiseAfterShutdownPythonThread(self):
+        self._run("raise RuntimeError('boom after JVM destroyed')",
+                  self._SPAWN_PYTHON_THREAD)
+
+    def testCallAfterShutdownPythonThread(self):
+        self._run("jpype.java.lang.System.currentTimeMillis()",
+                  self._SPAWN_PYTHON_THREAD)
 
 
 @subrun.TestCase
