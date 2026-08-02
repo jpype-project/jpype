@@ -146,11 +146,30 @@ matching (see below).
 ## Supplementary: jpy / jep comparison
 
 For context only -- neither is a drop-in replacement for jpype's
-feature set (in particular, jpy's array-argument overload matching
-doesn't inspect elements before committing to a conversion, which is
-part of why it's faster there; jpype's design validates every element up
-front to support correct Java-style overload disambiguation). jpy in
-particular wasn't judged a strong reference point for this comparison.
+feature set, and where they're faster it's mostly not because jpype's
+implementation is worse. Two different things are going on, and they
+shouldn't be conflated:
+
+- **Arrays**: jpy's array-argument matching genuinely skips work jpype
+  does -- it doesn't inspect elements before committing to a conversion,
+  where jpype validates every element up front to support correct
+  Java-style overload disambiguation. This isn't inferred from the
+  timing gap; it was confirmed by reading jpy's own C source
+  (`jpy_jtype.c`/`jpy_jmethod.c`) earlier in this work. That's a real
+  correctness/speed tradeoff jpy makes and jpype doesn't.
+- **Everything else (scalars, dispatch, proxy)**: the same source dive
+  found jpy's matchers there are *not* cutting correctness corners --
+  they're just leaner architecturally (fewer abstraction layers, less
+  general-purpose machinery to walk through). jpype pays a real cost
+  for breadth of behavior a narrower binding doesn't have to support
+  (implicit numeric widening, functional-interface duck typing,
+  hint-based custom conversions, the whole `JPConversion` chain this
+  session's caching work targets). So "jpy is faster here" is a fair
+  data point, just not evidence that jpype's implementation of the same
+  narrow behavior is inefficient.
+
+jpy in particular wasn't judged a strong reference point for this
+comparison overall.
 
 ns/call, best-of-5. jep is on Python 3.10 (this checkout's only working
 native build), not 3.12 like jpype/jpy, and embeds Python inside the JVM
