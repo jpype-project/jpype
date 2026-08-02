@@ -94,6 +94,55 @@ polymorphic: -23%) since they exclude the layout rework's contribution.
   noise floor of everything else a method call does (JPMatch
   construction, dispatch bookkeeping, the JNI call itself). Reverted.
 
+## Multi-dimensional array push conversion (follow-on)
+
+JPype already had a fast bulk path for building a Java array from a flat
+Python buffer (`newMultiArray`/`convertMultiArray`, used by the explicit
+`_jpype.arrayFromBuffer()` upload call), but it wasn't reachable from
+ordinary argument conversion -- passing a multi-dimensional numpy array
+as an `int[][]`/`double[][][]`/etc. argument went through
+`JPConversionSequence`'s general path instead, which walks the outer
+dimension via per-row Python-level indexing (materializing a fresh numpy
+sub-array view object per row) and does a separate buffer conversion per
+row.
+
+`JPConversionMultiArrayBuffer` (jp_classhints.cpp) now recognizes a
+buffer-protocol argument whose `ndim` matches the target array's nesting
+depth and routes it directly through the existing bulk machinery
+instead. `JPArrayClass` precomputes its nesting depth and primitive leaf
+type once at construction, so this new check costs nothing on the (far
+more common) 1D-array and non-buffer paths -- confirmed both by
+benchmark and by instrumented call-counting during development, which
+showed zero invocations of the new conversion for either a 1D list or a
+nested list-of-lists argument.
+
+| category | operation | before | after | change |
+|---|---|---:|---:|---:|
+| arrays | `int[][]` from numpy(10x10), fresh | 10453 | 3014 | -71% |
+| arrays | `int[][]` from nested list(10x10), fresh | 15300 | 16122 | +5%\* |
+
+\* Nested lists-of-lists never touch the new path at all -- no buffer
+protocol, so `PyObject_CheckBuffer` fails immediately, and instrumented
+call-counting confirmed zero invocations of the new conversion here.
+This small shift is compiler code-layout noise from the recompiled
+translation units, not added runtime work in the hot path. It's real
+(reproducible across repeated runs) but not something to chase further.
+
+Nested-list `int[][]` itself remains exactly as slow as before this
+work, and there's no cheap fix in sight for it: it's an
+architecture mismatch, not a missing fast path. The buffer trick here
+works because a `Py_buffer` hands over shape, strides, and a contiguous
+memory region up front, letting the whole array be walked with a
+handful of JNI calls. A Python list-of-lists offers none of that --
+each row is an arbitrary sequence that has to be indexed, checked, and
+converted element-by-element through the general (necessarily slower,
+but also more permissive -- mixed types, ragged rows, arbitrary
+iterables) `JPConversionSequence` path, the same as any other list
+argument. Making that materially faster would mean a fundamentally
+different (and narrower, less correct) traversal, not a bolt-on cache or
+buffer check -- the same tradeoff jpy already makes for its own array
+matching (see below).
+
 ## Supplementary: jpy / jep comparison
 
 For context only -- neither is a drop-in replacement for jpype's
@@ -117,6 +166,8 @@ uncertainty.
 | string | `new String` + `.toString()` | 1022 | 927 | 2512 |
 | object | `Object` identity (arg + return) | 995 | 730 | 1971 |
 | arrays | `int[]` from fresh `list(100)` | 3192 | 1262 | 2029 |
+| arrays | `int[][]` from nested list(10x10), fresh | 16122 | 2105 | 5875 |
+| arrays | `int[][]` from numpy(10x10), fresh | 3014 | 5316 | N/A† |
 | method dispatch | overload x16, monomorphic | 686 | 370 | 4454 |
 | method dispatch | overload x16, polymorphic | 925 | 456 | 4558 |
 | proxy | callback, `int` arg | 2655 | N/A* | 2240 |
@@ -125,6 +176,19 @@ uncertainty.
 \* jpy's `PyObject.createProxy()` didn't produce a usable object from
 Python in this checkout -- see README.md. Looks like a jpy-side issue,
 not a benchmark gap.
+
+† jep raises `TypeError: Error matching ndarray.dtype to Java primitive
+type` for any multi-dimensional numpy array -- a real jep limitation
+(no multi-dimensional numpy support at all), not a benchmark setup
+issue; confirmed by mirroring jep's own conversion code path.
+
+The 2D numpy row is the interesting one from the multi-dimensional-array
+follow-on above: jpype (3014) is now *faster* than jpy (5316) here,
+flipping what was a ~2x jpype deficit into a ~1.76x jpype lead. jpy
+apparently has no equivalent bulk path for multi-dimensional buffers
+either -- its own numpy-2D handling is slower than its plain
+nested-list conversion (5316 vs 2105), so it's paying buffer-inspection
+overhead without a matching payoff.
 
 ## Verification
 
@@ -135,3 +199,10 @@ CLAUDE.md, plus targeted regression tests for the specific correctness
 edge cases each fast path introduced (null arguments, covariant/subclass
 returns, mixed-type lists, boxed-type round trips, repeated-call cache
 invalidation). See the individual commits for details.
+
+The multi-dimensional array follow-on adds its own regression tests in
+`test_array.py`: 2D/3D numpy round trips through the new path, a
+transposed (non-contiguous) numpy array correctly falling back to the
+general path, a dtype the buffer machinery can't convert correctly
+raising `TypeError` instead of being silently accepted, and a ragged
+nested list (which was never affected) still working.
