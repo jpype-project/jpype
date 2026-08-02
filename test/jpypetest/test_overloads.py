@@ -394,3 +394,23 @@ class OverloadDispatchCacheTestCase(common.JPypeTestCase):
                 return 99
         self.assertEqual(
             self.DeepBench.sumIntArray([1, 2, Indexable()]), 102)
+
+    def testIntArrayExtractionPaths(self):
+        # Regression coverage for JPIntType::setArrayRange's fast
+        # (PyList_CheckExact + PyLong_CheckExact) vs general (PyIndex_Check
+        # + PyLong_AsLongLong) extraction paths and the handoff between them.
+
+        # bool at the very first position -- fast path must break out
+        # immediately (i == 0) and hand off cleanly, not skip element 0.
+        self.assertEqual(self.DeepBench.sumIntArray([True, True, 3]), 5)
+
+        # Non-list sequence (tuple): PyList_CheckExact is false, so this
+        # must go straight to the general path for every element.
+        self.assertEqual(self.DeepBench.sumIntArray(tuple(range(5))), 10)
+
+        # A value that fits Python's arbitrary-precision int (passes
+        # PyLong_CheckExact, so takes the fast path) but overflows even a
+        # 64-bit range -- PyLong_AsLong must surface this as OverflowError,
+        # not silently truncate or crash.
+        with self.assertRaises(OverflowError):
+            self.DeepBench.sumIntArray([10 ** 30])
