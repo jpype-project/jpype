@@ -35,11 +35,17 @@ message(STATUS "Final JNI include dirs: ${JNI_INCLUDE_DIRS}")
 
 
 if(SKBUILD)
-    message(DEBUG "SKBuild invocation")
-    set(DEST_JAR ${SKBUILD_PLATLIB_DIR})
     set(DEST_EXTENSION ${SKBUILD_PLATLIB_DIR})
+    if(SKBUILD_STATE STREQUAL "editable")
+        message(STATUS "EDITABLE INSTALL")
+        # redirect mode keeps __file__ pointing at the real source tree, so
+        # runtime jar lookup (relative to __file__) needs it here, not in
+        # the editable install staging dir.
+        set(DEST_JAR "${CMAKE_SOURCE_DIR}/")
+    else()
+        set(DEST_JAR ${SKBUILD_PLATLIB_DIR})
+    endif()
 else()
-    # in-place build, set output to cmakes output dir.
     set(DEST_JAR ${CMAKE_CURRENT_BINARY_DIR})
     set(DEST_EXTENSION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
@@ -135,5 +141,13 @@ if(BUILD_TEST_HARNESS) # This requires a JDK of course.
 
     add_custom_target(build_tests ALL DEPENDS "${TEST_SENTINEL}")
 endif()
+
+#add_custom_command(
+#        TARGET your_jar_target POST_BUILD
+#        COMMAND ${CMAKE_COMMAND} -E copy
+#        $<TARGET_FILE:your_jar_target>
+#        ${CMAKE_SOURCE_DIR}/src/jpype/org.jpype.jar
+#        COMMENT "Copying jar into source tree for editable/runtime use"
+#)
 
 add_subdirectory(native)

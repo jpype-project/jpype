@@ -76,14 +76,15 @@ testpaths = ["test", "jpype/_pyinstaller"]
 
 
 [tool.scikit-build]
+build-dir = "build/{wheel_tag}"
 build.verbose = true
 logging.level = "INFO"
 wheel.packages = ["jpype", "jpype._pyinstaller", "_jpype"]
-editable.mode = "inplace"
+# editable mode installs an import hook to redirect the extension and the python code.
+# since this does not work for the JAR, CMake copies the JAR next to CMakelists.txt (root).
+editable.mode = "redirect"
 # todo: try out automatic rebuild feature.
 #editable.rebuild = true
-
-
 
 sdist.include = [
     "native/**/*.h",
