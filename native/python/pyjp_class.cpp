@@ -656,7 +656,6 @@ static int PyJPClass_setHints(PyObject *self, PyObject *value, PyObject *closure
 
 PyObject* PyJPClass_instancecheck(PyTypeObject *self, PyObject *test)
 {
-	// GCOVR_EXCL_START
 	// Issue #1329: Check if JVM is running before creating JPJavaFrame
 	// This prevents crashes when isinstance() is called with JException
 	// after a failed JVM initialization
@@ -665,7 +664,6 @@ PyObject* PyJPClass_instancecheck(PyTypeObject *self, PyObject *test)
 		// Fall back to Python-only type checking when JVM is not running
 		return PyJPClass_subclasscheck(self, Py_TYPE(test));
 	}
-	// GCOVR_EXCL_STOP
 
 	// JInterface is a meta
 	if ((PyObject*) self == _JInterface)
