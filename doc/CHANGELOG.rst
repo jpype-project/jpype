@@ -7,6 +7,25 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Reworked the internal object layout for Java-backed Python objects to use
+    fixed, type-baked offsets instead of a runtime allocator that re-derived
+    each object's layout from version-sensitive CPython internals on every
+    access. For the boxed `Long`/`Boolean`/`Character` wrapper types this
+    also removes their per-instance Java-value storage entirely (reconstructed
+    on demand instead), shrinking those instances and eliminating a
+    version-gated digit-layout workaround. No user-visible API change; boxed
+    wrapper instances no longer retain Java-side reference identity across
+    repeated round-trips through Python.
+
+  - Fixed heap corruption when boxing large `JLong`/`JInt`/`JShort`/`JByte`/`JBoolean`
+    values on Python 3.8-3.11, caused by a fixed-offset allocator layout
+    assumption colliding with CPython's own implicit `__dict__` slot for
+    variable-length int subclasses.
+
+  - Fixed a GC refcount-accounting bug in the internal Java-class metaclass
+    where `tp_traverse`/`tp_clear` did not chain to `type`'s own
+    implementation.
+
   - Fixed a random segmentation fault at JVM shutdown when Python tooling
     (such as pytest's built-in faulthandler plugin) restored pre-JVM signal
     handlers over HotSpot's, leaving safepoint polls in compiled code

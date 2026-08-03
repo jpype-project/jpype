@@ -13,6 +13,7 @@
 
    See NOTICE file for details.
  *****************************************************************************/
+#include <cstddef>
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_buffer.h"
@@ -23,10 +24,17 @@ extern "C"
 {
 #endif
 
+// Buffer has a real, compile-time-known C layout and is always
+// single-inheritance below Object, so it goes straight to concrete -- same
+// reasoning as Exception/Array.
 struct PyJPBuffer
 {
 	PyObject_HEAD
 	JPBuffer *m_Buffer;
+	// Bare jvalue, not a full JPValue -- class is always derived from the
+	// wrapper type (PyJPValue_getJPClass), so there's nothing to look up a
+	// JPValue for here.
+	jvalue extra;
 } ;
 
 static void PyJPBuffer_dealloc(PyJPBuffer *self)
@@ -141,8 +149,9 @@ static PyType_Spec bufferSpec = {
 
 void PyJPBuffer_initType(PyObject * module)
 {
+	Py_ssize_t offset = offsetof (struct PyJPBuffer, extra);
 	JPPyObject tuple = JPPyTuple_Pack(PyJPObject_Type);
-	PyJPBuffer_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&bufferSpec, tuple.get());
+	PyJPBuffer_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&bufferSpec, tuple.get(), offset);
 #if PY_VERSION_HEX < 0x03090000
 	PyJPBuffer_Type->tp_as_buffer = &directBuffer;
 #endif

@@ -58,8 +58,7 @@ public:
 
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
-		JPValue *value = match.getJavaSlot();
-		if (value == nullptr)
+		if (match.getJPClass() == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 		// Implied conversion from boxed to primitive (JLS 5.1.8)

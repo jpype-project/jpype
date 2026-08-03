@@ -14,6 +14,7 @@
    See NOTICE file for details.
  *****************************************************************************/
 #include <algorithm>
+#include <cstddef>
 #include <Python.h>
 #include <frameobject.h>
 #include <structmember.h>
@@ -32,9 +33,70 @@ struct PyJPClass
 	PyHeapTypeObject ht_type;
 	JPClass *m_Class;
 	PyObject *m_Doc;
+	// Java-value slot bookkeeping for the fixed-offset object model.  See
+	// the offset parameter documentation in include/pyjp.h. Once a type is
+	// fully created this is ALWAYS the real, resolved byte offset -- for an
+	// abstract/concrete pair, the same value is written onto BOTH halves
+	// (see the concreteCall branch of PyJPClass_init), so no caller ever
+	// needs to branch or chase a companion to use it. Never -1 in steady
+	// state; 0 is a hard-error sentinel for legacy families that no longer
+	// exist (see PyJPClass_FromSpecWithBases).
+	Py_ssize_t offset;
+	// Abstract/concrete pairing, split into two one-directional, explicitly
+	// named edges rather than one field whose meaning depends on which side
+	// you're looking from:
+	//   tp_concrete: set only on an abstract type, points to its hidden
+	//     concrete companion. This is the OWNED edge -- the companion is
+	//     kept alive permanently (for the JVM session) by the reference
+	//     PyJPClass_concrete's tp_call never releases; this field is that
+	//     same pointer, not a separate incref.
+	//   tp_abstract: set only on a concrete companion, points back to the
+	//     abstract type it belongs to. This is a raw, NON-owned back-edge:
+	//     the pair is created and torn down as a unit, and the abstract
+	//     type's own lifetime never depends on its companion, so no
+	//     refcounting is needed on this direction. Consequently tp_traverse
+	//     visits tp_concrete but never tp_abstract (Py_VISIT should only
+	//     report edges this object actually owns a reference on).
+	// Both are null for any type that isn't part of such a pair.
+	PyTypeObject *tp_concrete;
+	PyTypeObject *tp_abstract;
+	// Every _JClass instance (i.e. every generated Java class/interface
+	// wrapper type object, such as the type object for java.lang.String)
+	// itself carries a JPValue for the java.lang.Class object it represents.
+	// struct PyJPClass is a single, closed, compile-time-fixed layout --
+	// PyJPClass_Type is never used as a base for any other spec, and every
+	// wrapper is an *instance* of it, not a Python-level subclass with its
+	// own extra slots -- so this can be a plain trailing field, exactly like
+	// Exception/Array/Buffer/Char, with no per-family scan needed.  See the
+	// PyJPClass_Type special case in PyJPClass_getOffset below.
+	JPValue extra;
+	// Per-family-root hook (set once on the family root type, e.g.
+	// PyJPNumberLong_Type/PyJPChar_Type, and inherited by every leaf
+	// wrapper class via PyJPClass_GetJValueFn's tp_base walk) that
+	// reconstructs a jvalue on demand for families with no live per-instance
+	// JPValue (Long/Boolean/Character). Null for families that still store
+	// jvalue directly (general objects/arrays/exceptions, Float/Double).
+	PyJPValueFn tp_jvalue;
+	// Per-leaf-boxed-class singleton for JObject(None, cls), lazily built and
+	// cached on first request (see JPBoxedType::convertToPythonObject). Null
+	// for non-boxed types and for boxed classes that haven't had a null cast
+	// yet. Deliberately NOT visited/cleared by tp_traverse/tp_clear: this
+	// type strongly owns nullBoxed, and nullBoxed's own Py_TYPE strongly owns
+	// this type right back (ordinary instance-of-type reference) -- the same
+	// owned/back-edge shape as tp_concrete/tp_abstract above, and for the
+	// same reason (see those field comments): it's a permanent, JVM-lifetime
+	// edge that must stay invisible to the cyclic GC rather than become an
+	// uncollectable 2-node cycle tp_clear can never actually break.
+	PyObject *nullBoxed;
 } ;
 
 PyObject* PyJPClassMagic = nullptr;
+PyObject* PyJPClassMagicConcrete = nullptr;
+
+static inline size_t PyJPClass_alignUp(size_t value, size_t alignment)
+{
+	return (value + alignment - 1) & ~(alignment - 1);
+}
 
 #ifdef __cplusplus
 extern "C"
@@ -46,21 +108,132 @@ int PyJPClass_Check(PyObject* obj)
 	return PyJP_IsInstanceSingle(obj, PyJPClass_Type);
 }
 
+Py_ssize_t PyJPClass_getOffset(PyTypeObject* type)
+{
+	// Special case: PyJPClass_Type itself.  Its own instances are the
+	// generated Java class/interface wrapper type objects (e.g. the type
+	// object for java.lang.String) -- each one directly *is* a
+	// `struct PyJPClass`, whose `extra` field is a fixed, compile-time-known
+	// offset, not something computed per-family.  This is what lets
+	// PyJPValue_getJPClass/getJValue(obj) work uniformly whether obj is an ordinary
+	// Java object instance (Py_TYPE(obj) is itself a PyJPClass instance,
+	// handled below) or a class/interface wrapper object (Py_TYPE(obj) is
+	// PyJPClass_Type exactly).
+	if (type == (PyTypeObject*) PyJPClass_Type)
+		return offsetof (struct PyJPClass, extra);
+	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
+		return 0;
+	return ((PyJPClass*) type)->offset;
+}
+
+PyTypeObject* PyJPClass_getConcrete(PyTypeObject* type)
+{
+	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
+		return nullptr;
+	return ((PyJPClass*) type)->tp_concrete;
+}
+
+PyTypeObject* PyJPClass_getAbstract(PyTypeObject* type)
+{
+	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
+		return nullptr;
+	return ((PyJPClass*) type)->tp_abstract;
+}
+
+JPClass* PyJPClass_GetClass(PyTypeObject* type)
+{
+	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
+		return nullptr;
+	return ((PyJPClass*) type)->m_Class;
+}
+
+PyObject* PyJPClass_GetNullBoxed(PyTypeObject* type)
+{
+	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
+		return nullptr;
+	return ((PyJPClass*) type)->nullBoxed;
+}
+
+void PyJPClass_SetNullBoxed(PyTypeObject* type, PyObject* obj)
+{
+	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
+		return;
+	Py_XINCREF(obj);
+	Py_XDECREF(((PyJPClass*) type)->nullBoxed);
+	((PyJPClass*) type)->nullBoxed = obj;
+}
+
+/**
+ * Create a hidden, single-purpose concrete companion type for an abstract
+ * (offset == -1) type.  The companion shares the abstract type's tp_name,
+ * is single-inheritance (bases = (abstract_type,)) so it can never conflict
+ * with a foreign layout at creation time, and is not itself subclassable
+ * (Py_TPFLAGS_BASETYPE cleared once it is built -- see the concrete branch
+ * of PyJPClass_init).
+ */
+static int PyJPClass_concrete(PyTypeObject *abstractType)
+{
+	PyObject *bases = PyTuple_Pack(1, (PyObject*) abstractType);
+	if (bases == nullptr)
+		return -1;
+	PyObject *args = Py_BuildValue("sNN", abstractType->tp_name, bases, PyDict_New());
+	if (args == nullptr)
+		return -1;
+	PyObject *self = ((PyTypeObject*) PyJPClass_Type)->tp_call((PyObject*) PyJPClass_Type, args, PyJPClassMagicConcrete);
+	Py_DECREF(args);
+	if (self == nullptr)
+		return -1;
+	// Intentionally not decref'd: this is a permanent, JVM-lifetime
+	// companion kept alive by the reference tp_call returned. That same
+	// pointer is what gets stored into ((PyJPClass*)abstractType)->tp_concrete
+	// (see the concreteCall branch of PyJPClass_init) -- it IS the owning
+	// reference, not a separate incref.
+	return 0;
+}
+
 static int PyJPClass_traverse(PyJPClass *self, visitproc visit, void *arg)
 {
+	// This type overrides type's tp_traverse, so it must chain to it to
+	// keep visiting tp_dict/tp_bases/tp_mro/etc, or the GC undercounts
+	// outgoing edges from this object while other objects (e.g. the
+	// wrapper_descriptors in tp_dict) still count their incoming edge to
+	// us - causing a gc refcount underflow assertion at shutdown.
+	if (PyType_Type.tp_traverse((PyObject*) self, visit, arg) != 0)
+		return -1; // GCOVR_EXCL_LINE
 	Py_VISIT(self->m_Doc);
+	// self->tp_concrete is the one genuinely OWNED edge in the abstract/
+	// concrete pair (see the struct PyJPClass field comments) -- but is
+	// deliberately not visited here anyway: it is a permanent, JVM-lifetime
+	// reference that is intentionally never cleared (the companion's own
+	// tp_bases points straight back at this type, so visiting both halves
+	// of that pair would turn it into a real, GC-visible 2-node cycle that
+	// tp_clear can never actually break -- a traverse/clear contract
+	// violation that corrupts cycle-collector refcount accounting for the
+	// whole connected component it touches, not just this pair). Treat it
+	// the same as the C++-side JPClass::m_Host reference: a permanent edge
+	// that is simply invisible to the cyclic GC, exactly like this design
+	// already intends it to behave.
+	//
+	// self->tp_abstract is never visited for a different reason: it is not
+	// an owned reference at all (no incref backs it -- see the struct
+	// field comment), so there is no edge here for the GC to account for
+	// in the first place.
+	//
+	// self->nullBoxed is likewise deliberately never visited/cleared, for
+	// the same reason as tp_concrete -- see the struct field comment.
 	return 0;
 }
 
 static int PyJPClass_clear(PyJPClass *self)
 {
+	PyType_Type.tp_clear((PyObject*) self);
 	Py_CLEAR(self->m_Doc);
 	return 0;
 }
 
 PyObject* examine(PyObject *module, PyObject *other);
 
-PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
+PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases, Py_ssize_t offset)
 {
 	JP_PY_TRY("PyJPClass_FromSpecWithBases");
 #if PY_VERSION_HEX>=0x030c0000
@@ -106,7 +279,12 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 	type->tp_itemsize = spec->itemsize;
 	if (spec->itemsize == 0)
 		type->tp_itemsize = type->tp_base->tp_itemsize;
-	type->tp_alloc = PyJPValue_alloc;
+	// Default allocator: inherit from the base, exactly like ordinary
+	// CPython single-inheritance type creation would.  Every built-in
+	// _jpype._J* family now bakes its Java-value slot into tp_basicsize
+	// itself (concrete: a real trailing struct field; abstract: no slot of
+	// its own yet), so no special allocator is needed here any more.
+	type->tp_alloc = type->tp_base->tp_alloc;
 	type->tp_free = PyJPValue_free;
 	type->tp_finalize = (destructor) PyJPValue_finalize;
 	for (PyType_Slot* slot = spec->slots; slot->slot; slot++)
@@ -250,12 +428,35 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases)
 
 #endif
 
-	// Make sure our memory model is used
-	type->tp_alloc = (allocfunc) PyJPValue_alloc;
+	// Every built-in family now has its Java-value slot's location either
+	// baked into tp_basicsize (concrete) or deliberately absent (abstract,
+	// awaiting a concrete companion) -- so the inherited allocator set
+	// above is always correct and there is no legacy (offset == 0) case
+	// left to force onto the thread-local dummy-heap-type allocator.
+	if (offset == 0)
+	{
+		PyErr_Format(PyExc_TypeError,
+				"internal error: '%s' registered with offset 0 (legacy "
+				"allocator no longer exists)", spec->name);
+		Py_DECREF(type);
+		JP_RAISE_PYTHON();
+	}
 	type->tp_finalize = (destructor) PyJPValue_finalize;
+	((PyJPClass*) type)->offset = offset;
+	((PyJPClass*) type)->tp_concrete = nullptr;
+	((PyJPClass*) type)->tp_abstract = nullptr;
+	((PyJPClass*) type)->tp_jvalue = nullptr;
+	((PyJPClass*) type)->nullBoxed = nullptr;
 
 	PyType_Ready(type);
 	PyDict_SetItemString(type->tp_dict, "__module__", PyUnicode_FromString("_jpype"));
+
+	if (offset == -1 && PyJPClass_concrete(type) == -1)
+	{
+		Py_DECREF(type);
+		return nullptr;
+	}
+
 	return (PyObject*) type;
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
@@ -281,7 +482,13 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 	// Verify that we were called internally
 	int magic = 0;
-	if (kwargs == PyJPClassMagic || (kwargs != nullptr && PyDict_GetItemString(kwargs, "internal") != nullptr))
+	bool concreteCall = false;
+	if (kwargs == PyJPClassMagicConcrete)
+	{
+		magic = 1;
+		concreteCall = true;
+		kwargs = nullptr;
+	} else if (kwargs == PyJPClassMagic || (kwargs != nullptr && PyDict_GetItemString(kwargs, "internal") != nullptr))
 	{
 		magic = 1;
 		kwargs = nullptr;
@@ -322,10 +529,95 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		}
 	}
 
-	// We must make sure that all classes have our allocator
-	type->tp_alloc = (allocfunc) PyJPValue_alloc;
+	// Resolve this type's Java-value slot family by scanning all bases.
+	// Priority is legacy > concrete > abstract:
+	//  - any legacy base forces the whole type back to the fully-legacy
+	//    path, no matter what else is mixed in.  This is what keeps boxed
+	//    Number types (which implement Comparable/Serializable -- abstract,
+	//    migrated bases) safe: they stay on the untouched legacy allocator
+	//    rather than risk a CPython "instance lay-out conflict" from mixing
+	//    a migrated family's layout with PyLong/PyFloat ancestry.
+	//  - failing that, a concrete base's offset is inherited directly (no
+	//    further work needed -- CPython's own type_new already grew
+	//    tp_basicsize correctly via ordinary single/solid-base inheritance).
+	//  - failing that, if any base is abstract, this type is abstract too
+	//    and needs its own concrete companion before it can be instantiated.
+	bool anyLegacy = false;
+	Py_ssize_t concreteOffset = 0;
+	bool anyAbstract = false;
+	{
+		Py_ssize_t n = PyTuple_Size(bases);
+		for (Py_ssize_t i = 0; i < n; ++i)
+		{
+			PyObject *b = PyTuple_GetItem(bases, i);
+			if (Py_TYPE(b) != (PyTypeObject*) PyJPClass_Type)
+				continue;
+			// An already-linked abstract-kind base has tp_concrete set (see
+			// the struct PyJPClass field comments) -- check that FIRST and
+			// unconditionally treat it as abstract for inheritance-safety
+			// classification, regardless of what its own offset field says.
+			// offset is now always the real, resolved byte offset even on
+			// abstract types (flattened onto both halves of the pair when
+			// the companion is built -- see the concreteCall branch below),
+			// so once linked it can no longer be used as the abstract/
+			// concrete signal here: that field answers "where is my data",
+			// not "am I safe to physically extend tp_basicsize with" --
+			// interfaces must stay classified as abstract forever so they
+			// remain safe to mix into arbitrary multiple-inheritance
+			// chains, even though their offset is a real, usable number.
+			if (((PyJPClass*) b)->tp_concrete != nullptr)
+			{
+				anyAbstract = true;
+				continue;
+			}
+			Py_ssize_t bo = ((PyJPClass*) b)->offset;
+			if (bo == 0)
+				anyLegacy = true;
+			else if (bo > 0)
+			{
+				if (concreteOffset == 0)
+					concreteOffset = bo;
+			}
+			else
+			{
+				// bo == -1: an abstract base that is mid-construction of
+				// its own companion RIGHT NOW (this scan is running as
+				// part of that very concreteCall -- see PyJPClass_concrete)
+				// and hasn't been flattened/linked yet. Still abstract.
+				anyAbstract = true;
+			}
+		}
+	}
+
+	// anyLegacy can no longer trip (no family registers offset == 0 any
+	// more -- see PyJPClass_FromSpecWithBases), and the "no Java-value-
+	// bearing base at all" case is unreachable in practice: PyJPClass_
+	// getBases always supplies either an interface/superclass base (which
+	// itself resolves recursively) or, when super == nullptr, the abstract
+	// PyJPObject_Type explicitly -- so every wrapper's bases tuple contains
+	// at least one non-zero-offset PyJPClass_Type instance, bottoming out
+	// at Object. Both are asserted here rather than silently forced onto a
+	// (now-deleted) legacy allocator, so that if this reasoning is ever
+	// wrong for some case we haven't enumerated, it fails loudly instead of
+	// corrupting memory.
+	if (anyLegacy || (!(concreteOffset > 0) && !anyAbstract))
+	{
+		PyErr_Format(PyExc_TypeError,
+				"internal error: '%s' has no Java-value-bearing base "
+				"(legacy allocator no longer exists)",
+				((PyHeapTypeObject*) type)->ht_name ?
+				PyUnicode_AsUTF8(((PyHeapTypeObject*) type)->ht_name) : "?");
+		return -1;
+	}
+	Py_ssize_t resolvedOffset = (concreteOffset > 0) ? concreteOffset : -1;
+
 	type->tp_finalize = (destructor) PyJPValue_finalize;
 	((PyJPClass*) self)->m_Doc = nullptr;
+	((PyJPClass*) self)->offset = resolvedOffset;
+	((PyJPClass*) self)->tp_concrete = nullptr;
+	((PyJPClass*) self)->tp_abstract = nullptr;
+	((PyJPClass*) self)->tp_jvalue = nullptr;
+	((PyJPClass*) self)->nullBoxed = nullptr;
 
 	// Call the type init
 	int rc = PyType_Type.tp_init(self, args, nullptr);
@@ -344,8 +636,10 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 	// This sanity check is trigger if the user attempts to build their own
 	// type wrapper with a __del__ method defined.	It is hard to trigger.
-	if (type->tp_alloc != (allocfunc) PyJPValue_alloc
-			&& type->tp_alloc != PyBaseObject_Type.tp_alloc)
+	// No family forces its own allocator any more (see PyJPClass_init above),
+	// so the only correct value is whatever ordinary CPython inheritance
+	// already gave this type from its base.
+	if (type->tp_alloc != type->tp_base->tp_alloc)
 	{
 		PyErr_SetString(PyExc_TypeError, "alloc conflict");
 		return -1;
@@ -354,11 +648,46 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 #if PY_VERSION_HEX < 0x03090000
 	// This was required at one point but I don't know what version it applied to.
-	if (PyObject_IsSubclass((PyObject*) type, (PyObject*) PyJPException_Type))
+	// PyJPException_Type is null while it is itself under construction (see
+	// PyJPObject_initType), which this type-init path runs through too -- guard
+	// against that self-referential bootstrap case rather than dereferencing null.
+	if (PyJPException_Type != nullptr &&
+			PyObject_IsSubclass((PyObject*) type, (PyObject*) PyJPException_Type))
 	{
 		type->tp_new = PyJPException_Type->tp_new;
 	}
 #endif
+
+	if (concreteCall)
+	{
+		// This call came from PyJPClass_concrete: bases is exactly
+		// (abstractType,).  Bake in the real fixed offset for it now and
+		// pair the two types together; no further Python-level subclassing
+		// of this hidden companion is allowed.
+		PyObject *abstractBase = PyTuple_GetItem(bases, 0);
+		// Bare jvalue, not a full JPValue -- class is always derived from the
+		// wrapper type (PyJPClass_GetClass/PyJPValue_getJPClass), never
+		// stored per-instance.
+		size_t off = PyJPClass_alignUp((size_t) type->tp_basicsize, alignof (jvalue));
+		type->tp_basicsize = (Py_ssize_t) (off + sizeof (jvalue));
+		((PyJPClass*) self)->offset = (Py_ssize_t) off;
+		// Flatten the SAME real offset onto the abstract half too, so
+		// resolving a live instance's jvalue never needs to branch or
+		// chase a companion again -- offset becomes a hard invariant on
+		// both halves of the pair, not just the concrete one. See the
+		// struct PyJPClass field comments for why tp_concrete is the owned
+		// edge and tp_abstract is a raw, non-owned back-edge.
+		((PyJPClass*) abstractBase)->offset = (Py_ssize_t) off;
+		((PyJPClass*) abstractBase)->tp_concrete = type;
+		((PyJPClass*) self)->tp_abstract = (PyTypeObject*) abstractBase;
+		type->tp_flags &= ~Py_TPFLAGS_BASETYPE;
+	} else if (resolvedOffset == -1)
+	{
+		// An ordinary type that resolved to abstract: give it its own
+		// hidden concrete companion so it can actually be instantiated.
+		if (PyJPClass_concrete(type) == -1)
+			return -1;
+	}
 
 	return rc;
 	JP_PY_CATCH(-1);
@@ -565,13 +894,13 @@ static PyObject *PyJPClass_class(PyObject *self, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_class");
 	JPJavaFrame frame = JPJavaFrame::outer();
-	JPValue* javaSlot = PyJPValue_getJavaSlot(self);
-	if (javaSlot == nullptr)
+	JPClass* cls = PyJPValue_getJPClass(self);
+	if (cls == nullptr)
 	{
 		PyErr_SetString(PyExc_AttributeError, "Java slot is null");
 		return nullptr;
 	}
-	return javaSlot->getClass()->convertToPythonObject(frame, javaSlot->getValue(), false).keep();
+	return cls->convertToPythonObject(frame, PyJPValue_getJValue(frame, self), false).keep();
 	JP_PY_CATCH(nullptr);
 }
 
@@ -580,8 +909,8 @@ static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
 	JP_PY_TRY("PyJPClass_setClass", self);
 	JPJavaFrame frame = JPJavaFrame::outer();
 	JPContext *context = frame.getContext();
-	JPValue* javaSlot = PyJPValue_getJavaSlot(type);
-	if (javaSlot == nullptr || javaSlot->getClass() != context->_java_lang_Class)
+	JPClass* typeCls = PyJPValue_getJPClass(type);
+	if (typeCls == nullptr || typeCls != context->_java_lang_Class)
 	{
 		PyErr_SetString(PyExc_TypeError, "Java class instance is required");
 		return -1;
@@ -591,10 +920,11 @@ static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
 		PyErr_SetString(PyExc_AttributeError, "Java class can't be set");
 		return -1;
 	}
-	PyJPValue_assignJavaSlot(frame, self, *javaSlot);
+	jvalue typeVal = PyJPValue_getJValue(frame, type);
+	PyJPValue_assignJavaSlot(frame, self, JPValue(typeCls, typeVal));
 
-	JPClass* cls = frame.findClass((jclass) javaSlot->getJavaObject());
-	JP_TRACE("Set host", cls, javaSlot->getClass()->getCanonicalName().c_str());
+	JPClass* cls = frame.findClass((jclass) typeVal.l);
+	JP_TRACE("Set host", cls, typeCls->getCanonicalName().c_str());
 	if (cls->getHost() == nullptr)
 		cls->setHost(self);
 	((PyJPClass*) self)->m_Class = cls;
@@ -838,10 +1168,10 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 	JP_PY_TRY("PyJPClass_cast");
 	JPJavaFrame frame = JPJavaFrame::outer();
 	JPClass *type = self->m_Class;
-	JPValue *val = PyJPValue_getJavaSlot(other);
+	JPClass *valCls = PyJPValue_getJPClass(other);
 
 	// Cast on non-Java
-	if (val == nullptr || val->getClass()->isPrimitive())
+	if (valCls == nullptr || valCls->isPrimitive())
 	{
 		JPMatch match(&frame, other);
 		type->findJavaConversion(match);
@@ -860,8 +1190,9 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 	}
 
 	// Cast on java object
-	//	if (!type->isSubTypeOf(val->getClass()))
-	jobject obj = val->getJavaObject();
+	//	if (!type->isSubTypeOf(valCls))
+	jvalue val = PyJPValue_getJValue(frame, other);
+	jobject obj = val.l;
 	if (obj == nullptr)
 	{
 		jvalue v;
@@ -871,7 +1202,7 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 	JPClass *otherClass = frame.findClassForObject(obj);
 	if (otherClass == nullptr)
 	{
-		return type->convertToPythonObject(frame, val->getValue(), true).keep();
+		return type->convertToPythonObject(frame, val, true).keep();
 	}
 
 	if (!otherClass->isAssignableFrom(frame, type))
@@ -897,7 +1228,7 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 		}
 	}
 
-	return type->convertToPythonObject(frame, val->getValue(), true).keep();
+	return type->convertToPythonObject(frame, val, true).keep();
 
 	Py_RETURN_NONE;
 	JP_PY_CATCH(nullptr);
@@ -1009,7 +1340,10 @@ static PyGetSetDef classGetSets[] = {
 };
 
 static PyType_Slot classSlots[] = {
-	{ Py_tp_alloc, (void*) PyJPValue_alloc},
+	// No Py_tp_alloc override: struct PyJPClass's own JPValue ("extra") is
+	// now a compile-time-fixed trailing field (see PyJPClass_getOffset's
+	// PyJPClass_Type special case), so classSpec.basicsize already accounts
+	// for it and the ordinary inherited (PyType_Type) allocator is correct.
 	{ Py_tp_finalize, (void*) PyJPValue_finalize},
 	{ Py_tp_init, (void*) PyJPClass_init},
 	{ Py_tp_dealloc, (void*) PyJPClass_dealloc},
@@ -1048,6 +1382,31 @@ void PyJPClass_initType(PyObject* module)
 	JP_PY_CHECK();
 }
 
+PyJPValueFn PyJPClass_GetJValueFn(PyTypeObject* type)
+{
+	// Unlike m_Class (set explicitly on every wrapped Java class, see
+	// PyJPClass_hook), tp_jvalue is only ever set once, on a family's root
+	// type (e.g. PyJPNumberLong_Type -- see PyJPNumber_initType). Every real
+	// wrapped class (java.lang.Integer, ...) is a plain single-inheritance
+	// subclass of that root and must inherit it, so walk tp_base until we
+	// leave the PyJPClass-metaclass family entirely.
+	while (type != nullptr && Py_TYPE(type) == (PyTypeObject*) PyJPClass_Type)
+	{
+		PyJPValueFn fn = ((PyJPClass*) type)->tp_jvalue;
+		if (fn != nullptr)
+			return fn;
+		type = type->tp_base;
+	}
+	return nullptr;
+}
+
+void PyJPClass_SetJValueFn(PyTypeObject* type, PyJPValueFn fn)
+{
+	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
+		return;
+	((PyJPClass*) type)->tp_jvalue = fn;
+}
+
 JPClass* PyJPClass_getJPClass(PyObject* obj)
 {
 	try
@@ -1055,15 +1414,30 @@ JPClass* PyJPClass_getJPClass(PyObject* obj)
 		if (obj == nullptr)
 			return nullptr;
 		if (PyJPClass_Check(obj))
-			return ((PyJPClass*) obj)->m_Class;
-		JPValue* javaSlot = PyJPValue_getJavaSlot(obj);
-		if (javaSlot == nullptr)
+		{
+			JPClass *cls = ((PyJPClass*) obj)->m_Class;
+			if (cls != nullptr)
+				return cls;
+			// obj may be either half of an abstract/concrete pair --
+			// m_Class is only ever set on the canonical type returned to
+			// PyJPClass_hook's caller, so hop to whichever paired type obj
+			// points to (at most one of tp_concrete/tp_abstract is ever
+			// non-null on a given type) to find it. This is what keeps the
+			// fast subtype check and isinstance/issubclass correct
+			// regardless of which paired type a live instance's Py_TYPE
+			// happens to be.
+			PyTypeObject *paired = ((PyJPClass*) obj)->tp_concrete;
+			if (paired == nullptr)
+				paired = ((PyJPClass*) obj)->tp_abstract;
+			return (paired != nullptr) ? ((PyJPClass*) paired)->m_Class : nullptr;
+		}
+		JPClass* cls = PyJPValue_getJPClass(obj);
+		if (cls == nullptr)
 			return nullptr;
-		JPClass *cls = javaSlot->getClass();
 		JPJavaFrame frame = JPJavaFrame::outer();
 		if (cls != frame.getContext()->_java_lang_Class)
 			return nullptr;
-		return frame.findClass((jclass) javaSlot->getJavaObject());
+		return frame.findClass((jclass) PyJPValue_getJValue(frame, obj).l);
 	} catch (...) // GCOVR_EXCL_LINE
 	{
 		return nullptr; // GCOVR_EXCL_LINE

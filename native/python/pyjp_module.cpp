@@ -510,13 +510,13 @@ PyObject *PyJPModule_getClass(PyObject* module, PyObject *obj)
 	} else
 	{
 		// From an existing java.lang.Class object
-		JPValue *value = PyJPValue_getJavaSlot(obj);
-		if (value == nullptr || value->getClass() != context->_java_lang_Class)
+		JPClass *valueCls = PyJPValue_getJPClass(obj);
+		if (valueCls == nullptr || valueCls != context->_java_lang_Class)
 		{
 			PyErr_Format(PyExc_TypeError, "JClass requires str or java.lang.Class instance, not '%s'", Py_TYPE(obj)->tp_name);
 			return nullptr;
 		}
-		cls = frame.findClass((jclass) value->getValue().l);
+		cls = frame.findClass((jclass) PyJPValue_getJValue(frame, obj).l);
 		if (cls == nullptr)
 		{
 			PyErr_SetString(PyExc_ValueError, "Unable to find class");
@@ -728,7 +728,7 @@ PyObject* examine(PyObject *module, PyObject *other)
 	printf("    alloc: %p\n", type->tp_alloc);
 	printf("    free: %p\n", type->tp_free);
 	printf("    finalize: %p\n", type->tp_finalize);
-	long v = _PyObject_VAR_SIZE(type, 1)+(PyJPValue_hasJavaSlot(type)?sizeof (JPValue):0);
+	long v = _PyObject_VAR_SIZE(type, 1)+(PyJPValue_hasJavaSlot(type)?sizeof (jvalue):0);
 	printf("    size?: %ld\n",v);
 	printf("======\n");
 
@@ -855,6 +855,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyModule_AddObject(module, "__builtins__", builtins);
 
 	PyJPClassMagic = PyDict_New();
+	PyJPClassMagicConcrete = PyDict_New();
 	// Initialize each of the python extension types
 	PyJPClass_initType(module);
 	PyJPObject_initType(module);

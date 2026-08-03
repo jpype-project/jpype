@@ -223,9 +223,8 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 		return retType->invokeStatic(frame, claz, m_MethodID, &v[0]);
 	} else
 	{
-		JPValue* selfObj = PyJPValue_getJavaSlot(arg[0]);
 		jobject c;
-		if (selfObj == nullptr)
+		if (PyJPValue_getJPClass(arg[0]) == nullptr)
 		{
 			// This only can be hit by calling an instance method as a
 			// class object.  We already know it is safe to convert.
@@ -233,7 +232,7 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 			c = val.l;
 		} else
 		{
-			c = selfObj->getJavaObject();
+			c = PyJPValue_getJValue(frame, arg[0]).l;
 		}
 		jclass clazz = nullptr;
 		// Issue #880: Interface and annotation methods must always use virtual calls
@@ -271,10 +270,9 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 	{
 		JP_TRACE("Call instance");
 		len--;
-		JPValue *selfObj = PyJPValue_getJavaSlot(arg[0]);
-		if (selfObj == nullptr)
+		if (PyJPValue_getJPClass(arg[0]) == nullptr)
 			JP_RAISE(PyExc_RuntimeError, "Null object"); // GCOVR_EXCL_LINE
-		self = selfObj->getJavaObject();
+		self = PyJPValue_getJValue(frame, arg[0]).l;
 	}
 
 	// Convert arguments
