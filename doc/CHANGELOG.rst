@@ -42,6 +42,8 @@ Latest Changes:
 
   - Fixed overloaded methods from multiple interfaces not being detected. #844
 
+  - Fixed annotation and interface methods using incorrect JNI call type. #880
+
   - Fixed crash when calling isinstance(obj, JException) before JVM starts or after JVM shutdown. #1329
 
   - Added fallback conversion path for JArray.of() to support non-primitive types like JString, enabling conversion of numpy string arrays. #953
