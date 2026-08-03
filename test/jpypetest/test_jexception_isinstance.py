@@ -1,8 +1,10 @@
 import common
 import jpype
+import subrun
 
 
-class JExceptionIsInstanceTestCase(common.JPypeTestCase):
+@subrun.TestCase(individual=True)
+class JExceptionIsInstanceTestCaseBeforeJVM(common.JPypeTestCase):
     """Test isinstance with JException when JVM is not running"""
 
     def testIsInstanceBeforeJVMStart(self):
@@ -16,6 +18,7 @@ class JExceptionIsInstanceTestCase(common.JPypeTestCase):
             result = isinstance(e, jpype.JException)
             self.assertFalse(result)
 
+class JExceptionIsInstanceTestCaseAfterJVM(common.JPypeTestCase):
     def testIsInstanceWithNonJavaObject(self):
         """Test isinstance with non-Java objects after JVM starts"""
         # After JVM starts, test with Python objects
@@ -35,12 +38,9 @@ class JExceptionIsInstanceTestCase(common.JPypeTestCase):
 
     def testIsInstanceWithJavaException(self):
         """Test isinstance with actual Java exception"""
-        common.JPypeTestCase.setUp(self)
-        
         # Create a Java exception
         Exception = jpype.JClass("java.lang.Exception")
         java_ex = Exception("test")
         
         # This should return True
-        result = isinstance(java_ex, jpype.JException)
-        self.assertTrue(result)
+        assert isinstance(java_ex, jpype.JException)
