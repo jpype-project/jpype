@@ -398,11 +398,28 @@ public:
 	{
 		JP_TRACE_IN("JPConversionByteArray::matches");
 		auto* acls = dynamic_cast<JPArrayClass*>( cls);
-		if (match.frame == nullptr  || !PyBytes_Check(match.object) ||
+		if (match.frame == nullptr ||
 				acls->getComponentType() != JPContext_global->_byte)
 			return match.type = JPMatch::_none;
-		match.conversion = this;
-		return match.type = JPMatch::_implicit;
+
+		// Check for bytes first - implicit conversion
+		if (PyBytes_Check(match.object))
+		{
+			match.conversion = this;
+			return match.type = JPMatch::_implicit;
+		}
+
+		// Check for bytearray - derived match for byte[] (issue #598)
+		// bytearray is semantically a mutable byte array, so it should
+		// match byte[] better than char[] (which gets _implicit)
+		// Use _derived instead of _exact to avoid caching issues
+		if (PyByteArray_Check(match.object))
+		{
+			match.conversion = this;
+			return match.type = JPMatch::_derived;
+		}
+
+		return match.type = JPMatch::_none;
 		JP_TRACE_OUT;
 	}
 
@@ -412,6 +429,7 @@ public:
 		if (acls->getComponentType() != JPContext_global->_byte)
 			return;
 		PyList_Append(info.implicit, (PyObject*) & PyBytes_Type);
+		PyList_Append(info.implicit, (PyObject*) & PyByteArray_Type);
 	}
 
 	jvalue convert(JPMatch &match) override
@@ -420,7 +438,19 @@ public:
 		jvalue res;
 		Py_ssize_t size = 0;
 		char *buffer = nullptr;
-		PyBytes_AsStringAndSize(match.object, &buffer, &size); // internal reference
+
+		// Handle both bytes and bytearray
+		// matches() already verified it's one of these
+		if (PyBytes_Check(match.object))
+		{
+			PyBytes_AsStringAndSize(match.object, &buffer, &size); // internal reference
+		}
+		else // PyByteArray_Check
+		{
+			size = PyByteArray_GET_SIZE(match.object);
+			buffer = PyByteArray_AS_STRING(match.object); // internal reference
+		}
+
 		jbyteArray byteArray = frame.NewByteArray((jsize) size);
 		frame.SetByteArrayRegion(byteArray, 0, (jsize) size, (jbyte*) buffer);
 		res.l = frame.keep(byteArray);
@@ -439,6 +469,13 @@ public:
 		JPClass *componentType = acls->getComponentType();
 		if ( !componentType->isPrimitive())
 			return match.type = JPMatch::_none;
+
+		// Issue #598: bytearray should match byte[] not char[]
+		// byteArrayConversion handles this more specifically
+		if (PyByteArray_Check(match.object) &&
+		    (componentType == JPContext_global->_char || componentType == JPContext_global->_byte))
+			return match.type = JPMatch::_none;
+
 		// If is isn't a buffer we can skip
 		JPPyBuffer	buffer(match.object, PyBUF_ND | PyBUF_FORMAT);
 		if (!buffer.valid())
