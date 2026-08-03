@@ -397,7 +397,7 @@ class OverloadTestCase(common.JPypeTestCase):
         self.assertEqual('String,String...', test1.testVarArgsVsVarArgs('a', 'b'))
         self.assertEqual('String,String...', test1.testVarArgsVsVarArgs('a'))
 
-    @common.unittest.skip
+    @common.unittest.skip("diagnostic test (prints)")
     def testDiagnosticVarArgs(self):
         """Diagnostic test to examine method resolution order"""
         test1 = self.__jp.Test1()
@@ -417,7 +417,7 @@ class OverloadTestCase(common.JPypeTestCase):
         
         # Test method resolution using reflection if available
         try:
-            from org.jpype.manager import MethodResolution
+            from org.jpype.manager import MethodResolution # type: ignore
             Test1Class = JClass('jpype.overloads.Test1')
             methods = Test1Class.class_.getDeclaredMethods()
             
