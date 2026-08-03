@@ -42,6 +42,8 @@ Latest Changes:
 
   - Fixed overloaded methods from multiple interfaces not being detected. #844
 
+  - Fixed crash when calling isinstance(obj, JException) before JVM starts or after JVM shutdown. #1329
+
   - Added fallback conversion path for JArray.of() to support non-primitive types like JString, enabling conversion of numpy string arrays. #953
 
   - Improved implicit conversion from Python primitives to Java boxed types (Integer, Long, Short, Double, Float). #1098
