@@ -185,3 +185,25 @@ class JStringTestCase(common.JPypeTestCase):
     def testBad(self):
         bad = jpype.JClass("jpype.str.Bad")()
         self.assertEqual(str(bad), "null")
+
+    def testBytearrayConstructor(self):
+        """Test issue #598: bytearray should map to byte[] not char[]"""
+        # Single byte bytearray - should not raise ambiguity error
+        s1 = JString(bytearray([1]))
+        self.assertIsNotNone(s1)
+
+        # ASCII bytes
+        s2 = JString(bytearray([72, 101, 108, 108, 111]))
+        self.assertEqual(s2, "Hello")
+
+        # Verify it uses byte[] constructor (UTF-8 encoding)
+        s3 = JString(bytearray([65, 66, 67]))
+        self.assertEqual(s3, "ABC")
+
+    def testBytesConstructor(self):
+        """Test that bytes still work (for comparison with bytearray)"""
+        s1 = JString(bytes([72, 101, 108, 108, 111]))
+        self.assertEqual(s1, "Hello")
+
+        s2 = JString(bytes([65, 66, 67]))
+        self.assertEqual(s2, "ABC")

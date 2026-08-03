@@ -213,6 +213,8 @@ bool JPPyString::checkCharUTF16(PyObject* pyobj)
 		return true;
 	if (PyBytes_Check(pyobj) && PyBytes_Size(pyobj) == 1)
 		return true;
+	// bytearray should NOT match char[] to avoid ambiguity with byte[]
+	// See issue #598
 	return false;
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
