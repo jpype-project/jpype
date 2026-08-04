@@ -2858,6 +2858,59 @@ Common Issues and Troubleshooting
     import _jpype
     _jpype.enableStacktraces(True)
 
+7. **Class Loader Conflicts with Third-Party Frameworks**: In environments
+   with multiple class loaders (e.g., OSGi, Java EE application servers,
+   Eclipse Modeling Framework), you may encounter "No matching overloads found"
+   errors even when types appear to match. This occurs because Java considers
+   classes loaded by different class loaders to be incompletely different types,
+   even if they have identical names and bytecode.
+
+   **Symptoms**: Error messages like "No matching overloads found for
+   ClassName.method(Type)" where the type shown in the error matches the
+   method signature exactly.
+
+   **Limitation**: JPype cannot automatically resolve class loader conflicts.
+   When a third-party framework uses its own class loader, classes loaded
+   through that framework are incompatible with classes loaded through JPype's
+   class loader.
+
+   **Solution**: Explicitly load classes using the same class loader as your
+   framework. When working with frameworks that use custom class loaders (e.g.,
+   OSGi, EMF), you must load the Java classes through that framework's class
+   loader rather than JPype's default:
+
+   .. code-block:: python
+
+       # Get the framework's class loader
+       framework_loader = my_framework_object.getClass().getClassLoader()
+
+       # Load the enum class using the framework's class loader
+       MyEnumClass = jpype.JClass('com.example.MyEnum', loader=framework_loader)
+
+       # Now enum values will be compatible with framework methods
+       enum_value = MyEnumClass.valueOf("VALUE")
+       framework_object.setEnum(enum_value)  # This will work!
+
+   Alternatively, use Java's ``Class.forName()`` with the specific class loader:
+
+   .. code-block:: python
+
+       from java.lang import Class
+
+       # Get the framework's class loader
+       framework_loader = my_framework_object.getClass().getClassLoader()
+
+       # Load the class using forName with the specific loader
+       MyEnumClass = Class.forName('com.example.MyEnum', True, framework_loader)
+
+       # Access enum constants through reflection
+       enum_value = MyEnumClass.getField("VALUE").get(None)
+
+   **Note**: You must use the framework's class loader consistently for all
+   related classes. Mixing classes from different loaders will result in type
+   mismatch errors. If you cannot access the framework's class loader, consider
+   configuring your framework to use a shared parent class loader.
+
 
 .. _controlling_the_jvm_best_practices_for_jvm_starting:
 
