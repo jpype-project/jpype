@@ -82,6 +82,7 @@ PyObject* _JMethodAnnotations = nullptr;
 PyObject* _JMethodCode = nullptr;
 PyObject* _JObjectKey = nullptr;
 PyObject* _JVMNotRunning = nullptr;
+PyObject* PyJClass_Generics = nullptr;
 
 void PyJPModule_loadResources(PyObject* module)
 {
@@ -870,6 +871,9 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyJPClassHints_initType(module);
 	PyJPPackage_initType(module);
 	PyJPChar_initType(module);
+
+	PyJClass_Generics = PyDict_New();
+	PyModule_AddObject(module, "_generics", PyJClass_Generics);
 
 	_PyJPModule_trace = true;
 

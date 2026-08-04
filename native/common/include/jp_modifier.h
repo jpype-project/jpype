@@ -166,6 +166,11 @@ inline bool isBuffer(jlong modifier)
 	return (modifier & 0x01000000) == 0x01000000;
 }
 
+inline bool isGeneric(jlong modifier)
+{
+	return (modifier & 0x02000000) == 0x02000000;
+}
+
 inline bool isConstructor(jlong modifier)
 {
 	return (modifier & 0x10000000) == 0x10000000;
