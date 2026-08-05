@@ -62,16 +62,23 @@ m_PrimitiveType(primitiveType)
 JPBoxedType::~JPBoxedType()
 = default;
 
-JPMatch::Type JPBoxedType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPBoxedType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPBoxedType::findJavaConversion");
-	JPClass::findJavaConversion(match);
+	JPClass::findJavaConversionImpl(match);
 	if (match.type != JPMatch::_none)
 		return match.type;
-	if (m_PrimitiveType->findJavaConversion(match) != JPMatch::_none)
+	// m_PrimitiveType->findJavaConversion is a call into another JPClass's
+	// own cached wrapper, which resets match.cacheable for its own
+	// sub-decision -- AND it back with what the base check above already
+	// established rather than letting it silently overwrite that.
+	bool baseCacheable = match.cacheable;
+	JPMatch::Type primitiveType = m_PrimitiveType->findJavaConversion(match);
+	match.cacheable = baseCacheable && match.cacheable;
+	if (primitiveType != JPMatch::_none)
 	{
 		JP_TRACE("Primitive", match.type);
-		match.conversion = boxBooleanConversion;
+		match.conversion = boxGenericConversion;
 		match.closure = this;
 		// Issue #1098: Downgrade match quality by one level for boxing conversion
 		// This allows Python int/float to implicitly convert to boxed types
@@ -115,9 +122,15 @@ JPPyObject JPBoxedType::convertToPythonObject(JPJavaFrame& frame, jvalue value, 
 			return JPPyObject::getNone();
 		}
 
-		cls = frame.findClassForObject(value.l);
-		if (cls != this)
-			return cls->convertToPythonObject(frame, value, true);
+		// See JPClass::convertToPythonObject's identical fast path: skip
+		// the findClassForObject JNI upcall when the runtime class is
+		// already known to be exactly this one.
+		if (!frame.IsSameObject(frame.GetObjectClass(value.l), getJavaClass()))
+		{
+			cls = frame.findClassForObject(value.l);
+			if (cls != this)
+				return cls->convertToPythonObject(frame, value, true);
+		}
 	}
 
 	JPPyObject wrapper = PyJPClass_create(frame, cls);

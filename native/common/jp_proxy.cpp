@@ -42,9 +42,24 @@ JPPyObject getArgs(jlongArray parameterTypePtrs,
 	for (jsize i = 0; i < argLen; i++)
 	{
 		jobject obj = frame.GetObjectArrayElement(args, i);
-		JPClass* type = frame.findClassForObject(obj);
+		auto* declaredType = reinterpret_cast<JPClass*> (types[i]);
+
+		// Same idea as JPClass::convertToPythonObject's fast path (this is
+		// a separate, explicit findClassForObject call, not routed through
+		// that code): a proxy's parameter types are fixed by the
+		// interface, and a call site's actual argument class is usually
+		// stable call to call, so check the cheap way first and only pay
+		// for the upcall when it doesn't hold. GetObjectClass/IsSameObject
+		// require a real object -- obj may legitimately be null (a null
+		// argument), which findClassForObject already handles below via
+		// the declaredType fallback, so skip straight to that path here.
+		JPClass* type = nullptr;
+		if (obj != nullptr && frame.IsSameObject(frame.GetObjectClass(obj), declaredType->getJavaClass()))
+			type = declaredType;
+		else
+			type = frame.findClassForObject(obj);
 		if (type == nullptr)
-			type = reinterpret_cast<JPClass*> (types[i]);
+			type = declaredType;
 		JPValue val = type->getValueFromObject(frame, JPValue(type, obj));
 		PyTuple_SetItem(pyargs.get(), i+extra, type->convertToPythonObject(frame, val, false).keep());
 	}

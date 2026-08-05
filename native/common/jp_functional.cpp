@@ -41,6 +41,12 @@ public:
 		if (!PyCallable_Check(match.object))
 			return match.type = JPMatch::_none;
 
+		// Every plain function/lambda/bound method shares the same Py_TYPE
+		// regardless of its argument count/defaults/varargs -- but those are
+		// exactly what determines which functional interface(s) it matches
+		// below, so this decision is inherently per-object, not per-type.
+		match.cacheable = false;
+
 		// def my_func(x, y=None) should be both a Function and a BiFunction
 		// i.e. the number of parameters accepted by the interface MUST
 		// 1. Be at most the maximum number of parameters accepted by the python function (parameter_count)
@@ -125,10 +131,10 @@ public:
 	}
 } functional_conversion;
 
-JPMatch::Type JPFunctional::findJavaConversion(JPMatch &match)
+JPMatch::Type JPFunctional::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPJPFunctional::findJavaConversiocdn");
-	JPClass::findJavaConversion(match);
+	JPClass::findJavaConversionImpl(match);
 	if (match.type != JPMatch::_none)
 		return match.type;
 	if (functional_conversion.matches(this, match))

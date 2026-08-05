@@ -67,6 +67,27 @@ public:
 	PyObject *object;
 	void *closure;
 
+	/**
+	 * Whether the current matches()/findJavaConversion() decision is
+	 * determined purely by Py_TYPE(object) (and the JPClass being matched
+	 * against), with no dependence on object's value/contents.
+	 *
+	 * Defaults to true (opt-out, not opt-in): a converter must explicitly
+	 * clear this if its decision inspects the object itself (e.g. duck-typed
+	 * attribute presence, or a sequence's element types) rather than just its
+	 * type. Default-true is required for this to compose correctly across
+	 * the few findJavaConversion implementations (JPBoxedType, JPFunctional)
+	 * that call into another class's findJavaConversion as a building block:
+	 * an opt-in ("only ever set true") flag would get silently reset by
+	 * those nested calls, but a monotonic "only ever gets cleared" flag
+	 * degrades safely instead.
+	 *
+	 * JPClass::findJavaConversion consults this after a cache miss to decide
+	 * whether the resolved {conversion, type} pair is safe to memoize keyed
+	 * on Py_TYPE(object) alone.
+	 */
+	bool cacheable;
+
 private:
 	bool m_SlotResolved;
 	JPClass *m_SlotClass;

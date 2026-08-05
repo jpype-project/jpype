@@ -599,6 +599,12 @@ jclass JPJavaFrame::GetObjectClass(jobject obj)
 			m_Env->GetObjectClass(obj));
 }
 
+jboolean JPJavaFrame::IsSameObject(jobject ref1, jobject ref2)
+{
+	JAVA_RETURN(jboolean, "JPJavaFrame::IsSameObject",
+			m_Env->IsSameObject(ref1, ref2));
+}
+
 jobject JPJavaFrame::GetStaticObjectField(jclass clazz, jfieldID fid)
 {
 	JAVA_RETURN_OBJ(jobject, "JPJavaFrame::GetStaticObjectField",

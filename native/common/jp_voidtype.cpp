@@ -76,7 +76,7 @@ JPPyObject JPVoidType::convertToPythonObject(JPJavaFrame& frame, jvalue val, boo
 	return JPPyObject::getNone();
 }
 
-JPMatch::Type JPVoidType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPVoidType::findJavaConversionImpl(JPMatch &match)
 {
 	return match.type = JPMatch::_none;
 }

@@ -20,6 +20,7 @@ set(JPYPE_NATIVE_SRC
         common/jp_classloader.cpp
         common/jp_classtype.cpp
         common/jp_context.cpp
+        common/jp_conversioncache.cpp
         common/jp_convert.cpp
         common/jp_doubletype.cpp
         common/jp_encoding.cpp
@@ -116,6 +117,10 @@ elseif(APPLE)
 elseif(LINUX OR UNIX) # make sure APPLE is handled before this.
     target_link_libraries(_jpype PRIVATE dl)
     target_link_options(_jpype PRIVATE "-Wl,-l:libstdc++.so.6")
+    # 16-byte std::atomic<T> (JPConversionCache) isn't backed by a native
+    # lock-free instruction on every target this ships to, so GCC/Clang emit
+    # calls to __atomic_*_16, which live in libatomic rather than libc.
+    target_link_libraries(_jpype PRIVATE atomic)
 
     # Keep frame pointers for better stack unwinding.
     add_compile_options(-fno-omit-frame-pointer)

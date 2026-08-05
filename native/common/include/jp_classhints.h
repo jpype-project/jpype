@@ -99,6 +99,19 @@ public:
 	void getInfo(JPClass *cls, JPConversionInfo &info);
 
 	bool m_ConvertJava;
+
+	/**
+	 * Bumped every time any JPClassHints anywhere gains a new conversion
+	 * (addTypeConversion/addAttributeConversion/excludeConversion).
+	 *
+	 * JPClass::findJavaConversion's per-type cache compares its own stashed
+	 * generation against this on every call and clears itself if stale. This
+	 * is deliberately global/coarse rather than per-owning-class (which
+	 * would need a back-pointer this class doesn't have) -- hint mutation
+	 * only happens at setup time, so invalidating a bit more than strictly
+	 * necessary costs nothing in practice.
+	 */
+	static uint64_t s_Generation;
 private:
 	std::list<JPConversion*> conversions;
 } ;
@@ -117,6 +130,7 @@ extern JPConversion *javaValueConversion;
 extern JPConversion *stringConversion;
 extern JPConversion *boxConversion;
 extern JPConversion *boxBooleanConversion;
+extern JPConversion *boxGenericConversion;
 extern JPConversion *boxLongConversion;
 extern JPConversion *boxDoubleConversion;
 extern JPConversion *unboxConversion;

@@ -120,7 +120,7 @@ public:
 	}
 } asJDoubleConversion;
 
-JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPDoubleType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPDoubleType::findJavaConversion");
 

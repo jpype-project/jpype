@@ -108,7 +108,7 @@ public:
 
 } asJFloatConversion;
 
-JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPFloatType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPFloatType::findJavaConversion");
 

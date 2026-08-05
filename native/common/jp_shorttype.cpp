@@ -101,7 +101,7 @@ public:
 
 } jshortConversion;
 
-JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPShortType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPShortType::findJavaConversion");
 

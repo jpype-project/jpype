@@ -74,6 +74,11 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
 	{
 		JP_TRACE_IN("JPConversionAsChar::matches");
+		// checkCharUTF16 requires str/bytes of length exactly 1 -- depends
+		// on the object's content/length, not just its Py_TYPE (e.g.
+		// bytes([1]) matches but bytes([1, 1]) does not, despite both being
+		// `bytes`).
+		match.cacheable = false;
 		if (!JPPyString::checkCharUTF16(match.object))
 			return match.type = JPMatch::_none;
 		match.conversion = this;
@@ -123,7 +128,7 @@ public:
 
 } asJCharConversion;
 
-JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPCharType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPCharType::findJavaConversion");
 

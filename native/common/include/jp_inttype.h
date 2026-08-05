@@ -37,7 +37,8 @@ public:
 	}
 
 	JPClass* getBoxedClass(JPJavaFrame& frame) const override;
-	JPMatch::Type findJavaConversion(JPMatch &match) override;
+	JPMatch::Type findJavaConversionImpl(JPMatch &match) override;
+	bool fastElementCheck(PyObject* obj, JPMatch::Type& quality) const override;
 	void getConversionInfo(JPConversionInfo &info) override;
 	JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 	JPValue     getValueFromObject(JPJavaFrame& frame, const JPValue& obj) override;

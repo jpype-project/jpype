@@ -103,7 +103,7 @@ public:
 	}
 } jlongConversion;
 
-JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPLongType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPLongType::findJavaConversion");
 
