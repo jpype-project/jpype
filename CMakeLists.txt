@@ -14,6 +14,7 @@ option(BUILD_TEST_HARNESS "Enable building of the Java test harness" ON)
 # set(PY_GIL_DISABLED ON)
 set(CMAKE_CXX_STANDARD 14)
 set(SRC_JAR "${CMAKE_CURRENT_SOURCE_DIR}/org.jpype.jar")
+set(EDITABLE FALSE)
 
 find_package(Python3 COMPONENTS Interpreter Development.Module REQUIRED)
 find_package(Python3 COMPONENTS Development.Embed)
@@ -35,11 +36,17 @@ message(STATUS "Final JNI include dirs: ${JNI_INCLUDE_DIRS}")
 
 
 if(SKBUILD)
-    message(DEBUG "SKBuild invocation")
-    set(DEST_JAR ${SKBUILD_PLATLIB_DIR})
     set(DEST_EXTENSION ${SKBUILD_PLATLIB_DIR})
+    if(SKBUILD_STATE STREQUAL "editable")
+        set(EDITABLE TRUE)
+        # redirect mode keeps __file__ pointing at the real source tree, so
+        # runtime jar lookup (relative to __file__) needs it here, not in
+        # the editable install staging dir.
+        set(DEST_JAR "${CMAKE_SOURCE_DIR}/")
+    else()
+        set(DEST_JAR ${SKBUILD_PLATLIB_DIR})
+    endif()
 else()
-    # in-place build, set output to cmakes output dir.
     set(DEST_JAR ${CMAKE_CURRENT_BINARY_DIR})
     set(DEST_EXTENSION ${CMAKE_CURRENT_BINARY_DIR})
 endif()
@@ -106,34 +113,30 @@ if(ENABLE_BUILD_JAR)
     )
 endif()
 
-# If javac is there just do it. Disabled by pip build by default.
-if(Java_Development_FOUND)
-    message(STATUS "Forcing: Build Test Java classes, because JDK is available.")
+# Only auto-enable the test harness for local development — never for an
+# actual sdist/wheel build, where CMAKE_SOURCE_DIR is a disposable
+# extraction dir and the compiled classes would just be discarded.
+if(Java_Development_FOUND AND (NOT SKBUILD OR ${EDITABLE}))
+    message(STATUS "Forcing: Build Test Java classes, because JDK is available (dev/editable build).")
     set(BUILD_TEST_HARNESS ON CACHE BOOL "Build Test Java classes automatically" FORCE)
 endif()
 
-# fixme: if installed from sdist and run from git clone, the classes end up in the wheel (at least tmp build dir) and cannot be found.
-# 1. copy classes output to cwd?
-# 2. install classes somewhere and point conftest classpath towards it?
-#
-if(BUILD_TEST_HARNESS) # This requires a JDK of course.
+if(BUILD_TEST_HARNESS AND (NOT SKBUILD OR ${EDITABLE}))
     find_program(ANT_EXECUTABLE ant REQUIRED)
-    
-    # We define a representative output file to help CMake track dependencies
-    # todo: cmake_source_dir is in tmp, if installing from sdist!
-    set(TEST_HARNESS_OUTPUT ${CMAKE_CURRENT_LIST_DIR})
-    message(STATUS "test harness output: ${TEST_HARNESS_OUTPUT}")
+    set(TEST_HARNESS_OUTPUT ${CMAKE_SOURCE_DIR})
     set(TEST_SENTINEL "${TEST_HARNESS_OUTPUT}/test/classes/org/jpype/JPypeTest.class")
 
     add_custom_command(
         OUTPUT "${TEST_SENTINEL}"
         COMMAND "${ANT_EXECUTABLE}" -f "test/build.xml"
         WORKING_DIRECTORY "${TEST_HARNESS_OUTPUT}"
-        DEPENDS jpype_jar  # Ensure the main org.jpype.jar is built first
+        #DEPENDS jpype_jar  # Ensure the main org.jpype.jar is built first
         COMMENT "Building JPype Java Test Harness via Ant"
     )
 
     add_custom_target(build_tests ALL DEPENDS "${TEST_SENTINEL}")
+elseif(BUILD_TEST_HARNESS)
+    message(STATUS "Skipping Java test harness build (SKBUILD_STATE=${SKBUILD_STATE}) — dev/editable only.")
 endif()
 
 add_subdirectory(native)
