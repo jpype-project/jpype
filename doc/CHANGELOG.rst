@@ -73,6 +73,10 @@ Latest Changes:
   
   - Fixed ambiguous overload resolution for bytearray between byte[] and char[]. #598
 
+  - Added a customizer example to the quickstart guide and fixed the
+    "Extending classes" entry, which had been carrying a leftover
+    "lambda is WIP" note since before lambdas were documented. #792
+
 
 - **1.7.1 - 2026-05-06**
 

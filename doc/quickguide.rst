@@ -711,9 +711,19 @@ with an interface for each methods that are to be accessed from Python.
 |                           |     DoubleUnaryOperator u = (p->p*2);                   |     u=DoubleUnaryOperator@(lambda x: x*2)               |
 |                           |                                                         |                                                         |
 +---------------------------+---------------------------------------------------------+---------------------------------------------------------+
+|                           |                                                         |                                                         |
+| Add methods to an         |                                                         | .. code-block:: python                                  |
+| existing Java class [25]_ |                                                         |                                                         |
+|                           |                                                         |     @JImplementationFor('java.util.Map')                |
+|                           |                                                         |     class _JMap:                                        |
+|                           |                                                         |         def __len__(self):                              |
+|                           |                                                         |             return self.size()                          |
+|                           |                                                         |                                                         |
++---------------------------+---------------------------------------------------------+---------------------------------------------------------+
 
-    .. [23] Support for use of Python function as Java 8 lambda is WIP.
+    .. [23] Not supported directly. Implement an interface instead, or create a thin Java-side extension class with an interface for the methods that need to be reached from Python.
     .. [24] Any Java functional interface can take a lambda or callable.
+    .. [25] A customizer. Adds or replaces methods/properties on a Java wrapper class; combine with @JOverride to replace an existing Java method rather than add a new one.
 
 
 
