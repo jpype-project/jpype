@@ -352,8 +352,13 @@ public class JavadocTransformer
     if (name.equals("code") && parent.getNodeName().equals("a"))
     {
       Element eparent = (Element) parent;
-      String href = this.toReference(ws, eparent.getAttribute("href"));
+      String href = this.formatLink(ws, node.getTextContent(), eparent.getAttribute("href"));
       DomUtilities.clearChildren(parent);
+      // Rename so this <a> is not visited again by the standalone "a" case
+      // below - traverseDFS processes children first, so without this the
+      // parent <a> (still tagged "a", still holding its original href) gets
+      // reprocessed right after this and double-wraps the text we just set.
+      doc.renameNode(parent, null, "nop");
       parent.appendChild(doc.createTextNode(href));
       return;
     }
@@ -361,7 +366,7 @@ public class JavadocTransformer
     // <code><a> is also used.
     if (name.equals("a") && parent.getNodeName().equals("code"))
     {
-      String href = this.toReference(ws, e.getAttribute("href"));
+      String href = this.formatLink(ws, node.getTextContent(), e.getAttribute("href"));
       DomUtilities.clearChildren(parent);
       doc.renameNode(parent, null, "nop");
       parent.appendChild(doc.createTextNode(href));
@@ -371,19 +376,8 @@ public class JavadocTransformer
     // <a> by itself is usually external references.
     if (name.equals("a"))
     {
-      String href = e.getAttribute("href");
-      if (href.startsWith("http:") || href.startsWith("shttp:"))
-      {
-        String content = node.getTextContent();
-        content = String.format("`%s <%s>`", content, href);
-        parent.replaceChild(doc.createTextNode(content), node);
-        return;
-      }
-      href = this.toReference(ws, href);
-      if (href == null)
-        parent.replaceChild(doc.createTextNode(node.getTextContent()), node);
-      else
-        parent.replaceChild(doc.createTextNode(href), node);
+      String href = this.formatLink(ws, node.getTextContent(), e.getAttribute("href"));
+      parent.replaceChild(doc.createTextNode(href), node);
       return;
     }
 
@@ -401,6 +395,32 @@ public class JavadocTransformer
       }
     }
 
+  }
+
+  /**
+   * Format a hyperlink for RST output, routing absolute (http/https)
+   * hrefs to an external link and everything else to {@link #toReference}.
+   *
+   * All three markup shapes javadoc uses for a link (bare {@code <a>},
+   * {@code <a><code>}, and {@code <code><a>}) funnel through here so the
+   * external-vs-local distinction is made in exactly one place. This
+   * matters in practice: since JDK 12+, javadoc auto-links platform
+   * classes (java.lang.Object, etc.) to https://docs.oracle.com even
+   * without an explicit -link argument, where JDK 8-11 leaves them as
+   * plain text - so any of these three shapes can carry an absolute URL
+   * depending on the JDK that generated the page.
+   *
+   * @param ws
+   * @param content is the link's visible text.
+   * @param href is the raw href attribute.
+   * @return
+   */
+  private String formatLink(Workspace ws, String content, String href)
+  {
+    if (href.startsWith("http:") || href.startsWith("https:"))
+      return String.format("`%s <%s>`", content, href);
+    String ref = this.toReference(ws, href);
+    return ref == null ? content : ref;
   }
 
   /**
