@@ -14,6 +14,7 @@
    See NOTICE file for details.
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
 
 JPPrimitiveType::JPPrimitiveType(const string& name)
 : JPClass(name, 0x411)
@@ -28,45 +29,15 @@ bool JPPrimitiveType::isPrimitive() const
 	return true;
 }
 
-extern "C" Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self);
-
-// equivalent of long_subtype_new as it isn't exposed
-
 PyObject *JPPrimitiveType::convertLong(PyTypeObject* wrapper, PyLongObject* tmp)
 {
 	if (wrapper == nullptr)
 		JP_RAISE(PyExc_SystemError, "bad wrapper");
 
-#if PY_VERSION_HEX<0x030c0000
-	// Determine number of digits to copy
-	Py_ssize_t n = Py_SIZE(tmp);
-	if (n < 0)
-		n = -n;
-
-	auto *newobj = (PyLongObject *) wrapper->tp_alloc(wrapper, n);
-	if (newobj == nullptr)
-		return nullptr;
-
-	// Size is in units of digits
-	((PyVarObject*) newobj)->ob_size = Py_SIZE(tmp);
-	for (Py_ssize_t i = 0; i < n; i++)
-	{
-		newobj->ob_digit[i] = tmp->ob_digit[i];
-	}
-
-#else
-	// 3.12 completely does away with ob_size field and repurposes it
-	
-	// Determine the number of digits to copy
-	int n = (tmp->long_value.lv_tag >> 3);
-
-	PyLongObject *newobj = (PyLongObject *) wrapper->tp_alloc(wrapper, n);
-	if (newobj == NULL)
-		return NULL;
-
-	newobj->long_value.lv_tag = tmp->long_value.lv_tag;
-	memcpy(&newobj->long_value.ob_digit, &tmp->long_value.ob_digit, n*sizeof(digit));
-#endif
-	return (PyObject*) newobj;
+	// PyLong_AsLongLong can't fail/overflow here -- tmp always represents a
+	// genuine Java primitive (byte/short/int/long), which always fits
+	// within 64 bits.
+	long long value = PyLong_AsLongLong((PyObject*) tmp);
+	return PyJPNumber_longFromLongLong(wrapper, value);
 }
 

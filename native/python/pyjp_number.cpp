@@ -16,15 +16,79 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_boxedtype.h"
+#include <cstddef>
+
+// Float has a genuine compile-time-known C layout (like Exception), so it
+// gets a real struct and a direct offsetof-based concrete offset -- no
+// digit-budget reasoning needed since PyFloatObject is always fixed-size.
+struct PyJPFloat
+{
+	PyFloatObject base;
+	// Bare jvalue, not a full JPValue -- class is always derived from the
+	// wrapper type (PyJPValue_getJPClass), so there's nothing to look up a
+	// JPValue for here.
+	jvalue extra;
+};
+
+// Long/Boolean no longer keep any trailing per-instance storage at all: the
+// PyLongObject itself, and tp_jvalue (see longJValue below) reconstructs a
+// jvalue from it on demand -- boxing via a real JNI call when the context is
+// a boxed wrapper, reading the digits directly when it's a primitive. So
+// there's no fixed offset to protect any more, and ordinary CPython subtype
+// construction (long_subtype_new, dispatched via PyLong_Type.tp_new with the
+// real subtype) is exactly the right tool -- the earlier hand-written-digit
+// version existed solely to keep a trailing JPValue at a constant offset.
+PyObject* PyJPNumber_longFromLongLong(PyTypeObject* type, long long value)
+{
+	JPPyObject tmp = JPPyObject::call(PyLong_FromLongLong(value));
+	JPPyObject args = JPPyTuple_Pack(tmp.get());
+	return PyLong_Type.tp_new(type, args.get(), nullptr);
+}
+
+static PyObject* newFloatFixed(PyTypeObject* type, double value)
+{
+	auto* self = (PyFloatObject*) type->tp_alloc(type, 0);
+	if (self == nullptr)
+		return nullptr;
+	self->ob_fval = value;
+	return (PyObject*) self;
+}
 
 static bool isNull(PyObject *self)
 {
-	JPValue *javaSlot = PyJPValue_getJavaSlot(self);
-	if (javaSlot != nullptr
-			&& !javaSlot->getClass()->isPrimitive()
-			&& javaSlot->getValue().l == nullptr)
-		return true;
-	return false;
+	JPClass *cls = PyJPValue_getJPClass(self);
+	if (cls == nullptr || cls->isPrimitive())
+		return false;
+	// Reconstructing families (Long/Boolean, see longJValue) never carry a
+	// jvalue that could be null -- tp_jvalue always boxes a live value.
+	// A real Java null is instead represented by a per-class singleton
+	// instance (see PyJPClass_GetNullBoxed / jp_boxedtype.cpp), so null-ness
+	// is an identity check, not a value read.
+	if (PyJPClass_GetJValueFn(Py_TYPE(self)) != nullptr)
+		return self == PyJPClass_GetNullBoxed(Py_TYPE(self));
+	JPJavaFrame frame = JPJavaFrame::outer();
+	return PyJPValue_getJValue(frame, self).l == nullptr;
+}
+
+// tp_jvalue for the Long/Boolean family: reconstructs a jvalue from the
+// PyLong's own digits, boxing via a real JNI call only when this instance's
+// class is a boxed wrapper. The null-boxed singleton is special-cased first
+// so it costs a pointer compare, not a JNI round trip.
+static jvalue longJValue(JPJavaFrame& frame, PyObject* self)
+{
+	JPClass *cls = PyJPValue_getJPClass(self);
+	jvalue prim{};
+	prim.j = (jlong) PyLong_AsLongLong(self);
+	if (cls == nullptr || cls->isPrimitive())
+		return prim;
+	if (self == PyJPClass_GetNullBoxed(Py_TYPE(self)))
+	{
+		jvalue null_{};
+		return null_;
+	}
+	jvalue out{};
+	out.l = (dynamic_cast<JPBoxedType*>(cls))->box(frame, prim);
+	return out;
 }
 
 #ifdef __cplusplus
@@ -215,12 +279,12 @@ static Py_hash_t PyJPNumberLong_hash(PyObject *self)
 {
 	JP_PY_TRY("PyJPNumberLong_hash");
 	JPJavaFrame frame = JPJavaFrame::outer();
-	JPValue *javaSlot = PyJPValue_getJavaSlot(self);
-	if (javaSlot == nullptr)
+	JPClass *cls = PyJPValue_getJPClass(self);
+	if (cls == nullptr)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
-	if (!javaSlot->getClass()->isPrimitive())
+	if (!cls->isPrimitive())
 	{
-		jobject o = javaSlot->getJavaObject();
+		jobject o = PyJPValue_getJValue(frame, self).l;
 		if (o == nullptr)
 			return Py_TYPE(Py_None)->tp_hash(Py_None);
 	}
@@ -232,12 +296,12 @@ static Py_hash_t PyJPNumberFloat_hash(PyObject *self)
 {
 	JP_PY_TRY("PyJPNumberFloat_hash");
 	JPJavaFrame frame = JPJavaFrame::outer();
-	JPValue *javaSlot = PyJPValue_getJavaSlot(self);
-	if (javaSlot == nullptr)
+	JPClass *cls = PyJPValue_getJPClass(self);
+	if (cls == nullptr)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
-	if (!javaSlot->getClass()->isPrimitive())
+	if (!cls->isPrimitive())
 	{
-		jobject o = javaSlot->getJavaObject();
+		jobject o = PyJPValue_getJValue(frame, self).l;
 		if (o == nullptr)
 			return Py_TYPE(Py_None)->tp_hash(Py_None);
 	}
@@ -248,21 +312,20 @@ static Py_hash_t PyJPNumberFloat_hash(PyObject *self)
 static PyObject *PyJPBoolean_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPBoolean_new", type);
-	JPPyObject self;
 	if (PyTuple_Size(args) != 1)
 	{
 		PyErr_SetString(PyExc_TypeError, "Requires one argument");
 		return nullptr;
 	}
 	int i = PyObject_IsTrue(PyTuple_GetItem(args, 0));
-	JPPyObject args2 = JPPyTuple_Pack(PyLong_FromLong(i));
-	self = JPPyObject::call(PyLong_Type.tp_new(type, args2.get(), kwargs));
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
 	if (cls == nullptr)
 	{
 		PyErr_SetString(PyExc_TypeError, "Class type incorrect");
 		return nullptr;
 	}
+	JPPyObject self = JPPyObject::call(PyJPNumber_longFromLongLong(type, i));
+	JP_PY_CHECK();
 	JPJavaFrame frame = JPJavaFrame::outer();
 	JPMatch match(&frame, self.get());
 	cls->findJavaConversion(match);
@@ -335,7 +398,7 @@ static PyType_Slot numberFloatSlots[] = {
 PyTypeObject *PyJPNumberFloat_Type = nullptr;
 PyType_Spec numberFloatSpec = {
 	"_jpype._JNumberFloat",
-	0,
+	sizeof (struct PyJPFloat),
 	0,
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
 	numberFloatSlots
@@ -370,22 +433,35 @@ PyType_Spec numberBooleanSpec = {
 
 void PyJPNumber_initType(PyObject* module)
 {
+	// Long/Boolean keep no per-instance storage at all any more (see
+	// longJValue above), so the offset passed to PyJPClass_FromSpecWithBases
+	// is a pure sentinel -- it only has to be nonzero to mark the family as
+	// Java-backed. It is never dereferenced: PyJPValue_getJValue/
+	// assignJavaSlot/finalize all check PyJPClass_GetJValueFn first and
+	// return before touching instance memory at this offset.
+	Py_ssize_t longOffset = (Py_ssize_t) PyLong_Type.tp_basicsize;
 
 	JPPyObject bases = JPPyTuple_Pack(&PyLong_Type, PyJPObject_Type);
-	PyJPNumberLong_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberLongSpec, bases.get());
+	PyJPNumberLong_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberLongSpec, bases.get(), longOffset);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
+	PyJPClass_SetJValueFn(PyJPNumberLong_Type, &longJValue);
 	PyModule_AddObject(module, "_JNumberLong", (PyObject*) PyJPNumberLong_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
 	bases = JPPyTuple_Pack(&PyFloat_Type, PyJPObject_Type);
-	PyJPNumberFloat_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberFloatSpec, bases.get());
+	PyJPNumberFloat_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberFloatSpec, bases.get(),
+			offsetof (struct PyJPFloat, extra));
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyModule_AddObject(module, "_JNumberFloat", (PyObject*) PyJPNumberFloat_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
+	// Boolean is its own family root (not a subclass of PyJPNumberLong_Type)
+	// but shares the identical PyLong_Type-based layout, so it reuses the
+	// same sentinel offset and jvalue-reconstruction function.
 	bases = JPPyTuple_Pack(&PyLong_Type, PyJPObject_Type);
-	PyJPNumberBool_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberBooleanSpec, bases.get());
+	PyJPNumberBool_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&numberBooleanSpec, bases.get(), longOffset);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
+	PyJPClass_SetJValueFn(PyJPNumberBool_Type, &longJValue);
 	PyModule_AddObject(module, "_JBoolean", (PyObject*) PyJPNumberBool_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 }
@@ -399,9 +475,7 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 		jlong l = 0;
 		if (value.getValue().l != nullptr)
 			l = frame.CallBooleanMethodA(value.getJavaObject(), context->_java_lang_Boolean->m_BooleanValueID, nullptr);
-		JPPyObject ln = JPPyObject::call(PyLong_FromLongLong(l));
-		JPPyObject args = JPPyTuple_Pack(ln.get());
-		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args.get(), nullptr));
+		return JPPyObject::call(PyJPNumber_longFromLongLong((PyTypeObject*) wrapper.get(), l));
 	}
 	if (PyObject_IsSubclass(wrapper.get(), (PyObject*) & PyLong_Type))
 	{
@@ -411,9 +485,7 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 			auto* jb = dynamic_cast<JPBoxedType*>( value.getClass());
 			l = frame.CallLongMethodA(value.getJavaObject(), jb->m_LongValueID, nullptr);
 		}
-		JPPyObject ln = JPPyObject::call(PyLong_FromLongLong(l));
-		JPPyObject args = JPPyTuple_Pack(ln.get());
-		return JPPyObject::call(PyLong_Type.tp_new((PyTypeObject*) wrapper.get(), args.get(), nullptr));
+		return JPPyObject::call(PyJPNumber_longFromLongLong((PyTypeObject*) wrapper.get(), l));
 	}
 	if (PyObject_IsSubclass(wrapper.get(), (PyObject*) & PyFloat_Type))
 	{
@@ -423,9 +495,7 @@ JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPVa
 			auto* jb = dynamic_cast<JPBoxedType*>( value.getClass());
 			l = frame.CallDoubleMethodA(value.getJavaObject(), jb->m_DoubleValueID, nullptr);
 		}
-		JPPyObject ln = JPPyObject::call(PyFloat_FromDouble(l));
-		JPPyObject args = JPPyTuple_Pack(ln.get());
-		return JPPyObject::call(PyFloat_Type.tp_new((PyTypeObject*) wrapper.get(), args.get(), nullptr));
+		return JPPyObject::call(newFloatFixed((PyTypeObject*) wrapper.get(), l));
 	}
 	JP_RAISE(PyExc_TypeError, "unable to convert");  //GCOVR_EXCL_LINE
 }

@@ -36,23 +36,41 @@ public:
 	JPMatch(JPJavaFrame *frame, PyObject *object);
 
 	/**
-	 * Get the Java slot associated with the Python object.
+	 * Get the JPClass associated with the Python object, if any.
 	 *
-	 * Thus uses caching.
+	 * Cached alongside getJValue() -- both are resolved together on first
+	 * use since some JPConversion::matches() implementations (e.g.
+	 * JPConversionUnbox) read the cached jvalue directly, relying on an
+	 * earlier matches() call on the same argument having already resolved
+	 * it.
 	 *
-	 * @return the Java slot or 0 if not available.
+	 * @return the class, or nullptr if not a Java value.
 	 */
-	JPValue *getJavaSlot();
+	JPClass *getJPClass();
+
+	/**
+	 * Get the jvalue associated with the Python object.
+	 *
+	 * Only meaningful once getJPClass() is non-null.
+	 */
+	jvalue getJValue();
 
 	jvalue convert();
+
+private:
+	void resolveSlot();
 
 public:
 	JPMatch::Type type;
 	JPConversion *conversion;
 	JPJavaFrame *frame;
 	PyObject *object;
-	JPValue *slot;
 	void *closure;
+
+private:
+	bool m_SlotResolved;
+	JPClass *m_SlotClass;
+	jvalue m_SlotValue;
 } ;
 
 class JPMethodMatch

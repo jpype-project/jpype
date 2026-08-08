@@ -18,6 +18,25 @@ Latest Changes:
     returns, warns to stderr, and gets the thread off the JVM permanently
     (hard-terminated where safe, parked forever otherwise) instead of
     letting it touch freed state.
+    
+  - Reworked the internal object layout for Java-backed Python objects to use
+    fixed, type-baked offsets instead of a runtime allocator that re-derived
+    each object's layout from version-sensitive CPython internals on every
+    access. For the boxed `Long`/`Boolean`/`Character` wrapper types this
+    also removes their per-instance Java-value storage entirely (reconstructed
+    on demand instead), shrinking those instances and eliminating a
+    version-gated digit-layout workaround. No user-visible API change; boxed
+    wrapper instances no longer retain Java-side reference identity across
+    repeated round-trips through Python.
+
+  - Fixed heap corruption when boxing large `JLong`/`JInt`/`JShort`/`JByte`/`JBoolean`
+    values on Python 3.8-3.11, caused by a fixed-offset allocator layout
+    assumption colliding with CPython's own implicit `__dict__` slot for
+    variable-length int subclasses.
+
+  - Fixed a GC refcount-accounting bug in the internal Java-class metaclass
+    where `tp_traverse`/`tp_clear` did not chain to `type`'s own
+    implementation.
 
   - Fixed a random segmentation fault at JVM shutdown when Python tooling
     (such as pytest's built-in faulthandler plugin) restored pre-JVM signal
@@ -42,6 +61,8 @@ Latest Changes:
 
   - Fixed instablity in threading for method dispatch. #1366
 
+  - Fixed overloading ambiguity issue. #1371
+
   - Fixed caching issue with method overloading for functors. #1366
 
   - Fixed issue with library loading on Chinese systems. #1380
@@ -53,6 +74,12 @@ Latest Changes:
   - Added jdk.zipfs module dependency to module-info for proper jlink/jdeps detection. #908
 
   - Fixed overloaded methods from multiple interfaces not being detected. #844
+
+  - Fixed annotation and interface methods using incorrect JNI call type. #880
+
+  - Fixed crash when calling isinstance(obj, JException) before JVM starts or after JVM shutdown. #1329
+
+  - Added fallback conversion path for JArray.of() to support non-primitive types like JString, enabling conversion of numpy string arrays. #953
 
   - Improved implicit conversion from Python primitives to Java boxed types (Integer, Long, Short, Double, Float). #1098
   
