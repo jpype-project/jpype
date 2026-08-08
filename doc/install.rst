@@ -174,11 +174,43 @@ Path requirements
 -----------------
 
 On certain systems such as Windows 2016 Server, the JDK will not load properly
-despite JPype properly locating the JVM library.  The work around for this 
-issue is add the JRE bin directory to the system PATH.  Apparently, the 
+despite JPype properly locating the JVM library.  The work around for this
+issue is add the JRE bin directory to the system PATH.  Apparently, the
 shared library requires dependencies which are located in the bin directory.
-If a JPype fails to load despite having the correct JAVA_HOME and 
+If a JPype fails to load despite having the correct JAVA_HOME and
 system architecture, it may be this issue.
+
+
+macOS: ``JVM DLL not found`` on Apple Silicon
+----------------------------------------------
+
+This is one of the most frequently reported installation problems on macOS,
+and the error message is misleading - despite saying "not found", the
+library file is usually present. Debug output added by affected users (and
+confirmed by re-running the failing load with tracing) showed the actual
+failure is ``dlopen`` refusing to load the library because of a **CPU
+architecture mismatch** between the Python interpreter and the installed
+JDK/JRE, e.g.::
+
+    dlopen(.../libjvm.dylib, 9): no suitable image found. Did find:
+        .../libjvm.dylib: mach-o, but wrong architecture
+
+This happens easily on Apple Silicon (M1/M2/M3/...) Macs, where it is easy
+to end up with an x86_64 JDK installed alongside a native arm64 Python (or
+vice versa) without noticing, since Rosetta lets an x86_64 JDK install and
+run standalone without complaint.
+
+To check for a mismatch::
+
+    python3 -c "import platform; print(platform.machine())"
+    file "$(/usr/libexec/java_home)/lib/server/libjvm.dylib"
+
+If these report different architectures (``arm64`` vs. ``x86_64``), install
+a JDK build matching Python's architecture and point ``JAVA_HOME`` at it.
+
+This is the same underlying requirement as the mixed 32-bit/64-bit
+limitation below - Python and the JVM must be built for the same
+architecture - just easier to hit unintentionally on Apple Silicon.
 
 
 Known Bugs/Limitations

@@ -73,6 +73,9 @@ Latest Changes:
   
   - Fixed ambiguous overload resolution for bytearray between byte[] and char[]. #598
 
+  - Documented the "JVM DLL not found" error on Apple Silicon Macs and its
+    cause (a Python/JDK CPU architecture mismatch, e.g. arm64 vs x86_64). #994
+
 
 - **1.7.1 - 2026-05-06**
 
