@@ -49,6 +49,8 @@ Latest Changes:
 
   - Fixed instablity in threading for method dispatch. #1366
 
+  - Fixed overloading ambiguity issue. #1371
+
   - Fixed caching issue with method overloading for functors. #1366
 
   - Fixed issue with library loading on Chinese systems. #1380
@@ -60,6 +62,12 @@ Latest Changes:
   - Added jdk.zipfs module dependency to module-info for proper jlink/jdeps detection. #908
 
   - Fixed overloaded methods from multiple interfaces not being detected. #844
+
+  - Fixed annotation and interface methods using incorrect JNI call type. #880
+
+  - Fixed crash when calling isinstance(obj, JException) before JVM starts or after JVM shutdown. #1329
+
+  - Added fallback conversion path for JArray.of() to support non-primitive types like JString, enabling conversion of numpy string arrays. #953
 
   - Improved implicit conversion from Python primitives to Java boxed types (Integer, Long, Short, Double, Float). #1098
   

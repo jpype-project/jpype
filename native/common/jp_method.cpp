@@ -235,7 +235,9 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 			c = PyJPValue_getJValue(frame, arg[0]).l;
 		}
 		jclass clazz = nullptr;
-		if (!isAbstract() && !instance)
+		// Issue #880: Interface and annotation methods must always use virtual calls
+		// even when called with a specific class, as they don't have non-virtual form in JNI
+		if (!isAbstract() && !instance && !m_Class->isInterface())
 		{
 			clazz = m_Class->getJavaClass();
 			JP_TRACE("invoke nonvirtual", m_Name);
