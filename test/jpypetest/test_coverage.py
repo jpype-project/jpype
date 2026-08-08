@@ -267,10 +267,22 @@ class CoverageCase(common.JPypeTestCase):
             self.assertFalse(magic.AppHelper.runConsoleEventLoop.called)
             jpype.shutdownGuiEnvironment()
             self.assertFalse(magic.AppHelper.stopEventLoop.called)
-        with mock.patch("sys.platform", "darwin"), mock.patch.dict('sys.modules', {'PyObjCTools': magic}):
+        with mock.patch("sys.platform", "darwin"), mock.patch.dict('sys.modules', {'PyObjCTools': magic}), \
+                mock.patch("jpype._gui._jclass.JClass") as mock_jclass, \
+                mock.patch("jpype._gui._jproxy.JProxy") as mock_jproxy:
+            # JClass/JProxy are mocked here too: the unmocked path starts a
+            # real java.lang.Thread wrapping a real JProxy callback and never
+            # joins it, which is a real background JVM thread left running
+            # after the test returns (see issue #1452 - "time bomb" CI
+            # segfault race). This test only needs to verify
+            # setupGuiEnvironment/shutdownGuiEnvironment drive the (already
+            # mocked) AppHelper hooks correctly, not exercise real JVM
+            # threading.
             from PyObjCTools import AppHelper  # type: ignore
             self.assertEqual(sys.platform, "darwin")
             jpype.setupGuiEnvironment(foo)
+            mock_jproxy.assert_called_once_with('java.lang.Runnable', {'run': foo})
+            mock_jclass.assert_called_once_with("java.lang.Thread")
             self.assertTrue(magic.AppHelper.runConsoleEventLoop.called)
             jpype.shutdownGuiEnvironment()
             self.assertTrue(magic.AppHelper.stopEventLoop.called)
