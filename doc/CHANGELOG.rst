@@ -7,6 +7,15 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed ``startJVM()`` printing a "restricted method" / native access
+    warning on JDK 22+ (``java.lang.System::load has been called ... in an
+    unnamed module``). JPype now probes the JVM's supported JNI version
+    before launch and, on JDK 21+, defaults to passing
+    ``--enable-native-access=ALL-UNNAMED`` unless the caller already
+    specified their own ``--enable-native-access`` option; on older JDKs
+    any user-supplied ``--enable-native-access`` option is dropped rather
+    than causing a hard failure. #1310
+
   - Reworked the internal object layout for Java-backed Python objects to use
     fixed, type-baked offsets instead of a runtime allocator that re-derived
     each object's layout from version-sensitive CPython internals on every
