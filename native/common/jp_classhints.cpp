@@ -25,18 +25,35 @@
 #include "pyjp.h"
 
 JPMatch::JPMatch() : conversion(nullptr), frame(nullptr), object(nullptr),
-					 type(JPMatch::_none), slot((JPValue*) - 1), closure(nullptr)
+					 type(JPMatch::_none), closure(nullptr),
+					 m_SlotResolved(false), m_SlotClass(nullptr), m_SlotValue()
 {}
 
 JPMatch::JPMatch(JPJavaFrame *fr, PyObject *obj) : conversion(nullptr), frame(fr), object(obj),
-												   type(JPMatch::_none), slot((JPValue*) - 1), closure(nullptr)
+												   type(JPMatch::_none), closure(nullptr),
+												   m_SlotResolved(false), m_SlotClass(nullptr), m_SlotValue()
 {}
 
-JPValue *JPMatch::getJavaSlot()
+void JPMatch::resolveSlot()
 {
-	if (slot == (JPValue*) - 1)
-		return slot = PyJPValue_getJavaSlot(object);
-	return slot;
+	if (m_SlotResolved)
+		return;
+	m_SlotResolved = true;
+	m_SlotClass = PyJPValue_getJPClass(object);
+	if (m_SlotClass != nullptr && frame != nullptr)
+		m_SlotValue = PyJPValue_getJValue(*frame, object);
+}
+
+JPClass *JPMatch::getJPClass()
+{
+	resolveSlot();
+	return m_SlotClass;
+}
+
+jvalue JPMatch::getJValue()
+{
+	resolveSlot();
+	return m_SlotValue;
 }
 
 jvalue JPMatch::convert()
@@ -150,10 +167,10 @@ public:
 		JPClass *cls = ((JPClass*) match.closure);
 		JPPyObject args = JPPyTuple_Pack(cls->getHost(), match.object);
 		JPPyObject ret = JPPyObject::call(PyObject_Call(method_.get(), args.get(), nullptr));
-		JPValue *value = PyJPValue_getJavaSlot(ret.get());
-		if (value != nullptr)
+		JPClass *retCls = PyJPValue_getJPClass(ret.get());
+		if (retCls != nullptr)
 		{
-			jvalue v = value->getValue();
+			jvalue v = PyJPValue_getJValue(*match.frame, ret.get());
 			JP_TRACE("Value", v.l);
 			v.l = match.frame->NewLocalRef(v.l);
 			return v;
@@ -398,11 +415,28 @@ public:
 	{
 		JP_TRACE_IN("JPConversionByteArray::matches");
 		auto* acls = dynamic_cast<JPArrayClass*>( cls);
-		if (match.frame == nullptr  || !PyBytes_Check(match.object) ||
+		if (match.frame == nullptr ||
 				acls->getComponentType() != JPContext_global->_byte)
 			return match.type = JPMatch::_none;
-		match.conversion = this;
-		return match.type = JPMatch::_implicit;
+
+		// Check for bytes first - implicit conversion
+		if (PyBytes_Check(match.object))
+		{
+			match.conversion = this;
+			return match.type = JPMatch::_implicit;
+		}
+
+		// Check for bytearray - derived match for byte[] (issue #598)
+		// bytearray is semantically a mutable byte array, so it should
+		// match byte[] better than char[] (which gets _implicit)
+		// Use _derived instead of _exact to avoid caching issues
+		if (PyByteArray_Check(match.object))
+		{
+			match.conversion = this;
+			return match.type = JPMatch::_derived;
+		}
+
+		return match.type = JPMatch::_none;
 		JP_TRACE_OUT;
 	}
 
@@ -412,6 +446,7 @@ public:
 		if (acls->getComponentType() != JPContext_global->_byte)
 			return;
 		PyList_Append(info.implicit, (PyObject*) & PyBytes_Type);
+		PyList_Append(info.implicit, (PyObject*) & PyByteArray_Type);
 	}
 
 	jvalue convert(JPMatch &match) override
@@ -420,7 +455,19 @@ public:
 		jvalue res;
 		Py_ssize_t size = 0;
 		char *buffer = nullptr;
-		PyBytes_AsStringAndSize(match.object, &buffer, &size); // internal reference
+
+		// Handle both bytes and bytearray
+		// matches() already verified it's one of these
+		if (PyBytes_Check(match.object))
+		{
+			PyBytes_AsStringAndSize(match.object, &buffer, &size); // internal reference
+		}
+		else // PyByteArray_Check
+		{
+			size = PyByteArray_GET_SIZE(match.object);
+			buffer = PyByteArray_AS_STRING(match.object); // internal reference
+		}
+
 		jbyteArray byteArray = frame.NewByteArray((jsize) size);
 		frame.SetByteArrayRegion(byteArray, 0, (jsize) size, (jbyte*) buffer);
 		res.l = frame.keep(byteArray);
@@ -439,6 +486,13 @@ public:
 		JPClass *componentType = acls->getComponentType();
 		if ( !componentType->isPrimitive())
 			return match.type = JPMatch::_none;
+
+		// Issue #598: bytearray should match byte[] not char[]
+		// byteArrayConversion handles this more specifically
+		if (PyByteArray_Check(match.object) &&
+		    (componentType == JPContext_global->_char || componentType == JPContext_global->_byte))
+			return match.type = JPMatch::_none;
+
 		// If is isn't a buffer we can skip
 		JPPyBuffer	buffer(match.object, PyBUF_ND | PyBUF_FORMAT);
 		if (!buffer.valid())
@@ -618,13 +672,10 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JP_TRACE_IN("JPConversionObject::matches");
-		JPValue *value = match.getJavaSlot();
-		if (value == nullptr || match.frame == nullptr)
+		JPClass *oc = match.getJPClass();
+		if (oc == nullptr || match.frame == nullptr)
 			return match.type = JPMatch::_none;
 		match.conversion = this;
-		JPClass *oc = value->getClass();
-		if (oc == nullptr)
-			return match.type = JPMatch::_none;
 		if (oc == cls)
 		{
 			// hey, this is me! :)
@@ -660,8 +711,7 @@ public:
 	jvalue convert(JPMatch &match) override
 	{
 		jvalue res;
-		JPValue* value = match.getJavaSlot();
-		res.l = match.frame->NewLocalRef(value->getValue().l);
+		res.l = match.frame->NewLocalRef(match.getJValue().l);
 		return res;
 	}
 } _objectConversion;
@@ -669,8 +719,8 @@ public:
 JPMatch::Type JPConversionJavaValue::matches(JPClass *cls, JPMatch &match)
 {
 	JP_TRACE_IN("JPConversionJavaValue::matches");
-	JPValue *slot = match.getJavaSlot();
-	if (slot == nullptr || slot->getClass() != cls)
+	JPClass *oc = match.getJPClass();
+	if (oc == nullptr || oc != cls)
 		return match.type = JPMatch::_none;
 	match.conversion = this;
 	return match.type = JPMatch::_exact;
@@ -685,8 +735,7 @@ void JPConversionJavaValue::getInfo(JPClass *cls, JPConversionInfo &info)
 
 jvalue JPConversionJavaValue::convert(JPMatch &match)
 {
-	JPValue* value = match.getJavaSlot();
-	return *value;
+	return match.getJValue();
 }
 
 JPConversionJavaValue _javaValueConversion;
@@ -851,13 +900,13 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JP_TRACE_IN("JPConversionJavaObjectAny::matches");
-		JPValue *value = match.getJavaSlot();
-		if (value == nullptr || match.frame == nullptr || value->getClass() == nullptr)
+		JPClass *oc = match.getJPClass();
+		if (oc == nullptr || match.frame == nullptr)
 			return match.type = JPMatch::_none;
 		match.conversion = this;
-		if (value->getClass()->isPrimitive())
+		if (oc->isPrimitive())
 			match.type = JPMatch::_implicit;
-		else if (value->getClass() == cls)
+		else if (oc == cls)
 			match.type = JPMatch::_exact;
 		else
 			match.type = JPMatch::_derived;
@@ -875,15 +924,15 @@ public:
 	{
 		jvalue res;
 		JPJavaFrame *frame = match.frame;
-		JPValue *value = match.getJavaSlot();
-		if (!value->getClass()->isPrimitive())
+		JPClass *oc = match.getJPClass();
+		if (!oc->isPrimitive())
 		{
-			res.l = frame->NewLocalRef(value->getJavaObject());
+			res.l = frame->NewLocalRef(match.getJValue().l);
 			return res;
 		} else
 		{
 			// Okay we need to box it.
-			auto* type = dynamic_cast<JPPrimitiveType*> (value->getClass());
+			auto* type = dynamic_cast<JPPrimitiveType*> (oc);
 			match.closure = type->getBoxedClass(*frame);
 			res = JPConversionBox::convert(match);
 			return res;
@@ -899,15 +948,14 @@ public:
 	{
 		JP_TRACE_IN("JPConversionJavaNumberAny::matches");
 		JPContext *context = JPContext_global;
-		JPValue *value = match.getJavaSlot();
+		JPClass *oc = match.getJPClass();
 		// This converter only works for number types, thus boolean and char
 		// are excluded.
-		if (value == nullptr || match.frame == nullptr || value->getClass() == nullptr
-				|| value->getClass() == context->_boolean
-				|| value->getClass() == context->_char)
+		if (oc == nullptr || match.frame == nullptr
+				|| oc == context->_boolean
+				|| oc == context->_char)
 			return match.type = JPMatch::_none;
 		match.conversion = this;
-		JPClass *oc = value->getClass();
 		// If it is the exact type, then it is exact
 		if (oc == cls)
 			return match.type = JPMatch::_exact;
@@ -937,9 +985,9 @@ public:
 		JPContext *context = JPContext_global;
 		if (context == nullptr)
 			return match.type = JPMatch::_none;
-		JPValue *slot = match.slot;
+		JPClass *oc = match.getJPClass();
 		auto *pcls = dynamic_cast<JPPrimitiveType*>( cls);
-		if (slot->getClass() != pcls->getBoxedClass(*match.frame))
+		if (oc != pcls->getBoxedClass(*match.frame))
 			return match.type = JPMatch::_none;
 		match.conversion = this;
 		match.closure = cls;
@@ -956,9 +1004,8 @@ public:
 
 	jvalue convert(JPMatch &match) override
 	{
-		JPValue* value = match.getJavaSlot();
 		auto *cls = (JPClass*) match.closure;
-		return cls->getValueFromObject(*match.frame, *value);
+		return cls->getValueFromObject(*match.frame, JPValue(match.getJPClass(), match.getJValue()));
 	}
 } _unboxConversion;
 
