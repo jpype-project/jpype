@@ -7,6 +7,11 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed ``testGui`` starting a real, unjoined ``java.lang.Thread`` with a
+    live JNI/Python callback that could still be pending when later,
+    unrelated tests ran - a background-thread race matching the "time
+    bomb" CI segfault reported on Windows. #1452
+
   - Reworked the internal object layout for Java-backed Python objects to use
     fixed, type-baked offsets instead of a runtime allocator that re-derived
     each object's layout from version-sensitive CPython internals on every
