@@ -73,6 +73,10 @@ Latest Changes:
   
   - Fixed ambiguous overload resolution for bytearray between byte[] and char[]. #598
 
+  - Documented the Windows ``ImportError: DLL load failed while importing
+    _jpype`` error and its fix (installing the Microsoft Visual C++
+    Redistributable). #1167
+
 
 - **1.7.1 - 2026-05-06**
 
