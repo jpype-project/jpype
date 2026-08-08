@@ -174,11 +174,28 @@ Path requirements
 -----------------
 
 On certain systems such as Windows 2016 Server, the JDK will not load properly
-despite JPype properly locating the JVM library.  The work around for this 
-issue is add the JRE bin directory to the system PATH.  Apparently, the 
+despite JPype properly locating the JVM library.  The work around for this
+issue is add the JRE bin directory to the system PATH.  Apparently, the
 shared library requires dependencies which are located in the bin directory.
-If a JPype fails to load despite having the correct JAVA_HOME and 
+If a JPype fails to load despite having the correct JAVA_HOME and
 system architecture, it may be this issue.
+
+
+Windows: ``ImportError: DLL load failed while importing _jpype``
+------------------------------------------------------------------
+
+This error happens while importing the ``_jpype`` extension module itself,
+before JPype ever gets to looking for a JVM, so it is not a ``JAVA_HOME`` or
+``PATH`` problem like the one above. ``_jpype`` is a compiled C++ extension,
+and on Windows it depends on the Microsoft Visual C++ runtime DLLs. If those
+are missing, Python reports the failure as an opaque ``DLL load failed``
+rather than naming the missing runtime library.
+
+The fix is to install the `Microsoft Visual C++ Redistributable
+<https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist>`__
+(the x64 version, for a 64-bit Python) and retry the import. This has
+resolved the error for every user who has hit it, including on fresh Windows
+installs where no other C++ software had been installed yet.
 
 
 Known Bugs/Limitations
