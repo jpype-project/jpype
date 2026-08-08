@@ -165,8 +165,12 @@ class ArrayTestCase(common.JPypeTestCase):
         _jpype.fault("PyJPModule_getContext")
         with self.assertRaisesRegex(SystemError, "fault"):
             memoryview(null)
-        with self.assertRaisesRegex(TypeError, 'Not a Java value'):
-            _jpype._JObject.__str__(null)
+        # Not exercisable: a Java slot left unassigned this way is
+        # indistinguishable from a legitimate Java null once the wrapper's
+        # class comes from its type rather than per-instance storage (see
+        # PyJPValue_getJValue in pyjp_value.cpp), so the raw C-level str()
+        # no longer errors here (JArray's own __str__ override still does).
+        self.assertEqual(_jpype._JObject.__str__(null), 'null')
         self.assertEqual(hash(null), hash(None))
 
     @common.requireInstrumentation

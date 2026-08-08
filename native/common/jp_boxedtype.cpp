@@ -121,8 +121,31 @@ JPPyObject JPBoxedType::convertToPythonObject(JPJavaFrame& frame, jvalue value, 
 	}
 
 	JPPyObject wrapper = PyJPClass_create(frame, cls);
-	JPPyObject obj;
+	auto *wrapperType = (PyTypeObject*) wrapper.get();
 	JPContext *context = JPContext_global;
+
+	// Reconstructing families (Long/Boolean/Char) keep no per-instance Java
+	// value at all -- a real Java null needs a dedicated singleton instance
+	// instead, since there's no slot left on an ordinary instance to mark
+	// "this one's null". Built once per class and cached; Double/Float (no
+	// tp_jvalue yet) fall through to the ordinary path below, unchanged.
+	if (cast && value.l == nullptr && PyJPClass_GetJValueFn(wrapperType) != nullptr)
+	{
+		PyObject *nullBoxed = PyJPClass_GetNullBoxed(wrapperType);
+		if (nullBoxed == nullptr)
+		{
+			JPPyObject built;
+			if (this->getPrimitive() == context->_char)
+				built = JPPyObject::call(PyJPChar_Create(wrapperType, 0));
+			else
+				built = PyJPNumber_create(frame, wrapper, JPValue(cls, value));
+			PyJPClass_SetNullBoxed(wrapperType, built.get());
+			nullBoxed = built.get();
+		}
+		return JPPyObject::use(nullBoxed);
+	}
+
+	JPPyObject obj;
 	if (this->getPrimitive() == context->_char)
 	{
 		jchar value2 = 0;
@@ -130,7 +153,7 @@ JPPyObject JPBoxedType::convertToPythonObject(JPJavaFrame& frame, jvalue value, 
 		if (value.l != nullptr)
 			value2 = context->_char->getValueFromObject(frame, JPValue(this, value)).getValue().c;
 		// Create a char string object
-		obj = JPPyObject::call(PyJPChar_Create((PyTypeObject*) wrapper.get(), value2));
+		obj = JPPyObject::call(PyJPChar_Create(wrapperType, value2));
 	} else
 		obj = PyJPNumber_create(frame, wrapper, JPValue(cls, value));
 	PyJPValue_assignJavaSlot(frame, obj.get(), JPValue(cls, value));
