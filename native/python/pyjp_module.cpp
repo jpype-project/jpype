@@ -22,34 +22,17 @@
 #include <Windows.h>
 #endif
 
-namespace {
-int init_numpy_bool_type()
-{
-	JP_TRACE("init_numpy_bool_type()");
-	PyObject *numpy = PyImport_ImportModule("numpy");
-	if (numpy == nullptr) {
-		// we do not want a Python error to be propagated.
-		PyErr_Clear(); // GCOVR_EXCL_LINE
-		return -1; // GCOVR_EXCL_LINE
-	}
-
-	PyObject *t = PyObject_GetAttrString(numpy, "bool_");
-	Py_DECREF(numpy);
-	if (t == nullptr) {
-		JP_TRACE("bool_ attr not found"); // GCOVR_EXCL_LINE
-		return -1; // GCOVR_EXCL_LINE
-	}
-
-	/* store as PyTypeObject* for fast checks */
-	_NPBool_Type = (PyTypeObject *)t;
-	return 0;
-}
-
-}
-
 void PyJPModule_installGC(PyObject* module);
 
 bool _jp_cpp_exceptions = false;
+static int _numpy_typepos = 0;
+static int _numpy_genericpos = 0;
+PyObject* _numpy_generic_type = nullptr;
+PyObject* _numpy_bool_type = nullptr;
+PyObject* _numpy_int8_type  = nullptr;
+PyObject* _numpy_int16_type = nullptr;
+PyObject* _numpy_int32_type = nullptr;
+
 
 extern void PyJPArray_initType(PyObject* module);
 extern void PyJPBuffer_initType(PyObject* module);
@@ -64,7 +47,8 @@ extern void PyJPClassHints_initType(PyObject* module);
 extern void PyJPPackage_initType(PyObject* module);
 extern void PyJPChar_initType(PyObject* module);
 
-static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype);
+static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype, PyObject *source);
+static PyObject *PyJPModule_convertBufferFallback(PyObject *source, PyObject *dtype);
 
 // To ensure no leaks (requires C++ linkage)
 
@@ -98,7 +82,6 @@ PyObject* _JMethodAnnotations = nullptr;
 PyObject* _JMethodCode = nullptr;
 PyObject* _JObjectKey = nullptr;
 PyObject* _JVMNotRunning = nullptr;
-PyTypeObject* _NPBool_Type = nullptr;
 
 void PyJPModule_loadResources(PyObject* module)
 {
@@ -150,9 +133,14 @@ void PyJPModule_loadResources(PyObject* module)
 
 		_JObjectKey = PyCapsule_New(module, "constructor key", nullptr);
 
-	}	catch (JPypeException&)  // GCOVR_EXCL_LINE
+	}	catch (JPBaseError& ex)  // GCOVR_EXCL_LINE
 	{
 		// GCOVR_EXCL_START
+		// PyJP_SetStringWithCause needs the original exception live on the
+		// thread state to chain it as a cause - restorePythonError() puts
+		// back what our throw-time-fetch fix (see jp_exception.cpp) deliberately
+		// held privately instead of leaving pending for the whole unwind.
+		ex.restorePythonError();
 		PyJP_SetStringWithCause(PyExc_RuntimeError, "JPype resource is missing");
 		JP_RAISE_PYTHON();
 		// GCOVR_EXCL_STOP
@@ -174,13 +162,19 @@ void PyJP_SetStringWithCause(PyObject *exception,
 	// See _PyErr_TrySetFromCause
 	PyObject *exc1, *val1, *tb1;
 	PyErr_Fetch(&exc1, &val1, &tb1);
-	PyErr_NormalizeException(&exc1, &val1, &tb1);
-	if (tb1 != nullptr)
+	// A caller may have nothing pending (e.g. it was already claimed
+	// elsewhere) - PyErr_NormalizeException() is a no-op on a null type,
+	// so exc1/val1 stay null too; guard rather than assume one is set.
+	if (exc1 != nullptr)
 	{
-		PyException_SetTraceback(val1, tb1);
-		Py_DECREF(tb1);
+		PyErr_NormalizeException(&exc1, &val1, &tb1);
+		if (tb1 != nullptr)
+		{
+			PyException_SetTraceback(val1, tb1);
+			Py_DECREF(tb1);
+		}
+		Py_DECREF(exc1);
 	}
-	Py_DECREF(exc1);
 	PyErr_SetString(exception, str);
 	PyObject *exc2, *val2, *tb2;
 	PyErr_Fetch(&exc2, &val2, &tb2);
@@ -244,6 +238,31 @@ int PyJP_IsSubClassSingle(PyTypeObject* type, PyTypeObject* obj)
 		return 0;
 	return PyTuple_GetItem(mro1, n1 - n2) == (PyObject*) type;
 }
+
+PyTypeObject* PyJP_GetNumPyBaseType(PyTypeObject* type)
+{
+	PyObject* mro = type->tp_mro;
+	if (mro == nullptr || _numpy_generic_type == nullptr) return nullptr;
+
+	Py_ssize_t n = PyTuple_GET_SIZE(mro);
+
+	// 1. Check the Gate using cached generic position
+	// If n < 2, it's a raw object/type.
+	// If the item at (n - _numpy_genericpos) isn't generic, it's not NumPy.
+	if (n < _numpy_genericpos || 
+			PyTuple_GET_ITEM(mro, n - _numpy_genericpos) != _numpy_generic_type)
+		return nullptr;
+
+	// 2. Resolve the concrete base (e.g., int32) using cached type position
+	// If the user subclassed it, n will be > _numpy_typepos.
+	// The base type is always at index (n - _numpy_typepos).
+	if (n >= _numpy_typepos && _numpy_typepos > 0)
+		return (PyTypeObject*) PyTuple_GET_ITEM(mro, n - _numpy_typepos);
+    
+	// 3. Fallback for types with shallower MROs (like bool_ or generic itself)
+	return type;
+}
+
 
 int PyJP_IsInstanceSingle(PyObject* obj, PyTypeObject* type)
 {
@@ -491,13 +510,13 @@ PyObject *PyJPModule_getClass(PyObject* module, PyObject *obj)
 	} else
 	{
 		// From an existing java.lang.Class object
-		JPValue *value = PyJPValue_getJavaSlot(obj);
-		if (value == nullptr || value->getClass() != context->_java_lang_Class)
+		JPClass *valueCls = PyJPValue_getJPClass(obj);
+		if (valueCls == nullptr || valueCls != context->_java_lang_Class)
 		{
 			PyErr_Format(PyExc_TypeError, "JClass requires str or java.lang.Class instance, not '%s'", Py_TYPE(obj)->tp_name);
 			return nullptr;
 		}
-		cls = frame.findClass((jclass) value->getValue().l);
+		cls = frame.findClass((jclass) PyJPValue_getJValue(frame, obj).l);
 		if (cls == nullptr)
 		{
 			PyErr_SetString(PyExc_ValueError, "Unable to find class");
@@ -555,17 +574,17 @@ static PyObject *PyJPModule_arrayFromBuffer(PyObject *module, PyObject *args, Py
 	{
 		JPPyBuffer	buffer(source, PyBUF_FULL_RO);
 		if (buffer.valid())
-			return PyJPModule_convertBuffer(buffer, dtype);
+			return PyJPModule_convertBuffer(buffer, dtype, source);
 	}
 	{
 		JPPyBuffer	buffer(source, PyBUF_RECORDS_RO);
 		if (buffer.valid())
-			return PyJPModule_convertBuffer(buffer, dtype);
+			return PyJPModule_convertBuffer(buffer, dtype, source);
 	}
 	{
 		JPPyBuffer	buffer(source, PyBUF_ND | PyBUF_FORMAT);
 		if (buffer.valid())
-			return PyJPModule_convertBuffer(buffer, dtype);
+			return PyJPModule_convertBuffer(buffer, dtype, source);
 	}
 	PyErr_Format(PyExc_TypeError, "buffer protocol for '%s' not supported", Py_TYPE(source)->tp_name);
 	return nullptr;
@@ -574,6 +593,18 @@ static PyObject *PyJPModule_arrayFromBuffer(PyObject *module, PyObject *args, Py
 
 PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 {
+	// This is a gc.callbacks entry, invoked by Python's own cyclic GC
+	// whenever it happens to run - which can be in the middle of unwinding
+	// from an unrelated pending exception (GC isn't aware of, or triggered
+	// by, our own exception-handling code; enough temporary objects
+	// created/destroyed during unwind can cross its allocation threshold).
+	// The RSS-based bookkeeping in onStart/onEnd (including the JNI call to
+	// System.gc() onEnd may make) is a heuristic, not safety-critical - it's
+	// not worth the risk of touching Java/global state while some unrelated
+	// exception is already in flight on this thread, so just skip this
+	// invocation entirely rather than try to save/restore around it.
+	if (PyErr_Occurred())
+		Py_RETURN_NONE;
 	JPContext* context = JPContext_global;
 	if (!context->isRunning())
 		Py_RETURN_NONE;
@@ -631,6 +662,32 @@ static PyObject* PyJPModule_isPackage(PyObject *module, PyObject *pkg)
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
+static void PyJPModule_InitNumpy()
+{
+    PyObject *numpy = PyImport_ImportModule("numpy");
+    if (numpy == nullptr) 
+    {
+        PyErr_Clear();
+        return;
+    }
+
+    // Do it one by one. If one fails, you can actually handle it.
+    _numpy_generic_type = PyObject_GetAttrString(numpy, "generic");
+    _numpy_bool_type    = PyObject_GetAttrString(numpy, "bool_");
+    _numpy_int8_type   = PyObject_GetAttrString(numpy, "int8");
+    _numpy_int16_type   = PyObject_GetAttrString(numpy, "int16");
+    _numpy_int32_type   = PyObject_GetAttrString(numpy, "int32");
+
+    // Check for nulls BEFORE you try to access internals
+    if (_numpy_int32_type && _numpy_generic_type)
+    {
+        _numpy_typepos = PyTuple_GET_SIZE(((PyTypeObject*)_numpy_int32_type)->tp_mro);
+        _numpy_genericpos = PyTuple_GET_SIZE(((PyTypeObject*)_numpy_generic_type)->tp_mro);
+    }
+
+    Py_DECREF(numpy);
+}
+
 
 #if 1
 // GCOVR_EXCL_START
@@ -671,7 +728,7 @@ PyObject* examine(PyObject *module, PyObject *other)
 	printf("    alloc: %p\n", type->tp_alloc);
 	printf("    free: %p\n", type->tp_free);
 	printf("    finalize: %p\n", type->tp_finalize);
-	long v = _PyObject_VAR_SIZE(type, 1)+(PyJPValue_hasJavaSlot(type)?sizeof (JPValue):0);
+	long v = _PyObject_VAR_SIZE(type, 1)+(PyJPValue_hasJavaSlot(type)?sizeof (jvalue):0);
 	printf("    size?: %ld\n",v);
 	printf("======\n");
 
@@ -789,7 +846,7 @@ PyMODINIT_FUNC PyInit__jpype()
     PyUnstable_Module_SetGIL(module, Py_MOD_GIL_NOT_USED);
 #endif
 // TODO: we should probably pass the version directly from a scikit-build (cmake) defined macro.
-	PyModule_AddStringConstant(module, "__version__", "1.7.1.dev0");
+	PyModule_AddStringConstant(module, "__version__", "1.7.2.dev0");
 
 	// Our module will be used for PyFrame object and it is a requirement that
 	// we have a builtins in our dictionary.
@@ -798,6 +855,7 @@ PyMODINIT_FUNC PyInit__jpype()
 	PyModule_AddObject(module, "__builtins__", builtins);
 
 	PyJPClassMagic = PyDict_New();
+	PyJPClassMagicConcrete = PyDict_New();
 	// Initialize each of the python extension types
 	PyJPClass_initType(module);
 	PyJPObject_initType(module);
@@ -815,7 +873,7 @@ PyMODINIT_FUNC PyInit__jpype()
 
 	_PyJPModule_trace = true;
 
-	init_numpy_bool_type();
+	PyJPModule_InitNumpy();
 
 	return module;
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
@@ -832,7 +890,7 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 	try
 	{
 		throw;
-	} catch (JPypeException& ex)
+	} catch (JPBaseError& ex)
 	{
 		ex.from(info); // this likely wont be necessary, but for now we will add the entry point.
 		ex.toPython();
@@ -849,7 +907,7 @@ void PyJPModule_rethrow(const JPStackInfo& info)
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
+static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype, PyObject *source)
 {
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer();
@@ -881,8 +939,8 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 		cls = PyJPClass_getJPClass(dtype);
 		if (cls == nullptr  || !cls->isPrimitive())
 		{
-			PyErr_Format(PyExc_TypeError, "'%s' is not a Java primitive type", Py_TYPE(dtype)->tp_name);
-			return nullptr;
+			// Not a primitive type - use fallback path for element-by-element conversion
+			return PyJPModule_convertBufferFallback(source, dtype);
 		}
 	} else
 	{
@@ -915,6 +973,7 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 		}
 		if (cls == nullptr)
 		{
+			// Unrecognized buffer format - use fallback path
 			PyErr_Format(PyExc_TypeError, "'%s' type code not supported without dtype specified", format);
 			return nullptr;
 		}
@@ -953,6 +1012,55 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype)
 		base = view.len / view.itemsize;
 	}
 	return pcls->newMultiArray(frame, buffer, subs, base, (jobject) jdims);
+}
+
+static PyObject *PyJPModule_convertBufferFallback(PyObject *source, PyObject *dtype)
+{
+	JP_PY_TRY("PyJPModule_convertBufferFallback");
+
+	// For non-primitive types or unrecognized buffer formats,
+	// use Python-level conversion by calling the JArray constructor.
+	// This is slower but handles all cases that the regular Python
+	// conversion path supports (like strings, objects, etc.)
+
+	// Get the shape to determine dimensions
+	JPPyObject shape_obj = JPPyObject::call(PyObject_GetAttrString(source, "shape"));
+	Py_ssize_t ndim = 1;
+	if (!shape_obj.isNull() && PyTuple_Check(shape_obj.get()))
+	{
+		ndim = PyTuple_Size(shape_obj.get());
+	}
+	else
+	{
+		// If no shape attribute, assume 1D
+		PyErr_Clear();
+	}
+
+	// Import jpype module to get JArray
+	JPPyObject jpype_module = JPPyObject::call(PyImport_ImportModule("jpype"));
+	if (jpype_module.isNull())
+		return nullptr;
+
+	JPPyObject JArray = JPPyObject::call(PyObject_GetAttrString(jpype_module.get(), "JArray"));
+	if (JArray.isNull())
+		return nullptr;
+
+	// Create the array type: JArray(dtype, ndim)
+	JPPyObject args = JPPyObject::call(Py_BuildValue("(Oi)", dtype, (int)ndim));
+	if (args.isNull())
+		return nullptr;
+
+	JPPyObject array_type = JPPyObject::call(PyObject_CallObject(JArray.get(), args.get()));
+	if (array_type.isNull())
+		return nullptr;
+
+	// Now construct the array with the source data
+	JPPyObject constructor_args = JPPyObject::call(Py_BuildValue("(O)", source));
+	if (constructor_args.isNull())
+		return nullptr;
+
+	return PyObject_CallObject(array_type.get(), constructor_args.get());
+	JP_PY_CATCH(nullptr);
 }
 
 #ifdef JP_INSTRUMENTATION

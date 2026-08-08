@@ -49,7 +49,7 @@ public:
 		{
 			if (_array)
 				((&_frame)->*_release)(_array, _elem, JNI_ABORT);
-		}		catch (JPypeException&) // GCOVR_EXCL_LINE
+		}		catch (...) // GCOVR_EXCL_LINE
 		{
 			// We can't throw here because it would abort.
 			// But this is called on a non-op release, so
@@ -251,10 +251,9 @@ public:
 
 	jvalue convert(JPMatch &match) override
 	{
-		JPValue *value = match.getJavaSlot();
 		jvalue ret;
 		base_t::field(ret) = (typename base_t::type_t) (dynamic_cast<JPPrimitiveType*>(
-				value->getClass()))->getAsLong(value->getValue());
+				match.getJPClass()))->getAsLong(match.getJValue());
 		return ret;
 	}
 } ;
@@ -331,9 +330,8 @@ public:
 
 	jvalue convert(JPMatch &match) override
 	{
-		JPValue *value = match.getJavaSlot();
 		jvalue ret;
-		base_t::field(ret) = (typename base_t::type_t) (dynamic_cast<JPPrimitiveType*>( value->getClass()))->getAsDouble(value->getValue());
+		base_t::field(ret) = (typename base_t::type_t) (dynamic_cast<JPPrimitiveType*>( match.getJPClass()))->getAsDouble(match.getJValue());
 		return ret;
 	}
 } ;

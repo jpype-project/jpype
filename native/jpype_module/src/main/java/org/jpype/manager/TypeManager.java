@@ -672,8 +672,9 @@ public class TypeManager
     LinkedList<Method> declaredMethods = filterOverridden(cls, cls.getDeclaredMethods());
 
     // We only need one dispatch per name
+    // Use all methods (including inherited) not just declared methods (issue #844)
     TreeSet<String> resolve = new TreeSet<>();
-    for (Method method : declaredMethods)
+    for (Method method : methods)
     {
       resolve.add(method.getName());
     }

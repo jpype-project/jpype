@@ -30,6 +30,7 @@ Full process:
           Check Python versions for Windows
           Check Python versions for OSX
           Check the manylinux image for Linux
+    - [ ] Update jpype/pyproject.toml `required-python` line to match the current builds.
     - [ ] Check patterns in .azure/scripts/build-wheels.sh
     - [ ] Edit doc/CHANGELOG.rst
 - [ ] Create a release candidate

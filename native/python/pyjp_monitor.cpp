@@ -41,32 +41,33 @@ static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "O", &value))
 		return -1;
 
-	JPValue *v1 = PyJPValue_getJavaSlot(value);
-	if (v1 == nullptr)
+	JPClass *cls1 = PyJPValue_getJPClass(value);
+	if (cls1 == nullptr)
 	{
 		PyErr_SetString(PyExc_TypeError, "Java object is required.");
 		return -1;
 	}
 
-	if (v1->getClass() == context->_java_lang_String)
+	if (cls1 == context->_java_lang_String)
 	{
 		PyErr_SetString(PyExc_TypeError, "Java strings cannot be used to synchronize.");
 		return -1;
 	}
 
-	if ((v1->getClass())->isPrimitive())
+	if (cls1->isPrimitive())
 	{
 		PyErr_SetString(PyExc_TypeError, "Java primitives cannot be used to synchronize.");
 		return -1;
 	}
 
-	if (v1->getValue().l == nullptr)
+	jobject jval1 = PyJPValue_getJValue(frame, value).l;
+	if (jval1 == nullptr)
 	{
 		PyErr_SetString(PyExc_TypeError, "Java null cannot be used to synchronize.");
 		return -1;
 	}
 
-	self->m_Monitor = new JPMonitor(v1->getValue().l);
+	self->m_Monitor = new JPMonitor(jval1);
 	return 0;
 	JP_PY_CATCH(-1);
 }

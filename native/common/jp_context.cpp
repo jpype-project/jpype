@@ -31,10 +31,80 @@
 #include <dlfcn.h>
 #endif // HPUX
 #include <errno.h>
+#include <signal.h>
+#include <stdio.h>
 #endif
 
 
 JPResource::~JPResource() = default;
+
+#ifndef WIN32
+// HotSpot depends on its own SIGSEGV/SIGBUS/SIGILL/SIGFPE handlers to service
+// safepoint polls and implicit null checks in compiled code.  Python tooling
+// that saves and restores signal handlers around the JVM's lifetime (e.g.
+// faulthandler via pytest's default plugin) reinstalls the pre-JVM handlers,
+// after which the first armed safepoint kills the process with a raw SIGSEGV.
+// Snapshot the handlers the JVM installs and reinstate them before driving
+// shutdown, which is when safepoints are guaranteed to arm.
+static const int jvmSignals[] = {SIGSEGV, SIGBUS, SIGILL, SIGFPE};
+static const size_t jvmSignalCount = sizeof (jvmSignals) / sizeof (jvmSignals[0]);
+static struct sigaction preJVMSignalSnapshot[jvmSignalCount];
+static struct sigaction jvmSignalSnapshot[jvmSignalCount];
+static bool preJVMSignalsSaved = false;
+static bool jvmSignalsSaved = false;
+
+static void snapshotSignals(struct sigaction* dest)
+{
+	// Querying a valid signal cannot fail, so no error handling here.
+	for (size_t i = 0; i < jvmSignalCount; i++)
+		sigaction(jvmSignals[i], nullptr, &dest[i]);
+}
+
+// sa_handler and sa_sigaction may share storage, so a handler must be read
+// from the field selected by SA_SIGINFO.
+static void* activeHandler(const struct sigaction& sa)
+{
+	if ((sa.sa_flags & SA_SIGINFO) != 0)
+		return (void*) sa.sa_sigaction;
+	return (void*) sa.sa_handler;
+}
+
+static void restoreJVMSignals()
+{
+	// Only reachable without a snapshot in embedded mode, where startJVM
+	// never ran; restoring a zeroed snapshot would install SIG_DFL and
+	// cause the very crash this guards against.
+	if (!jvmSignalsSaved)
+		return;  // GCOVR_EXCL_LINE
+	bool changed = false;
+	for (size_t i = 0; i < jvmSignalCount; i++)
+	{
+		struct sigaction current;
+		if (sigaction(jvmSignals[i], nullptr, &current) != 0)
+			continue;  // GCOVR_EXCL_LINE
+		if (activeHandler(current) == activeHandler(jvmSignalSnapshot[i]))
+			continue;
+		changed = true;
+		sigaction(jvmSignals[i], &jvmSignalSnapshot[i], nullptr);
+	}
+	if (changed)
+		fprintf(stderr, "JPype: the JVM's signal handlers were replaced while it was"
+				" running (faulthandler?); restoring them for JVM shutdown.\n");
+}
+
+// Once the JVM is destroyed its handlers point into a dead VM, so return the
+// process to the handlers it had before startJVM (faulthandler's, or the
+// defaults).  The JVM's lifetime is thereby handler-transparent.  Safe
+// because VM_Exit parks all remaining daemon threads at the final safepoint;
+// nothing executes Java code after DestroyJavaVM returns.
+static void restorePreJVMSignals()
+{
+	if (!preJVMSignalsSaved)
+		return;  // GCOVR_EXCL_LINE
+	for (size_t i = 0; i < jvmSignalCount; i++)
+		sigaction(jvmSignals[i], &preJVMSignalSnapshot[i], nullptr);
+}
+#endif
 
 
 #define USE_JNI_VERSION JNI_VERSION_1_4
@@ -67,7 +137,7 @@ bool JPContext::isRunning()
 }
 
 /**
-	throw a JPypeException if the JVM is not started
+	throw a JPInternalError if the JVM is not started
  */
 void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 {
@@ -80,12 +150,12 @@ void assertJVMRunning(JPContext* context, const JPStackInfo& info)
 
 	if (context == nullptr)
 	{
-		throw JPypeException(JPError::_python_exc, _JVMNotRunning, "Java Context is null", info);
+		throw JPInternalError(_JVMNotRunning, "Java Context is null", info);
 	}
 
 	if (!context->isRunning())
 	{
-		throw JPypeException(JPError::_python_exc, _JVMNotRunning, "Java Virtual Machine is not running", info);
+		throw JPInternalError(_JVMNotRunning, "Java Virtual Machine is not running", info);
 	}
 }
 
@@ -109,15 +179,8 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	m_ConvertStrings = convertStrings;
 
 	// Get the entry points in the shared library
-	try
-	{
-		JP_TRACE("Load entry points");
-		loadEntryPoints(vmPath);
-	} catch (JPypeException& ex)
-	{
-		(void) ex;
-		throw;
-	}
+	JP_TRACE("Load entry points");
+	loadEntryPoints(vmPath);
 
 	// Determine the memory requirements
 #define PAD(x) ((x+31)&~31)
@@ -156,6 +219,10 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	// Launch the JVM
 	JNIEnv* env = nullptr;
 	JP_TRACE("Create JVM");
+#ifndef WIN32
+	snapshotSignals(preJVMSignalSnapshot);
+	preJVMSignalsSaved = true;
+#endif
 	try
 	{
 		CreateJVM_Method(&m_JavaVM, (void**) &env, (void*) jniArgs);
@@ -175,6 +242,11 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	// Mark running for assert
 	m_Running = true;
 
+#ifndef WIN32
+	snapshotSignals(jvmSignalSnapshot);
+	jvmSignalsSaved = true;
+#endif
+
 	jint jni_version = env->GetVersion();
 	if (jni_version < 0x00090000)
 	{
@@ -193,22 +265,29 @@ void JPContext::attachJVM(JNIEnv* env)
 	initializeResources(env, false);
 }
 
-std::string getShared() 
+std::string getShared()
 {
 #ifdef WIN32
-	// Windows specific
-	char path[MAX_PATH];
+	wchar_t wpath[MAX_PATH];
 	HMODULE hm = NULL;
-	if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | 
+	if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
 		GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-		(LPCSTR) &getShared, &hm) != 0 &&
-		GetModuleFileName(hm, path, sizeof(path)) != 0)
+		(LPCWSTR) &getShared, &hm) != 0 &&
+		GetModuleFileNameW(hm, wpath, MAX_PATH) != 0)
 	{
-		// This is needed when there is no-ascii characters in path
-		char shortPathBuffer[MAX_PATH];
-		long len = GetShortPathName(path, shortPathBuffer, MAX_PATH);
-		if (len != 0)
-			return std::string(shortPathBuffer);
+		wchar_t wShortPath[MAX_PATH];
+		long len = GetShortPathNameW(wpath, wShortPath, MAX_PATH);
+		wchar_t* finalWPath = (len != 0) ? wShortPath : wpath;
+		int utf8Len = WideCharToMultiByte(CP_UTF8, 0, finalWPath, -1, NULL, 0, NULL, NULL);
+		if (utf8Len > 0) {
+			std::string result(utf8Len - 1, '\0');
+			WideCharToMultiByte(CP_UTF8, 0, finalWPath, -1, &result[0], utf8Len, NULL, NULL);
+			return result;
+		} else {
+			std::cout << "[ERROR] WideCharToMultiByte failed." << std::endl;
+		}
+	} else {
+		std::cout << "[ERROR] GetModuleFileNameW failed." << std::endl;
 	}
 #else
 	// Linux specific
@@ -380,12 +459,23 @@ void JPContext::shutdownJVM(bool destroyJVM, bool freeJVM)
 	//	if (m_Embedded)
 	//		JP_RAISE(PyExc_RuntimeError, "Cannot shutdown from embedded Python");
 
+#ifndef WIN32
+	// Shutdown arms safepoints while hook threads run compiled code; make
+	// sure the JVM's signal handlers are still in place before starting.
+	restoreJVMSignals();
+#endif
+
 	// Wait for all non-demon threads to terminate
 	if (destroyJVM)
 	{
 		JP_TRACE("Destroy JVM");
-		JPPyCallRelease call;
-		m_JavaVM->DestroyJavaVM();
+		{
+			JPPyCallRelease call;
+			m_JavaVM->DestroyJavaVM();
+		}
+#ifndef WIN32
+		restorePreJVMSignals();
+#endif
 	}
 
 	// unload the jvm library
@@ -485,22 +575,22 @@ extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeContext_onShutdown
 }
 
 /**********************************************************************
- * Interrupts are complex.   Both Java and Python want to handle the 
- * interrupt, but only one can be in control.  Java starts later and 
+ * Interrupts are complex.   Both Java and Python want to handle the
+ * interrupt, but only one can be in control.  Java starts later and
  * installs its handler over Python as a chain.  If Java handles it then
  * the JVM will terminate which leaves Python with a bunch of bad
  * references which tends to lead to segfaults.  So we need to disable
- * the Java one by routing it back to Python.  But if we do so then 
+ * the Java one by routing it back to Python.  But if we do so then
  * Java wont respect Ctrl+C.  So we need to handle the interrupt, convert
- * it to a wait interrupt so that Java can break at the next I/O and 
+ * it to a wait interrupt so that Java can break at the next I/O and
  * then trip Python signal handler so the Python gets the interrupt.
  *
  * But this leads to a few race conditions.
  *
- * If the control is in Java then it will get the interrupt next time 
+ * If the control is in Java then it will get the interrupt next time
  * it hits Python code when the returned object is checked resulting
  * InterruptedException.  Now we have two exceptions on the stack,
- * the one from Java and the one from Python.  We check to see if 
+ * the one from Java and the one from Python.  We check to see if
  * Python has a pending interrupt and eat the Java one.
  *
  * If the control is in Java and it hits an I/O call.  This generates

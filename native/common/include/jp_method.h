@@ -114,6 +114,7 @@ private:
 	JPClassList              m_ParameterTypes;
 	JPMethodList             m_MoreSpecificOverloads;
 	jint                     m_Modifiers{};
+	long                     m_Hash{-1};
 } ;
 
 #endif // _JPMETHOD_H_

@@ -19,7 +19,8 @@ module jpype {
   requires java.xml;
   requires java.sql;
   requires java.management;
-  
+  requires jdk.zipfs;  // Issue #908: Required for JAR filesystem access via FileSystemProvider
+
   exports org.jpype;
   exports org.jpype.html;
   exports org.jpype.javadoc;

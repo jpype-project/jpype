@@ -135,7 +135,7 @@ def _jclassPre(name, bases, members):
     # Apply customizers
     hints = _jcustomizer.getClassHints(name)
     hints.applyCustomizers(name, bases, members)
-    return (name, tuple(bases), members)
+    return name, tuple(bases), members
 
 
 def _jclassPost(res, *args):
@@ -168,7 +168,7 @@ def _jclassDoc(cls):
     out = []
     if not hasattr(cls, "__javadoc__"):
         jde = JClass("org.jpype.javadoc.JavadocExtractor")()
-        jd = jde.getDocumentation(cls)
+        jd = jde.getDocumentation(cls.class_)
         if jd is not None:
             setattr(cls, "__javadoc__", jd)
             if jd.description is not None:

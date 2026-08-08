@@ -28,7 +28,7 @@ JPMethodDispatch::JPMethodDispatch(JPClass* clazz,
 	m_Class = clazz;
 	m_Overloads = overloads;
 	m_Modifiers = modifiers;
-	m_LastCache.m_Hash = -1;
+	m_LastOverload = nullptr;
 }
 
 JPMethodDispatch::~JPMethodDispatch()
@@ -52,18 +52,22 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	//   Then make sure we don't hit the rare case that the hash was -1 by chance.
 	//   Then make sure it isn't variadic list match, as the hash of an opaque list
 	//   element can't be resolved without going through the resolution process.
-	if (m_LastCache.m_Hash == bestMatch.m_Hash && m_LastCache.m_Overload != nullptr
-			&& !m_LastCache.m_Overload->isVarArgs())
-	{
-		bestMatch.m_Overload = m_LastCache.m_Overload;
-		bestMatch.m_Overload->matches(frame, bestMatch, callInstance, arg);
+	// 1. Grab the pointer. Relaxed means "give me whatever is there right now."
+	JPMethod* cachedMethod = m_LastOverload.load(std::memory_order_relaxed);
 
-		// Anything better than explicit constitutes a hit on the cache
-		if (bestMatch.m_Type > JPMatch::_explicit)
-			return true;
-		else
-			// bad match so forget the overload.
-			bestMatch.m_Overload = nullptr;
+	// 2. Validate using the hash logic you moved into the method/match
+	if (cachedMethod != nullptr && !cachedMethod->isVarArgs()) 
+	{
+		// bestMatch.m_Hash is the hash of the current arguments.
+		// If we assume the method 'knows' the hash it was last validated with:
+		if (cachedMethod->m_Hash == bestMatch.m_Hash)
+		{
+			bestMatch.m_Overload = cachedMethod;
+			bestMatch.m_Overload->matches(frame, bestMatch, callInstance, arg);
+
+			if (bestMatch.m_Type > JPMatch::_explicit)
+				return true;
+		}
 	}
 
 	// We need two copies of the match.  One to hold the best match we have
@@ -82,8 +86,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 		{
 			// We can bypass the process here as there is no better match than exact.
 			bestMatch = match;
-			m_LastCache = (JPMethodCache&) match; // lgtm [cpp/slicing]
-			return true;
+			break;
 		}
 		if (match.m_Type < JPMatch::_implicit)
 			continue;
@@ -198,10 +201,11 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 		JP_RAISE(PyExc_TypeError, ss.str());
 	}
 
-	// Set up a cache to bypass repeated calls.
-	if (bestMatch.m_Type == JPMatch::_implicit)
+	if (bestMatch.m_Type >= JPMatch::_implicit)
 	{
-		m_LastCache = (JPMethodCache&) bestMatch; // lgtm [cpp/slicing]
+		// Isn't m_Hash a shared resource? 
+		bestMatch.m_Overload->m_Hash = bestMatch.m_Hash;
+		m_LastOverload.store(bestMatch.m_Overload, std::memory_order_relaxed);
 	}
 
 	JP_TRACE("Best match", bestMatch.m_Overload->toString());

@@ -13,6 +13,7 @@
 
    See NOTICE file for details.
  *****************************************************************************/
+#include <cstddef>
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_array.h"
@@ -65,16 +66,35 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 
 	JPJavaFrame frame = JPJavaFrame::outer();
 
-	JPValue *value = PyJPValue_getJavaSlot(v);
-	if (value != nullptr)
+	JPClass *valueCls = PyJPValue_getJPClass(v);
+	if (valueCls != nullptr)
 	{
-		auto* arrayClass2 = dynamic_cast<JPArrayClass*> (value->getClass());
+		auto* arrayClass2 = dynamic_cast<JPArrayClass*> (valueCls);
 		if (arrayClass2 == nullptr)
 			JP_RAISE(PyExc_TypeError, "Class must be array type");
 		if (arrayClass2 != arrayClass)
 			JP_RAISE(PyExc_TypeError, "Array class mismatch");
-		((PyJPArray*) self)->m_Array = new JPArray(*value);
-		PyJPValue_assignJavaSlot(frame, self, *value);
+
+		// Check if the input is a PyJPArray and if it's a slice
+		// If so, we need to clone it to get the actual sliced elements
+		if (PyObject_IsInstance(v, (PyObject*) PyJPArray_Type))
+		{
+			JPArray* srcArray = ((PyJPArray*) v)->m_Array;
+			if (srcArray->isSlice())
+			{
+				// Create a new array with the correct length and copy elements
+				jsize sliceLength = srcArray->getLength();
+				JPValue newArray = arrayClass->newArray(frame, sliceLength);
+				((PyJPArray*) self)->m_Array = new JPArray(newArray);
+				((PyJPArray*) self)->m_Array->setRange(0, sliceLength, 1, v);
+				PyJPValue_assignJavaSlot(frame, self, newArray);
+				return 0;
+			}
+		}
+
+		JPValue value(valueCls, PyJPValue_getJValue(frame, v));
+		((PyJPArray*) self)->m_Array = new JPArray(value);
+		PyJPValue_assignJavaSlot(frame, self, value);
 		return 0;
 	}
 
@@ -163,7 +183,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 
 		slicelength = PySlice_AdjustIndices(length, &start, &stop, step);
 
-        if (slicelength <= 0)
+		if (slicelength <= 0)
 		{
 			// This should point to a null array so we don't hold worthless
 			// memory, but this is a low priority
@@ -177,7 +197,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 
 		// Copy over the JPValue
 		PyJPValue_assignJavaSlot(frame, newArray.get(),
-				*PyJPValue_getJavaSlot((PyObject*) self));
+				JPValue(PyJPValue_getJPClass((PyObject*) self), PyJPValue_getJValue(frame, (PyObject*) self)));
 
 		// Set up JPArray as slice
 		JPArray *array = ((PyJPArray*) self)->m_Array;
@@ -204,9 +224,9 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 	// Watch out for self assignment
 	if (PyObject_IsInstance(value, (PyObject*) PyJPArray_Type))
 	{
-		JPValue *v1 = PyJPValue_getJavaSlot((PyObject*) self);
-		JPValue *v2 = PyJPValue_getJavaSlot((PyObject*) value);
-		if (frame.equals(v1->getJavaObject(), v2->getJavaObject()))
+		jobject v1 = PyJPValue_getJValue(frame, (PyObject*) self).l;
+		jobject v2 = PyJPValue_getJValue(frame, (PyObject*) value).l;
+		if (frame.equals(v1, v2))
 			JP_RAISE(PyExc_ValueError, "self assignment not support currently");
 	}
 
@@ -229,7 +249,7 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 
 		slicelength = PySlice_AdjustIndices(length, &start, &stop, step);
 
-        if (slicelength <= 0)
+		if (slicelength <= 0)
 			return 0;
 
 		self->m_Array->setRange((jsize) start, (jsize) slicelength, (jsize) step,  value);
@@ -285,10 +305,9 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 	{
 		// Collect the members into a rectangular array if possible.
 		result = frame.collectRectangular(obj);
-	} catch (JPypeException &ex)
+	} catch (...)
 	{
 		// No matter what happens we are only allowed to throw BufferError
-		(void) ex;
 		PyErr_SetString(PyExc_BufferError, "Problem in Java buffer extraction");
 		return -1;
 	}
@@ -324,9 +343,8 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		view->obj = (PyObject*) self;
 		Py_INCREF(view->obj);
 		return 0;
-	} catch (JPypeException &ex) // GCOVR_EXCL_LINE
+	} catch (...) // GCOVR_EXCL_LINE
 	{
-		(void) ex;
 		// GCOVR_EXCL_START
 		// Release the partial buffer so we don't leak
 		PyJPArray_releaseBuffer(self, view);
@@ -385,9 +403,8 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 		view->obj = (PyObject*) self;
 		Py_INCREF(view->obj);
 		return 0;
-	} catch (JPypeException &ex)
+	} catch (...)
 	{
-		(void) ex;
 		PyJPArray_releaseBuffer(self, view);
 
 		// We are only allowed to raise BufferError
@@ -414,10 +431,10 @@ static PyGetSetDef arrayGetSets[] = {
 };
 
 static PyType_Slot arraySlots[] = {
-	{ Py_tp_new,      (void*) PyJPArray_new},
-	{ Py_tp_init,     (void*) PyJPArray_init},
+	{ Py_tp_new,	  (void*) PyJPArray_new},
+	{ Py_tp_init,	 (void*) PyJPArray_init},
 	{ Py_tp_dealloc,  (void*) PyJPArray_dealloc},
-	{ Py_tp_repr,     (void*) PyJPArray_repr},
+	{ Py_tp_repr,	 (void*) PyJPArray_repr},
 	{ Py_tp_methods,  (void*) &arrayMethods},
 	{ Py_mp_subscript, (void*) &PyJPArray_getItem},
 	{ Py_sq_length,   (void*) &PyJPArray_len},
@@ -476,8 +493,13 @@ static PyType_Spec arrayPrimSpec = {
 
 void PyJPArray_initType(PyObject * module)
 {
+	// Array has a real, compile-time-known C layout (struct PyJPArray) and is
+	// always single-inheritance below Object, so it goes straight to
+	// concrete -- same reasoning as Exception, see pyjp_object.cpp.
+	Py_ssize_t offset = offsetof (struct PyJPArray, extra);
+
 	JPPyObject tuple = JPPyTuple_Pack(PyJPObject_Type);
-	PyJPArray_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&arraySpec, tuple.get());
+	PyJPArray_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&arraySpec, tuple.get(), offset);
 	JP_PY_CHECK();
 #if PY_VERSION_HEX < 0x03090000
 	PyJPArray_Type->tp_as_buffer = &arrayBuffer;
@@ -485,9 +507,12 @@ void PyJPArray_initType(PyObject * module)
 	PyModule_AddObject(module, "_JArray", (PyObject*) PyJPArray_Type);
 	JP_PY_CHECK();
 
+	// ArrayPrimitive adds no new fields (arrayPrimSpec.basicsize == 0, so it
+	// inherits PyJPArray's basicsize as-is) -- same slot location, so pass
+	// the identical offset rather than 0 (which would mean legacy).
 	tuple = JPPyTuple_Pack(PyJPArray_Type);
 	PyJPArrayPrimitive_Type = (PyTypeObject*)
-			PyJPClass_FromSpecWithBases(&arrayPrimSpec, tuple.get());
+			PyJPClass_FromSpecWithBases(&arrayPrimSpec, tuple.get(), offset);
 #if PY_VERSION_HEX < 0x03090000
 	PyJPArrayPrimitive_Type->tp_as_buffer = &arrayPrimBuffer;
 #endif

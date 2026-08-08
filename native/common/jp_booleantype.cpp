@@ -53,7 +53,7 @@ public:
     {
         PyObject* obj = match.object;
 
-        if (PyBool_Check(obj) || PyObject_IsInstance(obj, (PyObject*)_NPBool_Type))
+        if (PyBool_Check(obj) || PyJP_IsInstanceSingle(obj, (PyTypeObject*)_numpy_bool_type))
         {
             match.conversion = this;
             return match.type = JPMatch::_exact;
@@ -85,8 +85,7 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 
-		JPValue *value = match.getJavaSlot();
-		if (value == nullptr)
+		if (match.getJPClass() == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
@@ -328,7 +327,7 @@ void JPBooleanType::releaseView(JPArrayView& view)
 		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseBooleanArrayElements((jbooleanArray) view.m_Array->getJava(),
 				(jboolean*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
-	}	catch (JPypeException&)
+	}	catch (...)
 	{
 		// This is called as part of the cleanup routine and exceptions
 		// are not permitted

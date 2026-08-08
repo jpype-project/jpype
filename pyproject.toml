@@ -4,12 +4,13 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "jpype1"
-version = '1.7.1.dev0'
+version = '1.7.2.dev0'
 authors = [
     {name = "Steve Menard", email = "devilwolf@users.sourceforge.net"},
+    {name = "Karl Einar Nelson", email = "thrameos@gmail.com"},
 ]
 maintainers = [
-    {name = "Luis Nell", email = "cooperate@originell.org"},
+    {name = "Martin K. Scherer", email = "martin.k.scherer@gmail.com"},
 ]
 description = "A Python to Java bridge"
 readme = "README.rst"
@@ -23,6 +24,7 @@ classifiers = [
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
     'Programming Language :: Python :: 3.13',
+    'Programming Language :: Python :: 3.14',
     'Topic :: Software Development',
     'Topic :: Scientific/Engineering'
 ]
@@ -64,17 +66,47 @@ module = [
 ignore_missing_imports = true
 
 [tool.pytest]
-addopts = ["--verbose"]
+# pytest's built-in faulthandler plugin calls faulthandler.enable() before the
+# JVM exists and faulthandler.disable() at exit, which reinstalls the pre-JVM
+# SIGSEGV handler over HotSpot's.  The JVM then dies on the first armed
+# safepoint poll during shutdown (random ~25% crash rate in CI).  Keep the
+# plugin off; conftest.py enables faulthandler itself before startJVM.
+addopts = ["--verbose", "-p", "no:faulthandler"]
 testpaths = ["test", "jpype/_pyinstaller"]
 
 
 [tool.scikit-build]
+build-dir = "build/{wheel_tag}"
 build.verbose = true
 logging.level = "INFO"
 wheel.packages = ["jpype", "jpype._pyinstaller", "_jpype"]
-editable.mode = "inplace"
+# editable mode installs an import hook to redirect the extension and the python code.
+# since this does not work for the JAR, CMake copies the JAR next to CMakelists.txt (root).
+editable.mode = "redirect"
 # todo: try out automatic rebuild feature.
 #editable.rebuild = true
 
-sdist.exclude = [".azure", ".github"]
+sdist.include = [
+    "native/**/*.h",
+    "native/**/*.xml",
+    "native/**/*.java",
+    "native/**/*.jar",
+    "*.rst",
+    "doc/*",
+    "test/**",
+    "org.jpype.jar",
+]
 
+sdist.exclude = [
+    "test/classes/**",
+    ".azure",
+    ".github",
+    "project/",
+]
+# keep debug info
+cmake.build-type = "RelWithDebInfo"
+install.strip = false
+
+[tool.scikit-build.cmake.define]
+ENABLE_BUILD_JAR = "OFF"
+BUILD_TEST_HARNESS = "OFF"

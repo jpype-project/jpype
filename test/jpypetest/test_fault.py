@@ -433,9 +433,9 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPValue_alloc(self):
-        _jpype.fault("PyJPValue_alloc")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            JInt(1)
+        # PyJPValue_alloc itself no longer exists (removed with the
+        # thread-local dummy-heap-type allocator -- see pyjp.h), so only
+        # the PyJPModule_getContext fault point is exercisable here.
         _jpype.fault("PyJPModule_getContext")
         with self.assertRaisesRegex(SystemError, "fault"):
             JInt(1)

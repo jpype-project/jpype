@@ -460,6 +460,37 @@ class BoxedTestCase(common.JPypeTestCase):
         u = passThrough(n)
         self.assertEqual(u, None)
 
+    def testNullSingletonIdentity(self):
+        # Long/Boolean/Char keep no per-instance Java value, so
+        # JObject(None, cls) must always resolve to the exact same per-class
+        # singleton object, not a fresh instance each call.
+        for cls in (JBoolean, JByte, JShort, JInt, JLong, JChar):
+            with self.subTest(cls=cls):
+                n1 = JObject(None, cls)
+                n2 = JObject(None, cls)
+                self.assertIs(n1, n2)
+
+    def testNullSingletonDistinctPerClass(self):
+        nInt = JObject(None, JInt)
+        nLong = JObject(None, JLong)
+        nShort = JObject(None, JShort)
+        nByte = JObject(None, JByte)
+        nBool = JObject(None, JBoolean)
+        nChar = JObject(None, JChar)
+        singletons = [nInt, nLong, nShort, nByte, nBool, nChar]
+        for i, a in enumerate(singletons):
+            for b in singletons[i + 1:]:
+                self.assertIsNot(a, b)
+
+    def testNullSingletonSurvivesGC(self):
+        import gc
+        n1 = JObject(None, JInt)
+        del n1
+        gc.collect()
+        n2 = JObject(None, JInt)
+        n3 = JObject(None, JInt)
+        self.assertIs(n2, n3)
+
     def testAsNumber(self):
         self.assertIsInstance(java.lang.Byte(1), java.lang.Number)
         self.assertIsInstance(java.lang.Short(1), java.lang.Number)

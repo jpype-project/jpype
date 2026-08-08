@@ -100,8 +100,7 @@ public:
 
 	JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
 	{
-		JPValue *value = match.getJavaSlot();
-		if (value == nullptr)
+		if (match.getJPClass() == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 
@@ -264,7 +263,7 @@ void JPCharType::releaseView(JPArrayView& view)
 		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseCharArrayElements((jcharArray) view.m_Array->getJava(),
 				(jchar*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
-	}	catch (JPypeException&)
+	}	catch (...)
 	{
 		// This is called as part of the cleanup routine and exceptions
 		// are not permitted

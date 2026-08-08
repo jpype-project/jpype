@@ -61,8 +61,7 @@ public:
 
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
-		JPValue *value = match.getJavaSlot();
-		if (value == nullptr)
+		if (match.getJPClass() == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 
@@ -72,7 +71,7 @@ public:
 			return match.type;
 
 		// Consider widening
-		JPClass *cls2 = value->getClass();
+		JPClass *cls2 = match.getJPClass();
 		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
@@ -285,7 +284,7 @@ void JPFloatType::releaseView(JPArrayView& view)
 		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseFloatArrayElements((jfloatArray) view.m_Array->getJava(),
 				(jfloat*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
-	}	catch (JPypeException&)
+	}	catch (...)
 	{
 		// This is called as part of the cleanup routine and exceptions
 		// are not permitted

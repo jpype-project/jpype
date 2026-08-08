@@ -16,6 +16,7 @@
 #ifndef _JPMETHODDISPATCH_H_
 #define _JPMETHODDISPATCH_H_
 
+#include <atomic>
 #include "jp_class.h"
 
 class JPMethodDispatch : public JPResource
@@ -81,7 +82,7 @@ private:
 	string        m_Name;
 	JPMethodList  m_Overloads;
 	jlong         m_Modifiers;
-	JPMethodCache m_LastCache{};
+	std::atomic<JPMethod*> m_LastOverload{nullptr};
 } ;
 
 #endif // _JPMETHODDISPATCH_H_

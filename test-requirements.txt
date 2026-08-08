@@ -1,4 +1,6 @@
 pytest
+pytest-randomly
+pytest-xdist
 pyinstaller
 jedi==0.18.0
 numpy

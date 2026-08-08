@@ -15,18 +15,20 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+from __future__ import annotations # for py38
+
 import os as _os
-import typing
+from pathlib import Path
+from typing import Union
 
 import _jpype
 
-__all__ = ['addClassPath', 'getClassPath']
-
-_CLASSPATHS = []
+_CLASSPATHS: list[Path] = []
 _SEP = _os.path.pathsep
 
+__all__ = ['addClassPath', 'getClassPath']
 
-def addClassPath(path1: typing.Union[str, _os.PathLike]) -> None:
+def addClassPath(path1: Union[str, _os.PathLike]) -> None:
     """ Add a path to the Java class path
 
     Classpath items can be a java, a directory, or a
@@ -39,7 +41,6 @@ def addClassPath(path1: typing.Union[str, _os.PathLike]) -> None:
     """
     # We are deferring these imports until here as we only need them
     # if this function is used.
-    from pathlib import Path
     import inspect
     global _CLASSPATHS
 
@@ -77,7 +78,6 @@ def getClassPath(env: bool = True) -> str:
       env(Optional, bool): If true then environment is included.
         (default True)
     """
-    from pathlib import Path
     global _CLASSPATHS
     global _SEP
 

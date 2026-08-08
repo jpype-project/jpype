@@ -5,9 +5,84 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 
-- **1.7.1.dev0 - 2026-04-09**
+- **1.7.2.dev0**
 
   - Support for descriptor level alterations using "." prefix.
+
+  - Reworked the internal object layout for Java-backed Python objects to use
+    fixed, type-baked offsets instead of a runtime allocator that re-derived
+    each object's layout from version-sensitive CPython internals on every
+    access. For the boxed `Long`/`Boolean`/`Character` wrapper types this
+    also removes their per-instance Java-value storage entirely (reconstructed
+    on demand instead), shrinking those instances and eliminating a
+    version-gated digit-layout workaround. No user-visible API change; boxed
+    wrapper instances no longer retain Java-side reference identity across
+    repeated round-trips through Python.
+
+  - Fixed heap corruption when boxing large `JLong`/`JInt`/`JShort`/`JByte`/`JBoolean`
+    values on Python 3.8-3.11, caused by a fixed-offset allocator layout
+    assumption colliding with CPython's own implicit `__dict__` slot for
+    variable-length int subclasses.
+
+  - Fixed a GC refcount-accounting bug in the internal Java-class metaclass
+    where `tp_traverse`/`tp_clear` did not chain to `type`'s own
+    implementation.
+
+  - Fixed a random segmentation fault at JVM shutdown when Python tooling
+    (such as pytest's built-in faulthandler plugin) restored pre-JVM signal
+    handlers over HotSpot's, leaving safepoint polls in compiled code
+    unserviced.  JPype now snapshots the JVM's fault handlers at startup,
+    reinstates them before shutdown if they were replaced, and restores the
+    pre-JVM handlers once the JVM is destroyed, making the JVM's lifetime
+    signal-handler transparent on POSIX systems.
+
+  - Refactored internal exception handling: replaced the single
+    ``JPypeException`` tag-plus-union class with distinct C++ types per
+    exception origin (``JPJavaError``, ``JPPythonError``,
+    ``JPInternalError``), so each type only carries the payload valid for
+    it instead of relying on convention. No user-facing behavior change;
+    done to prevent future bugs of the class fixed by #1415 below.
+
+  - Fixed a rare crash where Python's cyclic garbage collector firing
+    while a Python exception was mid-unwind through the reverse-bridge
+    C++ layer could corrupt the in-flight exception. #1415
+
+  - Fixed memory leak with int and float conversions. #1379
+
+  - Fixed instablity in threading for method dispatch. #1366
+
+  - Fixed overloading ambiguity issue. #1371
+
+  - Fixed caching issue with method overloading for functors. #1366
+
+  - Fixed issue with library loading on Chinese systems. #1380
+
+  - Fixed type mismatch in JavadocExtractor causing help() to fail on Java classes. #1149
+
+  - Fixed JArray constructor ignoring slice bounds when creating from sliced array. #845
+
+  - Added jdk.zipfs module dependency to module-info for proper jlink/jdeps detection. #908
+
+  - Fixed overloaded methods from multiple interfaces not being detected. #844
+
+  - Fixed annotation and interface methods using incorrect JNI call type. #880
+
+  - Fixed crash when calling isinstance(obj, JException) before JVM starts or after JVM shutdown. #1329
+
+  - Added fallback conversion path for JArray.of() to support non-primitive types like JString, enabling conversion of numpy string arrays. #953
+
+  - Improved implicit conversion from Python primitives to Java boxed types (Integer, Long, Short, Double, Float). #1098
+  
+  - Fixed ambiguous overload resolution for bytearray between byte[] and char[]. #598
+
+
+- **1.7.1 - 2026-05-06**
+
+  - Binaries for OSX ARM64.
+
+  - Fixed null pointer dereferncing in NumPy bool instance checking. #1360
+
+  - Required Python version is back to 3.8. #1361
 
 - **1.7.0 - 2026-04-04**
 

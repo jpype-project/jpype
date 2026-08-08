@@ -59,8 +59,7 @@ public:
 
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
-		JPValue* value = match.getJavaSlot();
-		if (value == nullptr)
+		if (match.getJPClass() == nullptr)
 			return match.type = JPMatch::_none;
 
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
@@ -69,7 +68,7 @@ public:
 			return match.type;
 
 		// Consider widening
-		JPClass *cls2 = value->getClass();
+		JPClass *cls2 = match.getJPClass();
 		if (cls2->isPrimitive())
 		{
 			// https://docs.oracle.com/javase/specs/jls/se7/html/jls-5.html#jls-5.1.2
@@ -287,7 +286,7 @@ void JPLongType::releaseView(JPArrayView& view)
 		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseLongArrayElements((jlongArray) view.m_Array->getJava(),
 				(jlong*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
-	}	catch (JPypeException&)
+	}	catch (...)
 	{
 		// This is called as part of the cleanup routine and exceptions
 		// are not permitted

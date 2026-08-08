@@ -4,8 +4,31 @@ Module for dynamically loading Java Classes using the import system.
 
 This is a replacement for the jpype.JPackage("com").fuzzy.Main type syntax.
 It features better safety as the objects produced are checked for class
-existence. To use Java imports, import the domains package prior to
-importing a Java class.
+existence.
+
+Setup
+-----
+
+To enable Java imports, you must first start the JVM and then import the
+``jpype.imports`` module:
+
+ .. code-block:: python
+
+  import jpype
+  import jpype.imports  # Enable Java imports
+
+  # Start the JVM
+  jpype.startJVM()
+
+  # Now you can import Java classes
+  import java.lang
+  from java.util import ArrayList
+
+Once ``jpype.imports`` is imported, Python's import system will automatically
+load Java classes and packages as if they were Python modules.
+
+Import Styles
+-------------
 
 This module supports three different styles of importing java classes.
 

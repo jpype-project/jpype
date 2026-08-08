@@ -46,9 +46,15 @@ Example:
    from java.lang import String
 
 """
+from __future__ import annotations
+
 import sys
-import _jpype
+from importlib.abc import Loader, MetaPathFinder
 from importlib.machinery import ModuleSpec as _ModuleSpec
+from typing import Optional, Protocol
+
+import _jpype
+
 from . import _pykeywords
 
 __all__ = ["registerImportCustomizer", "registerDomain", "JImportCustomizer"]
@@ -70,8 +76,13 @@ def _keywordWrap(name):
     return name
 
 
+class JImportCustomizerProtocol(Protocol):
+    def canCustomize(self, name: str) -> bool: ...
+    def getSpec(self, name: str): ...
+
+
 # %% Customizer
-_CUSTOMIZERS = []
+_CUSTOMIZERS: list[JImportCustomizerProtocol] = []
 
 
 def _JExceptionHandler(pkg, name, ex):
@@ -91,7 +102,7 @@ def _JExceptionHandler(pkg, name, ex):
     raise ImportError("Unable to import '%s'" % javaname) from ex
 
 
-def registerImportCustomizer(customizer):
+def registerImportCustomizer(customizer: JImportCustomizerProtocol):
     """ Import customizers can be used to import python packages
     into java modules automatically.
     """
@@ -100,7 +111,7 @@ def registerImportCustomizer(customizer):
 # Support hook for placing other things into the java tree
 
 
-class JImportCustomizer(object):
+class JImportCustomizer(JImportCustomizerProtocol):
     """ Base class for Import customizer.
 
     Import customizers should implement canCustomize and getSpec.
@@ -122,7 +133,7 @@ class JImportCustomizer(object):
                return importlib.util.spec_from_file_location(name, path)
    """
 
-    def canCustomize(self, name):
+    def canCustomize(self, name: str) -> bool:
         """ Determine if this path is to be treated differently
 
         Return:
@@ -130,7 +141,7 @@ class JImportCustomizer(object):
         """
         return False
 
-    def getSpec(self, name):
+    def getSpec(self, name: str):
         """ Get the module spec for this module.
         """
         raise NotImplementedError
@@ -140,19 +151,20 @@ class JImportCustomizer(object):
 
 def unwrap(name):
     # Deal with Python keywords in the Java path
-    if not '_' in name:
+    if '_' not in name:
         return name
     return ".".join([_keywordUnwrap(i) for i in name.split('.')])
 
 
-class _JImportLoader:
+class _JImportLoader(MetaPathFinder, Loader):
     """ (internal) Finder hook for importlib. """
 
-    def find_spec(self, name, path, target=None):
+    def find_spec(self, name: str, path, target=None):
+        base: Optional[str | _jpype._JPackage]
         # If jvm is not started then we just check against the TLDs
         if not _jpype.isStarted():
             base = name.partition('.')[0]
-            if not base in _JDOMAINS:
+            if base not in _JDOMAINS:
                 return None
             raise ImportError(
                 "Attempt to create Java package '%s' without jvm" % name)
@@ -164,7 +176,7 @@ class _JImportLoader:
                 raise ImportError(
                     "Java package '%s' not found, requested by alias '%s'" % (jname, name))
             ms = _ModuleSpec(name, self)
-            ms._jname = jname
+            ms._jname = jname # type: ignore[attr-defined]
             return ms
 
         # Check if it is a TLD
@@ -173,7 +185,7 @@ class _JImportLoader:
         # Use the parent module to simplify name mangling
         if not parts[1] and _jpype.isPackage(parts[2]):
             ms = _ModuleSpec(name, self)
-            ms._jname = name
+            ms._jname = name  # type: ignore[attr-defined]
             return ms
 
         if not parts[1] and not _jpype.isPackage(parts[0]):
@@ -193,7 +205,7 @@ class _JImportLoader:
         if not hasattr(base, parts[2]):
             # If the base is a Java package and it wasn't found in the
             # package using getAttr, then we need to emit an error
-            # so we produce a meaningful diagnositic.
+            # so we produce a meaningful diagnostic.
             try:
                 # Use forname because it give better diagnostics
                 cls = _jpype._java_lang_Class.forName(
@@ -231,10 +243,10 @@ class _JImportLoader:
 sys.meta_path.append(_JImportLoader())
 
 # %% Domains
-_JDOMAINS = {}
+_JDOMAINS : dict[str, Optional[str]] = {}
 
 
-def registerDomain(mod, alias=None):
+def registerDomain(mod: str, alias=None):
     """ Add a Java domain to Python as a dynamic module.
 
     This can be used to bind a Java path to a Python path.

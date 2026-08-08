@@ -9,7 +9,7 @@ PY_SRC := $(shell find jpype -name "*.py" 2>/dev/null)
 CPP_SRC := $(shell find native -name "*.cpp" -o -name "*.h" 2>/dev/null)
 SENTINEL := .build_history
 
-.PHONY: all clean compile test-java test-python
+.PHONY: all clean compile test-java test-python jar
 
 # Default target
 all: resolve $(SENTINEL)
@@ -22,6 +22,10 @@ $(IVY_JAR):
 	@mkdir -p lib
 	@echo "Downloading Ivy..."
 	wget --no-clobber "https://repo1.maven.org/maven2/org/apache/ivy/ivy/$(IVY_VER)/ivy-$(IVY_VER).jar" -P lib
+
+jar:
+	ant -f native
+	cp ./native/build/lib/org.jpype.jar .
 
 
 $(SENTINEL): pyproject.toml $(PY_SRC) $(CPP_SRC)
