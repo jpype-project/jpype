@@ -4146,6 +4146,58 @@ Use Cases of JPickler
    - Example: Serialize problematic objects for inspection after a crash.
 
 
+.. _serialization_with_jpickler_pickling_python_objects_with_java_attributes:
+
+Pickling Python Objects with Java Attributes
+=============================================
+
+JPickler serializes Java objects themselves, but it does not help with the
+more common case of a plain Python object that merely *holds* one or more
+Java objects as attributes. Python's standard `pickle` module cannot
+serialize those attributes directly, since Java-backed objects are not
+picklable.
+
+The fix is the same technique Python uses for any other unpicklable
+attribute (open file handles, sockets, and so on): exclude the Java-backed
+attributes in `__getstate__`, and rebuild them in `__setstate__` after the
+rest of the state has been restored.
+
+.. code-block:: python
+
+    import jpype
+
+    class MyModel:
+        # Names of attributes that hold Java objects and must be excluded
+        # from pickling.
+        _java_attrs = ("java_obj",)
+
+        def __init__(self):
+            self.java_obj = jpype.JClass("some.pkg.SomeClass")()
+
+        def __getstate__(self):
+            state = self.__dict__.copy()
+            for name in self._java_attrs:
+                del state[name]
+            return state
+
+        def __setstate__(self, state):
+            self.__dict__.update(state)
+            if not jpype.isJVMStarted():
+                jpype.startJVM()
+            # Recreate the excluded Java-backed attributes.
+            self.java_obj = jpype.JClass("some.pkg.SomeClass")()
+
+Listing the excluded attribute names in one place (`_java_attrs` above)
+keeps `__getstate__` from having to special-case each field, and gives
+`__setstate__` a single list to regenerate. Exactly how a Java-backed
+attribute gets rebuilt is application-specific: it may mean re-running a
+constructor, as above, or re-deriving the value from other, already-restored
+state on the object.
+
+See `issue #1019 <https://github.com/jpype-project/jpype/issues/1019>`_ for
+the original report and workaround this pattern is generalized from.
+
+
 .. _serialization_with_jpickler_conclusion_for_jpicker:
 
 Conclusion for JPicker

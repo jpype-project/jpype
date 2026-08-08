@@ -73,6 +73,10 @@ Latest Changes:
   
   - Fixed ambiguous overload resolution for bytearray between byte[] and char[]. #598
 
+  - Documented a pattern for pickling plain Python objects that hold
+    Java-backed attributes, using ``__getstate__``/``__setstate__`` to
+    exclude and regenerate them. #1019
+
 
 - **1.7.1 - 2026-05-06**
 
