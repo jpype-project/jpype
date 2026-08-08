@@ -5433,6 +5433,46 @@ whenever Java is no longer needed.  The thread will automatically reattach if
 Java is needed again.  There is a performance penalty each time a thread is
 attached and detached.
 
+
+.. _concurrent_processing_threading_deciding_daemon_or_not:
+
+Deciding Whether a Thread Should Block Shutdown
+------------------------------------------------
+
+A thread that is inside a call into Java when ``shutdownJVM()`` runs forces a
+choice: should shutdown wait for it, or proceed without it? This comes up for
+any long-lived worker (a pool thread, an event loop task, a callback invoked
+from Java) that might still be running when the application exits. There is
+no automatic right answer, so pick one of the two explicitly:
+
+1. **The JVM must stay up until this thread finishes.** Attach it as a user
+   thread with ``java.lang.Thread.attach()`` (see
+   :ref:`concurrent_processing_customizing_javalangthread` above).
+   ``shutdownJVM()`` blocks until every user thread completes, so your
+   application is responsible for architecting a way to tell that thread to
+   wrap up - a shutdown flag it checks periodically, a Java shutdown hook
+   that signals back into Python, or similar - and let it return. Nothing
+   does this for you: if the thread is never told to finish, shutdown blocks
+   forever. That hang is by design, not a bug - a user thread is a promise
+   that the JVM won't go away without it, and JPype cannot break that
+   promise on your behalf.
+
+2. **This thread's work is not required for a clean exit.** Leave it as a
+   daemon - the default for any thread that has never called ``attach()``
+   explicitly, or set explicitly with ``java.lang.Thread.attachAsDaemon()``.
+   Daemon threads never block ``shutdownJVM()``. If a daemon thread is still
+   parked inside a Java call when shutdown proceeds without it, JPype
+   detects this as soon as that call would otherwise resume and safely
+   terminates or parks the thread rather than letting it touch freed JVM
+   state.
+
+If you are unsure which applies, prefer daemon: it is the safer default, and
+getting it wrong now fails safe instead of crashing.
+
+(See `issue #1169 <https://github.com/jpype-project/jpype/issues/1169>`_ for
+the discussion this section is drawn from.)
+
+
 .. _concurrent_processing_threading_java_threads:
 
 Java Threads
