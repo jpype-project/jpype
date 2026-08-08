@@ -7,6 +7,18 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed a segmentation fault when a Python proxy (e.g. implementing
+    ``Runnable``) was invoked from a *daemon* Java thread and was still
+    blocked inside its Python callback when ``shutdownJVM()`` ran.
+    ``DestroyJavaVM()`` only waits for non-daemon Java threads, so shutdown
+    would complete - freeing every internal class/context resource - while
+    that thread was still parked underneath it; releasing the callback
+    afterwards resumed execution on top of a destroyed JVM. JPype now
+    detects this in the native proxy dispatcher as soon as the callback
+    returns, warns to stderr, and gets the thread off the JVM permanently
+    (hard-terminated where safe, parked forever otherwise) instead of
+    letting it touch freed state.
+    
   - Reworked the internal object layout for Java-backed Python objects to use
     fixed, type-baked offsets instead of a runtime allocator that re-derived
     each object's layout from version-sensitive CPython internals on every
