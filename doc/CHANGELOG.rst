@@ -7,6 +7,16 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed Javadoc extraction (``help()``/``__doc__`` on Java classes) being
+    silently broken on JDK 17+: an unhandled ``<wbr>`` tag (used by JDK 21+'s
+    javadoc output to hint line-wraps in long signatures) crashed extraction
+    outright, and a ``https:`` typo in the external-link check caused every
+    reference to a JDK platform class to render as a mangled path instead of
+    a clean link, since JDK 12+ auto-links platform classes to
+    https://docs.oracle.com even without an explicit ``-link`` argument.
+    Also fixed a related double-rendering bug for ``<a><code>...</code></a>``
+    links exposed by the above fix. #963, #1116
+
   - Reworked the internal object layout for Java-backed Python objects to use
     fixed, type-baked offsets instead of a runtime allocator that re-derived
     each object's layout from version-sensitive CPython internals on every
