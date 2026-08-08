@@ -244,3 +244,21 @@ class StartJVMCase(unittest.TestCase):
 
         # Check that shutdown does not raise
         jpype._core._JTerminate()
+
+    def testNativeAccessEnabledByDefault(self):
+        # #1310: on JDK 21+, native access should be enabled by default so
+        # that JPype's System.load() doesn't print a restricted-method
+        # warning, without the caller having to pass the flag themselves.
+        jpype.startJVM(self.jvmpath, classpath=cp)
+        if jpype.getJVMVersion()[0] >= 21:
+            module = jpype.JClass("org.jpype.JPypeContext").class_.getModule()
+            self.assertTrue(module.isNativeAccessEnabled())
+
+    def testNativeAccessUserOverrideNotDuplicated(self):
+        # A caller-supplied --enable-native-access option should not be
+        # dropped or duplicated by the default we add.
+        jpype.startJVM(self.jvmpath, "--enable-native-access=ALL-UNNAMED",
+                        classpath=cp)
+        if jpype.getJVMVersion()[0] >= 21:
+            module = jpype.JClass("org.jpype.JPypeContext").class_.getModule()
+            self.assertTrue(module.isNativeAccessEnabled())
