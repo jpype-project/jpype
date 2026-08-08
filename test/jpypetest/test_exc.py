@@ -110,6 +110,23 @@ class ExceptionTestCase(common.JPypeTestCase):
             frame = frame.tb_next
             i += 1
 
+    def testCauseNoLineInfo(self):
+        # #1178: frames without Java line-number info (e.g. from ASM-
+        # generated classes) must report a real int for tb_lineno, not
+        # None, or downstream tools that do arithmetic on it (like pytest's
+        # own traceback formatting) crash with a TypeError.
+        cls = jpype.JClass("jpype.exc.ExceptionTest")
+        try:
+            cls.throwNoLineInfo()
+        except Exception as ex:
+            ex1 = ex
+
+        frame = ex1.__cause__.__traceback__
+        self.assertIsNotNone(frame)
+        self.assertIsInstance(frame.tb_lineno, int)
+        # Must support arithmetic the way pytest's repr_traceback_entry does.
+        self.assertEqual(frame.tb_lineno - 1, frame.tb_lineno - 1)
+
     def testIndexError(self):
         with self.assertRaises(IndexError):
             raise java.lang.IndexOutOfBoundsException("From Java")
