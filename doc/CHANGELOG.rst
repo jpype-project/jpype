@@ -7,6 +7,8 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Support for descriptor level alterations using "." prefix.
+
   - Reworked the internal object layout for Java-backed Python objects to use
     fixed, type-baked offsets instead of a runtime allocator that re-derived
     each object's layout from version-sensitive CPython internals on every
