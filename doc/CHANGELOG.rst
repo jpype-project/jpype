@@ -7,6 +7,12 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed jedi tab-completion registration patching the wrong internal list
+    (``ALLOWED_GETITEM_TYPES``, which only guards ``__getitem__`` access on
+    builtin containers) instead of ``ALLOWED_DESCRIPTOR_ACCESS`` (what jedi
+    actually checks before invoking a descriptor during completion) for
+    jedi >= 0.18. #1240
+
   - Reworked the internal object layout for Java-backed Python objects to use
     fixed, type-baked offsets instead of a runtime allocator that re-derived
     each object's layout from version-sensitive CPython internals on every

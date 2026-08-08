@@ -59,12 +59,16 @@ def _register_jedi():
             if hasattr(_jedi_access, 'ALLOWED_DESCRIPTOR_ACCESS'):
                 _jedi_access.ALLOWED_DESCRIPTOR_ACCESS += (_jpype._JMethod, _jpype._JField)
         except ModuleNotFoundError:
-            # Jedi >= 0.18 (The "Inference" era)
+            # Jedi >= 0.18 (The "Inference" era): access.py moved, but the
+            # relevant list is still called ALLOWED_DESCRIPTOR_ACCESS - it's
+            # what jedi's is_allowed_getattr() checks to decide whether a
+            # descriptor is safe to actually invoke during completion.
+            # ALLOWED_GETITEM_TYPES is unrelated: it only guards __getitem__
+            # access on builtin container types.
             try:
                 import jedi.inference.compiled.access as _jedi_access
-                # Add to ALLOWED_GETITEM_TYPES if it exists
-                current = getattr(_jedi_access, 'ALLOWED_GETITEM_TYPES', ())
-                setattr(_jedi_access, 'ALLOWED_GETITEM_TYPES', current + (_jpype._JMethod, _jpype._JField))
+                if hasattr(_jedi_access, 'ALLOWED_DESCRIPTOR_ACCESS'):
+                    _jedi_access.ALLOWED_DESCRIPTOR_ACCESS += (_jpype._JMethod, _jpype._JField)
             except (ModuleNotFoundError, AttributeError):
                 # If Jedi moves things again, we just move on.
                 pass
