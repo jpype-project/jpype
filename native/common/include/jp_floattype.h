@@ -37,7 +37,7 @@ public:
 	}
 
 	JPClass* getBoxedClass(JPJavaFrame& frame) const override;
-	JPMatch::Type findJavaConversion(JPMatch &match) override;
+	JPMatch::Type findJavaConversionImpl(JPMatch &match) override;
 	void getConversionInfo(JPConversionInfo &info) override;
 	JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 	JPValue     getValueFromObject(JPJavaFrame& frame, const JPValue& obj) override;
@@ -86,6 +86,8 @@ public:
 
 	PyObject *newMultiArray(JPJavaFrame &frame,
 			JPPyBuffer &buffer, int subs, int base, jobject dims) override;
+	jobject newMultiArrayObject(JPJavaFrame &frame,
+			JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims) override;
 
 } ;
 

@@ -103,7 +103,7 @@ public:
 	}
 } jlongConversion;
 
-JPMatch::Type JPLongType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPLongType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPLongType::findJavaConversion");
 
@@ -320,6 +320,15 @@ PyObject *JPLongType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int 
 	JP_TRACE_IN("JPLongType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "j",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}
+
+jobject JPLongType::newMultiArrayObject(JPJavaFrame &frame, JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPLongType::newMultiArrayObject");
+	return convertMultiArrayObject<type_t>(
+			frame, this, &pack, converter,
 			buffer, subs, base, dims);
 	JP_TRACE_OUT;
 }

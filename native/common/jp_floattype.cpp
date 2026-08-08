@@ -108,7 +108,7 @@ public:
 
 } asJFloatConversion;
 
-JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPFloatType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPFloatType::findJavaConversion");
 
@@ -318,6 +318,15 @@ PyObject *JPFloatType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int
 	JP_TRACE_IN("JPFloatType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "f",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}
+
+jobject JPFloatType::newMultiArrayObject(JPJavaFrame &frame, JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPFloatType::newMultiArrayObject");
+	return convertMultiArrayObject<type_t>(
+			frame, this, &pack, converter,
 			buffer, subs, base, dims);
 	JP_TRACE_OUT;
 }

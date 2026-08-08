@@ -40,6 +40,14 @@ class StringProxy:
         self.proxy = proxy
 
 
+class RepeatedCallImpl(object):
+    pass
+
+
+class NotYetRegisteredImpl(object):
+    pass
+
+
 class ClassHintsTestCase(common.JPypeTestCase):
 
     def setUp(self):
@@ -131,3 +139,54 @@ class ClassHintsTestCase(common.JPypeTestCase):
 
         hints = jpype.JClass("java.lang.String")._hints
         self.assertTrue(StringProxy in hints.implicit)
+
+    def testCacheRepeatedCalls(self):
+        # Exercises JPClass's per-Py_TYPE conversion cache: a registered
+        # hint conversion must keep firing correctly across many repeated
+        # calls with different instances of the same Python type, not just
+        # the first (cold, cache-populating) one.
+        cht = self.ClassHintsTest
+
+        @jpype.JConversion(self.Custom, instanceof=RepeatedCallImpl)
+        def ImplToCustom(jcls, obj):
+            return self.MyCustom(obj)
+
+        for i in range(5):
+            obj = RepeatedCallImpl()
+            cht.call(obj)
+            self.assertIsInstance(cht.input, self.MyCustom)
+            self.assertIs(cht.input.arg, obj)
+
+    def testCacheInvalidatedByNewHint(self):
+        # A conversion result cached as "no match" for a given Python type
+        # must not stick around once a new hint is registered that *does*
+        # match that type -- the per-class cache is invalidated via
+        # JPClassHints' global generation counter for exactly this reason.
+        cht = self.ClassHintsTest
+        with self.assertRaises(TypeError):
+            cht.call(NotYetRegisteredImpl())
+
+        @jpype.JConversion(self.Custom, instanceof=NotYetRegisteredImpl)
+        def NewToCustom(jcls, obj):
+            return self.MyCustom(obj)
+
+        obj = NotYetRegisteredImpl()
+        cht.call(obj)
+        self.assertIsInstance(cht.input, self.MyCustom)
+        self.assertIs(cht.input.arg, obj)
+
+    def testBoxedRoundTripRepeated(self):
+        # Regression test for the JPBoxedType nested findJavaConversion
+        # composition (calling JPClass's and the primitive type's own
+        # cached resolution as building blocks) and for
+        # JPConversionBoxBoolean's closure (which is a fixed constant, not
+        # `this`) -- both must keep producing the right boxed value across
+        # repeated cold/warm calls of each primitive kind.
+        Boolean = jpype.JClass("java.lang.Boolean")
+        Integer = jpype.JClass("java.lang.Integer")
+        Double = jpype.JClass("java.lang.Double")
+        for i in range(3):
+            self.assertEqual(jpype.JObject(True, Boolean), True)
+            self.assertEqual(jpype.JObject(False, Boolean), False)
+            self.assertEqual(jpype.JObject(5, Integer), 5)
+            self.assertEqual(jpype.JObject(2.5, Double), 2.5)

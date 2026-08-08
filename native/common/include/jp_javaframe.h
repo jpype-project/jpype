@@ -352,6 +352,7 @@ public:
 
 	// Object
 	jclass GetObjectClass(jobject obj);
+	jboolean IsSameObject(jobject ref1, jobject ref2);
 	jobject GetStaticObjectField(jclass clazz, jfieldID fid);
 	jobject GetObjectField(jobject clazz, jfieldID fid);
 	void SetStaticObjectField(jclass clazz, jfieldID fid, jobject val);

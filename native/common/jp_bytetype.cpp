@@ -79,7 +79,7 @@ public:
 
 } jbyteConversion;
 
-JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPByteType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPByteType::findJavaConversion");
 
@@ -294,6 +294,15 @@ PyObject *JPByteType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int 
 	JP_TRACE_IN("JPByteType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "b",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}
+
+jobject JPByteType::newMultiArrayObject(JPJavaFrame &frame, JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPByteType::newMultiArrayObject");
+	return convertMultiArrayObject<type_t>(
+			frame, this, &pack, converter,
 			buffer, subs, base, dims);
 	JP_TRACE_OUT;
 }

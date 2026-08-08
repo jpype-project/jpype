@@ -48,6 +48,13 @@ public:
 	virtual PyObject *newMultiArray(JPJavaFrame &frame,
 			JPPyBuffer& view, int subs, int base, jobject dims) = 0;
 
+	// Same traversal as newMultiArray, but returns the raw Java array
+	// (a local ref) instead of wrapping it as a Python object -- for use
+	// from a JPConversion::convert(), which needs a jvalue, not a PyObject.
+	// converter must already be resolved (see getConverter in jpype.h).
+	virtual jobject newMultiArrayObject(JPJavaFrame &frame,
+			JPPyBuffer& view, jconverter converter, int subs, int base, jobject dims) = 0;
+
 	// Helper for Long types
 	PyObject *convertLong(PyTypeObject* wrapper, PyLongObject* tmp);
 } ;

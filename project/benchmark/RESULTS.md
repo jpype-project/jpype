@@ -1,0 +1,578 @@
+# Results: conversion-path caching and fast paths, 2026-08-01
+
+## What changed
+
+- `JPClass::findJavaConversion` (native/common/include/jp_conversioncache.h,
+  jp_class.cpp): a per-class, fixed 16-slot, atomically-accessed cache
+  keyed on `Py_TYPE(object)`, consulted before re-running the conversion
+  search (previously a linear scan, unbounded for classes with many
+  registered `@JConversion` hints). `JPMatch::cacheable` (default true)
+  lets individual `JPConversion::matches()` implementations opt out when
+  their decision depends on the object's content, not just its type
+  (duck-typed attributes, `Class` identity, sequence/buffer element scans,
+  proxy interfaces, functional-interface arg counts). [`4a61fe38`]
+- `JPConversionSequence` (jp_classhints.cpp) and `JPIntType::setArrayRange`
+  (jp_inttype.cpp): a fast raw-type-check path for homogeneous lists of
+  exact `int`s, falling back to the general (unchanged, fully correct)
+  path from the first non-conforming element. [`82a552de`, `bc73d88f`]
+- `JPClass::convertToPythonObject` / `JPBoxedType::convertToPythonObject`:
+  skip the `findClassForObject` JNI upcall (a bytecode-level HashMap.get
+  on the Java side) when `GetObjectClass`+`IsSameObject` against the
+  already-known declared class confirms there's no covariant override in
+  play. Applies to every non-primitive Java method return. [`5069df78`]
+- `jp_proxy.cpp`'s `getArgs()`: the same `IsSameObject` fast path, applied
+  to every argument of every Java-calls-Python proxy invocation (a
+  separate code path from the return-value one above, with its own
+  explicit `findClassForObject` call). [`0f21b4ad`]
+- A real, independent bug fix in `JPMethodDispatch::findOverload`'s
+  single-slot overload-dispatch cache: a failed cache-hit attempt left
+  `bestMatch.m_Overload` non-null (since `JPMethod::matches()` sets it
+  unconditionally), which fooled the fallback logic into reporting a
+  corrupted match as successful instead of raising `TypeError`. Found via
+  the array benchmark below, unrelated to the caching feature itself.
+  [`d65781fb`]
+
+None of this trades functionality for speed: each fast path checks the
+exact same thing the general path would, just cheaper, and falls back to
+the unmodified general path the instant the cheap check doesn't hold. See
+project/benchmark/README.md to reproduce any of these numbers, and
+project/benchmark/{jpype,jpy,jep}/*.py for the actual benchmark code.
+
+## Results: master vs. this branch
+
+ns/call, best-of-5, standard (non-instrumented) build. "master" =
+`9daaf0af`, the actual released baseline. "final" = this branch (all five
+changes above).
+
+| category | operation | master | final | change |
+|---|---|---:|---:|---:|
+| int | `Math.max(int,int)` | 817 | 750 | -8% |
+| int | `new Integer(int)` | 1107 | 840 | -24% |
+| double | `Math.sqrt(double)` | 786 | 690 | -12% |
+| double | `new Double(double)` | 1161 | 918 | -21% |
+| string | `new String` + `.toString()` | 1107 | 1022 | -8% |
+| object | `Object` identity (arg + return) | 1201 | 995 | -17% |
+| list->array | `int[]` from fresh `list(100)` | 5700 | 3192 | -44% |
+| method dispatch | overload x16, monomorphic | 712 | 686 | -4% |
+| method dispatch | overload x16, polymorphic | 1227 | 925 | -25% |
+| proxy | callback, established binding, `int` arg | 3034 | 2655 | -12% |
+| proxy | callback, established binding, `Object` arg | 2972 | 2364 | -20% |
+
+Plus, not in the table above since it has no single-call analog: the
+hint-list conversion scan (`JPClassHints::getConversion`, see
+`jpype/classhints.py`) went from linear in the number of registered
+hints -- up to 6.8us at 400 hints -- to a flat ~620ns regardless of count.
+
+Worth noting: `model3` (the branch this work landed on) already differs
+from `master` before any of the above -- an earlier, separate object-layout
+rework ("fixed offsets, fungible boxed values") had already improved
+boxed-type and object-identity paths by 10-17% on its own. The table above
+is master-to-final, so it captures that too; if isolating just this
+session's caching/fast-path work against model3's own pre-existing tip
+(`5d35fa30`) is useful context, those numbers run 4-46% smaller per
+category (e.g. arrays: -46%, proxy Object-arg: -19%, dispatch
+polymorphic: -23%) since they exclude the layout rework's contribution.
+
+## Why some paths didn't move
+
+- **int/double/string, most cases**: these were already resolved via
+  short, fixed-size matcher chains (a handful of `if` checks, not a
+  scan), so there was nothing for a cache or fast path to skip. The
+  modest movement they do show is from the object-layout rework, not
+  this session's work.
+- **Method dispatch, monomorphic**: already cheap via the pre-existing
+  single-slot overload cache; the polymorphic case improved (25%) purely
+  as a side effect of the `findJavaConversion` cache, since each of the
+  16 candidate-overload checks in that scan calls `findJavaConversion`
+  internally -- nothing in the dispatch loop itself was touched.
+- A separate attempt at a raw-type-check fast path for scalar
+  `findJavaConversion` itself (bypassing even a cache *hit*, mirroring
+  the array fast path) was built, fully verified, and benchmarked on a
+  branch -- and showed no measurable gain. The array fast path pays off
+  because it fires ~100 times per call (once per list element); a scalar
+  argument only gets it once per call, which isn't enough to clear the
+  noise floor of everything else a method call does (JPMatch
+  construction, dispatch bookkeeping, the JNI call itself). Reverted.
+
+## Multi-dimensional array push conversion (follow-on)
+
+JPype already had a fast bulk path for building a Java array from a flat
+Python buffer (`newMultiArray`/`convertMultiArray`, used by the explicit
+`_jpype.arrayFromBuffer()` upload call), but it wasn't reachable from
+ordinary argument conversion -- passing a multi-dimensional numpy array
+as an `int[][]`/`double[][][]`/etc. argument went through
+`JPConversionSequence`'s general path instead, which walks the outer
+dimension via per-row Python-level indexing (materializing a fresh numpy
+sub-array view object per row) and does a separate buffer conversion per
+row.
+
+`JPConversionMultiArrayBuffer` (jp_classhints.cpp) now recognizes a
+buffer-protocol argument whose `ndim` matches the target array's nesting
+depth and routes it directly through the existing bulk machinery
+instead. `JPArrayClass` precomputes its nesting depth and primitive leaf
+type once at construction, so this new check costs nothing on the (far
+more common) 1D-array and non-buffer paths -- confirmed both by
+benchmark and by instrumented call-counting during development, which
+showed zero invocations of the new conversion for either a 1D list or a
+nested list-of-lists argument.
+
+| category | operation | before | after | change |
+|---|---|---:|---:|---:|
+| buffer->array | `int[][]` from numpy(10x10), fresh | 10453 | 3014 | -71% |
+| list->array | `int[][]` from nested list(10x10), fresh | 15300 | 16122 | +5%\* |
+
+\* Nested lists-of-lists never touch the new path at all -- no buffer
+protocol, so `PyObject_CheckBuffer` fails immediately, and instrumented
+call-counting confirmed zero invocations of the new conversion here.
+This small shift is compiler code-layout noise from the recompiled
+translation units, not added runtime work in the hot path. It's real
+(reproducible across repeated runs) but not something to chase further.
+
+Nested-list `int[][]` itself remains exactly as slow as before this
+work, and there's no cheap fix in sight for it: it's an
+architecture mismatch, not a missing fast path. The buffer trick here
+works because a `Py_buffer` hands over shape, strides, and a contiguous
+memory region up front, letting the whole array be walked with a
+handful of JNI calls. A Python list-of-lists offers none of that --
+each row is an arbitrary sequence that has to be indexed, checked, and
+converted element-by-element through the general (necessarily slower,
+but also more permissive -- mixed types, ragged rows, arbitrary
+iterables) `JPConversionSequence` path, the same as any other list
+argument. Making that materially faster would mean a fundamentally
+different (and narrower, less correct) traversal, not a bolt-on cache or
+buffer check -- the same tradeoff jpy already makes for its own array
+matching (see below).
+
+## Supplementary: jpy / jep comparison
+
+For context only -- neither is a drop-in replacement for jpype's
+feature set, and where they're faster it's mostly not because jpype's
+implementation is worse. Two different things are going on, and they
+shouldn't be conflated:
+
+- **Arrays**: jpy's array-argument matching genuinely skips work jpype
+  does -- it doesn't inspect elements before committing to a conversion,
+  where jpype validates every element up front to support correct
+  Java-style overload disambiguation. This isn't inferred from the
+  timing gap; it was confirmed by reading jpy's own C source
+  (`jpy_jtype.c`/`jpy_jmethod.c`) earlier in this work. That's a real
+  correctness/speed tradeoff jpy makes and jpype doesn't.
+- **Everything else (scalars, dispatch, proxy)**: the same source dive
+  found jpy's matchers there are *not* cutting correctness corners --
+  they're just leaner architecturally (fewer abstraction layers, less
+  general-purpose machinery to walk through). jpype pays a real cost
+  for breadth of behavior a narrower binding doesn't have to support
+  (implicit numeric widening, functional-interface duck typing,
+  hint-based custom conversions, the whole `JPConversion` chain this
+  session's caching work targets). So "jpy is faster here" is a fair
+  data point, just not evidence that jpype's implementation of the same
+  narrow behavior is inefficient.
+- **numpy scalars specifically, for `int`/`long` parameters**: a third,
+  separate case from the two above -- not a correctness tradeoff, and
+  not just "leaner architecture" either, but a coverage gap. jpy's
+  per-parameter-type fast dispatch (`JType_MatchPyArgAsJIntParam`/
+  `JLongParam`, `jpy_jtype.c`) recognizes only real Python `int`/`bool`
+  (`PyLong_Check`/`PyBool_Check`) with no fallback at all, unlike the
+  `float`/`double` matchers, which fall back to a generic
+  `PyNumber_Check` at a fixed lower score when the exact-type check
+  misses. Verified empirically (running jpy venv):
+
+  ```
+  np.int32(3)   -> Math.max(int,int): FAILED "ambiguous Java method call,
+                   too many matching method overloads found"
+  np.int64(3)   -> same failure
+  np.float32(3) -> same failure (float32 isn't a Python float subclass either)
+  np.float64(3) -> OK, 5.0 (float64 genuinely is a Python float subclass)
+  ```
+
+  `Math.max` has `int`/`long`/`float`/`double` overloads. A numpy int (or
+  `float32`) scalar matches none of them through the fast path, but ties
+  at the same fallback score between the `float` and `double` overloads
+  -- jpy can't break the tie and raises rather than guessing. This only
+  surfaces with 2+ overloads sharing that fallback (`Math.sqrt`, a single
+  overload, accepts every numpy scalar type fine, fallback or not).
+  jpype handles all four numpy scalar types correctly and unambiguously
+  for `Math.max` (checked the same way). Important distinction: this is
+  a coverage gap, not unsoundness -- the failure is a loud exception, not
+  a silently wrong result -- but it's also not free: real numpy-scalar-
+  producing code (e.g. indexing a numpy array) can't call an overloaded
+  jpy-bound method with the result at all here.
+
+jpy in particular wasn't judged a strong reference point for this
+comparison overall.
+
+ns/call, best-of-5. jep is on Python 3.10 (this checkout's only working
+native build), not 3.12 like jpype/jpy, and embeds Python inside the JVM
+(the reverse of jpype/jpy's architecture), so its numbers carry extra
+uncertainty.
+
+| category | operation | jpype (final) | jpy | jep |
+|---|---|---:|---:|---:|
+| int | `Math.max(int,int)` | 750 | 353 | 1299 |
+| int | `new Integer(int)` | 840 | 479 | 1257 |
+| double | `Math.sqrt(double)` | 690 | 393 | 645 |
+| double | `new Double(double)` | 918 | 506 | 1378 |
+| string | `new String` + `.toString()` | 1022 | 927 | 2512 |
+| object | `Object` identity (arg + return) | 995 | 730 | 1971 |
+| list->array | `int[]` from fresh `list(100)` | 3192 | 1262 | 2029 |
+| list->array | `int[][]` from nested list(10x10), fresh | 16122 | 2105 | 5875 |
+| buffer->array | `int[][]` from numpy(10x10), fresh | 3014 | 5316 | N/A† |
+| method dispatch | overload x16, monomorphic | 686 | 370 | 4454 |
+| method dispatch | overload x16, polymorphic | 925 | 456 | 4558 |
+| proxy | callback, `int` arg | 2655 | N/A* | 2240 |
+| proxy | callback, `Object` arg | 2364 | N/A* | 4629 |
+
+\* jpy's `PyObject.createProxy()` didn't produce a usable object from
+Python in this checkout -- see README.md. Looks like a jpy-side issue,
+not a benchmark gap.
+
+† jep raises `TypeError: Error matching ndarray.dtype to Java primitive
+type` for any multi-dimensional numpy array -- a real jep limitation
+(no multi-dimensional numpy support at all), not a benchmark setup
+issue; confirmed by mirroring jep's own conversion code path.
+
+The 2D numpy row is the interesting one from the multi-dimensional-array
+follow-on above: jpype (3014) is now *faster* than jpy (5316) here,
+flipping what was a ~2x jpype deficit into a ~1.76x jpype lead. jpy
+apparently has no equivalent bulk path for multi-dimensional buffers
+either -- its own numpy-2D handling is slower than its plain
+nested-list conversion (5316 vs 2105), so it's paying buffer-inspection
+overhead without a matching payoff.
+
+### jpype vs. jep specifically
+
+jpype beats jep in 8 of the 12 comparable rows above (`int[][]` from
+numpy has no jep entry -- see above). Where jep wins, it's genuinely
+because it skips work jpype does -- confirmed by reading jep's own
+source, not inferred from the timing gap:
+
+- **Arrays** (`int[]` from list: 2029 vs 3192; `int[][]` from nested
+  list: 5875 vs 16122): jep's overload resolution
+  (`pyjmultimethod_call`, `src/main/c/Objects/pyjmultimethod.c:118-155`
+  in the jep checkout) first filters candidates by parameter count
+  alone -- no type inspection -- and only runs its per-argument
+  compatibility check (`PyJMethod_CheckArguments`) when *two or more*
+  candidates share that count. `DeepBench.sumIntArray`/`sum2DIntArray`
+  each have exactly one overload, so that check never runs at all for
+  them: jep goes straight from an arity match to `pyjmethod_call`
+  (`pyjmethod.c:284`), which converts each argument directly against
+  the one already-known parameter type, optimistically, raising only if
+  an element actually fails to convert. That's one pass over the data.
+  jpype's `JPMethod::matches()` always computes a full match quality
+  first (a complete scan of every array element via
+  `JPConversionSequence`, needed to correctly rank against sibling
+  overloads even when there happens to be only one), and only then does
+  `convert()` do a second full pass to actually build the array --
+  two traversals where jep does one, for exactly the case (no
+  competing overload) these benchmarks exercise.
+- **`Math.sqrt`** (645 vs 690, 7%): too small a gap to attribute to
+  this or anything else specific -- likely just noise.
+- **Proxy, `int` arg** (2240 vs 2655, 18%): not this mechanism -- both
+  sides have exactly one interface method here, so there's no
+  overload ambiguity to skip resolving on jpype's side either. More
+  likely explained by jep's reversed embedding architecture: it hosts
+  Python *inside* the JVM, so a Java-calls-Python callback is jep's
+  native direction, while jpype has to reach back out through JNI into
+  the interpreter hosting the JVM.
+
+This isn't true across the board, though: on the 16-overload dispatch
+benchmark, where every candidate shares the same arity, jep's fast
+filter can't help and it falls back to calling `PyJMethod_CheckArguments`
+repeatedly -- and there jpype is dramatically faster (686-925 vs
+4454-4558). The one-pass-vs-two-pass array gap above is a real,
+specific tradeoff for the no-ambiguity case, not evidence that jep's
+overload resolution is generally cheaper.
+
+## Array conversion suite: full sweep, both directions, all three libraries
+
+The rows above sample a single size (`list(100)`, `numpy(10x10)`). The
+dedicated suite added at `project/benchmark/{jpype,jpy,jep}/array_flat.py`
+and `array_multidim.py` generalizes that across sizes (100/1k/10k/100k,
+flat) and nesting depth (2D-5D, fixed element count per depth), and adds
+the pull direction (Java array -> Python), which nothing above measures
+at all. ns/call, best-of-5, `int32`/`int`.
+
+Four categories per direction, not one "arrays" bucket -- see
+`README.md` for why list vs. buffer input are different native code
+paths in all three libraries, not just different inputs to the same one.
+
+### Flat (1D)
+
+**push, list->array** -- `sumIntArray(list)`:
+
+| size | jpype | jpy | jep |
+|---:|---:|---:|---:|
+| 100 | 3469 | 1313 | 1939 |
+| 1,000 | 22032 | 8294 | 9574 |
+| 10,000 | 211972 | 78342 | 86629 |
+| 100,000 | 2007142 | 774569 | 840301 |
+
+**push, buffer->array** -- `sumIntArray(numpy_array)`:
+
+| size | jpype | jpy | jep |
+|---:|---:|---:|---:|
+| 100 | 1462 | 540 | 882 |
+| 1,000 | 3080 | 951 | 1331 |
+| 10,000 | 19029 | 5927 | 6506 |
+| 100,000 | 181011 | 48833 | 49781 |
+
+**pull, array->list** -- `list(makeIntArray(n))`:
+
+| size | jpype | jpy | jep |
+|---:|---:|---:|---:|
+| 100 | 37063 | 4344 | 2795 |
+| 1,000 | 443667 | 40029 | 23566 |
+| 10,000 | 4643777 | 401341 | 237692 |
+| 100,000 | 53238200 | 5487530 | 3712665 |
+
+**pull, array->buffer** -- `np.asarray(makeIntArray(n))`:
+
+| size | jpype | jpy | jep |
+|---:|---:|---:|---:|
+| 100 | 1939 | 994 | 7025\*\* |
+| 1,000 | 2461 | 1520 | 48691\*\* |
+| 10,000 | 7339 | 6490 | 479937\*\* |
+| 100,000 | 48836 | 46129 | 6173758\*\* |
+
+\*\* jep's `array->buffer` is not actually a buffer read: a returned Java
+array always comes back as jep's own `pyjarray`, which has no
+buffer-protocol support at all (confirmed: no `getbufferproc` in
+`pyjarray.c` -- only `jep.NDArray` gets an automatic numpy conversion on
+return, and that's a different Java type, not a real `int[]`). So
+`np.asarray()` here is the exact same generic per-element sequence walk
+as `array->list`, which is why the two jep columns above are so close at
+every size -- jpy's and jpype's real buffer reads pull dramatically
+ahead of jep at 10k+ while jep's own `array->list`/`array->buffer` stay
+neck-and-neck with each other.
+
+jpype's `array->list` numbers are the standout oddity here -- an order
+of magnitude slower than jpy's/jep's `array->list` at every size, and
+*slower than jpype's own `array->buffer`* by 20-1000x. `list(jarray)`
+goes through `_JavaArrayIter`/`JPClass::getArrayItem`
+(jpype/_jarray.py, jp_class.cpp): one `JPPyObject` allocation and one
+`JNI` element-fetch call *per element*, with no bulk path at all, unlike
+the buffer-protocol read `array->buffer` uses. This looks like a real,
+previously-unmeasured gap (nothing in this directory benchmarked pull
+before this suite existed) rather than a deliberate design choice, and is
+worth a follow-up fast path (an `int[]`-specific bulk `GetIntArrayRegion`
++ direct Python `list` construction, mirroring what `array->buffer`
+already does) -- not attempted here since it's a new finding, not part
+of this session's caching/buffer work.
+
+### Multi-dimensional (2D-5D, 10\*\*dims elements)
+
+**push, list->array** -- `sum{2,3,4,5}DIntArray(nested_list)`:
+
+| dims | jpype | jpy | jep |
+|---:|---:|---:|---:|
+| 2 | 16187 | 2226 | 5914 |
+| 3 | 237328 | 18304 | 54016 |
+| 4 | 3153538 | 179039 | 536362 |
+| 5 | 39523608 | 1832619 | 5343343 |
+
+**push, buffer->array** -- `sum{2,3,4,5}DIntArray(numpy_array)`:
+
+| dims | jpype | jpy | jep\* |
+|---:|---:|---:|---:|
+| 2 | 2911 | 5392 | 19344 |
+| 3 | 15893 | 53558 | 190041 |
+| 4 | 151518 | 542709 | 1896885 |
+| 5 | 1432057 | 5452297 | 18973229 |
+
+\* jep has no automatic `buffer->array` path for multi-dimensional
+arrays at all (numpy input to an `int[][]`-or-deeper argument always
+raises `TypeError` -- see `jep/array_multidim.py`). The jep column here
+is the manual workaround measured there instead: assembling the real
+Java array by hand from per-row bulk conversions (`jep.jarray()` +
+`DeepBench.identityIntArray(numpy_row)`), which is *slower* than jep's
+own `list->array` at this row size (10 elements/row) -- not a typo, see
+that file's docstring for why (per-row JNI call overhead outweighing the
+saved per-element conversion cost at this size).
+
+jpy's `buffer->array` being *slower* than its own `list->array` here
+(also not a typo) confirms what the earlier "Supplementary" section
+inferred from a single 2D sample: jpy has no bulk path for
+multi-dimensional buffers in either direction, so numpy input pays real
+buffer-inspection overhead with no payoff, while jpype's
+`JPConversionMultiArrayBuffer` fast path (this session's follow-on) makes
+jpype's `buffer->array` its fastest multi-dimensional push row by a wide
+margin -- and the only one of the three libraries where `buffer->array`
+actually beats `list->array` at every depth.
+
+**pull, array->list** -- fully-materialized nested Python lists from
+`make{2,3,4,5}DIntArray(10)`:
+
+| dims | jpype | jpy | jep |
+|---:|---:|---:|---:|
+| 2 | 53475 | 8598 | 10840 |
+| 3 | 597300 | 86505 | 122934 |
+| 4 | 6490358 | 951499 | 1210478 |
+| 5 | 73669189 | 11994026 | 13695769 |
+
+**pull, array->buffer** -- `np.asarray(make{2,3,4,5}DIntArray(10))`:
+
+| dims | jpype | jpy | jep |
+|---:|---:|---:|---:|
+| 2 | 3482 | 8029 | 25692 |
+| 3 | 12502 | 73614 | 252709 |
+| 4 | 93607 | 829611 | 2717355 |
+| 5 | 965669 | 9301758 | 34146334 |
+
+jpype's `array->buffer` (`JPArray_getBuffer`'s `collectRectangular`) is
+the only multi-dimensional pull path with a real bulk read behind it --
+jpy has no buffer protocol on any array type past 1D (`jpy_jobj.c`), and
+jep has none on any returned array regardless of depth (see above), so
+both fall back to the same per-element walk `array->list` uses. That
+shows up directly: jpype's `array->buffer` beats its own `array->list`
+by 15-75x at every depth, while jpy's and jep's two pull columns stay
+within a small constant factor of each other throughout, same as in the
+flat table above.
+
+## pyjnius: a fourth library
+
+`project/benchmark/pyjnius/` adds pyjnius (Kivy's JNI-based bridge, built
+from `~/devel/pyjnius`, a Cython extension -- no prebuilt wheel existed,
+see README.md for the build) to every category above except
+`classhints.py` (jpype-only). ns/call, best-of-5.
+
+### Scalars, object, dispatch, proxy
+
+| category | operation | jpype | jpy | jep | pyjnius |
+|---|---|---:|---:|---:|---:|
+| int | `Math.max(int,int)` | 750 | 353 | 1299 | 1276 |
+| int | `new Integer(int)` | 840 | 479 | 1257 | 7403 |
+| double | `Math.sqrt(double)` | 690 | 393 | 645 | 497 |
+| double | `new Double(double)` | 918 | 506 | 1378 | 6765 |
+| string | `new String` + `.toString()` | 1022 | 927 | 2512 | 22349 |
+| object | `Object` identity (arg + return) | 995 | 730 | 1971 | 3763 |
+| method dispatch | overload x16, monomorphic | 686 | 370 | 4454 | 3858 |
+| method dispatch | overload x16, polymorphic | 925 | 456 | 4558 | 4000 |
+| proxy | callback, `int` arg | 2655 | N/A* | 2240 | 39412\*\*\* |
+
+pyjnius is the slowest of the four on every boxed/string/proxy row, often
+by a wide margin (`new Integer`: 7403 vs. 840-1257 elsewhere; `new
+String`+`.toString()`: 22349 vs. 927-2512; proxy: 39412 vs. 2240-2655).
+Not investigated down to the source level the jpy/jep comparisons above
+were -- flagging the gap, not attributing it to a specific mechanism.
+
+\*\*\* Only the `int`-arg proxy case is measured for pyjnius -- the
+`Object`-arg case (`invokeObjectCallback`) is not benchmarked because
+its null-argument variant (`invokeObjectCallbackWithNull`) reliably
+crashes the JVM with a native `SIGSEGV` in `jni_GetObjectClass`,
+reproduced independently three times against a fresh build in a
+disposable venv (ruled out as stale-build-state first, per this repo's
+CLAUDE.md). `DeepBench`'s `ObjectCallback` methods exist specifically to
+cover this case (see `jp_proxy.cpp`'s own history) -- a Python-side Java
+interface implementation receiving a genuinely null `Object` argument.
+This pyjnius checkout's proxy-argument-marshalling code calls
+`GetObjectClass`/`IsSameObject` on the argument without a null check
+first, which is undefined behavior over JNI. Even the *non-crashing*
+case (a real, non-null argument) doesn't work correctly either --
+`invokeObjectCallback` silently returns `None` instead of the object the
+Python callback handed back, a separate, non-fatal correctness bug in
+pyjnius's proxy return-value handling. This is a real finding about this
+pyjnius checkout, not a benchmark-setup issue.
+
+**numpy scalar dispatch** (mirroring the jpy finding earlier in this
+file): pyjnius has the same gap as jpy for `int`/`long` parameters --
+`Math.max(np.int32(3), 5)` fails -- but with a different, arguably
+clearer failure mode: `"No static methods called max in java/lang/Math
+matching your arguments... available: ['(JJ)J', '(II)I', '(DD)D',
+'(FF)F']"`, a plain "no match" error rather than jpy's "ambiguous" one.
+`np.float64` succeeds (genuinely a Python `float` subclass); single-
+overload methods (`Math.sqrt`) accept any numpy scalar type regardless,
+same reasoning as jpy's case.
+
+### Arrays: pyjnius has no `buffer->array` at all
+
+Confirmed empirically, not assumed: passing a numpy array anywhere a
+Java array argument is expected raises `JavaException('Expecting a
+python list/tuple, got array(...)')`, unconditionally, at every size and
+depth tried. This is stricter than jep (which has a real fast path for a
+flat 1D target) and stricter than jpy/jpype (both accept a buffer-
+protocol object at least for 1D). So only `list->array` push exists for
+pyjnius -- there's no `buffer->array` row to report.
+
+Pull is structurally different from the other three libraries too: a
+returned Java array comes back from pyjnius *already* a fully
+materialized, recursively-nested plain Python `list` -- confirmed
+(`type(DeepBench.make2DIntArray(4))` is `list`, and so is
+`type(DeepBench.make2DIntArray(4)[0])`). There's no wrapper array object
+to convert afterward, so `array->list` is just the raw return value, and
+`array->buffer` is that same value plus an extra `np.asarray()` step --
+strictly slower than `array->list` at every size/depth measured, since
+there's no bulk Java-array-to-numpy path to win with (unlike jpype's/
+jpy's `array->buffer`, which do have one, at least for 1D).
+
+**Flat (1D), list->array push** (`sumIntArray(list)`):
+
+| size | jpype | jpy | jep | pyjnius |
+|---:|---:|---:|---:|---:|
+| 100 | 3469 | 1313 | 1939 | 3068 |
+| 1,000 | 22032 | 8294 | 9574 | 25932 |
+| 10,000 | 211972 | 78342 | 86629 | 268303 |
+| 100,000 | 2007142 | 774569 | 840301 | 4520089 |
+
+**Flat (1D), pull** (`makeIntArray(n)`):
+
+| size | array->list (pyjnius) | array->buffer (pyjnius) |
+|---:|---:|---:|
+| 100 | 1234 | 3759 |
+| 1,000 | 10436 | 33889 |
+| 10,000 | 113502 | 351246 |
+| 100,000 | 1142328 | 4969111 |
+
+(compare against the four-library flat-pull tables in the "Array
+conversion suite" section above -- pyjnius's `array->list` is
+competitive with jpy's/jep's there, but its `array->buffer` never wins
+since it's just `array->list` plus a redundant conversion, unlike
+jpype's/jpy's real buffer reads.)
+
+**Multi-dimensional (2D-5D), list->array push** (`sum{2,3,4,5}DIntArray(nested_list)`):
+
+| dims | jpype | jpy | jep | pyjnius |
+|---:|---:|---:|---:|---:|
+| 2 | 16187 | 2226 | 5914 | 4867 |
+| 3 | 237328 | 18304 | 54016 | 41419 |
+| 4 | 3153538 | 179039 | 536362 | 418743 |
+| 5 | 39523608 | 1832619 | 5343343 | 4563869 |
+
+**Multi-dimensional (2D-5D), pull** (`make{2,3,4,5}DIntArray(10)`):
+
+| dims | array->list (pyjnius) | array->buffer (pyjnius) |
+|---:|---:|---:|
+| 2 | 2500 | 6124 |
+| 3 | 25676 | 59329 |
+| 4 | 357055 | 710086 |
+| 5 | 5127586 | 9973923 |
+
+## Verification
+
+Every change above went through the full local suite (standard and
+`ENABLE_COVERAGE=ON`/fault-injection builds, both fixed and
+`pytest-randomly` orderings) in a disposable venv per this repo's
+CLAUDE.md, plus targeted regression tests for the specific correctness
+edge cases each fast path introduced (null arguments, covariant/subclass
+returns, mixed-type lists, boxed-type round trips, repeated-call cache
+invalidation). See the individual commits for details.
+
+The multi-dimensional array follow-on adds its own regression tests in
+`test_array.py`: 2D/3D numpy round trips through the new path, a
+transposed (non-contiguous) numpy array correctly falling back to the
+general path, a dtype the buffer machinery can't convert correctly
+raising `TypeError` instead of being silently accepted, and a ragged
+nested list (which was never affected) still working.
+
+The array conversion suite's numbers above were all actually run for
+this table, not extrapolated: every `array_flat.py`/`array_multidim.py`
+in `project/benchmark/{jpype,jpy,jep}/` executed to completion (disposable
+venv for jpype, the prebuilt jpy wheel, jep's embedded-JVM launcher for
+jep) immediately before being recorded here.
+
+Same for the pyjnius section: built from source into its own disposable
+venv, every `project/benchmark/pyjnius/*.py` file executed to completion
+before its numbers were recorded, and the SIGSEGV finding was reproduced
+three separate times (once with a debug print inside the callback, once
+isolated to just the null-argument call, once to confirm the non-null
+call doesn't crash) before being written up as a real bug rather than a
+one-off fluke.

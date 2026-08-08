@@ -149,7 +149,7 @@ public:
 
 } asBooleanNumber;
 
-JPMatch::Type JPBooleanType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPBooleanType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPBooleanType::findJavaConversion", this);
 
@@ -361,6 +361,15 @@ PyObject *JPBooleanType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, i
 	JP_TRACE_IN("JPBooleanType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "z",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}
+
+jobject JPBooleanType::newMultiArrayObject(JPJavaFrame &frame, JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPBooleanType::newMultiArrayObject");
+	return convertMultiArrayObject<type_t>(
+			frame, this, &pack, converter,
 			buffer, subs, base, dims);
 	JP_TRACE_OUT;
 }

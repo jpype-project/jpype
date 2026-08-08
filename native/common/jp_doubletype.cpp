@@ -120,7 +120,7 @@ public:
 	}
 } asJDoubleConversion;
 
-JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPDoubleType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPDoubleType::findJavaConversion");
 
@@ -332,6 +332,15 @@ PyObject *JPDoubleType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, in
 	JP_TRACE_IN("JPDoubleType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "d",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}
+
+jobject JPDoubleType::newMultiArrayObject(JPJavaFrame &frame, JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPDoubleType::newMultiArrayObject");
+	return convertMultiArrayObject<type_t>(
+			frame, this, &pack, converter,
 			buffer, subs, base, dims);
 	JP_TRACE_OUT;
 }

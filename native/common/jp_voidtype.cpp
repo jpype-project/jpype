@@ -76,7 +76,7 @@ JPPyObject JPVoidType::convertToPythonObject(JPJavaFrame& frame, jvalue val, boo
 	return JPPyObject::getNone();
 }
 
-JPMatch::Type JPVoidType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPVoidType::findJavaConversionImpl(JPMatch &match)
 {
 	return match.type = JPMatch::_none;
 }
@@ -154,6 +154,12 @@ jdouble JPVoidType::getAsDouble(jvalue v)
 
 PyObject *JPVoidType::newMultiArray(JPJavaFrame &frame,
 		JPPyBuffer& view, int subs, int base, jobject dims)
+{
+	return nullptr;
+}
+
+jobject JPVoidType::newMultiArrayObject(JPJavaFrame &frame,
+		JPPyBuffer& view, jconverter converter, int subs, int base, jobject dims)
 {
 	return nullptr;
 }

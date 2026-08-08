@@ -13,6 +13,7 @@
 
    See NOTICE file for details.
  *****************************************************************************/
+#include <cctype>
 #include <utility>
 
 #include <Python.h>
@@ -24,13 +25,15 @@
 
 #include "pyjp.h"
 
+#include "jp_primitive_accessor.h"
+
 JPMatch::JPMatch() : conversion(nullptr), frame(nullptr), object(nullptr),
-					 type(JPMatch::_none), closure(nullptr),
+					 type(JPMatch::_none), closure(nullptr), cacheable(true),
 					 m_SlotResolved(false), m_SlotClass(nullptr), m_SlotValue()
 {}
 
 JPMatch::JPMatch(JPJavaFrame *fr, PyObject *obj) : conversion(nullptr), frame(fr), object(obj),
-												   type(JPMatch::_none), closure(nullptr),
+												   type(JPMatch::_none), closure(nullptr), cacheable(true),
 												   m_SlotResolved(false), m_SlotClass(nullptr), m_SlotValue()
 {}
 
@@ -101,6 +104,9 @@ JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool ca
 }
 
 JPConversion::~JPConversion() = default;
+
+uint64_t JPClassHints::s_Generation = 1;
+
 JPClassHints::JPClassHints()
 {
 	m_ConvertJava = false;
@@ -207,6 +213,10 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		JP_TRACE_IN("JPAttributeConversion::matches");
+		// Duck-typed attribute presence is always instance-dependent (e.g.
+		// __getattr__, per-instance attributes) -- never safe to cache by
+		// Py_TYPE(object) alone.
+		match.cacheable = false;
 		JPPyObject attr = JPPyObject::accept(PyObject_GetAttrString(match.object, attribute_.c_str()));
 		if (attr.isNull())
 			return JPMatch::_none;
@@ -232,6 +242,7 @@ void JPClassHints::addAttributeConversion(const string &attribute, PyObject *con
 	JP_TRACE_IN("JPClassHints::addAttributeConversion", this);
 	JP_TRACE(attribute);
 	conversions.push_back(new JPAttributeConversion(attribute, conversion));
+	++s_Generation;
 	JP_TRACE_OUT;
 }
 
@@ -319,6 +330,7 @@ void JPClassHints::addTypeConversion(PyObject *type, PyObject *method, bool exac
 	if (PyJPClass_Check(type))
 		m_ConvertJava = true;
 	conversions.push_back(new JPTypeConversion(type, method, exact));
+	++s_Generation;
 	JP_TRACE_OUT;
 }
 
@@ -326,6 +338,7 @@ void JPClassHints::excludeConversion(PyObject *type)
 {
 	JP_TRACE_IN("JPClassHints::addTypeConversion", this);
 	conversions.push_front(new JPNoneConversion(type));
+	++s_Generation;
 	JP_TRACE_OUT;
 }
 
@@ -509,6 +522,9 @@ public:
 			PyErr_Clear();
 			return match.type = JPMatch::_none;
 		}
+		// From here the result depends on the buffer's element type/content,
+		// not just Py_TYPE(object) -- e.g. a numpy array of floats vs ints.
+		match.cacheable = false;
 		match.type = JPMatch::_implicit;
 		if (length > 0)
 		{
@@ -545,6 +561,113 @@ public:
 	}
 }  _bufferConversion;
 
+// Fast path for multi-dimensional primitive arrays (int[][], double[][][],
+// ...) from a buffer-protocol object (a numpy ndarray, chiefly) whose ndim
+// matches the array nesting depth. Without this, JPArrayClass falls through
+// to sequenceConversion, which walks the outer dimension via Python-level
+// indexing (materializing a fresh sub-array/view object per row) and then
+// recurses into a separate JPConversionBuffer/setArrayRange call per row.
+// This instead traverses the buffer directly off its own shape/strides
+// (convertMultiArrayObject, shared with the explicit arrayFromBuffer()
+// call), with no per-row Python object churn.
+class JPConversionMultiArrayBuffer : public JPConversion
+{
+public:
+
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	{
+		JP_TRACE_IN("JPConversionMultiArrayBuffer::matches");
+		auto *acls = dynamic_cast<JPArrayClass*>( cls);
+		// Depth/leaf are precomputed once at class-construction time (see
+		// JPArrayClass's ctor) specifically so this common-case bailout
+		// (called for every array-typed argument, including plain lists
+		// that will never match here) stays a couple of field reads, not a
+		// dynamic_cast walk. A single dimension is already handled (faster,
+		// since it also covers non-buffer sequences too) by
+		// bufferConversion/setArrayRange's own buffer fast path -- this
+		// conversion only has something to offer starting at int[][] and
+		// deeper.
+		JPPrimitiveType *pcls = acls->getMultiArrayLeaf();
+		int depth = acls->getMultiArrayDepth();
+		if (pcls == nullptr || depth < 2)
+			return match.type = JPMatch::_none;
+
+		if (!PyObject_CheckBuffer(match.object))
+			return match.type = JPMatch::_none;
+
+		// Same flags as bufferConversion above: PyBUF_ND requires a
+		// C-contiguous view, so anything that can't provide one (e.g. a
+		// transposed numpy array) simply fails to match here and falls
+		// through to the general (always-correct) sequenceConversion.
+		JPPyBuffer buffer(match.object, PyBUF_ND | PyBUF_FORMAT);
+		if (!buffer.valid())
+		{
+			PyErr_Clear();
+			return match.type = JPMatch::_none;
+		}
+		Py_buffer &view = buffer.getView();
+		if (view.ndim != depth)
+			return match.type = JPMatch::_none;
+
+		char code[2] = {(char) tolower(pcls->getTypeCode()), 0};
+		const char *format = view.format != nullptr ? view.format : "B";
+		if (getConverter(format, (int) view.itemsize, code) == nullptr)
+			return match.type = JPMatch::_none;
+
+		// Depends on the buffer's shape/dtype, not just Py_TYPE(object).
+		match.cacheable = false;
+		match.closure = cls;
+		match.conversion = multiArrayBufferConversion;
+		return match.type = JPMatch::_implicit;
+		JP_TRACE_OUT;
+	}
+
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	{
+		// This will be covered by Sequence, same as bufferConversion above.
+	}
+
+	jvalue convert(JPMatch &match) override
+	{
+		JP_TRACE_IN("JPConversionMultiArrayBuffer::convert");
+		JPJavaFrame frame(*match.frame);
+		auto *acls = (JPArrayClass *) match.closure;
+		JPPrimitiveType *pcls = acls->getMultiArrayLeaf();
+
+		JPPyBuffer buffer(match.object, PyBUF_ND | PyBUF_FORMAT);
+		if (!buffer.valid())
+			JP_RAISE(PyExc_TypeError, "buffer protocol required");
+		Py_buffer &view = buffer.getView();
+
+		JPContext *context = frame.getContext();
+		auto jdims = (jintArray) context->_int->newArrayOf(frame, view.ndim);
+		{
+			JPPrimitiveArrayAccessor<jintArray, jint*> accessor(frame, jdims,
+					&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
+			jint *a = accessor.get();
+			for (int i = 0; i < view.ndim; ++i)
+				a[i] = (jint) view.shape[i];
+			accessor.commit();
+		}
+		Py_ssize_t subs = 1;
+		for (int i = 0; i < view.ndim - 1; ++i)
+			subs *= view.shape[i];
+		Py_ssize_t base = view.shape[view.ndim - 1];
+
+		char code[2] = {(char) tolower(pcls->getTypeCode()), 0};
+		const char *format = view.format != nullptr ? view.format : "B";
+		jconverter converter = getConverter(format, (int) view.itemsize, code);
+		if (converter == nullptr)
+			JP_RAISE(PyExc_TypeError, "No type converter found");
+
+		jvalue res;
+		res.l = frame.keep(pcls->newMultiArrayObject(frame, buffer, converter,
+				(int) subs, (int) base, (jobject) jdims));
+		return res;
+		JP_TRACE_OUT;
+	}
+} _multiArrayBufferConversion;
+
 class JPConversionSequence : public JPConversion
 {
 public:
@@ -563,6 +686,9 @@ public:
 			PyErr_Clear();
 			return match.type = JPMatch::_none;
 		}
+		// From here the result depends on the sequence's element types, not
+		// just Py_TYPE(object) -- e.g. a list of ints vs a list of strings.
+		match.cacheable = false;
 		match.type = JPMatch::_implicit;
 		for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
 		{
@@ -570,6 +696,23 @@ public:
 			// so we must hold the reference in a container while
 			// the match is caching it.
 			JPPyObject item = seq[i];
+
+			// Fast path: a raw type check standing in for a known quality,
+			// skipping JPMatch construction and the general
+			// findJavaConversion dispatch entirely. Falls through to the
+			// general path (unchanged) the moment an element doesn't
+			// qualify -- so a homogeneous list (the common case) never
+			// touches the slow path at all, and a mixed list only pays
+			// full price from the first non-conforming element onward, not
+			// for the whole list.
+			JPMatch::Type fastQuality;
+			if (componentType->fastElementCheck(item.get(), fastQuality))
+			{
+				if (fastQuality < match.type)
+					match.type = fastQuality;
+				continue;
+			}
+
 			JPMatch imatch(match.frame, item.get());
 			componentType->findJavaConversion(imatch);
 			if (imatch.type < match.type)
@@ -641,9 +784,19 @@ public:
 		JP_TRACE_IN("JPConversionClass::matches");
 		if (match.frame == nullptr)
 			return match.type = JPMatch::_none;
+		// PyJPClass_getJPClass gates on Py_TYPE first (PyJPClass_Check) and
+		// returns nullptr immediately for anything that isn't a _JClass
+		// instance -- that "not a Class object at all" case (the overwhelming
+		// majority of callers, e.g. any plain object matched against
+		// java.lang.Object) is genuinely type-only and safe to cache.
 		JPClass* cls2 = PyJPClass_getJPClass(match.object);
 		if (cls2 == nullptr)
 			return match.type = JPMatch::_none;
+		// Every _JClass type instance shares the same Py_TYPE
+		// (PyJPClass_Type) but wraps a different java.lang.Class -- from
+		// here the result depends on match.object's identity, not just its
+		// type.
+		match.cacheable = false;
 		match.conversion = this;
 		match.closure = cls2;
 		return match.type = JPMatch::_implicit;
@@ -792,6 +945,15 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
 	{
 		JP_TRACE_IN("JPConversionBoxBoolean::matches");
+		// This is reached directly via JPObjectType/JPNumberType's chain
+		// (a bare Python bool matched against Object/Number), where the
+		// box class is always java.lang.Boolean regardless of `cls`. See
+		// JPConversionBoxGeneric below for JPBoxedType's own, separate
+		// "any boxed primitive" stand-in -- keeping the two roles as
+		// distinct objects means neither one's closure handling has to
+		// account for the other (a single object previously played both
+		// roles, and fixing one's closure handling silently broke the
+		// other -- see the JObject(5, Integer) regression this caused).
 		if (!PyBool_Check(match.object))
 			return match.type = JPMatch::_none;
 		match.conversion = this;
@@ -806,6 +968,30 @@ public:
 	}
 
 } _boxBooleanConversion;
+
+/**
+ * Generic "any boxed primitive" stand-in used only by
+ * JPBoxedType::findJavaConversionImpl, once it has already resolved a
+ * match via the primitive type and knows which box class (`this`) it
+ * wants -- convert() (inherited from JPConversionBox, unmodified) just
+ * reads match.closure as the caller already set it to.
+ */
+class JPConversionBoxGeneric : public JPConversionBox
+{
+public:
+
+	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
+	{
+		// Never reached via the normal matches() chain -- JPBoxedType
+		// assigns this conversion directly, once it already knows the
+		// match succeeded some other way.
+		return match.type = JPMatch::_none; // GCOVR_EXCL_LINE
+	}
+
+	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	{
+	}
+} _boxGenericConversion;
 
 class JPConversionBoxLong : public JPConversionBox
 {
@@ -1018,7 +1204,16 @@ public:
 		JP_TRACE_IN("JPConversionProxy::matches");
 		JPProxy* proxy = PyJPProxy_getJPProxy(match.object);
 		if (proxy == nullptr || match.frame == nullptr)
+			// Whether a Python type carries a proxy at all is fixed at
+			// class-decoration time (@JImplements), so this branch is
+			// genuinely type-only and safe to cache -- unlike the interface
+			// list below, which we don't have the same guarantee about.
 			return match.type = JPMatch::_none;
+
+		// Interfaces come from a per-instance JPProxy*; not verified to be
+		// invariant across all instances of a given Python type, so treated
+		// conservatively as never cacheable from here on.
+		match.cacheable = false;
 
 		// Check if any of the interfaces matches ...
 		vector<JPClass*> itf = proxy->getInterfaces();
@@ -1049,6 +1244,7 @@ JPConversion *hintsConversion = &_hintsConversion;
 JPConversion *charArrayConversion = &_charArrayConversion;
 JPConversion *byteArrayConversion = &_byteArrayConversion;
 JPConversion *bufferConversion = &_bufferConversion;
+JPConversion *multiArrayBufferConversion = &_multiArrayBufferConversion;
 JPConversion *sequenceConversion = &_sequenceConversion;
 JPConversion *nullConversion = &_nullConversion;
 JPConversion *classConversion = &_classConversion;
@@ -1058,6 +1254,7 @@ JPConversion *javaNumberAnyConversion = &_javaNumberAnyConversion;
 JPConversion *javaValueConversion = &_javaValueConversion;
 JPConversion *stringConversion = &_stringConversion;
 JPConversion *boxBooleanConversion = &_boxBooleanConversion;
+JPConversion *boxGenericConversion = &_boxGenericConversion;
 JPConversion *boxLongConversion = &_boxLongConversion;
 JPConversion *boxDoubleConversion = &_boxDoubleConversion;
 JPConversion *unboxConversion = &_unboxConversion;

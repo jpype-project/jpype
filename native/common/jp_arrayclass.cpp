@@ -28,19 +28,38 @@ JPArrayClass::JPArrayClass(JPJavaFrame& frame,
 : JPClass(frame, cls, name, superClass, JPClassList(), modifiers)
 {
 	m_ComponentType = componentType;
+
+	// componentType is always fully constructed already (array classes are
+	// built bottom-up), so this can be resolved once here rather than with
+	// a dynamic_cast walk on every JPConversionMultiArrayBuffer::matches().
+	auto *actl = dynamic_cast<JPArrayClass*>(componentType);
+	if (actl != nullptr)
+	{
+		m_MultiArrayDepth = actl->m_MultiArrayDepth + 1;
+		m_MultiArrayLeaf = actl->m_MultiArrayLeaf;
+	} else
+	{
+		m_MultiArrayDepth = 1;
+		m_MultiArrayLeaf = dynamic_cast<JPPrimitiveType*>(componentType);
+	}
 }
 
 JPArrayClass::~JPArrayClass()
 = default;
 
-JPMatch::Type JPArrayClass::findJavaConversion(JPMatch &match)
+JPMatch::Type JPArrayClass::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPArrayClass::findJavaConversion");
+	// m_MultiArrayDepth < 2 covers every existing 1D array class (the vast
+	// majority of calls into this function) -- skip even calling into
+	// multiArrayBufferConversion for those so this addition costs nothing
+	// beyond one integer compare on the paths it doesn't apply to.
 	if (nullConversion->matches(this, match)
 			|| objectConversion->matches(this, match)
 			|| charArrayConversion->matches(this, match)
 			|| byteArrayConversion->matches(this, match)
 			|| bufferConversion->matches(this, match)
+			|| (m_MultiArrayDepth >= 2 && multiArrayBufferConversion->matches(this, match))
 			|| sequenceConversion->matches(this, match)
 			|| hintsConversion->matches(this, match)
 			)

@@ -16,6 +16,7 @@
 #ifndef _JP_CLASS_H_
 #define _JP_CLASS_H_
 
+#include "jp_conversioncache.h"
 #include "jp_modifier.h"
 
 class JPClass : public JPResource
@@ -120,10 +121,61 @@ public:
 	 *
 	 * This is used to determine which overload is the best match.
 	 *
+	 * Non-virtual: consults a per-type cache keyed on Py_TYPE(match.object)
+	 * before delegating to the virtual findJavaConversionImpl, and memoizes
+	 * the result there if the resolution turned out to be cacheable (see
+	 * JPMatch::cacheable). Subclasses override findJavaConversionImpl, not
+	 * this.
+	 *
 	 * @param pyobj is the Python object.
 	 * @return the quality of the match
 	 */
-	virtual JPMatch::Type findJavaConversion(JPMatch& match);
+	JPMatch::Type findJavaConversion(JPMatch& match);
+
+	/**
+	 * Cheap, type-only check for whether a single Python object matches
+	 * this class at some known quality, without going through the general
+	 * findJavaConversion dispatch (JPMatch construction, cache lookup,
+	 * matches() chain).
+	 *
+	 * Used by JPConversionSequence (jp_classhints.cpp) to fast-path the
+	 * common case of a homogeneous list of one recognized element type
+	 * (e.g. plain `int` for int[]): it tries this first, per element, and
+	 * only falls back to the general path (unchanged, fully correct) from
+	 * the point where an element doesn't satisfy it -- so a mixed list
+	 * only ever pays full price for its non-conforming tail, not the whole
+	 * list, and a fully homogeneous list never constructs a JPMatch at
+	 * all. Returns false (no opinion, always safe) by default; only worth
+	 * overriding where a raw C-API type check can stand in for a known
+	 * quality level.
+	 */
+	virtual bool fastElementCheck(PyObject* obj, JPMatch::Type& quality) const
+	{
+		return false;
+	}
+
+	/** Clear this class's cached findJavaConversion() results.
+	 *
+	 * Called lazily by findJavaConversion() itself when JPClassHints's
+	 * global generation counter has moved on since this class's cache was
+	 * last populated (i.e. some class's hints changed somewhere).
+	 */
+	void clearConversionCache();
+
+protected:
+	/**
+	 * The actual, per-class conversion search (null/object/proxy/hints,
+	 * or a hand-written primitive-type chain, depending on the subclass).
+	 * Overridden instead of findJavaConversion so the caching wrapper above
+	 * stays in one place. See JPBoxedType/JPFunctional for the one pattern
+	 * that needs care: reusing another class's chain (including this base
+	 * one) as a building block must call findJavaConversionImpl directly
+	 * (explicitly qualified) rather than going back through
+	 * findJavaConversion, or it recurses into itself through the vtable.
+	 */
+	virtual JPMatch::Type findJavaConversionImpl(JPMatch& match);
+
+public:
 
 	virtual void getConversionInfo(JPConversionInfo &info);
 
@@ -209,6 +261,19 @@ protected:
 	jint                 m_Modifiers;
 	JPPyObject           m_Host;
 	JPPyObject           m_Hints;
+
+private:
+	// Every cacheable matches() sets match.closure to exactly `this`, with
+	// one known exception: boxBooleanConversion's dedicated direct-match
+	// role (see jp_boxedtype.cpp's JPConversionBoxGeneric comment) always
+	// uses the fixed java.lang.Boolean class instead, regardless of `this`.
+	// That's a compile-time constant tied to *which conversion* was cached,
+	// not extra per-entry state, so JPClass::findJavaConversion special-
+	// cases it directly rather than growing the cache entry to carry a
+	// third field (see JPConversionCache for why that matters: it's sized
+	// to fit in one atomically-accessed 128-bit slot).
+	JPConversionCache m_ConversionCache;
+	uint64_t m_ConversionCacheGeneration = 0;
 } ;
 
 #endif // _JPPOBJECTTYPE_H_

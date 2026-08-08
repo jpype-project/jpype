@@ -101,7 +101,7 @@ public:
 
 } jshortConversion;
 
-JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPShortType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPShortType::findJavaConversion");
 
@@ -317,6 +317,15 @@ PyObject *JPShortType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int
 	JP_TRACE_IN("JPShortType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "s",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}
+
+jobject JPShortType::newMultiArrayObject(JPJavaFrame &frame, JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPShortType::newMultiArrayObject");
+	return convertMultiArrayObject<type_t>(
+			frame, this, &pack, converter,
 			buffer, subs, base, dims);
 	JP_TRACE_OUT;
 }

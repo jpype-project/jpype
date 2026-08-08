@@ -31,7 +31,7 @@ public:
 	~ JPArrayClass() override;
 
 	JPPyObject convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
-	JPMatch::Type findJavaConversion(JPMatch &match) override;
+	JPMatch::Type findJavaConversionImpl(JPMatch &match) override;
 	void getConversionInfo(JPConversionInfo &info) override;
 
 	JPValue newArray(JPJavaFrame& frame, int length);
@@ -59,8 +59,27 @@ public:
 		return true;
 	}
 
+	// Nesting depth (1 for e.g. int[], 2 for int[][], ...) and primitive
+	// leaf type of this array's component chain, computed once at
+	// construction (component classes are always fully built already, so
+	// this is O(1) here rather than a dynamic_cast walk on every
+	// conversion attempt). getMultiArrayLeaf() is nullptr for arrays that
+	// don't bottom out in a single primitive type (e.g. Object[][]) -- see
+	// JPConversionMultiArrayBuffer in jp_classhints.cpp, the only user.
+	JPPrimitiveType* getMultiArrayLeaf() const
+	{
+		return m_MultiArrayLeaf;
+	}
+
+	int getMultiArrayDepth() const
+	{
+		return m_MultiArrayDepth;
+	}
+
 private:
 	JPClass* m_ComponentType;
+	JPPrimitiveType* m_MultiArrayLeaf;
+	int m_MultiArrayDepth;
 } ;
 
 #endif // _JPARRAYCLASS_H_
