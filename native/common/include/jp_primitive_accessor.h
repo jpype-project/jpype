@@ -15,6 +15,7 @@
  *****************************************************************************/
 #ifndef JP_PRIMITIVE_ACCESSOR_H
 #define JP_PRIMITIVE_ACCESSOR_H
+#include <cstring>
 #include <Python.h>
 #include "jp_exception.h"
 #include "jp_javaframe.h"
@@ -85,22 +86,23 @@ public:
 
 } ;
 
-template <class type_t> PyObject *convertMultiArray(
+// Traverses a Python buffer and packs it into a (possibly multi-dimensional)
+// Java primitive array, returning the raw local ref. Split out from
+// convertMultiArray below so callers that want the jvalue directly (the
+// general argument-conversion path, which mustn't round-trip through a
+// Python wrapper object just to unwrap it again) can use it without also
+// paying for convertToPythonObject. converter must already have been
+// resolved (see convertMultiArray) -- this half assumes it is valid.
+template <class type_t> jobject convertMultiArrayObject(
 		JPJavaFrame &frame,
 		JPPrimitiveType* cls,
 		void (*pack)(type_t*, jvalue),
-		const char* code,
+		jconverter converter,
 		JPPyBuffer &buffer,
 		int subs, int base, jobject dims)
 {
 	JPContext *context = frame.getContext();
 	Py_buffer& view = buffer.getView();
-	jconverter converter = getConverter(view.format, (int) view.itemsize, code);
-	if (converter == nullptr)
-	{
-		PyErr_Format(PyExc_TypeError, "No type converter found");
-		return nullptr;
-	}
 
 	// Reserve space for array.
 	auto contents = (jobjectArray) context->_java_lang_Object->newArrayOf(frame, subs);
@@ -160,7 +162,28 @@ template <class type_t> PyObject *convertMultiArray(
 	}
 
 	// Assemble it into a multidimensional array
-	jobject out = frame.assemble(dims, contents);
+	return frame.assemble(dims, contents);
+}
+
+template <class type_t> PyObject *convertMultiArray(
+		JPJavaFrame &frame,
+		JPPrimitiveType* cls,
+		void (*pack)(type_t*, jvalue),
+		const char* code,
+		JPPyBuffer &buffer,
+		int subs, int base, jobject dims)
+{
+	JPContext *context = frame.getContext();
+	Py_buffer& view = buffer.getView();
+	jconverter converter = getConverter(view.format, (int) view.itemsize, code);
+	if (converter == nullptr)
+	{
+		PyErr_Format(PyExc_TypeError, "No type converter found");
+		return nullptr;
+	}
+
+	jobject out = convertMultiArrayObject<type_t>(
+			frame, cls, pack, converter, buffer, subs, base, dims);
 
 	// Convert it to Python
 	JPClass *type = context->_java_lang_Object;
@@ -169,6 +192,105 @@ template <class type_t> PyObject *convertMultiArray(
 	jvalue v;
 	v.l = out;
 	return type->convertToPythonObject(frame, v, false).keep();
+}
+
+/**
+ * Bulk-copy a (possibly strided/sliced) 1-D primitive Java array into an
+ * arbitrary-shape/strided caller-owned Python buffer (JArray.pullTo's
+ * general path).
+ *
+ * Used whenever the fast contiguous path (a single Get<Type>ArrayRegion
+ * call straight into the destination, see JPArray::pullTo) does not
+ * apply, i.e. the source is a stepped slice and/or the destination is
+ * non-contiguous or N-dimensional. Mirrors convertMultiArrayObject's
+ * Py_buffer stride-walk above, but reversed (the Java array is pinned as
+ * the *source*, the destination's shape/strides are walked instead of the
+ * source's) and without value conversion: this is a same-dtype bulk copy,
+ * not a type-converting one, so it is a plain itemsize-wide memcpy per
+ * element rather than a pack/converter round trip.
+ */
+inline void copyArrayToBuffer(JPJavaFrame &frame, jarray source,
+		jsize start, jsize step, jsize len, Py_ssize_t itemsize,
+		JPPyBuffer &destBuffer)
+{
+	Py_buffer& view = destBuffer.getView();
+	jboolean isCopy;
+	void *mem = frame.getEnv()->GetPrimitiveArrayCritical(source, &isCopy);
+	JP_TRACE_JAVA("GetPrimitiveArrayCritical", mem);
+
+	std::vector<Py_ssize_t> indices(view.ndim, 0);
+	int u = view.ndim - 1;
+	for (Py_ssize_t idx = 0; idx < len; ++idx)
+	{
+		char *destPtr = destBuffer.getBufferPtr(indices);
+		const char *srcPtr = (const char*) mem + (start + idx * step) * itemsize;
+		memcpy(destPtr, srcPtr, (size_t) itemsize);
+
+		// Odometer-increment the destination index vector.
+		for (int d = u; d >= 0; --d)
+		{
+			if (++indices[d] < view.shape[d])
+				break;
+			indices[d] = 0;
+		}
+	}
+
+	JP_TRACE_JAVA("ReleasePrimitiveArrayCritical", mem);
+	frame.getEnv()->ReleasePrimitiveArrayCritical(source, mem, JNI_ABORT);
+}
+
+/**
+ * Bulk-copy an arbitrary-shape/strided caller-owned Python buffer into a
+ * (possibly strided/sliced) 1-D primitive Java array (JArray.pushFrom's
+ * general path) -- the mirror of copyArrayToBuffer above, converting
+ * rather than reinterpreting.
+ *
+ * Used whenever the fast contiguous+dtype-matching path (a single
+ * Set<Type>ArrayRegion call, see JPArray::pushFrom) does not apply, i.e.
+ * real value conversion is needed (dtype coercion, byte swap,
+ * half-precision decode) and/or the source is non-contiguous or
+ * N-dimensional. `converter` must already be resolved (see getConverter).
+ * A single JNI critical section covers the whole destination array --
+ * unlike the multi-dimensional push path, there is no per-row pinning
+ * concern here since JPArray itself is always flat (one Java array
+ * object), so this is already about as cheap as a converting copy can be
+ * without leaving C++ entirely.
+ *
+ * jvalue is a plain union (every member aliases the same storage from
+ * byte 0), so writing the itemsize-wide prefix of a freshly-converted
+ * jvalue is exactly the converted value in `dest`'s own primitive type --
+ * no per-type dispatch needed here, unlike convertMultiArrayObject's pack
+ * function pointer, because there is no PyObject wrapping step in the way.
+ */
+inline void copyBufferToArray(JPJavaFrame &frame, jarray dest,
+		jsize start, jsize step, jsize len, Py_ssize_t itemsize,
+		jconverter converter, JPPyBuffer &srcBuffer)
+{
+	Py_buffer& view = srcBuffer.getView();
+	jboolean isCopy;
+	void *mem = frame.getEnv()->GetPrimitiveArrayCritical(dest, &isCopy);
+	JP_TRACE_JAVA("GetPrimitiveArrayCritical", mem);
+
+	std::vector<Py_ssize_t> indices(view.ndim, 0);
+	int u = view.ndim - 1;
+	for (Py_ssize_t idx = 0; idx < len; ++idx)
+	{
+		char *srcPtr = srcBuffer.getBufferPtr(indices);
+		jvalue v = converter(srcPtr);
+		char *destPtr = (char*) mem + (start + idx * step) * itemsize;
+		memcpy(destPtr, &v, (size_t) itemsize);
+
+		// Odometer-increment the source index vector.
+		for (int d = u; d >= 0; --d)
+		{
+			if (++indices[d] < view.shape[d])
+				break;
+			indices[d] = 0;
+		}
+	}
+
+	JP_TRACE_JAVA("ReleasePrimitiveArrayCritical", mem);
+	frame.getEnv()->ReleasePrimitiveArrayCritical(dest, mem, 0);
 }
 
 template <typename base_t>

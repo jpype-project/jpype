@@ -16,6 +16,8 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_array.h"
+#include "jp_arrayclass.h"
+#include "jp_classhints.h"
 #include "jp_primitive_accessor.h"
 #include "jp_chartype.h"
 #include "jp_boxedtype.h"
@@ -74,6 +76,11 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match)  override
 	{
 		JP_TRACE_IN("JPConversionAsChar::matches");
+		// checkCharUTF16 requires str/bytes of length exactly 1 -- depends
+		// on the object's content/length, not just its Py_TYPE (e.g.
+		// bytes([1]) matches but bytes([1, 1]) does not, despite both being
+		// `bytes`).
+		match.cacheable = false;
 		if (!JPPyString::checkCharUTF16(match.object))
 			return match.type = JPMatch::_none;
 		match.conversion = this;
@@ -123,7 +130,7 @@ public:
 
 } asJCharConversion;
 
-JPMatch::Type JPCharType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPCharType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPCharType::findJavaConversion");
 
@@ -211,31 +218,46 @@ void JPCharType::setArrayRange(JPJavaFrame& frame, jarray a,
 		PyObject* sequence)
 {
 	JP_TRACE_IN("JPCharType::setArrayRange");
-
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
 			&JPJavaFrame::GetCharArrayElements, &JPJavaFrame::ReleaseCharArrayElements);
 
 	type_t* val = accessor.get();
-	JPPySequence seq = JPPySequence::use(sequence);
 	jsize index = start;
-	for (Py_ssize_t i = 0; i < length; ++i, index += step)
+
+	// Fast path: a plain list/tuple, avoiding PySequence_GetItem's generic
+	// protocol dispatch in favor of PyList_GET_ITEM/PyTuple_GET_ITEM. No
+	// per-element type/length branch needed beyond what asCharUTF16
+	// already does -- matches()/sequenceCheck already validated every
+	// element converts (length-1 string or JChar), so this is purely a
+	// container-access optimization, not a widened-acceptance one.
+	if (PyList_CheckExact(sequence))
 	{
-		jchar v = JPPyString::asCharUTF16(seq[i].get());
-		JP_PY_CHECK();
-		val[index] = (type_t) v;
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			jchar v = JPPyString::asCharUTF16(PyList_GET_ITEM(sequence, i));
+			JP_PY_CHECK();
+			val[index] = (type_t) v;
+		}
+	} else if (PyTuple_CheckExact(sequence))
+	{
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			jchar v = JPPyString::asCharUTF16(PyTuple_GET_ITEM(sequence, i));
+			JP_PY_CHECK();
+			val[index] = (type_t) v;
+		}
+	} else
+	{
+		JPPySequence seq = JPPySequence::use(sequence);
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			jchar v = JPPyString::asCharUTF16(seq[i].get());
+			JP_PY_CHECK();
+			val[index] = (type_t) v;
+		}
 	}
 	accessor.commit();
 	JP_TRACE_OUT;
-}
-
-JPPyObject JPCharType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
-{
-	auto array = (array_t) a;
-	type_t val;
-	frame.GetCharArrayRegion(array, ndx, 1, &val);
-	jvalue v;
-	field(v) = val;
-	return convertToPythonObject(frame, v, false);
 }
 
 void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
@@ -245,6 +267,79 @@ void JPCharType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java char");
 	type_t val = field(match.convert());
 	frame.SetCharArrayRegion((array_t) a, ndx, 1, &val);
+}
+
+JPPyObject JPCharType::getFastArrayItem(JPJavaAccess& frame, jarray a, jsize ndx)
+{
+	// See JPIntType::getFastArrayItem: inlines convertToPythonObject
+	// directly -- PyJPValue_assignJavaSlot is a guaranteed no-op for this
+	// family, so no frame is ever genuinely needed here.
+	auto array = (array_t) a;
+	type_t val;
+	frame.GetCharArrayRegion(array, ndx, 1, &val);
+	return JPPyObject::call(PyJPChar_Create((PyTypeObject*) _JChar, val));
+}
+
+JPArray* JPCharType::createArrayWrapper(const JPValue& value)
+{
+	return new JPArrayChar(value);
+}
+
+JPArrayClass* JPCharType::createArrayClass(JPJavaFrame& frame, jclass cls,
+		const string& name, JPClass* superClass, jint modifiers)
+{
+	return new JPArrayClassChar(frame, cls, name, superClass, this, modifiers);
+}
+
+JPMatch::Type JPArrayClassChar::findJavaConversionImpl(JPMatch &match)
+{
+	JP_TRACE_IN("JPArrayClassChar::findJavaConversion");
+	if (nullConversion->matches(this, match)
+			|| objectConversion->matches(this, match)
+			|| charArrayConversion->matches(this, match)
+			|| bufferConversion->matches(this, match)
+			|| listConversion->matches(this, match)
+			|| tupleConversion->matches(this, match)
+			|| sequenceConversion->matches(this, match)
+			|| hintsConversion->matches(this, match)
+			)
+		return match.type;
+	JP_TRACE("None");
+	return match.type = JPMatch::_none;
+	JP_TRACE_OUT;
+}
+
+void JPArrayClassChar::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame = JPJavaFrame::outer();
+	objectConversion->getInfo(this, info);
+	charArrayConversion->getInfo(this, info);
+	bufferConversion->getInfo(this, info);
+	sequenceConversion->getInfo(this, info);
+	hintsConversion->getInfo(this, info);
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
+}
+
+JPArrayChar::JPArrayChar(const JPValue& array)
+: JPArray(array), m_CompType(dynamic_cast<JPCharType*>(m_Class->getComponentType()))
+{
+}
+
+JPArrayChar::JPArrayChar(JPArrayChar* src, jsize start, jsize stop, jsize step)
+: JPArray(src, start, stop, step), m_CompType(src->m_CompType)
+{
+}
+
+JPPyObject JPArrayChar::getItem(jsize ndx)
+{
+	ndx = checkIndex(ndx);
+	JPJavaAccess frame;
+	return m_CompType->getFastArrayItem(frame, m_Object.get(), m_Start + ndx * m_Step);
+}
+
+JPArray* JPArrayChar::slice(jsize start, jsize stop, jsize step)
+{
+	return new JPArrayChar(this, start, stop, step);
 }
 
 void JPCharType::getView(JPArrayView& view)
@@ -287,6 +382,13 @@ void JPCharType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize l
 	frame.GetCharArrayRegion((jcharArray) a, start, len, b);
 }
 
+void JPCharType::setElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		const void* memory, int offset)
+{
+	auto* b = (jchar*) ((const char*) memory + offset);
+	frame.SetCharArrayRegion((jcharArray) a, start, len, const_cast<jchar*>(b));
+}
+
 static void pack(jchar* d, jvalue v)
 {
 	*d = v.c;
@@ -297,6 +399,15 @@ PyObject *JPCharType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int 
 	JP_TRACE_IN("JPCharType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "c",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}
+
+jobject JPCharType::newMultiArrayObject(JPJavaFrame &frame, JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPCharType::newMultiArrayObject");
+	return convertMultiArrayObject<type_t>(
+			frame, this, &pack, converter,
 			buffer, subs, base, dims);
 	JP_TRACE_OUT;
 }

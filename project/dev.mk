@@ -9,7 +9,12 @@ PY_SRC := $(shell find jpype -name "*.py" 2>/dev/null)
 CPP_SRC := $(shell find native -name "*.cpp" -o -name "*.h" 2>/dev/null)
 SENTINEL := .build_history
 
-.PHONY: all clean compile test-java test-python jar
+# File(s) to scope the coverage report to, e.g.:
+#   make -f project/dev.mk coverage PYTHON=/tmp/cov-venv/bin/python3 \
+#       COVERAGE_FILTER=native/python/pyjp_array.cpp
+COVERAGE_FILTER := native/
+
+.PHONY: all clean compile test-java test-python jar coverage
 
 # Default target
 all: resolve $(SENTINEL)
@@ -48,6 +53,30 @@ test-python:
 	# We cd into test just like the Azure runner to avoid path confusion
 	cd test && $(PYTHON) -m pytest -v jpypetest --checkjni
 
+# Coverage build + report, scoped to COVERAGE_FILTER (default: all of
+# native/). Per CLAUDE.md, PYTHON must point at a disposable venv --
+# this target does not create one. Requires gcovr in that venv.
+#
+#   python3.12 -m venv /tmp/cov-venv
+#   /tmp/cov-venv/bin/pip install scikit-build-core pybind11 pytest \
+#       pytest-randomly numpy gcovr
+#   make -f project/dev.mk coverage PYTHON=/tmp/cov-venv/bin/python3
+#
+# GCOV must match the compiler CMake actually picked (check
+# build/*/CMakeCache.txt's CMAKE_CXX_COMPILER if unsure) -- a mismatched
+# default `gcov` on a multi-gcc-version system fails with a .gcno
+# version error rather than silently using the right one.
+GCOV := gcov
+coverage:
+	@echo "Building with coverage instrumentation..."
+	$(PIP) install --no-build-isolation -e . \
+		--config-settings=cmake.define.BUILD_TEST_HARNESS=ON \
+		--config-settings=cmake.define.ENABLE_COVERAGE=ON
+	$(PYTHON) -m pytest -q test/jpypetest
+	$(PYTHON) -m gcovr --root . --filter $(COVERAGE_FILTER) \
+		--gcov-executable $(GCOV) \
+		--object-directory build --print-summary -k
+
 clean:
 	@echo "Cleaning up build artifacts..."
 	# Remove directories
@@ -58,6 +87,12 @@ clean:
 	rm -f Makefile cmake_install.cmake  # In case it used Unix Makefiles
 	# Remove build products
 	rm -f _jpype.so org.jpype.jar $(SENTINEL)
+	# Remove ant's own incremental build dir and compiled test-harness
+	# classes -- ant's timestamp-based incremental compilation can skip
+	# recompiling after a branch switch/checkout, silently leaving a stale
+	# jar mismatched against a freshly-rebuilt native .so.
+	rm -rf native/build test/classes
+	find test/harness -name "*.class" -delete
 	# Recursive cleanup
 	find . -name "*.pyc" -delete
 	find . -name "__pycache__" -type d -exec rm -rf {} +

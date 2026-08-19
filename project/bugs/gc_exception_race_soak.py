@@ -9,8 +9,8 @@ Java side of the boundary, for long enough to give a still-present bug
 many chances to fire, so a clean run here is meaningful evidence rather
 than luck.
 
-The confirmed trigger (see plan/GCExceptionRace.md): a reverse-bridge
-call into Python raises mid-conversion (JArray(JBoolean) assignment
+The confirmed trigger: a reverse-bridge call into Python raises
+mid-conversion (JArray(JBoolean) assignment
 calling __bool__ on each element), producing a _python_error exception
 that C++ has to unwind through. Racing that against:
   - gc.set_threshold(1, 1, 1) - the original bug required heavy
@@ -31,7 +31,7 @@ that C++ has to unwind through. Racing that against:
 maximizes the odds of catching a regression. With gc.set_threshold(1, 1,
 1), this harness reliably reproduces the original corruption
 (SystemError: "error return without exception set") in a few thousand
-iterations against a pre-fix checkout - see plan/GCExceptionRace.md.
+iterations against a pre-fix checkout.
 
 Usage:
     python gc_exception_race_soak.py [iterations] [seconds]

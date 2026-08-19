@@ -29,7 +29,7 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 {
 	JP_PY_TRY("PyJPProxy_new");
 	auto *self = (PyJPProxy*) type->tp_alloc(type, 0);
-	JP_PY_CHECK();
+	JP_PY_CHECK_NULL(self);
 
 	// Parse arguments
 	PyObject *instance;

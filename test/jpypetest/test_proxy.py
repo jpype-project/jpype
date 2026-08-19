@@ -553,6 +553,37 @@ class ProxyTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             _jpype._JProxy(None, None, [type])
 
+    def testCallbackArgClassResolution(self):
+        # Regression coverage for jp_proxy.cpp's getArgs(): it resolves
+        # each callback argument's Java class itself (findClassForObject,
+        # with an IsSameObject-against-the-declared-type fast path), not
+        # via JPClass::convertToPythonObject's own copy of that logic -- so
+        # it needs its own coverage for both a null argument (must not call
+        # GetObjectClass on it) and a covariant one (declared Object,
+        # actual runtime type a subclass of it).
+        DeepBench = JClass('jpype.benchmark.DeepBench')
+        ObjectCallback = JClass('jpype.benchmark.DeepBench$ObjectCallback')
+        T15 = JClass('jpype.benchmark.DeepBench$T15')
+
+        seen = []
+
+        @JImplements(ObjectCallback)
+        class MyObjCallback:
+            @JOverride
+            def handle(self, o):
+                seen.append(o)
+                return o
+
+        cb = MyObjCallback()
+
+        result = DeepBench.invokeObjectCallbackWithNull(cb)
+        self.assertIsNone(seen[-1])
+        self.assertIsNone(result)
+
+        result = DeepBench.invokeObjectCallbackWithSubtype(cb)
+        self.assertIsInstance(seen[-1], T15)
+        self.assertIsInstance(result, T15)
+
 
 @subrun.TestCase(individual=True)
 class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):

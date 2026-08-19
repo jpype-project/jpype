@@ -54,7 +54,7 @@ JPPyObject JPStringType::convertToPythonObject(JPJavaFrame& frame, jvalue val, b
 	JP_TRACE_OUT; // GCOV_EXCL_LINE
 }
 
-JPMatch::Type JPStringType::findJavaConversion(JPMatch& match)
+JPMatch::Type JPStringType::findJavaConversionImpl(JPMatch& match)
 {
 	JP_TRACE_IN("JPStringType::findJavaConversion");
 	if (nullConversion->matches(this, match)

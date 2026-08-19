@@ -16,8 +16,8 @@
 #ifndef _JP_ERROR_H_
 #define _JP_ERROR_H_
 
-/* The result of the exception-model split (see plan/ExceptionRefactor.md):
- * one concrete C++ type per exception origin, replacing the single
+/* The exception-model split: one concrete C++ type per exception origin,
+ * replacing the single
  * type-tag-plus-union design JPypeException used to have, so each type only
  * carries (and only knows how to convert) the payload that is actually valid
  * for it, instead of relying on convention/comments to track which union

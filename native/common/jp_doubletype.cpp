@@ -16,6 +16,8 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_array.h"
+#include "jp_arrayclass.h"
+#include "jp_classhints.h"
 #include "jp_primitive_accessor.h"
 #include "jp_doubletype.h"
 
@@ -120,7 +122,7 @@ public:
 	}
 } asJDoubleConversion;
 
-JPMatch::Type JPDoubleType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPDoubleType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPDoubleType::findJavaConversion");
 
@@ -212,6 +214,9 @@ void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a,
 		PyObject* sequence)
 {
 	JP_TRACE_IN("JPDoubleType::setArrayRange");
+	if (tryFastBufferPush(frame, this, a, start, step, length, sequence))
+		return;
+
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
 			&JPJavaFrame::GetDoubleArrayElements, &JPJavaFrame::ReleaseDoubleArrayElements);
 
@@ -231,8 +236,16 @@ void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a,
 				JP_RAISE(PyExc_ValueError, "mismatched size");
 
 			char* memory = (char*) view.buf;
-			if (view.suboffsets && view.suboffsets[0] >= 0)
-				memory = *((char**) memory) + view.suboffsets[0];
+			// This is PyBUF_FULL_RO, so suboffsets CAN legitimately be
+			// non-null for a genuinely indirect exporter -- but every such
+			// exporter found (CPython's own _testbuffer.ndarray, the only
+			// one able to produce one at all; numpy/array/ctypes can't)
+			// lacks __len__, and both call paths that reach here
+			// (JPArray::setRange and JPConversionBuffer::matches) require
+			// a working len() before ever getting this far. Kept as a
+			// defensive fallback, not a provably-reachable path.
+			if (view.suboffsets && view.suboffsets[0] >= 0)  // GCOVR_EXCL_LINE
+				memory = *((char**) memory) + view.suboffsets[0];  // GCOVR_EXCL_LINE
 			jsize index = start;
 			jconverter conv = getConverter(view.format, (int) view.itemsize, "d");
 			for (Py_ssize_t i = 0; i < length; ++i, index += step)
@@ -249,28 +262,71 @@ void JPDoubleType::setArrayRange(JPJavaFrame& frame, jarray a,
 		}
 	}
 
-	// Use sequence API
-	JPPySequence seq = JPPySequence::use(sequence);
 	jsize index = start;
-	for (Py_ssize_t i = 0; i < length; ++i, index += step)
+
+	// Container-kind dispatch happens once, not per element (list vs.
+	// tuple vs. general sequence, resolved here); within each loop, the
+	// exact-float/exact-int-or-neither check IS per element, deliberately
+	// -- see JPFloatType::setArrayRange for the same pattern (this type
+	// just stores the double directly, no narrowing cast needed). A
+	// single item that's neither exact float nor exact int anywhere in
+	// the sequence no longer demotes every element after it to the
+	// generic PySequence_GetItem path.
+	if (PyList_CheckExact(sequence))
 	{
-		type_t v = (type_t) PyFloat_AsDouble(seq[i].get());
-		if (v == -1)
-			JP_PY_CHECK();
-		val[index] = v;
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			PyObject *item = PyList_GET_ITEM(sequence, i);
+			double v;
+			if (PyFloat_CheckExact(item))
+				v = PyFloat_AS_DOUBLE(item);
+			else if (PyLong_CheckExact(item))
+			{
+				v = PyLong_AsDouble(item);
+				if (v == -1.0 && PyErr_Occurred())
+					JP_PY_CHECK();
+			} else
+			{
+				v = PyFloat_AsDouble(item);
+				if (v == -1.0 && PyErr_Occurred())
+					JP_PY_CHECK();
+			}
+			val[index] = (type_t) v;
+		}
+	} else if (PyTuple_CheckExact(sequence))
+	{
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			PyObject *item = PyTuple_GET_ITEM(sequence, i);
+			double v;
+			if (PyFloat_CheckExact(item))
+				v = PyFloat_AS_DOUBLE(item);
+			else if (PyLong_CheckExact(item))
+			{
+				v = PyLong_AsDouble(item);
+				if (v == -1.0 && PyErr_Occurred())
+					JP_PY_CHECK();
+			} else
+			{
+				v = PyFloat_AsDouble(item);
+				if (v == -1.0 && PyErr_Occurred())
+					JP_PY_CHECK();
+			}
+			val[index] = (type_t) v;
+		}
+	} else
+	{
+		JPPySequence seq = JPPySequence::use(sequence);
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			type_t v = (type_t) PyFloat_AsDouble(seq[i].get());
+			if (v == -1)
+				JP_PY_CHECK();
+			val[index] = v;
+		}
 	}
 	accessor.commit();
 	JP_TRACE_OUT;
-}
-
-JPPyObject JPDoubleType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
-{
-	auto array = (array_t) a;
-	type_t val;
-	frame.GetDoubleArrayRegion(array, ndx, 1, &val);
-	jvalue v;
-	field(v) = val;
-	return convertToPythonObject(frame, v, false);
 }
 
 void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
@@ -280,6 +336,84 @@ void JPDoubleType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObjec
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java double");
 	type_t val = field(match.convert());
 	frame.SetDoubleArrayRegion((array_t) a, ndx, 1, &val);
+}
+
+JPPyObject JPDoubleType::getFastArrayItem(JPJavaAccess& frame, jarray a, jsize ndx)
+{
+	// See JPFloatType::getFastArrayItem: inlines convertToPythonObject
+	// directly, including its real (frame-free) slot write, rather than
+	// calling it via a real JPJavaFrame& that would never actually be
+	// used for anything JNI-related.
+	auto array = (array_t) a;
+	type_t val;
+	frame.GetDoubleArrayRegion(array, ndx, 1, &val);
+	PyTypeObject* wrapper = getHost();
+	JPPyObject obj = JPPyObject::call(wrapper->tp_alloc(wrapper, 0));
+	((PyFloatObject*) obj.get())->ob_fval = val;
+	Py_ssize_t offset = PyJPValue_getJavaSlotOffset(obj.get());
+	auto* slot = (jvalue*) (((char*) obj.get()) + offset);
+	slot->d = val;
+	return obj;
+}
+
+JPArray* JPDoubleType::createArrayWrapper(const JPValue& value)
+{
+	return new JPArrayDouble(value);
+}
+
+JPArrayClass* JPDoubleType::createArrayClass(JPJavaFrame& frame, jclass cls,
+		const string& name, JPClass* superClass, jint modifiers)
+{
+	return new JPArrayClassDouble(frame, cls, name, superClass, this, modifiers);
+}
+
+JPMatch::Type JPArrayClassDouble::findJavaConversionImpl(JPMatch &match)
+{
+	JP_TRACE_IN("JPArrayClassDouble::findJavaConversion");
+	if (nullConversion->matches(this, match)
+			|| objectConversion->matches(this, match)
+			|| bufferConversion->matches(this, match)
+			|| listConversion->matches(this, match)
+			|| tupleConversion->matches(this, match)
+			|| sequenceConversion->matches(this, match)
+			|| hintsConversion->matches(this, match)
+			)
+		return match.type;
+	JP_TRACE("None");
+	return match.type = JPMatch::_none;
+	JP_TRACE_OUT;
+}
+
+void JPArrayClassDouble::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame = JPJavaFrame::outer();
+	objectConversion->getInfo(this, info);
+	bufferConversion->getInfo(this, info);
+	sequenceConversion->getInfo(this, info);
+	hintsConversion->getInfo(this, info);
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
+}
+
+JPArrayDouble::JPArrayDouble(const JPValue& array)
+: JPArray(array), m_CompType(dynamic_cast<JPDoubleType*>(m_Class->getComponentType()))
+{
+}
+
+JPArrayDouble::JPArrayDouble(JPArrayDouble* src, jsize start, jsize stop, jsize step)
+: JPArray(src, start, stop, step), m_CompType(src->m_CompType)
+{
+}
+
+JPPyObject JPArrayDouble::getItem(jsize ndx)
+{
+	ndx = checkIndex(ndx);
+	JPJavaAccess frame;
+	return m_CompType->getFastArrayItem(frame, m_Object.get(), m_Start + ndx * m_Step);
+}
+
+JPArray* JPArrayDouble::slice(jsize start, jsize stop, jsize step)
+{
+	return new JPArrayDouble(this, start, stop, step);
 }
 
 void JPDoubleType::getView(JPArrayView& view)
@@ -322,6 +456,13 @@ void JPDoubleType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize
 	frame.GetDoubleArrayRegion((jdoubleArray) a, start, len, b);
 }
 
+void JPDoubleType::setElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		const void* memory, int offset)
+{
+	auto* b = (jdouble*) ((const char*) memory + offset);
+	frame.SetDoubleArrayRegion((jdoubleArray) a, start, len, const_cast<jdouble*>(b));
+}
+
 static void pack(jdouble* d, jvalue v)
 {
 	*d = v.d;
@@ -332,6 +473,15 @@ PyObject *JPDoubleType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, in
 	JP_TRACE_IN("JPDoubleType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "d",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}
+
+jobject JPDoubleType::newMultiArrayObject(JPJavaFrame &frame, JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPDoubleType::newMultiArrayObject");
+	return convertMultiArrayObject<type_t>(
+			frame, this, &pack, converter,
 			buffer, subs, base, dims);
 	JP_TRACE_OUT;
 }

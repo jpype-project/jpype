@@ -384,13 +384,37 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 	m_Reflector = JPObjectRef(frame, frame.GetObjectField(m_JavaContext.get(), reflectorField));
 	m_CallMethodID = frame.GetMethodID(reflectorClass, "callMethod",
 			"(Ljava/lang/reflect/Method;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;");
-	m_Context_collectRectangularID = frame.GetMethodID(contextClass,
+
+	// org.jpype.internal.Support -- static multi-dim array transfer
+	// helpers, looked up as static methods rather than round-tripping
+	// through the context instance.
+	jclass supportLocal = m_ClassLoader->findClass(frame, "org.jpype.internal.Support");
+	m_SupportClass = JPClassRef(frame, supportLocal);
+	jclass supportClass = m_SupportClass.get();
+	m_Support_collectRectangularID = frame.GetStaticMethodID(supportClass,
 			"collectRectangular",
 			"(Ljava/lang/Object;)[Ljava/lang/Object;");
-
-	m_Context_assembleID = frame.GetMethodID(contextClass,
+	m_Support_assembleID = frame.GetStaticMethodID(supportClass,
 			"assemble",
 			"([ILjava/lang/Object;)Ljava/lang/Object;");
+	m_Support_fillFromBufferID = frame.GetStaticMethodID(supportClass,
+			"fillFromBuffer",
+			"(CILjava/nio/ByteBuffer;[I)Ljava/lang/Object;");
+	m_Support_collectToBufferID = frame.GetStaticMethodID(supportClass,
+			"collectToBuffer",
+			"(C[Ljava/lang/Object;Ljava/nio/ByteBuffer;)V");
+	m_Support_fillBufferIntoMultiArrayID = frame.GetStaticMethodID(supportClass,
+			"fillFromBufferIntoRectangular",
+			"(C[Ljava/lang/Object;Ljava/nio/ByteBuffer;)V");
+	m_Support_fillRaggedFromBufferID = frame.GetStaticMethodID(supportClass,
+			"fillRaggedFromBuffer",
+			"(CILjava/nio/ByteBuffer;)Ljava/lang/Object;");
+	m_Support_fillFlatFromBufferID = frame.GetStaticMethodID(supportClass,
+			"fillFlatFromBuffer",
+			"(CCIZLjava/nio/ByteBuffer;II)Ljava/lang/Object;");
+	m_Support_fillFlatIntoArrayID = frame.GetStaticMethodID(supportClass,
+			"fillFlatIntoArray",
+			"(CCIZLjava/nio/ByteBuffer;IILjava/lang/Object;II)V");
 
 	m_Context_CreateExceptionID = frame.GetMethodID(contextClass, "createException",
 			"(JJ)Ljava/lang/Exception;");

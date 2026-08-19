@@ -17,7 +17,6 @@ package org.jpype;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.Buffer;
@@ -322,114 +321,6 @@ public class JPypeContext
   public void _addPost(Runnable run)
   {
     this.postHooks.add(run);
-  }
-
-  /**
-   * Helper function for collect rectangular,
-   */
-  private static boolean collect(List l, Object o, int q, int[] shape, int d)
-  {
-    if (Array.getLength(o) != shape[q])
-      return false;
-    if (q + 1 == d)
-    {
-      l.add(o);
-      return true;
-    }
-    for (int i = 0; i < shape[q]; ++i)
-    {
-      if (!collect(l, Array.get(o, i), q + 1, shape, d))
-        return false;
-    }
-    return true;
-  }
-
-  /**
-   * Collect up a rectangular primitive array for a Python memory view.
-   *
-   * If it is a rectangular primitive array then the result will be an object
-   * array containing. - the primitive type - an int array with the shape of the
-   * array - each of the primitive arrays that will need be visited in order.
-   *
-   * This is the safest way to provide a view as we are verifying and collected
-   * thus even if something mutates the shape of the array after we have
-   * visited, we have a locked copy.
-   *
-   * @param o is the object to be tested.
-   * @return null if the object is not a rectangular primitive array.
-   */
-  public Object[] collectRectangular(Object o)
-  {
-    if (o == null || !o.getClass().isArray())
-      return null;
-    int[] shape = new int[5];
-    int d = 0;
-    ArrayList<Object> out = new ArrayList<>();
-    Object o1 = o;
-    Class c1 = o1.getClass();
-    for (int i = 0; i < 5; ++i)
-    {
-      int l = Array.getLength(o1);
-      if (l == 0)
-        return null;
-      shape[d++] = l;
-      o1 = Array.get(o1, 0);
-      if (o1 == null)
-        return null;
-      c1 = c1.getComponentType();
-      if (!c1.isArray())
-        break;
-    }
-    if (!c1.isPrimitive())
-      return null;
-    out.add(c1);
-    shape = Arrays.copyOfRange(shape, 0, d);
-    out.add(shape);
-    int total = 1;
-    for (int i = 0; i < d - 1; i++)
-      total *= shape[i];
-    out.ensureCapacity(total + 2);
-    if (d == 5)
-      return null;
-    if (!collect(out, o, 0, shape, d))
-      return null;
-    return out.toArray();
-  }
-
-  private Object unpack(int size, Object parts)
-  {
-    Object e0 = Array.get(parts, 0);
-    Class c = e0.getClass();
-    int segments = Array.getLength(parts) / size;
-    Object a2 = Array.newInstance(c, size);
-    Object a1 = Array.newInstance(a2.getClass(), segments);
-    int k = 0;
-    for (int i = 0; i < segments; i++)
-    {
-      for (int j = 0; j < size; j++, k++)
-      {
-        Object o = Array.get(parts, k);
-        Array.set(a2, j, o);
-      }
-      Array.set(a1, i, a2);
-      if (i < segments - 1)
-        a2 = Array.newInstance(c, size);
-    }
-    return a1;
-  }
-
-  private Object assemble(int[] dims, Object parts)
-  {
-    int n = dims.length;
-    if (n == 1)
-      return Array.get(parts, 0);
-    if (n == 2)
-      return Array.get(unpack(dims[0], parts), 0);
-    for (int i = 0; i < n - 2; ++i)
-    {
-      parts = unpack(dims[n - i - 2], parts);
-    }
-    return parts;
   }
 
   public boolean isShutdown()

@@ -16,7 +16,10 @@
 #ifndef _JP_CLASS_H_
 #define _JP_CLASS_H_
 
+#include "jp_conversioncache.h"
 #include "jp_modifier.h"
+
+class JPPySequence;
 
 class JPClass : public JPResource
 {
@@ -120,10 +123,80 @@ public:
 	 *
 	 * This is used to determine which overload is the best match.
 	 *
+	 * Non-virtual: consults a per-type cache keyed on Py_TYPE(match.object)
+	 * before delegating to the virtual findJavaConversionImpl, and memoizes
+	 * the result there if the resolution turned out to be cacheable (see
+	 * JPMatch::cacheable). Subclasses override findJavaConversionImpl, not
+	 * this.
+	 *
 	 * @param pyobj is the Python object.
 	 * @return the quality of the match
 	 */
-	virtual JPMatch::Type findJavaConversion(JPMatch& match);
+	JPMatch::Type findJavaConversion(JPMatch& match);
+
+	/**
+	 * Whole-sequence quality check for JPConversionSequence (jp_classhints.cpp,
+	 * the list -> 1D array conversion): given the sequence and its length,
+	 * compute the entire match quality (into match.type) in a single call.
+	 *
+	 * The default implementation (jp_class.cpp) is generic and correct for
+	 * every JPClass, not a per-type assumption: it keeps a single
+	 * {PyTypeObject*, quality} slot for the whole scan, filled on a cache
+	 * miss by calling the ordinary findJavaConversion() for that one
+	 * element -- and reuses the slot for later same-typed elements only
+	 * when that call reported match.cacheable. cacheable is the same flag
+	 * findJavaConversion()'s own per-class JPConversionCache already keys
+	 * on, and every JPConversion::matches() implementation already sets it
+	 * correctly (e.g. JPConversionAsChar clears it because a char[]
+	 * element's quality depends on string length, not just Py_TYPE) -- so
+	 * trusting it here needs no per-type auditing to stay correct. A
+	 * homogeneous run of same-typed elements costs one findJavaConversion
+	 * call total (the first), then a bare Py_TYPE()+pointer compare per
+	 * element after that.
+	 */
+	virtual void sequenceCheck(JPMatch& match, JPPySequence& seq, jlong length);
+
+	/**
+	 * Same algorithm as sequenceCheck, specialized for the two concrete
+	 * container types that dominate real usage (JPConversionList/
+	 * JPConversionTuple, jp_classhints.cpp, tried ahead of the general
+	 * JPConversionSequence in each array class's conversion chain).
+	 *
+	 * These exist so the per-element loop itself never branches on
+	 * container type: PyList_GET_ITEM/PyTuple_GET_ITEM index straight into
+	 * the container's backing array with a borrowed reference, no
+	 * PySequence_GetItem protocol dispatch and no refcount traffic --
+	 * cheaper than sequenceCheck's seq[i] on every single element, not
+	 * just once. Splitting into three unconditional entry points (rather
+	 * than one that branches on container type inside the loop) is the
+	 * same specialize-don't-runtime-dispatch shape used throughout this
+	 * codebase's conversion chains.
+	 */
+	virtual void sequenceCheckList(JPMatch& match, PyObject* listObj, jlong length);
+	virtual void sequenceCheckTuple(JPMatch& match, PyObject* tupleObj, jlong length);
+
+	/** Clear this class's cached findJavaConversion() results.
+	 *
+	 * Called lazily by findJavaConversion() itself when JPClassHints's
+	 * global generation counter has moved on since this class's cache was
+	 * last populated (i.e. some class's hints changed somewhere).
+	 */
+	void clearConversionCache();
+
+protected:
+	/**
+	 * The actual, per-class conversion search (null/object/proxy/hints,
+	 * or a hand-written primitive-type chain, depending on the subclass).
+	 * Overridden instead of findJavaConversion so the caching wrapper above
+	 * stays in one place. See JPBoxedType/JPFunctional for the one pattern
+	 * that needs care: reusing another class's chain (including this base
+	 * one) as a building block must call findJavaConversionImpl directly
+	 * (explicitly qualified) rather than going back through
+	 * findJavaConversion, or it recurses into itself through the vtable.
+	 */
+	virtual JPMatch::Type findJavaConversionImpl(JPMatch& match);
+
+public:
 
 	virtual void getConversionInfo(JPConversionInfo &info);
 
@@ -179,6 +252,35 @@ public:
 	virtual JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx);
 	virtual void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val);
 
+	/** Construct the concrete JPArray subclass to wrap an array whose
+	 * component type is `this` -- called as
+	 * `arrayClass->getComponentType()->createArrayWrapper(value)` from
+	 * JPArray::create(), reusing this same per-type fork instead of a new
+	 * dispatch table. Default (this base): component is a plain
+	 * class/interface -> JPArrayObject. JPArrayClass overrides for a
+	 * component that is itself an array -> JPArrayNested. Each JPXxxType
+	 * overrides for its own primitive component -> the matching
+	 * JPArrayXxx.
+	 */
+	virtual JPArray*    createArrayWrapper(const JPValue& value);
+
+	/** Construct the JPArrayClass metadata object for an array whose
+	 * component type is `this` -- called as
+	 * `componentType->createArrayClass(...)` from
+	 * TypeFactoryNative_defineArrayClass, the same pattern as
+	 * createArrayWrapper: the component type picks its own specialized
+	 * JPArrayClass subclass (which conversions apply -- e.g. char[] vs
+	 * double[] -- differs by component type and is fixed for the
+	 * class's lifetime), instead of one shared JPArrayClass re-deriving
+	 * that per call. Default (this base): plain JPArrayClass -- used for
+	 * a plain class/interface component or a component that is itself
+	 * an array (nested arrays; multi-array-depth conversions there don't
+	 * depend on the leaf primitive's identity). Each JPXxxType overrides
+	 * to return its own JPArrayClassXxx.
+	 */
+	virtual JPArrayClass* createArrayClass(JPJavaFrame& frame, jclass cls,
+			const string& name, JPClass* superClass, jint modifiers);
+
 	/**
 	 * Expose IsAssignableFrom to python.
 	 */
@@ -209,6 +311,19 @@ protected:
 	jint                 m_Modifiers;
 	JPPyObject           m_Host;
 	JPPyObject           m_Hints;
+
+private:
+	// Every cacheable matches() sets match.closure to exactly `this`, with
+	// one known exception: boxBooleanConversion's dedicated direct-match
+	// role (see jp_boxedtype.cpp's JPConversionBoxGeneric comment) always
+	// uses the fixed java.lang.Boolean class instead, regardless of `this`.
+	// That's a compile-time constant tied to *which conversion* was cached,
+	// not extra per-entry state, so JPClass::findJavaConversion special-
+	// cases it directly rather than growing the cache entry to carry a
+	// third field (see JPConversionCache for why that matters: it's sized
+	// to fit in one atomically-accessed 128-bit slot).
+	JPConversionCache m_ConversionCache;
+	uint64_t m_ConversionCacheGeneration = 0;
 } ;
 
 #endif // _JPPOBJECTTYPE_H_

@@ -16,7 +16,7 @@
 #ifndef JP_FUNCTIONAL_H
 #define JP_FUNCTIONAL_H
 
-class JPFunctional : public JPClass
+class JPFunctional : public JPInterfaceType
 {
 public:
 	JPFunctional(JPJavaFrame& frame,
@@ -27,7 +27,7 @@ public:
 			jint modifiers);
 	~JPFunctional() override;
 
-	JPMatch::Type findJavaConversion(JPMatch &match) override;
+	JPMatch::Type findJavaConversionImpl(JPMatch &match) override;
 	void getConversionInfo(JPConversionInfo &info) override;
 
 	string getMethod()

@@ -18,10 +18,10 @@
 
 /* Stack-trace bookkeeping infrastructure shared by the JPBaseError hierarchy
  * (see jp_error.h). This file used to also define JPypeException, the single
- * mono-class every exception crossing the Java/Python/C++ boundary was
- * carried as (see plan/ExceptionRefactor.md for the history) - that class
- * has been fully replaced by JPJavaError/JPPythonError/JPInternalError and
- * is gone; only the pieces they still depend on remain here.
+ * mono-class every exception crossing the Java/Python/C++ boundary used to
+ * be carried as - that class has been fully replaced by
+ * JPJavaError/JPPythonError/JPInternalError and is gone; only the pieces
+ * they still depend on remain here.
  */
 #include <stdexcept>
 #ifndef __FUNCTION_NAME__

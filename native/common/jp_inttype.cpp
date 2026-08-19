@@ -16,6 +16,8 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_array.h"
+#include "jp_arrayclass.h"
+#include "jp_classhints.h"
 #include "jp_primitive_accessor.h"
 #include "jp_inttype.h"
 
@@ -34,10 +36,9 @@ JPClass* JPIntType::getBoxedClass(JPJavaFrame& frame) const
 
 JPPyObject JPIntType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
-	JPPyObject tmp = JPPyObject::call(PyLong_FromLong(field(val)));
 	if (getHost() == nullptr)
-		return tmp;
-	JPPyObject out = JPPyObject::call(convertLong(getHost(), (PyLongObject*) tmp.get()));
+		return JPPyObject::call(PyLong_FromLong(field(val)));
+	JPPyObject out = JPPyObject::call(convertLong(getHost(), field(val)));
 	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
 	return out;
 }
@@ -104,7 +105,7 @@ public:
 
 } jintConversion;
 
-JPMatch::Type JPIntType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPIntType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPIntType::findJavaConversion");
 
@@ -194,6 +195,9 @@ void JPIntType::setArrayRange(JPJavaFrame& frame, jarray a,
 		PyObject* sequence)
 {
 	JP_TRACE_IN("JPIntType::setArrayRange");
+	if (tryFastBufferPush(frame, this, a, start, step, length, sequence))
+		return;
+
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
 			&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
 
@@ -213,8 +217,16 @@ void JPIntType::setArrayRange(JPJavaFrame& frame, jarray a,
 				JP_RAISE(PyExc_ValueError, "mismatched size");
 
 			char* memory = (char*) view.buf;
-			if (view.suboffsets && view.suboffsets[0] >= 0)
-				memory = *((char**) memory) + view.suboffsets[0];
+			// This is PyBUF_FULL_RO, so suboffsets CAN legitimately be
+			// non-null for a genuinely indirect exporter -- but every such
+			// exporter found (CPython's own _testbuffer.ndarray, the only
+			// one able to produce one at all; numpy/array/ctypes can't)
+			// lacks __len__, and both call paths that reach here
+			// (JPArray::setRange and JPConversionBuffer::matches) require
+			// a working len() before ever getting this far. Kept as a
+			// defensive fallback, not a provably-reachable path.
+			if (view.suboffsets && view.suboffsets[0] >= 0)  // GCOVR_EXCL_LINE
+				memory = *((char**) memory) + view.suboffsets[0];  // GCOVR_EXCL_LINE
 			jsize index = start;
 			jconverter conv = getConverter(view.format, (int) view.itemsize, "i");
 			for (Py_ssize_t i = 0; i < length; ++i, index += step)
@@ -231,34 +243,88 @@ void JPIntType::setArrayRange(JPJavaFrame& frame, jarray a,
 		}
 	}
 
-	// Use sequence API
-	JPPySequence seq = JPPySequence::use(sequence);
 	jsize index = start;
-	for (Py_ssize_t i = 0; i < length; ++i, index += step)
+
+	// Container-kind dispatch happens once, not per element (list vs.
+	// tuple vs. general sequence, resolved here); within each loop, the
+	// exact-int-or-not check IS per element, deliberately -- it's a
+	// single cheap PyLong_CheckExact, the same cost sequenceCheckStep
+	// (jp_class.cpp) already pays per element during matches(). A single
+	// non-exact item (a bool, a numpy scalar, a custom __index__ object,
+	// ...) anywhere in the sequence no longer demotes every element after
+	// it to the generic PySequence_GetItem path -- only that one element
+	// pays the heavier PyIndex_Check + PyLong_AsLongLong conversion; the
+	// rest of the array stays on direct indexed access either way.
+	if (PyList_CheckExact(sequence))
 	{
-		PyObject *item = seq[i].get();
-		if (!PyIndex_Check(item))
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
 		{
-			PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to int", Py_TYPE(item)->tp_name);
-			JP_RAISE_PYTHON();
+			PyObject *item = PyList_GET_ITEM(sequence, i);
+			jlong v;
+			if (PyLong_CheckExact(item))
+			{
+				long lv = PyLong_AsLong(item);
+				if (lv == -1)
+					JP_PY_CHECK();
+				v = lv;
+			} else
+			{
+				if (!PyIndex_Check(item))
+				{
+					PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to int", Py_TYPE(item)->tp_name);
+					JP_RAISE_PYTHON();
+				}
+				v = PyLong_AsLongLong(item);
+				if (v == -1)
+					JP_PY_CHECK();
+			}
+			val[index] = (type_t) assertRange(v);
 		}
-		jlong v = PyLong_AsLongLong(item);
-		if (v == -1)
-			JP_PY_CHECK();
-		val[index] = (type_t) assertRange(v);
+	} else if (PyTuple_CheckExact(sequence))
+	{
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			PyObject *item = PyTuple_GET_ITEM(sequence, i);
+			jlong v;
+			if (PyLong_CheckExact(item))
+			{
+				long lv = PyLong_AsLong(item);
+				if (lv == -1)
+					JP_PY_CHECK();
+				v = lv;
+			} else
+			{
+				if (!PyIndex_Check(item))
+				{
+					PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to int", Py_TYPE(item)->tp_name);
+					JP_RAISE_PYTHON();
+				}
+				v = PyLong_AsLongLong(item);
+				if (v == -1)
+					JP_PY_CHECK();
+			}
+			val[index] = (type_t) assertRange(v);
+		}
+	} else
+	{
+		JPPySequence seq = JPPySequence::use(sequence);
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			PyObject *item = seq[i].get();
+			if (!PyIndex_Check(item))
+			{
+				PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to int", Py_TYPE(item)->tp_name);
+				JP_RAISE_PYTHON();
+			}
+			jlong v = PyLong_AsLongLong(item);
+			if (v == -1)
+				JP_PY_CHECK();
+			val[index] = (type_t) assertRange(v);
+		}
 	}
+
 	accessor.commit();
 	JP_TRACE_OUT;
-}
-
-JPPyObject JPIntType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
-{
-	auto array = (array_t) a;
-	type_t val;
-	frame.GetIntArrayRegion(array, ndx, 1, &val);
-	jvalue v;
-	field(v) = val;
-	return convertToPythonObject(frame, v, false);
 }
 
 void JPIntType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
@@ -268,6 +334,84 @@ void JPIntType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* 
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java int");
 	type_t val = field(match.convert());
 	frame.SetIntArrayRegion((array_t) a, ndx, 1, &val);
+}
+
+JPPyObject JPIntType::getFastArrayItem(JPJavaAccess& frame, jarray a, jsize ndx)
+{
+	// Inlines convertToPythonObject directly rather than calling it,
+	// because that would require a real JPJavaFrame& just to satisfy the
+	// signature -- and PyJPValue_assignJavaSlot is a *guaranteed* no-op
+	// for this family: it's rooted at a JValueFn-registered base type
+	// (PyJPNumberLong_Type -- see PyJPClass_GetJValueFn's tp_base walk,
+	// which every subclass, including a customized host, must inherit
+	// from), so its early "nothing to write" return always fires here.
+	// No frame is ever genuinely needed on this path.
+	auto array = (array_t) a;
+	type_t val;
+	frame.GetIntArrayRegion(array, ndx, 1, &val);
+	if (getHost() == nullptr)
+		return JPPyObject::call(PyLong_FromLong(val));
+	return JPPyObject::call(convertLong(getHost(), val));
+}
+
+JPArray* JPIntType::createArrayWrapper(const JPValue& value)
+{
+	return new JPArrayInt(value);
+}
+
+JPArrayClass* JPIntType::createArrayClass(JPJavaFrame& frame, jclass cls,
+		const string& name, JPClass* superClass, jint modifiers)
+{
+	return new JPArrayClassInt(frame, cls, name, superClass, this, modifiers);
+}
+
+JPMatch::Type JPArrayClassInt::findJavaConversionImpl(JPMatch &match)
+{
+	JP_TRACE_IN("JPArrayClassInt::findJavaConversion");
+	if (nullConversion->matches(this, match)
+			|| objectConversion->matches(this, match)
+			|| bufferConversion->matches(this, match)
+			|| listConversion->matches(this, match)
+			|| tupleConversion->matches(this, match)
+			|| sequenceConversion->matches(this, match)
+			|| hintsConversion->matches(this, match)
+			)
+		return match.type;
+	JP_TRACE("None");
+	return match.type = JPMatch::_none;
+	JP_TRACE_OUT;
+}
+
+void JPArrayClassInt::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame = JPJavaFrame::outer();
+	objectConversion->getInfo(this, info);
+	bufferConversion->getInfo(this, info);
+	sequenceConversion->getInfo(this, info);
+	hintsConversion->getInfo(this, info);
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
+}
+
+JPArrayInt::JPArrayInt(const JPValue& array)
+: JPArray(array), m_CompType(dynamic_cast<JPIntType*>(m_Class->getComponentType()))
+{
+}
+
+JPArrayInt::JPArrayInt(JPArrayInt* src, jsize start, jsize stop, jsize step)
+: JPArray(src, start, stop, step), m_CompType(src->m_CompType)
+{
+}
+
+JPPyObject JPArrayInt::getItem(jsize ndx)
+{
+	ndx = checkIndex(ndx);
+	JPJavaAccess frame;
+	return m_CompType->getFastArrayItem(frame, m_Object.get(), m_Start + ndx * m_Step);
+}
+
+JPArray* JPArrayInt::slice(jsize start, jsize stop, jsize step)
+{
+	return new JPArrayInt(this, start, stop, step);
 }
 
 void JPIntType::getView(JPArrayView& view)
@@ -301,7 +445,7 @@ const char* JPIntType::getBufferFormat()
 
 Py_ssize_t JPIntType::getItemSize()
 {
-	return sizeof (jfloat);
+	return sizeof (jint);
 }
 
 void JPIntType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
@@ -309,6 +453,13 @@ void JPIntType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize le
 {
 	jint* b = (jint*) ((char*) memory + offset);
 	frame.GetIntArrayRegion((jintArray) a, start, len, b);
+}
+
+void JPIntType::setElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		const void* memory, int offset)
+{
+	auto* b = (jint*) ((const char*) memory + offset);
+	frame.SetIntArrayRegion((jintArray) a, start, len, const_cast<jint*>(b));
 }
 
 static void pack(jint* d, jvalue v)
@@ -321,6 +472,15 @@ PyObject *JPIntType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int s
 	JP_TRACE_IN("JPIntType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "i",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}
+
+jobject JPIntType::newMultiArrayObject(JPJavaFrame &frame, JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPIntType::newMultiArrayObject");
+	return convertMultiArrayObject<type_t>(
+			frame, this, &pack, converter,
 			buffer, subs, base, dims);
 	JP_TRACE_OUT;
 }

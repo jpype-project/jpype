@@ -67,6 +67,17 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 
 			if (bestMatch.m_Type > JPMatch::_explicit)
 				return true;
+
+			// The cache-hit attempt failed. JPMethod::matches() unconditionally
+			// sets m_Overload = this regardless of success, so bestMatch is left
+			// looking like "we already found cachedMethod" even though we
+			// didn't -- undo that, or the fallback below mistakes this stale
+			// leftover for a real match (skipping the "first match" branch, and
+			// then the final "no matching overload found" check too, since
+			// m_Overload is non-null) and returns a bogus success with a
+			// bestMatch that never actually resolved to a valid conversion.
+			bestMatch.m_Overload = nullptr;
+			bestMatch.m_Type = JPMatch::_none;
 		}
 	}
 

@@ -96,8 +96,18 @@ JPPyObject JPPyObject::claim(PyObject* obj)
 JPPyObject JPPyObject::call(PyObject* obj)
 {
 	JP_TRACE_PY("pyref new(call)", obj);
-	JP_PY_CHECK();
-	ASSERT_NOT_NULL(obj);
+	// A CPython C-API call that returns a real object cannot simultaneously
+	// leave an exception pending -- the two calling conventions (return NULL
+	// with an exception set, or return a valid object) are mutually
+	// exclusive by contract. PyErr_Occurred() previously ran unconditionally
+	// here, on every successful call as well as every failing one; gate it
+	// on obj itself being NULL, its only possible trigger, so the
+	// overwhelmingly common success path skips the call entirely.
+	if (obj == nullptr)
+	{
+		JP_PY_CHECK();
+		ASSERT_NOT_NULL(obj);
+	}
 	assertValid(obj);
 	return JPPyObject(obj);
 }

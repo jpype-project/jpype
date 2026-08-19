@@ -17,6 +17,7 @@
 #include "pyjp.h"
 #include "jp_boxedtype.h"
 #include <cstddef>
+#include <atomic>
 
 // Float has a genuine compile-time-known C layout (like Exception), so it
 // gets a real struct and a direct offsetof-based concrete offset -- no
@@ -30,20 +31,210 @@ struct PyJPFloat
 	jvalue extra;
 };
 
-// Long/Boolean no longer keep any trailing per-instance storage at all: the
+// Long/Boolean keep no trailing per-instance storage at all: the
 // PyLongObject itself, and tp_jvalue (see longJValue below) reconstructs a
-// jvalue from it on demand -- boxing via a real JNI call when the context is
-// a boxed wrapper, reading the digits directly when it's a primitive. So
-// there's no fixed offset to protect any more, and ordinary CPython subtype
-// construction (long_subtype_new, dispatched via PyLong_Type.tp_new with the
-// real subtype) is exactly the right tool -- the earlier hand-written-digit
-// version existed solely to keep a trailing JPValue at a constant offset.
+// jvalue from it on demand. With no appended slot to protect, this builds
+// the digits directly into a single instance of the real subtype, rather
+// than routing through PyLong_Type.tp_new -- which for an int subtype
+// (long_subtype_new) allocates and fills a throwaway base-PyLong first via
+// PyNumber_Long, then allocates a second, real instance of the subtype and
+// copies the digits across. Every array element pulled through this path
+// paid for two allocations plus a tuple pack/unpack instead of one.
+//
+// Digit layout is duplicated per CPython version boundary (confirmed
+// against the CPython source tree directly, tags v3.10.0 through v3.14.0):
+//   - <=3.11: struct _longobject { PyObject_VAR_HEAD; digit ob_digit[1]; };
+//     sign is the sign of ob_size.
+//   - >=3.12: struct _longobject { PyObject_HEAD; _PyLongValue long_value; }
+//     where long_value = { uintptr_t lv_tag; digit ob_digit[1]; }. lv_tag's
+//     low 2 bits are sign (0=positive,1=zero,2=negative), bit 2 is the
+//     immortal-object flag (0 for our freshly allocated objects), lv_tag>>3
+//     is the digit count.
+#if PYLONG_BITS_IN_DIGIT == 30
+#define JLONG_MAX_DIGITS 3 /* 3*30 = 90 >= 64 bits */
+#elif PYLONG_BITS_IN_DIGIT == 15
+#define JLONG_MAX_DIGITS 5 /* 5*15 = 75 >= 64 bits */
+#else
+#error "Unexpected PYLONG_BITS_IN_DIGIT"
+#endif
+
+// Recycling pool for the byte/short/int/long tagged-number leaves
+// (JByte/JShort/JInt/JLong -- not Float/Double, which have a genuine
+// compile-time-fixed layout and don't go through tp_alloc at all here, and
+// not Boolean, which gets its own two-singleton treatment below instead of
+// a pool). Measured: array-pull (`list(intArray)`) construction is
+// dominated by generic `tp_alloc` (PyType_GenericAlloc) -- these are
+// non-builtin heap types, so they get none of CPython's own small-int
+// cache or PyLong-specific allocator fast path. A pool closes most of
+// that gap.
+//
+// One fixed-size bucket, not one per digit count: every value these four
+// types can ever hold fits in JLONG_MAX_DIGITS digits, and there's nothing
+// to gain from chopping the pool's memory any finer than "one block big
+// enough for the largest possible jlong" -- every recycled block is
+// allocated at that one size regardless of the value it happens to hold
+// next, and the true digit count is written into the header
+// (lv_tag/ob_size) on every reuse regardless of the block's origin.
+//
+// Only the four primitive leaves opt in (gated by exact type-pointer
+// identity in isEligible, populated once from PyJPNumber_initType).
+// Callers cannot register a Python subclass of these to bypass the check
+// (`class MyInt(JInt): pass` raises "Java classes cannot be extended in
+// Python" -- these leaves are final in practice despite carrying
+// Py_TPFLAGS_BASETYPE), but PyJPNumber_longFromLongLong has a second,
+// unrelated caller family: PyJPNumber_create boxes java.lang.Integer/
+// Long/Short/Byte/Boolean return values through the very same function
+// with the *boxed* class's own host type, which is a distinct
+// PyTypeObject from the primitive leaf even though it shares the same
+// memory layout. Pooling those too might well be safe (nothing here is
+// JVM-object-identity-bearing -- see the class comment above) but is out
+// of scope for this pass, so they deliberately fall through to the
+// ordinary tp_alloc/tp_free path via the identity check below.
+//
+// Treiber stack (atomic head, CAS push/pop, next-pointer stored inline in
+// the dead object's own memory) rather than a mutex -- construction here
+// runs under the GIL today so a lock would cost nothing extra either way,
+// but the lock-free form costs nothing extra either and stays correct if
+// this is ever reached under free-threaded CPython.
+namespace intfreelist
+{
+
+struct Node
+{
+	std::atomic<Node*> next;
+};
+
+constexpr int CAP = 4096;
+static std::atomic<Node*> head{nullptr};
+static std::atomic<int> count{0};
+
+// Populated once, from PyJPNumber_initType, with the four leaves'
+// concrete type objects (JByte/JShort/JInt/JLong) -- fixed for the
+// process's lifetime after that, same as the leaves themselves.
+static PyTypeObject* eligibleTypes[4] = {nullptr, nullptr, nullptr, nullptr};
+
+inline bool isEligible(PyTypeObject* type)
+{
+	for (auto* t : eligibleTypes)
+		if (t == type)
+			return true;
+	return false;
+}
+
+inline void* pop()
+{
+	Node* n = head.load(std::memory_order_acquire);
+	while (n != nullptr)
+	{
+		Node* next = n->next.load(std::memory_order_relaxed);
+		if (head.compare_exchange_weak(n, next, std::memory_order_acq_rel, std::memory_order_acquire))
+		{
+			count.fetch_sub(1, std::memory_order_relaxed);
+			return (void*) n;
+		}
+	}
+	return nullptr;
+}
+
+inline bool push(void* p)
+{
+	if (count.load(std::memory_order_relaxed) >= CAP)
+		return false;
+	auto* n = (Node*) p;
+	Node* old = head.load(std::memory_order_relaxed);
+	do
+	{
+		n->next.store(old, std::memory_order_relaxed);
+	} while (!head.compare_exchange_weak(old, n, std::memory_order_release, std::memory_order_relaxed));
+	count.fetch_add(1, std::memory_order_relaxed);
+	return true;
+}
+
+} // namespace intfreelist
+
+// tp_dealloc for the four pooled leaves (wired in via intFamilySlots
+// below): push the block back onto the pool instead of freeing it, unless
+// the pool is already at capacity. These leaves are non-GC, have no
+// __dict__/weakref slot (tp_dictoffset/tp_weaklistoffset are both 0,
+// inherited from the family root), so there is nothing else for a normal
+// tp_dealloc to tear down first -- a bare recycle-or-free is the whole job.
+static void PyJPNumberInt_freelistDealloc(PyObject* self)
+{
+	if (intfreelist::push(self))
+		return;
+	PyObject_Free(self);
+}
+
+// Digit layout is duplicated per CPython version boundary (confirmed
+// against the CPython source tree directly, tags v3.10.0 through v3.14.0):
+//   - <=3.11: struct _longobject { PyObject_VAR_HEAD; digit ob_digit[1]; };
+//     sign is the sign of ob_size.
+//   - >=3.12: struct _longobject { PyObject_HEAD; _PyLongValue long_value; }
+//     where long_value = { uintptr_t lv_tag; digit ob_digit[1]; }. lv_tag's
+//     low 2 bits are sign (0=positive,1=zero,2=negative), bit 2 is the
+//     immortal-object flag (0 for our freshly allocated objects), lv_tag>>3
+//     is the digit count.
 PyObject* PyJPNumber_longFromLongLong(PyTypeObject* type, long long value)
 {
-	JPPyObject tmp = JPPyObject::call(PyLong_FromLongLong(value));
-	JPPyObject args = JPPyTuple_Pack(tmp.get());
-	return PyLong_Type.tp_new(type, args.get(), nullptr);
+	// Magnitude via unsigned negation so INT64_MIN doesn't overflow.
+	unsigned long long mag = (value < 0)
+			? (0ULL - (unsigned long long) value)
+			: (unsigned long long) value;
+
+	digit digits[JLONG_MAX_DIGITS];
+	unsigned long long m = mag;
+	for (int i = 0; i < JLONG_MAX_DIGITS; i++)
+	{
+		digits[i] = (digit) (m & PyLong_MASK);
+		m >>= PyLong_SHIFT;
+	}
+	int ndigits = JLONG_MAX_DIGITS;
+	while (ndigits > 0 && digits[ndigits - 1] == 0)
+		ndigits--;
+
+	PyLongObject* self;
+	if (intfreelist::isEligible(type))
+	{
+		self = (PyLongObject*) intfreelist::pop();
+		if (self != nullptr)
+		{
+			// Reused block: still carries its previous occupant's
+			// refcount/type from before it was pushed back, so both must
+			// be reset before this is handed out as a live object again.
+			Py_SET_REFCNT((PyObject*) self, 1);
+			Py_SET_TYPE((PyObject*) self, type);
+		} else
+		{
+			// Fresh block, but always sized for the pool's one fixed
+			// capacity (JLONG_MAX_DIGITS) regardless of this value's
+			// actual digit count, so it's poolable on the way back in too.
+			self = (PyLongObject*) type->tp_alloc(type, JLONG_MAX_DIGITS);
+			if (self == nullptr)
+				return nullptr;
+		}
+	} else
+	{
+		// Allocate exactly the digits this value needs -- no appended slot
+		// means no fixed budget to protect, unlike the earlier version of
+		// this function that reserved a worst-case-width digit array.
+		self = (PyLongObject*) type->tp_alloc(type, ndigits);
+		if (self == nullptr)
+			return nullptr;
+	}
+
+#if PY_VERSION_HEX >= 0x030c0000
+	int sign_code = (mag == 0) ? 1 : (value < 0 ? 2 : 0);
+	self->long_value.lv_tag = ((uintptr_t) ndigits << 3) | (uintptr_t) sign_code;
+	for (int i = 0; i < ndigits; i++)
+		self->long_value.ob_digit[i] = digits[i];
+#else
+	Py_SET_SIZE(self, (value < 0) ? -ndigits : ndigits);
+	for (int i = 0; i < ndigits; i++)
+		self->ob_digit[i] = digits[i];
+#endif
+	return (PyObject*) self;
 }
+#undef JLONG_MAX_DIGITS
 
 static PyObject* newFloatFixed(PyTypeObject* type, double value)
 {
@@ -309,6 +500,27 @@ static Py_hash_t PyJPNumberFloat_hash(PyObject *self)
 	JP_PY_CATCH(0);
 }
 
+// A Java boolean has exactly two possible values, so -- like Python's own
+// True/False -- there's no reason to allocate one past the first
+// construction of each; every later JBoolean(x) just hands out an incref
+// of whichever singleton matches. Safe to skip findJavaConversion/
+// assignJavaSlot entirely once cached: this family's tp_jvalue
+// (longJValue) reconstructs the jvalue straight from the PyLong bits on
+// demand (see the comment on PyJPNumber_longFromLongLong above), so
+// there's no per-instance Java slot state a reused instance could ever
+// hold stale.
+//
+// Only the bare JBoolean leaf is cached (gated by exact type-pointer
+// identity, same reasoning as intfreelist::isEligible above) -- the boxed
+// java.lang.Boolean path doesn't come through here at all (PyJPNumber_create
+// special-cases Boolean and calls PyJPNumber_longFromLongLong directly).
+static PyObject *g_boolSingleton[2] = {nullptr, nullptr};
+// Set once below, right after the leaf is built: PyJPBoolean_new is wired
+// as tp_new on the *root* spec (numberBooleanSlots) but inherited by the
+// leaf, and it's the leaf (_jpype.JBoolean) that every real `JBoolean(x)`
+// call actually constructs, not the root (_jpype._JBoolean).
+static PyTypeObject *g_boolLeafType = nullptr;
+
 static PyObject *PyJPBoolean_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPBoolean_new", type);
@@ -318,6 +530,11 @@ static PyObject *PyJPBoolean_new(PyTypeObject *type, PyObject *args, PyObject *k
 		return nullptr;
 	}
 	int i = PyObject_IsTrue(PyTuple_GetItem(args, 0));
+	if (type == g_boolLeafType && g_boolSingleton[i] != nullptr)
+	{
+		Py_INCREF(g_boolSingleton[i]);
+		return g_boolSingleton[i];
+	}
 	JPClass *cls = PyJPClass_getJPClass((PyObject*) type);
 	if (cls == nullptr)
 	{
@@ -332,6 +549,11 @@ static PyObject *PyJPBoolean_new(PyTypeObject *type, PyObject *args, PyObject *k
 	jvalue val = match.convert();
 	PyJPValue_assignJavaSlot(frame, self.get(), JPValue(cls, val));
 	JP_TRACE("new", self.get());
+	if (type == g_boolLeafType && g_boolSingleton[i] == nullptr)
+	{
+		Py_INCREF(self.get());
+		g_boolSingleton[i] = self.get();
+	}
 	return self.keep();
 	JP_PY_CATCH(nullptr);
 }
@@ -431,6 +653,75 @@ PyType_Spec numberBooleanSpec = {
 }
 #endif
 
+// Concrete leaf classes (JByte/JShort/JInt/JLong/JFloat/JDouble/JBoolean)
+// used to be plain Python `class JXxx(_jpype._JYyy, internal=True): pass`
+// statements in jpype/types.py. CPython's type_new unconditionally sets
+// Py_TPFLAGS_HAVE_GC on any heap type it creates -- even one instantiated
+// through this metaclass -- so every one of those classes silently picked
+// up GC tracking that their non-GC family root (built via
+// PyJPClass_FromSpecWithBases, bypassing type_new) deliberately avoids.
+// None of them can ever hold an arbitrary Python reference (tp_dictoffset
+// is 0, inherited from the root), so they can provably never participate
+// in a reference cycle -- the GC bookkeeping was pure per-instance
+// allocation/deallocation overhead. Building them the same way as their
+// root, with no additional slots, gets them the same non-GC treatment.
+static PyType_Slot leafSlots[] = {
+	{0}
+};
+
+// Byte/Short/Int/Long additionally override tp_dealloc to recycle through
+// intfreelist instead of freeing -- see the pool comment above
+// PyJPNumber_longFromLongLong. Doesn't disturb the non-GC treatment
+// discussed above: dealloc is unrelated to the GC-flag inheritance being
+// protected there.
+static PyType_Slot intFamilyLeafSlots[] = {
+	{Py_tp_dealloc, (void*) &PyJPNumberInt_freelistDealloc},
+	{0}
+};
+
+// Dotted names, like the family roots, even though these are leaves: if
+// spec->name has no dot, CPython's own type-from-spec machinery (seeing no
+// pre-existing "__module__" in the freshly built tp_dict) raises a
+// DeprecationWarning ("builtin type JInt has no __module__ attribute")
+// instead of silently defaulting one -- so a dot has to be there at
+// creation time to keep that quiet. tp_name (and hence repr(), which
+// prints tp_name verbatim -- see PyJPClass_repr) is fixed back up to the
+// plain name below, after creation, alongside the __module__ override.
+static PyType_Spec byteSpec = {"_jpype.JByte", 0, 0, Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, intFamilyLeafSlots};
+static PyType_Spec shortSpec = {"_jpype.JShort", 0, 0, Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, intFamilyLeafSlots};
+static PyType_Spec intSpec = {"_jpype.JInt", 0, 0, Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, intFamilyLeafSlots};
+static PyType_Spec longSpec = {"_jpype.JLong", 0, 0, Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, intFamilyLeafSlots};
+static PyType_Spec floatSpec = {"_jpype.JFloat", 0, 0, Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, leafSlots};
+static PyType_Spec doubleSpec = {"_jpype.JDouble", 0, 0, Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, leafSlots};
+static PyType_Spec booleanLeafSpec = {"_jpype.JBoolean", 0, 0, Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, leafSlots};
+
+// Builds one of the leaf types above as a single-inheritance child of
+// `base`, registers it into the module under `attrName`, and restores both
+// tp_name and __module__ to what these classes had as ordinary
+// jpype/types.py class statements ("JInt" / "jpype.types") -- see the spec
+// table comment above for tp_name, and PyJPClass_FromSpecWithBases always
+// baking in __module__ "_jpype" (right for the family roots, genuinely
+// defined in this file, but not for these leaves).
+static PyTypeObject* PyJPNumber_createLeaf(PyType_Spec *spec, PyTypeObject *base,
+		Py_ssize_t offset, PyObject *module, const char *attrName)
+{
+	JPPyObject bases = JPPyTuple_Pack(base);
+	auto *type = (PyTypeObject*) PyJPClass_FromSpecWithBases(spec, bases.get(), offset);
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
+	// Types built through PyJPClass_FromSpecWithBases are permanent for the
+	// JVM's session (never deallocated), so replacing tp_name with a static
+	// string here -- distinct from the heap-allocated buffer type_dealloc
+	// would otherwise free via _ht_tpname -- is safe: that buffer is simply
+	// never freed, exactly like every other permanent resource this family
+	// of types already holds onto for the process lifetime.
+	type->tp_name = attrName;
+	PyDict_SetItemString(type->tp_dict, "__module__", PyUnicode_FromString("jpype.types"));
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
+	PyModule_AddObject(module, attrName, (PyObject*) type);
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
+	return type;
+}
+
 void PyJPNumber_initType(PyObject* module)
 {
 	// Long/Boolean keep no per-instance storage at all any more (see
@@ -464,6 +755,18 @@ void PyJPNumber_initType(PyObject* module)
 	PyJPClass_SetJValueFn(PyJPNumberBool_Type, &longJValue);
 	PyModule_AddObject(module, "_JBoolean", (PyObject*) PyJPNumberBool_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
+
+	// The eight concrete leaves. Each shares its root's sentinel offset
+	// (identical layout, no new fields), and each inherits longJValue/
+	// tp_jvalue from its root via the tp_base walk in
+	// PyJPClass_GetJValueFn -- nothing extra to wire up here.
+	intfreelist::eligibleTypes[0] = PyJPNumber_createLeaf(&byteSpec, PyJPNumberLong_Type, longOffset, module, "JByte");
+	intfreelist::eligibleTypes[1] = PyJPNumber_createLeaf(&shortSpec, PyJPNumberLong_Type, longOffset, module, "JShort");
+	intfreelist::eligibleTypes[2] = PyJPNumber_createLeaf(&intSpec, PyJPNumberLong_Type, longOffset, module, "JInt");
+	intfreelist::eligibleTypes[3] = PyJPNumber_createLeaf(&longSpec, PyJPNumberLong_Type, longOffset, module, "JLong");
+	PyJPNumber_createLeaf(&floatSpec, PyJPNumberFloat_Type, offsetof (struct PyJPFloat, extra), module, "JFloat");
+	PyJPNumber_createLeaf(&doubleSpec, PyJPNumberFloat_Type, offsetof (struct PyJPFloat, extra), module, "JDouble");
+	g_boolLeafType = PyJPNumber_createLeaf(&booleanLeafSpec, PyJPNumberBool_Type, longOffset, module, "JBoolean");
 }
 
 JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPValue& value)

@@ -130,7 +130,7 @@ JPPyObject PyJPField_create(JPField* m)
 {
 	JP_TRACE_IN("PyJPField_create");
 	auto* self = (PyJPField*) PyJPField_Type->tp_alloc(PyJPField_Type, 0);
-	JP_PY_CHECK();
+	JP_PY_CHECK_NULL(self);
 	self->m_Field = m;
 	return JPPyObject::claim((PyObject*) self);
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE

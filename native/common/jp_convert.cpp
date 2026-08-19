@@ -14,8 +14,11 @@
    See NOTICE file for details.
  *****************************************************************************/
 #include "jpype.h"
+#include "pyjp.h"
+#include "jp_primitive_accessor.h"
 #include <math.h>
 #include <bitset>
+#include <cctype>
 
 namespace
 {
@@ -438,16 +441,21 @@ jconverter getConverter(const char* from, int itemsize, const char* to)
 			}
 			break;
 		case 'e':
+			// call2, not call4: a float16 element is 2 bytes on the wire
+			// even though Half::convert widens it to a 4-byte float
+			// internally -- swapping 4 bytes here would read past the
+			// element (into the next one, or out of bounds at the end of
+			// the buffer) and reverse the wrong byte pair.
 			if (reverse) switch (to[0])
 			{
-				case 'z': return &Reverse<Half<Convert<float>::toZ>::convert>::call4;
-				case 'b': return &Reverse<Half<Convert<float>::toB>::convert>::call4;
-				case 'c': return &Reverse<Half<Convert<float>::toC>::convert>::call4;
-				case 's': return &Reverse<Half<Convert<float>::toS>::convert>::call4;
-				case 'i': return &Reverse<Half<Convert<float>::toI>::convert>::call4;
-				case 'j': return &Reverse<Half<Convert<float>::toJ>::convert>::call4;
-				case 'f': return &Reverse<Half<Convert<float>::toF>::convert>::call4;
-				case 'd': return &Reverse<Half<Convert<float>::toD>::convert>::call4;
+				case 'z': return &Reverse<Half<Convert<float>::toZ>::convert>::call2;
+				case 'b': return &Reverse<Half<Convert<float>::toB>::convert>::call2;
+				case 'c': return &Reverse<Half<Convert<float>::toC>::convert>::call2;
+				case 's': return &Reverse<Half<Convert<float>::toS>::convert>::call2;
+				case 'i': return &Reverse<Half<Convert<float>::toI>::convert>::call2;
+				case 'j': return &Reverse<Half<Convert<float>::toJ>::convert>::call2;
+				case 'f': return &Reverse<Half<Convert<float>::toF>::convert>::call2;
+				case 'd': return &Reverse<Half<Convert<float>::toD>::convert>::call2;
 			}
 			else switch (to[0])
 			{
@@ -463,6 +471,13 @@ jconverter getConverter(const char* from, int itemsize, const char* to)
 			break;
 
 		case 'n':
+			// GCOVR_EXCL_START -- 'n'/'N' (Py_ssize_t/size_t) are
+			// native-only in the struct module's own format-string rules;
+			// neither numpy (whose intp buffer format is 'l'/'q', not 'n')
+			// nor ctypes nor memoryview.cast() can produce a byte-order-
+			// prefixed 'n' buffer, so `reverse` can't legitimately be true
+			// here. Kept in case a non-standard buffer exporter ever lies
+			// about its own format string.
 			if (reverse) switch (to[0])
 			{
 				case 'z': return &Reverse<Convert<Py_ssize_t>::toZ>::call8;
@@ -474,6 +489,7 @@ jconverter getConverter(const char* from, int itemsize, const char* to)
 				case 'f': return &Reverse<Convert<Py_ssize_t>::toF>::call8;
 				case 'd': return &Reverse<Convert<Py_ssize_t>::toD>::call8;
 			}
+			// GCOVR_EXCL_STOP
 			else switch (to[0])
 			{
 				case 'z': return &Convert<Py_ssize_t>::toZ;
@@ -487,6 +503,10 @@ jconverter getConverter(const char* from, int itemsize, const char* to)
 			}
 			break;
 		case 'N':
+			// GCOVR_EXCL_START -- same reasoning as case 'n' above: 'N' is
+			// native-only per the struct module's own rules, so no
+			// standard buffer exporter can produce a byte-order-prefixed
+			// 'N' buffer for `reverse` to legitimately be true here.
 			if (reverse) switch (to[0])
 			{
 				case 'z': return &Reverse<Convert<size_t>::toZ>::call8;
@@ -498,6 +518,7 @@ jconverter getConverter(const char* from, int itemsize, const char* to)
 				case 'f': return &Reverse<Convert<size_t>::toF>::call8;
 				case 'd': return &Reverse<Convert<size_t>::toD>::call8;
 			}
+			// GCOVR_EXCL_STOP
 			else switch (to[0])
 			{
 				case 'z': return &Convert<size_t>::toZ;
@@ -514,4 +535,224 @@ jconverter getConverter(const char* from, int itemsize, const char* to)
 	}
 	PyErr_Format(PyExc_ValueError, "Unable to handle buffer type '%s'", from);
 	JP_RAISE_PYTHON();
+}
+
+JPRawTransferMode classifyRawTransfer(jconverter converter, JPPrimitiveType* pcls,
+		const char* format, int itemsize, const char* code)
+{
+	if (format == nullptr)
+		format = "B";
+
+	// Strip an explicit byte-order prefix the same way getConverter does,
+	// so re-resolving with the bare remainder always means "as if native
+	// order" regardless of what the original prefix said.
+	const char* stripped = format;
+	switch (stripped[0])
+	{
+		case '!':
+		case '>':
+		case '<':
+		case '@':
+		case '=':
+			stripped++;
+			break;
+		default:
+			break;
+	}
+
+	// Match getConverter's own itemsize==8 'l'/'L' -> 'q'/'Q' aliasing so
+	// the "as-if-native" re-resolution below picks the same base type
+	// getConverter itself would have picked for this format/itemsize.
+	char adj[2] = {stripped[0], 0};
+	if (itemsize == 8 && adj[0] == 'l')
+		adj[0] = 'q';
+	if (itemsize == 8 && adj[0] == 'L')
+		adj[0] = 'Q';
+
+	if (adj[0] == 'e')
+	{
+		// Half precision is never a raw reinterpret (no native 16-bit
+		// float type), but is still cheap, fixed-cost, bulk-friendly work
+		// -- distinguish only whether the source order matches native.
+		if (itemsize != 2)
+			return RAW_NONE;
+		jconverter nativeHalf = getConverter(adj, itemsize, code);
+		return (converter == nativeHalf) ? RAW_HALF_NATIVE : RAW_HALF_SWAPPED;
+	}
+
+	jconverter identity = getConverter(pcls->getBufferFormat(), (int) pcls->getItemSize(), code);
+	if (converter == identity)
+		return RAW_NATIVE;
+
+	jconverter asNative = getConverter(adj, itemsize, code);
+	if (asNative == identity)
+		return RAW_SWAPPED;
+
+	return RAW_NONE;
+}
+
+bool classifyBufferSource(const char* format, int itemsize, JPBufferSource& out)
+{
+	if (format == nullptr)
+		format = "B";
+
+	// Same byte-order-prefix stripping as getConverter above.
+	bool reverse = false;
+	unsigned int x = 1;
+	bool little = *((char*) &x) == 1;
+	switch (format[0])
+	{
+		case '!':
+		case '>':
+			if (little)
+				reverse = true;
+			format++;
+			break;
+		case '<':
+			if (!little)
+				reverse = true;
+			format++;
+			break;
+		case '@':
+		case '=':
+			format++;
+		default:
+			break;
+	}
+
+	// Same itemsize==8 'l'/'L' -> 'q'/'Q' aliasing as getConverter above.
+	char base = format[0];
+	if (itemsize == 8 && base == 'l')
+		base = 'q';
+	if (itemsize == 8 && base == 'L')
+		base = 'Q';
+
+	out.swapped = reverse;
+	switch (base)
+	{
+		case '?':
+		case 'c':
+		case 'b':
+			out.kind = 'i';
+			out.size = 1;
+			return true;
+		case 'B':
+			out.kind = 'u';
+			out.size = 1;
+			return true;
+		case 'h':
+			out.kind = 'i';
+			out.size = 2;
+			return true;
+		case 'H':
+			out.kind = 'u';
+			out.size = 2;
+			return true;
+		case 'i':
+		case 'l':
+			out.kind = 'i';
+			out.size = 4;
+			return true;
+		case 'I':
+		case 'L':
+			out.kind = 'u';
+			out.size = 4;
+			return true;
+		case 'q':
+		case 'n':
+			out.kind = 'i';
+			out.size = 8;
+			return true;
+		case 'Q':
+		case 'N':
+			out.kind = 'u';
+			out.size = 8;
+			return true;
+		case 'f':
+			out.kind = 'f';
+			out.size = 4;
+			return true;
+		case 'd':
+			out.kind = 'f';
+			out.size = 8;
+			return true;
+		case 'e':
+			out.kind = 'f';
+			out.size = 2;
+			return true;
+		default:
+			return false;
+	}
+}
+
+bool tryFastBufferPush(JPJavaFrame &frame, JPPrimitiveType *pcls, jarray dest,
+		jsize start, jsize step, jsize length, PyObject *sequence)
+{
+	if (length <= 0 || !PyObject_CheckBuffer(sequence))
+		return false;
+
+	JPPyBuffer buffer(sequence, PyBUF_STRIDES | PyBUF_FORMAT);
+	if (!buffer.valid())
+	{
+		PyErr_Clear();
+		return false;
+	}
+	Py_buffer &view = buffer.getView();
+	if (view.ndim != 1 || view.shape[0] != length)
+		return false;
+
+	const char *format = view.format != nullptr ? view.format : "B";
+	Py_ssize_t vstep = view.strides != nullptr ? view.strides[0] : view.itemsize;
+	JPBufferSource src;
+	if (vstep <= 0 || !classifyBufferSource(format, (int) view.itemsize, src))
+		return false;
+
+	jobject directBuf = frame.NewDirectByteBuffer(view.buf,
+			(jlong) ((length - 1) * vstep + view.itemsize));
+	frame.fillFlatIntoArray(pcls->getTypeCode(), src.kind, src.size, (jboolean) src.swapped,
+			directBuf, length, (jint) vstep, dest, start, step);
+	return true;
+}
+
+jintArray buildDimsArray(JPJavaFrame &frame, Py_buffer &view)
+{
+	auto jdims = (jintArray) frame.getContext()->_int->newArrayOf(frame, view.ndim);
+	JPPrimitiveArrayAccessor<jintArray, jint*> accessor(frame, jdims,
+			&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
+	jint *a = accessor.get();
+	for (int i = 0; i < view.ndim; ++i)
+		a[i] = (jint) view.shape[i];
+	accessor.commit();
+	return jdims;
+}
+
+bool tryFastMultiArrayBuffer(JPJavaFrame &frame, JPPrimitiveType *pcls,
+		JPPyBuffer &buffer, jintArray jdims, jarray &out)
+{
+	Py_buffer &view = buffer.getView();
+	if (!PyBuffer_IsContiguous(&view, 'C'))
+		return false;
+
+	char code[2] = {(char) tolower(pcls->getTypeCode()), 0};
+	const char *format = view.format != nullptr ? view.format : "B";
+	// getConverter() never actually returns nullptr for an unrecognized
+	// format -- it raises ValueError via JP_RAISE_PYTHON() instead (see its
+	// final `default: break;` case above). This check is dead but kept as a
+	// defensive backstop in case that contract ever changes.
+	jconverter converter = getConverter(format, (int) view.itemsize, code);
+	if (converter == nullptr)  // GCOVR_EXCL_LINE
+		return false;  // GCOVR_EXCL_LINE
+
+	JPRawTransferMode mode = classifyRawTransfer(converter, pcls, format, (int) view.itemsize, code);
+	if (mode == RAW_NONE)
+		return false;
+
+	Py_ssize_t total = 1;
+	for (int i = 0; i < view.ndim; ++i)
+		total *= view.shape[i];
+	jobject directBuf = frame.NewDirectByteBuffer(view.buf, total * view.itemsize);
+	// A local reference within frame's own scope -- caller keeps/converts
+	// it as appropriate to their own frame lifetime, same as before.
+	out = (jarray) frame.fillMultiArrayFromBuffer(pcls->getTypeCode(), (jint) mode, directBuf, jdims);
+	return true;
 }

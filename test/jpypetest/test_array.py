@@ -81,9 +81,11 @@ class ArrayTestCase(common.JPypeTestCase):
         _jpype.fault("PyJPArray_len")
         with self.assertRaisesRegex(SystemError, "fault"):
             len(ja)
-        _jpype.fault("PyJPModule_getContext")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            len(ja)
+        # No second (PyJPModule_getContext) check here: PyJPArray_len
+        # returns a cached jsize set at construction and makes no JNI
+        # call at all (see the comment on PyJPArray_len itself,
+        # pyjp_array.cpp), so there is no longer any JNI-failure mode to
+        # inject for a plain length read.
 
     @common.requireInstrumentation
     def testJPArray_getArrayItem(self):
@@ -194,7 +196,15 @@ class ArrayTestCase(common.JPypeTestCase):
     @common.requireInstrumentation
     def testJArrayGetJavaConversion(self):
         ja = JArray(JInt)
-        _jpype.fault("JPArrayClass::findJavaConversion")
+        # findJavaConversion is now a cache-checking wrapper on the base
+        # JPClass (see JPClass::findJavaConversion, jp_class.cpp) that
+        # only calls into the per-subclass findJavaConversionImpl
+        # (formerly plain findJavaConversion, still traced under the old
+        # "JPArrayClass::findJavaConversion" label) on a cache miss -- but
+        # the wrapper itself is the actual entry point _canConvertToJava
+        # reaches, and it fault-checks before ever delegating, so that's
+        # the fault point to arm.
+        _jpype.fault("JPClass::findJavaConversion")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja._canConvertToJava(object())
 
@@ -542,32 +552,42 @@ class ArrayTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testArrayOfFaults(self):
+        # b is a flat (1D) buffer source -- PyJPModule_convertBuffer's
+        # view.ndim==1 branch (pyjp_module.cpp) routes every one of these
+        # straight through pcls->newArrayOf + pcls->setArrayRange (the same
+        # bulk fast path setArrayRange's own buffer branch uses), never
+        # reaching newMultiArray/assemble at all -- those only run for a
+        # genuinely multi-dimensional (view.ndim > 1) source. So the fault
+        # point to arm is fillFlatIntoArray, except for JChar, whose
+        # setArrayRange has no buffer fast path (still a plain
+        # Get/ReleaseCharArrayElements critical section -- see
+        # JPCharType::setArrayRange).
         b = bytes([1, 2, 3])
-        _jpype.fault("JPJavaFrame::assemble")
+        _jpype.fault("JPJavaFrame::fillFlatIntoArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray.of(b, JInt)
-        _jpype.fault("JPBooleanType::newMultiArray")
+        _jpype.fault("JPJavaFrame::fillFlatIntoArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray.of(b, JBoolean)
-        _jpype.fault("JPCharType::newMultiArray")
+        _jpype.fault("JPJavaFrame::ReleaseCharArrayElements")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray.of(b, JChar)
-        _jpype.fault("JPByteType::newMultiArray")
+        _jpype.fault("JPJavaFrame::fillFlatIntoArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray.of(b, JByte)
-        _jpype.fault("JPShortType::newMultiArray")
+        _jpype.fault("JPJavaFrame::fillFlatIntoArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray.of(b, JShort)
-        _jpype.fault("JPIntType::newMultiArray")
+        _jpype.fault("JPJavaFrame::fillFlatIntoArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray.of(b, JInt)
-        _jpype.fault("JPLongType::newMultiArray")
+        _jpype.fault("JPJavaFrame::fillFlatIntoArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray.of(b, JLong)
-        _jpype.fault("JPFloatType::newMultiArray")
+        _jpype.fault("JPJavaFrame::fillFlatIntoArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray.of(b, JFloat)
-        _jpype.fault("JPDoubleType::newMultiArray")
+        _jpype.fault("JPJavaFrame::fillFlatIntoArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray.of(b, JDouble)
 
@@ -678,3 +698,99 @@ class ArrayTestCase(common.JPypeTestCase):
         np_array = np.array([[True, False], [False, True]])
         bool_2d = JArray(JBoolean, dims=2)(np_array)
         np.testing.assert_array_equal(np_array, bool_2d)
+
+    @common.requireNumpy
+    def testNumpyMultiDimBufferConversion(self):
+        """A C-contiguous numpy array whose ndim matches a multi-dimensional
+        primitive array's nesting depth should take the bulk buffer path
+        (JPConversionMultiArrayBuffer) rather than the general per-row
+        sequence path -- exercised here for several primitive types and
+        both 2D and 3D, checking the converted contents are correct."""
+        np_2d = np.arange(12, dtype=np.int32).reshape(3, 4)
+        j_2d = JArray(JInt, dims=2)(np_2d)
+        for i in range(3):
+            for j in range(4):
+                self.assertEqual(j_2d[i][j], np_2d[i, j])
+
+        np_3d = np.arange(24, dtype=np.float64).reshape(2, 3, 4)
+        j_3d = JArray(JDouble, dims=3)(np_3d)
+        for i in range(2):
+            for j in range(3):
+                for k in range(4):
+                    self.assertEqual(j_3d[i][j][k], np_3d[i, j, k])
+
+    @common.requireNumpy
+    def testNumpyMultiDimBufferNonContiguousFallback(self):
+        """A transposed numpy array can't provide the C-contiguous buffer
+        the fast path requires, so this must fall back to the general
+        sequence-based conversion rather than raise or produce garbage."""
+        np_2d = np.arange(12, dtype=np.int32).reshape(3, 4).T
+        self.assertFalse(np_2d.flags['C_CONTIGUOUS'])
+        j_2d = JArray(JInt, dims=2)(np_2d)
+        for i in range(4):
+            for j in range(3):
+                self.assertEqual(j_2d[i][j], np_2d[i, j])
+
+    @common.requireNumpy
+    def testNumpyMultiDimBufferDtypeMismatch(self):
+        """A buffer whose element type has no Java primitive converter
+        (Python objects, here) must not be silently accepted by the fast
+        path -- it should fail the same way the general path would."""
+        np_2d = np.array([[object(), object()], [object(), object()]])
+        with self.assertRaises(TypeError):
+            JArray(JInt, dims=2)(np_2d)
+
+    def testRaggedNestedListStillWorks(self):
+        """A ragged (non-rectangular) nested list can't be described by a
+        Py_buffer at all, so it must keep going through the general
+        per-row sequence conversion unaffected by the new buffer fast
+        path."""
+        ragged = [[1, 2, 3], [4, 5]]
+        j_ragged = JArray(JInt, dims=2)(ragged)
+        self.assertEqual(list(j_ragged[0]), [1, 2, 3])
+        self.assertEqual(list(j_ragged[1]), [4, 5])
+
+
+class ArrayClassNestedTestCase(common.JPypeTestCase):
+    """JPArrayClassNested (jp_arrayclass.cpp) is the multiArrayBuffer-but-
+    not-ragged specialization used for a 2D+ array whose leaf type isn't
+    ragged-eligible (short/byte/char/boolean -- see isRaggedEligible in
+    jp_classhints.cpp), as distinct from JPArrayClassNestedRagged
+    (int/long/float/double, exercised via DeepBench.sum2DIntArray etc. in
+    test_arrayRaggedPush.py/test_arrayMultiDimBuffer.py). short[][] is the
+    only readily-available declared-parameter target for it."""
+
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+        self.DeepBench = jpype.JClass('jpype.benchmark.DeepBench')
+
+    def testNestedAsArgument(self):
+        data = [[1, 2, 3], [4, 5]]
+        expected = sum(x for row in data for x in row)
+        self.assertEqual(self.DeepBench.sum2DShortArray(data), expected)
+
+    def testNestedAsArgumentNoMatchRaises(self):
+        # Nothing (null/object/multiArrayBuffer/sequence/hints) matches a
+        # plain object() -- JPArrayClassNested::findJavaConversionImpl's
+        # own no-match fallthrough, not an earlier/unrelated rejection.
+        with self.assertRaises(TypeError):
+            self.DeepBench.sum2DShortArray(object())
+
+    def testNestedHints(self):
+        # JPArrayClassNested::getConversionInfo, reached via the class's
+        # _hints introspection property.
+        hints = jpype.JClass(jpype.JShort[:, :])._hints
+        self.assertEqual(list(hints.returns), [jpype.JClass(jpype.JShort[:, :])])
+
+    def testRaggedEligibleHints(self):
+        # JPArrayClassNestedRagged::getConversionInfo counterpart.
+        hints = jpype.JClass(jpype.JInt[:, :])._hints
+        self.assertEqual(list(hints.returns), [jpype.JClass(jpype.JInt[:, :])])
+
+    def testNestedSlice(self):
+        # JPArrayNested::slice -- the non-primitive-leaf array-of-arrays
+        # slice path (JPArrayNested), as opposed to the primitive-leaf
+        # JPArrayByte/Short/etc. slice used by a flat 1D array.
+        ja = JArray(JShort, 2)([[1, 2], [3, 4], [5, 6]])
+        sub = ja[0:2]
+        self.assertEqual([list(row) for row in sub], [[1, 2], [3, 4]])

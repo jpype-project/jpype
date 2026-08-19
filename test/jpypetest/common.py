@@ -75,6 +75,21 @@ def requireAscii(func):
             raise unittest.SkipTest("Ascii root directory required")
     return f
 
+class GenericSequence(object):
+    """A minimal sequence (not list, not tuple) for exercising the generic
+    PySequence fallback path in array-set conversions, as distinct from the
+    list/tuple fast paths."""
+
+    def __init__(self, items):
+        self.items = list(items)
+
+    def __len__(self):
+        return len(self.items)
+
+    def __getitem__(self, i):
+        return self.items[i]
+
+
 class UseFunc(object):
     def __init__(self, obj, func, attr):
         self.obj = obj

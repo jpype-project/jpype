@@ -32,7 +32,7 @@ JPClassType::JPClassType(JPJavaFrame& frame,
 JPClassType::~JPClassType()
 = default;
 
-JPMatch::Type JPClassType::findJavaConversion(JPMatch& match)
+JPMatch::Type JPClassType::findJavaConversionImpl(JPMatch& match)
 {
 	JP_TRACE_IN("JPClass::findJavaConversion");
 	if (nullConversion->matches(this, match)

@@ -111,7 +111,7 @@ public:
 	friend class JPJavaFrame;
 	friend class JPClass;
 	// Free functions in jp_exception.cpp used by the JPBaseError hierarchy's
-	// toPython()/toJava() (see jp_error.h / plan/ExceptionRefactor.md).
+	// toPython()/toJava() (see jp_error.h).
 	friend void convertJavaToPython(jthrowable th);
 	friend void convertPythonToJava(const char* mesg);
 
@@ -222,14 +222,24 @@ private:
 	JPClassRef m_Array;
 	JPObjectRef m_Reflector;
 
+	// org.jpype.internal.Support -- static helpers, resolved separately
+	// from the instance methods below (see loadEntryPoints)
+	JPClassRef m_SupportClass;
+	jmethodID m_Support_collectRectangularID{};
+	jmethodID m_Support_assembleID{};
+	jmethodID m_Support_fillFromBufferID{};
+	jmethodID m_Support_collectToBufferID{};
+	jmethodID m_Support_fillBufferIntoMultiArrayID{};
+	jmethodID m_Support_fillRaggedFromBufferID{};
+	jmethodID m_Support_fillFlatFromBufferID{};
+	jmethodID m_Support_fillFlatIntoArrayID{};
+
 	// Java Functions
 	jmethodID m_Object_ToStringID{};
 	jmethodID m_Object_EqualsID{};
 	jmethodID m_Object_HashCodeID{};
 	jmethodID m_CallMethodID{};
 	jmethodID m_Class_GetNameID{};
-	jmethodID m_Context_collectRectangularID{};
-	jmethodID m_Context_assembleID{};
 	jmethodID m_String_ToCharArrayID{};
 	jmethodID m_Context_CreateExceptionID{};
 	jmethodID m_Context_GetExcClassID{};

@@ -8,6 +8,7 @@ project(jpype-native)
 
 option(ENABLE_TRACING "Enable tracing in the extension" OFF)
 option(ENABLE_COVERAGE "Enable compilation for coverage measurement" OFF)
+option(JP_ASSERT_FAST_FRAMES "Assert that JPJavaFrame::fast() call sites never run with zero real JNI frames on the thread" OFF)
 option(ENABLE_BUILD_JAR "Enable building of the Java support library JAR" ON)
 option(BUILD_TEST_HARNESS "Enable building of the Java test harness" ON)
 # Optionally set Python GIL disabled flag

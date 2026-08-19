@@ -19,12 +19,16 @@
 #include "jpype.h"
 #include "jp_pythontypes.h"
 
-// Py_SET_TYPE became a public macro in CPython 3.9 (bpo-39573); before that,
-// Py_TYPE(obj) itself was an assignable lvalue macro. Needed for the
-// polymorph-back-to-canonical-type step in jp_class.cpp/pyjp_object.cpp on
-// Python 3.8, the oldest version this project still supports.
+// Py_SET_TYPE/Py_SET_REFCNT/Py_SET_SIZE became public macros in CPython 3.9
+// (bpo-39573); before that, Py_TYPE(obj)/Py_REFCNT(obj)/Py_SIZE(obj)
+// themselves were assignable lvalue macros. Needed for the
+// polymorph-back-to-canonical-type step in jp_class.cpp/pyjp_object.cpp and
+// the tagged-number recycling pool in pyjp_number.cpp on Python 3.8, the
+// oldest version this project still supports.
 #if PY_VERSION_HEX < 0x03090000
 #define Py_SET_TYPE(obj, type) ((Py_TYPE(obj) = (type)))
+#define Py_SET_REFCNT(obj, refcnt) ((Py_REFCNT(obj) = (refcnt)))
+#define Py_SET_SIZE(obj, size) ((Py_SIZE(obj) = (size)))
 #endif
 
 class JPStackInfo;
@@ -52,6 +56,12 @@ class JPStackInfo;
 // Macro to all after executing a Python command that can result in
 // a failure to convert it to an exception.
 #define JP_PY_CHECK() { if (PyErr_Occurred() != 0) JP_RAISE_PYTHON();  } // GCOVR_EXCL_LINE
+
+// Use after a CPython C-API call whose *only* failure signal is a NULL
+// return (the common case) -- unlike JP_PY_CHECK(), only calls
+// PyErr_Occurred() when obj is actually NULL, since a real API contract
+// never returns non-NULL with an exception left pending.
+#define JP_PY_CHECK_NULL(obj) { if ((obj) == nullptr) { JP_PY_CHECK(); } }
 
 #ifdef __cplusplus
 extern "C"

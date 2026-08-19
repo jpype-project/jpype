@@ -1766,6 +1766,25 @@ Java arrays provide several Python methods:
   ``memoryview(jarray)`` function to create a buffer for transferring data.
   Memory views of Java arrays are not writable.
 
+- **Bulk Transfer**:
+  For primitive arrays, ``pullTo(dest)`` and ``pushFrom(src)`` bulk-copy
+  data in place between the array and an existing, caller-supplied buffer
+  (such as a preallocated numpy array), taking the fastest available
+  transfer path automatically. This works for arrays of any dimension;
+  ``dest``/``src`` need only match the array's total element count, not
+  its shape. ``pushFrom`` additionally accepts a source with a different
+  dtype, converting as it copies. Note that a buffer previously obtained
+  from ``memoryview(jarray)`` and still held open will *not* reflect a
+  later ``pushFrom`` on that same array -- a multi-dimensional Java
+  array's memory isn't contiguous, so ``memoryview()`` exports a one-time
+  snapshot for the life of that export. Release the memoryview (or take a
+  fresh one) after mutating the array to see the new data.
+
+- **To List**:
+  Use the ``toList()`` method to bulk-convert a Java array into a genuine
+  Python list. Multi-dimensional primitive arrays are converted into
+  genuinely nested lists.
+
 - **Iteration (For Each)**:
   Java arrays can be used in Python `for` loops and loop comprehensions.
 

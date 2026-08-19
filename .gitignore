@@ -105,3 +105,12 @@ plan/
 project/issues
 project/pr
 project/codescan
+
+# Generated benchmark output (regenerate via project/benchmark/*/*.py; see
+# project/benchmark/README.md) -- not source, not committed.
+project/benchmark/**/*_results.csv
+
+# Parsed benchmark data snapshot -- regenerate via
+# project/benchmark/helper/parse_logs.py from raw log output; RESULTS.md is
+# regenerated from it via gen_results.py. Not source, not committed.
+project/benchmark/helper/parsed.json

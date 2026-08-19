@@ -24,7 +24,7 @@ public:
 	~JPVoidType() override;
 
 	JPClass* getBoxedClass(JPJavaFrame& frame) const override;
-	JPMatch::Type findJavaConversion(JPMatch &match) override;
+	JPMatch::Type findJavaConversionImpl(JPMatch &match) override;
 	JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 	JPValue     getValueFromObject(JPJavaFrame& frame, const JPValue& obj) override;
 
@@ -54,9 +54,14 @@ public:
 	void copyElements(JPJavaFrame &frame,
 			jarray a, jsize start, jsize len,
 			void* memory, int offset) override;
+	void setElements(JPJavaFrame &frame,
+			jarray a, jsize start, jsize len,
+			const void* memory, int offset) override;
 
 	PyObject *newMultiArray(JPJavaFrame &frame,
 			JPPyBuffer &buffer, int subs, int base, jobject dims) override;
+	jobject newMultiArrayObject(JPJavaFrame &frame,
+			JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims) override;
 } ;
 
 #endif // _JP_VOID_TYPE_H_

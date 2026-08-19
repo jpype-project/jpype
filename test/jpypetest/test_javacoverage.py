@@ -29,16 +29,17 @@ class JavaCoverageTestCase(common.JPypeTestCase):
         self.fixture = JClass('jpype.common.Fixture')()
         JPypeContext = JClass('org.jpype.JPypeContext')
         self.inst = JPypeContext.getInstance()
+        self.support = JClass('org.jpype.internal.Support')
 
     def testTypeFactory(self):
         self.assertNotEqual(self.inst.getTypeFactory(), None)
 
     def testContext(self):
-        self.assertEqual(self.inst.collectRectangular(None), None)
-        self.assertEqual(self.inst.collectRectangular(JString('hello')), None)
-        self.assertEqual(self.inst.collectRectangular(
+        self.assertEqual(self.support.collectRectangular(None), None)
+        self.assertEqual(self.support.collectRectangular(JString('hello')), None)
+        self.assertEqual(self.support.collectRectangular(
             JArray(JObject, 2)([JArray(JObject)(0)])), None)
-        self.assertEqual(self.inst.collectRectangular(
+        self.assertEqual(self.support.collectRectangular(
             JArray(JObject)([None, None])), None)
         self.assertEqual(self.inst.getExcValue(None), 0)
 

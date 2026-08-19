@@ -336,6 +336,12 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases, Py_ssi
 			case Py_tp_hash:
 				type->tp_hash = (hashfunc) slot->pfunc;
 				break;
+			case Py_tp_iter:
+				type->tp_iter = (getiterfunc) slot->pfunc;
+				break;
+			case Py_tp_iternext:
+				type->tp_iternext = (iternextfunc) slot->pfunc;
+				break;
 			case Py_nb_int:
 				heap->as_number.nb_int = (unaryfunc) slot->pfunc;
 				break;

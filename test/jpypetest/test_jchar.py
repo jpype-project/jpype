@@ -105,6 +105,16 @@ class JChar2TestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             jf().char_field = object()
 
+    def testArraySetRangeTuple(self):
+        ja = JArray(JChar)(3)
+        ja[0:3] = ('a', 'b', JChar('c'))
+        self.assertEqual(list(ja[0:3]), ['a', 'b', 'c'])
+
+    def testArraySetRangeSequence(self):
+        ja = JArray(JChar)(3)
+        ja[0:3] = common.GenericSequence(['a', 'b', JChar('c')])
+        self.assertEqual(list(ja[0:3]), ['a', 'b', 'c'])
+
     def testCharArrayAsString(self):
         t = JClass("jpype.array.TestArray")()
         v = t.getCharArray()

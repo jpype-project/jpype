@@ -16,6 +16,8 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_array.h"
+#include "jp_arrayclass.h"
+#include "jp_classhints.h"
 #include "jp_primitive_accessor.h"
 #include "jp_floattype.h"
 #include "jp_boxedtype.h"
@@ -108,7 +110,7 @@ public:
 
 } asJFloatConversion;
 
-JPMatch::Type JPFloatType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPFloatType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPFloatType::findJavaConversion");
 
@@ -198,6 +200,9 @@ void JPFloatType::setArrayRange(JPJavaFrame& frame, jarray a,
 		PyObject* sequence)
 {
 	JP_TRACE_IN("JPFloatType::setArrayRange");
+	if (tryFastBufferPush(frame, this, a, start, step, length, sequence))
+		return;
+
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
 			&JPJavaFrame::GetFloatArrayElements, &JPJavaFrame::ReleaseFloatArrayElements);
 
@@ -217,8 +222,16 @@ void JPFloatType::setArrayRange(JPJavaFrame& frame, jarray a,
 				JP_RAISE(PyExc_ValueError, "mismatched size");
 
 			char* memory = (char*) view.buf;
-			if (view.suboffsets && view.suboffsets[0] >= 0)
-				memory = *((char**) memory) + view.suboffsets[0];
+			// This is PyBUF_FULL_RO, so suboffsets CAN legitimately be
+			// non-null for a genuinely indirect exporter -- but every such
+			// exporter found (CPython's own _testbuffer.ndarray, the only
+			// one able to produce one at all; numpy/array/ctypes can't)
+			// lacks __len__, and both call paths that reach here
+			// (JPArray::setRange and JPConversionBuffer::matches) require
+			// a working len() before ever getting this far. Kept as a
+			// defensive fallback, not a provably-reachable path.
+			if (view.suboffsets && view.suboffsets[0] >= 0)  // GCOVR_EXCL_LINE
+				memory = *((char**) memory) + view.suboffsets[0];  // GCOVR_EXCL_LINE
 			jsize index = start;
 			jconverter conv = getConverter(view.format, (int) view.itemsize, "f");
 			for (Py_ssize_t i = 0; i < length; ++i, index += step)
@@ -235,28 +248,73 @@ void JPFloatType::setArrayRange(JPJavaFrame& frame, jarray a,
 		}
 	}
 
-	// Use sequence API
-	JPPySequence seq = JPPySequence::use(sequence);
 	jsize index = start;
-	for (Py_ssize_t i = 0; i < length; ++i, index += step)
+
+	// Container-kind dispatch happens once, not per element (list vs.
+	// tuple vs. general sequence, resolved here); within each loop, the
+	// exact-float/exact-int-or-neither check IS per element, deliberately
+	// -- cheap type checks, the same cost sequenceCheckStep (jp_class.cpp)
+	// already pays per element during matches(). The PyLong_CheckExact arm
+	// mirrors matches()'s own widening acceptance, so an int among floats
+	// stays fast too. A single item that's neither (a numpy scalar, a
+	// custom __float__ object, ...) anywhere in the sequence no longer
+	// demotes every element after it to the generic PySequence_GetItem
+	// path -- only that one element pays the general PyFloat_AsDouble call.
+	if (PyList_CheckExact(sequence))
 	{
-		double v =  PyFloat_AsDouble(seq[i].get());
-		if (v == -1.)
-			JP_PY_CHECK();
-		val[index] = (type_t) v;
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			PyObject *item = PyList_GET_ITEM(sequence, i);
+			double v;
+			if (PyFloat_CheckExact(item))
+				v = PyFloat_AS_DOUBLE(item);
+			else if (PyLong_CheckExact(item))
+			{
+				v = PyLong_AsDouble(item);
+				if (v == -1.0 && PyErr_Occurred())
+					JP_PY_CHECK();
+			} else
+			{
+				v = PyFloat_AsDouble(item);
+				if (v == -1.0 && PyErr_Occurred())
+					JP_PY_CHECK();
+			}
+			val[index] = (type_t) v;
+		}
+	} else if (PyTuple_CheckExact(sequence))
+	{
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			PyObject *item = PyTuple_GET_ITEM(sequence, i);
+			double v;
+			if (PyFloat_CheckExact(item))
+				v = PyFloat_AS_DOUBLE(item);
+			else if (PyLong_CheckExact(item))
+			{
+				v = PyLong_AsDouble(item);
+				if (v == -1.0 && PyErr_Occurred())
+					JP_PY_CHECK();
+			} else
+			{
+				v = PyFloat_AsDouble(item);
+				if (v == -1.0 && PyErr_Occurred())
+					JP_PY_CHECK();
+			}
+			val[index] = (type_t) v;
+		}
+	} else
+	{
+		JPPySequence seq = JPPySequence::use(sequence);
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			double v =  PyFloat_AsDouble(seq[i].get());
+			if (v == -1.)
+				JP_PY_CHECK();
+			val[index] = (type_t) v;
+		}
 	}
 	accessor.commit();
 	JP_TRACE_OUT;
-}
-
-JPPyObject JPFloatType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
-{
-	auto array = (array_t) a;
-	type_t val;
-	frame.GetFloatArrayRegion(array, ndx, 1, &val);
-	jvalue v;
-	field(v) = val;
-	return convertToPythonObject(frame, v, false);
 }
 
 void JPFloatType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
@@ -266,6 +324,88 @@ void JPFloatType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java float");
 	type_t val = field(match.convert());
 	frame.SetFloatArrayRegion((array_t) a, ndx, 1, &val);
+}
+
+JPPyObject JPFloatType::getFastArrayItem(JPJavaAccess& frame, jarray a, jsize ndx)
+{
+	// Inlines convertToPythonObject directly rather than calling it,
+	// because that would require a real JPJavaFrame& just to satisfy the
+	// signature. Unlike byte/short/int/long/char (see
+	// JPIntType::getFastArrayItem), float has no JValueFn registered, so
+	// PyJPValue_assignJavaSlot's real effect -- a plain offset-based
+	// jvalue write, no JNI involved -- does need replicating here, but
+	// that's pure Python-level type metadata (PyJPValue_getJavaSlotOffset)
+	// plus a raw memory write, not anything a frame is needed for.
+	auto array = (array_t) a;
+	type_t val;
+	frame.GetFloatArrayRegion(array, ndx, 1, &val);
+	PyTypeObject* wrapper = getHost();
+	JPPyObject obj = JPPyObject::call(wrapper->tp_alloc(wrapper, 0));
+	((PyFloatObject*) obj.get())->ob_fval = val;
+	Py_ssize_t offset = PyJPValue_getJavaSlotOffset(obj.get());
+	auto* slot = (jvalue*) (((char*) obj.get()) + offset);
+	slot->f = val;
+	return obj;
+}
+
+JPArray* JPFloatType::createArrayWrapper(const JPValue& value)
+{
+	return new JPArrayFloat(value);
+}
+
+JPArrayClass* JPFloatType::createArrayClass(JPJavaFrame& frame, jclass cls,
+		const string& name, JPClass* superClass, jint modifiers)
+{
+	return new JPArrayClassFloat(frame, cls, name, superClass, this, modifiers);
+}
+
+JPMatch::Type JPArrayClassFloat::findJavaConversionImpl(JPMatch &match)
+{
+	JP_TRACE_IN("JPArrayClassFloat::findJavaConversion");
+	if (nullConversion->matches(this, match)
+			|| objectConversion->matches(this, match)
+			|| bufferConversion->matches(this, match)
+			|| listConversion->matches(this, match)
+			|| tupleConversion->matches(this, match)
+			|| sequenceConversion->matches(this, match)
+			|| hintsConversion->matches(this, match)
+			)
+		return match.type;
+	JP_TRACE("None");
+	return match.type = JPMatch::_none;
+	JP_TRACE_OUT;
+}
+
+void JPArrayClassFloat::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame = JPJavaFrame::outer();
+	objectConversion->getInfo(this, info);
+	bufferConversion->getInfo(this, info);
+	sequenceConversion->getInfo(this, info);
+	hintsConversion->getInfo(this, info);
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
+}
+
+JPArrayFloat::JPArrayFloat(const JPValue& array)
+: JPArray(array), m_CompType(dynamic_cast<JPFloatType*>(m_Class->getComponentType()))
+{
+}
+
+JPArrayFloat::JPArrayFloat(JPArrayFloat* src, jsize start, jsize stop, jsize step)
+: JPArray(src, start, stop, step), m_CompType(src->m_CompType)
+{
+}
+
+JPPyObject JPArrayFloat::getItem(jsize ndx)
+{
+	ndx = checkIndex(ndx);
+	JPJavaAccess frame;
+	return m_CompType->getFastArrayItem(frame, m_Object.get(), m_Start + ndx * m_Step);
+}
+
+JPArray* JPArrayFloat::slice(jsize start, jsize stop, jsize step)
+{
+	return new JPArrayFloat(this, start, stop, step);
 }
 
 void JPFloatType::getView(JPArrayView& view)
@@ -308,6 +448,13 @@ void JPFloatType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize 
 	frame.GetFloatArrayRegion((jfloatArray) a, start, len, b);
 }
 
+void JPFloatType::setElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		const void* memory, int offset)
+{
+	auto* b = (jfloat*) ((const char*) memory + offset);
+	frame.SetFloatArrayRegion((jfloatArray) a, start, len, const_cast<jfloat*>(b));
+}
+
 static void pack(jfloat* d, jvalue v)
 {
 	*d = v.f;
@@ -318,6 +465,15 @@ PyObject *JPFloatType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int
 	JP_TRACE_IN("JPFloatType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "f",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}
+
+jobject JPFloatType::newMultiArrayObject(JPJavaFrame &frame, JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPFloatType::newMultiArrayObject");
+	return convertMultiArrayObject<type_t>(
+			frame, this, &pack, converter,
 			buffer, subs, base, dims);
 	JP_TRACE_OUT;
 }

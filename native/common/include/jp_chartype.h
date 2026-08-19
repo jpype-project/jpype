@@ -40,7 +40,7 @@ public:
 	}
 
 	JPClass* getBoxedClass(JPJavaFrame& frame) const override;
-	JPMatch::Type findJavaConversion(JPMatch &match) override;
+	JPMatch::Type findJavaConversionImpl(JPMatch &match) override;
 	void getConversionInfo(JPConversionInfo &info) override;
 	JPPyObject  convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast) override;
 	JPValue     getValueFromObject(JPJavaFrame& frame, const JPValue& obj) override;
@@ -57,8 +57,16 @@ public:
 	void        setArrayRange(JPJavaFrame& frame, jarray,
 			jsize start, jsize length, jsize step,
 			PyObject *sequence) override;
-	JPPyObject  getArrayItem(JPJavaFrame& frame, jarray, jsize ndx) override;
 	void        setArrayItem(JPJavaFrame& frame, jarray, jsize ndx, PyObject* val) override;
+
+	// Non-virtual, narrow-frame companion to JPPrimitiveType::getArrayItem
+	// (unreachable for primitives; see jp_primitivetype.h) -- called
+	// only by JPArrayChar::getItem().
+	JPPyObject  getFastArrayItem(JPJavaAccess& frame, jarray, jsize ndx);
+
+	JPArray*    createArrayWrapper(const JPValue& value) override;
+	JPArrayClass* createArrayClass(JPJavaFrame& frame, jclass cls,
+			const string& name, JPClass* superClass, jint modifiers) override;
 
 	char getTypeCode() override
 	{
@@ -85,9 +93,14 @@ public:
 	void copyElements(JPJavaFrame &frame,
 			jarray a, jsize start, jsize len,
 			void* memory, int offset) override;
+	void setElements(JPJavaFrame &frame,
+			jarray a, jsize start, jsize len,
+			const void* memory, int offset) override;
 
 	PyObject *newMultiArray(JPJavaFrame &frame,
 			JPPyBuffer &buffer, int subs, int base, jobject dims) override;
+	jobject newMultiArrayObject(JPJavaFrame &frame,
+			JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims) override;
 
 } ;
 

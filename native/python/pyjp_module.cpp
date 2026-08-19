@@ -754,6 +754,13 @@ uint32_t _PyJPModule_fault_code = -1;
 
 static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
 {
+	// Arming (or disarming) a fault must force the next findJavaConversion
+	// resolution to actually run findJavaConversionImpl again -- otherwise a
+	// cache hit can silently skip right over the instrumented matches() call
+	// the test is targeting, leaving the fault armed-but-never-triggered to
+	// go off unexpectedly in some later, unrelated call. Reuse the same
+	// generation-counter invalidation JPClassHints mutation uses.
+	++JPClassHints::s_Generation;
 	if (args == Py_None)
 	{
 		_PyJPModule_fault_code = 0;
@@ -983,20 +990,36 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype, P
 	// the type.
 	auto *pcls = dynamic_cast<JPPrimitiveType *>( cls);
 
+	// Flat (1D) source: route through the same bulk fast path
+	// `setArrayRange`'s buffer branch (`tryFastBufferPush`,
+	// `Support.fillFlatFromBuffer`) already gives the method-argument
+	// push and the naive `JArray(JType)(numpyArray)` sequence
+	// constructor (which also lands in `setArrayRange` -- numpy arrays
+	// satisfy `PySequence_Check` too) -- one bulk JNI handoff instead of
+	// the N-D `newMultiArray`/`convertMultiArrayObject` path's per-element
+	// `pack(converter(src))` loop, which has no such shortcut and was
+	// never meant to carry the common flat case. Measured: this closed a
+	// ~5-6x regression where `JArray.of()` was slower than the "naive"
+	// non-buffer constructor for the exact same input (see
+	// project/benchmark/jpype/array_of.py).
+	if (view.ndim == 1)
+	{
+		Py_ssize_t length = view.shape != nullptr ? view.shape[0] : view.len / view.itemsize;
+		jarray arr = pcls->newArrayOf(frame, (jsize) length);
+		pcls->setArrayRange(frame, arr, 0, (jsize) length, 1, source);
+		JPClass *outType = frame.findClassForObject(arr);
+		jvalue v;
+		v.l = arr;
+		return outType->convertToPythonObject(frame, v, false).keep();
+	}
+
 	// Convert the shape
 	Py_ssize_t subs = 1;
 	Py_ssize_t base = 1;
-	auto jdims = (jintArray) context->_int->newArrayOf(frame, view.ndim);
+	jintArray jdims;
 	if (view.shape != nullptr)
 	{
-		JPPrimitiveArrayAccessor<jintArray, jint*> accessor(frame, jdims,
-				&JPJavaFrame::GetIntArrayElements, &JPJavaFrame::ReleaseIntArrayElements);
-		jint *a = accessor.get();
-		for (int i = 0; i < view.ndim; ++i)
-		{
-			a[i] = view.shape[i];
-		}
-		accessor.commit();
+		jdims = buildDimsArray(frame, view);
 		for (int i = 0; i < view.ndim - 1; ++i)
 		{
 			subs *= view.shape[i];
@@ -1004,13 +1027,35 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype, P
 		base = view.shape[view.ndim - 1];
 	} else
 	{
+		// Defensive only: every flag combo PyJPModule_arrayFromBuffer
+		// probes with (PyBUF_FULL_RO, PyBUF_RECORDS_RO, PyBUF_ND |
+		// PyBUF_FORMAT) implies PyBUF_ND, which guarantees a non-null
+		// view.shape -- so this branch is not known to be reachable from
+		// any real caller of this function.
 		if (view.ndim > 1)
 		{
 			PyErr_Format(PyExc_TypeError, "buffer dims inconsistent");
 			return nullptr;
 		}
+		jdims = (jintArray) context->_int->newArrayOf(frame, view.ndim);
 		base = view.len / view.itemsize;
 	}
+
+	// Same bulk DirectByteBuffer handoff as the flat (1D) case above and
+	// as JPConversionMultiArrayBuffer's own N-D method-argument push --
+	// see tryFastMultiArrayBuffer (jp_convert.cpp). Falls back to the
+	// older per-element newMultiArray/convertMultiArrayObject path
+	// (unchanged below) for a non-contiguous source or genuine dtype
+	// coercion.
+	jarray fast = nullptr;
+	if (tryFastMultiArrayBuffer(frame, pcls, buffer, jdims, fast))
+	{
+		JPClass *outType = frame.findClassForObject(fast);
+		jvalue v;
+		v.l = fast;
+		return outType->convertToPythonObject(frame, v, false).keep();
+	}
+
 	return pcls->newMultiArray(frame, buffer, subs, base, (jobject) jdims);
 }
 

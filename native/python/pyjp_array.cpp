@@ -18,11 +18,105 @@
 #include "pyjp.h"
 #include "jp_array.h"
 #include "jp_arrayclass.h"
+#include "jp_primitive_accessor.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
+// Native iterator for JArray (list(arr), for x in arr, tuple(arr), *arr,
+// comprehensions, ...). Deliberately NOT just relying on the sq_item slot
+// below plus CPython's generic PySeqIter fallback: PySeqIter detects the
+// end of iteration by calling sq_item one index past the end and
+// catching IndexError, and profiling found that raising *any* exception
+// while a JPJavaFrame is open and then popping that frame is expensive
+// here (thousands of futex calls per hit -- looks like JVM safepoint
+// synchronization triggered by the frame-pop/exception-state interaction,
+// not anything in jpype's own code) -- cheap for a real error, but much
+// too expensive to pay on every normal iteration's last step, and the
+// cost is worse than proportionally so for many small arrays (deep
+// multi-dimensional pulls) than for one large flat one. This type
+// mirrors CPython's own list/tuple iterators instead: an explicit length
+// check before ever calling into array access, returning NULL with *no*
+// exception set to signal a clean stop -- the same trick that lets
+// list/tuple iteration avoid exception-raising overhead entirely.
+struct PyJPArrayIter
+{
+	PyObject_HEAD
+	PyJPArray *m_Array; // strong ref, cleared once exhausted
+	Py_ssize_t m_Index;
+};
+
+static PyTypeObject *PyJPArrayIter_Type = nullptr;
+
+static void PyJPArrayIter_dealloc(PyJPArrayIter *self)
+{
+	Py_CLEAR(self->m_Array);
+	Py_TYPE(self)->tp_free(self);
+}
+
+static PyObject *PyJPArrayIter_iter(PyObject *self)
+{
+	Py_INCREF(self);
+	return self;
+}
+
+static PyObject *PyJPArrayIter_next(PyJPArrayIter *self)
+{
+	JP_PY_TRY("PyJPArrayIter_next");
+	if (self->m_Array == nullptr)
+		return nullptr; // already exhausted
+	// No JPJavaFrame constructed here on purpose -- JPArray::getItem() is
+	// fully self-contained per concrete subclass (a primitive read needs
+	// no frame at all on its common path; an object-array read pushes
+	// its own outer() internally). Pushing one here "just in case" would
+	// tax every element of every array type with a real
+	// PushLocalFrame/PopLocalFrame pair regardless of whether the
+	// concrete type ever needs one, exactly the per-call cost this whole
+	// design exists to avoid.
+	JPArray *array = self->m_Array->m_Array;
+	if (array == nullptr || self->m_Index >= array->getLength())
+	{
+		// Clean stop, no exception -- see the design note above.
+		Py_CLEAR(self->m_Array);
+		return nullptr;
+	}
+	PyObject *result = array->getItem((jsize) self->m_Index).keep();
+	self->m_Index++;
+	return result;
+	JP_PY_CATCH(nullptr);
+}
+
+static PyType_Slot arrayIterSlots[] = {
+	{ Py_tp_dealloc, (void*) PyJPArrayIter_dealloc},
+	{ Py_tp_iter,	 (void*) PyJPArrayIter_iter},
+	{ Py_tp_iternext, (void*) PyJPArrayIter_next},
+	{0}
+};
+
+static PyType_Spec arrayIterSpec = {
+	"_jpype._JArrayIterator",
+	sizeof (PyJPArrayIter),
+	0,
+	Py_TPFLAGS_DEFAULT,
+	arrayIterSlots
+};
+
+static PyObject *PyJPArray_iter(PyJPArray *self)
+{
+	JP_PY_TRY("PyJPArray_iter");
+	if (self->m_Array == nullptr)
+		JP_RAISE(PyExc_ValueError, "Null array");
+	auto *it = (PyJPArrayIter*) PyJPArrayIter_Type->tp_alloc(PyJPArrayIter_Type, 0);
+	if (it == nullptr)
+		return nullptr; // GCOVR_EXCL_LINE
+	Py_INCREF(self);
+	it->m_Array = self;
+	it->m_Index = 0;
+	return (PyObject*) it;
+	JP_PY_CATCH(nullptr);
+}
 
 /**
  * Create a new object.
@@ -85,7 +179,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 				// Create a new array with the correct length and copy elements
 				jsize sliceLength = srcArray->getLength();
 				JPValue newArray = arrayClass->newArray(frame, sliceLength);
-				((PyJPArray*) self)->m_Array = new JPArray(newArray);
+				((PyJPArray*) self)->m_Array = JPArray::create(newArray);
 				((PyJPArray*) self)->m_Array->setRange(0, sliceLength, 1, v);
 				PyJPValue_assignJavaSlot(frame, self, newArray);
 				return 0;
@@ -93,9 +187,66 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		}
 
 		JPValue value(valueCls, PyJPValue_getJValue(frame, v));
-		((PyJPArray*) self)->m_Array = new JPArray(value);
+		((PyJPArray*) self)->m_Array = JPArray::create(value);
 		PyJPValue_assignJavaSlot(frame, self, value);
 		return 0;
+	}
+
+	// Buffer-protocol fast path for a multi-dimensional target (int[][],
+	// double[][][], ...) -- without this, a numpy array also satisfies
+	// PySequence_Check below, so construction would always fall into the
+	// generic newArray+setRange(0, length, 1, v) path. That's still fast
+	// for a 1D target (JPClass::setArrayRange's *primitive* overrides
+	// already try tryFastBufferPush internally), but for an N-D target the
+	// componentType is itself an array class, so setArrayRange's generic
+	// default implementation applies instead -- no buffer shortcut, one
+	// findJavaConversion+set call per row. Same gate/fallback contract as
+	// JPConversionMultiArrayBuffer::matches (jp_classhints.cpp) and
+	// JArray.of()'s N-D branch (PyJPModule_convertBuffer, pyjp_module.cpp),
+	// which both already reuse tryFastMultiArrayBuffer (jp_convert.cpp) the
+	// same way.
+	JPPrimitiveType *multiLeaf = arrayClass->getMultiArrayLeaf();
+	int multiDepth = arrayClass->getMultiArrayDepth();
+	if (multiLeaf != nullptr && multiDepth >= 2 && PyObject_CheckBuffer(v))
+	{
+		JPPyBuffer buffer(v, PyBUF_STRIDES | PyBUF_FORMAT);
+		if (!buffer.valid())
+		{
+			PyErr_Clear();
+		} else
+		{
+			Py_buffer &view = buffer.getView();
+			jarray fast = nullptr;
+			if (view.ndim == multiDepth)
+			{
+				try
+				{
+					jintArray jdims = buildDimsArray(frame, view);
+					tryFastMultiArrayBuffer(frame, multiLeaf, buffer, jdims, fast);
+				} catch (...)
+				{
+					// Declined -- e.g. an element format with no Java
+					// primitive converter at all (a numpy object-dtype
+					// array), which getConverter reports by raising rather
+					// than returning nullptr. Fall through to the general
+					// PySequence_Check path below, which raises the
+					// appropriate TypeError for genuinely unconvertible
+					// elements -- same outcome as if this fast path had
+					// never been attempted.
+					fast = nullptr;
+				}
+			}
+			if (fast != nullptr)
+			{
+				JPClass *outType = frame.findClassForObject(fast);
+				jvalue val;
+				val.l = fast;
+				JPValue value(outType, val);
+				((PyJPArray*) self)->m_Array = JPArray::create(value);
+				PyJPValue_assignJavaSlot(frame, self, value);
+				return 0;
+			}
+		}
 	}
 
 	if (PySequence_Check(v))
@@ -105,7 +256,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		if (length < 0 || length > 2147483647)
 			JP_RAISE(PyExc_ValueError, "Array size invalid");
 		JPValue newArray = arrayClass->newArray(frame, (int) length);
-		((PyJPArray*) self)->m_Array = new JPArray(newArray);
+		((PyJPArray*) self)->m_Array = JPArray::create(newArray);
 		((PyJPArray*) self)->m_Array->setRange(0, (jsize) length, 1, v);
 		PyJPValue_assignJavaSlot(frame, self, newArray);
 		return 0;
@@ -118,7 +269,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		if (length < 0 || length > 2147483647)
 			JP_RAISE(PyExc_ValueError, "Array size invalid");
 		JPValue newArray = arrayClass->newArray(frame, (int) length);
-		((PyJPArray*) self)->m_Array = new JPArray(newArray);
+		((PyJPArray*) self)->m_Array = JPArray::create(newArray);
 		PyJPValue_assignJavaSlot(frame, self, newArray);
 		return 0;
 	}
@@ -146,7 +297,8 @@ static PyObject *PyJPArray_repr(PyJPArray *self)
 static Py_ssize_t PyJPArray_len(PyJPArray *self)
 {
 	JP_PY_TRY("PyJPArray_len");
-	JPJavaFrame frame = JPJavaFrame::outer();
+	// JPArray::getLength() returns a cached jsize set at construction --
+	// no JNI call, so no frame (fast or real) is needed here at all.
 	if (self->m_Array == nullptr)
 		JP_RAISE(PyExc_ValueError, "Null array"); // GCOVR_EXCL_LINE
 	return self->m_Array->getLength();
@@ -158,10 +310,48 @@ static PyObject* PyJPArray_length(PyJPArray *self, PyObject *closure)
 	return PyLong_FromSsize_t(PyJPArray_len(self));
 }
 
+static PyObject *PyJPArray_sqItem(PyJPArray *self, Py_ssize_t index)
+{
+	JP_PY_TRY("PyJPArray_sqItem");
+	// No JPJavaFrame constructed here -- see PyJPArrayIter_next's comment
+	// above; JPArray::getItem() is fully self-contained per subclass.
+	if (self->m_Array == nullptr)
+		JP_RAISE(PyExc_ValueError, "Null array");
+
+	// Bounds-check here, rather than letting JPArray::getItem's own check
+	// raise, because CPython's built-in PySeqIter (which drives
+	// list(arr)/for x in arr/tuple(arr)/etc -- see jpype/_jarray.py, no
+	// Python-level __iter__ defined on purpose) detects end-of-iteration
+	// by calling sq_item one index past the end and expecting IndexError.
+	// That happens once per array on the hot path, not just on genuine
+	// caller error -- but once per *innermost* array in a nested
+	// structure, so for a deep multi-dim pull it fires thousands of
+	// times. getItem's own out-of-bounds path goes through JP_RAISE (a
+	// real C++ throw, caught by JP_PY_CATCH below) -- fine for a genuine
+	// error, too expensive to pay on every iteration's normal end.
+	// Confirmed by benchmark: without this check, multi-dim list() got
+	// *slower* after switching to the native iterator, not faster.
+	jsize length = self->m_Array->getLength();
+	Py_ssize_t ndx = index;
+	if (ndx < 0)
+		ndx += length;
+	if (ndx < 0 || ndx >= length)
+	{
+		PyErr_SetString(PyExc_IndexError, "array index out of bounds");
+		return nullptr;
+	}
+	return self->m_Array->getItem((jsize) ndx).keep();
+	JP_PY_CATCH(nullptr);
+}
+
 static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 {
 	JP_PY_TRY("PyJPArray_getArrayItem");
-	JPJavaFrame frame = JPJavaFrame::outer();
+	// No JPJavaFrame constructed here on the general entry path -- see
+	// PyJPArrayIter_next's comment. The index branch below needs none at
+	// all (JPArray::getItem() is self-contained); only the slice branch
+	// genuinely uses one (PyJPValue_assignJavaSlot/PyJPValue_getJValue),
+	// so it constructs its own, scoped to just that branch.
 	if (self->m_Array == nullptr)
 		JP_RAISE(PyExc_ValueError, "Null array");
 
@@ -175,6 +365,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 
 	if (PySlice_Check(item))
 	{
+		JPJavaFrame frame = JPJavaFrame::outer();
 		Py_ssize_t start, stop, step, slicelength;
 		auto length = (Py_ssize_t) self->m_Array->getLength();
 
@@ -201,7 +392,7 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 
 		// Set up JPArray as slice
 		JPArray *array = ((PyJPArray*) self)->m_Array;
-		((PyJPArray*) newArray.get())->m_Array = new JPArray(array,
+		((PyJPArray*) newArray.get())->m_Array = array->slice(
 				(jsize) start, (jsize) stop, (jsize) step);
 		return newArray.keep();
 	}
@@ -414,6 +605,122 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 	JP_PY_CATCH(-1);
 }
 
+static PyObject *PyJPArray_pullTo(PyJPArray *self, PyObject *dest)
+{
+	JP_PY_TRY("PyJPArray_pullTo");
+	if (self->m_Array == nullptr)
+		JP_RAISE(PyExc_ValueError, "Null array");
+	self->m_Array->pullTo(dest);
+	Py_RETURN_NONE;
+	JP_PY_CATCH(nullptr);
+}
+
+static const char *pullTo_doc =
+		"Bulk-copy this array's elements out into a writable buffer.\n"
+		"\n"
+		"``dest`` must be a writable buffer-protocol object (e.g. a\n"
+		"preallocated numpy array) with the same total element count and\n"
+		"item size as this array -- its shape need not match. Only valid\n"
+		"for arrays of primitives.\n";
+
+static PyObject *PyJPArray_pushFrom(PyJPArray *self, PyObject *src)
+{
+	JP_PY_TRY("PyJPArray_pushFrom");
+	if (self->m_Array == nullptr)
+		JP_RAISE(PyExc_ValueError, "Null array");
+	self->m_Array->pushFrom(src);
+	Py_RETURN_NONE;
+	JP_PY_CATCH(nullptr);
+}
+
+static const char *pushFrom_doc =
+		"Bulk-copy a readable buffer's elements into this array in place.\n"
+		"\n"
+		"``src`` must be a readable buffer-protocol object (e.g. a numpy\n"
+		"array) with the same total element count as this array -- its\n"
+		"shape need not match, and its dtype need not match this array's\n"
+		"component type (a converting fallback handles that case). Only\n"
+		"valid for arrays of primitives.\n"
+		"\n"
+		"For a multi-dimensional array: any buffer export of this array\n"
+		"(``memoryview(arr)``, ``numpy.asarray(arr)``) already open at the\n"
+		"time of the call is a frozen read-only snapshot and will not\n"
+		"reflect this call's changes -- Java's array-of-arrays layout isn't\n"
+		"contiguous, so an export can only ever be a one-time collected\n"
+		"copy, not a live view. Release any prior export first (or take a\n"
+		"fresh one afterwards) to see the update.\n";
+
+namespace
+{
+
+// dtype=None (or omitted): dstType == nullptr means "this array's own
+// component type, plain output" -- resolved per-array in JPArray::toList.
+// dtype=int/float: plain output cast to Java long/double.
+// dtype=JByte..JDouble: wrapped output (tagged instance) cast to that type.
+struct DtypeSpec
+{
+	JPPrimitiveType* type = nullptr;
+	bool wrap = false;
+};
+
+DtypeSpec parseDtypeArg(PyObject* dtype_obj, JPContext* context)
+{
+	if (dtype_obj == nullptr || dtype_obj == Py_None)
+		return DtypeSpec{};
+
+	if (dtype_obj == (PyObject*) &PyLong_Type)
+		return DtypeSpec{context->_long, false};
+	if (dtype_obj == (PyObject*) &PyFloat_Type)
+		return DtypeSpec{context->_double, false};
+
+	if (PyType_Check(dtype_obj))
+	{
+		JPClass* jc = PyJPClass_getJPClass(dtype_obj);
+		auto* prim = dynamic_cast<JPPrimitiveType*>(jc);
+		if (prim != nullptr && jc != context->_boolean && jc != context->_char)
+			return DtypeSpec{prim, true};
+	}
+
+	JP_RAISE(PyExc_TypeError, "dtype must be int, float, or a jpype primitive "
+			"numeric type (JByte, JShort, JInt, JLong, JFloat, JDouble)");
+}
+
+} // namespace
+
+static PyObject *PyJPArray_toList(PyJPArray *self, PyObject *args, PyObject *kwargs)
+{
+	static const char *kwlist[] = {"dtype", nullptr};
+	PyObject *dtype_obj = nullptr;
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "|O:toList", (char**) kwlist, &dtype_obj))
+		return nullptr;
+
+	JP_PY_TRY("PyJPArray_toList");
+	if (self->m_Array == nullptr)
+		JP_RAISE(PyExc_ValueError, "Null array");
+	JPJavaFrame frame = JPJavaFrame::outer();
+	DtypeSpec spec = parseDtypeArg(dtype_obj, frame.getContext());
+	return self->m_Array->toList(spec.type, spec.wrap).keep();
+	JP_PY_CATCH(nullptr);
+}
+
+static const char *toList_doc =
+		"Convert this array into a genuine Python list.\n"
+		"\n"
+		"For an array of primitives this is a bulk conversion (one JNI\n"
+		"critical section for the whole array rather than one JNI call per\n"
+		"element via ``list(arr)``); multi-dimensional primitive arrays\n"
+		"produce genuinely nested lists. For an array of objects, elements\n"
+		"are boxed individually, same as ``list(arr)``.\n"
+		"\n"
+		"By default, primitive arrays return plain Python types (int,\n"
+		"float, bool, str). ``dtype`` requests a forced cast (NumPy-style):\n"
+		"\n"
+		"    - ``int``/``float``: plain Python type, cast to that kind.\n"
+		"    - ``JByte``/``JShort``/``JInt``/``JLong``/``JFloat``/``JDouble``:\n"
+		"      a tagged wrapper instance of that type, cast to it.\n"
+		"\n"
+		"``dtype`` is not supported for ``JBoolean``/``JChar`` arrays.\n";
+
 static const char *length_doc =
 		"Get the length of a Java array\n"
 		"\n"
@@ -422,6 +729,9 @@ static const char *length_doc =
 
 static PyMethodDef arrayMethods[] = {
 	{"__getitem__", (PyCFunction) (&PyJPArray_getItem), METH_O | METH_COEXIST, ""},
+	{"pullTo", (PyCFunction) (&PyJPArray_pullTo), METH_O, (pullTo_doc)},
+	{"pushFrom", (PyCFunction) (&PyJPArray_pushFrom), METH_O, (pushFrom_doc)},
+	{"toList", (PyCFunction) (&PyJPArray_toList), METH_VARARGS | METH_KEYWORDS, (toList_doc)},
 	{nullptr},
 };
 
@@ -438,6 +748,8 @@ static PyType_Slot arraySlots[] = {
 	{ Py_tp_methods,  (void*) &arrayMethods},
 	{ Py_mp_subscript, (void*) &PyJPArray_getItem},
 	{ Py_sq_length,   (void*) &PyJPArray_len},
+	{ Py_sq_item,	 (void*) &PyJPArray_sqItem},
+	{ Py_tp_iter,	 (void*) &PyJPArray_iter},
 	{ Py_tp_getset,   (void*) &arrayGetSets},
 	{ Py_mp_ass_subscript, (void*) &PyJPArray_assignSubscript},
 #if PY_VERSION_HEX >= 0x03090000
@@ -520,13 +832,19 @@ void PyJPArray_initType(PyObject * module)
 	PyModule_AddObject(module, "_JArrayPrimitive",
 			(PyObject*) PyJPArrayPrimitive_Type);
 	JP_PY_CHECK();
+
+	// Internal only -- not added to the module namespace, mirrors how
+	// CPython doesn't expose list_iterator/tuple_iterator as builtins
+	// either. A plain heap type (no Java-wrapping machinery needed).
+	PyJPArrayIter_Type = (PyTypeObject*) PyType_FromSpec(&arrayIterSpec);
+	JP_PY_CHECK();
 }
 
 JPPyObject PyJPArray_create(JPJavaFrame &frame, PyTypeObject *type, const JPValue & value)
 {
 	PyObject *obj = type->tp_alloc(type, 0);
 	JP_PY_CHECK();
-	((PyJPArray*) obj)->m_Array = new JPArray(value);
+	((PyJPArray*) obj)->m_Array = JPArray::create(value);
 	PyJPValue_assignJavaSlot(frame, obj, value);
 	return JPPyObject::claim(obj);
 }

@@ -16,6 +16,8 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_array.h"
+#include "jp_arrayclass.h"
+#include "jp_classhints.h"
 #include "jp_primitive_accessor.h"
 #include "jp_bytetype.h"
 
@@ -34,8 +36,7 @@ JPClass* JPByteType::getBoxedClass(JPJavaFrame& frame) const
 
 JPPyObject JPByteType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
-	JPPyObject tmp = JPPyObject::call(PyLong_FromLong(field(val)));
-	JPPyObject out = JPPyObject::call(convertLong(getHost(), (PyLongObject*) tmp.get()));
+	JPPyObject out = JPPyObject::call(convertLong(getHost(), field(val)));
 	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
 	return out;
 }
@@ -79,7 +80,7 @@ public:
 
 } jbyteConversion;
 
-JPMatch::Type JPByteType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPByteType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPByteType::findJavaConversion");
 
@@ -168,6 +169,9 @@ void JPByteType::setArrayRange(JPJavaFrame& frame, jarray a,
 		jsize start, jsize length, jsize step, PyObject* sequence)
 {
 	JP_TRACE_IN("JPByteType::setArrayRange");
+	if (tryFastBufferPush(frame, this, a, start, step, length, sequence))
+		return;
+
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
 			&JPJavaFrame::GetByteArrayElements, &JPJavaFrame::ReleaseByteArrayElements);
 
@@ -187,8 +191,16 @@ void JPByteType::setArrayRange(JPJavaFrame& frame, jarray a,
 				JP_RAISE(PyExc_ValueError, "mismatched size");
 
 			char* memory = (char*) view.buf;
-			if (view.suboffsets && view.suboffsets[0] >= 0)
-				memory = *((char**) memory) + view.suboffsets[0];
+			// This is PyBUF_FULL_RO, so suboffsets CAN legitimately be
+			// non-null for a genuinely indirect exporter -- but every such
+			// exporter found (CPython's own _testbuffer.ndarray, the only
+			// one able to produce one at all; numpy/array/ctypes can't)
+			// lacks __len__, and both call paths that reach here
+			// (JPArray::setRange and JPConversionBuffer::matches) require
+			// a working len() before ever getting this far. Kept as a
+			// defensive fallback, not a provably-reachable path.
+			if (view.suboffsets && view.suboffsets[0] >= 0)  // GCOVR_EXCL_LINE
+				memory = *((char**) memory) + view.suboffsets[0];  // GCOVR_EXCL_LINE
 			jsize index = start;
 			jconverter conv = getConverter(view.format, (int) view.itemsize, "b");
 			for (Py_ssize_t i = 0; i < length; ++i, index += step)
@@ -205,34 +217,87 @@ void JPByteType::setArrayRange(JPJavaFrame& frame, jarray a,
 		}
 	}
 
-	// Use sequence API
-	JPPySequence seq = JPPySequence::use(sequence);
 	jsize index = start;
-	for (Py_ssize_t i = 0; i < length; ++i, index += step)
+
+	// Container-kind dispatch happens once, not per element (list vs.
+	// tuple vs. general sequence, resolved here); within each loop, the
+	// exact-int-or-not check IS per element, deliberately -- it's a
+	// single cheap PyLong_CheckExact, the same cost sequenceCheckStep
+	// (jp_class.cpp) already pays per element during matches(). A single
+	// non-exact item (a bool, a numpy scalar, a custom __index__ object,
+	// ...) anywhere in the sequence no longer demotes every element after
+	// it to the generic PySequence_GetItem path -- only that one element
+	// pays the heavier PyIndex_Check + PyLong_AsLongLong conversion; the
+	// rest of the array stays on direct indexed access either way.
+	if (PyList_CheckExact(sequence))
 	{
-		PyObject *item = seq[i].get();
-		if (!PyIndex_Check(item))
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
 		{
-			PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to byte", Py_TYPE(item)->tp_name);
-			JP_RAISE_PYTHON();
+			PyObject *item = PyList_GET_ITEM(sequence, i);
+			jlong v;
+			if (PyLong_CheckExact(item))
+			{
+				long lv = PyLong_AsLong(item);
+				if (lv == -1)
+					JP_PY_CHECK();
+				v = lv;
+			} else
+			{
+				if (!PyIndex_Check(item))
+				{
+					PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to byte", Py_TYPE(item)->tp_name);
+					JP_RAISE_PYTHON();
+				}
+				v = PyLong_AsLongLong(item);
+				if (v == -1)
+					JP_PY_CHECK();
+			}
+			val[index] = (type_t) assertRange(v);
 		}
-		jlong v = PyLong_AsLongLong(item);
-		if (v == -1)
-			JP_PY_CHECK();
-		val[index] = (type_t) assertRange(v);
+	} else if (PyTuple_CheckExact(sequence))
+	{
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			PyObject *item = PyTuple_GET_ITEM(sequence, i);
+			jlong v;
+			if (PyLong_CheckExact(item))
+			{
+				long lv = PyLong_AsLong(item);
+				if (lv == -1)
+					JP_PY_CHECK();
+				v = lv;
+			} else
+			{
+				if (!PyIndex_Check(item))
+				{
+					PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to byte", Py_TYPE(item)->tp_name);
+					JP_RAISE_PYTHON();
+				}
+				v = PyLong_AsLongLong(item);
+				if (v == -1)
+					JP_PY_CHECK();
+			}
+			val[index] = (type_t) assertRange(v);
+		}
+	} else
+	{
+		JPPySequence seq = JPPySequence::use(sequence);
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			PyObject *item = seq[i].get();
+			if (!PyIndex_Check(item))
+			{
+				PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to byte", Py_TYPE(item)->tp_name);
+				JP_RAISE_PYTHON();
+			}
+			jlong v = PyLong_AsLongLong(item);
+			if (v == -1)
+				JP_PY_CHECK();
+			val[index] = (type_t) assertRange(v);
+		}
 	}
 	accessor.commit();
 	JP_TRACE_OUT;
-}
-
-JPPyObject JPByteType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
-{
-	auto array = (array_t) a;
-	type_t val;
-	frame.GetByteArrayRegion(array, ndx, 1, &val);
-	jvalue v;
-	field(v) = val;
-	return convertToPythonObject(frame, v, false);
 }
 
 void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
@@ -242,6 +307,81 @@ void JPByteType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject*
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java byte");
 	type_t val = field(match.convert());
 	frame.SetByteArrayRegion((array_t) a, ndx, 1, &val);
+}
+
+JPPyObject JPByteType::getFastArrayItem(JPJavaAccess& frame, jarray a, jsize ndx)
+{
+	// See JPIntType::getFastArrayItem: inlines convertToPythonObject
+	// directly -- PyJPValue_assignJavaSlot is a guaranteed no-op for this
+	// family, so no frame is ever genuinely needed here. Unlike int, byte
+	// has no getHost()==nullptr branch in its own convertToPythonObject,
+	// so none is replicated here either.
+	auto array = (array_t) a;
+	type_t val;
+	frame.GetByteArrayRegion(array, ndx, 1, &val);
+	return JPPyObject::call(convertLong(getHost(), val));
+}
+
+JPArray* JPByteType::createArrayWrapper(const JPValue& value)
+{
+	return new JPArrayByte(value);
+}
+
+JPArrayClass* JPByteType::createArrayClass(JPJavaFrame& frame, jclass cls,
+		const string& name, JPClass* superClass, jint modifiers)
+{
+	return new JPArrayClassByte(frame, cls, name, superClass, this, modifiers);
+}
+
+JPMatch::Type JPArrayClassByte::findJavaConversionImpl(JPMatch &match)
+{
+	JP_TRACE_IN("JPArrayClassByte::findJavaConversion");
+	if (nullConversion->matches(this, match)
+			|| objectConversion->matches(this, match)
+			|| byteArrayConversion->matches(this, match)
+			|| bufferConversion->matches(this, match)
+			|| listConversion->matches(this, match)
+			|| tupleConversion->matches(this, match)
+			|| sequenceConversion->matches(this, match)
+			|| hintsConversion->matches(this, match)
+			)
+		return match.type;
+	JP_TRACE("None");
+	return match.type = JPMatch::_none;
+	JP_TRACE_OUT;
+}
+
+void JPArrayClassByte::getConversionInfo(JPConversionInfo &info)
+{
+	JPJavaFrame frame = JPJavaFrame::outer();
+	objectConversion->getInfo(this, info);
+	byteArrayConversion->getInfo(this, info);
+	bufferConversion->getInfo(this, info);
+	sequenceConversion->getInfo(this, info);
+	hintsConversion->getInfo(this, info);
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
+}
+
+JPArrayByte::JPArrayByte(const JPValue& array)
+: JPArray(array), m_CompType(dynamic_cast<JPByteType*>(m_Class->getComponentType()))
+{
+}
+
+JPArrayByte::JPArrayByte(JPArrayByte* src, jsize start, jsize stop, jsize step)
+: JPArray(src, start, stop, step), m_CompType(src->m_CompType)
+{
+}
+
+JPPyObject JPArrayByte::getItem(jsize ndx)
+{
+	ndx = checkIndex(ndx);
+	JPJavaAccess frame;
+	return m_CompType->getFastArrayItem(frame, m_Object.get(), m_Start + ndx * m_Step);
+}
+
+JPArray* JPArrayByte::slice(jsize start, jsize stop, jsize step)
+{
+	return new JPArrayByte(this, start, stop, step);
 }
 
 void JPByteType::getView(JPArrayView& view)
@@ -284,6 +424,13 @@ void JPByteType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize l
 	frame.GetByteArrayRegion((jbyteArray) a, start, len, b);
 }
 
+void JPByteType::setElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		const void* memory, int offset)
+{
+	auto* b = (jbyte*) ((const char*) memory + offset);
+	frame.SetByteArrayRegion((jbyteArray) a, start, len, const_cast<jbyte*>(b));
+}
+
 static void pack(jbyte* d, jvalue v)
 {
 	*d = v.b;
@@ -294,6 +441,15 @@ PyObject *JPByteType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int 
 	JP_TRACE_IN("JPByteType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "b",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}
+
+jobject JPByteType::newMultiArrayObject(JPJavaFrame &frame, JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPByteType::newMultiArrayObject");
+	return convertMultiArrayObject<type_t>(
+			frame, this, &pack, converter,
 			buffer, subs, base, dims);
 	JP_TRACE_OUT;
 }

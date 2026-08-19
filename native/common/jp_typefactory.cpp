@@ -27,6 +27,7 @@
 #include "jp_buffertype.h"
 #include "jp_typemanager.h"
 #include "jp_arrayclass.h"
+#include "jp_interfacetype.h"
 #include "jp_stringtype.h"
 #include "jp_voidtype.h"
 #include "jp_booleantype.h"
@@ -148,10 +149,13 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineArrayClas
 	JP_JAVA_TRY("JPTypeFactory_defineArrayClass");
 	string cname = frame.toStringUTF8(name);
 	JP_TRACE(cname);
-	auto* result = new JPArrayClass(frame, cls,
+	// componentType picks its own JPArrayClass specialization (which of
+	// the fixed array conversions can ever match is fixed by the
+	// component's identity) -- see JPClass::createArrayClass.
+	auto* componentType = (JPClass*) componentClass;
+	auto* result = componentType->createArrayClass(frame, cls,
 			cname,
 			(JPClass*) superClass,
-			(JPClass*) componentClass,
 			modifiers);
 	return (jlong) result;
 	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
@@ -177,6 +181,12 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineObjectCla
 	JPClass* result = nullptr;
 	if (!JPModifier::isSpecial(modifiers))
 	{
+		// A dynamic proxy can only ever be assigned to an interface, never
+		// a plain class -- JPInterfaceType is the only one of the two
+		// whose findJavaConversionImpl includes proxyConversion at all.
+		if (JPModifier::isInterface(modifiers))
+			return (jlong) new JPInterfaceType(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
+
 		// Create a normal class
 		return (jlong) new JPClass(frame, cls, className, (JPClass*) superClass, interfaces, modifiers);
 	}
