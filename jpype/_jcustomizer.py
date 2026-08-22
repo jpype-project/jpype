@@ -129,12 +129,24 @@ def _applyStickyMethods(cls, sticky):
         rename = attr.get('rename', None)
         name = method.__name__
         if rename:
-            orig = type.__getattribute__(cls, name)
-            cls._customize(rename, orig)
+            # Only capture/rename an "original" the first time cls sees a
+            # sticky override of this method - i.e. while cls's own dict
+            # still holds the real (unwrapped) Java method. On any later
+            # pass (a second sticky customizer applied to the same
+            # target, or inheriting an already-wrapped ancestor's slot)
+            # cls's own dict entry is no longer a real _JMethod but a
+            # previously-installed wrapper; capturing that as "the
+            # original" makes the wrapper call itself once installed,
+            # producing infinite recursion (jpype-project/jpype#1473).
+            # Leaving the existing rename target alone preserves the
+            # true original captured on the first pass.
+            orig = cls.__dict__.get(name, None)
+            if isinstance(orig, _jpype._JMethod):
+                cls._customize(rename, orig)
         cls._customize(name, method)
 
 
-def _applyCustomizerImpl(members, proto, sticky, setter):
+def _applyCustomizerImpl(members, proto, sticky, inits, setter):
     """ (internal) Apply a customizer to a class.
 
     This "borrows" methods from a prototype class.
@@ -157,6 +169,16 @@ def _applyCustomizerImpl(members, proto, sticky, setter):
                 rename = attr.get('rename', "_" + p)
                 if p in members and isinstance(members[p], (_jpype._JField, _jpype._JMethod)):
                     setter(rename, members[p])
+            if p == '__jclass_init__':
+                # Collected and chained by the caller rather than copied
+                # directly: when more than one customizer for the same
+                # target defines its own __jclass_init__ (or one does and
+                # a sticky method also needs one synthesized), a plain
+                # setter(p, v) here lets whichever proto is processed
+                # last silently overwrite every earlier one instead of
+                # composing them (jpype-project/jpype#1476).
+                inits.append(v)
+                continue
             setter(p, v)
 
 
@@ -175,17 +197,29 @@ def _applyAll(cls, method):
 def _applyCustomizerPost(cls, proto):
     """ (internal) Customize a class after it has been created """
     sticky = []
-    _applyCustomizerImpl(cls.__dict__, proto, sticky,
+    inits = []
+    _applyCustomizerImpl(cls.__dict__, proto, sticky, inits,
                          lambda p, v: cls._customize(p, v))
 
-    # Merge sticky into existing __jclass_init__
-    if len(sticky) > 0:
-        method = proto.__dict__.get('__jclass_init__', None)
+    # Merge sticky/inits into the existing __jclass_init__. This has to
+    # chain the class's *current* __jclass_init__ (whatever a prior
+    # registration - up front or itself retroactive - already installed
+    # here), not just this proto's own hook: cls itself was already
+    # finalized by the time this runs, so any class created *after* this
+    # registration reaches __jclass_init__ only through cls's dict entry,
+    # and overwriting it outright would silently drop every earlier
+    # registration's sticky methods and __jclass_init__ hooks for such
+    # classes (jpype-project/jpype#1476).
+    if len(sticky) > 0 or len(inits) > 0:
+        prev = cls.__dict__.get('__jclass_init__', None)
 
         def init(cls):
-            if method:
-                method(cls)
-            _applyStickyMethods(cls, sticky)
+            if prev:
+                prev(cls)
+            for m in inits:
+                m(cls)
+            if len(sticky) > 0:
+                _applyStickyMethods(cls, sticky)
         cls._customize('__jclass_init__', init)
 
     # Apply a customizer to all derived classes
@@ -242,17 +276,17 @@ class JClassHints(_jpype._JClassHints):
 
         # Apply implementations
         sticky = []
+        inits = []
         for proto in self.implementations:
-            _applyCustomizerImpl(members, proto, sticky,
+            _applyCustomizerImpl(members, proto, sticky, inits,
                                  lambda p, v: members.__setitem__(p, v))
 
-        if len(sticky) > 0:
-            method = members.get('__jclass_init__', None)
-
+        if len(sticky) > 0 or len(inits) > 0:
             def init(cls):
-                if method is not None:
-                    method(cls)
-                _applyStickyMethods(cls, sticky)
+                for m in inits:
+                    m(cls)
+                if len(sticky) > 0:
+                    _applyStickyMethods(cls, sticky)
             members['__jclass_init__'] = init
 
     def applyInitializer(self, cls):
