@@ -131,6 +131,25 @@ class ImportsTestCase(common.JPypeTestCase):
         self.assertTrue(t.field == 5)
         self.assertTrue(t.method() == "Yes")
 
+    def testAddClassPathLateJdbcDriver(self):
+        # A JDBC driver added to the classpath after the JVM has started
+        # must still be discoverable by java.sql.DriverManager, even
+        # though DriverManager's own ServiceLoader-based provider scan only
+        # runs once, at its first use (see #914).
+        import pathlib
+        DriverManager = jpype.JClass("java.sql.DriverManager")
+        SQLException = jpype.JClass("java.sql.SQLException")
+        url = "jdbc:latedriver:test"
+        with self.assertRaises(SQLException):
+            DriverManager.getDriver(url)
+
+        jar_path = pathlib.Path(__file__).parent / "../jars/latedriver/latedriver.jar"
+        assert jar_path.exists(), "run `ant -f test/build.xml latedriver-jar` first"
+        jpype.addClassPath(jar_path.absolute())
+        driver = DriverManager.getDriver(url)
+        self.assertEqual(str(driver.getClass().getName()),
+                          "org.jpype.latedriver.LateDriver")
+
     def testStar(self):
         import importstar
 

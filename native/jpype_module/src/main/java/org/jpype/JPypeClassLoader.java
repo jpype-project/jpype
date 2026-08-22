@@ -1,11 +1,14 @@
 package org.jpype;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -302,6 +305,8 @@ public class JPypeClassLoader extends URLClassLoader
 
     try (JarFile jf = new JarFile(path.toFile()))
     {
+      registerEagerServices(jf);
+
       Enumeration<JarEntry> entries = jf.entries();
       URI abs = path.toAbsolutePath().toUri();
       Set urls = new java.util.HashSet();
@@ -344,6 +349,61 @@ public class JPypeClassLoader extends URLClassLoader
     } catch (IOException ex)
     {
       // Anything goes wrong skip it
+    }
+  }
+
+  /**
+   * Services whose registry (unlike a normal ServiceLoader consumer) is
+   * populated exactly once and never rescanned, so providers added to the
+   * classpath after the registry's first use are otherwise invisible even
+   * though the class itself loads fine.
+   */
+  private static final String[] EAGER_SPI_SERVICES = {
+    "java.sql.Driver"
+  };
+
+  /**
+   * Force-initialize any providers listed under {@link #EAGER_SPI_SERVICES}
+   * so their self-registering static initializer runs (the JDBC-mandated
+   * pattern every java.sql.Driver implementation follows for compatibility
+   * with the pre-JDBC-4 Class.forName("...") loading convention). Called
+   * whenever a jar is added to this loader so a driver jar added after the
+   * JVM has started still gets picked up by java.sql.DriverManager.
+   *
+   * @param jf the jar being added.
+   */
+  private void registerEagerServices(JarFile jf)
+  {
+    for (String service : EAGER_SPI_SERVICES)
+    {
+      JarEntry entry = jf.getJarEntry("META-INF/services/" + service);
+      if (entry == null)
+        continue;
+      try (BufferedReader reader = new BufferedReader(
+              new InputStreamReader(jf.getInputStream(entry), StandardCharsets.UTF_8)))
+      {
+        String line;
+        while ((line = reader.readLine()) != null)
+        {
+          int hash = line.indexOf('#');
+          if (hash != -1)
+            line = line.substring(0, hash);
+          line = line.trim();
+          if (line.isEmpty())
+            continue;
+          try
+          {
+            Class.forName(line, true, this);
+          } catch (Throwable ex)
+          {
+            // Best effort - a provider that fails to initialize here would
+            // have failed the same way under normal SPI loading.
+          }
+        }
+      } catch (IOException ex)
+      {
+        // Malformed provider-configuration file - ignore
+      }
     }
   }
 

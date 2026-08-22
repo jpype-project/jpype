@@ -85,5 +85,29 @@
 			</classpath>
 		</javadoc>
 	</target>
-	<target name="build-all" depends="compile,javadoc"/>
+	<!-- Minimal self-registering JDBC driver used by
+	     test_imports.py::testAddClassPathLateJdbcDriver to verify a driver
+	     jar added to the classpath after the JVM has started is still
+	     picked up by java.sql.DriverManager. Built here (not committed as
+	     a binary) since it is an ordinary, cleanly reproducible jar. -->
+	<target name="latedriver-jar">
+		<mkdir dir="jars/latedriver/classes"/>
+		<javac destdir="jars/latedriver/classes"
+			source="8"
+			target="8"
+			includeantruntime="false"
+			>
+			<src>
+				<pathelement location="../project/jars/latedriver/src"/>
+			</src>
+			<include name="org/**/*"/>
+		</javac>
+		<copy todir="jars/latedriver/classes/META-INF/services">
+			<fileset dir="../project/jars/latedriver/src/META-INF/services"/>
+		</copy>
+		<jar destfile="jars/latedriver/latedriver.jar"
+			basedir="jars/latedriver/classes"/>
+	</target>
+
+	<target name="build-all" depends="compile,javadoc,latedriver-jar"/>
 </project>
