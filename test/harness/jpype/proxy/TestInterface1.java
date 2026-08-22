@@ -21,4 +21,11 @@ public interface TestInterface1
   int testMethod1();
 
   default int testDefault() { return 1234; }
+
+  // A default method that takes an argument -- regression coverage for
+  // JPypeProxy.invoke() building the MethodType used to look up the
+  // default implementation from only the return type, silently dropping
+  // parameter types and causing findSpecial() to look for a zero-arg
+  // overload that doesn't exist (see #1256).
+  default int testDefaultArg(int x) { return x + 1; }
 }

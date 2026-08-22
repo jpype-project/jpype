@@ -7,6 +7,16 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed ``@JImplements`` proxies throwing ``UndeclaredThrowableException``
+    when falling back to an unoverridden Java ``default`` interface method
+    that takes any arguments (e.g. a default method with a
+    ``Collection<T>`` parameter). ``JPypeProxy.invoke()`` built the
+    ``MethodType`` used to look up the default implementation from only
+    the method's return type, silently dropping its parameter types, so
+    ``findSpecial()`` looked for a nonexistent zero-argument overload.
+    Every existing default-method test happened to use a zero-argument
+    method, which is why this went unnoticed. #1256
+
   - ``JBoolean``/``JByte``/``JChar``/``JInt``/``JShort``/``JLong``/``JFloat``/
     ``JDouble`` are no longer tracked by the cyclic garbage collector. They
     were previously declared as ordinary Python ``class`` statements, which

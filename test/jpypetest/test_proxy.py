@@ -148,6 +148,21 @@ class ProxyTestCase(common.JPypeTestCase):
         obj = itf1@MyImpl()
         self.assertEqual(obj.testDefault(), 1234)
 
+    def testDefaultArg(self):
+        # A default method that isn't overridden but takes an argument
+        # must still fall through to the interface's default
+        # implementation correctly. See #1256.
+        itf1 = self.package.TestInterface1
+
+        @JImplements(itf1)
+        class MyImpl(object):
+            @JOverride
+            def testMethod1(self):
+                pass
+
+        obj = itf1@MyImpl()
+        self.assertEqual(obj.testDefaultArg(41), 42)
+
     def testDefault2(self):
         itf1 = self.package.TestInterface1
 

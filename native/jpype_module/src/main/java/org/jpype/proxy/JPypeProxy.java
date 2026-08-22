@@ -137,7 +137,7 @@ public class JPypeProxy implements InvocationHandler
           return constructor.newInstance(cls)
                   .findSpecial(cls,
                           method.getName(),
-                          MethodType.methodType(method.getReturnType()),
+                          MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
                           cls)
                   .bindTo(proxy)
                   .invokeWithArguments(args);
@@ -146,7 +146,7 @@ public class JPypeProxy implements InvocationHandler
         return MethodHandles.lookup()
                 .findSpecial(cls,
                         method.getName(),
-                        MethodType.methodType(method.getReturnType()),
+                        MethodType.methodType(method.getReturnType(), method.getParameterTypes()),
                         cls)
                 .bindTo(proxy)
                 .invokeWithArguments(args);
