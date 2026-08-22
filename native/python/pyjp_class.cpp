@@ -1332,12 +1332,93 @@ static PyMethodDef classMethods[] = {
 	{nullptr},
 };
 
+// __doc__ is installed separately after type creation, via
+// PyJP_NewUnboundSafeGetSet (see below) rather than as a plain entry here -
+// see that function's comment for why.
 static PyGetSetDef classGetSets[] = {
 	{"class_", (getter) PyJPClass_class, (setter) PyJPClass_setClass, ""},
 	{"_hints", (getter) PyJPClass_hints, (setter) PyJPClass_setHints, ""},
-	{"__doc__", (getter) PyJPClass_getDoc, (setter) PyJPClass_setDoc, nullptr, nullptr},
 	{nullptr}
 };
+
+typedef struct
+{
+	PyObject_HEAD
+	getter get;
+	setter set;
+} PyJPUnboundSafeGetSet;
+
+static PyObject *PyJPUnboundSafeGetSet_descrGet(PyObject *self, PyObject *obj, PyObject *type)
+{
+	PyJPUnboundSafeGetSet *descr = (PyJPUnboundSafeGetSet*) self;
+	// Accessed on the type itself (e.g. _jpype._JClass.__doc__ or
+	// _jpype._JMethod.__doc__), not on an instance of it. The most common
+	// path here is CPython's own type.__doc__ getter, which for heap types
+	// looks "__doc__" up directly in the type's tp_dict and invokes its
+	// descr_get with obj=NULL - which for a plain PyGetSetDef-based
+	// descriptor just returns the descriptor object itself rather than
+	// calling the getter (see #1213). The wrapped getter here expects a
+	// real instance's extra fields (e.g. m_Doc); calling it with the type
+	// object itself would misinterpret the type's own memory as an
+	// instance of itself, so return None instead.
+	if (obj == nullptr || obj == Py_None)
+		Py_RETURN_NONE;
+	return descr->get(obj, nullptr);
+}
+
+static int PyJPUnboundSafeGetSet_descrSet(PyObject *self, PyObject *obj, PyObject *value)
+{
+	PyJPUnboundSafeGetSet *descr = (PyJPUnboundSafeGetSet*) self;
+	if (obj == nullptr || obj == Py_None || descr->set == nullptr)
+	{
+		PyErr_SetString(PyExc_AttributeError, "can't set attribute");
+		return -1;
+	}
+	return descr->set(obj, value, nullptr);
+}
+
+static PyType_Slot unboundSafeGetSetSlots[] = {
+	{ Py_tp_descr_get, (void*) PyJPUnboundSafeGetSet_descrGet},
+	{ Py_tp_descr_set, (void*) PyJPUnboundSafeGetSet_descrSet},
+	{0}
+};
+
+static PyType_Spec unboundSafeGetSetSpec = {
+	"_jpype._UnboundSafeGetSet",
+	sizeof (PyJPUnboundSafeGetSet),
+	0,
+	Py_TPFLAGS_DEFAULT,
+	unboundSafeGetSetSlots
+};
+
+static PyTypeObject *PyJPUnboundSafeGetSet_Type = nullptr;
+
+/**
+ * Create a data descriptor equivalent to a single PyGetSetDef entry, except
+ * that accessing it unbound (directly on the type that owns it, rather than
+ * on an instance) safely returns None instead of either the raw descriptor
+ * object (CPython's default for a plain PyGetSetDef) or misinterpreting the
+ * type object as an instance of itself.
+ *
+ * Used for __doc__ on PyJPClass_Type/PyJPMethod_Type, whose getters are
+ * meant only for instances (ordinary wrapper classes / bound methods) but
+ * which CPython's type.__doc__ heap-type fallback can otherwise reach
+ * unbound (see #1213).
+ */
+PyObject* PyJP_NewUnboundSafeGetSet(getter get, setter set)
+{
+	if (PyJPUnboundSafeGetSet_Type == nullptr)
+	{
+		PyJPUnboundSafeGetSet_Type = (PyTypeObject*) PyType_FromSpec(&unboundSafeGetSetSpec);
+		JP_PY_CHECK();
+	}
+	PyJPUnboundSafeGetSet *descr = (PyJPUnboundSafeGetSet*)
+			PyJPUnboundSafeGetSet_Type->tp_alloc(PyJPUnboundSafeGetSet_Type, 0);
+	JP_PY_CHECK();
+	descr->get = get;
+	descr->set = set;
+	return (PyObject*) descr;
+}
 
 static PyType_Slot classSlots[] = {
 	// No Py_tp_alloc override: struct PyJPClass's own JPValue ("extra") is
@@ -1378,6 +1459,14 @@ void PyJPClass_initType(PyObject* module)
 	JPPyObject bases = JPPyTuple_Pack(&PyType_Type);
 	PyJPClass_Type = (PyTypeObject*) PyType_FromSpecWithBases(&classSpec, bases.get());
 	JP_PY_CHECK();
+
+	PyObject *doc = PyJP_NewUnboundSafeGetSet((getter) PyJPClass_getDoc, (setter) PyJPClass_setDoc);
+	JP_PY_CHECK();
+	PyDict_SetItemString(PyJPClass_Type->tp_dict, "__doc__", doc);
+	Py_DECREF(doc);
+	JP_PY_CHECK();
+	PyType_Modified(PyJPClass_Type);
+
 	PyModule_AddObject(module, "_JClass", (PyObject*) PyJPClass_Type);
 	JP_PY_CHECK();
 }

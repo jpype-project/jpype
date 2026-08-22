@@ -26,6 +26,18 @@ Latest Changes:
     Also fixed a related double-rendering bug for ``<a><code>...</code></a>``
     links exposed by the above fix. #963, #1116
 
+  - Fixed ``_jpype._JClass.__doc__``/``_jpype._JMethod.__doc__`` (i.e.
+    accessed on those metaclasses directly, not on one of their instances)
+    returning the raw internal getset descriptor object instead of a string
+    or ``None``. This tripped up full-module introspection tools such as
+    ``mypy``'s ``stubgen --inspect-mode``, which expect ``__doc__`` to
+    always be ``str``-or-``None``. Root cause: CPython's own
+    ``type.__doc__`` getter has a heap-type fallback that looks ``__doc__``
+    up directly in the type's own ``__dict__`` and invokes its descriptor
+    protocol unbound (``obj=NULL``), which for a plain getset descriptor
+    just returns the descriptor itself rather than calling the getter.
+    #1213
+
   - Fixed classpath directories/jars containing a "+" character having it
     silently converted to a space on import, corrupting the resolved
     resource path. #1413
