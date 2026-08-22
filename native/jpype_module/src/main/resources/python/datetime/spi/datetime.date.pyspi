@@ -1,0 +1,18 @@
+kind: class
+module: datetime
+class: date
+interface: python.datetime.PyDate
+---
+def _compare_to(x, other):
+    return (x > other) - (x < other)
+
+
+METHODS = {
+    ".year": lambda x: x.year,
+    ".month": lambda x: x.month,
+    ".day": lambda x: x.day,
+    ".weekday": lambda x: x.weekday(),
+    ".isoWeekday": lambda x: x.isoweekday(),
+    ".toOrdinal": lambda x: x.toordinal(),
+    ".compareTo": _compare_to,
+}

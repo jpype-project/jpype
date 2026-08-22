@@ -1,0 +1,9 @@
+kind: class
+module: _io
+class: StringIO
+interface: python.io.PyStringIO
+lazy: true
+---
+METHODS = {
+    ".getvalue": lambda x: x.getvalue(),
+}

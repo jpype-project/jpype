@@ -7,6 +7,61 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Added ``jpype.addJVMOption()``/``jpype.getJVMOptions()``, mirroring
+    ``addClassPath()``/``getClassPath()``. Independent libraries can each
+    accumulate JVM flags (memory settings, GC settings, ``-D`` properties,
+    ...) prior to ``startJVM()`` without needing to own the
+    ``startJVM()`` call site.
+
+  - Added ``toPython()`` customizer to ``java.io.Writer``/``Reader``/
+    ``OutputStream``/``InputStream``, wrapping a Java stream as a Python
+    ``io.TextIOBase`` object suitable for ``sys.stdout``/``sys.stderr``/
+    ``sys.stdin``. Java embedders can trigger this explicitly via
+    ``Interpreter.setOutput()``/``setError()``/``setInput()``.
+
+  - Added ``toPython()`` customizer to ``java.time.Instant``,
+    ``java.nio.file.Path``, and ``java.io.File``, returning a genuine
+    ``datetime.datetime``/``pathlib.Path`` value. Renamed the existing
+    ``_py()`` customizer on ``java.sql.Date``/``Time``/``Timestamp`` and
+    ``java.math.BigDecimal`` to ``toPython()`` for the same public,
+    documented convention.
+
+  - Added ``toPython()`` customizer to ``java.lang.reflect.Method``, binding
+    one already-resolved overload to a plain Python callable (instance
+    methods take the instance as an explicit first argument) and skipping
+    JPype's normal per-call overload search.
+
+  - Added ``org.jpype.SubInterpreterBuilder``, a ``ProcessBuilder``-style
+    configuration object for launching PEP 684 subinterpreters with
+    non-default ``PyInterpreterConfig`` options (own GIL, own obmalloc,
+    allow fork/exec/threads), including an ``ownGil()`` preset for genuine
+    interpreter isolation.
+
+  - Added ``JArray.pullTo(dest)`` and ``JArray.pushFrom(src)`` for bulk
+    in-place transfer between a primitive Java array and an existing
+    caller-supplied Python buffer (e.g. a preallocated numpy array), and
+    ``JArray.toList()`` for bulk conversion of a Java array into a genuine
+    Python list. Also substantially sped up array transfer generally: both
+    directions of multi-dimensional primitive array <-> numpy conversion
+    (construction, argument passing, and ``np.asarray()``) now hand the
+    whole buffer to Java in a single JNI call and let Java do the
+    reshape/copy in bulk, instead of pinning or visiting one JNI call per
+    leaf sub-array; this also extends to non-native byte order and
+    ``float16`` sources, which previously fell back to a much slower
+    element-by-element path. #1457, #1443
+
+  - ``pullTo``/``pushFrom`` now support multi-dimensional primitive arrays
+    directly (previously flat/1D only, raising ``TypeError`` for any array
+    whose component type was itself an array); ``dest``/``src`` need only
+    match the array's total element count, not its shape. ``JArray.of()``
+    and the manual ``JArray(JType, dims)(source)`` / ``JType[:, :, ...]
+    (source)`` construction spelling both gained the same bulk buffer
+    fast path for multi-dimensional (2+ dimension) sources that the flat
+    case already had, removing a per-element conversion loop that
+    previously made those two construction paths considerably slower than
+    an equivalent ``JArray.of()``/argument-passing call for the same
+    data.
+
   - ``JBoolean``/``JByte``/``JChar``/``JInt``/``JShort``/``JLong``/``JFloat``/
     ``JDouble`` are no longer tracked by the cyclic garbage collector. They
     were previously declared as ordinary Python ``class`` statements, which
@@ -15,7 +70,7 @@ Latest Changes:
     reference cycle; every boxed array element pulled into Python paid for
     that bookkeeping on allocation and deallocation for no benefit. No
     user-visible API change.
-    
+
   - Fixed Javadoc extraction (``help()``/``__doc__`` on Java classes) being
     silently broken on JDK 17+: an unhandled ``<wbr>`` tag (used by JDK 21+'s
     javadoc output to hint line-wraps in long signatures) crashed extraction
@@ -112,7 +167,7 @@ Latest Changes:
   - Added fallback conversion path for JArray.of() to support non-primitive types like JString, enabling conversion of numpy string arrays. #953
 
   - Improved implicit conversion from Python primitives to Java boxed types (Integer, Long, Short, Double, Float). #1098
-  
+
   - Fixed ambiguous overload resolution for bytearray between byte[] and char[]. #598
 
   - Documented the "JVM DLL not found" error on Apple Silicon Macs and its
@@ -129,7 +184,6 @@ Latest Changes:
   - Documented a pattern for pickling plain Python objects that hold
     Java-backed attributes, using ``__getstate__``/``__setstate__`` to
     exclude and regenerate them. #1019
-
 
 - **1.7.1 - 2026-05-06**
 

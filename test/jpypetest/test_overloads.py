@@ -479,6 +479,74 @@ class OverloadTestCase(common.JPypeTestCase):
         print("=== End Diagnostic ===\n")
 
 
+class OverloadDispatchCacheTestCase(common.JPypeTestCase):
+    """Regression tests for JPMethodDispatch::findOverload's single-slot
+    m_LastOverload cache.
+
+    That cache is keyed only on argument *types* (e.g. "the argument is a
+    list"), not content, so it's easy for a method to be called twice with
+    the same argument type where the second call's actual content doesn't
+    convert. Found via project/benchmark/bench_deep_jpype.py's array
+    benchmark: a first successful call primed the cache, and the second
+    (content-invalid) call incorrectly returned success with a corrupted
+    match instead of raising TypeError, because the cache-hit attempt left
+    bestMatch.m_Overload non-null even though it had failed, so both the
+    "first match" and "no matching overload" checks downstream were
+    fooled into thinking a real match had already been found.
+    """
+
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+        self.DeepBench = JClass('jpype.benchmark.DeepBench')
+
+    def testFailureAfterCachedSuccess(self):
+        # Prime the single-slot cache with a real, successful match.
+        self.assertEqual(self.DeepBench.sumIntArray(list(range(10))), 45)
+
+        # Same argument type (list), content that can't convert to int[] --
+        # must raise cleanly, not corrupt/crash.
+        with self.assertRaises(TypeError):
+            self.DeepBench.sumIntArray([1, 2, "notanumber", 4])
+
+        # Dispatch must still work correctly afterward: another failure,
+        # and a real success.
+        with self.assertRaises(TypeError):
+            self.DeepBench.sumIntArray([1, 2, "notanumber", 4])
+        self.assertEqual(self.DeepBench.sumIntArray(list(range(20))), 190)
+
+    def testMixedListStillWorks(self):
+        # bool fails PyLong_CheckExact (it's a distinct type from int in
+        # Python) but is still a valid int; a custom __index__ object is
+        # valid too. Both must still convert correctly, cached or not.
+        self.assertEqual(self.DeepBench.sumIntArray([1, 2, 3, True, 5]), 12)
+
+        class Indexable:
+            def __index__(self):
+                return 99
+        self.assertEqual(
+            self.DeepBench.sumIntArray([1, 2, Indexable()]), 102)
+
+    def testIntArrayExtractionPaths(self):
+        # Regression coverage for JPIntType::setArrayRange's fast
+        # (PyList_CheckExact + PyLong_CheckExact) vs general (PyIndex_Check
+        # + PyLong_AsLongLong) extraction paths and the handoff between them.
+
+        # bool at the very first position -- fast path must break out
+        # immediately (i == 0) and hand off cleanly, not skip element 0.
+        self.assertEqual(self.DeepBench.sumIntArray([True, True, 3]), 5)
+
+        # Non-list sequence (tuple): PyList_CheckExact is false, so this
+        # must go straight to the general path for every element.
+        self.assertEqual(self.DeepBench.sumIntArray(tuple(range(5))), 10)
+
+        # A value that fits Python's arbitrary-precision int (passes
+        # PyLong_CheckExact, so takes the fast path) but overflows even a
+        # 64-bit range -- PyLong_AsLong must surface this as OverflowError,
+        # not silently truncate or crash.
+        with self.assertRaises(OverflowError):
+            self.DeepBench.sumIntArray([10 ** 30])
+
+
 class VarArgsHierarchyTestCase(common.JPypeTestCase):
     """Fixed-arity vs varargs overload specificity across primitives,
     Object, a Parent/Child hierarchy, and an unrelated type.

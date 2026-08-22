@@ -1,3 +1,4 @@
+// --- file: common/jp_exception.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -18,6 +19,7 @@
 
 #include "jpype.h"
 #include "jp_exception.h"
+#include "jp_proxy.h"
 #include "pyjp.h"
 
 PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace);
@@ -33,12 +35,11 @@ bool isJavaThrowable(PyObject* exceptionClass)
 /** Shared conversion logic for a Java-originated exception, used by
  * JPJavaError::toPython().
  */
-void convertJavaToPython(jthrowable th)
+void convertJavaToPython(JPContext* context, jthrowable th)
 {
 	// Welcome to paranoia land, where they really are out to get you!
 	JP_TRACE_IN("convertJavaToPython");
 	// GCOVR_EXCL_START
-	JPContext* context = JPContext_global;
 	if (context == nullptr)
 	{
 		PyErr_SetString(PyExc_RuntimeError, "Unable to convert java error, context is null.");
@@ -47,24 +48,55 @@ void convertJavaToPython(jthrowable th)
 	// GCOVR_EXCL_STOP
 
 	// Okay we can get to a frame to talk to the object
-	JPJavaFrame frame = JPJavaFrame::external(context->getEnv());
+	JPJavaFrame frame = JPJavaFrame::external(context->getEnv(), context);
+
 	jvalue v;
 	v.l = th;
+
+	// Fast path: this Java throwable is actually a rerouting wrapper around
+	// a Python exception raised inside a JPProxy callback (see ProxyType's
+	// mirror exception class) - unwrap and restore the original Python
+	// exception directly instead of going through the generic conversion
+	// below.
+	if (context->m_ProxyType_UnwrapPythonExceptionID != nullptr)
+	{
+		jlong py_instance_ptr = frame.CallStaticLongMethodA(
+			(jclass) context->m_ProxyTypeClass,
+			context->m_ProxyType_UnwrapPythonExceptionID,
+			&v
+		);  // borrowed reference, lifespan held by th
+
+
+		if (py_instance_ptr != 0)
+		{
+			JPProxy* jp_proxy = (JPProxy*) py_instance_ptr;
+			PyJPProxy* py_proxy = jp_proxy->m_Instance;
+			PyObject* exc = py_proxy->m_Target;
+			// Restore the original exception into Python's error registers
+			PyErr_SetObject((PyObject*) Py_TYPE(exc), exc);
+			JP_TRACE("Successfully unwrapped and restored Python exception from Java proxy");
+			return;
+		}
+	}
+
+	// This is a PyExceptionProxy created by convertPythonToJava() below via
+	// Support.createException() - decode the two longs it carries back into
+	// the original Python exception class/value instead of falling through
+	// to the generic Java-exception conversion path.
 	// GCOVR_EXCL_START
-	// This is condition is only hit if something fails during the initial boot
-	if (context->getJavaContext() == nullptr || context->m_Context_GetExcClassID == nullptr)
+	// This condition is only hit if something fails during the initial boot
+	if (context->m_SupportClass != nullptr && context->m_Support_GetExcClassID != nullptr)
 	{
-		PyErr_SetString(PyExc_SystemError, frame.toString(th).c_str());
-		return;
+		// GCOVR_EXCL_STOP
+		jlong pycls = frame.CallStaticLongMethodA(context->m_SupportClass, context->m_Support_GetExcClassID, &v);
+		if (pycls != 0)
+		{
+			jlong value = frame.CallStaticLongMethodA(context->m_SupportClass, context->m_Support_GetExcValueID, &v);
+			PyErr_SetObject((PyObject*) pycls, (PyObject*) value);
+			return;
+		}
 	}
-	// GCOVR_EXCL_STOP
-	jlong pycls = frame.CallLongMethodA(context->getJavaContext(), context->m_Context_GetExcClassID, &v);
-	if (pycls != 0)
-	{
-		jlong value = frame.CallLongMethodA(context->getJavaContext(), context->m_Context_GetExcValueID, &v);
-		PyErr_SetObject((PyObject*) pycls, (PyObject*) value);
-		return;
-	}
+
 	JP_TRACE("Check typemanager");
 	// GCOVR_EXCL_START
 	if (!context->isRunning())
@@ -76,6 +108,14 @@ void convertJavaToPython(jthrowable th)
 
 	// Convert to Python object
 	JP_TRACE("Convert to python");
+
+	// We died in the boot sequence and don't have required resources
+	if (!context->getTypeManager()->isReady())
+	{
+		PyErr_SetString(PyExc_RuntimeError, frame.toString(th).c_str());
+		return;
+	}
+	
 	JPClass* cls = frame.findClassForObject((jobject) th);
 
 	// GCOVR_EXCL_START
@@ -89,9 +129,26 @@ void convertJavaToPython(jthrowable th)
 	}
 	// GCOVR_EXCL_STOP
 
-	// Create the exception object (this may fail)
+	// Create the exception object (this may fail, e.g. the smuggler guard in
+	// JPClass::convertToPythonObject rejecting a Java exception object that
+	// wraps a Python proxy created by a different interpreter). We are
+	// already inside exception handling here, so a throw escaping this
+	// point unwinds through the caller's exception-conversion machinery too -
+	// asbestos required. Catch locally and fall back to the same safe,
+	// contextual RuntimeError the (now largely unreachable) null-check below
+	// was meant to provide, rather than letting it fall through to the
+	// generic "Fatal error occurred" at the outer safety net.
 	v.l = th;
-	JPPyObject pyvalue = cls->convertToPythonObject(frame, v, false);
+	JPPyObject pyvalue;
+	try
+	{
+		pyvalue = cls->convertToPythonObject(frame, v, false);
+	} catch (JPBaseError& ex)
+	{
+		(void) ex;
+		PyErr_SetString(PyExc_RuntimeError, frame.toString(th).c_str());
+		return;
+	}
 
 	// GCOVR_EXCL_START
 	// This sanity check can only be hit if the exception failed during
@@ -143,11 +200,10 @@ void convertJavaToPython(jthrowable th)
  * JPInternalError::toJava(). mesg is only used for the extremely early
  * startup fallback where no JPContext exists yet to build a real exception.
  */
-void convertPythonToJava(const char* mesg)
+void convertPythonToJava(JPContext* context, const char* mesg)
 {
 	JP_TRACE_IN("convertPythonToJava");
-	JPJavaFrame frame = JPJavaFrame::outer();
-	JPContext *context = frame.getContext();
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	jthrowable th;
 	JPPyErrFrame eframe;
 	if (eframe.m_good && isJavaThrowable(eframe.m_ExceptionClass.get()))
@@ -162,19 +218,57 @@ void convertPythonToJava(const char* mesg)
 		}
 	}
 
-	if (context->m_Context_CreateExceptionID == nullptr)
+	// Prefer building a genuinely-typed python.exceptions.Py*Error via
+	// _pyexc_convert (jpype/_jbridge.py's _jpype._exc dict, built from the
+	// real python.exceptions package at startup and populated into
+	// context->m_PyExcConvert by PyJPModule_loadResources) so Java-side
+	// code can catch a specific exception subtype (PyKeyError, etc.)
+	// instead of only ever seeing the generic rerouting carrier below.
+	// This is reverse's original mechanism - dropped from this call site
+	// during the array-transfer-phase3/reverse merge in favor of the
+	// generic path only, which is why every Java test expecting a typed
+	// catch clause on a proxied Python exception was failing (see
+	// witty-purring-canyon.md plan item 4). _pyexc_convert itself was
+	// never removed - only this call site calling it was.
+	if (context->m_PyExcConvert != nullptr)
+	{
+		JPPyObject typed = JPPyObject::accept(PyObject_CallFunctionObjArgs(
+				context->m_PyExcConvert, eframe.m_ExceptionValue.get(), nullptr));
+		if (typed.isValid() && PyJPValue_getJPClass(typed.get()) != nullptr)
+		{
+			th = (jthrowable) PyJPValue_getJValue(frame, typed.get()).l;
+			eframe.clear();
+			JP_TRACE("Throwing typed Java exception", frame.toString(th));
+			frame.Throw(th);
+			return;
+		}
+		// _pyexc_convert failed/raised internally (should only happen for
+		// exception types it doesn't recognize, and even then it falls
+		// back to wrapping an AssertionError - a hard failure here means
+		// something is badly broken). Clear whatever error that left
+		// behind and fall through to the generic rerouting-proxy path,
+		// which is still always correct, just untyped.
+		PyErr_Clear();
+	}
+
+	// Build a rerouting Java exception carrying the Python exception
+	// class/value (via Support.createException(), a static method - the
+	// JPypeContext instance that used to host this as createException() was
+	// retired in favor of NativeContext) so it can be unwrapped again on
+	// the way back to Python (see convertJavaToPython()'s
+	// getExcClass/getExcValue decode above).
+	if (context->m_SupportClass == nullptr || context->m_Support_CreateExceptionID == nullptr)
 	{
 		frame.ThrowNew(frame.FindClass("java/lang/RuntimeException"), mesg);
 		return;
 	}
 
-
 	// Otherwise
 	jvalue v[2];
 	v[0].j = (jlong) eframe.m_ExceptionClass.get();
 	v[1].j = (jlong) eframe.m_ExceptionValue.get();
-	th = (jthrowable) frame.CallObjectMethodA(context->getJavaContext(),
-			context->m_Context_CreateExceptionID, v);
+	th = (jthrowable) frame.CallStaticObjectMethodA(context->m_SupportClass,
+			context->m_Support_CreateExceptionID, v);
 	frame.registerRef((jobject) th, eframe.m_ExceptionClass.get());
 	frame.registerRef((jobject) th, eframe.m_ExceptionValue.get());
 	eframe.clear();
@@ -257,7 +351,7 @@ void JPJavaError::toPython()
 			return;
 		if (PyErr_Occurred())
 			return;
-		convertJavaToPython(getThrowable());
+		convertJavaToPython(m_Context, getThrowable());
 	} catch (...) // GCOVR_EXCL_LINE
 	{
 		// GCOVR_EXCL_START
@@ -271,13 +365,16 @@ void JPJavaError::toPython()
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-void JPJavaError::toJava()
+void JPJavaError::toJava(JPContext* context)
 {
 	JP_TRACE_IN("JPJavaError::toJava");
+	// m_Context was already captured at construction (see jp_error.h) -
+	// that is the correct context to rethrow through under sub-interpreters,
+	// not necessarily whatever the caller happens to be holding right now.
+	(void) context;
 	if (getThrowable() != nullptr)
 	{
-		JPContext* context = JPContext_global;
-		JPJavaFrame frame = JPJavaFrame::external(context->getEnv());
+		JPJavaFrame frame = JPJavaFrame::outer(m_Context);
 		JP_TRACE("Java rethrow");
 		frame.Throw(getThrowable());
 	}
@@ -312,16 +409,16 @@ void JPPythonError::toPython()
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-void JPPythonError::toJava()
+void JPPythonError::toJava(JPContext* context)
 {
 	JP_TRACE_IN("JPPythonError::toJava");
 	try
 	{
-		JPPyCallAcquire callback;
+		JPPyCallAcquire callback(context->modulestate);
 		// convertPythonToJava() expects to find the exception live on the
 		// thread state - restore what was fetched off it at throw time.
 		JPPyErr::restore(m_PyExcValue);
-		convertPythonToJava(what());
+		convertPythonToJava(context, what());
 	} catch (...) // GCOVR_EXCL_LINE
 	{
 		// GCOVR_EXCL_START
@@ -387,26 +484,25 @@ void JPInternalError::toPython()
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
-void JPInternalError::toJava()
+void JPInternalError::toJava(JPContext* context)
 {
 	JP_TRACE_IN("JPInternalError::toJava");
 	try
 	{
-		JPContext* context = JPContext_global;
-		JPJavaFrame frame = JPJavaFrame::external(context->getEnv());
+		JPJavaFrame frame = JPJavaFrame::outer(context);
 		const char* mesg = what();
 		if (!isOSError())
 		{
-			JPPyCallAcquire callback;
+			JPPyCallAcquire callback(context->modulestate);
 			PyErr_SetString((PyObject*) getPyExcType(), mesg);
-			convertPythonToJava(mesg);
+			convertPythonToJava(context, mesg);
 			return;
 		}
 		// GCOVR_EXCL_START
 		// OS errors are startup-only and never reach toJava() in practice
 		// (no JVM/JNI frame exists yet at that point) - issued as a
 		// RuntimeException for parity with the legacy fallback branch.
-		frame.ThrowNew(context->m_RuntimeException.get(), mesg);
+		frame.ThrowNew(frame.getContext()->m_RuntimeException, mesg);
 		// GCOVR_EXCL_STOP
 	} catch (...) // GCOVR_EXCL_LINE
 	{
@@ -451,8 +547,19 @@ PyObject *tb_create(
 	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(PyFrame_GetLasti(pframe)));
 #endif
 	JPPyObject linenuma = JPPyObject::claim(PyLong_FromLong(linenum));
-	JPPyObject tuple = JPPyTuple_Pack(Py_None, frame.get(), lasti.get(), linenuma.get());
+	// last_traceback (the previously-built frame, i.e. this frame's caller)
+	// becomes this new traceback's tb_next -- PyTuple_Pack/the traceback
+	// constructor each take their own reference to it, so our incoming
+	// reference (owned by us: the caller received it from a prior
+	// tb_create()'s own `.keep()`) must be released here once it has been
+	// absorbed into the chain, or every non-final frame in a multi-frame
+	// trace leaks (only the last-built traceback was ever handed back to a
+	// decref'ing owner).
+	JPPyObject tuple = JPPyTuple_Pack(
+			last_traceback == nullptr ? Py_None : last_traceback,
+			frame.get(), lasti.get(), linenuma.get());
 	JPPyObject traceback = JPPyObject::accept(PyObject_Call((PyObject*) &PyTraceBack_Type, tuple.get(), NULL));
+	Py_XDECREF(last_traceback);
 
 	// We could fail in process
 	if (traceback.get() == nullptr)
@@ -466,12 +573,16 @@ PyObject *tb_create(
 PyObject* PyTrace_FromJPStackTrace(JPStackTrace& trace)
 {
 	PyObject *last_traceback = nullptr;
-	PyObject *dict = PyModule_GetDict(PyJPModule);
+	
+	// Grab the global builtins dictionary. It is always available on the current 
+	// thread/interpreter state, requires no module pointers, and is 100% reentrant-safe.
+	PyObject *dict = PyEval_GetBuiltins(); 
 	for (auto& iter : trace)
 	{
 		last_traceback = tb_create(last_traceback, dict, iter.getFile(),
 				iter.getFunction(), iter.getLine());
 	}
+	
 	if (last_traceback == nullptr)
 		Py_RETURN_NONE;
 	return last_traceback;
@@ -484,12 +595,12 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 	jvalue args[2];
 	args[0].l = th;
 	args[1].l = prev;
-	if (context->m_Context_GetStackFrameID == nullptr)
+	if (context->m_Support_GetStackFrameID == nullptr)
 		return {};
 
 	JNIEnv* env = frame.getEnv();
-	jobjectArray obj = static_cast<jobjectArray>(env->CallObjectMethodA(context->getJavaContext(),
-			context->m_Context_GetStackFrameID, args));
+	jobjectArray obj = static_cast<jobjectArray>(env->CallStaticObjectMethodA(context->m_SupportClass,
+			context->m_Support_GetStackFrameID, args));
 
 	// Eat any exceptions that were generated
 	if (env->ExceptionCheck() == JNI_TRUE)
@@ -498,7 +609,11 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 	if (obj == nullptr)
 		return {};
 	jsize sz = frame.GetArrayLength(obj);
-	PyObject *dict = PyModule_GetDict(PyJPModule);
+
+	PyObject *dict = context->modulestate->module_dict;
+	if (dict == nullptr)
+		dict = PyEval_GetBuiltins(); 
+
 	for (jsize i = 0; i < sz; i += 4)
 	{
 		string filename, method;

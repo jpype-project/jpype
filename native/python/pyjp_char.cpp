@@ -1,3 +1,4 @@
+// --- file: python/pyjp_char.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -23,8 +24,6 @@
 extern "C"
 {
 #endif
-
-PyTypeObject *PyJPChar_Type = nullptr;
 
 // m_Data is a fixed 4 bytes regardless of the boxed value (enough for one
 // UCS-2 code point + null in any compact-unicode kind), so -- unlike
@@ -77,7 +76,7 @@ static int isNullClass(PyObject *self, JPClass *cls)
 	// null is instead the per-class nullBoxed singleton, an identity check.
 	if (PyJPClass_GetJValueFn(Py_TYPE(self)) != nullptr)
 		return self == PyJPClass_GetNullBoxed(Py_TYPE(self));
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPObject_getContext(self));
 	return PyJPValue_getJValue(frame, self).l == nullptr;
 }
 
@@ -193,9 +192,8 @@ PyObject *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p)
 
 /** This one is just used for initializing so the local copy matches.
  */
-Py_UCS2 fromJPValue(const JPValue & value)
+static Py_UCS2 fromJPValue(JPJavaFrame& frame, const JPValue & value)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
 	JPClass* cls = value.getClass();
 	if (cls->isPrimitive())
 		return (Py_UCS2) (value.getValue().c);
@@ -208,7 +206,7 @@ Py_UCS2 fromJPValue(const JPValue & value)
 
 /** Get the value of the char.  Does not touch Java.
  */
-Py_UCS2 fromJPChar(PyJPChar *self)
+static Py_UCS2 fromJPChar(PyJPChar *self)
 {
 	if (_PyUnicode_STATE(self).ascii == 1)
 	{
@@ -267,7 +265,7 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	PyObject *in = PyTuple_GetItem(pyargs, 0);
 	Py_UCS4 cv = ord(in);
 
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPType_getContext(type));
 	if (cv != (Py_UCS4) - 1)
 	{
 		JPPyObject v = JPPyObject::call(PyLong_FromLong(cv));
@@ -291,8 +289,8 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 		return nullptr;
 	}
 
-	PyObject *self = PyJPChar_Create(type, fromJPValue(jv));
-	JP_PY_CHECK();
+	PyObject *self = PyJPChar_Create(type, fromJPValue(frame, jv));
+	JP_PY_CHECK_NULL(self);
 	PyJPValue_assignJavaSlot(frame, self, jv);
 	return self;
 	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
@@ -632,31 +630,31 @@ struct PyGetSetDef charGetSet[] = {
 };
 
 static PyType_Slot charSlots[] = {
-	{Py_tp_new,       (void*) PyJPChar_new},
+	{Py_tp_new,	   (void*) PyJPChar_new},
 	{Py_tp_methods,   (void*) charMethods},
-	{Py_tp_getset,    (void*) charGetSet},
-	{Py_tp_str,       (void*) PyJPChar_str},
-	{Py_tp_repr,      (void*) PyJPChar_repr},
-	{Py_nb_index,     (void*) PyJPChar_index},
+	{Py_tp_getset,	(void*) charGetSet},
+	{Py_tp_str,	   (void*) PyJPChar_str},
+	{Py_tp_repr,	  (void*) PyJPChar_repr},
+	{Py_nb_index,	 (void*) PyJPChar_index},
 #if PY_VERSION_HEX<0x03080000
-	{Py_nb_int,     (void*) PyJPChar_index},
+	{Py_nb_int,	 (void*) PyJPChar_index},
 #endif
-	{Py_nb_float,     (void*) PyJPChar_float},
+	{Py_nb_float,	 (void*) PyJPChar_float},
 	{Py_nb_absolute,  (void*) PyJPChar_abs},
-	{Py_nb_and,       (void*) PyJPChar_and},
-	{Py_nb_or,        (void*) PyJPChar_or},
-	{Py_nb_xor,       (void*) PyJPChar_xor},
-	{Py_nb_add,       (void*) PyJPChar_add},
+	{Py_nb_and,	   (void*) PyJPChar_and},
+	{Py_nb_or,		(void*) PyJPChar_or},
+	{Py_nb_xor,	   (void*) PyJPChar_xor},
+	{Py_nb_add,	   (void*) PyJPChar_add},
 	{Py_nb_subtract,  (void*) PyJPChar_subtract},
 	{Py_nb_multiply,  (void*) PyJPChar_mult},
-	{Py_nb_rshift,    (void*) PyJPChar_rshift},
-	{Py_nb_lshift,    (void*) PyJPChar_lshift},
+	{Py_nb_rshift,	(void*) PyJPChar_rshift},
+	{Py_nb_lshift,	(void*) PyJPChar_lshift},
 	{Py_tp_richcompare, (void*) PyJPJChar_compare},
-	{Py_tp_hash,      (void*) PyJPChar_hash},
-	{Py_nb_bool,      (void*) PyJPChar_bool},
+	{Py_tp_hash,	  (void*) PyJPChar_hash},
+	{Py_nb_bool,	  (void*) PyJPChar_bool},
 	{Py_nb_negative,  (void*) PyJPChar_neg},
 	{Py_nb_positive,  (void*) PyJPChar_pos},
-	{Py_nb_invert,    (void*) PyJPChar_inv},
+	{Py_nb_invert,	(void*) PyJPChar_inv},
 	{Py_nb_floor_divide, (void*) PyJPChar_floordiv},
 	{Py_nb_divmod, (void*) PyJPChar_divmod},
 	{Py_tp_getattro,  (void*) PyJPValue_getattro},
@@ -686,25 +684,22 @@ static PyType_Slot charLeafSlots[] = {
 // name after creation, below.
 static PyType_Spec charLeafSpec = {"_jpype.JChar", 0, 0, Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, charLeafSlots};
 
-#ifdef __cplusplus
-}
-#endif
-
-void PyJPChar_initType(PyObject* module)
+void PyJPChar_initType(PyObject* module, PyJPModuleState* st)
 {
 	// We will inherit from str and JObject. Char keeps no per-instance
 	// storage (see charJValue above), so this offset is a pure sentinel --
 	// nonzero only to mark the family as Java-backed; never dereferenced.
 	Py_ssize_t offset = sizeof (struct PyJPChar);
-	JPPyObject bases = JPPyTuple_Pack(&PyUnicode_Type, PyJPObject_Type);
-	PyJPChar_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&charSpec, bases.get(), offset);
+	JPPyObject bases = JPPyTuple_Pack(&PyUnicode_Type, st->PyJPObject_Type);
+	st->PyJPChar_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(module, &charSpec, bases.get(), offset);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
-	PyJPClass_SetJValueFn(PyJPChar_Type, &charJValue);
-	PyModule_AddObject(module, "_JChar", (PyObject*) PyJPChar_Type);
+	PyJPClass_SetJValueFn(st->PyJPChar_Type, &charJValue);
+	Py_INCREF((PyObject*) st->PyJPChar_Type);
+	PyModule_AddObject(module, "_JChar", (PyObject*) st->PyJPChar_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
-	bases = JPPyTuple_Pack(PyJPChar_Type);
-	auto *leaf = (PyTypeObject*) PyJPClass_FromSpecWithBases(&charLeafSpec, bases.get(), offset);
+	bases = JPPyTuple_Pack(st->PyJPChar_Type);
+	auto *leaf = (PyTypeObject*) PyJPClass_FromSpecWithBases(module, &charLeafSpec, bases.get(), offset);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	// Restore tp_name and __module__ to what this class had as a
 	// jpype/types.py class statement ("JChar" / "jpype.types") -- see the
@@ -716,3 +711,7 @@ void PyJPChar_initType(PyObject* module)
 	PyModule_AddObject(module, "JChar", (PyObject*) leaf);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 }
+
+#ifdef __cplusplus
+}
+#endif

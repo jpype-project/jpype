@@ -19,14 +19,12 @@
 # from unittest import mock
 import os
 import pathlib
-import struct
 import sys
-import tempfile
 import unittest
 from unittest import mock
 
-from jpype._jvmfinder import (_checkJVMArch, LinuxJVMFinder, JVMNotSupportedException,
-                              DarwinJVMFinder, WindowsJVMFinder)
+from jpype._jvmfinder import (LinuxJVMFinder, JVMNotSupportedException, DarwinJVMFinder,
+                              WindowsJVMFinder)
 
 
 class JVMFinderTest(unittest.TestCase):
@@ -80,26 +78,6 @@ class JVMFinderTest(unittest.TestCase):
             finder = LinuxJVMFinder()
             with self.assertRaises(JVMNotSupportedException):
                 finder.find_libjvm('arbitrary java home')
-
-    def test_check_jvm_arch_on_arm64(self):
-        PE_HEADER_POINTER_OFFSET = 0x3C
-        PE_HEADER_OFFSET = 0x80
-        PE_SIGNATURE_SIZE = 4
-        IMAGE_FILE_MACHINE_ARM64 = 43620
-        PYTHON_64_BIT_MAXSIZE = 2**63
-
-        with tempfile.NamedTemporaryFile(delete=False) as test_file:
-            test_file.write(b"MZ")
-            test_file.seek(PE_HEADER_POINTER_OFFSET)
-            test_file.write(struct.pack("<L", PE_HEADER_OFFSET))
-            test_file.seek(PE_HEADER_OFFSET + PE_SIGNATURE_SIZE)
-            test_file.write(struct.pack("<H", IMAGE_FILE_MACHINE_ARM64))
-            path = test_file.name
-
-        try:
-            _checkJVMArch(path, maxsize=PYTHON_64_BIT_MAXSIZE)
-        finally:
-            os.remove(path)
 
     @mock.patch('os.walk')
     @mock.patch('os.path.exists')

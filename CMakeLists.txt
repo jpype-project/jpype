@@ -8,6 +8,7 @@ project(jpype-native)
 
 option(ENABLE_TRACING "Enable tracing in the extension" OFF)
 option(ENABLE_COVERAGE "Enable compilation for coverage measurement" OFF)
+option(JP_ASSERT_FAST_FRAMES "Assert that JPJavaFrame::fast() call sites never run with zero real JNI frames on the thread" OFF)
 option(ENABLE_BUILD_JAR "Enable building of the Java support library JAR" ON)
 option(BUILD_TEST_HARNESS "Enable building of the Java test harness" ON)
 # Optionally set Python GIL disabled flag
@@ -140,3 +141,39 @@ elseif(BUILD_TEST_HARNESS)
 endif()
 
 add_subdirectory(native)
+
+# 1. Define the Bootstrap Source
+set(JPYPE_BOOTSTRAP_SRC
+    native/bootstrap/ejp_natives.cpp
+)
+
+# 2. Add the Library as a Python Module
+Python3_add_library(_jpyne MODULE ${JPYPE_BOOTSTRAP_SRC})
+target_link_libraries(_jpyne PRIVATE Python3::Module)
+target_include_directories(_jpyne PRIVATE ${JNI_INCLUDE_DIRS})
+
+# 3. Configure Properties (Mirroring the main module)
+set_target_properties(_jpyne PROPERTIES
+    PREFIX "" 
+    OUTPUT_NAME "_jpyne"
+)
+
+# 4. Apply Platform-Specific Suffixes and Options
+if(WIN32)
+    set_target_properties(_jpyne PROPERTIES SUFFIX ".pyd")
+    target_compile_definitions(_jpyne PRIVATE WIN32=1)
+    # Ensure symbols like Java_org_jpype_bridge_BootstrapLoader_loadLibrary are visible
+    set_target_properties(_jpyne PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+else()
+    target_link_libraries(_jpyne PRIVATE dl)
+    set_target_properties(_jpyne PROPERTIES SUFFIX ".so")
+endif()
+
+# 5. Installation for Wheel Building (scikit-build-core)
+if(SKBUILD)
+    install(TARGETS _jpyne
+            LIBRARY DESTINATION ${DEST_EXTENSION}
+            RUNTIME DESTINATION ${DEST_EXTENSION}
+    )
+endif()
+

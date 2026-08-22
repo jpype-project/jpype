@@ -26,7 +26,7 @@ class JPBufferType;
 class JPBuffer
 {
 public:
-	explicit JPBuffer(const JPValue& array);
+	JPBuffer(JPJavaFrame& frame, const JPValue& array);
 	virtual~ JPBuffer();
 
 	JPBufferType* getClass()
@@ -34,9 +34,9 @@ public:
 		return m_Class;
 	}
 
-	jobject getJava()
+	jobject getJava(JPJavaFrame& frame)
 	{
-		return m_Object.get();
+		return frame.retrieveGlobal(m_Object);
 	}
 
 	bool isReadOnly() const;
@@ -47,7 +47,7 @@ public:
 
 private:
 	JPBufferType* m_Class;
-	JPObjectRef m_Object;
+	jref m_Object;
 	void *m_Address;
 	Py_ssize_t m_Capacity;
 	Py_buffer m_Buffer{};

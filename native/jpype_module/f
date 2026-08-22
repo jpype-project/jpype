@@ -1,0 +1,367 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper (file:/usr/share/maven/lib/guava.jar)
+WARNING: Please consider reporting this to the maintainers of class com.google.common.util.concurrent.AbstractFuture$UnsafeAtomicHelper
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+[[1;34mINFO[m] Scanning for projects...
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--------------------------< [0;36morg.jpype:jpype[0;1m >---------------------------[m
+[[1;34mINFO[m] [1mBuilding jpype_module 1.7.2.dev0[m
+[[1;34mINFO[m] [1m--------------------------------[ jar ]---------------------------------[m
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m--- [0;32mmaven-surefire-plugin:3.2.5:test[m [1m(default-cli)[m @ [36mjpype[0;1m ---[m
+[[1;33mWARNING[m] useSystemClassLoader setting has no effect when not forking
+[[1;33mWARNING[m] The parameter forkCount should likely not be 0. Forking a JVM for tests improves test accuracy. Ensure to have a <forkCount> >= 1.
+[[1;34mINFO[m] Using auto detected provider org.apache.maven.surefire.testng.TestNGProvider
+[[1;34mINFO[m] Running python.lang.PyBuiltInNGTest
+May 15, 2026 9:30:22 AM org.jpype.bridge.Interpreter resolveLibraries
+INFO: Cache hit: python3.12
+May 15, 2026 9:30:22 AM org.jpype.bridge.Interpreter prepare
+INFO: Interpreter prepared. Ready for inspection or launch.
+May 15, 2026 9:30:22 AM org.jpype.bridge.Interpreter installNatives
+INFO: JPype Bridge Environment:
+May 15, 2026 9:30:22 AM org.jpype.bridge.Interpreter installNatives
+INFO:   Python Executable: python3.12
+May 15, 2026 9:30:23 AM org.jpype.bridge.Interpreter installNatives
+INFO:   Python Library:    /usr/lib/x86_64-linux-gnu/libpython3.12.so
+May 15, 2026 9:30:23 AM org.jpype.bridge.Interpreter installNatives
+INFO:   JPype Library:     /mnt/c/Users/nelson85/Documents/devel/open/jpype/_jpype.so
+May 15, 2026 9:30:23 AM org.jpype.bridge.Interpreter installNatives
+INFO:   JPype Version:     1.7.2.dev0
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by org.jpype.bridge.Interpreter in an unnamed module (file:/mnt/c/Users/nelson85/Documents/devel/open/jpype/native/jpype_module/target/classes/)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+May 15, 2026 9:30:23 AM org.jpype.bridge.Interpreter installNatives
+INFO: Native libraries loaded successfully.
+May 15, 2026 9:30:23 AM org.jpype.bridge.Interpreter start
+INFO: Python C-API Configuration:
+May 15, 2026 9:30:23 AM org.jpype.bridge.Interpreter start
+INFO:   program_name: python3.12
+May 15, 2026 9:30:23 AM org.jpype.bridge.Interpreter start
+INFO:   home:         /usr
+May 15, 2026 9:30:23 AM org.jpype.bridge.Interpreter start
+INFO:   pythonpath:   /mnt/c/Users/nelson85/Documents/devel/open/jpype:/usr/lib/python312.zip:/usr/lib/python3.12:/usr/lib/python3.12/lib-dynload:/home/nelson85/env/python3.12-wsl/lib/python3.12/site-packages
+May 15, 2026 9:30:23 AM org.jpype.bridge.Interpreter start
+INFO:   isolated:     false
+May 15, 2026 9:30:23 AM org.jpype.bridge.Interpreter start
+INFO:   site_import:  true
+May 15, 2026 9:30:23 AM org.jpype.bridge.Interpreter start
+INFO: Launching Python Interpreter...
+May 15, 2026 9:30:24 AM org.jpype.bridge.Interpreter setBackend
+INFO: Backend installed
+DEBUG: Calling Python method: NoneType:object
+May 15, 2026 9:30:24 AM org.jpype.bridge.Interpreter start
+INFO: Python launched
+DEBUG: Calling Python method: NoneType:newDict
+>>> RUNNING TEST: test$float
+DEBUG: Calling Python method: NoneType:newFloat
+DEBUG: Calling Python method: float:toNumber
+DEBUG: Calling Python method: NoneType:asDouble
+>>> RUNNING TEST: test$int
+DEBUG: Calling Python method: NoneType:newInt
+DEBUG: Calling Python method: int:toNumber
+DEBUG: Calling Python method: NoneType:asLong
+>>> RUNNING TEST: testBytesFromString
+DEBUG: Calling Python method: NoneType:bytes
+DEBUG: Calling Python method: bytes:size
+DEBUG: Calling Python method: NoneType:len
+>>> RUNNING TEST: testCall
+DEBUG: Calling Python method: NoneType:eval
+DEBUG: Calling Python method: NoneType:newTupleFromArray
+DEBUG: Calling Python method: NoneType:newDict
+DEBUG: Calling Python method: NoneType:call
+DEBUG: Calling Python method: int:toString
+>>> RUNNING TEST: testDelattr
+DEBUG: Calling Python method: NoneType:exec
+DEBUG: Calling Python method: NoneType:eval
+DEBUG: Calling Python method: NoneType:hasattrString
+DEBUG: Calling Python method: NoneType:delattrString
+DEBUG: Calling Python method: NoneType:hasattrString
+>>> RUNNING TEST: testDelattrMissingThrows
+DEBUG: Calling Python method: NoneType:exec
+DEBUG: Calling Python method: NoneType:eval
+DEBUG: Calling Python method: NoneType:delattrString
+>>> RUNNING TEST: testDict
+DEBUG BOOTSTRAP:
+  Class: <class 'AttributeError'>
+  Value: AttributeError("'DelAttrMissing' object has no attribute 'does_not_exist'")
+DEBUG: Calling Python method: NoneType:newDict
+DEBUG: Calling Python method: NoneType:len
+>>> RUNNING TEST: testDir
+DEBUG: Calling Python method: NoneType:str
+DEBUG: Calling Python method: NoneType:dir
+DEBUG: Calling Python method: list:toString
+>>> RUNNING TEST: testEnumerateContents
+DEBUG: Calling Python method: NoneType:enumerate
+DEBUG: Calling Python method: enumerate:toList
+DEBUG: Calling Python method: list:size
+DEBUG: Calling Python method: list:get
+DEBUG: Calling Python method: tuple:toString
+DEBUG: Calling Python method: list:get
+DEBUG: Calling Python method: tuple:toString
+DEBUG: Calling Python method: list:get
+DEBUG: Calling Python method: tuple:toString
+DEBUG: Calling Python method: list:get
+DEBUG: Calling Python method: tuple:toString
+>>> RUNNING TEST: testEnumerateIterable
+DEBUG: Calling Python method: NoneType:enumerate
+DEBUG: Calling Python method: enumerate:toList
+DEBUG: Calling Python method: list:size
+>>> RUNNING TEST: testEnumeratePyObject
+DEBUG: Calling Python method: NoneType:list
+DEBUG: Calling Python method: NoneType:enumerate
+DEBUG: Calling Python method: enumerate:toList
+DEBUG: Calling Python method: list:size
+>>> RUNNING TEST: testEval
+DEBUG: Calling Python method: NoneType:newDict
+DEBUG: Calling Python method: NoneType:newDict
+DEBUG: Calling Python method: NoneType:eval
+DEBUG: Calling Python method: int:toNumber
+DEBUG: Calling Python method: NoneType:asLong
+>>> RUNNING TEST: testEvalInvalidExpressionThrows
+DEBUG: Calling Python method: NoneType:newDict
+DEBUG: Calling Python method: NoneType:newDict
+DEBUG: Calling Python method: NoneType:eval
+>>> RUNNING TEST: testExec
+DEBUG BOOTSTRAP:
+  Class: <class 'SyntaxError'>
+  Value: SyntaxError('invalid syntax', ('<string>', 1, 0, '1 + ', 1, 0))
+DEBUG: Calling Python method: NoneType:newDict
+DEBUG: Calling Python method: NoneType:newDict
+DEBUG: Calling Python method: NoneType:eval
+>>> RUNNING TEST: testGetattr
+DEBUG BOOTSTRAP:
+  Class: <class 'SyntaxError'>
+  Value: SyntaxError('invalid syntax', ('<string>', 1, 3, 'x = 123', 1, 4))
+DEBUG: Calling Python method: NoneType:str
+DEBUG: Calling Python method: NoneType:getattrString
+>>> RUNNING TEST: testGetattrDefaultExisting
+DEBUG: Calling Python method: NoneType:exec
+DEBUG: Calling Python method: NoneType:eval
+DEBUG: Calling Python method: NoneType:str
+DEBUG: Calling Python method: NoneType:getattrDefault
+DEBUG: Calling Python method: str:toString
+>>> RUNNING TEST: testGetattrDefaultMissing
+DEBUG: Calling Python method: NoneType:exec
+DEBUG: Calling Python method: NoneType:eval
+DEBUG: Calling Python method: NoneType:str
+DEBUG: Calling Python method: NoneType:getattrDefault
+DEBUG: Calling Python method: str:equals
+DEBUG: Calling Python method: str:toString
+DEBUG: Calling Python method: str:toString
+>>> RUNNING TEST: testGetattrMissingThrows
+DEBUG: Calling Python method: NoneType:eval
+DEBUG: Calling Python method: NoneType:getattrString
+>>> RUNNING TEST: testHasattr
+DEBUG BOOTSTRAP:
+  Class: <class 'AttributeError'>
+  Value: AttributeError("'object' object has no attribute 'missing_attribute_name'")
+DEBUG: Calling Python method: NoneType:str
+DEBUG: Calling Python method: NoneType:hasattrString
+DEBUG: Calling Python method: NoneType:hasattrString
+>>> RUNNING TEST: testIndices
+DEBUG: Calling Python method: NoneType:slice
+DEBUG: Calling Python method: NoneType:newTupleFromArray
+DEBUG: Calling Python method: tuple:size
+>>> RUNNING TEST: testIsinstanceFalse
+DEBUG: Calling Python method: NoneType:newInt
+DEBUG: Calling Python method: NoneType:str
+DEBUG: Calling Python method: NoneType:type
+DEBUG: Calling Python method: NoneType:isinstanceFromArray
+>>> RUNNING TEST: testIsinstanceMultipleTypes
+DEBUG: Calling Python method: NoneType:str
+DEBUG: Calling Python method: NoneType:type
+DEBUG: Calling Python method: NoneType:newInt
+DEBUG: Calling Python method: NoneType:type
+DEBUG: Calling Python method: NoneType:isinstanceFromArray
+>>> RUNNING TEST: testIsinstanceTrue
+DEBUG: Calling Python method: NoneType:newInt
+DEBUG: Calling Python method: NoneType:type
+DEBUG: Calling Python method: NoneType:isinstanceFromArray
+>>> RUNNING TEST: testIterOnNonIterableThrows
+DEBUG: Calling Python method: NoneType:newInt
+DEBUG: Calling Python method: NoneType:iter
+>>> RUNNING TEST: testIterOnPyList
+DEBUG BOOTSTRAP:
+  Class: <class 'TypeError'>
+  Value: TypeError("'int' object is not iterable")
+DEBUG: Calling Python method: NoneType:list
+DEBUG: Calling Python method: NoneType:iter
+DEBUG: Calling Python method: list_iterator:next
+DEBUG: Calling Python method: NoneType:next
+DEBUG: Calling Python method: list_iterator:next
+DEBUG: Calling Python method: NoneType:next
+>>> RUNNING TEST: testLen
+DEBUG: Calling Python method: NoneType:list
+DEBUG: Calling Python method: NoneType:len
+>>> RUNNING TEST: testListEmpty
+DEBUG: Calling Python method: NoneType:newList
+DEBUG: Calling Python method: list:size
+DEBUG: Calling Python method: list:isEmpty
+DEBUG: Calling Python method: list:size
+>>> RUNNING TEST: testList_Object
+DEBUG: Calling Python method: NoneType:list
+DEBUG: Calling Python method: NoneType:len
+DEBUG: Calling Python method: list:get
+>>> RUNNING TEST: testMemoryviewFromBytes
+DEBUG: Calling Python method: NoneType:bytes
+DEBUG: Calling Python method: NoneType:memoryview
+>>> RUNNING TEST: testNextWithStopDefault
+DEBUG: Calling Python method: NoneType:list
+DEBUG: Calling Python method: NoneType:iter
+DEBUG: Calling Python method: NoneType:str
+DEBUG: Calling Python method: NoneType:next
+DEBUG: Calling Python method: NoneType:next
+DEBUG: Calling Python method: str:equals
+DEBUG: Calling Python method: str:toString
+DEBUG: Calling Python method: str:toString
+>>> RUNNING TEST: testRangeStartStop
+DEBUG: Calling Python method: NoneType:range
+DEBUG: Calling Python method: range:getStart
+DEBUG: Calling Python method: range:getStop
+DEBUG: Calling Python method: range:getStep
+>>> RUNNING TEST: testRangeStartStopStep
+DEBUG: Calling Python method: NoneType:range
+DEBUG: Calling Python method: range:getStart
+DEBUG: Calling Python method: range:getStop
+DEBUG: Calling Python method: range:getStep
+>>> RUNNING TEST: testRange_int
+DEBUG: Calling Python method: NoneType:range
+DEBUG: Calling Python method: NoneType:len
+>>> RUNNING TEST: testRepr
+DEBUG: Calling Python method: NoneType:str
+DEBUG: Calling Python method: NoneType:repr
+DEBUG: Calling Python method: str:toString
+>>> RUNNING TEST: testReprList
+DEBUG: Calling Python method: NoneType:list
+DEBUG: Calling Python method: NoneType:repr
+DEBUG: Calling Python method: str:toString
+DEBUG: Calling Python method: str:toString
+>>> RUNNING TEST: testSetEmpty
+DEBUG: Calling Python method: NoneType:newSet
+DEBUG: Calling Python method: set:size
+DEBUG: Calling Python method: set:isEmpty
+DEBUG: Calling Python method: set:size
+>>> RUNNING TEST: testSetattr
+DEBUG: Calling Python method: NoneType:exec
+DEBUG: Calling Python method: NoneType:eval
+DEBUG: Calling Python method: NoneType:setattrString
+DEBUG: Calling Python method: NoneType:getattrString
+>>> RUNNING TEST: testSliceSingle
+DEBUG: Calling Python method: NoneType:slice
+DEBUG: Calling Python method: slice:getStart
+DEBUG: Calling Python method: slice:getStop
+>>> RUNNING TEST: testSliceStartStop
+DEBUG: Calling Python method: NoneType:slice
+DEBUG: Calling Python method: slice:getStart
+DEBUG: Calling Python method: slice:getStop
+DEBUG: Calling Python method: slice:getStep
+>>> RUNNING TEST: testSliceStartStopStep
+DEBUG: Calling Python method: NoneType:slice
+DEBUG: Calling Python method: slice:getStart
+DEBUG: Calling Python method: slice:getStop
+DEBUG: Calling Python method: slice:getStep
+>>> RUNNING TEST: testStr
+DEBUG: Calling Python method: NoneType:newInt
+DEBUG: Calling Python method: NoneType:str
+DEBUG: Calling Python method: str:toString
+>>> RUNNING TEST: testStrList
+DEBUG: Calling Python method: NoneType:list
+DEBUG: Calling Python method: NoneType:str
+DEBUG: Calling Python method: str:toString
+DEBUG: Calling Python method: str:toString
+>>> RUNNING TEST: testTupleEmpty
+DEBUG: Calling Python method: NoneType:newTuple
+DEBUG: Calling Python method: tuple:size
+DEBUG: Calling Python method: tuple:isEmpty
+DEBUG: Calling Python method: tuple:size
+>>> RUNNING TEST: testTupleVarArgs
+DEBUG: Calling Python method: NoneType:newTupleFromArray
+DEBUG: Calling Python method: tuple:size
+DEBUG: Calling Python method: tuple:get
+DEBUG: Calling Python method: tuple:get
+DEBUG: Calling Python method: tuple:get
+>>> RUNNING TEST: testType
+DEBUG: Calling Python method: NoneType:newInt
+DEBUG: Calling Python method: NoneType:type
+DEBUG: Calling Python method: type:toString
+>>> RUNNING TEST: testVars
+DEBUG: Calling Python method: NoneType:exec
+DEBUG: Calling Python method: NoneType:eval
+DEBUG: Calling Python method: NoneType:vars
+DEBUG: Calling Python method: dict:containsKey
+DEBUG: Calling Python method: dict:get
+DEBUG: Calling Python method: int:toString
+>>> RUNNING TEST: testZipBuiltIn
+DEBUG: Calling Python method: NoneType:zipFromIterable
+DEBUG: Calling Python method: zip:toList
+DEBUG: Calling Python method: list:size
+>>> Shutting down JPype Bridge...
+Close bridge
+<class 'object'> : (<java class 'python.lang.PyObject'>,)
+<class 'function'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PyCallable'>)
+<class 'int'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PyIndex'>, <java class 'python.lang.PyNumber'>, <java class 'python.lang.PyInt'>)
+<class 'BuiltinAttrTest4'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PyBuffer'>)
+<class 'DelAttrMissing'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PyBuffer'>)
+<class 'tuple'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PySequence'>, <java class 'python.lang.PyIterable'>, <java class 'python.lang.PyCollection'>, <java class 'python.lang.PyContainer'>, <java class 'python.lang.PyTuple'>)
+<class 'tuple'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PySequence'>, <java class 'python.lang.PyIterable'>, <java class 'python.lang.PyCollection'>, <java class 'python.lang.PyContainer'>, <java class 'python.lang.PyTuple'>)
+<class 'tuple'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PySequence'>, <java class 'python.lang.PyIterable'>, <java class 'python.lang.PyCollection'>, <java class 'python.lang.PyContainer'>, <java class 'python.lang.PyTuple'>)
+<class 'tuple'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PySequence'>, <java class 'python.lang.PyIterable'>, <java class 'python.lang.PyCollection'>, <java class 'python.lang.PyContainer'>, <java class 'python.lang.PyTuple'>)
+<class 'int'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PyIndex'>, <java class 'python.lang.PyNumber'>, <java class 'python.lang.PyInt'>)
+<class 'builtin_function_or_method'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PyCallable'>)
+<class 'BuiltinAttrTest2'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PyBuffer'>)
+<class 'str'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PySequence'>, <java class 'python.lang.PyIterable'>, <java class 'python.lang.PyCollection'>, <java class 'python.lang.PyContainer'>, <java class 'python.lang.PyString'>)
+<class 'BuiltinAttrTest'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PyBuffer'>)
+<class 'str'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PySequence'>, <java class 'python.lang.PyIterable'>, <java class 'python.lang.PyCollection'>, <java class 'python.lang.PyContainer'>, <java class 'python.lang.PyString'>)
+<class 'object'> : (<java class 'python.lang.PyObject'>,)
+<class 'str'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PySequence'>, <java class 'python.lang.PyIterable'>, <java class 'python.lang.PyCollection'>, <java class 'python.lang.PyContainer'>, <java class 'python.lang.PyString'>)
+<class 'BuiltinAttrTest3'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PyBuffer'>)
+<class 'BuiltinVarsTest'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PyBuffer'>)
+<class 'int'> : (<java class 'python.lang.PyObject'>, <java class 'python.lang.PyIndex'>, <java class 'python.lang.PyNumber'>, <java class 'python.lang.PyInt'>)
+A1
+DETACH
+A2
+Bridge down
+Got java.lang.NullPointerException: Cannot invoke "org.jpype.bridge.Backend.eval(java.lang.CharSequence, python.lang.PyDict, python.lang.PyObject)" because "org.jpype.bridge.Interpreter.backend" is null
+[[1;31mERROR[m] Tests run: 47, Failures: 3, Errors: 0, Skipped: 0, Time elapsed: 3.567 s <<< FAILURE! -- in python.lang.PyBuiltInNGTest
+[[1;31mERROR[m] python.lang.PyBuiltInNGTest.testExec -- Time elapsed: 0.004 s <<< FAILURE!
+org.jpype.PyExceptionProxy
+	at python.lang.PyBuiltInNGTest.testExec(PyBuiltInNGTest.java:152)
+
+[[1;31mERROR[m] python.lang.PyBuiltInNGTest.testGetattrDefaultMissing -- Time elapsed: 0.006 s <<< FAILURE!
+java.lang.AssertionError: expected [fallback] but found [fallback]
+	at python.lang.PyBuiltInNGTest.testGetattrDefaultMissing(PyBuiltInNGTest.java:195)
+
+[[1;31mERROR[m] python.lang.PyBuiltInNGTest.testNextWithStopDefault -- Time elapsed: 0.003 s <<< FAILURE!
+java.lang.AssertionError: expected [stop] but found [stop]
+	at python.lang.PyBuiltInNGTest.testNextWithStopDefault(PyBuiltInNGTest.java:313)
+
+[[1;34mINFO[m] 
+[[1;34mINFO[m] Results:
+[[1;34mINFO[m] 
+[[1;31mERROR[m] Failures: 
+[[1;31mERROR[m]   PyBuiltInNGTest.testExec:152 » PyExceptionProxy
+[[1;31mERROR[m]   PyBuiltInNGTest.testGetattrDefaultMissing:195 expected [fallback] but found [fallback]
+[[1;31mERROR[m]   PyBuiltInNGTest.testNextWithStopDefault:313 expected [stop] but found [stop]
+[[1;34mINFO[m] 
+[[1;31mERROR[m] Tests run: 47, Failures: 3, Errors: 0, Skipped: 0
+[[1;34mINFO[m] 
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] [1;31mBUILD FAILURE[m
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;34mINFO[m] Total time:  4.873 s
+[[1;34mINFO[m] Finished at: 2026-05-15T09:30:26-07:00
+[[1;34mINFO[m] [1m------------------------------------------------------------------------[m
+[[1;31mERROR[m] Failed to execute goal [32morg.apache.maven.plugins:maven-surefire-plugin:3.2.5:test[m [1m(default-cli)[m on project [36mjpype[m: [1;31mThere are test failures.[m
+[[1;31mERROR[m] [1;31m[m
+[[1;31mERROR[m] [1;31mPlease refer to /mnt/c/Users/nelson85/Documents/devel/open/jpype/native/jpype_module/target/surefire-reports for the individual test results.[m
+[[1;31mERROR[m] [1;31mPlease refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.[m
+[[1;31mERROR[m] -> [1m[Help 1][m
+[[1;31mERROR[m] 
+[[1;31mERROR[m] To see the full stack trace of the errors, re-run Maven with the [1m-e[m switch.
+[[1;31mERROR[m] Re-run Maven using the [1m-X[m switch to enable full debug logging.
+[[1;31mERROR[m] 
+[[1;31mERROR[m] For more information about the errors and possible solutions, please read the following articles:
+[[1;31mERROR[m] [1m[Help 1][m http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+A3

@@ -27,7 +27,7 @@ U = typing.TypeVar('U')
 
 class JArray(typing.Generic[T]):
 
-    def __new__(cls, tp: typing.Type[T], dims=1) -> JArray[T]:
+    def __new__(cls, tp: typing.Type[T], dims: int = 1) -> '_JArrayType[T]':
         ...
 
     @classmethod
@@ -57,4 +57,10 @@ class JArray(typing.Generic[T]):
 
     @typing.overload
     def __setitem__(self, index: slice, value: typing.Sequence[T]):
+        ...
+
+
+class _JArrayType(JArray[T], typing.Generic[T]):
+
+    def __call__(self, init: typing.Union[int, typing.Sequence[T]]) -> JArray[T]:
         ...

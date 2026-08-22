@@ -1,0 +1,21 @@
+kind: class
+module: decimal
+class: Decimal
+interface: python.decimal.PyDecimal
+---
+def _compare_to(x, other):
+    return (x > other) - (x < other)
+
+
+METHODS = {
+    ".add": lambda x, other: x + other,
+    ".subtract": lambda x, other: x - other,
+    ".multiply": lambda x, other: x * other,
+    ".divide": lambda x, other: x / other,
+    ".negate": lambda x: -x,
+    ".abs": lambda x: abs(x),
+    ".isNaN": lambda x: x.is_nan(),
+    ".isInfinite": lambda x: x.is_infinite(),
+    ".isFinite": lambda x: x.is_finite(),
+    ".compareTo": _compare_to,
+}

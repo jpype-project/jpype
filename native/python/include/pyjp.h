@@ -16,6 +16,7 @@
 #ifndef PYJP_H
 #define PYJP_H
 #include <Python.h>
+#include <atomic>
 #include "jpype.h"
 #include "jp_pythontypes.h"
 
@@ -56,6 +57,12 @@ class JPStackInfo;
 // Macro to all after executing a Python command that can result in
 // a failure to convert it to an exception.
 #define JP_PY_CHECK() { if (PyErr_Occurred() != 0) JP_RAISE_PYTHON();  } // GCOVR_EXCL_LINE
+
+// Use after a CPython C-API call whose *only* failure signal is a NULL
+// return (the common case) -- unlike JP_PY_CHECK(), only calls
+// PyErr_Occurred() when obj is actually NULL, since a real API contract
+// never returns non-NULL with an exception left pending.
+#define JP_PY_CHECK_NULL(obj) { if ((obj) == nullptr) { JP_PY_CHECK(); } }
 
 #ifdef __cplusplus
 extern "C"
@@ -128,6 +135,7 @@ struct PyJPProxy
 	JPProxy* m_Proxy;
 	PyObject* m_Target;
 	PyObject* m_Dispatch;
+	PyJPModuleState* m_State;
 	bool m_Convert;
 } ;
 
@@ -141,21 +149,209 @@ struct JPConversionInfo
 	PyObject *none;
 } ;
 
+struct PyJPModuleState
+{
+	PyObject* module;
+	JPContext* context;
+	PyObject* module_dict; // borrowed
+	PyInterpreterState* interp_state;
+	// The thread state Py_NewInterpreterFromConfig() returned when this
+	// subinterpreter was created (nullptr for the main interpreter). It is
+	// swapped out (detached) once startup finishes, but stays allocated -
+	// Py_EndInterpreter() requires being called with the interpreter's sole
+	// remaining thread state, so finishSub() must reattach to this exact
+	// state rather than creating a new one (which would leave this one as an
+	// orphan and make Py_EndInterpreter fail with "not the last thread").
+	PyThreadState* root_tstate;
+	bool is_main_interpreter;  // true if this is the main Python interpreter
+	bool is_shutting_down;     // true when interpreter is finalizing - don't call Python APIs
+	int count;
+	int held;
 
-// JPype types
-extern PyTypeObject *PyJPArray_Type;
-extern PyTypeObject *PyJPArrayPrimitive_Type;
-extern PyTypeObject *PyJPBuffer_Type;
-extern PyTypeObject *PyJPClass_Type;
-extern PyTypeObject *PyJPComparable_Type;
-extern PyTypeObject *PyJPMethod_Type;
-extern PyTypeObject *PyJPObject_Type;
-extern PyTypeObject *PyJPProxy_Type;
-extern PyTypeObject *PyJPException_Type;
-extern PyTypeObject *PyJPNumberLong_Type;
-extern PyTypeObject *PyJPNumberFloat_Type;
-extern PyTypeObject *PyJPNumberBool_Type;
-extern PyTypeObject *PyJPChar_Type;
+	// Types (installed by init*)
+	PyTypeObject* PyJPClass_Type;
+	PyTypeObject* PyJPObject_Type;
+	PyTypeObject* PyJPException_Type;
+	PyTypeObject* PyJPComparable_Type;
+	PyTypeObject* PyJPArray_Type;
+	PyTypeObject* PyJPArrayPrimitive_Type;
+	PyTypeObject* PyJPArrayIter_Type;
+	PyTypeObject* PyJPBuffer_Type;
+	PyTypeObject* PyJPChar_Type;
+	PyTypeObject* PyJPField_Type;
+	PyTypeObject* PyJPMethod_Type;
+	PyTypeObject* PyJPMonitor_Type;
+	PyTypeObject* PyJPProxy_Type;
+	PyTypeObject* PyJPNumberLong_Type;
+	PyTypeObject* PyJPNumberFloat_Type;
+	PyTypeObject* PyJPNumberBool_Type;
+	PyTypeObject* PyJPClassHints_Type;
+	PyTypeObject* PyJPPackage_Type;
+
+	// Per-(sub)interpreter recycling pool for the JByte/JShort/JInt/JLong
+	// tagged-number leaves (see pyjp_number.cpp's intfreelist). Deliberately
+	// not process-wide: it recycles raw allocated blocks, and under a
+	// per-interpreter GIL/allocator build (PEP 684) a block freed under one
+	// interpreter's obmalloc arena and popped back out under another's would
+	// corrupt that interpreter's heap.
+	struct
+	{
+		std::atomic<void*> head;
+		std::atomic<int> count;
+		PyTypeObject* eligibleTypes[4];
+	} intfreelist;
+
+	// Per-interpreter JBoolean(True)/JBoolean(False) singletons (see
+	// pyjp_number.cpp's PyJPBoolean_new) -- each (sub)interpreter builds its
+	// own JBoolean leaf type, so the cached instances must be scoped the
+	// same way, not shared process-wide.
+	PyObject* boolSingleton[2];
+	PyTypeObject* boolLeafType;
+
+	PyObject* class_magic;
+	PyObject* class_magic_concrete;
+	PyObject* Py_JP_CALL;
+	PyObject* strings_dict;
+
+	// Resources (loadResources)
+
+	// Frontend
+	PyObject* JObject;
+	PyObject* JInterface;
+	PyObject* JArray;
+	PyObject* JChar;
+	PyObject* JException;
+
+	// Class
+	PyObject* JClassPre;
+	PyObject* JClassPost;
+
+	// Cache
+	PyObject* cacheDict;
+	PyObject* cacheInterfacesDict;
+	PyObject* cacheMethodsDict;
+	PyObject* package_dict;
+
+	// Doc
+	PyObject* JClassDoc;
+	PyObject* JMethodDoc;
+	PyObject* JMethodAnnotations;
+	PyObject* JMethodCode;
+
+	// GC
+	PyObject* python_gc;
+    PyObject* gc_callbacks;
+    PyObject* collect;
+
+	// Guards
+	PyObject* JObjectKey;
+
+	// Bridge
+	PyObject* concreteDict;
+	PyObject* protocolDict;
+	PyObject* methodsDict;
+
+	PyObject* abc_sequence;
+	PyObject* abc_mapping;
+	PyObject* abc_generator;
+	PyObject* abc_iterator;
+	PyObject* abc_iterable;
+	PyObject* abc_coroutine;
+	PyObject* abc_awaitable;
+	PyObject* abc_set;
+	PyObject* abc_mutable_set;
+	PyObject* abc_collection;
+	PyObject* abc_container;
+
+	// Numpy
+	PyObject* numpy_generic_type;
+	PyObject* numpy_bool_type;
+	PyObject* numpy_int8_type;
+	PyObject* numpy_int16_type;
+	PyObject* numpy_int32_type;
+
+	PyObject* protocol_pipeline[16];
+
+	int numpy_typepos;
+	int numpy_genericpos;
+	int cpp_exceptions;
+
+	// Temporary extracted jar to clean up on shutdown, if any. Heap pointer
+	// (not embedded by value) because PyJPModuleState is memset-constructed
+	// and freed without destructors running, same as `context` above.
+	std::string* jarTmpPath;
+};
+
+// Per-type hook that reconstructs a jvalue on demand for families with no
+// live per-instance value at all (boxed/primitive numeric types,
+// Character). Null for families that still store jvalue directly (general
+// objects/arrays/exceptions, Float/Double). Declared here (ahead of struct
+// PyJPClass below, which needs it for tp_jvalue) rather than down with the
+// rest of the C++-only declarations after extern "C" closes.
+typedef jvalue (*PyJPValueFn)(JPJavaFrame&, PyObject*);
+
+struct PyJPClass
+{
+	PyHeapTypeObject ht_type;
+	JPClass *m_Class;
+	PyObject *m_Doc;
+	PyJPModuleState *m_State;
+	// Java-value slot bookkeeping for the fixed-offset object model.  See
+	// the offset parameter documentation below (PyJPClass_FromSpecWithBases).
+	// Once a type is fully created this is ALWAYS the real, resolved byte
+	// offset -- for an abstract/concrete pair, the same value is written
+	// onto BOTH halves (see the concreteCall branch of PyJPClass_init), so
+	// no caller ever needs to branch or chase a companion to use it. Never
+	// -1 in steady state; 0 is a hard-error sentinel for legacy families
+	// that no longer exist.
+	Py_ssize_t offset;
+	// Abstract/concrete pairing, split into two one-directional, explicitly
+	// named edges rather than one field whose meaning depends on which side
+	// you're looking from:
+	//   tp_concrete: set only on an abstract type, points to its hidden
+	//     concrete companion. This is the OWNED edge -- the companion is
+	//     kept alive permanently (for the JVM session) by the reference
+	//     PyJPClass_concrete's tp_call never releases; this field is that
+	//     same pointer, not a separate incref.
+	//   tp_abstract: set only on a concrete companion, points back to the
+	//     abstract type it belongs to. This is a raw, NON-owned back-edge:
+	//     the pair is created and torn down as a unit, and the abstract
+	//     type's own lifetime never depends on its companion, so no
+	//     refcounting is needed on this direction. Consequently tp_traverse
+	//     visits tp_concrete but never tp_abstract (Py_VISIT should only
+	//     report edges this object actually owns a reference on).
+	// Both are null for any type that isn't part of such a pair.
+	PyTypeObject *tp_concrete;
+	PyTypeObject *tp_abstract;
+	// Every _JClass instance (i.e. every generated Java class/interface
+	// wrapper type object, such as the type object for java.lang.String)
+	// itself carries a JPValue for the java.lang.Class object it represents.
+	// struct PyJPClass is a single, closed, compile-time-fixed layout --
+	// PyJPClass_Type is never used as a base for any other spec, and every
+	// wrapper is an *instance* of it, not a Python-level subclass with its
+	// own extra slots -- so this can be a plain trailing field, exactly like
+	// Exception/Array/Buffer/Char, with no per-family scan needed.  See the
+	// PyJPClass_Type special case in PyJPClass_getOffset below.
+	JPValue extra;
+	// Per-family-root hook (set once on the family root type, e.g.
+	// PyJPNumberLong_Type/PyJPChar_Type, and inherited by every leaf
+	// wrapper class via PyJPClass_GetJValueFn's tp_base walk) that
+	// reconstructs a jvalue on demand for families with no live per-instance
+	// JPValue (Long/Boolean/Character). Null for families that still store
+	// jvalue directly (general objects/arrays/exceptions, Float/Double).
+	PyJPValueFn tp_jvalue;
+	// Per-leaf-boxed-class singleton for JObject(None, cls), lazily built and
+	// cached on first request (see JPBoxedType::convertToPythonObject). Null
+	// for non-boxed types and for boxed classes that haven't had a null cast
+	// yet. Deliberately NOT visited/cleared by tp_traverse/tp_clear: this
+	// type strongly owns nullBoxed, and nullBoxed's own Py_TYPE strongly owns
+	// this type right back (ordinary instance-of-type reference) -- the same
+	// owned/back-edge shape as tp_concrete/tp_abstract above, and for the
+	// same reason (see those field comments): it's a permanent, JVM-lifetime
+	// edge that must stay invisible to the cyclic GC rather than become an
+	// uncollectable 2-node cycle tp_clear can never actually break.
+	PyObject *nullBoxed;
+} ;
 
 
 // JPype resources
@@ -173,16 +369,8 @@ extern PyObject *_JMethodAnnotations;
 extern PyObject *_JMethodCode;
 extern PyObject *_JObjectKey;
 extern PyObject *_JVMNotRunning;
-extern PyObject *PyJPClassMagic;
-extern PyObject *PyJPClassMagicConcrete;
 // for caching type checks with Numpy bool after np version 2.1
 extern PyObject* _num_bool_type;
-extern PyObject* _numpy_int8_type;
-extern PyObject* _numpy_int16_type;
-extern PyObject* _numpy_int32_type;
-extern PyObject* _numpy_bool_type;
-
-extern JPContext* JPContext_global;
 
 // Class wrapper functions
 int        PyJPClass_Check(PyObject* obj);
@@ -199,7 +387,7 @@ int        PyJPClass_Check(PyObject* obj);
 // (0 used to mean "legacy family, resolved at runtime via the thread-local
 // dummy-heap-type allocator" -- that allocator, PyJPValue_alloc, has been
 // removed; passing 0 is now a hard internal error.)
-PyObject  *PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases, Py_ssize_t offset);
+PyObject  *PyJPClass_FromSpecWithBases(PyObject* module, PyType_Spec *spec, PyObject *bases, Py_ssize_t offset);
 // Once a type is fully created, this is ALWAYS the real, resolved byte
 // offset -- including for an abstract type, whose offset field is flattened
 // to the same value as its hidden concrete companion's the moment that
@@ -236,7 +424,7 @@ int        PyJPValue_clear(PyObject *self);
 
 // Generic methods that operate on any object with a Java slot
 PyObject  *PyJPValue_str(PyObject* self);
-bool       PyJPValue_hasJavaSlot(PyTypeObject* type);
+bool	   PyJPValue_hasJavaSlot(PyTypeObject* type);
 Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self);
 
 // JPValue (the bundled class+jvalue struct) is never embedded per-instance;
@@ -251,11 +439,91 @@ Py_ssize_t PyJPValue_getJavaSlotOffset(PyObject* self);
 JPClass*   PyJPValue_getJPClass(PyObject* obj);
 
 // Access point for creating classes
-PyObject  *PyJPModule_getClass(PyObject* module, PyObject *obj);
 PyObject  *PyJPValue_getattro(PyObject *obj, PyObject *name);
-int        PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value);
+int		PyJPValue_setattro(PyObject *self, PyObject *name, PyObject *value);
 PyObject  *PyJPChar_Create(PyTypeObject *type, Py_UCS2 p);
-PyTypeObject* PyJP_GetNumPyBaseType(PyTypeObject* obj);
+PyTypeObject* PyJP_GetNumPyBaseType(PyJPModuleState* st, PyTypeObject* obj);
+
+PyObject* PyJP_probe(PyJPModuleState* st, PyTypeObject *other);
+PyObject* PyJP_pyobject(PyJPModuleState* st, PyTypeObject* type, PyObject *object);
+PyObject *PyJPModule_convertBuffer(PyJPModuleState* st, JPPyBuffer& buffer, PyObject *dtype);
+
+void	   PyJPClass_hook(JPJavaFrame &frame, JPClass* cls);
+
+JPPyObject PyJPArray_create(JPJavaFrame &frame, PyTypeObject* wrapper, const JPValue& value);
+JPPyObject PyJPBuffer_create(JPJavaFrame &frame, PyTypeObject *type, const JPValue & value);
+JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls);
+JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPValue& value);
+JPPyObject PyJPField_create(JPJavaFrame &frame, JPField* m);
+JPPyObject PyJPMethod_create(JPJavaFrame &frame, JPMethodDispatch *m, PyObject *instance);
+
+JPClass*   PyJPClass_getJPClass(PyObject* obj);
+JPProxy*   PyJPProxy_getJPProxy(PyJPModuleState* st, PyObject* obj);
+void	   PyJPModule_rethrow(const JPStackInfo& info);
+void	   PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* obj, const JPValue& value);
+bool	   PyJPValue_isSetJavaSlot(PyObject* self);
+JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowable prev);
+void	   PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, jthrowable enclosing);
+
+void PyJPModule_installGC(PyObject* module);
+void PyJPModule_loadResources(PyObject* module, PyJPModuleState* st);
+
+void PyJPArray_initType(PyObject* module, PyJPModuleState* st);
+void PyJPBuffer_initType(PyObject* module, PyJPModuleState* st);
+void PyJPClass_initType(PyObject* module, PyJPModuleState* st);
+void PyJPField_initType(PyObject* module, PyJPModuleState* st);
+void PyJPMethod_initType(PyObject* module, PyJPModuleState* st);
+void PyJPMonitor_initType(PyObject* module, PyJPModuleState* st);
+void PyJPProxy_initType(PyObject* module, PyJPModuleState* st);
+void PyJPObject_initType(PyObject* module, PyJPModuleState* st);
+void PyJPNumber_initType(PyObject* module, PyJPModuleState* st);
+void PyJPClassHints_initType(PyObject* module, PyJPModuleState* st);
+void PyJPPackage_initType(PyObject* module, PyJPModuleState* st);
+void PyJPChar_initType(PyObject* module, PyJPModuleState* st);
+
+
+#define _ASSERT_JVM_RUNNING(context) assertJVMRunning((JPContext*)context, JP_STACKINFO())
+
+inline JPContext* PyJPObject_getContext(PyObject* self)
+{
+	// self may itself be a generated wrapper TYPE object (e.g. `JClass
+	// ("java.lang.Integer")` passed to jpype.synchronized()), not just an
+	// ordinary instance -- PyJPClass_Check(self) is the same self-vs-
+	// Py_TYPE(self) distinction already established for
+	// PyJPValue_getJPClass/getJValue. Using Py_TYPE(self) unconditionally
+	// treated a wrapper type's own metaclass (PyJPClass_Type) as if it
+	// were a struct PyJPClass instance, reading garbage past its real
+	// PyHeapTypeObject layout.
+	//
+	// m_State is set exactly once, at type-creation time, and no code
+	// path ever nulls it out afterward -- but CPython's interpreter
+	// shutdown does not guarantee a type outlives its instances'
+	// tp_finalize calls the way ordinary runtime GC does, so a still-
+	// pending instance's tp_finalize can run after its own type's C-level
+	// state has already been torn down as part of unwinding the owning
+	// module. Every caller of this function already tolerates a null
+	// JPContext* return (context == nullptr is the first thing checked);
+	// this null-checks m_State itself so that shutdown-time race doesn't
+	// crash before reaching those checks (see the "no ambient is-the-JVM-
+	// up-at-all bail here" comment in PyJPValue_finalize for the sibling
+	// per-context safety net this complements).
+	if (PyJPClass_Check(self))
+	{
+		auto* state = ((PyJPClass*) self)->m_State;
+		return state == nullptr ? nullptr : state->context;
+	}
+	auto* state = ((PyJPClass*) Py_TYPE(self))->m_State;
+	return state == nullptr ? nullptr : state->context;
+}
+
+static inline JPContext* PyJPType_getContext(PyTypeObject* type)
+{
+	// See PyJPObject_getContext's comment: m_State can be null here during
+	// interpreter shutdown, when a type's own C-level state may already be
+	// torn down by the time some instance's cleanup path still runs.
+	auto* state = ((PyJPClass*) type)->m_State;
+	return state == nullptr ? nullptr : state->context;
+}
 
 // Build a boxed/primitive-wrapper int value directly: an ordinary PyLong
 // subtype instance (via CPython's own long_subtype_new, dispatched through
@@ -270,56 +538,16 @@ PyObject  *PyJPNumber_longFromLongLong(PyTypeObject* type, long long value);
 }
 #endif
 
-void       PyJPClass_hook(JPJavaFrame &frame, JPClass* cls);
-
-// C++ methods
-JPPyObject PyJPArray_create(JPJavaFrame &frame, PyTypeObject* wrapper, const JPValue& value);
-JPPyObject PyJPBuffer_create(JPJavaFrame &frame, PyTypeObject *type, const JPValue & value);
-JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls);
-JPPyObject PyJPNumber_create(JPJavaFrame &frame, JPPyObject& wrapper, const JPValue& value);
-JPPyObject PyJPField_create(JPField* m);
-JPPyObject PyJPMethod_create(JPMethodDispatch *m, PyObject *instance);
-
-JPClass*   PyJPClass_getJPClass(PyObject* obj);
-JPProxy*   PyJPProxy_getJPProxy(PyObject* obj);
-void       PyJPModule_rethrow(const JPStackInfo& info);
-void       PyJPValue_assignJavaSlot(JPJavaFrame &frame, PyObject* obj, const JPValue& value);
-bool       PyJPValue_isSetJavaSlot(PyObject* self);
-
-// Per-type hook that reconstructs a jvalue on demand for families with no
-// live per-instance value at all (boxed/primitive numeric types,
-// Character). Null for families that still store jvalue directly (general
-// objects/arrays/exceptions, Float/Double).
-typedef jvalue (*PyJPValueFn)(JPJavaFrame&, PyObject*);
+// See the PyJPValueFn typedef above (declared ahead of struct PyJPClass).
 PyJPValueFn PyJPClass_GetJValueFn(PyTypeObject* type);
 void        PyJPClass_SetJValueFn(PyTypeObject* type, PyJPValueFn fn);
 
 // See PyJPValue_getJPClass above -- the jvalue half of the old JPValue pair.
 jvalue     PyJPValue_getJValue(JPJavaFrame& frame, PyObject* obj);
-JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowable prev);
-void       PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, jthrowable enclosing);
 
-#define _ASSERT_JVM_RUNNING(context) assertJVMRunning((JPContext*)context, JP_STACKINFO())
-
-/**
- * Use this when getting the context where the context must be running.
- *
- * The context needs to be accessed before accessing and JPClass* or other
- * internal structured.  Those resources are owned by the JVM and thus
- * will be deleted when the JVM is shutdown.  This method will throw if the
- * JVM is not running.
- *
- * If the context may or many not be running access JPContext_global directly.
- */
-inline JPContext* PyJPModule_getContext()
-{
-#ifdef JP_INSTRUMENTATION
-	PyJPModuleFault_throw(compile_hash("PyJPModule_getContext"));
-#endif
-	JPContext* context = JPContext_global;
-	_ASSERT_JVM_RUNNING(context); // GCOVR_EXCL_LINE
-	return context;
-}
+// See PyJPModule_loadResources(PyObject*, PyJPModuleState*) above -- this
+// zero-st overload is used by pyjp_module.cpp's own bootstrap path (before
+// a state pointer is threaded down that far).
 void PyJPModule_loadResources(PyObject* module);
 
 #endif /* PYJP_H */

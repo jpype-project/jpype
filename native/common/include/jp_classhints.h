@@ -23,7 +23,7 @@ public:
 
 	virtual JPMatch::Type matches(JPClass *cls, JPMatch &match) = 0;
 
-	virtual void getInfo(JPClass *cls, JPConversionInfo &info) = 0;
+	virtual void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) = 0;
 
 	virtual jvalue convert(JPMatch &match) = 0;
 } ;
@@ -32,7 +32,7 @@ class JPIndexConversion : public JPConversion
 {
 public:
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override;
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override;
 
 } ;
 
@@ -40,7 +40,7 @@ class JPNumberConversion : public JPIndexConversion
 {
 public:
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override;
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override;
 
 } ;
 
@@ -48,7 +48,7 @@ class JPConversionJavaValue : public JPConversion
 {
 public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override;
-	void getInfo(JPClass *cls, JPConversionInfo &info) override;
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override;
 	jvalue convert(JPMatch &match) override;
 } ;
 
@@ -96,9 +96,22 @@ public:
 
 	void excludeConversion(PyObject* type);
 
-	void getInfo(JPClass *cls, JPConversionInfo &info);
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info);
 
 	bool m_ConvertJava;
+
+	/**
+	 * Bumped every time any JPClassHints anywhere gains a new conversion
+	 * (addTypeConversion/addAttributeConversion/excludeConversion).
+	 *
+	 * JPClass::findJavaConversion's per-type cache compares its own stashed
+	 * generation against this on every call and clears itself if stale. This
+	 * is deliberately global/coarse rather than per-owning-class (which
+	 * would need a back-pointer this class doesn't have) -- hint mutation
+	 * only happens at setup time, so invalidating a bit more than strictly
+	 * necessary costs nothing in practice.
+	 */
+	static uint64_t s_Generation;
 private:
 	std::list<JPConversion*> conversions;
 } ;
@@ -107,7 +120,18 @@ extern JPConversion *hintsConversion;
 extern JPConversion *charArrayConversion;
 extern JPConversion *byteArrayConversion;
 extern JPConversion *bufferConversion;
+extern JPConversion *multiArrayBufferConversion;
+extern JPConversion *raggedSequenceConversion;
 extern JPConversion *sequenceConversion;
+extern JPConversion *listConversion;
+extern JPConversion *tupleConversion;
+
+// True for the leaf primitive type codes raggedSequenceConversion
+// supports (every primitive type code -- see jp_classhints.cpp for why).
+// Checked by JPArrayClass::findJavaConversionImpl before even attempting
+// raggedSequenceConversion->matches(), so a disqualified array class
+// (Object[][], String[][], ...) never calls into it at all.
+bool isRaggedEligible(char typeCode);
 extern JPConversion *nullConversion;
 extern JPConversion *classConversion;
 extern JPConversion *objectConversion;
@@ -117,9 +141,12 @@ extern JPConversion *javaValueConversion;
 extern JPConversion *stringConversion;
 extern JPConversion *boxConversion;
 extern JPConversion *boxBooleanConversion;
+extern JPConversion *boxGenericConversion;
 extern JPConversion *boxLongConversion;
 extern JPConversion *boxDoubleConversion;
 extern JPConversion *unboxConversion;
 extern JPConversion *proxyConversion;
+extern JPConversion *pythonConversion;
+extern JPConversion *j2pythonConversion;
 
 #endif /* JP_CLASSHINTS_H */

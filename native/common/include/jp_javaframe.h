@@ -46,11 +46,20 @@ static const int LOCAL_FRAME_DEFAULT = 8;
 class JPJavaFrame
 {
 	JNIEnv* m_Env;
+	JPContext* m_Context;
 	bool m_Popped;
 	bool m_Outer;
+	// True only for a fast()-constructed frame: m_Popped is permanently
+	// true for these from birth (fast() never pushes a real frame to pop),
+	// which is their normal, valid resting state for their entire
+	// lifetime -- not a "this frame was already used up" signal the way
+	// m_Popped==true means for every other constructor. check()'s
+	// JP_FRAME_CHECK() needs to tell the two apart; see its use below.
+	bool m_Fast;
 
 private:
-	JPJavaFrame(JNIEnv* env, int size, bool outer);
+	JPJavaFrame(JNIEnv* env, JPContext* ctx, int size, bool outer);
+	JPJavaFrame(JNIEnv* env, JPContext* ctx);  // fast(): no PushLocalFrame
 
 public:
 
@@ -65,9 +74,9 @@ public:
 	 * @throws JPBaseError if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
-	static JPJavaFrame outer(int size = LOCAL_FRAME_DEFAULT)
+	static JPJavaFrame outer(JPContext* ctx, int size = LOCAL_FRAME_DEFAULT)
 	{
-		return {nullptr, size, true};
+		return {nullptr, ctx, size, true};
 	}
 
 	/** Create a new JavaFrame when called internal when
@@ -79,10 +88,10 @@ public:
 	 * @throws JPBaseError if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
-	static JPJavaFrame inner(int size = LOCAL_FRAME_DEFAULT)
-	{
-		return {nullptr, size, false};
-	}
+//	static JPJavaFrame inner(int size = LOCAL_FRAME_DEFAULT)
+//	{
+//		return {nullptr, size, false};
+//	}
 
 	/** Create a new JavaFrame when called from Java.
 	 *
@@ -94,12 +103,57 @@ public:
 	 * @throws JPBaseError if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
-	static JPJavaFrame external(JNIEnv* env, int size = LOCAL_FRAME_DEFAULT)
+	static JPJavaFrame external(JNIEnv* env, JPContext* ctx, int size = LOCAL_FRAME_DEFAULT)
 	{
-		return {env, size, false};
+		return {env, ctx, size, false};
+	}
+
+	/** Create a lightweight frame that does not push a JNI local frame.
+	 *
+	 * Only valid at call sites that are provably local-reference-free for
+	 * their entire duration (no `New*`-family JNI call, no
+	 * jobject-returning JNI call, no re-entry into Python). It borrows
+	 * whatever real frame already exists further up the call stack --
+	 * using fast() does not create a new safety scope of its own. See the
+	 * JP_ASSERT_FAST_FRAMES build (JP_ASSERT_HAS_FRAME/g_frameDepth in
+	 * jp_javaframe.cpp) for the mechanism that checks this contract.
+	 *
+	 * context is whatever the caller already has in hand (e.g.
+	 * JPJavaAccess::getContext()) -- there is no ambient fallback here,
+	 * for the same reason JPJavaAccess itself requires one explicitly.
+	 */
+	static JPJavaFrame fast(JNIEnv* env, JPContext* context)
+	{
+		return JPJavaFrame(env, context);
 	}
 
 	JPJavaFrame(const JPJavaFrame& frame);
+
+	/** Transfer ownership of an already-pushed frame without pushing a
+	 * second one.
+	 *
+	 * Required because the copy constructor above pushes a brand new real
+	 * JNI local frame rather than sharing the source's -- correct for an
+	 * explicit, intentional copy, but C++14 (this project's standard, see
+	 * CMAKE_CXX_STANDARD) only makes copy elision for a function's
+	 * by-value return *encouraged*, not mandatory the way C++17 does. A
+	 * `JPJavaFrame frame = JPJavaFrame::outer(ctx);`-style call whose
+	 * compiler/optimization level doesn't elide the temporary falls back
+	 * to constructing `frame` from that temporary -- via this move
+	 * constructor if one exists, otherwise silently via the copy
+	 * constructor instead, pushing an extra, unaccounted-for real JNI
+	 * frame every such call makes. That extra frame was invisible before
+	 * the JPJavaFrame destructor fix that made ~JPJavaFrame() always pop
+	 * an unpopped frame regardless of m_Outer -- the accidental frame
+	 * used to just leak instead of ever being popped. Once real leaks
+	 * started being caught, unoptimized (-O0) builds started reliably
+	 * hitting "local reference outside of frame" instead, because the
+	 * extra copy-constructed frame's own destructor now pops a real JNI
+	 * frame layer code elsewhere doesn't know exists, invalidating local
+	 * refs created in what calling code assumes is still the same,
+	 * still-open frame.
+	 */
+	JPJavaFrame(JPJavaFrame&& frame) noexcept;
 
 	/** Exit the local scope and clean up all java
 	 * objects.
@@ -108,8 +162,6 @@ public:
 	 * by the keep method will be kept alive.
 	 */
 	~JPJavaFrame();
-
-	JPContext* getContext();
 
 	void check();
 
@@ -154,9 +206,26 @@ public:
 	jweak NewWeakGlobalRef(jobject obj);
 	void DeleteWeakGlobalRef(jweak obj);
 
+	/** Stores obj in this frame's interpreter's Java-side GlobalPool
+	 * (org.jpype.internal.NativeContext#storeGlobal) and returns a handle
+	 * for it, in place of a JNI NewGlobalRef.
+	 */
+	jref storeGlobal(jobject obj);
+
+	/** Resolves a handle from storeGlobal() back to a local reference
+	 * scoped to this frame (org.jpype.internal.NativeContext#retrieveGlobal),
+	 * or nullptr if it's stale/foreign/already released.
+	 */
+	jobject retrieveGlobal(jref ref);
+
 	JNIEnv* getEnv() const
 	{
 		return m_Env;
+	}
+	JPContext* getContext() const
+	{
+		// We can add guard statements here.
+		return m_Context;
 	}
 
 	string toString(jobject o);
@@ -166,6 +235,52 @@ public:
 	jint hashCode(jobject o);
 	jobject collectRectangular(jarray obj);
 	jobject assemble(jobject dims, jobject parts);
+
+	// Buffer-handoff multi-dim push/pull -- single JNI entry into
+	// org.jpype.internal.Support, everything after that is plain Java (no
+	// per-leaf-array JNI calls), including the serial-vs-parallel
+	// decision -- Java already knows the total element count once the
+	// shape is in hand and has no less insight into IntStream/
+	// ForkJoinPool dispatch cost than C++ would, so that decision isn't
+	// threaded across the JNI boundary at all. `typeCode` is the JNI
+	// primitive type signature character (see
+	// JPPrimitiveType::getTypeCode()); `buf` must be a direct
+	// java.nio.ByteBuffer.
+	jobject fillMultiArrayFromBuffer(char typeCode, jint mode, jobject buf, jintArray shape);
+	void collectMultiArrayToBuffer(char typeCode, jobject collected, jobject buf);
+
+	// Push-side mirror of collectMultiArrayToBuffer above -- writes buf's
+	// contents into collected's existing leaf arrays in place (JArray::
+	// pushFrom's N-D case), rather than reading them out. `collected` must
+	// be the result of collectRectangular against the array being pushed
+	// into, so its leaf-array references are the array's own -- this never
+	// allocates a new array, preserving the target's identity.
+	void fillBufferIntoMultiArray(char typeCode, jobject collected, jobject buf);
+
+	// Ragged-native nested-list push -- same shape as
+	// fillMultiArrayFromBuffer above (single JNI entry into
+	// org.jpype.internal.Support, everything after that plain Java), but
+	// for a ragged tree (one int32 length marker per node, depth-first
+	// pre-order) rather than a fixed rectangular shape array. `buf` must
+	// be a direct java.nio.ByteBuffer holding the encoded tree; `dims` is
+	// the array's static nesting depth.
+	jobject fillRaggedFromBuffer(char typeCode, jint dims, jobject buf);
+
+	// Flat (1D) buffer-handoff push -- JPConversionBuffer's fast path
+	// (jp_classhints.cpp). Unlike fillMultiArrayFromBuffer, dtype coercion
+	// (srcKind/srcSize/swapped) and a non-unit strideBytes are handled
+	// directly on the Java side, so this covers both a raw reinterpret and
+	// a genuine coercing/non-contiguous push in the same single JNI call.
+	jobject fillFlatFromBuffer(char typeCode, char srcKind, jint srcSize, jboolean swapped,
+			jobject buf, jint length, jint strideBytes);
+
+	// Write-into sibling of fillFlatFromBuffer -- writes directly into an
+	// existing Java array's [destStart, destStart+destStep*length) range
+	// (JPArray::setRange/clone's fast path, jp_convert.cpp's
+	// tryFastBufferPush) instead of allocating and returning a fresh one.
+	void fillFlatIntoArray(char typeCode, char srcKind, jint srcSize, jboolean swapped,
+			jobject buf, jint length, jint strideBytes,
+			jarray dest, jint destStart, jint destStep);
 
 	jobject newArrayInstance(jclass c, jintArray dims);
 	jthrowable getCause(jthrowable th);
@@ -182,14 +297,14 @@ public:
 	jstring fromStringUTF8(const string& str);
 	jobject callMethod(jobject method, jobject obj, jobject args);
 	jobject toCharArray(jstring jstr);
-	string getFunctional(jclass c);
+	PyObject* getFunctional(jclass c);
 
 	JPClass *findClass(jclass obj);
 	JPClass *findClassByName(const string& name);
 	JPClass *findClassForObject(jobject obj);
 
-    // not implemented
-    JPJavaFrame& operator= (const JPJavaFrame& frame) = delete;
+	// not implemented
+	JPJavaFrame& operator= (const JPJavaFrame& frame) = delete;
 
 private:
 	jint PushLocalFrame(jint);
@@ -197,7 +312,6 @@ private:
 
 public:
 
-	bool ExceptionCheck();
 	void ExceptionDescribe();
 	void ExceptionClear();
 	jthrowable ExceptionOccurred();
@@ -352,6 +466,7 @@ public:
 
 	// Object
 	jclass GetObjectClass(jobject obj);
+	jboolean IsSameObject(jobject ref1, jobject ref2);
 	jobject GetStaticObjectField(jclass clazz, jfieldID fid);
 	jobject GetObjectField(jobject clazz, jfieldID fid);
 	void SetStaticObjectField(jclass clazz, jfieldID fid, jobject val);
@@ -389,6 +504,103 @@ public:
 
 	void clearInterrupt(bool throws);
 
+} ;
+
+/** A compile-time-narrow companion to JPJavaFrame for call sites that are
+ * provably local-reference-free on their own happy path (no `New*`, no
+ * `CallObjectMethodA` family, no re-entry into Python) -- e.g. a primitive
+ * array element read (`Get<Type>ArrayRegion`). Unlike JPJavaFrame::fast(),
+ * this is not the same C++ type as JPJavaFrame at all: it has no
+ * reference-creating methods to call in the first place, so a future edit
+ * that tries to reach for one here is a compile error in every build, not
+ * a runtime assertion gated behind JP_ASSERT_FAST_FRAMES. It never pushes a
+ * JNI local frame and never needs to -- it makes no local references.
+ *
+ * The one thing every wrapped JNI call still needs is the *exception*
+ * check every JAVA_CHECK/JAVA_RETURN pays after any JNI call (even a call
+ * that is documented as not throwing can still observe an
+ * already-pending exception from something earlier in the call chain).
+ * checkFast() is that check's frame-less equivalent: on the (overwhelming)
+ * common case of no pending exception it touches nothing but
+ * ExceptionCheck(), a boolean query. Only on the rare exception branch
+ * does it escalate to a real JPJavaFrame::inner(), specifically because
+ * ExceptionOccurred() returns a local jthrowable reference (and building
+ * the JPJavaError from it may create more), which needs somewhere real to
+ * be popped from.
+ */
+/** RAII guard for a single local reference obtained on a JPJavaAccess/
+ * fast() call path that pushes no frame of its own (see JPJavaFrame::fast's
+ * ctor comment) -- deletes the reference when it goes out of scope,
+ * including via an exception unwinding past it, unlike a bare
+ * DeleteLocalRef() call placed after the code that uses the reference
+ * (which is skipped if that code throws). Not needed on a path with a
+ * real enclosing frame (outer()/inner()/external()), which already
+ * reclaims every local reference created under it on its own.
+ */
+class JPLocalRef
+{
+	JNIEnv* m_Env;
+	jobject m_Ref;
+public:
+	JPLocalRef(JNIEnv* env, jobject ref) : m_Env(env), m_Ref(ref)
+	{
+	}
+
+	JPLocalRef(const JPLocalRef&) = delete;
+	JPLocalRef& operator=(const JPLocalRef&) = delete;
+
+	~JPLocalRef()
+	{
+		if (m_Ref != nullptr)
+			m_Env->DeleteLocalRef(m_Ref);
+	}
+
+	jobject get() const
+	{
+		return m_Ref;
+	}
+} ;
+
+class JPJavaAccess
+{
+	JNIEnv* m_Env;
+	JPContext* m_Context;
+
+public:
+	/** context is whatever the caller already has in hand (e.g. a
+	 * JPClass::getContext()) -- there is no ambient fallback, since this
+	 * class exists precisely for hot per-element call sites that must not
+	 * silently resolve the wrong sub-interpreter's context.
+	 */
+	explicit JPJavaAccess(JPContext* context);
+
+	void checkFast();
+
+	/** For a caller that needs to escalate to a real JPJavaFrame (e.g. to
+	 * call the shared convertToPythonObject) -- pass to
+	 * JPJavaFrame::fast(env, context) so it doesn't redundantly re-fetch
+	 * this thread's JNIEnv*, which is a real JNI call, not free.
+	 */
+	JNIEnv* getEnv() const
+	{
+		return m_Env;
+	}
+
+	JPContext* getContext() const
+	{
+		return m_Context;
+	}
+
+	jsize GetArrayLength(jarray a0);
+
+	void GetBooleanArrayRegion(jbooleanArray array, jsize start, jsize len, jboolean* vals);
+	void GetByteArrayRegion(jbyteArray array, jsize start, jsize len, jbyte* vals);
+	void GetCharArrayRegion(jcharArray array, jsize start, jsize len, jchar* vals);
+	void GetShortArrayRegion(jshortArray array, jsize start, jsize len, jshort* vals);
+	void GetIntArrayRegion(jintArray array, jsize start, jsize len, jint* vals);
+	void GetLongArrayRegion(jlongArray array, jsize start, jsize len, jlong* vals);
+	void GetFloatArrayRegion(jfloatArray array, jsize start, jsize len, jfloat* vals);
+	void GetDoubleArrayRegion(jdoubleArray array, jsize start, jsize len, jdouble* vals);
 } ;
 
 #endif // _JP_JAVA_FRAME_H_

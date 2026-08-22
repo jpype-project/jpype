@@ -1,0 +1,348 @@
+# Curated leak-sweep targets for leaksweep.py.
+#
+# One entry per line: module.py:ClassName.testMethod:budget_seconds
+# '#'-prefixed lines and blank lines are ignored.
+#
+# This list is meant to be hand-curated and reviewed like the original
+# test_leak.py spot checks were (see plan/LeakCheckHarness.md) -- not
+# auto-generated or auto-discovered. Add a new entry when a leak is found
+# and fixed, so the fix gets permanent, systematic regression coverage
+# instead of relying on another investigation getting lucky again.
+#
+# The budgets below are smoke-test sized (60s) so a full sweep finishes in
+# a few minutes for local/CI sanity checks. A dedicated overnight/opt-in run
+# should use much larger budgets (e.g. 300s+) for real sensitivity, since a
+# bigger budget means more batches sampled, not a bigger/slower batch.
+
+test_leak.py:LeakTestCase.testStringLeak:60
+test_leak.py:LeakTestCase.testStringLeak__str__:60
+test_leak.py:LeakTestCase.testClassLeak:60
+test_leak.py:LeakTestCase.testCtorLeak:60
+test_leak.py:LeakTestCase.testInvokeLeak:60
+
+# GENERIC entries: point directly at an existing, unmodified test method or
+# function (see leaksweep.py's module docstring for the shape) instead of a
+# hand-written closure -- the driver supplies the loop/isolation/measurement
+# itself via leakharness.runTargetBudget().
+
+# Regression coverage for the testPassedObjectGetsCleanedUp OOM leak fixed
+# in jp_context.cpp (see bugs/PassedObjectGetsCleanedUpFlake.md) -- this
+# test already loops internally per call, so keep size small.
+GENERIC:test_attr.py:AttributeTestCase.testPassedObjectGetsCleanedUp:60:2
+
+# Array-iteration path (the ArrayIterLocalRefLeak.md fix's regression coverage).
+GENERIC:test_array.py:ArrayTestCase.testIterateArray:60:200
+
+# JPProxy dynamic-class-generation path. Was a real leak (see
+# bugs/ProxyClassRefcountLeak.md and bugs/ReferenceQueueTestRefsLeak.md):
+# every @JImplements-decorated class is a CPython heap type, and
+# PyJPProxy_dealloc (native/python/pyjp_proxy.cpp) never decref'd an
+# instance's own type on dealloc -- normally subtype_dealloc does this for
+# you, except when (as here) the nearest non-subtype_dealloc base is itself
+# a heap type, in which case that base's own dealloc is responsible. Not
+# metaspace, not JVM heap (both confirmed flat) -- every fresh class
+# defined by this test's per-call @JImplements usage was permanently
+# leaked, never freed. Fixed; the ~5-7KB/call growth is gone, down to the
+# same ~262 bytes/call harness-noise floor documented in
+# bugs/DirectBufferLeak.md. Now a clean regression check for this fix
+# (this fix also resolved the testRefs entry below, same root cause).
+GENERIC:test_proxy.py:ProxyTestCase.testProxyLeak:60:200
+
+# Direct ByteBuffer conversion + an internal exception round-trip.
+# Investigated -- see bugs/DirectBufferLeak.md. Real, confirmed live-RSS
+# growth (not a high-water-mark artifact); JPype's own phantom-ref cleanup
+# path has zero accounting gap. Most of the growth (~1300-2800 -> ~262
+# bytes/call once the test's exception-throwing line is removed) looks
+# like the same jp_exception.cpp tb_create traceback leak the parallel
+# testCause investigation found and fixed -- re-verify against that fix.
+# A smaller ~262 bytes/call residual persists even exception-free and is
+# still unexplained (real small leak vs. harness-threshold miscalibration
+# for this async-cleanup workload shape -- not yet distinguished).
+GENERIC:test_bytebuffer.py:ByteBufferCase.testConvertToDirectBuffer:60
+
+# Multi-dimensional (3D) rectangular array push.
+GENERIC:test_arrayRaggedPush.py:ArrayRaggedPushTestCase.testRectangularInt3D:60
+
+# Ragged (jagged) 2D array pull via JArray.toList().
+GENERIC:test_arrayToList.py:ArrayToListTestCase.testMultiDimJagged:60
+
+# Bulk primitive-array-to-list pull across every primitive type.
+GENERIC:test_arrayToList.py:ArrayToListTestCase.testEachPrimitiveType:60
+
+# Custom user-defined Java class instantiation + non-static field access.
+GENERIC:test_attr.py:AttributeTestCase.testGetNonStatic:60
+
+# Numeric widening/boxing: Python int -> boxed java.lang.Long.
+GENERIC:test_boxing.py:BoxingTestCase.testBoxedLongFromPythonInt:60
+
+# Java exception throw/catch round-trip with __cause__ traceback chaining.
+# Was a real leak (see bugs/ExceptionCauseTracebackLeak.md): tb_create()'s
+# last_traceback local was reassigned each loop iteration without a decref,
+# leaking every non-final synthetic traceback frame -- fixed in
+# native/common/jp_exception.cpp. Now a clean regression check.
+GENERIC:test_exc.py:ExceptionTestCase.testCause:60
+
+# java.util.HashMap conversion (dict-like put/get).
+GENERIC:test_collection.py:CollectionMapCase.testMapPut:60
+
+# java.util.ArrayList conversion + iteration.
+GENERIC:test_collection.py:CollectionListCase.testListAdd:60
+
+# Reflection: java.lang.Class.forName() lookup.
+GENERIC:test_forname.py:ForNameTestCase.testForName:60
+
+# Numeric conversion baseline (Python int -> Java int).
+GENERIC:test_conversionInt.py:ConversionIntTestCase.testIntFromInt:60
+
+# Numeric widening (Python int -> Java long).
+GENERIC:test_conversionLong.py:ConversionLongTestCase.testLongFromInt:60
+
+# Java-side lambda/Function invoked from Python -- reverse direction of
+# testProxyLeak (Python-implementing-a-Java-interface); this is
+# Java-owning-the-callable, no per-call dynamic class generation.
+GENERIC:test_lambdas.py:LambdasTestCase.testLambdasFunction:60
+
+# JNI thread attach/detach/reattach cycle, plus an auto-attach triggered by
+# a Java call after an explicit detach.
+GENERIC:test_thread.py:ThreadTestCase.testAttach:60
+
+# java.util.TreeMap iteration round-trip.
+GENERIC:test_map.py:JMapTestCase.testIter:60
+
+# java.util.ArrayList iteration round-trip (distinct from testListAdd above,
+# which only covers add(), not iteration).
+GENERIC:test_list.py:JListTestCase.testIter:60
+
+# Non-ASCII / surrogate-pair string round-trip -- the other string coverage
+# in this file (test_leak.py's testStringLeak) only uses plain ASCII.
+GENERIC:test_utf8.py:Utf8TestCase.test_string_upload_with_surrogates:60:100
+
+# numpy -> JArray(JByte) slice WRITE. The array entries above (testIterateArray,
+# testRectangularInt3D, testMultiDimJagged, testEachPrimitiveType) all cover
+# reads/pulls; this is the write/push direction. Requires numpy.
+GENERIC:test_array.py:ArrayTestCase.testSetFromNPByteArray:60:200
+
+# java.time.Instant comparison operators (Comparable round-trip).
+GENERIC:test_comparable.py:ComparableTestCase.testComparable:60
+
+# java.math.BigInteger hashing.
+GENERIC:test_comparable.py:ComparableTestCase.testComparableHash:60
+
+# Varargs overload resolution -- calls the same method at 1/2/3 args each
+# call, exercising three overload-resolution paths per iteration.
+GENERIC:test_varargs.py:VarArgsTestCase.testVarArgsMethod:60:200
+
+# Directly exercises org.jpype.ref.GlobalPool/NativeReference cleanup --
+# the machinery whose detachJVM()/_JavaVM accounting bug was the actual
+# root cause of the already-fixed testPassedObjectGetsCleanedUp leak (see
+# bugs/PassedObjectGetsCleanedUpFlake.md). High-value regression coverage
+# for that mechanism specifically. Was ALSO a real leak in its own right
+# (same PyJPProxy_dealloc heap-type-refcount bug as testProxyLeak above --
+# see bugs/ReferenceQueueTestRefsLeak.md for the full investigation,
+# including why an isolated run reliably showed steady ~13-14KB/call growth
+# while a short/early-exiting full-sweep run could PASS cleanly: too few
+# batches to clear the 4-bytes/call noise threshold before "4 clean
+# batches" triggers an early PASS). Fixed in native/python/pyjp_proxy.cpp;
+# now a clean regression check.
+GENERIC:test_ref.py:ReferenceQueueTestCase.testRefs:60:100
+
+# --- Third curation round: SQL/JDBC + previously-proposed candidates + ---
+# --- broad sampling across previously-untouched categories.           ---
+
+# SQL/JDBC: connection open/close lifecycle via dbapi2's context-manager
+# protocol (sqlite, in-memory, no external server needed). Structurally
+# distinct from every entry above -- exercises Connection resource cleanup,
+# not just object conversion.
+GENERIC:test_sql_sqlite.py:ConnectTestCase.testScope:60:200
+
+# SQL/JDBC: full connection+cursor+statement+resultset cycle (create table,
+# insert, select, fetchall) via context managers, sqlite driver.
+GENERIC:test_sql_sqlite.py:CursorTestCase.test_execute:60:200
+
+# SQL/JDBC: same cycle as above but the h2 driver -- distinct JDBC driver
+# class-loading/type-mapping path from sqlite.
+GENERIC:test_sql_h2.py:CursorTestCase.test_execute:60:200
+
+# Object hashCode() round-trip (java.lang.Object, not a primitive wrapper --
+# the other testHash* methods mostly cover boxed-primitive hashing already
+# implied by boxing/comparable coverage above).
+GENERIC:test_hash.py:HashTestCase.testHashObject:60
+
+# Functional-interface lambda binding against an interface with BOTH static
+# and default methods (java.util.function.Predicate) -- distinct overload
+# path from testLambdasFunction above (single abstract method only).
+GENERIC:test_functional.py:FunctionalTestCase.testStaticDefaultMethods:60
+
+# Overload resolution against multiple candidate Java interfaces.
+GENERIC:test_overloads.py:OverloadTestCase.testInterfaces1:60
+
+# JProxy dynamic-proxy instance creation against one/multiple interfaces.
+# Distinct from testProxyLeak above: uses JProxy(dict=...) directly rather
+# than @JImplements, so no fresh Python class is defined per call -- a
+# useful contrast target for that entry's still-open flakiness question.
+GENERIC:test_proxy.py:ProxyTestCase.testProxyDecl:60
+
+# Numeric conversion baseline, short (rounds out the int/long coverage
+# already present above with testIntFromInt/testLongFromInt).
+GENERIC:test_conversionShort.py:ConversionShortTestCase.testShortFromInt:60
+
+# float -> double widening round-trip through a custom Java class method.
+GENERIC:test_numeric.py:NumericTestCase.testDoubleConversion:60
+
+# Bulk round-trip of every Java primitive wrapper type via JNumberTestCase.
+GENERIC:test_number.py:JNumberTestCase.testJavaPrimitives:60
+
+# str()/repr() on a wrapped JObject.
+GENERIC:test_repr.py:ReprTestCase.testObject:60
+
+# JPickler/JUnpickler round-trip of a dict containing a Java collection and
+# a Java string -- real file I/O per call (writes/reads self.filename).
+GENERIC:test_pickle.py:PickleTestCase.testMixed:60:200
+
+# Class resolution for a Java class implementing multiple interfaces (MRO
+# construction path).
+GENERIC:test_mro.py:MroTestCase.testMultipleInterfaces:60
+
+# Generic-signature JClass lookup with a wildcard type parameter.
+GENERIC:test_generic.py:GenericTestCase.testMap1:60
+
+# Type-hints/customizer metadata lookup on java.util.Collection.
+GENERIC:test_hints.py:HintsTestCase.testCollection:60
+
+# Virtual-dispatch call resolution across three call paths (direct, via
+# static-typed interface method, via class method) against a Java-side
+# object returned from a factory method -- no per-call dynamic class
+# generation (contrast the @JImplements-based entries above).
+GENERIC:test_virtual.py:VirtualsTestCase.testCallBooleanImplements:60
+
+# Python-list -> Java-Iterable implicit-conversion customizer path.
+# Investigated: the original FLAKY sanity-pass result (one short run showing
+# steady ~262-524 bytes/call growth, followed immediately by a clean PASS at
+# the same config) did not reproduce across 7 further runs at varying
+# budget/size (a 30-batch/200-call run plus 6 shorter budget-based runs) --
+# all clean, zero RSS/JVM growth. Traced `PyIterable@obj`'s actual path
+# (JPConversionPython::convert() in jp_classhints.cpp): it builds a JPProxy
+# via the org.jpype ProxyFactory, which deduplicates/caches the *dynamic
+# Java proxy Type* by interface set (so this is NOT the same
+# per-call-fresh-class mechanism as testProxyLeak above -- confirmed, not
+# assumed); only a Java proxy *instance* is created fresh per call, and its
+# lifetime is tied to the Python-side PyJPProxy object via
+# JPProxy::getProxy()'s Py_INCREF + the JPProxy::releaseProxyPython cleanup
+# callback, released through the same NativeReferenceQueue/phantom-ref async
+# cleanup machinery already verified leak-free elsewhere in this file (see
+# testPassedObjectGetsCleanedUp above). No accounting gap found. Conclusion:
+# most likely GC-timing/measurement noise from a single short run, not a
+# real leak -- downgrading this from an open flaky finding.
+GENERIC:test_bridge.py:JBridgeTestCase.testIterable:60
+
+# JInterface meta-class identity/subclass check.
+GENERIC:test_inherit.py:InheritTestCase.testInterface:60
+
+# --- Fourth curation round: remaining 51 previously-unreviewed test files ---
+# --- (annotations, buffers/arrays, boxing, reflection, sql/serial, etc.) ---
+
+# Annotation lookup + virtual-JNI method call on the annotation instance
+# (issue #880 regression coverage -- CallNonvirtual vs CallVirtual).
+GENERIC:test_annotation.py:AnnotationTestCase.testAnnotationMethodCall:60
+
+# numpy string-array -> Java String[] conversion (JArray.of with dtype).
+GENERIC:test_arrayFromBuffer.py:ArrayFromBufferTestCase.testStringArray1D:60
+
+# Multi-dimensional (2D) numpy buffer push into a Java array.
+GENERIC:test_arrayMultiDimBuffer.py:ArrayMultiDimBufferTestCase.testPush2D:60
+
+# Java array -> Python buffer pull, contiguous fast path.
+GENERIC:test_arrayPullPush.py:ArrayPullToTestCase.testContiguousFastPath:60
+
+# Boxed java.lang.Integer construction/round-trip.
+GENERIC:test_boxed.py:BoxedTestCase.testInteger:60
+
+# Boolean boxing round-trip.
+GENERIC:test_boxing_comprehensive.py:BoxingComprehensiveTestCase.testBooleanBoxing:60
+
+# DirectByteBuffer -> Python memoryview (distinct call shape from
+# testConvertToDirectBuffer above -- no exception round-trip in this one).
+GENERIC:test_buffer.py:BufferTestCase.testToMemoryview:60
+
+# Caller-sensitive static method dispatch (stack-walking to find caller's
+# class each call).
+GENERIC:test_caller_sensitive.py:JCallerSensitiveCase.testCallStatic:60
+
+# CharSequence implicit-conversion customizer path.
+GENERIC:test_charSequence.py:ConversionCharSequenceTestCase.testAutoConvert:60
+
+# AutoCloseable context-manager protocol (open/close cycle).
+GENERIC:test_closeable.py:CloseableTestCase.testCloseable:60
+
+# Access to a Java object/array/static member after the owning JPype
+# wrapper considers it "closed" -- exercises the closed-state check path.
+GENERIC:test_closed.py:ClosedTestCase.testObjects:60
+
+# JPype's exact-match implicit-conversion path (canConvertToJava/EXACT).
+GENERIC:test_conversion.py:ConversionTestCase.testConvertExact:60
+
+# Java int[] iteration via __iter__.
+GENERIC:test_coverage.py:CoverageCase.testJArrayIter:60
+
+# DirectByteBuffer allocation + byte-granularity memoryview view.
+GENERIC:test_directbuffer.py:JBufferTestCase.testMemoryViewByte:60
+
+# Instance/static java.lang.Object field get/set round-trip (distinct
+# primitive-type coverage from testGetNonStatic above).
+GENERIC:test_fields.py:FieldsTestCase.testObject:60
+
+# JInt/JBoolean wrapper round-trip under the gc-free-leaves (non-tracked)
+# object path.
+GENERIC:test_gcfree_leaves.py:GcFreeLeavesTestCase.testRoundTrip:60
+
+# AttributeError path for a non-static field accessed on the class itself.
+GENERIC:test_jclass.py:JClassTestCase.testGetAttrField:60
+
+# JInt construction-failure path (TypeError on non-convertible objects) --
+# exception-heavy per-call shape, contrast the happy-path conversion entries.
+GENERIC:test_jint.py:JIntTestCase.testFromObject:60
+
+# String.substring() instance method call.
+GENERIC:test_jmethod.py:JMethodTestCase.testMethodCall:60
+
+# AttributeError path for a non-static field accessed on the class itself
+# (test_jobject.py's own JClassTestCase -- distinct fixture/module from the
+# test_jclass.py entry above despite the same class name).
+GENERIC:test_jobject.py:JClassTestCase.testGetAttrField:60
+
+# JPackage attribute resolution to a JClass.
+GENERIC:test_jpackage.py:JPackageTestCase.testCreate:60
+
+# Reflected java.lang.reflect.Method.toPython() dispatch cache.
+GENERIC:test_jreflect.py:JReflectMethodTestCase.testInstanceMethodTakesInstanceFirst:60
+
+# JString construction from str and from bytes.
+GENERIC:test_jstring.py:JStringTestCase.testConversion:60
+
+# Explicit Tracer-based leak check (testArrayCall/testBufferCall) --
+# already self-checking via Tracer.leaked(), but not previously wired into
+# the curated sweep for time-budgeted (rather than fixed-100-iteration)
+# sensitivity. Array-of-int + object-arg callObject() round-trip.
+GENERIC:test_leak2.py:Leak2TestCase.testArrayCall:60:50
+
+# Same Tracer-based check, DirectByteBuffer + object-arg callObject()
+# round-trip.
+GENERIC:test_leak2.py:Leak2TestCase.testBufferCall:60:50
+
+# Low-level _jpype._getClass() lookup (below the JClass()/JPackage() layer).
+GENERIC:test_module.py:ModuleTestCase.testGetClass:60
+
+# _JMonitor construction-failure path on a non-monitorable (String) object.
+GENERIC:test_module2.py:ModuleTestCase2.testMonitorOnString:60
+
+# JObject() wrapping of an existing Java object instance.
+GENERIC:test_objectwrapper.py:ObjectWrapperTestCase.testWrapJavaObject:60
+
+# java.lang.reflect.Method.invoke() on a public method (raw reflection
+# path, distinct from JPype's own method-dispatch machinery).
+GENERIC:test_reflect.py:ReflectCase.testCallPublicMethod:60
+
+# java.io.ObjectOutputStream serialization of a Java object -- real file
+# I/O per call (writes self.tempname); smaller batch size to keep the
+# per-batch wall-clock cost reasonable.
+GENERIC:test_serial.py:SerializationTestCase.testSerialize:60:100

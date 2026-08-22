@@ -1,3 +1,4 @@
+// --- file: python/pyjp_object.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -37,7 +38,7 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	}
 
 	// Create an instance (this may fail)
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPType_getContext(type));
 	JPPyObjectVector args(pyargs);
 	JPValue jv = cls->newInstance(frame, args);
 
@@ -97,7 +98,7 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 		return out;
 	}
 
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPObject_getContext(self));
 	JPClass *cls0 = PyJPValue_getJPClass(self);
 	JPClass *cls1 = PyJPValue_getJPClass(other);
 	jobject obj0 = (cls0 != nullptr) ? PyJPValue_getJValue(frame, self).l : nullptr;
@@ -122,7 +123,7 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 		// This block seems like a giant waste as there are very few cases in which
 		// a converted object would ever satisfy equals.  But this was the original
 		// logic in JPype so we will try to match it.
-		JPMatch match(&frame, other);
+		JPMatch match(frame, other);
 		cls0->findJavaConversion(match);
 		if (match.type < JPMatch::_implicit)
 			Py_RETURN_FALSE;
@@ -141,7 +142,7 @@ static PyObject *PyJPObject_compare(PyObject *self, PyObject *other, int op)
 static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 {
 	JP_PY_TRY("PyJPComparable_compare");
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPObject_getContext(self));
 	JPClass *cls0 = PyJPValue_getJPClass(self);
 	JPClass *cls1 = PyJPValue_getJPClass(other);
 
@@ -171,7 +172,7 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 		// the first super class that implements Comparable.  Further,
 		// because of type erasure we can't actually get.
 		JPClass *cls2 = cls0;
-		JPMatch match(&frame, other);
+		JPMatch match(frame, other);
 		while (cls2 != nullptr && !cls2->findJavaConversion(match) && !JPModifier::isComparable(cls2->getModifiers()))
 			cls2 = cls2->getSuperClass();
 
@@ -232,7 +233,7 @@ static PyObject *PyJPComparable_compare(PyObject *self, PyObject *other, int op)
 static Py_hash_t PyJPObject_hash(PyObject *obj)
 {
 	JP_PY_TRY("PyJPObject_hash");
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPObject_getContext(obj));
 	if (PyJPValue_getJPClass(obj) == nullptr)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
 	jobject o = PyJPValue_getJValue(frame, obj).l;
@@ -251,12 +252,12 @@ static PyObject *PyJPObject_repr(PyObject *self)
 
 static PyObject *PyJPObject_initSubclass(PyObject *cls, PyObject* args, PyObject *kwargs)
 {
-    Py_RETURN_NONE;
+	Py_RETURN_NONE;
 }
 
 static PyMethodDef objectMethods[] = {
 	{"__init_subclass__", (PyCFunction) PyJPObject_initSubclass, METH_CLASS | METH_VARARGS | METH_KEYWORDS, ""},
-    {0}
+	{0}
 };
 
 static PyType_Slot objectSlots[] = {
@@ -265,15 +266,14 @@ static PyType_Slot objectSlots[] = {
 	{Py_tp_free,     (void*) &PyJPValue_free},
 	{Py_tp_getattro, (void*) &PyJPValue_getattro},
 	{Py_tp_setattro, (void*) &PyJPValue_setattro},
-	{Py_tp_str,      (void*) &PyJPValue_str},
-	{Py_tp_repr,     (void*) &PyJPObject_repr},
+	{Py_tp_str,	  (void*) &PyJPValue_str},
+	{Py_tp_repr,	 (void*) &PyJPObject_repr},
 	{Py_tp_richcompare, (void*) &PyJPObject_compare},
-	{Py_tp_hash,     (void*) &PyJPObject_hash},
+	{Py_tp_hash,	 (void*) &PyJPObject_hash},
 	{Py_tp_methods,  (void*) objectMethods},
 	{0}
 };
 
-PyTypeObject *PyJPObject_Type = nullptr;
 static PyType_Spec objectSpec = {
 	"_jpype._JObject",
 	0,
@@ -294,9 +294,10 @@ static PyObject *PyJPException_new(PyTypeObject *type, PyObject *pyargs, PyObjec
 	}  // GCOVR_EXCL_STOP
 
 	// Special constructor path for Exceptions
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPContext* context = PyJPType_getContext(type);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	JPPyObjectVector args(pyargs);
-	if (args.size() == 2 && args[0] == _JObjectKey)
+	if (args.size() == 2 && args[0] == context->modulestate->JObjectKey)
 		return ((PyTypeObject*) PyExc_BaseException)->tp_new(type, args[1], kwargs);
 
 	// Create an instance (this may fail)
@@ -309,14 +310,15 @@ static PyObject *PyJPException_new(PyTypeObject *type, PyObject *pyargs, PyObjec
 	JP_FAULT_RETURN("PyJPException_init.null", self);
 	PyJPValue_assignJavaSlot(frame, self, jv);
 	return self;
-	JP_PY_CATCH(nullptr);  // GCOVR_EXCL_LINE
+	JP_PY_CATCH(nullptr);
 }
 
 static int PyJPException_init(PyObject *self, PyObject *pyargs, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPException_init");
 	JPPyObjectVector args(pyargs);
-	if (args.size() == 2 && args[0] == _JObjectKey)
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPObject_getContext(self));
+	if (args.size() == 2 && args[0] == frame.getContext()->modulestate->JObjectKey)
 		return ((PyTypeObject*) PyExc_BaseException)->tp_init(self, args[1], kwargs);
 
 	// Exception must be constructed with the BaseException_new
@@ -327,7 +329,7 @@ static int PyJPException_init(PyObject *self, PyObject *pyargs, PyObject *kwargs
 static PyObject* PyJPException_expandStacktrace(PyObject* self)
 {
 	JP_PY_TRY("PyJPModule_expandStackTrace");
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPObject_getContext(self));
 
 	// These two are loop invariants and must match each time
 	auto th = (jthrowable) PyJPValue_getJValue(frame, self).l;
@@ -356,11 +358,10 @@ static PyGetSetDef exceptionGetSets[] = {
 	{nullptr}
 };
 
-PyTypeObject *PyJPException_Type = nullptr;
 static PyType_Slot excSlots[] = {
-	{Py_tp_new,      (void*) &PyJPException_new},
-	{Py_tp_init,     (void*) &PyJPException_init},
-	{Py_tp_str,      (void*) &PyJPValue_str},
+	{Py_tp_new,	  (void*) &PyJPException_new},
+	{Py_tp_init,	 (void*) &PyJPException_init},
+	{Py_tp_str,	  (void*) &PyJPValue_str},
 	{Py_tp_getattro, (void*) &PyJPValue_getattro},
 	{Py_tp_setattro, (void*) &PyJPValue_setattro},
 	{Py_tp_methods,  exceptionMethods},
@@ -394,11 +395,10 @@ static PyType_Spec excSpec = {
 
 static PyType_Slot comparableSlots[] = {
 	{Py_tp_richcompare, (void*) &PyJPComparable_compare},
-	{Py_tp_hash,     (void*) &PyJPObject_hash},
+	{Py_tp_hash,	 (void*) &PyJPObject_hash},
 	{0}
 };
 
-PyTypeObject *PyJPComparable_Type = nullptr;
 static PyType_Spec comparableSpec = {
 	"_jpype._JComparable",
 	0,
@@ -407,36 +407,37 @@ static PyType_Spec comparableSpec = {
 	comparableSlots
 };
 
-#ifdef __cplusplus
-}
-#endif
 
-void PyJPObject_initType(PyObject* module)
+void PyJPObject_initType(PyObject* module, PyJPModuleState* st)
 {
-    // -1: abstract.  Object's layout must stay byte-identical to `object` so
-    // it can be mixed, via ordinary Java interface implementation, into any
-    // foreign family (boxed Number/Buffer/Array/Char) without CPython
-    // raising "multiple bases have instance lay-out conflict".  A hidden
-    // concrete companion (see PyJPClass_concrete) is created immediately and
-    // used transparently at construction time (PyJPObject_new).
-    PyJPObject_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&objectSpec, nullptr, -1);
-    JP_PY_CHECK(); // GCOVR_EXCL_LINE
-	PyModule_AddObject(module, "_JObject", (PyObject*) PyJPObject_Type);
+	// -1: abstract.  Object's layout must stay byte-identical to `object` so
+	// it can be mixed, via ordinary Java interface implementation, into any
+	// foreign family (boxed Number/Buffer/Array/Char) without CPython
+	// raising "multiple bases have instance lay-out conflict".  A hidden
+	// concrete companion (see PyJPClass_concrete) is created immediately and
+	// used transparently at construction time (PyJPObject_new).
+	st->PyJPObject_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(module, &objectSpec, nullptr, -1);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
-    JPPyObject bases = JPPyTuple_Pack(PyExc_Exception, PyJPObject_Type);
-	PyJPException_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&excSpec, bases.get(),
+	Py_INCREF((PyObject*) st->PyJPObject_Type);
+	PyModule_AddObject(module, "_JObject", (PyObject*) st->PyJPObject_Type);
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
+
+	JPPyObject bases = JPPyTuple_Pack(PyExc_Exception, st->PyJPObject_Type);
+	st->PyJPException_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(module, &excSpec, bases.get(),
 			offsetof (struct PyJPException, extra));
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
-	PyModule_AddObject(module, "_JException", (PyObject*) PyJPException_Type);
+	Py_INCREF((PyObject*) st->PyJPException_Type);
+	PyModule_AddObject(module, "_JException", (PyObject*) st->PyJPException_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 
 	// Comparable is a pure interface mixin: it adds no fields of its own, so
 	// it is abstract too (like Object) rather than concrete, and gets its
 	// own (never actually used in practice, but harmless) hidden companion.
-	bases = JPPyTuple_Pack(PyJPObject_Type);
-	PyJPComparable_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(&comparableSpec, bases.get(), -1);
+	bases = JPPyTuple_Pack(st->PyJPObject_Type);
+	st->PyJPComparable_Type = (PyTypeObject*) PyJPClass_FromSpecWithBases(module, &comparableSpec, bases.get(), -1);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
-	PyModule_AddObject(module, "_JComparable", (PyObject*) PyJPComparable_Type);
+	Py_INCREF((PyObject*) st->PyJPComparable_Type);
+	PyModule_AddObject(module, "_JComparable", (PyObject*) st->PyJPComparable_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 }
 
@@ -446,7 +447,7 @@ void PyJPObject_initType(PyObject* module)
 void PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, jthrowable enclosing)
 {
 	JP_TRACE_IN("PyJPException_normalize");
-	JPContext *context = PyJPModule_getContext();
+	JPContext *context = frame.getContext();
 	while (th != nullptr)
 	{
 		// Attach the frame to first
@@ -473,5 +474,9 @@ void PyJPException_normalize(JPJavaFrame frame, JPPyObject exc, jthrowable th, j
 		PyException_SetCause(exc.get(), next.get());
 		exc = next;
 	}
-	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
+	JP_TRACE_OUT;
 }
+
+#ifdef __cplusplus
+}
+#endif

@@ -8,8 +8,8 @@ JPype DBAPI2 Guide
 One common use of JPype is to provide access to databases using JDBC.  The JDBC
 API is well established, very capable, and supports most databases.
 JPype can be used to access JDBC both directly or through the use of the Python
-DBAPI2 as layed (see PEP-0249_).  Unfortunately, the Python API leaves a lot of
-behaviors undefined.  
+DBAPI2 as laid out in PEP-0249_.  Unfortunately, the Python API leaves a lot of
+behaviors undefined.
 
 The JPype dbapi2 module provides our implementation of this Python API.
 Normally the Python API has to deal with two different type systems, Python
@@ -94,23 +94,23 @@ exceptions:
 Python exceptions are more fine grain than JDBC exceptions.  Wherever possible
 we have redirected the Java exception to the nearest Python exception.  However,
 there are cases in which the Java exception may appear.  Those exceptions
-inherit from `:py:class:jpype.dbapi2.Error`.  This is the exception inheritance layout::
+inherit from :py:class:`jpype.dbapi2.Error`.  This is the exception inheritance layout::
 
     Exception
     |__Warning
     |__Error
        |__InterfaceError
-       |__java.sql.SQLError
+       |__java.sql.SQLException
        |  |__java.sql.BatchUpdateException
-       |  |__java.sql.RowSetWarning
-       |  |__java.sql.SerialException
+       |  |__javax.sql.rowset.RowSetWarning
+       |  |__javax.sql.rowset.serial.SerialException
        |  |__java.sql.SQLClientInfoException
        |  |__java.sql.SQLNonTransientException
        |  |__java.sql.SQLRecoverableException
        |  |__java.sql.SQLTransientException
        |  |__java.sql.SQLWarning
-       |  |__java.sql.SyncFactoryException
-       |  |__java.sql.SyncProviderException
+       |  |__javax.sql.rowset.spi.SyncFactoryException
+       |  |__javax.sql.rowset.spi.SyncProviderException
        |
        |__DatabaseError
           |__DataError
@@ -270,8 +270,6 @@ For the most part these constructors are largely redundant because
 adapters can provide the same functionality and Java types
 can be used directly to communicate type information.
 
-.. `JDBC Types`
-
 `JDBC Types`_
 =============
 
@@ -280,19 +278,17 @@ of the SQL types by mapping multiple types together. For example, ``STRING``
 covers types `STRING`, `CHAR`, `NCHAR` , `NVARCHAR` , `VARCHAR`, 
 and `OTHER`.  JPype dbapi2 supports both the recommended Python types and
 the fine grain JDBC types.  Each type is represented by an object 
-of type JBDCType.
+of type JDBCType.
 
 .. autoclass:: jpype.dbapi2.JDBCType
    :members:
 
-The following types are defined with the correspond Python grouping, the
+The following types are defined with the corresponding Python grouping, the
 default setter, getter, and Python type.  For types that support more than
 one type of getter, the special getter can be applied as the converter for
 the type.  For example, the default configuration has ``getter[BLOB] = BINARY.get``,
-to get the Blob type use ``getter[BLOB] = BLOB.get`` or specify it when
-calling `use <cursor.use_>`_.
-
-.. The link to cursor.use above appears to be broken. Does cursor.use exist?
+to get the Blob type use ``getter[BLOB] = BLOB.get`` or pass it via the
+``types`` keyword argument to `.execute()  <Cursor_>`_.
 
 ======== ======================== =================== ============== ================= ===============
 Group    JDBC Type                Default Getter      Default Setter PyTypes           Special Getter 
@@ -305,15 +301,15 @@ DECIMAL  DECIMAL                  getBigDecimal       setBigDecimal  decimal.Dec
 DECIMAL  NUMERIC                  getBigDecimal       setBigDecimal  decimal.Decimal                  
 -------- ------------------------ ------------------- -------------- ----------------- ---------------
 FLOAT    FLOAT                    getDouble           setDouble      float                            
-FLOAT    DOUBLE                   getDouble           getDouble      float                            
+FLOAT    DOUBLE                   getDouble           setDouble      float
 FLOAT    REAL                     getFloat            setFloat       float                            
 -------- ------------------------ ------------------- -------------- ----------------- ---------------
 NUMBER   BOOLEAN                  getBoolean          setBoolean     bool                             
 NUMBER   BIT                      getBoolean          setBoolean     bool                             
 NUMBER   TINYINT  (0..255)        getShort            setShort       int                              
-NUMBER   SMALLINT (-2^15..2^15)   getShort            getShort       int                              
-NUMBER   INTEGER  (-2^31..2^31)   getInt              getInt         int                              
-NUMBER   BIGINT   (-2^63..2^63)   getLong             getLong        int                              
+NUMBER   SMALLINT (-2^15..2^15)   getShort            setShort       int
+NUMBER   INTEGER  (-2^31..2^31)   getInt              setInt         int
+NUMBER   BIGINT   (-2^63..2^63)   getLong             setLong        int
 -------- ------------------------ ------------------- -------------- ----------------- ---------------
 BINARY   BINARY                   getBytes            setBytes       bytes                            
 BINARY   BLOB                     getBytes            setBytes       bytes             getBlob        
@@ -391,7 +387,7 @@ causing an exception to be raised.
 This exception is due to a conflict between dbapi2, Java, and HSQLDB
 specifications.  Dbapi2 requires that statements be executed as prepared
 statements, Java requires that closing a statement yields no action if the
-connection is already closed, and HSQLBD sets the ``isValid`` to false but not
+connection is already closed, and HSQLDB sets the ``isValid`` to false but not
 ``isClosed``.  Thus executing a shutdown through dbapi2 would be expected to
 close the prepared statement on an invalid connection resulting in an error.
 
@@ -431,6 +427,5 @@ be accessed on both the connection and the cursor objects.
 .. _connection.adapters: #jpype.dbapi2.JDBCType.adapters
 .. _connection.setters: #jpype.dbapi2.JDBCType.setters
 .. _connection.converters: #jpype.dbapi2.JDBCType.converters
-.. _cursor.use: #jpype.dbapi2.Cursor.use
 .. _cursor.description: #jpype.dbapi2.Cursor.description
 .. _jdbctype.adapters: #jpype.dbapi2.Connection.adapters

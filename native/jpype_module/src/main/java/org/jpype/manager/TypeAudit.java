@@ -1,3 +1,4 @@
+// --- file: org/jpype/manager/TypeAudit.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -22,7 +23,6 @@ import java.lang.reflect.Method;
  * <p>
  * This is not used during operation.
  *
- * @author nelson85
  */
 public interface TypeAudit
 {

@@ -1,3 +1,4 @@
+// --- file: common/jp_boxedtype.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -62,16 +63,23 @@ m_PrimitiveType(primitiveType)
 JPBoxedType::~JPBoxedType()
 = default;
 
-JPMatch::Type JPBoxedType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPBoxedType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPBoxedType::findJavaConversion");
-	JPClass::findJavaConversion(match);
+	JPClass::findJavaConversionImpl(match);
 	if (match.type != JPMatch::_none)
 		return match.type;
-	if (m_PrimitiveType->findJavaConversion(match) != JPMatch::_none)
+	// m_PrimitiveType->findJavaConversion is a call into another JPClass's
+	// own cached wrapper, which resets match.cacheable for its own
+	// sub-decision -- AND it back with what the base check above already
+	// established rather than letting it silently overwrite that.
+	bool baseCacheable = match.cacheable;
+	JPMatch::Type primitiveType = m_PrimitiveType->findJavaConversion(match);
+	match.cacheable = baseCacheable && match.cacheable;
+	if (primitiveType != JPMatch::_none)
 	{
 		JP_TRACE("Primitive", match.type);
-		match.conversion = boxBooleanConversion;
+		match.conversion = boxGenericConversion;
 		match.closure = this;
 		// Issue #1098: Downgrade match quality by one level for boxing conversion
 		// This allows Python int/float to implicitly convert to boxed types
@@ -86,22 +94,21 @@ JPMatch::Type JPBoxedType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPBoxedType::getConversionInfo(JPConversionInfo &info)
+void JPBoxedType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPBoxedType::getConversionInfo");
-	JPJavaFrame frame = JPJavaFrame::outer();
-	m_PrimitiveType->getConversionInfo(info);
+	m_PrimitiveType->getConversionInfo(frame, info);
 	JPPyObject::call(PyObject_CallMethod(info.expl, "extend", "O", info.implicit));
 	JPPyObject::call(PyObject_CallMethod(info.implicit, "clear", ""));
 	JPPyObject::call(PyObject_CallMethod(info.implicit, "extend", "O", info.exact));
 	JPPyObject::call(PyObject_CallMethod(info.exact, "clear", ""));
-	JPClass::getConversionInfo(info);
+	JPClass::getConversionInfo(frame, info);
 	JP_TRACE_OUT;
 }
 
 jobject JPBoxedType::box(JPJavaFrame &frame, jvalue v)
 {
-	return frame.NewObjectA(m_Class.get(), m_CtorID, &v);
+	return frame.NewObjectA(getJavaClass(frame), m_CtorID, &v);
 }
 
 JPPyObject JPBoxedType::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool cast)
@@ -115,14 +122,20 @@ JPPyObject JPBoxedType::convertToPythonObject(JPJavaFrame& frame, jvalue value, 
 			return JPPyObject::getNone();
 		}
 
-		cls = frame.findClassForObject(value.l);
-		if (cls != this)
-			return cls->convertToPythonObject(frame, value, true);
+		// See JPClass::convertToPythonObject's identical fast path: skip
+		// the findClassForObject JNI upcall when the runtime class is
+		// already known to be exactly this one.
+		if (!frame.IsSameObject(frame.GetObjectClass(value.l), getJavaClass(frame)))
+		{
+			cls = frame.findClassForObject(value.l);
+			if (cls != this)
+				return cls->convertToPythonObject(frame, value, true);
+		}
 	}
 
 	JPPyObject wrapper = PyJPClass_create(frame, cls);
 	auto *wrapperType = (PyTypeObject*) wrapper.get();
-	JPContext *context = JPContext_global;
+	JPContext *context = frame.getContext();
 
 	// Reconstructing families (Long/Boolean/Char) keep no per-instance Java
 	// value at all -- a real Java null needs a dedicated singleton instance

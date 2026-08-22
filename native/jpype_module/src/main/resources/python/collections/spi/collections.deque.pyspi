@@ -1,0 +1,29 @@
+kind: class
+module: collections
+class: deque
+interface: python.collections.PyDeque
+---
+METHODS = {
+    ".addFirst": lambda x, v: x.appendleft(v),
+    ".addLast": lambda x, v: x.append(v),
+    ".removeFirst": lambda x: x.popleft(),
+    ".removeLast": lambda x: x.pop(),
+    ".peekFirst": lambda x: x[0] if len(x) else None,
+    ".peekLast": lambda x: x[-1] if len(x) else None,
+    ".size": len,
+    ".clear": lambda x: x.clear(),
+    ".contains": lambda x, v: v in x,
+    ".append": lambda x, v: x.append(v),
+    ".appendleft": lambda x, v: x.appendleft(v),
+    ".pop": lambda x: x.pop(),
+    ".popleft": lambda x: x.popleft(),
+    ".extend": lambda x, c: x.extend(c),
+    ".extendleft": lambda x, c: x.extendleft(c),
+    ".rotate": lambda x, n=1: x.rotate(n),
+    ".count": lambda x, v: x.count(v),
+    ".index": lambda x, v: x.index(v),
+    ".insert": lambda x, i, v: x.insert(i, v),
+    ".remove": lambda x, v: x.remove(v),
+    ".reverse": lambda x: x.reverse(),
+    ".maxlen": lambda x: x.maxlen,
+}

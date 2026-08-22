@@ -30,7 +30,7 @@ class JPGarbageCollection
 {
 public:
 
-	explicit JPGarbageCollection();
+	explicit JPGarbageCollection(JPContext* context);
 
 	void init(JPJavaFrame& frame);
 
@@ -50,19 +50,13 @@ public:
 	void getStats(JPGCStats& stats);
 
 private:
+	size_t getWorkingSize();
+
+	JPContext* m_Context;
 	bool running;
 	bool in_python_gc;
 	bool java_triggered;
 	PyObject *python_gc;
-	jclass _SystemClass;
-	jclass _ContextClass;
-	jmethodID _gcMethodID;
-
-	jmethodID _totalMemoryID;
-	jmethodID _freeMemoryID;
-	jmethodID _maxMemoryID;
-	jmethodID _usedMemoryID;
-	jmethodID _heapMemoryID;
 
 	size_t last_python;
 	size_t last_java;
@@ -73,6 +67,14 @@ private:
 	int java_count;
 	int python_count;
 	int python_triggered;
+
+	// Only used by getWorkingSize()'s USE_PROC_INFO path (generic non-glibc
+	// Linux). Per-instance rather than process-static: each interpreter
+	// (main + every subinterpreter) has its own JPGarbageCollection, and a
+	// shared fd would let one interpreter's shutdown() close a fd another
+	// interpreter's getWorkingSize() is still reading from.
+	int statm_fd;
+	int page_size;
 } ;
 
 #endif /* JP_GC_H */

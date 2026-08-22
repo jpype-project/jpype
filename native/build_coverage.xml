@@ -16,7 +16,7 @@
 		<javac destdir="${build}/classes"
 			source="${JAVA_VERSION}"
 			target="${JAVA_VERSION}"
-			excludes="**/JPypeClassLoader.java"
+			excludes="**/DynamicClassLoader.java"
 			debug="true"
 			debuglevel="source,lines,vars"
 			>
@@ -25,7 +25,7 @@
 		<javac destdir="${build}/lib"
 			source="${JAVA_VERSION}"
 			target="${JAVA_VERSION}"
-			includes="**/JPypeClassLoader.java"
+			includes="**/DynamicClassLoader.java"
 			>
 			<src path="${src}"/>
 		</javac>

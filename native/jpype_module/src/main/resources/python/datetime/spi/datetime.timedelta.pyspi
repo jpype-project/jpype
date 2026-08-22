@@ -1,0 +1,16 @@
+kind: class
+module: datetime
+class: timedelta
+interface: python.datetime.PyTimeDelta
+---
+def _compare_to(x, other):
+    return (x > other) - (x < other)
+
+
+METHODS = {
+    ".days": lambda x: x.days,
+    ".seconds": lambda x: x.seconds,
+    ".microseconds": lambda x: x.microseconds,
+    ".totalSeconds": lambda x: x.total_seconds(),
+    ".compareTo": _compare_to,
+}

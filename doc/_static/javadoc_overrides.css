@@ -1,0 +1,33 @@
+/*
+ * Minimal, version-tolerant style override for generated Javadoc, so the
+ * Java API reference doesn't look jarringly different from the Sphinx
+ * (sphinx_rtd_theme) pages it's linked from.
+ *
+ * Deliberately uses only element selectors (body, a, h1-h6), not Javadoc's
+ * internal class/id names -- those churn between JDK releases (frames,
+ * search box, nav layout have all changed across 9/11/13/17+), but the
+ * plain tag structure has stayed stable. Do not add selectors scoped to
+ * a specific JDK's generated markup.
+ */
+
+body {
+    font-family: "Lato", "Helvetica Neue", Arial, sans-serif;
+    color: #404040;
+}
+
+a:link, a:visited {
+    color: #2980B9;
+}
+
+a:hover {
+    color: #3091d1;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: "Roboto Slab", "ff-tisa-web-pro", Georgia, Arial, sans-serif;
+    color: #404040;
+}
+
+pre, code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}

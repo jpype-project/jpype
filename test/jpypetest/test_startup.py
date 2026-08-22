@@ -16,6 +16,7 @@
 #
 # *****************************************************************************
 import jpype
+import _jpype
 import subrun
 import os
 from pathlib import Path
@@ -154,13 +155,42 @@ class StartJVMCase(unittest.TestCase):
         with self.assertRaises(TypeError):
             jpype.startJVM(invalid=True)  # type: ignore
 
+    def testAddJVMOption(self):
+        jpype.addJVMOption("-Djpype.test.option1=hello")
+        jpype.addJVMOption("-Djpype.test.option2=world")
+        assert jpype.getJVMOptions() == [
+            "-Djpype.test.option1=hello",
+            "-Djpype.test.option2=world",
+        ]
+        jpype.startJVM(classpath=cp, convertStrings=False)
+        System = jpype.JClass("java.lang.System")
+        assert System.getProperty("jpype.test.option1") == "hello"
+        assert System.getProperty("jpype.test.option2") == "world"
+
+    def testAddJVMOptionExplicitOverrides(self):
+        # Accumulated options compose with explicit *jvmargs, and an
+        # explicit arg wins over an accumulated one for the same property.
+        jpype.addJVMOption("-Djpype.test.option=fromoption")
+        jpype.startJVM(
+            "-Djpype.test.option=fromexplicit",
+            classpath=cp,
+            convertStrings=False,
+        )
+        System = jpype.JClass("java.lang.System")
+        assert System.getProperty("jpype.test.option") == "fromexplicit"
+
+    def testAddJVMOptionAfterStart(self):
+        jpype.startJVM(classpath=cp, convertStrings=False)
+        with self.assertRaises(OSError):
+            jpype.addJVMOption("-Xmx1g")
+
     def testNonASCIIPath(self):
         """Test that paths with non-ASCII characters are handled correctly.
         Regression test for https://github.com/jpype-project/jpype/issues/1194
         """
         jpype.startJVM(jvmpath=Path(self.jvmpath), classpath=f"{test_jar}/unicode_à😎/sample_package.jar")
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        self.assertEqual(type(cl), jpype.JClass("org.jpype.JPypeClassLoader"))
+        self.assertEqual(type(cl), jpype.JClass("org.jpype.internal.DynamicClassLoader"))
         assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
 
 
@@ -179,7 +209,7 @@ class StartJVMCase(unittest.TestCase):
         """
         jpype.startJVM(f"-Djava.class.path={test_jar}/unicode_à😎/sample_package.jar", jvmpath=Path(self.jvmpath))
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        self.assertEqual(type(cl), jpype.JClass("org.jpype.JPypeClassLoader"))
+        self.assertEqual(type(cl), jpype.JClass("org.jpype.internal.DynamicClassLoader"))
         assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
 
     def testNonASCIIPathWithSystemClassLoader(self):
@@ -227,7 +257,7 @@ class StartJVMCase(unittest.TestCase):
         # we introduce no behavior change unless absolutely necessary
         jpype.startJVM(jvmpath=Path(self.jvmpath))
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        self.assertNotEqual(type(cl), jpype.JClass("org.jpype.JPypeClassLoader"))
+        self.assertNotEqual(type(cl), jpype.JClass("org.jpype.internal.DynamicClassLoader"))
 
     def testServiceWithNonASCIIPath(self):
         jpype.startJVM(
@@ -245,7 +275,7 @@ class StartJVMCase(unittest.TestCase):
     def testShutdown(self):
         jpype.startJVM(self.jvmpath, classpath=cp)
         # Install a coverage hook
-        instance = jpype.JClass("org.jpype.JPypeContext").getInstance()
+        instance = _jpype.context()
         jpype.JClass("jpype.common.OnShutdown").addCoverageHook(instance)
 
         # Shutdown

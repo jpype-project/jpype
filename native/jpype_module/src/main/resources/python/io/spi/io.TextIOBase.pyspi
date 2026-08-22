@@ -1,0 +1,10 @@
+kind: class
+module: io
+class: TextIOBase
+interface: python.io.PyTextIOBase
+---
+METHODS = {
+    ".read": lambda x, size=-1: x.read(size),
+    ".readline": lambda x: x.readline(),
+    ".write": lambda x, s: x.write(str(s)),
+}

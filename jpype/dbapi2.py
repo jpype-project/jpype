@@ -225,7 +225,7 @@ URL = JDBCType(None, None, 'getURL', 'setURL')
 
 
 def _asPython(x):
-    return x._py()
+    return x.toPython()
 
 
 # This maps the types reported by the columns to the type used for the getter

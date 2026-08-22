@@ -1,3 +1,4 @@
+// --- file: python/pyjp_class.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -28,71 +29,6 @@
 #include "jp_methoddispatch.h"
 #include "jp_primitive_accessor.h"
 
-struct PyJPClass
-{
-	PyHeapTypeObject ht_type;
-	JPClass *m_Class;
-	PyObject *m_Doc;
-	// Java-value slot bookkeeping for the fixed-offset object model.  See
-	// the offset parameter documentation in include/pyjp.h. Once a type is
-	// fully created this is ALWAYS the real, resolved byte offset -- for an
-	// abstract/concrete pair, the same value is written onto BOTH halves
-	// (see the concreteCall branch of PyJPClass_init), so no caller ever
-	// needs to branch or chase a companion to use it. Never -1 in steady
-	// state; 0 is a hard-error sentinel for legacy families that no longer
-	// exist (see PyJPClass_FromSpecWithBases).
-	Py_ssize_t offset;
-	// Abstract/concrete pairing, split into two one-directional, explicitly
-	// named edges rather than one field whose meaning depends on which side
-	// you're looking from:
-	//   tp_concrete: set only on an abstract type, points to its hidden
-	//     concrete companion. This is the OWNED edge -- the companion is
-	//     kept alive permanently (for the JVM session) by the reference
-	//     PyJPClass_concrete's tp_call never releases; this field is that
-	//     same pointer, not a separate incref.
-	//   tp_abstract: set only on a concrete companion, points back to the
-	//     abstract type it belongs to. This is a raw, NON-owned back-edge:
-	//     the pair is created and torn down as a unit, and the abstract
-	//     type's own lifetime never depends on its companion, so no
-	//     refcounting is needed on this direction. Consequently tp_traverse
-	//     visits tp_concrete but never tp_abstract (Py_VISIT should only
-	//     report edges this object actually owns a reference on).
-	// Both are null for any type that isn't part of such a pair.
-	PyTypeObject *tp_concrete;
-	PyTypeObject *tp_abstract;
-	// Every _JClass instance (i.e. every generated Java class/interface
-	// wrapper type object, such as the type object for java.lang.String)
-	// itself carries a JPValue for the java.lang.Class object it represents.
-	// struct PyJPClass is a single, closed, compile-time-fixed layout --
-	// PyJPClass_Type is never used as a base for any other spec, and every
-	// wrapper is an *instance* of it, not a Python-level subclass with its
-	// own extra slots -- so this can be a plain trailing field, exactly like
-	// Exception/Array/Buffer/Char, with no per-family scan needed.  See the
-	// PyJPClass_Type special case in PyJPClass_getOffset below.
-	JPValue extra;
-	// Per-family-root hook (set once on the family root type, e.g.
-	// PyJPNumberLong_Type/PyJPChar_Type, and inherited by every leaf
-	// wrapper class via PyJPClass_GetJValueFn's tp_base walk) that
-	// reconstructs a jvalue on demand for families with no live per-instance
-	// JPValue (Long/Boolean/Character). Null for families that still store
-	// jvalue directly (general objects/arrays/exceptions, Float/Double).
-	PyJPValueFn tp_jvalue;
-	// Per-leaf-boxed-class singleton for JObject(None, cls), lazily built and
-	// cached on first request (see JPBoxedType::convertToPythonObject). Null
-	// for non-boxed types and for boxed classes that haven't had a null cast
-	// yet. Deliberately NOT visited/cleared by tp_traverse/tp_clear: this
-	// type strongly owns nullBoxed, and nullBoxed's own Py_TYPE strongly owns
-	// this type right back (ordinary instance-of-type reference) -- the same
-	// owned/back-edge shape as tp_concrete/tp_abstract above, and for the
-	// same reason (see those field comments): it's a permanent, JVM-lifetime
-	// edge that must stay invisible to the cyclic GC rather than become an
-	// uncollectable 2-node cycle tp_clear can never actually break.
-	PyObject *nullBoxed;
-} ;
-
-PyObject* PyJPClassMagic = nullptr;
-PyObject* PyJPClassMagicConcrete = nullptr;
-
 static inline size_t PyJPClass_alignUp(size_t value, size_t alignment)
 {
 	return (value + alignment - 1) & ~(alignment - 1);
@@ -103,9 +39,44 @@ extern "C"
 {
 #endif
 
+static inline int PyJPClass_checkContext(PyJPClass* cls)
+{
+	if (cls == nullptr || cls->m_State == nullptr || cls->m_State->context == nullptr)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "JPype module context is not available to JPClass");
+		return 0;
+	}
+	return 1;
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+// Fast check to verify that type is correct.
 int PyJPClass_Check(PyObject* obj)
 {
-	return PyJP_IsInstanceSingle(obj, PyJPClass_Type);
+	if (!PyType_Check(obj))
+		return 0;
+	return (((PyTypeObject*)obj)->tp_finalize == (destructor)PyJPValue_finalize);
+}
+
+static void PyJPClass_dealloc(PyJPClass *self);
+
+// Fixed-C-function-pointer identity check for "is candidate the PyJPClass
+// metaclass (of whichever interpreter built it)" -- mirrors PyJPClass_Check
+// above, needed here because there is no longer a single bare PyJPClass_Type
+// global to compare against (it's per-interpreter, st->PyJPClass_Type).
+// PyJPClass_dealloc is wired as Py_tp_dealloc in classSlots, so this is safe
+// and correct under every interpreter's own metaclass instance.
+static inline int PyJPClass_isWrapperMeta(PyTypeObject* candidate)
+{
+	return candidate != nullptr && candidate->tp_dealloc == (destructor) PyJPClass_dealloc;
+}
+
+static inline JPContext* PyJPClass_getContext(PyJPClass* cls)
+{
+	return cls->m_State->context;
 }
 
 Py_ssize_t PyJPClass_getOffset(PyTypeObject* type)
@@ -119,44 +90,44 @@ Py_ssize_t PyJPClass_getOffset(PyTypeObject* type)
 	// Java object instance (Py_TYPE(obj) is itself a PyJPClass instance,
 	// handled below) or a class/interface wrapper object (Py_TYPE(obj) is
 	// PyJPClass_Type exactly).
-	if (type == (PyTypeObject*) PyJPClass_Type)
+	if (PyJPClass_isWrapperMeta(type))
 		return offsetof (struct PyJPClass, extra);
-	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
+	if (type == nullptr || !PyJPClass_isWrapperMeta(Py_TYPE(type)))
 		return 0;
 	return ((PyJPClass*) type)->offset;
 }
 
 PyTypeObject* PyJPClass_getConcrete(PyTypeObject* type)
 {
-	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
+	if (type == nullptr || !PyJPClass_isWrapperMeta(Py_TYPE(type)))
 		return nullptr;
 	return ((PyJPClass*) type)->tp_concrete;
 }
 
 PyTypeObject* PyJPClass_getAbstract(PyTypeObject* type)
 {
-	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
+	if (type == nullptr || !PyJPClass_isWrapperMeta(Py_TYPE(type)))
 		return nullptr;
 	return ((PyJPClass*) type)->tp_abstract;
 }
 
 JPClass* PyJPClass_GetClass(PyTypeObject* type)
 {
-	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
+	if (type == nullptr || !PyJPClass_isWrapperMeta(Py_TYPE(type)))
 		return nullptr;
 	return ((PyJPClass*) type)->m_Class;
 }
 
 PyObject* PyJPClass_GetNullBoxed(PyTypeObject* type)
 {
-	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
+	if (type == nullptr || !PyJPClass_isWrapperMeta(Py_TYPE(type)))
 		return nullptr;
 	return ((PyJPClass*) type)->nullBoxed;
 }
 
 void PyJPClass_SetNullBoxed(PyTypeObject* type, PyObject* obj)
 {
-	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
+	if (type == nullptr || !PyJPClass_isWrapperMeta(Py_TYPE(type)))
 		return;
 	Py_XINCREF(obj);
 	Py_XDECREF(((PyJPClass*) type)->nullBoxed);
@@ -173,13 +144,14 @@ void PyJPClass_SetNullBoxed(PyTypeObject* type, PyObject* obj)
  */
 static int PyJPClass_concrete(PyTypeObject *abstractType)
 {
+	PyJPModuleState* st = ((PyJPClass*) abstractType)->m_State;
 	PyObject *bases = PyTuple_Pack(1, (PyObject*) abstractType);
 	if (bases == nullptr)
 		return -1;
 	PyObject *args = Py_BuildValue("sNN", abstractType->tp_name, bases, PyDict_New());
 	if (args == nullptr)
 		return -1;
-	PyObject *self = ((PyTypeObject*) PyJPClass_Type)->tp_call((PyObject*) PyJPClass_Type, args, PyJPClassMagicConcrete);
+	PyObject *self = st->PyJPClass_Type->tp_call((PyObject*) st->PyJPClass_Type, args, st->class_magic_concrete);
 	Py_DECREF(args);
 	if (self == nullptr)
 		return -1;
@@ -233,19 +205,28 @@ static int PyJPClass_clear(PyJPClass *self)
 
 PyObject* examine(PyObject *module, PyObject *other);
 
-PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases, Py_ssize_t offset)
+PyObject* PyJPClass_FromSpecWithBases(PyObject* module, PyType_Spec *spec, PyObject *bases, Py_ssize_t offset)
 {
 	JP_PY_TRY("PyJPClass_FromSpecWithBases");
+	auto* st = reinterpret_cast<PyJPModuleState*>(PyModule_GetState(module));
+	if (st == nullptr)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "JPype module state is not available to JClass init");
+		return nullptr;
+	}
+
 #if PY_VERSION_HEX>=0x030c0000
 	// Starting in Python 3.12 there is a function for creating from a meta class
 	// that replaces this madeness.
-	PyTypeObject *type = (PyTypeObject*) PyType_FromMetaclass((PyTypeObject*) PyJPClass_Type, NULL, spec, bases);
+	PyTypeObject *type = (PyTypeObject*) PyType_FromMetaclass((PyTypeObject*) st->PyJPClass_Type, NULL, spec, bases);
+ 	((PyJPClass*) type)->m_State = st;
 	if (type == nullptr)
 		return (PyObject*) type;
 #else
 	// Python lacks a FromSpecWithMeta so we are going to have to fake it here.
-	auto* type = (PyTypeObject*) PyJPClass_Type->tp_alloc(PyJPClass_Type, 0);
+	auto* type = (PyTypeObject*) st->PyJPClass_Type->tp_alloc(st->PyJPClass_Type, 0);
 	auto* heap = (PyHeapTypeObject*) type;
+ 	((PyJPClass*) type)->m_State = st;
 	type->tp_flags = spec->flags | Py_TPFLAGS_HEAPTYPE;
 	type->tp_name = spec->name;
 	const char *s = strrchr(spec->name, '.');
@@ -259,7 +240,7 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases, Py_ssi
 	if (bases == nullptr)
 	{
 		// do NOT use JPPyTuple_Pack here
-		type->tp_bases = PyTuple_Pack(1, (PyObject*) & PyBaseObject_Type);
+		type->tp_bases = PyTuple_Pack(1, (PyObject*) &PyBaseObject_Type);
 	}
 	else
 	{
@@ -335,6 +316,12 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases, Py_ssi
 				break;
 			case Py_tp_hash:
 				type->tp_hash = (hashfunc) slot->pfunc;
+				break;
+			case Py_tp_iter:
+				type->tp_iter = (getiterfunc) slot->pfunc;
+				break;
+			case Py_tp_iternext:
+				type->tp_iternext = (iternextfunc) slot->pfunc;
 				break;
 			case Py_nb_int:
 				heap->as_number.nb_int = (unaryfunc) slot->pfunc;
@@ -449,7 +436,10 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases, Py_ssi
 	((PyJPClass*) type)->nullBoxed = nullptr;
 
 	PyType_Ready(type);
-	PyDict_SetItemString(type->tp_dict, "__module__", PyUnicode_FromString("_jpype"));
+	JPPyObject module_name = JPPyObject::accept(PyObject_GetAttrString(module, "__name__"));
+	if (module_name.isNull())
+		return nullptr;
+	PyDict_SetItemString(type->tp_dict, "__module__", module_name.get());
 
 	if (offset == -1 && PyJPClass_concrete(type) == -1)
 	{
@@ -464,15 +454,27 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases, Py_ssi
 int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPClass_init");
-
-	if (!PyObject_IsInstance(self, (PyObject*) PyJPClass_Type))
+	if (!PyJPClass_Check(self))
 	{
 		PyErr_SetString(PyExc_TypeError, "Type incorrect");
 		return -1;
 	}
-
 	PyTypeObject *type = (PyTypeObject*) self;
+	PyObject* module = PyType_GetModule(Py_TYPE(type));
+	if (module == nullptr)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "Could not retrieve module from type spec");
+		return -1;
+	}
 
+	auto* st = reinterpret_cast<PyJPModuleState*>(PyModule_GetState(module));
+	if (st == nullptr)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "JPype module state is not available");
+		return -1;
+	}
+
+	((PyJPClass*) self)->m_State = st;
 #if PY_VERSION_HEX >= 0x030d0000
 	// Python 3.13 - This flag will try to place the dictionary are part of the object which 
 	// adds an unknown number of bytes to the end of the object making it impossible
@@ -483,12 +485,12 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	// Verify that we were called internally
 	int magic = 0;
 	bool concreteCall = false;
-	if (kwargs == PyJPClassMagicConcrete)
+	if (kwargs == st->class_magic_concrete)
 	{
 		magic = 1;
 		concreteCall = true;
 		kwargs = nullptr;
-	} else if (kwargs == PyJPClassMagic || (kwargs != nullptr && PyDict_GetItemString(kwargs, "internal") != nullptr))
+	} else if (kwargs == st->class_magic || (kwargs != nullptr && PyDict_GetItemString(kwargs, "internal") != nullptr))
 	{
 		magic = 1;
 		kwargs = nullptr;
@@ -550,7 +552,7 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		for (Py_ssize_t i = 0; i < n; ++i)
 		{
 			PyObject *b = PyTuple_GetItem(bases, i);
-			if (Py_TYPE(b) != (PyTypeObject*) PyJPClass_Type)
+			if (!PyJPClass_isWrapperMeta(Py_TYPE(b)))
 				continue;
 			// An already-linked abstract-kind base has tp_concrete set (see
 			// the struct PyJPClass field comments) -- check that FIRST and
@@ -651,10 +653,10 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 	// PyJPException_Type is null while it is itself under construction (see
 	// PyJPObject_initType), which this type-init path runs through too -- guard
 	// against that self-referential bootstrap case rather than dereferencing null.
-	if (PyJPException_Type != nullptr &&
-			PyObject_IsSubclass((PyObject*) type, (PyObject*) PyJPException_Type))
+	if (st->PyJPException_Type != nullptr &&
+			PyObject_IsSubclass((PyObject*) type, (PyObject*) st->PyJPException_Type))
 	{
-		type->tp_new = PyJPException_Type->tp_new;
+		type->tp_new = st->PyJPException_Type->tp_new;
 	}
 #endif
 
@@ -763,7 +765,7 @@ PyObject* PyJPClass_mro(PyTypeObject *self)
 	return obj;
 }
 
-PyObject *PyJPClass_getattro(PyObject *obj, PyObject *name)
+PyObject *PyJPClass_getattro(PyJPClass *self, PyObject *name)
 {
 	JP_PY_TRY("PyJPClass_getattro");
 	if (!PyUnicode_Check(name))
@@ -775,7 +777,7 @@ PyObject *PyJPClass_getattro(PyObject *obj, PyObject *name)
 	}
 
 	// Private members are accessed directly
-	PyObject* pyattr = PyType_Type.tp_getattro(obj, name);
+	PyObject* pyattr = PyType_Type.tp_getattro((PyObject*) self, name);
 	if (pyattr == nullptr)
 		return nullptr;
 	JPPyObject attr = JPPyObject::claim(pyattr);
@@ -785,7 +787,8 @@ PyObject *PyJPClass_getattro(PyObject *obj, PyObject *name)
 		return attr.keep();
 
 	// Methods
-	if (Py_TYPE(attr.get()) == PyJPMethod_Type)
+	PyJPModuleState* st = self->m_State;
+	if (Py_TYPE(attr.get()) == st->PyJPMethod_Type)
 		return attr.keep();
 
 	// Don't allow properties to be rewritten
@@ -798,10 +801,10 @@ PyObject *PyJPClass_getattro(PyObject *obj, PyObject *name)
 	JP_PY_CATCH(nullptr);
 }
 
-int PyJPClass_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
+int PyJPClass_setattro(PyJPClass *self, PyObject *attr_name, PyObject *v)
 {
 	JP_PY_TRY("PyJPClass_setattro");
-	PyJPModule_getContext();
+	PyJPClass_checkContext(self);
 	if (!PyUnicode_Check(attr_name))
 	{
 		PyErr_Format(PyExc_TypeError,
@@ -812,7 +815,7 @@ int PyJPClass_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
 
 	// Private members are accessed directly
 	if (PyUnicode_GetLength(attr_name) && PyUnicode_ReadChar(attr_name, 0) == '_')
-		return PyType_Type.tp_setattro(self, attr_name, v);
+		return PyType_Type.tp_setattro((PyObject*) self, attr_name, v);
 
 	JPPyObject f = JPPyObject::accept(PyJP_GetAttrDescriptor((PyTypeObject*) self, attr_name));
 	if (f.isNull())
@@ -824,7 +827,7 @@ int PyJPClass_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
 
 	descrsetfunc desc = Py_TYPE(f.get())->tp_descr_set;
 	if (desc != nullptr)
-		return desc(f.get(), self, v);
+		return desc(f.get(), (PyObject*) self, v);
 
 	// Not a descriptor
 	const char *name_str = PyUnicode_AsUTF8(attr_name);
@@ -841,18 +844,22 @@ PyObject* PyJPClass_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 	if (test == type)
 		Py_RETURN_TRUE;
 
+	auto* cls_type = (PyJPClass*) type;
+	PyJPModuleState* st = cls_type->m_State;
+	JPContext* context = st->context;
+
 	// GCOVR_EXCL_START
 	// This is triggered only if the user asks for isInstance when the
 	// JVM is shutdown. It should not happen in normal operations.
-	if (!JPContext_global->isRunning())
+	if (!context->isRunning())
 	{
-		if ((PyObject*) type == _JObject)
-			return PyBool_FromLong(PyJP_IsSubClassSingle(PyJPObject_Type, test));
+		if ((PyObject*) type == (PyObject*) st->PyJPObject_Type)
+			return PyBool_FromLong(PyJP_IsSubClassSingle(st->PyJPObject_Type, test));
 		return PyBool_FromLong(PyJP_IsSubClassSingle(type, test));
 	}
 	// GCOVR_EXCL_STOP
 
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 
 	// Check for class inheritance first
 	JPClass *testClass = PyJPClass_getJPClass((PyObject*) test);
@@ -865,18 +872,18 @@ PyObject* PyJPClass_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 	{
 		if (typeClass->isPrimitive())
 			Py_RETURN_FALSE;
-		bool b = frame.IsAssignableFrom(testClass->getJavaClass(), typeClass->getJavaClass()) != 0;
+		bool b = frame.IsAssignableFrom(testClass->getJavaClass(frame), typeClass->getJavaClass(frame)) != 0;
 		return PyBool_FromLong(b);
 	}
 
 	// Otherwise check for special cases
-	if ((PyObject*) type == _JInterface)
+	if ((PyObject*) type == st->JInterface)
 		return PyBool_FromLong(testClass->isInterface());
-	if ((PyObject*) type == _JObject)
+	if ((PyObject*) type == st->JObject)
 		return PyBool_FromLong(!testClass->isPrimitive());
-	if ((PyObject*) type == _JArray)
+	if ((PyObject*) type == st->JArray)
 		return PyBool_FromLong(testClass->isArray());
-	if ((PyObject*) type == _JException)
+	if ((PyObject*) type == st->JException)
 		return PyBool_FromLong(testClass->isThrowable());
 
 	PyObject* mro1 = test->tp_mro;
@@ -890,24 +897,24 @@ PyObject* PyJPClass_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 	JP_PY_CATCH(nullptr);
 }
 
-static PyObject *PyJPClass_class(PyObject *self, PyObject *closure)
+static PyObject *PyJPClass_class(PyJPClass *self, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_class");
-	JPJavaFrame frame = JPJavaFrame::outer();
-	JPClass* cls = PyJPValue_getJPClass(self);
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPClass_getContext(self));
+	JPClass* cls = PyJPValue_getJPClass((PyObject*) self);
 	if (cls == nullptr)
 	{
 		PyErr_SetString(PyExc_AttributeError, "Java slot is null");
 		return nullptr;
 	}
-	return cls->convertToPythonObject(frame, PyJPValue_getJValue(frame, self), false).keep();
+	return cls->convertToPythonObject(frame, PyJPValue_getJValue(frame, (PyObject*) self), false).keep();
 	JP_PY_CATCH(nullptr);
 }
 
-static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
+static int PyJPClass_setClass(PyJPClass *self, PyObject *type, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_setClass", self);
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPClass_getContext(self));
 	JPContext *context = frame.getContext();
 	JPClass* typeCls = PyJPValue_getJPClass(type);
 	if (typeCls == nullptr || typeCls != context->_java_lang_Class)
@@ -915,18 +922,18 @@ static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
 		PyErr_SetString(PyExc_TypeError, "Java class instance is required");
 		return -1;
 	}
-	if (PyJPValue_isSetJavaSlot(self))
+	if (PyJPValue_isSetJavaSlot((PyObject*) self))
 	{
 		PyErr_SetString(PyExc_AttributeError, "Java class can't be set");
 		return -1;
 	}
 	jvalue typeVal = PyJPValue_getJValue(frame, type);
-	PyJPValue_assignJavaSlot(frame, self, JPValue(typeCls, typeVal));
+	PyJPValue_assignJavaSlot(frame, (PyObject*) self, JPValue(typeCls, typeVal));
 
 	JPClass* cls = frame.findClass((jclass) typeVal.l);
-	JP_TRACE("Set host", cls, typeCls->getCanonicalName().c_str());
+	JP_TRACE("Set host", cls, typeCls->getCanonicalName(frame).c_str());
 	if (cls->getHost() == nullptr)
-		cls->setHost(self);
+		cls->setHost((PyObject*) self);
 	((PyJPClass*) self)->m_Class = cls;
 	return 0;
 	JP_PY_CATCH(-1);
@@ -935,8 +942,9 @@ static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
 static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_hints");
-	PyJPModule_getContext();
-	JPPyObject hints = JPPyObject::use(self->m_Class->getHints());
+	PyJPClass_checkContext(self);
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPClass_getContext(self));
+	JPPyObject hints = JPPyObject::use(self->m_Class->getHints(frame));
 	if (hints.get() == nullptr)
 		Py_RETURN_NONE; // GCOVR_EXCL_LINE only triggered if JClassPost failed
 
@@ -957,7 +965,7 @@ static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 	info.exact = exact.get();
 	info.expl = expl.get();
 	info.none = none.get();
-	self->m_Class->getConversionInfo(info);
+	self->m_Class->getConversionInfo(frame, info);
 	PyObject_SetAttrString(hints.get(), "returns", ret.get());
 	PyObject_SetAttrString(hints.get(), "implicit", implicit.get());
 	PyObject_SetAttrString(hints.get(), "exact", exact.get());
@@ -968,59 +976,60 @@ static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 	JP_PY_CATCH(nullptr);
 }
 
-static int PyJPClass_setHints(PyObject *self, PyObject *value, PyObject *closure)
+static int PyJPClass_setHints(PyJPClass *self, PyObject *value, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_setHints", self);
-	PyJPModule_getContext();
-	auto *cls = (PyJPClass*) self;
-	PyObject *hints = cls->m_Class->getHints();
+	PyJPClass_checkContext(self);
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPClass_getContext(self));
+	PyObject *hints = self->m_Class->getHints(frame);
 	if (hints != nullptr)
 	{
 		PyErr_SetString(PyExc_AttributeError, "_hints can't be set");
 		return -1;
 	}
-	cls->m_Class->setHints(value);
+	self->m_Class->setHints(value);
 	return 0;
 	JP_PY_CATCH(-1);
 }
 
-PyObject* PyJPClass_instancecheck(PyTypeObject *self, PyObject *test)
+PyObject* PyJPClass_instancecheck(PyJPClass *self, PyObject *test)
 {
+	PyJPModuleState* st = self->m_State;
 	// Issue #1329: Check if JVM is running before creating JPJavaFrame
 	// This prevents crashes when isinstance() is called with JException
 	// after a failed JVM initialization
-	if (!JPContext_global->isRunning())
+	if (st == nullptr || st->context == nullptr || !st->context->isRunning())
 	{
 		// Fall back to Python-only type checking when JVM is not running
-		return PyJPClass_subclasscheck(self, Py_TYPE(test));
+		return PyJPClass_subclasscheck((PyTypeObject*) self, Py_TYPE(test));
 	}
 
 	// JInterface is a meta
-	if ((PyObject*) self == _JInterface)
+	if ((PyObject*) self == st->JInterface)
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
+		JPJavaFrame frame = JPJavaFrame::outer(PyJPClass_getContext(self));
 		JPClass *testClass = PyJPClass_getJPClass((PyObject*) test);
 		return PyBool_FromLong(testClass != nullptr && testClass->isInterface());
 	}
-	if ((PyObject*) self == _JException)
+	if ((PyObject*) self == st->JException)
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
+		JPJavaFrame frame = JPJavaFrame::outer(PyJPClass_getContext(self));
 		JPClass *testClass = PyJPClass_getJPClass((PyObject*) test);
 		if (testClass)
 			return PyBool_FromLong(testClass->isThrowable());
 	}
-	return PyJPClass_subclasscheck(self, Py_TYPE(test));
+	return PyJPClass_subclasscheck((PyTypeObject*) self, Py_TYPE(test));
 }
 
 static PyObject *PyJPClass_canCast(PyJPClass *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPClass_canCast");
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPClass_getContext(self));
 
 	JPClass *cls = self->m_Class;
 
 	// Test the conversion
-	JPMatch match(&frame, other);
+	JPMatch match(frame, other);
 	cls->findJavaConversion(match);
 
 	// Report to user
@@ -1032,12 +1041,12 @@ static PyObject *PyJPClass_canCast(PyJPClass *self, PyObject *other)
 static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPClass_canConvertToJava");
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPClass_getContext(self));
 
 	JPClass *cls = self->m_Class;
 
 	// Test the conversion
-	JPMatch match(&frame, other);
+	JPMatch match(frame, other);
 	cls->findJavaConversion(match);
 
 	// Report to user
@@ -1071,7 +1080,7 @@ static bool PySlice_CheckFull(PyObject *item)
 static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 {
 	JP_PY_TRY("PyJPClass_array");
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPClass_getContext(self));
 	JPContext *context = frame.getContext();
 
 	if (self->m_Class == NULL)
@@ -1155,7 +1164,7 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 		accessor.commit();
 
 		jvalue v;
-		v.l = frame.newArrayInstance(cls->getJavaClass(), u);
+		v.l = frame.newArrayInstance(cls->getJavaClass(frame), u);
 		return context->_java_lang_Object->convertToPythonObject(frame, v, false).keep();
 	}
 
@@ -1166,14 +1175,14 @@ static PyObject *PyJPClass_array(PyJPClass *self, PyObject *item)
 static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPClass_cast");
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPClass_getContext(self));
 	JPClass *type = self->m_Class;
 	JPClass *valCls = PyJPValue_getJPClass(other);
 
 	// Cast on non-Java
-	if (valCls == nullptr || valCls->isPrimitive())
+	if (valCls == nullptr || valCls->isPrimitive() || type->isPython())
 	{
-		JPMatch match(&frame, other);
+		JPMatch match(frame, other);
 		type->findJavaConversion(match);
 		// Otherwise, see if we can convert it
 		if (match.type == JPMatch::_none)
@@ -1181,7 +1190,7 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 			PyErr_Format(PyExc_TypeError,
 					"Unable to cast '%s' to java type '%s'",
 					Py_TYPE(other)->tp_name,
-					type->getCanonicalName().c_str()
+					type->getCanonicalName(frame).c_str()
 					);
 			return nullptr;
 		}
@@ -1209,15 +1218,16 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 	{
 		PyErr_Format(PyExc_TypeError,
 				"Unable to cast '%s' to java type '%s'",
-				otherClass->getCanonicalName().c_str(),
-				type->getCanonicalName().c_str()
+				otherClass->getCanonicalName(frame).c_str(),
+				type->getCanonicalName(frame).c_str()
 				);
 		return nullptr;
 	}
 
 	// Special case.  If the otherClass is an array and the array is
 	// a slice then we need to copy it here.
-	if (PyObject_IsInstance(other, (PyObject*) PyJPArray_Type))
+	PyJPModuleState *st = frame.getContext()->modulestate;
+	if (PyObject_IsInstance(other, (PyObject*) st->PyJPArray_Type))
 	{
 		auto *array = (PyJPArray*) other;
 		if (array->m_Array->isSlice())
@@ -1245,12 +1255,12 @@ static PyObject *PyJPClass_castEq(PyJPClass *self, PyObject *other)
 static PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPClass_convertToJava");
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPJavaFrame frame = JPJavaFrame::outer(PyJPClass_getContext(self));
 
 	JPClass *cls = self->m_Class;
 
 	// Test the conversion
-	JPMatch match(&frame, other);
+	JPMatch match(frame, other);
 	cls->findJavaConversion(match);
 
 	// If there is no conversion report a failure
@@ -1277,7 +1287,8 @@ static PyObject *PyJPClass_repr(PyJPClass *self)
 static PyObject *PyJPClass_getDoc(PyJPClass *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getDoc");
-	JPJavaFrame frame = JPJavaFrame::outer();
+	JPContext* context = PyJPClass_getContext(self);
+	JPJavaFrame frame = JPJavaFrame::outer(context);
 	if (self->m_Doc)
 	{
 		Py_INCREF(self->m_Doc);
@@ -1289,7 +1300,7 @@ static PyObject *PyJPClass_getDoc(PyJPClass *self, void *ctxt)
 		JP_TRACE("Pack arguments");
 		JPPyObject args = JPPyTuple_Pack(self);
 		JP_TRACE("Call Python");
-		self->m_Doc = PyObject_Call(_JClassDoc, args.get(), nullptr);
+		self->m_Doc = PyObject_Call(context->modulestate->JClassDoc, args.get(), nullptr);
 		Py_XINCREF(self->m_Doc);
 		return self->m_Doc;
 	}
@@ -1318,6 +1329,7 @@ PyObject* PyJPClass_customize(PyJPClass *self, PyObject *args, PyObject *kwargs)
 	Py_RETURN_NONE;
 	JP_PY_CATCH(nullptr);
 }
+
 
 static PyMethodDef classMethods[] = {
 	{"__instancecheck__", (PyCFunction) PyJPClass_instancecheck, METH_O, ""},
@@ -1360,7 +1372,6 @@ static PyType_Slot classSlots[] = {
 	{0}
 };
 
-PyTypeObject* PyJPClass_Type = nullptr;
 static PyType_Spec classSpec = {
 	"_jpype._JClass",
 	sizeof (PyJPClass),
@@ -1369,16 +1380,17 @@ static PyType_Spec classSpec = {
 	classSlots
 };
 
-#ifdef __cplusplus
-}
-#endif
-
-void PyJPClass_initType(PyObject* module)
+void PyJPClass_initType(PyObject* module, PyJPModuleState* st)
 {
 	JPPyObject bases = JPPyTuple_Pack(&PyType_Type);
-	PyJPClass_Type = (PyTypeObject*) PyType_FromSpecWithBases(&classSpec, bases.get());
+#if PY_VERSION_HEX >= 0x030A0000
+	st->PyJPClass_Type = (PyTypeObject*) PyType_FromModuleAndSpec(module, &classSpec, bases.get());
+#else
+	st->PyJPClass_Type = (PyTypeObject*) PyType_FromSpecWithBases(&classSpec, bases.get());
+#endif
 	JP_PY_CHECK();
-	PyModule_AddObject(module, "_JClass", (PyObject*) PyJPClass_Type);
+	Py_INCREF((PyObject*) st->PyJPClass_Type);
+	PyModule_AddObject(module, "_JClass", (PyObject*) st->PyJPClass_Type);
 	JP_PY_CHECK();
 }
 
@@ -1390,7 +1402,7 @@ PyJPValueFn PyJPClass_GetJValueFn(PyTypeObject* type)
 	// wrapped class (java.lang.Integer, ...) is a plain single-inheritance
 	// subclass of that root and must inherit it, so walk tp_base until we
 	// leave the PyJPClass-metaclass family entirely.
-	while (type != nullptr && Py_TYPE(type) == (PyTypeObject*) PyJPClass_Type)
+	while (type != nullptr && PyJPClass_isWrapperMeta(Py_TYPE(type)))
 	{
 		PyJPValueFn fn = ((PyJPClass*) type)->tp_jvalue;
 		if (fn != nullptr)
@@ -1402,18 +1414,39 @@ PyJPValueFn PyJPClass_GetJValueFn(PyTypeObject* type)
 
 void PyJPClass_SetJValueFn(PyTypeObject* type, PyJPValueFn fn)
 {
-	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
+	if (type == nullptr || !PyJPClass_isWrapperMeta(Py_TYPE(type)))
 		return;
 	((PyJPClass*) type)->tp_jvalue = fn;
 }
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+/** This operates on both PyJPObject and PyJPClass */
 JPClass* PyJPClass_getJPClass(PyObject* obj)
 {
 	try
 	{
 		if (obj == nullptr)
 			return nullptr;
-		if (PyJPClass_Check(obj))
+		// Deliberately NOT PyJPClass_Check(obj) here: obj may itself be
+		// the wrapper metaclass (PyJPClass_Type, e.g. reached via
+		// Py_TYPE(some wrapper type) in PyJPClass_subclasscheck), which
+		// also has tp_finalize == PyJPValue_finalize (it's the slot value
+		// installed for ITS instances' finalization, e.g. JObject/String)
+		// -- PyJPClass_Check can't tell "is a generated wrapper type
+		// object" apart from "is the metaclass itself" using tp_finalize
+		// alone, and treating the metaclass as a struct PyJPClass reads
+		// past/through its real PyHeapTypeObject layout (see
+		// bugs/ArraySliceContextCorruption.md's root cause). Requiring
+		// obj's own TYPE to be the wrapper metaclass (matching
+		// PyJPClass_getOffset's own case-B derivation) correctly admits
+		// only genuine generated wrapper types (JObject, String, ...) and
+		// excludes the metaclass object itself. See
+		// bugs/PyJPClassGetJPClassMetaclassCheck.md.
+		if (PyType_Check(obj) && PyJPClass_isWrapperMeta(Py_TYPE(obj)))
 		{
 			JPClass *cls = ((PyJPClass*) obj)->m_Class;
 			if (cls != nullptr)
@@ -1434,7 +1467,7 @@ JPClass* PyJPClass_getJPClass(PyObject* obj)
 		JPClass* cls = PyJPValue_getJPClass(obj);
 		if (cls == nullptr)
 			return nullptr;
-		JPJavaFrame frame = JPJavaFrame::outer();
+		JPJavaFrame frame = JPJavaFrame::outer(PyJPObject_getContext(obj));
 		if (cls != frame.getContext()->_java_lang_Class)
 			return nullptr;
 		return frame.findClass((jclass) PyJPValue_getJValue(frame, obj).l);
@@ -1453,15 +1486,16 @@ JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 	// Decide the base for this object
 	JPPyObject baseType;
 	JPContext *context = frame.getContext();
+	PyJPModuleState *st = context->modulestate;
 	JPClass *super = cls->getSuperClass();
 	if (dynamic_cast<JPBoxedType*> (cls) == cls)
 	{
 		if (cls == context->_java_lang_Boolean)
 		{
-			baseType = JPPyObject::use((PyObject*) PyJPNumberBool_Type);
+			baseType = JPPyObject::use((PyObject*) st->PyJPNumberBool_Type);
 		} else if (cls == context->_java_lang_Character)
 		{
-			baseType = JPPyObject::use((PyObject*) PyJPChar_Type);
+			baseType = JPPyObject::use((PyObject*) st->PyJPChar_Type);
 		} else if (cls == context->_java_lang_Boolean
 				|| cls == context->_java_lang_Byte
 				|| cls == context->_java_lang_Short
@@ -1469,32 +1503,32 @@ JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 				|| cls == context->_java_lang_Long
 				)
 		{
-			baseType = JPPyObject::use((PyObject*) PyJPNumberLong_Type);
+			baseType = JPPyObject::use((PyObject*) st->PyJPNumberLong_Type);
 		} else if (cls == context->_java_lang_Float
 				|| cls == context->_java_lang_Double
 				)
 		{
-			baseType = JPPyObject::use((PyObject*) PyJPNumberFloat_Type);
+			baseType = JPPyObject::use((PyObject*) st->PyJPNumberFloat_Type);
 		}
 	} else if (JPModifier::isBuffer(cls->getModifiers()))
 	{
-		baseType = JPPyObject::use((PyObject*) PyJPBuffer_Type);
+		baseType = JPPyObject::use((PyObject*) st->PyJPBuffer_Type);
 	} else if (cls == context->_java_lang_Throwable)
 	{
-		baseType = JPPyObject::use((PyObject*) PyJPException_Type);
+		baseType = JPPyObject::use((PyObject*) st->PyJPException_Type);
 	} else if (cls->isArray())
 	{
 		auto* acls = dynamic_cast<JPArrayClass*>( cls);
 		if (acls->getComponentType()->isPrimitive())
-			baseType = JPPyObject::use((PyObject*) PyJPArrayPrimitive_Type);
+			baseType = JPPyObject::use((PyObject*) st->PyJPArrayPrimitive_Type);
 		else
-			baseType = JPPyObject::use((PyObject*) PyJPArray_Type);
-	} else if (cls->getCanonicalName() == "java.lang.Comparable")
+			baseType = JPPyObject::use((PyObject*) st->PyJPArray_Type);
+	} else if (cls->getCanonicalName(frame) == "java.lang.Comparable")
 	{
-		baseType = JPPyObject::use((PyObject*) PyJPComparable_Type);
+		baseType = JPPyObject::use((PyObject*) st->PyJPComparable_Type);
 	} else if (super == nullptr)
 	{
-		baseType = JPPyObject::use((PyObject*) PyJPObject_Type);
+		baseType = JPPyObject::use((PyObject*) st->PyJPObject_Type);
 	}
 
 	const JPClassList& baseItf = cls->getInterfaces();
@@ -1533,7 +1567,6 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 {
 	JP_TRACE_IN("PyJPClass_create", cls);
 	// Check the cache for speed
-
 	auto *host = (PyObject*) cls->getHost();
 	if (host == nullptr)
 	{
@@ -1551,10 +1584,10 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 	if (host != nullptr)
 		return;
 
-
 	JPPyObject members = JPPyObject::call(PyDict_New());
+
 	JPPyObject args = JPPyTuple_Pack(
-			JPPyString::fromStringUTF8(cls->getCanonicalName()).get(),
+			JPPyString::fromStringUTF8(cls->getCanonicalName(frame)).get(),
 			PyJPClass_getBases(frame, cls).get(),
 			members.get());
 
@@ -1567,14 +1600,15 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 	for (auto instField : instFields)
 	{
 		JPPyObject fieldName(JPPyString::fromStringUTF8(instField->getName()));
-		PyDict_SetItem(members.get(), fieldName.get(), PyJPField_create(instField).get());
+		PyDict_SetItem(members.get(), fieldName.get(), PyJPField_create(frame, instField).get());
 	}
+
 	const JPMethodDispatchList& m_Methods = cls->getMethods();
 	for (auto m_Method : m_Methods)
 	{
 		JPPyObject methodName(JPPyString::fromStringUTF8(m_Method->getName()));
 		PyDict_SetItem(members.get(), methodName.get(),
-				PyJPMethod_create(m_Method, nullptr).get());
+				PyJPMethod_create(frame, m_Method, nullptr).get());
 	}
 
 	if (cls->isInterface())
@@ -1584,24 +1618,33 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 		{
 			JPPyObject methodName(JPPyString::fromStringUTF8(m_Method->getName()));
 			PyDict_SetItem(members.get(), methodName.get(),
-					PyJPMethod_create(m_Method, nullptr).get());
+					PyJPMethod_create(frame, m_Method, nullptr).get());
 		}
 	}
 
 	// Call the customizer to make any required changes to the tables.
 	JP_TRACE("call pre");
-	JPPyObject rc = JPPyObject::call(PyObject_Call(_JClassPre, args.get(), nullptr));
+
+	// JClassPre may not be available during early initialization (when loading resources)
+	// In that case, we use the args directly without customization
+	JPPyObject rc;
+	if (context->modulestate->JClassPre != nullptr) {
+		rc = JPPyObject::call(PyObject_Call(context->modulestate->JClassPre, args.get(), nullptr));
+	} else {
+		rc = args; // Use args directly as the "result"
+	}
 
 	JP_TRACE("type new");
+	PyJPModuleState* st = frame.getContext()->modulestate;
 	// Create the type using the meta class magic
-	JPPyObject vself = JPPyObject::call(PyJPClass_Type->tp_call((PyObject*) PyJPClass_Type, rc.get(), PyJPClassMagic));
+	JPPyObject vself = JPPyObject::call(st->PyJPClass_Type->tp_call((PyObject*) st->PyJPClass_Type, rc.get(), st->class_magic));
 	auto *self = (PyJPClass*) vself.get();
 
 	// Attach the javaSlot
 	self->m_Class = cls;
 	//	self->m_Class->postLoad();
 	PyJPValue_assignJavaSlot(frame, (PyObject*) self, JPValue(context->_java_lang_Class,
-			(jobject) self->m_Class->getJavaClass()));
+			(jobject) self->m_Class->getJavaClass(frame)));
 
 	// Attach the cache  (adds reference, thus wrapper lives to end of JVM)
 	JP_TRACE("set host");
@@ -1609,6 +1652,13 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 
 	// Call the post load routine to attach inner classes
 	JP_TRACE("call post");
-	args = JPPyTuple_Pack(self);
-	JPPyObject rc2 = JPPyObject::call(PyObject_Call(_JClassPost, args.get(), nullptr));
+	if (context->modulestate->JClassPost != nullptr) {
+		args = JPPyTuple_Pack(self);
+		JPPyObject rc2 = JPPyObject::call(PyObject_Call(context->modulestate->JClassPost, args.get(), nullptr));
+	}
 }
+
+#ifdef __cplusplus
+}
+#endif
+

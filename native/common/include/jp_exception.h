@@ -18,16 +18,16 @@
 
 /* Stack-trace bookkeeping infrastructure shared by the JPBaseError hierarchy
  * (see jp_error.h). This file used to also define JPypeException, the single
- * mono-class every exception crossing the Java/Python/C++ boundary was
- * carried as (see plan/ExceptionRefactor.md for the history) - that class
- * has been fully replaced by JPJavaError/JPPythonError/JPInternalError and
- * is gone; only the pieces they still depend on remain here.
+ * mono-class every exception crossing the Java/Python/C++ boundary used to
+ * be carried as - that class has been fully replaced by
+ * JPJavaError/JPPythonError/JPInternalError and is gone; only the pieces
+ * they still depend on remain here.
  */
 #include <stdexcept>
 #ifndef __FUNCTION_NAME__
 #ifdef WIN32   //WINDOWS
 #define __FUNCTION_NAME__   __FUNCTION__
-#else          //*NIX
+#else		  //*NIX
 #define __FUNCTION_NAME__   __func__
 #endif
 #endif
@@ -41,7 +41,21 @@
 // Macro to use when hardening code
 //   Most of these will be removed after core is debugged, but
 //   a few are necessary to handle off normal conditions.
-#define ASSERT_NOT_NULL(X) {if ((X)==NULL) { JP_RAISE(PyExc_RuntimeError,  "Null Pointer Exception");} }
+
+// The helper macros required to force the preprocessor to stringify the expansion, 
+// rather than stringifying the tokens "__LINE__" or "__FILE__" directly.
+#define STRINGIFY_HELPER(x) #x
+#define TO_STRING(x) STRINGIFY_HELPER(x)
+
+// Now you can use standard string compile-time merging!
+#define ASSERT_NOT_NULL(X, Location) \
+	do { \
+		if ((X) == nullptr) { \
+			PyErr_SetString(PyExc_RuntimeError, \
+				"Null Pointer Exception at " Location " (" #X " is null) [" __FILE__ ":" TO_STRING(__LINE__) "]"); \
+			JP_RAISE_PYTHON(); \
+		} \
+	} while (0)
 
 // Macro to add stack trace info when multiple paths lead to the same trouble spot
 #define JP_CATCH catch (JPBaseError& ex) { ex.from(JP_STACKINFO()); throw; }

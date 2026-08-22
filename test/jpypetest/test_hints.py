@@ -412,7 +412,7 @@ class HintsTestCase(common.JPypeTestCase):
     def testDate(self):
         cls = JClass("java.sql.Date")
         d = cls(120, 0, 5)
-        d2 = d._py()
+        d2 = d.toPython()
         d3 = JObject(d2, cls)
         self.assertEqual(d, d2)
         self.assertEqual(d, d3)
@@ -420,7 +420,7 @@ class HintsTestCase(common.JPypeTestCase):
     def testTimestamp(self):
         cls = JClass("java.sql.Timestamp")
         d = cls(120, 0, 5, 9, 22, 51, 123456000)
-        d2 = d._py()
+        d2 = d.toPython()
         d3 = JObject(d2, cls)
         self.assertEqual(d, d2)
         self.assertEqual(d, d3)
@@ -428,7 +428,7 @@ class HintsTestCase(common.JPypeTestCase):
     def testTime(self):
         cls = JClass("java.sql.Time")
         d = cls(11, 53, 1)
-        d2 = d._py()
+        d2 = d.toPython()
         d3 = JObject(d2, cls)
         self.assertEqual(d, d2)
         self.assertEqual(d, d3)
@@ -436,10 +436,35 @@ class HintsTestCase(common.JPypeTestCase):
     def testBigDecimal(self):
         cls = JClass("java.math.BigDecimal")
         d = cls('1000234600000000000000')
-        d2 = d._py()
+        d2 = d.toPython()
         d3 = JObject(d2, cls)
         self.assertEqual(d, d2)
         self.assertEqual(d, d3)
+
+    def testInstantToPython(self):
+        import datetime
+        cls = JClass("java.time.Instant")
+        d = cls.ofEpochSecond(1577923200, 123456000)
+        d2 = d.toPython()
+        d3 = JObject(d2, cls)
+        self.assertEqual(d, d3)
+        self.assertEqual(d2.tzinfo, datetime.timezone.utc)
+
+    def testPathToPython(self):
+        import pathlib
+        cls = JClass("java.nio.file.Paths")
+        d = cls.get("a", ["b", "c"])
+        d2 = d.toPython()
+        self.assertIsInstance(d2, pathlib.Path)
+        self.assertEqual(str(d2), str(d))
+
+    def testFileToPython(self):
+        import pathlib
+        cls = JClass("java.io.File")
+        d = cls("a/b/c")
+        d2 = d.toPython()
+        self.assertIsInstance(d2, pathlib.Path)
+        self.assertEqual(str(d2), d.getPath())
 
     def testAddTypeBad(self):
         cls = JClass('java.lang.Object')

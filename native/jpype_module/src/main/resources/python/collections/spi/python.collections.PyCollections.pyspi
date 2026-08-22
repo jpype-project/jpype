@@ -1,0 +1,48 @@
+kind: backend
+interface: python.collections.PyCollections
+---
+import collections
+
+
+def _map_to_dict(m):
+    d = {}
+    for k, v in m.entrySet():
+        d[k] = v
+    return d
+
+
+def _deque(iterable=None, maxlen=None):
+    if iterable is None:
+        return collections.deque()
+    if maxlen is None:
+        return collections.deque(iterable)
+    return collections.deque(iterable, maxlen=int(maxlen))
+
+
+def _counter(other=None):
+    if other is None:
+        return collections.Counter()
+    if hasattr(other, "entrySet"):
+        return collections.Counter(_map_to_dict(other))
+    return collections.Counter(other)
+
+
+def _default_dict(factory=None):
+    return collections.defaultdict(factory)
+
+
+def _ordered_dict():
+    return collections.OrderedDict()
+
+
+def _chain_map(maps):
+    return collections.ChainMap(*list(maps))
+
+
+METHODS = {
+    "deque": _deque,
+    "counter": _counter,
+    "defaultDict": _default_dict,
+    "orderedDict": _ordered_dict,
+    "chainMap": _chain_map,
+}

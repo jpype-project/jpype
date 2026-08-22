@@ -1,0 +1,14 @@
+kind: class
+module: collections
+class: ChainMap
+interface: python.collections.PyChainMap
+---
+def _new_child(x, m=None):
+    return x.new_child(m) if m is not None else x.new_child()
+
+
+METHODS = {
+    ".maps": lambda x: x.maps,
+    ".newChild": _new_child,
+    ".parents": lambda x: x.parents,
+}

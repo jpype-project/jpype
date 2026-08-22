@@ -1,3 +1,4 @@
+// --- file: common/jp_shorttype.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -16,11 +17,13 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_array.h"
+#include "jp_arrayclass.h"
+#include "jp_classhints.h"
 #include "jp_primitive_accessor.h"
 #include "jp_shorttype.h"
 
-JPShortType::JPShortType()
-: JPPrimitiveType("short")
+JPShortType::JPShortType(JPJavaFrame& frame, jclass cls)
+: JPPrimitiveType(frame, cls, "short")
 {
 }
 
@@ -34,8 +37,7 @@ JPClass* JPShortType::getBoxedClass(JPJavaFrame& frame) const
 
 JPPyObject JPShortType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
-	JPPyObject tmp = JPPyObject::call(PyLong_FromLong(field(val)));
-	JPPyObject out = JPPyObject::call(convertLong(getHost(), (PyLongObject*) tmp.get()));
+	JPPyObject out = JPPyObject::call(convertLong(getHost(), field(val)));
 	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
 	return out;
 }
@@ -43,7 +45,7 @@ JPPyObject JPShortType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bo
 JPValue JPShortType::getValueFromObject(JPJavaFrame& frame, const JPValue& obj)
 {
 	jvalue v;
-	jobject jo = obj.getValue().l;
+	jobject jo = obj.getJavaObject(frame);
 	auto* jb = dynamic_cast<JPBoxedType*>( frame.findClassForObject(jo));
 	field(v) = (type_t) frame.CallIntMethodA(jo, jb->m_IntValueID, nullptr);
 	return JPValue(this, v);
@@ -89,19 +91,19 @@ public:
 		return JPMatch::_implicit;  //short cut further checks
 	}
 
-	void getInfo(JPClass *cls, JPConversionInfo &info) override
+	void getInfo(JPJavaFrame& frame, JPClass *cls, JPConversionInfo &info) override
 	{
-		JPContext *context = JPContext_global;
+		JPContext *context = frame.getContext();
 		PyList_Append(info.exact, (PyObject*) context->_short->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_byte->getHost());
 		PyList_Append(info.implicit, (PyObject*) context->_char->getHost());
-		unboxConversion->getInfo(cls, info);
+		unboxConversion->getInfo(frame, cls, info);
 	}
 
 
 } jshortConversion;
 
-JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPShortType::findJavaConversionImpl(JPMatch &match)
 {
 	JP_TRACE_IN("JPShortType::findJavaConversion");
 
@@ -117,13 +119,13 @@ JPMatch::Type JPShortType::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-void JPShortType::getConversionInfo(JPConversionInfo &info)
+void JPShortType::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
-	jshortConversion.getInfo(this, info);
-	shortConversion.getInfo(this, info);
-	shortNumberConversion.getInfo(this, info);
-	PyList_Append(info.ret, (PyObject*) JPContext_global->_short->getHost());
+	JPContext *context = frame.getContext();
+	jshortConversion.getInfo(frame, this, info);
+	shortConversion.getInfo(frame, this, info);
+	shortNumberConversion.getInfo(frame, this, info);
+	PyList_Append(info.ret, (PyObject*) context->_short->getHost());
 }
 
 jarray JPShortType::newArrayOf(JPJavaFrame& frame, jsize sz)
@@ -170,7 +172,7 @@ JPPyObject JPShortType::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jm
 
 void JPShortType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match(&frame, obj);
+	JPMatch match(frame, obj);
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java short");
 	type_t val = field(match.convert());
@@ -179,7 +181,7 @@ void JPShortType::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyO
 
 void JPShortType::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
-	JPMatch match(&frame, obj);
+	JPMatch match(frame, obj);
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java short");
 	type_t val = field(match.convert());
@@ -191,6 +193,9 @@ void JPShortType::setArrayRange(JPJavaFrame& frame, jarray a,
 		PyObject* sequence)
 {
 	JP_TRACE_IN("JPShortType::setArrayRange");
+	if (tryFastBufferPush(frame, this, a, start, step, length, sequence))
+		return;
+
 	JPPrimitiveArrayAccessor<array_t, type_t*> accessor(frame, a,
 			&JPJavaFrame::GetShortArrayElements, &JPJavaFrame::ReleaseShortArrayElements);
 
@@ -210,8 +215,16 @@ void JPShortType::setArrayRange(JPJavaFrame& frame, jarray a,
 				JP_RAISE(PyExc_ValueError, "mismatched size");
 
 			char* memory = (char*) view.buf;
-			if (view.suboffsets && view.suboffsets[0] >= 0)
-				memory = *((char**) memory) + view.suboffsets[0];
+			// This is PyBUF_FULL_RO, so suboffsets CAN legitimately be
+			// non-null for a genuinely indirect exporter -- but every such
+			// exporter found (CPython's own _testbuffer.ndarray, the only
+			// one able to produce one at all; numpy/array/ctypes can't)
+			// lacks __len__, and both call paths that reach here
+			// (JPArray::setRange and JPConversionBuffer::matches) require
+			// a working len() before ever getting this far. Kept as a
+			// defensive fallback, not a provably-reachable path.
+			if (view.suboffsets && view.suboffsets[0] >= 0)  // GCOVR_EXCL_LINE
+				memory = *((char**) memory) + view.suboffsets[0];  // GCOVR_EXCL_LINE
 			jsize index = start;
 			jconverter conv = getConverter(view.format, (int) view.itemsize, "s");
 			for (Py_ssize_t i = 0; i < length; ++i, index += step)
@@ -228,60 +241,198 @@ void JPShortType::setArrayRange(JPJavaFrame& frame, jarray a,
 		}
 	}
 
-	// Use sequence API
-	JPPySequence seq = JPPySequence::use(sequence);
 	jsize index = start;
-	for (Py_ssize_t i = 0; i < length; ++i, index += step)
+
+	// Container-kind dispatch happens once, not per element (list vs.
+	// tuple vs. general sequence, resolved here); within each loop, the
+	// exact-int-or-not check IS per element, deliberately -- it's a
+	// single cheap PyLong_CheckExact, the same cost sequenceCheckStep
+	// (jp_class.cpp) already pays per element during matches(). A single
+	// non-exact item (a bool, a numpy scalar, a custom __index__ object,
+	// ...) anywhere in the sequence no longer demotes every element after
+	// it to the generic PySequence_GetItem path -- only that one element
+	// pays the heavier PyIndex_Check + PyLong_AsLongLong conversion; the
+	// rest of the array stays on direct indexed access either way.
+	if (PyList_CheckExact(sequence))
 	{
-		PyObject *item = seq[i].get();
-		if (!PyIndex_Check(item))
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
 		{
-			PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to short", Py_TYPE(item)->tp_name);
-			JP_RAISE_PYTHON();
+			PyObject *item = PyList_GET_ITEM(sequence, i);
+			jlong v;
+			if (PyLong_CheckExact(item))
+			{
+				long lv = PyLong_AsLong(item);
+				if (lv == -1)
+					JP_PY_CHECK();
+				v = lv;
+			} else
+			{
+				if (!PyIndex_Check(item))
+				{
+					PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to short", Py_TYPE(item)->tp_name);
+					JP_RAISE_PYTHON();
+				}
+				v = PyLong_AsLongLong(item);
+				if (v == -1)
+					JP_PY_CHECK();
+			}
+			val[index] = (type_t) assertRange(v);
 		}
-		jlong v = PyLong_AsLongLong(item);
-		if (v == -1)
-			JP_PY_CHECK();
-		val[index] = (type_t) assertRange(v);
+	} else if (PyTuple_CheckExact(sequence))
+	{
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			PyObject *item = PyTuple_GET_ITEM(sequence, i);
+			jlong v;
+			if (PyLong_CheckExact(item))
+			{
+				long lv = PyLong_AsLong(item);
+				if (lv == -1)
+					JP_PY_CHECK();
+				v = lv;
+			} else
+			{
+				if (!PyIndex_Check(item))
+				{
+					PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to short", Py_TYPE(item)->tp_name);
+					JP_RAISE_PYTHON();
+				}
+				v = PyLong_AsLongLong(item);
+				if (v == -1)
+					JP_PY_CHECK();
+			}
+			val[index] = (type_t) assertRange(v);
+		}
+	} else
+	{
+		JPPySequence seq = JPPySequence::use(sequence);
+		for (Py_ssize_t i = 0; i < length; ++i, index += step)
+		{
+			PyObject *item = seq[i].get();
+			if (!PyIndex_Check(item))
+			{
+				PyErr_Format(PyExc_TypeError, "Unable to implicitly convert '%s' to short", Py_TYPE(item)->tp_name);
+				JP_RAISE_PYTHON();
+			}
+			jlong v = PyLong_AsLongLong(item);
+			if (v == -1)
+				JP_PY_CHECK();
+			val[index] = (type_t) assertRange(v);
+		}
 	}
 	accessor.commit();
 	JP_TRACE_OUT;
 }
 
-JPPyObject JPShortType::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
-{
-	auto array = (array_t) a;
-	type_t val;
-	frame.GetShortArrayRegion(array, ndx, 1, &val);
-	jvalue v;
-	field(v) = val;
-	return convertToPythonObject(frame, v, false);
-}
-
 void JPShortType::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* obj)
 {
-	JPMatch match(&frame, obj);
+	JPMatch match(frame, obj);
 	if (findJavaConversion(match) < JPMatch::_implicit)
 		JP_RAISE(PyExc_TypeError, "Unable to convert to Java short");
 	type_t val = field(match.convert());
 	frame.SetShortArrayRegion((array_t) a, ndx, 1, &val);
 }
 
-void JPShortType::getView(JPArrayView& view)
+JPPyObject JPShortType::getFastArrayItem(JPJavaAccess& frame, jarray a, jsize ndx)
 {
-	JPJavaFrame frame = JPJavaFrame::outer();
+	// See JPIntType::getFastArrayItem: inlines convertToPythonObject
+	// directly -- PyJPValue_assignJavaSlot is a guaranteed no-op for this
+	// family, so no frame is ever genuinely needed here.
+	auto array = (array_t) a;
+	type_t val;
+	frame.GetShortArrayRegion(array, ndx, 1, &val);
+	return JPPyObject::call(convertLong(getHost(), val));
+}
+
+JPArray* JPShortType::createArrayWrapper(const JPValue& value)
+{
+	return new JPArrayShort(value);
+}
+
+JPArrayClass* JPShortType::createArrayClass(JPJavaFrame& frame, jclass cls,
+		const string& name, JPClass* superClass, jint modifiers)
+{
+	return new JPArrayClassShort(frame, cls, name, superClass, this, modifiers);
+}
+
+JPMatch::Type JPArrayClassShort::findJavaConversionImpl(JPMatch &match)
+{
+	JP_TRACE_IN("JPArrayClassShort::findJavaConversion");
+	if (nullConversion->matches(this, match)
+			|| objectConversion->matches(this, match)
+			|| bufferConversion->matches(this, match)
+			|| listConversion->matches(this, match)
+			|| tupleConversion->matches(this, match)
+			|| sequenceConversion->matches(this, match)
+			|| hintsConversion->matches(this, match)
+			)
+		return match.type;
+	JP_TRACE("None");
+	return match.type = JPMatch::_none;
+	JP_TRACE_OUT;
+}
+
+void JPArrayClassShort::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
+{
+	objectConversion->getInfo(frame, this, info);
+	bufferConversion->getInfo(frame, this, info);
+	sequenceConversion->getInfo(frame, this, info);
+	hintsConversion->getInfo(frame, this, info);
+	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
+}
+
+JPArrayShort::JPArrayShort(const JPValue& array)
+: JPArray(array), m_CompType(dynamic_cast<JPShortType*>(m_Class->getComponentType()))
+{
+}
+
+JPArrayShort::JPArrayShort(JPArrayShort* src, jsize start, jsize stop, jsize step)
+: JPArray(src, start, stop, step), m_CompType(src->m_CompType)
+{
+}
+
+JPPyObject JPArrayShort::getItem(jsize ndx)
+{
+	ndx = checkIndex(ndx);
+	JPJavaAccess frame(m_Context);
+	JPJavaFrame jframe = JPJavaFrame::fast(frame.getEnv(), frame.getContext());
+	// retrieveGlobal() is a JNI method call, so it mints a real local
+	// reference -- fast() deliberately pushes no frame of its own (see its
+	// ctor comment in jp_javaframe.cpp), and there is no enclosing real
+	// frame on this single-element-access call path, so nothing else
+	// reclaims it. JPLocalRef (RAII) releases it even if getItem(ndx,
+	// resolved) below throws. Only paid here, on the single-index path
+	// (ja[5]) -- PyJPArrayIter's per-element hot loop resolves the array
+	// once, as a real global ref for the whole iterator, and calls
+	// getItem(ndx, resolved) directly. See bugs/ArrayIterLocalRefLeak.md.
+	JPLocalRef arr(jframe.getEnv(), jframe.retrieveGlobal(m_Object));
+	return getItem(ndx, arr.get());
+}
+
+JPPyObject JPArrayShort::getItem(jsize ndx, jobject resolved)
+{
+	JPJavaAccess frame(m_Context);
+	return m_CompType->getFastArrayItem(frame, (jarray) resolved, m_Start + ndx * m_Step);
+}
+
+JPArray* JPArrayShort::slice(jsize start, jsize stop, jsize step)
+{
+	return new JPArrayShort(this, start, stop, step);
+}
+
+void JPShortType::getView(JPJavaFrame& frame, JPArrayView& view)
+{
 	view.m_Memory = (void*) frame.GetShortArrayElements(
-			(jshortArray) view.m_Array->getJava(), &view.m_IsCopy);
+			(jshortArray) view.m_Array->getJava(frame), &view.m_IsCopy);
 	view.m_Buffer.format = "h";
 	view.m_Buffer.itemsize = sizeof (jshort);
 }
 
-void JPShortType::releaseView(JPArrayView& view)
+void JPShortType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 	try
 	{
-		JPJavaFrame frame = JPJavaFrame::outer();
-		frame.ReleaseShortArrayElements((jshortArray) view.m_Array->getJava(),
+		frame.ReleaseShortArrayElements((jshortArray) view.m_Array->getJava(frame),
 				(jshort*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
 	}	catch (...)
 	{
@@ -307,6 +458,13 @@ void JPShortType::copyElements(JPJavaFrame &frame, jarray a, jsize start, jsize 
 	frame.GetShortArrayRegion((jshortArray) a, start, len, b);
 }
 
+void JPShortType::setElements(JPJavaFrame &frame, jarray a, jsize start, jsize len,
+		const void* memory, int offset)
+{
+	auto* b = (jshort*) ((const char*) memory + offset);
+	frame.SetShortArrayRegion((jshortArray) a, start, len, const_cast<jshort*>(b));
+}
+
 static void pack(jshort* d, jvalue v)
 {
 	*d = v.s;
@@ -317,6 +475,15 @@ PyObject *JPShortType::newMultiArray(JPJavaFrame &frame, JPPyBuffer &buffer, int
 	JP_TRACE_IN("JPShortType::newMultiArray");
 	return convertMultiArray<type_t>(
 			frame, this, &pack, "s",
+			buffer, subs, base, dims);
+	JP_TRACE_OUT;
+}
+
+jobject JPShortType::newMultiArrayObject(JPJavaFrame &frame, JPPyBuffer &buffer, jconverter converter, int subs, int base, jobject dims)
+{
+	JP_TRACE_IN("JPShortType::newMultiArrayObject");
+	return convertMultiArrayObject<type_t>(
+			frame, this, &pack, converter,
 			buffer, subs, base, dims);
 	JP_TRACE_OUT;
 }

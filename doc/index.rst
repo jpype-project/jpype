@@ -18,13 +18,54 @@ Parts of the documentation
 
 .. toctree::
    :maxdepth: 2
+   :caption: Getting started
 
    install
-   userguide
-   quickguide
+   intro
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Python calling Java
+
+   quickguide_py
+   types_py
+   collections_py
+   jvm_py
+   customizers_py
+   proxies_py
+   threading_py
+   tooling_py
+   pickling_py
+   numpy_py
+   dbapi2_py
+   debugging_py
+   awt_py
+   gui_py
+   limitations_py
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Java calling Python (reverse bridge)
+
+   quickguide_java
+   types_java
+   collections_java
+   datetime_java
+   jvm_java
+   threading_java
+   customizers_java
+   tooling_java
+   limitations_java
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference
+
+   glossary
    api
    dbapi2
    imports
+   spi
    android
    CHANGELOG
    develguide

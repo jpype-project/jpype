@@ -5,6 +5,7 @@
 
 	<!-- src can't be "java" as it breaks nose tests -->
 	<property name="src" location="jpype_module/src/main/java"/>
+    <property name="resources" location="jpype_module/src/main/resources"/>
 	<property name="build" location="build"/>
 
 	<target name="test" depends="compile">
@@ -16,6 +17,12 @@
 		<mkdir dir="${build}/classes/META-INF/versions"/>
 		<mkdir dir="${build}/classes/META-INF/versions/0"/>
 		<mkdir dir="${build}/lib"/>
+
+        <copy todir="${build}/classes" failonerror="false">
+            <fileset dir="${resources}">
+                <exclude name="**/*.java"/>
+            </fileset>
+        </copy>
 		<javac destdir="${build}/classes"
 			source="${JAVA_VERSION}"
 			target="${JAVA_VERSION}"
@@ -43,6 +50,21 @@
 			</fileset>
 		</jar>
   </target>
+
+	<target name="javadoc">
+		<mkdir dir="${build}/javadoc"/>
+		<javadoc destdir="${build}/javadoc"
+			source="${JAVA_VERSION}"
+			access="public"
+			packagenames="python.*,org.jpype"
+			windowtitle="JPype Java API"
+			doctitle="JPype Java API (embedded Python / reverse bridge)"
+			>
+			<sourcepath path="${src}"/>
+			<arg value="--add-stylesheet"/>
+			<arg value="../doc/_static/javadoc_overrides.css"/>
+		</javadoc>
+	</target>
 
 	<target name="all" depends="jar" />
 

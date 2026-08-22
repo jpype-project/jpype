@@ -18,6 +18,8 @@
 import _jpype
 import datetime
 import decimal
+import io
+import pathlib
 import sys
 import _jpype
 from . import _jclass
@@ -70,6 +72,40 @@ def _JPathConvert(jcls, obj):
 def _JFileConvert(jcls, obj):
     return jcls(obj.__fspath__())
 
+
+@_jcustomizer.JImplementationFor("java.nio.file.Path")
+class _JPath:
+    def toPython(self):
+        return pathlib.Path(str(self))
+
+
+@_jcustomizer.JImplementationFor("java.io.File")
+class _JFile:
+    def toPython(self):
+        return pathlib.Path(str(self.getPath()))
+
+
+# python.io fulfills java.io.InputStream/OutputStream by delegating through
+# python.io.PyBufferedIOBase.asInputStream()/asOutputStream() (see
+# native/jpype_module/src/main/java/python/io/PyBufferedIOBase.java). This
+# lets a plain Python io.BytesIO (or any io.BufferedIOBase) be passed
+# directly to a Java API expecting a stream - mainly useful for exercising
+# the python.io SPI wiring end-to-end from a launched script; see
+# test_io.py and plan/IO.md.
+
+
+@_jcustomizer.JConversion("java.io.InputStream", instanceof=io.BufferedIOBase)
+def _JInputStreamConvert(jcls, obj):
+    iface = _jclass.JClass("python.io.PyBufferedIOBase")
+    return _jpype.JObject(obj, iface).asInputStream()
+
+
+@_jcustomizer.JConversion("java.io.OutputStream", instanceof=io.BufferedIOBase)
+def _JOutputStreamConvert(jcls, obj):
+    iface = _jclass.JClass("python.io.PyBufferedIOBase")
+    return _jpype.JObject(obj, iface).asOutputStream()
+
+
 # To be added in 1.1.x
 
 
@@ -98,12 +134,23 @@ def _JMapConvert(jcls, obj):
 # Converters start here
 
 
+_EPOCH = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
+
+
 @_jcustomizer.JConversion("java.time.Instant", exact=datetime.datetime)
 def _JInstantConversion(jcls, obj):
-    utc = obj.replace(tzinfo=datetime.timezone.utc).timestamp()
-    sec = int(utc)
-    nsec = int((utc - sec) * 1e9)
+    utc = obj.replace(tzinfo=datetime.timezone.utc)
+    delta = utc - _EPOCH
+    sec = delta.days * 86400 + delta.seconds
+    nsec = delta.microseconds * 1000
     return jcls.ofEpochSecond(sec, nsec)
+
+
+@_jcustomizer.JImplementationFor("java.time.Instant")
+class _JInstant:
+    def toPython(self):
+        return _EPOCH + datetime.timedelta(
+            seconds=self.getEpochSecond(), microseconds=self.getNano() // 1000)
 
 
 # Types needed for SQL
@@ -111,26 +158,26 @@ def _JInstantConversion(jcls, obj):
 
 @_jcustomizer.JImplementationFor('java.sql.Date')
 class _JSQLDate:
-    def _py(self):
+    def toPython(self):
         return datetime.date(self.getYear() + 1900, self.getMonth() + 1, self.getDate())
 
 
 @_jcustomizer.JImplementationFor('java.sql.Time')
 class _JSQLTime:
-    def _py(self):
+    def toPython(self):
         return datetime.time(self.getHours(), self.getMinutes(), self.getSeconds())
 
 
 @_jcustomizer.JImplementationFor('java.sql.Timestamp')
 class _JDate:
-    def _py(self):
+    def toPython(self):
         return datetime.datetime(self.getYear() + 1900, self.getMonth() + 1, self.getDate(),
                                  self.getHours(), self.getMinutes(), self.getSeconds(), self.getNanos() // 1000)
 
 
 @_jcustomizer.JImplementationFor('java.math.BigDecimal')
 class _JBigDecimal:
-    def _py(self):
+    def toPython(self):
         return decimal.Decimal(str(self))
 
 

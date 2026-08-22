@@ -905,10 +905,17 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("JPJavaFrame::GetBooleanArrayElements")
         with self.assertRaises(BufferError):
             memoryview(ja[0:3])
-        _jpype.fault("JPJavaFrame::ReleaseBooleanArrayElements")
+        # ja[0:3] = bytes(...) and cloning a slice both go through
+        # tryFastBufferPush's DirectByteBuffer handoff now (setArrayRange
+        # tries it before falling back to the
+        # Get/ReleaseBooleanArrayElements critical section), so the fault
+        # point to arm is fillFlatIntoArray, not
+        # ReleaseBooleanArrayElements -- that release call is never
+        # reached for a buffer-protocol source.
+        _jpype.fault("JPJavaFrame::fillFlatIntoArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja[0:3] = bytes([1, 2, 3])
-        _jpype.fault("JPJavaFrame::ReleaseBooleanArrayElements")
+        _jpype.fault("JPJavaFrame::fillFlatIntoArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             jpype.JObject(ja[::2], jpype.JObject)
         _jpype.fault("JPJavaFrame::ReleaseBooleanArrayElements")
