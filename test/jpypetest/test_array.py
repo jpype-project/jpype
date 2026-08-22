@@ -21,7 +21,6 @@ import jpype
 from jpype.types import *
 from jpype import JPackage, java
 import common
-import pytest
 try:
     import numpy as np
 except ImportError:

@@ -112,7 +112,71 @@ elseif(APPLE)
             COMMAND sh -c "otool -L $<TARGET_FILE:_jpype> | grep -q libc++.1.dylib || (echo 'FATAL: _jpype.so not dynamically linked against libc++!' >&2 && exit 1)"
             VERBATIM
     )
-elseif(LINUX OR UNIX) # make sure APPLE is handled before this.
+elseif(ANDROID) # make sure this is handled before the generic LINUX/UNIX branch below,
+    # since Android is Linux-derived and would otherwise fall through to it.
+    # The NDK toolchain ships libc++_shared.so, not glibc's libstdc++, so the
+    # generic Linux branch's "-Wl,-l:libstdc++.so.6" link flag and its matching
+    # readelf sanity check don't apply here.
+    target_link_libraries(_jpype PRIVATE log)
+    target_link_options(_jpype PRIVATE "-lc++_shared")
+
+    # Android_JNI_GetEnv() (native/python/pyjp_module.cpp) is deliberately
+    # never defined in native/ - by design it's resolved at runtime against
+    # whatever Android host app embeds JPype (see that file's comment), not
+    # at link time. The NDK CMake toolchain defaults to -Wl,--no-undefined
+    # for shared libraries, which would otherwise make this - and any
+    # other genuinely host-supplied symbol - a hard link failure instead
+    # of the intentional deferred-to-runtime reference it is.
+    #
+    # --allow-shlib-undefined alone isn't enough: it only silences
+    # unresolved symbols *inside a linked-against shared library*, not an
+    # undefined symbol directly referenced by our own object files (which
+    # is exactly this case, since nothing on this link line provides
+    # Android_JNI_GetEnv's callee - it's supplied by libmain.so, already
+    # loaded in-process at runtime but never linked here). Only
+    # --unresolved-symbols=ignore-all actually overrides --no-undefined
+    # for that case; it must come after --no-undefined on the command
+    # line since these are processed in order and the last one wins.
+    target_link_options(_jpype PRIVATE "-Wl,--allow-shlib-undefined" "-Wl,--unresolved-symbols=ignore-all")
+
+    # An --unresolved-symbols=ignore-all reference is only *link-time*
+    # deferred - at runtime, Android's linker namespace isolation blocks
+    # an implicit/global symbol lookup across namespaces (e.g. from
+    # _jpype.so, loaded via Python's import machinery, to a symbol in
+    # libmain.so, loaded by the app's native launcher into a different
+    # namespace), even when the symbol is legitimately exported. An
+    # explicit DT_NEEDED dependency, in contrast, *does* get resolved
+    # across that boundary. JPYPE_ANDROID_LIBMAIN_DIR, if set (by
+    # project/android's own recipe; see its get_recipe_env()), points at
+    # the directory containing the specific libmain.so this harness's
+    # Android_JNI_GetEnv() shim needs - passed as a CMake define rather
+    # than via the LDFLAGS environment variable because scikit-build-core
+    # does not read ambient LDFLAGS the way legacy setuptools builds did.
+    if(DEFINED JPYPE_ANDROID_LIBMAIN_DIR)
+        target_link_options(_jpype PRIVATE "-L${JPYPE_ANDROID_LIBMAIN_DIR}" "-l:libmain.so")
+    endif()
+
+    # Keep frame pointers for better stack unwinding.
+    add_compile_options(-fno-omit-frame-pointer)
+
+    set_target_properties(_jpype PROPERTIES SUFFIX ".so")
+
+    add_custom_command(TARGET _jpype POST_BUILD
+            COMMAND sh -c "readelf -d $<TARGET_FILE:_jpype> | grep -q libc++_shared.so || (echo 'FATAL: _jpype.so not dynamically linked against libc++_shared!' >&2 && exit 1)"
+            VERBATIM
+    )
+
+    # Optional: a reference Android_JNI_GetEnv() implementation (see
+    # native/python/pyjp_module.cpp - declared extern there, never defined
+    # in native/ since it must come from whatever app embeds JPype). Only
+    # present when built via project/android/'s own harness; a normal
+    # ANDROID cross-build driven by a different host app simply won't have
+    # this file and is expected to supply Android_JNI_GetEnv() itself.
+    set(JPYPE_ANDROID_JNIENV_SRC "${CMAKE_SOURCE_DIR}/project/android/native/android_jnienv.c")
+    if(EXISTS "${JPYPE_ANDROID_JNIENV_SRC}")
+        target_sources(_jpype PRIVATE "${JPYPE_ANDROID_JNIENV_SRC}")
+    endif()
+elseif(LINUX OR UNIX) # make sure APPLE and ANDROID are handled before this.
     target_link_libraries(_jpype PRIVATE dl)
     target_link_options(_jpype PRIVATE "-Wl,-l:libstdc++.so.6")
 

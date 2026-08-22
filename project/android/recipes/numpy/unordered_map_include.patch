@@ -1,0 +1,10 @@
+--- a/numpy/_core/src/multiarray/unique.cpp	2026-08-22 10:07:18.500018717 -0700
++++ b/numpy/_core/src/multiarray/unique.cpp	2026-08-22 10:07:18.504018696 -0700
+@@ -4,6 +4,7 @@
+ #include <Python.h>
+ 
+ #include <unordered_set>
++#include <unordered_map>
+ #include <functional>
+ 
+ #include <numpy/npy_common.h>

@@ -626,7 +626,11 @@ public class JPypeContext
 
   private static long getHeapMemory()
   {
-    java.lang.management.MemoryMXBean memoryBean = java.lang.management.ManagementFactory.getMemoryMXBean();
-    return memoryBean.getHeapMemoryUsage().getUsed();
+    // java.lang.management isn't available on Android's platform API, and
+    // Runtime's own accounting is portable to every JVM (desktop and
+    // Android alike), so there's no reason to keep the management-API
+    // dependency at all.
+    Runtime runtime = Runtime.getRuntime();
+    return runtime.totalMemory() - runtime.freeMemory();
   }
 }

@@ -27,6 +27,7 @@ from unittest import mock
 
 from jpype._jvmfinder import (_checkJVMArch, LinuxJVMFinder, JVMNotSupportedException,
                               DarwinJVMFinder, WindowsJVMFinder)
+import common
 
 
 class JVMFinderTest(unittest.TestCase):
@@ -122,6 +123,11 @@ class JVMFinderTest(unittest.TestCase):
         self.assertEqual(
             p, os.path.join('/usr/lib/jvm/java-6-openjdk-amd64/jre/lib/amd64/server', 'libjvm.so'))
 
+    # Exercises DarwinJVMFinder's macOS-specific lookup path, which pulls
+    # in the `packaging` module - not bundled for this Android build (not
+    # itself relevant to Android anyway, since this is testing macOS
+    # discovery logic, not anything that runs on-device).
+    @common.skipOnAndroid("packaging module not bundled; tests macOS-only logic")
     @mock.patch('platform.mac_ver')
     def testDarwinBinary(self, mock_mac_ver):
         # this version has java_home binary

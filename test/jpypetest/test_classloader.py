@@ -106,6 +106,10 @@ class ClassLoaderTestCase(common.JPypeTestCase):
         self.assertIsNotNone(value1)
         Example.takeEnum(value1)
 
+    # ClassLoader.getSystemClassLoader() returns a boot-loader stub with
+    # no dex visibility on Android - unlike desktop, where it happens to
+    # be the same object as the app's own classloader (see doc/android.rst).
+    @common.skipOnAndroid("ClassLoader.getSystemClassLoader() has no dex visibility on Android")
     def testEnumWithExplicitClassLoader(self):
         """Test loading enum through explicit class loader (solution for bug #992)"""
         # Get the system class loader
@@ -121,6 +125,7 @@ class ClassLoaderTestCase(common.JPypeTestCase):
         test_obj.setRole(role)
         self.assertEqual(test_obj.getRoleAsString(), "Master")
 
+    @common.skipOnAndroid("ClassLoader.getSystemClassLoader() has no dex visibility on Android")
     def testEnumWithForName(self):
         """Test loading enum using Class.forName with loader (alternative solution)"""
         Class = jpype.JClass('java.lang.Class')

@@ -271,9 +271,12 @@ int PyJP_IsInstanceSingle(PyObject* obj, PyTypeObject* type)
 	return PyJP_IsSubClassSingle(type, Py_TYPE(obj));
 }
 
-#ifndef ANDROID
+// Declared unconditionally so it is visible to PyJPModule_bootstrap()
+// below (#ifdef ANDROID), which is compiled outside this #ifndef ANDROID
+// block; the definition is supplied by the Android host bootstrap code.
 extern JNIEnv *Android_JNI_GetEnv();
 
+#ifndef ANDROID
 static string jarTmpPath;
 static PyObject* PyJPModule_startup(PyObject* module, PyObject* pyargs)
 {
@@ -772,12 +775,14 @@ static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
 
 static PyObject *PyJPModule_bootstrap(PyObject *module)
 {
+	JP_PY_TRY("PyJPModule_bootstrap");
 	// After all the internals are created we can connect the API with the internal module
 	JNIEnv * env = Android_JNI_GetEnv();
 	JPContext_global->attachJVM(env);
 	PyJPModule_installGC(module);
 	PyJPModule_loadResources(module);
 	Py_RETURN_NONE;
+	JP_PY_CATCH(nullptr);
 }
 #endif
 

@@ -1056,6 +1056,10 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             _jpype.detachThreadFromJVM()
 
+    # attachThreadToJVM()/detachThreadFromJVM() are removed on Android -
+    # Android's JVM is always already attached (see doc/android.rst's
+    # "Removed JPype Services").
+    @common.skipOnAndroid("attachThreadToJVM/detachThreadFromJVM removed on Android")
     def testDetachThread(self):
         self.assertTrue(_jpype.isThreadAttachedToJVM())
         _jpype.detachThreadFromJVM()
@@ -1082,6 +1086,9 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(TypeError, "function takes exactly 2 arguments"):
             _jpype.convertToDirectBuffer(bytes([1, 2, 3]))
 
+    # _jpype.startup() is meaningless on Android's single already-running
+    # JVM (see doc/android.rst's "Removed JPype Services").
+    @common.skipOnAndroid("_jpype.startup() removed on Android")
     def testStartupBadArg(self):
         with self.assertRaisesRegex(TypeError, "takes exactly"):
             _jpype.startup()

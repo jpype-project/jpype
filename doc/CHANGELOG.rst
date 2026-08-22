@@ -7,6 +7,50 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - JPype now runs end-to-end on Android for the first time, verified via a
+    new project-local build/test harness (``project/android/``, see
+    ``doc/android_build.rst``) that cross-compiles ``_jpype`` for Android,
+    packages it into a minimal app, and runs it on an emulator. Getting
+    there required fixing seven real bugs, all in shared ``native/``,
+    ``native/jpype_module/``, or ``jpype/`` sources (not worked around in
+    the harness):
+
+    - ``PyJPModule_bootstrap()`` (the Android entry point) was missing the
+      exception-handling wrapper (``JP_PY_TRY``/``JP_PY_CATCH``) present on
+      every other module entry point, so a failure inside it threw a C++
+      exception straight across the C-linkage boundary into CPython
+      instead of becoming a catchable Python exception - an
+      uncaught-exception abort (``SIGABRT``) instead of a normal error.
+      This is #1257 itself.
+    - ``AttachCurrentThread``/``AttachCurrentThreadAsDaemon`` used a cast
+      correct for desktop JNI headers but incompatible with Android's NDK
+      ``jni.h``, which declares the same functions with a different
+      parameter type - native/ didn't even compile against the NDK
+      without this.
+    - Two ``native/jpype_module`` Java sources
+      (``JPypeContext.getHeapMemory()``, ``JPypeUtilities``'s sealed-class
+      detection) used ``java.lang.management``/``MethodHandleProxies``,
+      neither available on Android's platform API - replaced with portable
+      equivalents that work identically on desktop and Android.
+    - A required Java source file (``Reflector0``, used to get a
+      correctly-shaped Java stack frame for invoking caller-sensitive
+      methods) was missing from the Android build entirely, since it lives
+      outside the source tree JPype's own build normally compiles from.
+    - ``ClassLoader.getSystemClassLoader()`` - used to work around JPMS
+      module-boundary restrictions during JPype's late class-loading on a
+      desktop JVM launch - returns a stub on Android that can't see the
+      app's own classes at all, unlike desktop where JPype's own JVM launch
+      flags make it work. Fixed Android-only; an earlier unconditional
+      attempt at this same fix regressed two desktop tests.
+    - The Android bootstrap path never marked the native context as
+      running, so every Java call immediately after a successful bootstrap
+      failed with a spurious "JVM is not running" error.
+    - An ``atexit`` shutdown hook assumed a function Android never
+      registers, producing a harmless but noisy ignored exception on every
+      process exit.
+
+    #1257
+
   - ``JBoolean``/``JByte``/``JChar``/``JInt``/``JShort``/``JLong``/``JFloat``/
     ``JDouble`` are no longer tracked by the cyclic garbage collector. They
     were previously declared as ordinary Python ``class`` statements, which

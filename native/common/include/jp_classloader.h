@@ -47,7 +47,7 @@ public:
 
 private:
 	JPClassRef m_ClassClass;
-	JPObjectRef m_SystemClassLoader;
+	JPObjectRef m_ParentClassLoader;
 	JPObjectRef m_BootLoader;
 	jmethodID m_ForNameID;
 } ;

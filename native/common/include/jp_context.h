@@ -217,6 +217,10 @@ private:
 public:
 	JPClassRef m_ContextClass;
 	JPClassRef m_RuntimeException;
+	// java.lang.reflect.Proxy - NOT org.jpype.proxy.JPypeProxy (that one's
+	// the unrelated, pre-existing m_ProxyClass below, JPype's own
+	// Python-callback proxy factory).
+	JPClassRef m_ReflectProxyClass;
 
 private:
 	JPClassRef m_Array;

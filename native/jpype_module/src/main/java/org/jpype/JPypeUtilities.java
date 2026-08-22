@@ -1,8 +1,5 @@
 package org.jpype;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandleProxies;
-import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URISyntaxException;
@@ -25,16 +22,24 @@ public class JPypeUtilities
 
   static
   {
-    Predicate<Class> result = null;
+    Predicate<Class> result;
     try
     {
+      // Plain Method reflection rather than MethodHandles/MethodHandleProxies
+      // (which java.lang.invoke exposes) - MethodHandleProxies isn't part
+      // of Android's platform API, and Method.invoke() does the same job
+      // here without needing it.
       Method m = Class.class.getMethod("isSealed");
-      MethodHandle handle = MethodHandles.publicLookup().unreflect(m);
-      result = MethodHandleProxies.asInterfaceInstance(Predicate.class, handle);
-    } catch (IllegalAccessException e)
-    {
-      // it's a public method so this should never occur
-      throw new IllegalAccessError(e.getMessage());
+      result = c ->
+      {
+        try
+        {
+          return (Boolean) m.invoke(c);
+        } catch (ReflectiveOperationException e)
+        {
+          return false;
+        }
+      };
     } catch (NoSuchMethodException e)
     {
       // if isSealed doesn't exist then neither do sealed classes

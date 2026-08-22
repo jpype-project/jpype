@@ -1,6 +1,12 @@
 JPype for Android
 =================
 
+.. note::
+   This page describes feature/behavior differences on Android. For how to
+   actually build and test the Android-specific native code in this repo
+   (cross-compiling, an emulator test app, etc.), see
+   :doc:`android_build`.
+
 We ported JPype to the Android system.  There are a number of important
 differences between JPype on Android and on a JVM.  The Andoid platform uses
 the Dalvik virtual machine(DVM) which supports only a portion of the Java

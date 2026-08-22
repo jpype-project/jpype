@@ -518,7 +518,11 @@ def _JTerminate():
         pass
 
 
-atexit.register(_JTerminate)
+# Android has no shutdownJVM()/_jpype.shutdown at all (DVM can't be
+# stopped mid-process, see doc/android.rst) - only register this hook where
+# there's something for it to call.
+if hasattr(_jpype, 'shutdown'):
+    atexit.register(_JTerminate)
 
 
 @deprecated("java.lang.Thread.isAttached")
