@@ -5538,6 +5538,47 @@ whenever Java is no longer needed.  The thread will automatically reattach if
 Java is needed again.  There is a performance penalty each time a thread is
 attached and detached.
 
+.. note::
+   The automatic daemon attachment described above applies to threads that
+   call into Java *after* the JVM is already running.  It does not apply to
+   whichever thread calls ``startJVM()`` itself.  By JNI/JVM design, the
+   thread that starts the JVM becomes its designated main thread and is
+   attached as a non-daemon (user) thread, regardless of which Python
+   thread it happens to be.  A non-daemon thread keeps the JVM - and thus
+   the whole process - alive until it either finishes or is explicitly
+   detached.
+
+   This matters if you call ``startJVM()`` from a disposable thread, such
+   as a thread pool worker or a thread that is only used to perform setup
+   and then exits::
+
+       import threading
+
+       def main():
+           import jpype
+           jpype.startJVM()
+
+       t = threading.Thread(target=main)
+       t.start()
+       t.join()
+       # The process hangs here: the thread that started the JVM has
+       # exited without detaching, and it was never a daemon thread to
+       # begin with.
+
+   To let the process exit normally in this situation, detach the
+   launching thread (optionally re-attaching it as a daemon if it still
+   needs to make Java calls afterward) before it finishes::
+
+       def main():
+           import jpype
+           jpype.startJVM()
+           thread = jpype.java.lang.Thread.currentThread()
+           thread.detach()
+           thread.attachAsDaemon()
+
+   See :ref:`concurrent_processing_customizing_javalangthread` for details
+   on ``detach()`` and ``attachAsDaemon()``.
+
 .. _concurrent_processing_threading_java_threads:
 
 Java Threads
