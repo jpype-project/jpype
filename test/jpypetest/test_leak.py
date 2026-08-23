@@ -17,20 +17,19 @@
 #
 # *****************************************************************************
 import jpype
-import gc
+import os
 import sys
 from os import path
 import subrun
 import unittest
 
-try:
-    import resource
-except ImportError:
-    resource = None  # type: ignore[assignment]
-
-
-def haveResource():
-    return resource is not None
+# subrun._import() (used for the individual=True subprocess isolation this
+# module's LeakTestCase relies on) loads this file directly from its path in
+# a freshly spawned child interpreter, so this directory is not guaranteed to
+# already be on sys.path there the way a normal pytest collection run would
+# have it. Make the leakharness import work either way.
+sys.path.insert(0, path.dirname(path.abspath(__file__)))
+from leakharness import LeakChecker, haveResource  # noqa: E402
 
 
 def hasRefCount():
@@ -39,80 +38,6 @@ def hasRefCount():
         return True
     except:
         return False
-
-
-class LeakChecker:
-
-    def __init__(self):
-        self.runtime = jpype.java.lang.Runtime.getRuntime()
-
-    def memory_usage_resource(self):
-        # The Python docs aren't clear on what the units are exactly, but
-        # the Mac OS X man page for `getrusage(2)` describes the units as bytes.
-        # The Linux man page isn't clear, but it seems to be equivalent to
-        # the information from `/proc/self/status`, which is in kilobytes.
-        if sys.platform == 'darwin':
-            rusage_mp = 1
-        else:
-            rusage_mp = 1024
-        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * rusage_mp
-
-    def freeResources(self):
-        self.runtime.gc()  # Garbage collect Java
-        gc.collect()  # Garbage collect Python?
-        rss_memory = self.memory_usage_resource()
-        jvm_total_mem = self.runtime.totalMemory()
-        jvm_free_mem = self.runtime.freeMemory()
-        num_gc_objects = len(gc.get_objects())
-        return (rss_memory, jvm_total_mem, jvm_free_mem)
-
-    def memTest(self, func, size):
-        # Returns true if there may be a leak
-
-        # Note, some growth is possible due to loading of objects and classes,
-        # Thus we will run it a few times to check the growth rate.
-
-        rss_memory = list()
-        jvm_total_mem = list()
-        jvm_free_mem = list()
-        grow0 = list()
-        grow1 = list()
-
-        (rss_memory0, jvm_total_mem0, jvm_free_mem0) = self.freeResources()
-        success = 0
-        for j in range(10):
-            for i in range(size):
-                func()
-            (rss_memory1, jvm_total_mem1, jvm_free_mem1) = self.freeResources()
-
-            rss_memory.append(rss_memory1)
-            jvm_total_mem.append(jvm_total_mem1)
-            jvm_free_mem.append(jvm_free_mem1)
-
-            growth0 = (rss_memory1 - rss_memory0) / (float(size))
-            growth1 = (jvm_total_mem1 - jvm_total_mem0) / (float(size))
-            rss_memory0 = rss_memory1
-            jvm_total_mem0 = jvm_total_mem1
-            jvm_free_mem0 = jvm_total_mem1
-
-            grow0.append(growth0)
-            grow1.append(growth1)
-
-            if (growth0 < 0) or (growth1 < 0):
-                continue
-
-            if (growth0 < 4) and (growth1 < 4):
-                success += 1
-
-            if success > 3:
-                return False
-
-        print()
-        for i in range(len(grow0)):
-            print('  Pass%d: %f %f  - %d %d %d' %
-                  (i, grow0[i], grow1[i], rss_memory[i], jvm_total_mem[i], jvm_free_mem[i]))
-        print()
-        return True
 
 
 @subrun.TestCase(individual=True)
@@ -130,7 +55,18 @@ class LeakTestCase(unittest.TestCase):
 
     def assertNotLeaky(self, function, counts=5000):
         lc = LeakChecker()
-        assert not lc.memTest(function, counts), 'Potential leak found'
+        # leaksweep.py's config-driven sweep runs these same tests through a
+        # time budget instead of a fixed batch count -- it sets this env var
+        # (inherited by this subrun-spawned child process) rather than
+        # threading a parameter through unittest's fixed test-method
+        # signature. Absent it (the normal pytest run of this file), nothing
+        # changes from the original fixed-batch behavior.
+        budget = os.environ.get('JPYPE_LEAK_BUDGET_SECONDS')
+        if budget:
+            leaky = lc.memTestBudget(function, counts, float(budget))
+        else:
+            leaky = lc.memTest(function, counts)
+        assert not leaky, 'Potential leak found'
 
     @unittest.skipUnless(haveResource(), "resource not available")
     def testStringLeak(self):

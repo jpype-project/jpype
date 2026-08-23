@@ -7,6 +7,59 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed a reference leak when implicitly converting a plain Python
+    callable (a function, lambda, or bound method) to a Java functional
+    interface -- e.g. ``JObject(lambda x: x, "java.util.function.
+    Function")``, or passing a plain callable where Java code expects a
+    functional interface. If the underlying Java-side proxy construction
+    failed for any reason, the Python callable's refcount was left
+    permanently incremented with no way to release it. Same underlying
+    cause and fix technique as the proxy-creation leak below.
+
+  - Fixed a reference leak in Java-implementing-Python proxies
+    (``@JImplements``/``JProxy``): the first time a proxy instance was
+    passed to Java, if ``java.lang.reflect.Proxy.newInstance()`` (or the
+    weak-reference bookkeeping right after it) failed for any reason, the
+    Python instance's refcount was left permanently incremented with no
+    way to release it. Found via a new leak-detection sweep harness
+    (``test/jpypetest/leaksweep.py``, run via ``make -f project/dev.mk
+    leak-sweep``) combined with fault injection.
+
+  - Fixed a JVM thread-attachment leak: any native thread that calls into
+    Java without first calling ``jpype.attachThreadToJVM()`` gets
+    implicitly attached on its first call (so it doesn't have to be
+    explicit for simple cases), but nothing previously detached that
+    thread from the JVM when it later exited -- ``detachCurrentThread()``
+    only ran on an explicit ``jpype.detachThreadFromJVM()`` call. Any
+    short-lived native thread that touched Java at all (e.g. a Python
+    ``threading.Thread`` worker calling ``jpype.synchronized()`` once and
+    exiting) permanently leaked its JVM-side thread attachment. Fixed
+    with a per-thread destructor (POSIX TLS / Windows FLS) that
+    auto-detaches on thread exit regardless of whether the thread called
+    JPype again beforehand. Found via a new leak-detection sweep harness
+    (``test/jpypetest/leaksweep.py``, run via ``make -f project/dev.mk
+    leak-sweep``).
+
+  - Fixed a native reference-count leak in ``PyJPProxy_dealloc``: every
+    ``@JImplements``-decorated class is a CPython heap type, and instance
+    creation implicitly holds a reference on it that must be released on
+    deallocation. That release was missing, so any code defining an
+    ``@JImplements`` class inside a loop (a fresh callback class per
+    iteration, or a factory function) permanently leaked one class object
+    per call. Found via a new leak-detection sweep harness
+    (``test/jpypetest/leaksweep.py``, run via ``make -f project/dev.mk
+    leak-sweep``).
+
+  - Fixed a leaked and broken synthetic traceback chain when converting a
+    Java exception's stack trace to Python: ``tb_create()`` built one
+    traceback frame per Java stack-trace element but always linked
+    ``tb_next`` to ``None`` instead of the previous frame, so only the
+    innermost frame was ever visible on ``.__traceback__.tb_next`` and
+    every earlier frame's traceback+frame object pair leaked outright.
+    Java exceptions raised into Python now expose their full stack trace
+    via the normal traceback chain, and no longer leak. Found via the
+    same leak-detection sweep harness.
+
   - ``JBoolean``/``JByte``/``JChar``/``JInt``/``JShort``/``JLong``/``JFloat``/
     ``JDouble`` are no longer tracked by the cyclic garbage collector. They
     were previously declared as ordinary Python ``class`` statements, which

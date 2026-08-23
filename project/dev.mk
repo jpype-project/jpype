@@ -9,7 +9,7 @@ PY_SRC := $(shell find jpype -name "*.py" 2>/dev/null)
 CPP_SRC := $(shell find native -name "*.cpp" -o -name "*.h" 2>/dev/null)
 SENTINEL := .build_history
 
-.PHONY: all clean compile test-java test-python jar
+.PHONY: all clean compile test-java test-python jar leak-sweep
 
 # Default target
 all: resolve $(SENTINEL)
@@ -47,6 +47,18 @@ test-python:
 	@echo "Running Pytest..."
 	# We cd into test just like the Azure runner to avoid path confusion
 	cd test && $(PYTHON) -m pytest -v jpypetest --checkjni
+
+# Curated, time-budgeted leak-detection sweep (see
+# plan/LeakCheckerBackport.md). Opt-in and separate from the normal fast
+# correctness run above -- each target in leak_targets.txt gets its own
+# fresh, isolated small-heap JVM and runs for its own configured
+# wall-clock budget, so this is meant for a dedicated
+# (multi-minute-to-multi-hour) run, not every `make test`. Per CLAUDE.md,
+# PYTHON must point at a disposable venv; this target does not create
+# one.
+leak-sweep:
+	@echo "Running curated leak-detection sweep..."
+	cd test/jpypetest && $(PYTHON) leaksweep.py
 
 clean:
 	@echo "Cleaning up build artifacts..."

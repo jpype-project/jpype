@@ -89,6 +89,63 @@ class ShutdownSignalWarningTest(unittest.TestCase):
 
 
 @subrun.TestCase
+class AutoDetachAfterShutdownTest(unittest.TestCase):
+    """Regression test for the JVM thread-attachment-leak fix
+    (native/common/jp_context.cpp): a thread that auto-attached (or
+    explicitly attached) to the JVM and is still alive/attached when the
+    JVM shuts down must not crash the process later when it finally
+    exits and its TLS auto-detach destructor fires -- by then the
+    JavaVM* it captured at attach time may point into an already
+    dlclose()'d/FreeLibrary()'d shared library
+    (JPPlatformAdapter::unloadLibrary(), called from shutdownJVM() when
+    freeJVM is set). The destructor must check
+    JPContext_global->isRunning() before touching that pointer rather
+    than assuming its own bookkeeping is still valid. Needs subrun since
+    it starts and shuts down its own JVM."""
+
+    @classmethod
+    def setUpClass(cls):
+        import threading
+
+        jpype.startJVM(convertStrings=False)
+
+        attached = threading.Event()
+        release = threading.Event()
+
+        def worker():
+            # Implicit ("auto") attach -- first call into Java on this
+            # brand-new native thread, registered as a daemon attach so
+            # shutdownJVM()'s DestroyJavaVM() does not wait for it.
+            jpype.JString("worker")
+            attached.set()
+            # Stay alive (and attached) until told to exit, so the JVM
+            # shutdown below happens while this thread is still attached
+            # -- this thread's eventual exit (after release.set(), below)
+            # is what fires the auto-detach destructor post-shutdown.
+            release.wait(timeout=10)
+
+        t = threading.Thread(target=worker)
+        t.start()
+        if not attached.wait(timeout=10):
+            raise RuntimeError("worker thread never attached")
+
+        jpype.shutdownJVM()
+
+        # Let the still-attached worker thread exit now that the JVM is
+        # already down, then wait for it.
+        release.set()
+        t.join(timeout=10)
+        cls.workerSurvived = not t.is_alive()
+
+    def testSurvivedShutdownWhileAttached(self):
+        # Reaching this line at all means the subprocess survived a
+        # worker thread auto-detaching after the JVM it was attached to
+        # had already shut down.
+        self.assertTrue(self.workerSurvived)
+        self.assertFalse(jpype.isJVMStarted())
+
+
+@subrun.TestCase
 class ShutdownTest(unittest.TestCase):
 
     @classmethod

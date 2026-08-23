@@ -115,6 +115,21 @@ class JLongTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             JLong._canConvertToJava(object())
 
+    def testNumberConversions(self):
+        # Plain (non-fault-injected) exercise of int()/float()/str()/repr()
+        # on a JLong -- the testJPNumberLong_* tests above cover the same
+        # functions but are @requireInstrumentation-gated (fault
+        # injection), which makes them unsuitable as a leak_targets.txt
+        # entry: on a normal (non-ENABLE_COVERAGE) build, _jpype.fault
+        # doesn't exist and the whole test body would silently no-op via
+        # unittest.SkipTest every call, contributing nothing to a real
+        # `make leak-sweep` run.
+        jd = JLong(1)
+        self.assertEqual(int(jd), 1)
+        self.assertEqual(float(jd), 1.0)
+        self.assertEqual(str(jd), "1")
+        self.assertIsInstance(repr(jd), str)
+
     @common.requireInstrumentation
     def testArrayFault(self):
         ja = JArray(JLong)(5)
