@@ -7,6 +7,8 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Support for descriptor level alterations using "." prefix.
+  
   - ``JBoolean``/``JByte``/``JChar``/``JInt``/``JShort``/``JLong``/``JFloat``/
     ``JDouble`` are no longer tracked by the cyclic garbage collector. They
     were previously declared as ordinary Python ``class`` statements, which

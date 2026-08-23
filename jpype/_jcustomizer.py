@@ -92,7 +92,7 @@ def JImplementationFor(clsname, base=False):
 
     The method ``__jclass_init__(cls)`` will be called with the constructed
     class as the argument.  This call is used to set methods for all classes
-    that derive from the specified class.  Use ``jclass._customize()`` to
+    that derive from the specified class.  Use ``setattr(jclass,"."+name,value)`` to
     alter the class methods.
 
     Using the prototype class as a base class is used mainly to support
@@ -130,8 +130,8 @@ def _applyStickyMethods(cls, sticky):
         name = method.__name__
         if rename:
             orig = type.__getattribute__(cls, name)
-            cls._customize(rename, orig)
-        cls._customize(name, method)
+            setattr(cls, "."+rename, orig)
+        setattr(cls, "."+name, method)
 
 
 def _applyCustomizerImpl(members, proto, sticky, setter):
@@ -176,7 +176,7 @@ def _applyCustomizerPost(cls, proto):
     """ (internal) Customize a class after it has been created """
     sticky = []
     _applyCustomizerImpl(cls.__dict__, proto, sticky,
-                         lambda p, v: cls._customize(p, v))
+                         lambda p, v: setattr(cls, "."+p, v))
 
     # Merge sticky into existing __jclass_init__
     if len(sticky) > 0:
@@ -186,7 +186,7 @@ def _applyCustomizerPost(cls, proto):
             if method:
                 method(cls)
             _applyStickyMethods(cls, sticky)
-        cls._customize('__jclass_init__', init)
+        setattr(cls, '.__jclass_init__', init)
 
     # Apply a customizer to all derived classes
     if '__jclass_init__' in proto.__dict__:

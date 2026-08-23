@@ -222,3 +222,22 @@ class FieldsTestCase(common.JPypeTestCase):
         self.assertEqual(self.cls.static_object_field, "Charlie")
         self.assertEqual(self.obj.getStaticObject(), "Charlie")
         self.assertEqual(self.cls.getStaticObject(), "Charlie")
+
+    def testStaticRename(self):
+        Fixture = JClass("jpype.common.Fixture")
+        Fixture.static_long_field = 52
+        self.assertEqual(Fixture.static_long_field, 52)
+        setattr(Fixture, ".alias", getattr(Fixture, ".static_long_field"))
+        self.assertEqual(Fixture.alias, 52)
+        Fixture.alias = 17
+        self.assertEqual(Fixture.static_long_field, 17)
+
+    def testDot(self):
+        Fixture = JClass("jpype.common.Fixture")
+        with self.assertRaises(AttributeError):
+            getattr(Fixture, ".")
+        with self.assertRaises(AttributeError):
+            setattr(Fixture, ".", 1)
+        with self.assertRaises(AttributeError):
+            getattr(Fixture, ".not")
+        
