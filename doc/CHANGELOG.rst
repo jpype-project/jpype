@@ -7,6 +7,15 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed ``startJVM()`` raising an uninformative ``"Can't find org.jpype.jar
+    support library"`` error when ``org.jpype.jar`` fails to load because the
+    running JVM is too old to support it (e.g. Java 8, since JPype 1.6.0's
+    classfile target requires Java 11+). The underlying
+    ``UnsupportedClassVersionError`` was being discarded, which also silently
+    disabled the existing friendlier "JVM is older than required Java
+    version" diagnostic in ``jpype._core``, since that diagnostic depends on
+    seeing the real exception text. #1312
+
   - ``JBoolean``/``JByte``/``JChar``/``JInt``/``JShort``/``JLong``/``JFloat``/
     ``JDouble`` are no longer tracked by the cyclic garbage collector. They
     were previously declared as ordinary Python ``class`` statements, which

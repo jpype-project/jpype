@@ -55,9 +55,18 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 		m_BootLoader = JPObjectRef(frame, frame.NewObjectA(dynamicLoaderClass, newDyLoader, &v));
 		return;
 	}
+	// org.jpype was not loaded already so we can't proceed.  Report the
+	// underlying Java exception (e.g. UnsupportedClassVersionError when the
+	// JVM is too old to load org.jpype.jar) rather than silently discarding
+	// it, so the real cause isn't hidden behind a generic "can't find" error
+	// (see #1312).
+	jthrowable th = frame.ExceptionOccurred();
 	frame.ExceptionClear();
-
-	// org.jpype was not loaded already so we can't proceed
+	if (th != nullptr)
+	{
+		string detail = frame.toString((jobject) th);
+		JP_RAISE(PyExc_RuntimeError, "Can't find org.jpype.jar support library: " + detail);
+	}
 	JP_RAISE(PyExc_RuntimeError, "Can't find org.jpype.jar support library");
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
