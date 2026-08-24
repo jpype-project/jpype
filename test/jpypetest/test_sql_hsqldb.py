@@ -179,6 +179,16 @@ class ConnectionTestCase(common.JPypeTestCase):
             with self.assertRaises(dbapi2.InterfaceError):
                 cx.converters = object()
 
+    def test_isolation_level(self):
+        with dbapi2.connect(db_name) as cx:
+            self.assertIsInstance(cx.isolation_level, int)
+            cx.isolation_level = dbapi2.TRANSACTION_SERIALIZABLE
+            self.assertEqual(cx.isolation_level, dbapi2.TRANSACTION_SERIALIZABLE)
+            with self.assertRaises(dbapi2.NotSupportedError):
+                cx.isolation_level = dbapi2.TRANSACTION_NONE
+        with self.assertRaises(dbapi2.ProgrammingError):
+            cx.isolation_level
+
 
 class CursorTestCase(common.JPypeTestCase):
     def setUp(self):
@@ -1087,6 +1097,28 @@ class TypeTestCase(common.JPypeTestCase):
             f3 = cu.execute('select * from test').fetchone()
             self.assertEqual(f3[0], datetime.datetime(2020, 5, 21, 3, 4, 5, 123122))
 
+    def testTimeWithTimezone(self):
+        # java.time.OffsetTime is the JDK-standard getObject() result for
+        # TIME WITH TIME ZONE and is converted to a timezone-aware
+        # datetime.time by default.
+        tz = datetime.timezone(datetime.timedelta(hours=2))
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(NAME TIME WITH TIME ZONE)")
+            cu.execute("insert into test(NAME) values(?)", ["03:04:05+02:00"])
+            f = cu.execute('select * from test').fetchone()
+            self.assertEqual(f[0], datetime.time(3, 4, 5, tzinfo=tz))
+
+    def testTimestampWithTimezone(self):
+        # HSQLDB's getObject() for TIMESTAMP WITH TIME ZONE returns the
+        # JDK-standard java.time.OffsetDateTime, converted to a
+        # timezone-aware datetime.datetime by default.
+        tz = datetime.timezone(datetime.timedelta(hours=2))
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(NAME TIMESTAMP WITH TIME ZONE)")
+            cu.execute("insert into test(NAME) values(?)", ["2020-05-21 03:04:05.123456+02:00"])
+            f = cu.execute('select * from test').fetchone()
+            self.assertEqual(f[0], datetime.datetime(2020, 5, 21, 3, 4, 5, 123456, tzinfo=tz))
+
     def _testInt(self, tp, desc, jtype, null=True):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table test(NAME %s)" % tp)
@@ -1166,6 +1198,18 @@ class TypeTestCase(common.JPypeTestCase):
     def testDecimal(self):
         self._testNumeric('DECIMAL', ('NAME', 'DECIMAL'), java.math.BigDecimal)
 
+    def testDecimalParam(self):
+        # decimal.Decimal has no direct setter of its own; it must be
+        # adapted into a java.math.BigDecimal before a setter can be
+        # found for it (see the default adapter registered in
+        # jpype.dbapi2._populateTypes).
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(NAME DECIMAL(10,2))")
+            cu.execute("insert into test(NAME) values(?)", [decimal.Decimal("3.14")])
+            f = cu.execute("select * from test").fetchone()
+            self.assertEqual(f[0], decimal.Decimal("3.14"))
+            self.assertIsInstance(f[0], decimal.Decimal)
+
     def _testBinary(self, tp, desc, jtype):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table test(NAME %s)" % tp)
@@ -1238,6 +1282,21 @@ class TypeTestCase(common.JPypeTestCase):
             cu.execute("insert into test(NAME) values(?)", [None])
             f = cu.execute("select * from test").fetchone(converters=None)
             self.assertEqual(f[0], None)
+
+    def testOverflow(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(NAME SMALLINT)")
+            with self.assertRaises(dbapi2.InterfaceError):
+                cu.execute("insert into test(NAME) values(?)", [10**30], types=[dbapi2.SMALLINT])
+
+    def testExplicitTypeMismatch(self):
+        # An explicit `types=` that cannot accept the supplied value (and
+        # falls through PreparedStatement.setObject() too) must surface as
+        # InterfaceError, not propagate a raw Java TypeError.
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(NAME DATE)")
+            with self.assertRaises(dbapi2.InterfaceError):
+                cu.execute("insert into test(NAME) values(?)", [object()], types=[dbapi2.DATE])
 
 
 class ThreadingTestCase(common.JPypeTestCase):

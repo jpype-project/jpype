@@ -4,4 +4,7 @@ pytest-xdist
 pyinstaller
 jedi==0.18.0
 numpy
+pandas
+polars
+DBUtils
 typing_extensions

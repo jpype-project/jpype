@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import threading
 import time
 import typing
@@ -10,11 +11,7 @@ from . import _jinit
 from . import types as _jtypes
 
 # TODO
-#  - Callable procedures
-#  - Isolation levels
-#  - Default adaptors
 #  - A complete testbench
-#  - Testbench with more than one DB
 #  - Documentation
 
 # This a generic implementation of PEP-249
@@ -31,12 +28,22 @@ __all__ = ['ARRAY', 'ASCII_STREAM', 'BIGINT', 'BINARY', 'BINARY_STREAM', 'BIT',
            'SETTERS_BY_META', 'SETTERS_BY_TYPE', 'SMALLINT', 'SQLXML', 'STRING',
            'TEXT', 'TIME', 'TIMESTAMP', 'TIMESTAMP_WITH_TIMEZONE',
            'TIME_WITH_TIMEZONE', 'TINYINT', 'Time', 'TimeFromTicks', 'Timestamp',
-           'TimestampFromTicks', 'URL', 'VARBINARY', 'VARCHAR', 'Warning',
+           'TimestampFromTicks', 'TRANSACTION_NONE', 'TRANSACTION_READ_COMMITTED',
+           'TRANSACTION_READ_UNCOMMITTED', 'TRANSACTION_REPEATABLE_READ',
+           'TRANSACTION_SERIALIZABLE', 'URL', 'VARBINARY', 'VARCHAR', 'Warning',
            'apilevel', 'connect', 'paramstyle', 'threadsafety']
 
 apilevel = "2.0"
 threadsafety = 2
 paramstyle = 'qmark'
+
+# (extension) Transaction isolation levels for Connection.isolation_level,
+# matching the java.sql.Connection.TRANSACTION_* constants.
+TRANSACTION_NONE = 0
+TRANSACTION_READ_UNCOMMITTED = 1
+TRANSACTION_READ_COMMITTED = 2
+TRANSACTION_REPEATABLE_READ = 4
+TRANSACTION_SERIALIZABLE = 8
 
 
 class JDBCTypeProtocol(typing.Protocol):
@@ -228,6 +235,27 @@ def _asPython(x):
     return x._py()
 
 
+def _offsetTimeToPy(v):
+    """ Convert a java.time.OffsetTime (the default getObject() result for
+    TIME_WITH_TIMEZONE on drivers that support java.time natively) into a
+    timezone-aware datetime.time. """
+    offset = datetime.timezone(datetime.timedelta(seconds=v.getOffset().getTotalSeconds()))
+    return datetime.time(v.getHour(), v.getMinute(), v.getSecond(),
+                         v.getNano() // 1000, offset)
+
+
+def _offsetDateTimeToPy(v):
+    """ Convert a java.time.OffsetDateTime (the default getObject() result
+    for TIMESTAMP_WITH_TIMEZONE on drivers that support java.time natively)
+    into a timezone-aware datetime.datetime. """
+    offset = datetime.timezone(datetime.timedelta(seconds=v.getOffset().getTotalSeconds()))
+    d = v.toLocalDate()
+    t = v.toLocalTime()
+    return datetime.datetime(d.getYear(), d.getMonthValue(), d.getDayOfMonth(),
+                             t.getHour(), t.getMinute(), t.getSecond(),
+                             t.getNano() // 1000, offset)
+
+
 # This maps the types reported by the columns to the type used for the getter
 # and converter
 _default_map = {ARRAY: OBJECT, OBJECT: OBJECT, NULL: OBJECT,
@@ -247,6 +275,10 @@ _default_map = {ARRAY: OBJECT, OBJECT: OBJECT, NULL: OBJECT,
                 }
 
 _default_setters: typing.Dict[typing.Any, typing.Union[JDBCType, _JDBCTypePrimitive]] = {}
+
+# Fallback for SETTERS_BY_TYPE: (java interface, JDBCType) pairs checked
+# with issubclass() when the exact-type lookup in _default_setters misses.
+_default_setters_by_interface: typing.List[typing.Tuple[typing.Any, JDBCTypeProtocol]] = []
 
 _default_converters : typing.Dict[typing.Any, typing.Callable] = {}
 
@@ -275,7 +307,18 @@ def SETTERS_BY_TYPE(cx, meta, col, ptype):
     from Python after adapters have been applied to determine the
     best setter.
     """
-    return _default_setters.get(ptype, None)
+    s = _default_setters.get(ptype, None)
+    if s is not None:
+        return s
+    # A value fetched from the database (java.sql.Array/Blob/Clob/...)
+    # always comes back as some vendor-specific concrete class
+    # implementing the interface, never the interface itself, so it will
+    # never match the exact-type lookup above.  Fall back to checking
+    # against the JDBC interfaces those getters can return.
+    for jtype, jdbctype in _default_setters_by_interface:
+        if issubclass(ptype, jtype):
+            return jdbctype
+    return None
 
 
 # Getters take (connection, meta, col) -> JDBCTYPE
@@ -661,6 +704,27 @@ class Connection(object):
         self._jcx.setAutoCommit(enabled)
 
     @property
+    def isolation_level(self):
+        """ (extension) Property controlling the transaction isolation level.
+
+        The value is one of ``TRANSACTION_NONE``, ``TRANSACTION_READ_UNCOMMITTED``,
+        ``TRANSACTION_READ_COMMITTED``, ``TRANSACTION_REPEATABLE_READ``, or
+        ``TRANSACTION_SERIALIZABLE``.  Not every level is supported by every
+        database; consult the JDBC driver documentation for details.  Setting
+        an unsupported level will raise NotSupportedError.
+        """
+        self._validate()
+        return self._jcx.getTransactionIsolation()
+
+    @isolation_level.setter
+    def isolation_level(self, level):
+        self._validate()
+        try:
+            self._jcx.setTransactionIsolation(level)
+        except _SQLException as ex:
+            raise NotSupportedError(ex.message()) from ex
+
+    @property
     def typeinfo(self):
         """ list: The list of types that are supported by this driver.
 
@@ -881,7 +945,8 @@ class Cursor(object):
         Each of these sequences contains information describing one result
         column:
 
-        - name
+        - name (the column's ``AS`` alias if the query specified one,
+          otherwise its plain name)
         - type_code
         - display_size
         - internal_size
@@ -899,7 +964,7 @@ class Cursor(object):
         meta = self._resultSet.getMetaData()
         for i in range(1, meta.getColumnCount() + 1):
             size = meta.getColumnDisplaySize(i)
-            desc.append((str(meta.getColumnName(i)),
+            desc.append((str(meta.getColumnLabel(i)),
                          str(meta.getColumnTypeName(i)),
                          size,
                          size,
@@ -1153,13 +1218,6 @@ class Cursor(object):
         if isinstance(seq_of_parameters, typing.Iterable):
             for params in seq_of_parameters:
                 counts.append(self._executeone(params))
-        elif isinstance(seq_of_parameters, typing.Iterator):
-            while True:
-                try:
-                    params = next(seq_of_parameters)
-                    counts.append(self._executeone(params))
-                except StopIteration:
-                    break
         else:
             raise _UnsupportedTypeError(
                 "'%s' is not supported" % str(type(seq_of_parameters)))
@@ -1451,6 +1509,19 @@ def _populateTypes():
     _default_setters[datetime.date] = DATE
     _default_setters[datetime.time] = TIME
 
+    # A value fetched from the database as an Array/Blob/Clob/... always
+    # comes back as a vendor-specific concrete class implementing the
+    # interface (e.g. org.h2.jdbc.JdbcBlob), never java.sql.Blob itself,
+    # so the exact-type entries above never actually match one of these
+    # in practice; SETTERS_BY_TYPE falls back to this list to catch them.
+    _default_setters_by_interface.append((java.sql.Array, ARRAY))
+    _default_setters_by_interface.append((java.sql.Blob, BLOB))
+    _default_setters_by_interface.append((java.sql.Clob, CLOB))
+    _default_setters_by_interface.append((java.sql.NClob, NCLOB))
+    _default_setters_by_interface.append((java.sql.SQLXML, SQLXML))
+    _default_setters_by_interface.append((java.sql.Ref, REF))
+    _default_setters_by_interface.append((java.sql.RowId, ROWID))
+
     _default_converters[java.lang.String] = str
     _default_converters[java.sql.Date] = _asPython
     _default_converters[java.sql.Time] = _asPython
@@ -1458,6 +1529,25 @@ def _populateTypes():
     _default_converters[java.math.BigDecimal] = _asPython
     _default_converters[byteArray] = bytes
     _default_converters[type(None)] = _nop
+
+    # decimal.Decimal has no direct setter of its own; adapt it into a
+    # java.math.BigDecimal, which does (matching the read-side converter
+    # above, which turns a BigDecimal back into a decimal.Decimal).
+    _default_adapters[decimal.Decimal] = lambda x: java.math.BigDecimal(str(x))
+
+    # TIME_WITH_TIMEZONE/TIMESTAMP_WITH_TIMEZONE default to OBJECT's
+    # getObject(), which returns whatever Java type the driver uses to
+    # represent them.  java.time.OffsetTime/OffsetDateTime are the
+    # JDK-standard (JDBC 4.2) representations and are what modern drivers
+    # increasingly return (e.g. HSQLDB for both; H2 for OffsetTime), so
+    # they are always safe to convert here.  A driver that returns its own
+    # vendor-specific class instead (e.g. H2's TIMESTAMP_WITH_TIMEZONE)
+    # needs a converter registered for that class explicitly -- see the
+    # dbapi2 guide's JDBC Types section for the pattern
+    # (``cx.converters[SomeJClass] = ...``).
+    _default_converters[java.time.OffsetTime] = _offsetTimeToPy
+    _default_converters[java.time.OffsetDateTime] = _offsetDateTimeToPy
+
     # Adaptors can be installed after the JVM is started
     # JByteArray = _jpype.JArray(_jtypes.JByte)
     # VARCHAR.adapters[memoryview] = JByteArray

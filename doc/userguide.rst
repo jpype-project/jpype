@@ -6032,7 +6032,7 @@ Example Usage of dbapi2
     # Connect to the database
     connection = dbapi2.connect(
         "jdbc:database_url",  # JDBC URL for the database
-        {"user": "username", "password": "password"}  # Connection properties
+        user="username", password="password"  # Connection properties
     )
 
     # Create a cursor and execute a query

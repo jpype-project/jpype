@@ -61,6 +61,8 @@ module = [
     "java.*",
     "jpypex.common",
     "jedi.*",
+    "pandas",
+    "dbutils.*",
 ]
 
 ignore_missing_imports = true
