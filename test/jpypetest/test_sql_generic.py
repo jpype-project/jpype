@@ -2,7 +2,75 @@
 import jpype.dbapi2 as dbapi2
 import common
 import time
+import unittest.mock as mock
 
+
+
+class CursorSetParamsTestCase(common.JPypeTestCase):
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+
+    def _cursor(self):
+        cx = mock.MagicMock(spec=dbapi2.Connection)
+        cx._jcx = mock.MagicMock()
+        cur = dbapi2.Cursor(cx)
+        cur._statement = mock.MagicMock()
+        return cx, cur
+
+    def test_setParams_skips_metadata_when_no_params(self):
+        # Some strict JDBC drivers raise on getParameterMetaData() when the
+        # statement has no parameter markers, so it must not be called for
+        # parameterless statements (see gh #1489).
+        _, cur = self._cursor()
+        cur._setParams(())
+        cur._statement.getParameterMetaData.assert_not_called()
+
+    def test_setParams_uses_metadata_when_params_given(self):
+        cx, cur = self._cursor()
+        cx._adapters = mock.MagicMock()
+        cx._adapters.get.return_value = None
+        cx._setters = mock.MagicMock()
+        cx._setters.return_value = mock.MagicMock()
+        cur._statement.getParameterMetaData.return_value.getParameterCount.return_value = 1
+        cur._setParams((1,))
+        cur._statement.getParameterMetaData.assert_called_once()
+
+
+class CursorCallprocTestCase(common.JPypeTestCase):
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+
+    def _cursor(self):
+        cx = mock.MagicMock(spec=dbapi2.Connection)
+        cx._jcx = mock.MagicMock()
+        cx._jcx.isClosed.return_value = False
+        cx._adapters = mock.MagicMock()
+        cx._setters = mock.MagicMock()
+        cur = dbapi2.Cursor(cx)
+        stmt = mock.MagicMock()
+        stmt.execute.return_value = False
+        stmt.getUpdateCount.return_value = -1
+        cx._jcx.prepareCall.return_value = stmt
+        return cx, cur, stmt
+
+    def test_callproc_skips_metadata_when_no_params(self):
+        # Same issue as parameterless execute(): a zero-argument
+        # "{CALL proc()}" must not trigger getParameterMetaData() either
+        # (see gh #1489).
+        _, cur, stmt = self._cursor()
+        cur.callproc("myproc")
+        stmt.getParameterMetaData.assert_not_called()
+
+    def test_callproc_uses_metadata_when_params_given(self):
+        cx, cur, stmt = self._cursor()
+        cx._adapters = mock.MagicMock()
+        cx._adapters.get.return_value = None
+        cx._setters = mock.MagicMock()
+        cx._setters.return_value = mock.MagicMock()
+        stmt.getParameterMetaData.return_value.getParameterCount.return_value = 1
+        stmt.getParameterMetaData.return_value.getParameterMode.return_value = 1
+        cur.callproc("myproc", (1,))
+        stmt.getParameterMetaData.assert_called_once()
 
 
 class SQLModuleTestCase(common.JPypeTestCase):

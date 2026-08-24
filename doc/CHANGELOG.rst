@@ -30,6 +30,13 @@ Latest Changes:
     silently converted to a space on import, corrupting the resolved
     resource path. #1413
 
+  - Fixed ``jpype.dbapi2`` calling ``PreparedStatement.getParameterMetaData()``
+    even for statements executed with no parameters, which some strict JDBC
+    drivers reject for statements containing no parameter markers.
+    Parameterless ``execute()``/``executemany()`` calls, as well as
+    parameterless ``callproc()`` calls, no longer inspect parameter
+    metadata at all. #1489
+
   - Reworked the internal object layout for Java-backed Python objects to use
     fixed, type-baked offsets instead of a runtime allocator that re-derived
     each object's layout from version-sensitive CPython internals on every

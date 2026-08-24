@@ -725,8 +725,6 @@ class Cursor(object):
 
     def _setParams(self, params):
         cx = self._connection
-        meta = self._statement.getParameterMetaData()
-        count = meta.getParameterCount()
 
         if isinstance(params, str):
             raise _UnsupportedTypeError(
@@ -737,6 +735,16 @@ class Cursor(object):
             raise _UnsupportedTypeError("'%s' parameters not supported" % type(params).__name__)  # pragma: no cover
 
         param_tuple = tuple(params)
+
+        # Skip inspecting parameter metadata entirely for parameterless
+        # statements.  Some strict JDBC drivers raise when
+        # getParameterMetaData() is called on a statement with no
+        # parameter markers.
+        if not param_tuple:
+            return
+
+        meta = self._statement.getParameterMetaData()
+        count = meta.getParameterCount()
 
         if len(param_tuple) != count:
             raise ProgrammingError(
@@ -969,14 +977,23 @@ class Cursor(object):
             # This is a special one as we need to deal with in and out arguments
             out = list(parameters)
             cx = self._connection
-            meta = self._statement.getParameterMetaData()
-            count = meta.getParameterCount()
-            if types is None:
-                types = [None] * count
+            # Skip inspecting parameter metadata entirely for parameterless
+            # calls.  Some strict JDBC drivers raise when
+            # getParameterMetaData() is called on a statement with no
+            # parameter markers.
+            if not parameters:
+                meta = None
+                count = 0
+                types = []
             else:
-                if len(types) != count:
-                    raise ProgrammingError(
-                        "expected '%d' types, got '%d'" % (count, len(types)))
+                meta = self._statement.getParameterMetaData()
+                count = meta.getParameterCount()
+                if types is None:
+                    types = [None] * count
+                else:
+                    if len(types) != count:
+                        raise ProgrammingError(
+                            "expected '%d' types, got '%d'" % (count, len(types)))
             for i in range(count):
                 # Lookup the JDBC Type
                 p = parameters[i]
