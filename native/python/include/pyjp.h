@@ -19,12 +19,16 @@
 #include "jpype.h"
 #include "jp_pythontypes.h"
 
-// Py_SET_TYPE became a public macro in CPython 3.9 (bpo-39573); before that,
-// Py_TYPE(obj) itself was an assignable lvalue macro. Needed for the
-// polymorph-back-to-canonical-type step in jp_class.cpp/pyjp_object.cpp on
-// Python 3.8, the oldest version this project still supports.
+// Py_SET_TYPE/Py_SET_REFCNT/Py_SET_SIZE became public macros in CPython 3.9
+// (bpo-39573); before that, Py_TYPE(obj)/Py_REFCNT(obj)/Py_SIZE(obj)
+// themselves were assignable lvalue macros. Needed for the
+// polymorph-back-to-canonical-type step in jp_class.cpp/pyjp_object.cpp and
+// the tagged-number recycling pool in pyjp_number.cpp on Python 3.8, the
+// oldest version this project still supports.
 #if PY_VERSION_HEX < 0x03090000
 #define Py_SET_TYPE(obj, type) ((Py_TYPE(obj) = (type)))
+#define Py_SET_REFCNT(obj, refcnt) ((Py_REFCNT(obj) = (refcnt)))
+#define Py_SET_SIZE(obj, size) ((Py_SIZE(obj) = (size)))
 #endif
 
 class JPStackInfo;

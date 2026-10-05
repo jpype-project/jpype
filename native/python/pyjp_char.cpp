@@ -673,6 +673,19 @@ static PyType_Spec charSpec = {
 	charSlots
 };
 
+// Concrete leaf, formerly `class JChar(_jpype._JChar, internal=True): pass`
+// in jpype/types.py -- see the matching comment in pyjp_number.cpp for why
+// building it here instead, with no additional slots, keeps it non-GC.
+static PyType_Slot charLeafSlots[] = {
+	{0}
+};
+
+// Dotted name -- see the matching comment in pyjp_number.cpp for why (a
+// dotless spec name makes PyType_FromMetaclass raise a DeprecationWarning
+// instead of defaulting __module__). tp_name is fixed back up to the plain
+// name after creation, below.
+static PyType_Spec charLeafSpec = {"_jpype.JChar", 0, 0, Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, charLeafSlots};
+
 #ifdef __cplusplus
 }
 #endif
@@ -688,5 +701,18 @@ void PyJPChar_initType(PyObject* module)
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 	PyJPClass_SetJValueFn(PyJPChar_Type, &charJValue);
 	PyModule_AddObject(module, "_JChar", (PyObject*) PyJPChar_Type);
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
+
+	bases = JPPyTuple_Pack(PyJPChar_Type);
+	auto *leaf = (PyTypeObject*) PyJPClass_FromSpecWithBases(&charLeafSpec, bases.get(), offset);
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
+	// Restore tp_name and __module__ to what this class had as a
+	// jpype/types.py class statement ("JChar" / "jpype.types") -- see the
+	// charLeafSpec comment above for tp_name, and FromSpecWithBases always
+	// baking in __module__ "_jpype" (right for _JChar itself, not this leaf).
+	leaf->tp_name = "JChar";
+	PyDict_SetItemString(leaf->tp_dict, "__module__", PyUnicode_FromString("jpype.types"));
+	JP_PY_CHECK(); // GCOVR_EXCL_LINE
+	PyModule_AddObject(module, "JChar", (PyObject*) leaf);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE
 }

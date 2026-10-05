@@ -1,0 +1,6 @@
+Test to verify that JARs whose path contains "+", "&", "=", or "#" are loaded
+correctly. Issue #1413: URLDecoder.decode() treats "+" as an encoded space,
+so a literal "+" in a classpath entry's path was silently corrupted when
+JPypePackageManager re-decoded the URI (needed to undo the JDK 8 zip
+filesystem double-encoding bug, see JPypePackageManager.toURI).
+The built jar should be placed in ``test/jar/plus+path&has=special#chars/sample_package.jar``.

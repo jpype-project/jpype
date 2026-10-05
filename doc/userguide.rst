@@ -2858,6 +2858,59 @@ Common Issues and Troubleshooting
     import _jpype
     _jpype.enableStacktraces(True)
 
+7. **Class Loader Conflicts with Third-Party Frameworks**: In environments
+   with multiple class loaders (e.g., OSGi, Java EE application servers,
+   Eclipse Modeling Framework), you may encounter "No matching overloads found"
+   errors even when types appear to match. This occurs because Java considers
+   classes loaded by different class loaders to be incompletely different types,
+   even if they have identical names and bytecode.
+
+   **Symptoms**: Error messages like "No matching overloads found for
+   ClassName.method(Type)" where the type shown in the error matches the
+   method signature exactly.
+
+   **Limitation**: JPype cannot automatically resolve class loader conflicts.
+   When a third-party framework uses its own class loader, classes loaded
+   through that framework are incompatible with classes loaded through JPype's
+   class loader.
+
+   **Solution**: Explicitly load classes using the same class loader as your
+   framework. When working with frameworks that use custom class loaders (e.g.,
+   OSGi, EMF), you must load the Java classes through that framework's class
+   loader rather than JPype's default:
+
+   .. code-block:: python
+
+       # Get the framework's class loader
+       framework_loader = my_framework_object.getClass().getClassLoader()
+
+       # Load the enum class using the framework's class loader
+       MyEnumClass = jpype.JClass('com.example.MyEnum', loader=framework_loader)
+
+       # Now enum values will be compatible with framework methods
+       enum_value = MyEnumClass.valueOf("VALUE")
+       framework_object.setEnum(enum_value)  # This will work!
+
+   Alternatively, use Java's ``Class.forName()`` with the specific class loader:
+
+   .. code-block:: python
+
+       from java.lang import Class
+
+       # Get the framework's class loader
+       framework_loader = my_framework_object.getClass().getClassLoader()
+
+       # Load the class using forName with the specific loader
+       MyEnumClass = Class.forName('com.example.MyEnum', True, framework_loader)
+
+       # Access enum constants through reflection
+       enum_value = MyEnumClass.getField("VALUE").get(None)
+
+   **Note**: You must use the framework's class loader consistently for all
+   related classes. Mixing classes from different loaders will result in type
+   mismatch errors. If you cannot access the framework's class loader, consider
+   configuring your framework to use a shared parent class loader.
+
 
 .. _controlling_the_jvm_best_practices_for_jvm_starting:
 
@@ -4144,6 +4197,58 @@ Use Cases of JPickler
    - Capture the state of Java objects during execution for offline analysis.
 
    - Example: Serialize problematic objects for inspection after a crash.
+
+
+.. _serialization_with_jpickler_pickling_python_objects_with_java_attributes:
+
+Pickling Python Objects with Java Attributes
+=============================================
+
+JPickler serializes Java objects themselves, but it does not help with the
+more common case of a plain Python object that merely *holds* one or more
+Java objects as attributes. Python's standard `pickle` module cannot
+serialize those attributes directly, since Java-backed objects are not
+picklable.
+
+The fix is the same technique Python uses for any other unpicklable
+attribute (open file handles, sockets, and so on): exclude the Java-backed
+attributes in `__getstate__`, and rebuild them in `__setstate__` after the
+rest of the state has been restored.
+
+.. code-block:: python
+
+    import jpype
+
+    class MyModel:
+        # Names of attributes that hold Java objects and must be excluded
+        # from pickling.
+        _java_attrs = ("java_obj",)
+
+        def __init__(self):
+            self.java_obj = jpype.JClass("some.pkg.SomeClass")()
+
+        def __getstate__(self):
+            state = self.__dict__.copy()
+            for name in self._java_attrs:
+                del state[name]
+            return state
+
+        def __setstate__(self, state):
+            self.__dict__.update(state)
+            if not jpype.isJVMStarted():
+                jpype.startJVM()
+            # Recreate the excluded Java-backed attributes.
+            self.java_obj = jpype.JClass("some.pkg.SomeClass")()
+
+Listing the excluded attribute names in one place (`_java_attrs` above)
+keeps `__getstate__` from having to special-case each field, and gives
+`__setstate__` a single list to regenerate. Exactly how a Java-backed
+attribute gets rebuilt is application-specific: it may mean re-running a
+constructor, as above, or re-deriving the value from other, already-restored
+state on the object.
+
+See `issue #1019 <https://github.com/jpype-project/jpype/issues/1019>`_ for
+the original report and workaround this pattern is generalized from.
 
 
 .. _serialization_with_jpickler_conclusion_for_jpicker:

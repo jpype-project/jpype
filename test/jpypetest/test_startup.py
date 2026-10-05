@@ -164,6 +164,15 @@ class StartJVMCase(unittest.TestCase):
         assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
 
 
+    def testPlusAndSpecialCharsPath(self):
+        """Test that classpath directories containing "+", "&", "=", or "#"
+        are handled correctly.
+        Regression test for https://github.com/jpype-project/jpype/issues/1413
+        """
+        jpype.startJVM(jvmpath=Path(self.jvmpath),
+                        classpath=f"{test_jar}/plus+path&has=special#chars/sample_package.jar")
+        assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A']
+
     def testOldStyleNonASCIIPath(self):
         """Test that paths with non-ASCII characters are handled correctly.
         Regression test for https://github.com/jpype-project/jpype/issues/1194
