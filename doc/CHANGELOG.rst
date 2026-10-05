@@ -7,6 +7,15 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed ``startJVM()`` printing a "restricted method" / native access
+    warning on JDK 22+ (``java.lang.System::load has been called ... in an
+    unnamed module``). JPype now probes the JVM's supported JNI version
+    before launch and, on JDK 21+, defaults to passing
+    ``--enable-native-access=ALL-UNNAMED`` unless the caller already
+    specified their own ``--enable-native-access`` option; on older JDKs
+    any user-supplied ``--enable-native-access`` option is dropped rather
+    than causing a hard failure. #1310
+
   - ``JBoolean``/``JByte``/``JChar``/``JInt``/``JShort``/``JLong``/``JFloat``/
     ``JDouble`` are no longer tracked by the cyclic garbage collector. They
     were previously declared as ordinary Python ``class`` statements, which
