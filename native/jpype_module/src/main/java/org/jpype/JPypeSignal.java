@@ -37,8 +37,14 @@ public class JPypeSignal
       signalHandlerClazz
     }, (proxy, method, args) ->
     {
-      main.interrupt();
+      // Record the signal for Python before waking the main thread.  If the
+      // main thread is blocked in Thread.sleep() or Object.wait(), interrupt()
+      // makes it throw InterruptedException, and JPJavaError::toPython() then
+      // looks for a pending signal.  In the other order the exception can be
+      // converted before the signal is recorded, and Python sees
+      // InterruptedException instead of KeyboardInterrupt.
       interruptPy(signal);
+      main.interrupt();
       return null;
     });
   }
