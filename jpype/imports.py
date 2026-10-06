@@ -96,6 +96,11 @@ def _JExceptionHandler(pkg, name, ex):
         raise ImportError(
             "Unable to import '%s' due to incorrect Java version" % javaname) from ex
     if exname == "java.lang.NoClassDefFoundError":
+        # A class whose initializer already failed is reported this way on
+        # every later attempt; it is not a missing dependency.
+        if str(ex.getMessage()).startswith("Could not initialize class"):
+            raise ImportError(
+                "Unable to import '%s' due to an earlier initializer error" % javaname) from ex
         missing = str(ex).replace('/', '.')
         raise ImportError("Unable to import '%s' due to missing dependency '%s'" % (
             javaname, missing)) from ex
@@ -227,9 +232,10 @@ class _JImportLoader(MetaPathFinder, Loader):
 
     def create_module(self, spec):
         if spec.parent == "":
-            return _jpype._JPackage(spec._jname)
-        parts = spec.name.rsplit('.', 1)
-        rc = getattr(sys.modules[spec.parent], parts[1])
+            rc = _jpype._JPackage(spec._jname)
+        else:
+            parts = spec.name.rsplit('.', 1)
+            rc = getattr(sys.modules[spec.parent], parts[1])
 
         # Install the handler
         rc._handler = _JExceptionHandler
