@@ -7,6 +7,12 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed importing a class whose static initializer fails directly from a
+    top level domain (``from org import Broken``) raising the raw
+    ``java.lang.ExceptionInInitializerError`` instead of ``ImportError``.
+    A later attempt to import the same class now reports the earlier
+    initializer failure instead of a missing dependency.
+
   - Fixed ``startJVM()`` printing a "restricted method" / native access
     warning on JDK 22+ (``java.lang.System::load has been called ... in an
     unnamed module``). JPype now probes the JVM's supported JNI version
