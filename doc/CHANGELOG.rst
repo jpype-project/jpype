@@ -7,6 +7,13 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed a crash in ``startJVM()`` under Python 3.15 global lazy imports
+    (``python -X lazy_imports=all``): jpype's internal setup imports were
+    deferred and never ran.  ``startJVM()`` now also loads a pending
+    ``import jpype.imports`` so the Java import hook is installed.  Java
+    packages work with the ``lazy import`` statement, including lazy imports
+    written before the JVM is started.  #1495
+
   - Fixed ``startJVM()`` printing a "restricted method" / native access
     warning on JDK 22+ (``java.lang.System::load has been called ... in an
     unnamed module``). JPype now probes the JVM's supported JNI version
