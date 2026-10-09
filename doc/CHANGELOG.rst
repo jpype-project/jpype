@@ -7,6 +7,14 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed ``startJVM(interrupt=False)`` sometimes raising
+    ``java.lang.InterruptedException`` (or aborting the process) instead of
+    ``KeyboardInterrupt`` when ``SIGINT`` arrived while the main thread was
+    blocked in a Java call such as ``Thread.sleep()`` or ``Object.wait()``.
+    The signal handler woke the main thread before it recorded the signal for
+    Python, so the pending-signal check made while converting the exception
+    could find nothing.  The handler now records the signal first.  #1496
+
   - Fixed ``startJVM()`` printing a "restricted method" / native access
     warning on JDK 22+ (``java.lang.System::load has been called ... in an
     unnamed module``). JPype now probes the JVM's supported JNI version
