@@ -70,7 +70,6 @@ target_link_libraries(_jpype PRIVATE Python3::Module)
 set_target_properties(_jpype PROPERTIES
         PREFIX ""  # remove 'lib' prefix
         OUTPUT_NAME "_jpype"
-        LIBRARY_OUTPUT_DIRECTORY ${DEST_EXTENSION}
 )
 
 if(ENABLE_TRACING)

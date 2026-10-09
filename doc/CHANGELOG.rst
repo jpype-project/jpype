@@ -19,6 +19,38 @@ Latest Changes:
     (hard-terminated where safe, parked forever otherwise) instead of
     letting it touch freed state.
     
+  - Fixed ``startJVM()`` printing a "restricted method" / native access
+    warning on JDK 22+ (``java.lang.System::load has been called ... in an
+    unnamed module``). JPype now probes the JVM's supported JNI version
+    before launch and, on JDK 21+, defaults to passing
+    ``--enable-native-access=ALL-UNNAMED`` unless the caller already
+    specified their own ``--enable-native-access`` option; on older JDKs
+    any user-supplied ``--enable-native-access`` option is dropped rather
+    than causing a hard failure. #1310
+
+  - ``JBoolean``/``JByte``/``JChar``/``JInt``/``JShort``/``JLong``/``JFloat``/
+    ``JDouble`` are no longer tracked by the cyclic garbage collector. They
+    were previously declared as ordinary Python ``class`` statements, which
+    unconditionally pick up GC tracking from CPython even when none of these
+    types can ever hold an arbitrary Python reference or participate in a
+    reference cycle; every boxed array element pulled into Python paid for
+    that bookkeeping on allocation and deallocation for no benefit. No
+    user-visible API change.
+    
+  - Fixed Javadoc extraction (``help()``/``__doc__`` on Java classes) being
+    silently broken on JDK 17+: an unhandled ``<wbr>`` tag (used by JDK 21+'s
+    javadoc output to hint line-wraps in long signatures) crashed extraction
+    outright, and a ``https:`` typo in the external-link check caused every
+    reference to a JDK platform class to render as a mangled path instead of
+    a clean link, since JDK 12+ auto-links platform classes to
+    https://docs.oracle.com even without an explicit ``-link`` argument.
+    Also fixed a related double-rendering bug for ``<a><code>...</code></a>``
+    links exposed by the above fix. #963, #1116
+
+  - Fixed classpath directories/jars containing a "+" character having it
+    silently converted to a space on import, corrupting the resolved
+    resource path. #1413
+
   - Reworked the internal object layout for Java-backed Python objects to use
     fixed, type-baked offsets instead of a runtime allocator that re-derived
     each object's layout from version-sensitive CPython internals on every
@@ -57,6 +89,25 @@ Latest Changes:
     while a Python exception was mid-unwind through the reverse-bridge
     C++ layer could corrupt the in-flight exception. #1415
 
+  - Reworked the internal object layout for Java-backed Python objects to use
+    fixed, type-baked offsets instead of a runtime allocator that re-derived
+    each object's layout from version-sensitive CPython internals on every
+    access. For the boxed `Long`/`Boolean`/`Character` wrapper types this
+    also removes their per-instance Java-value storage entirely (reconstructed
+    on demand instead), shrinking those instances and eliminating a
+    version-gated digit-layout workaround. No user-visible API change; boxed
+    wrapper instances no longer retain Java-side reference identity across
+    repeated round-trips through Python.
+
+  - Fixed heap corruption when boxing large `JLong`/`JInt`/`JShort`/`JByte`/`JBoolean`
+    values on Python 3.8-3.11, caused by a fixed-offset allocator layout
+    assumption colliding with CPython's own implicit `__dict__` slot for
+    variable-length int subclasses.
+
+  - Fixed a GC refcount-accounting bug in the internal Java-class metaclass
+    where `tp_traverse`/`tp_clear` did not chain to `type`'s own
+    implementation.
+
   - Fixed memory leak with int and float conversions. #1379
 
   - Fixed instablity in threading for method dispatch. #1366
@@ -84,6 +135,21 @@ Latest Changes:
   - Improved implicit conversion from Python primitives to Java boxed types (Integer, Long, Short, Double, Float). #1098
   
   - Fixed ambiguous overload resolution for bytearray between byte[] and char[]. #598
+
+  - Documented the "JVM DLL not found" error on Apple Silicon Macs and its
+    cause (a Python/JDK CPU architecture mismatch, e.g. arm64 vs x86_64). #994
+
+  - Added a customizer example to the quickstart guide and fixed the
+    "Extending classes" entry, which had been carrying a leftover
+    "lambda is WIP" note since before lambdas were documented. #792
+
+  - Documented the Windows ``ImportError: DLL load failed while importing
+    _jpype`` error and its fix (installing the Microsoft Visual C++
+    Redistributable). #1167
+
+  - Documented a pattern for pickling plain Python objects that hold
+    Java-backed attributes, using ``__getstate__``/``__setstate__`` to
+    exclude and regenerate them. #1019
 
 
 - **1.7.1 - 2026-05-06**

@@ -38,13 +38,19 @@ class HtmlTestCase(common.JPypeTestCase):
         JC = jpype.JClass("jpype.doc.Test")
         jd = JC.__doc__
         self.assertIsInstance(jd, str)
-        # Disabled this test for now. Java needs a better API for accessing Java doc.  
-        # It is hard to deal with random changes every version.
-        #self.assertRegex(jd, "random stuff")
+        self.assertRegex(jd, "random stuff")
+        # A cross-reference to a JDK platform class (java.lang.Object). This
+        # is the case that silently produced mangled output on JDK 17+
+        # (https://... treated as a local reference) - assert it resolved
+        # to something readable rather than a scraped-URL path.
+        self.assertIn("Object", jd)
+        self.assertNotIn("docs.oracle.com.en.java", jd)
 
     def testMethod(self):
         JC = jpype.JClass("jpype.doc.Test")
         jd = JC.methodOne.__doc__
         self.assertIsInstance(jd, str)
-        # Disabling this test for now.  Something fails in Linux but I can't replicate it.
-        #self.assertRegex(jd, "something special")
+        self.assertRegex(jd, "something special")
+        self.assertIn("Parameters:", jd)
+        self.assertIn("Returns:", jd)
+        self.assertNotIn("docs.oracle.com.en.java", jd)

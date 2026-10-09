@@ -2,7 +2,12 @@
 
 	<property name="src" location="harness"/>
 	<property name="build" location="classes"/>
-	<property name="version" value="${ant.java.version}"/>
+	<!-- Default to Java 11 class file compatibility regardless of which JDK
+	     runs ant, so test/classes (gitignored, not rebuilt automatically on
+	     every JAVA_HOME switch) doesn't leave behind class files newer than
+	     whatever JDK a later test run happens to use - override with
+	     -Dversion=NN to compile against a specific JDK's own version. -->
+	<property name="version" value="11"/>
 
 	<target name="test" depends="compile"/>
 

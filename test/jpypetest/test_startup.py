@@ -164,6 +164,15 @@ class StartJVMCase(unittest.TestCase):
         assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
 
 
+    def testPlusAndSpecialCharsPath(self):
+        """Test that classpath directories containing "+", "&", "=", or "#"
+        are handled correctly.
+        Regression test for https://github.com/jpype-project/jpype/issues/1413
+        """
+        jpype.startJVM(jvmpath=Path(self.jvmpath),
+                        classpath=f"{test_jar}/plus+path&has=special#chars/sample_package.jar")
+        assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A']
+
     def testOldStyleNonASCIIPath(self):
         """Test that paths with non-ASCII characters are handled correctly.
         Regression test for https://github.com/jpype-project/jpype/issues/1194
@@ -244,3 +253,21 @@ class StartJVMCase(unittest.TestCase):
 
         # Check that shutdown does not raise
         jpype._core._JTerminate()
+
+    def testNativeAccessEnabledByDefault(self):
+        # #1310: on JDK 21+, native access should be enabled by default so
+        # that JPype's System.load() doesn't print a restricted-method
+        # warning, without the caller having to pass the flag themselves.
+        jpype.startJVM(self.jvmpath, classpath=cp)
+        if jpype.getJVMVersion()[0] >= 21:
+            module = jpype.JClass("org.jpype.JPypeContext").class_.getModule()
+            self.assertTrue(module.isNativeAccessEnabled())
+
+    def testNativeAccessUserOverrideNotDuplicated(self):
+        # A caller-supplied --enable-native-access option should not be
+        # dropped or duplicated by the default we add.
+        jpype.startJVM(self.jvmpath, "--enable-native-access=ALL-UNNAMED",
+                        classpath=cp)
+        if jpype.getJVMVersion()[0] >= 21:
+            module = jpype.JClass("org.jpype.JPypeContext").class_.getModule()
+            self.assertTrue(module.isNativeAccessEnabled())
