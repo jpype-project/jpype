@@ -479,6 +479,41 @@ class OverloadTestCase(common.JPypeTestCase):
         print("=== End Diagnostic ===\n")
 
 
+class OverloadDispatchCacheTestCase(common.JPypeTestCase):
+    """Regression tests for JPMethodDispatch::findOverload's single-slot
+    m_LastOverload cache.
+
+    That cache is keyed only on argument *types* (e.g. "the argument is a
+    list"), not content, so a method can be called twice with the same
+    argument type where the second call's actual content doesn't convert.
+    A first successful call primes the cache; a second (content-invalid)
+    call must still raise TypeError, not incorrectly return success with a
+    corrupted match -- the cache-hit attempt left bestMatch.m_Overload
+    non-null even on failure, fooling the downstream "first match" and "no
+    matching overload" checks into thinking a real match had already been
+    found.
+    """
+
+    def setUp(self):
+        common.JPypeTestCase.setUp(self)
+        self.Test3 = JClass('jpype.overloads.Test3')
+
+    def testFailureAfterCachedSuccess(self):
+        # Prime the single-slot cache with a real, successful match.
+        self.assertEqual(self.Test3.sumIntArray(list(range(10))), 45)
+
+        # Same argument type (list), content that can't convert to int[] --
+        # must raise cleanly, not corrupt/crash.
+        with self.assertRaises(TypeError):
+            self.Test3.sumIntArray([1, 2, "notanumber", 4])
+
+        # Dispatch must still work correctly afterward: another failure,
+        # and a real success.
+        with self.assertRaises(TypeError):
+            self.Test3.sumIntArray([1, 2, "notanumber", 4])
+        self.assertEqual(self.Test3.sumIntArray(list(range(20))), 190)
+
+
 class VarArgsHierarchyTestCase(common.JPypeTestCase):
     """Fixed-arity vs varargs overload specificity across primitives,
     Object, a Parent/Child hierarchy, and an unrelated type.
