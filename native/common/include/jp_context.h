@@ -149,6 +149,7 @@ public:
 	 * It cannot fail even if the JVM is no longer operating.
 	 */
 	void ReleaseGlobalRef(jobject obj);
+	void ReleaseWeakGlobalRef(jweak obj);
 
 	// JPype services
 

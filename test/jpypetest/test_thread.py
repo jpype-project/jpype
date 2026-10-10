@@ -48,6 +48,29 @@ class ThreadTestCase(common.JPypeTestCase):
         s = jpype.JString("foo")
         self.assertTrue(jpype.isThreadAttachedToJVM())
 
+    def testProxyCleanupKeepsThreadDetached(self):
+        # Freeing a proxy on a detached thread must not attach it again (#1502)
+        import sys
+        import time
+        import java
+        Runnable = jpype.JClass("java.lang.Runnable")
+        proxy = jpype.JProxy(Runnable, dict(run=lambda: None))
+        count = sys.getrefcount(proxy)
+        jpype.JObject(proxy, Runnable)
+        # Wait for Java to collect its side and release its reference
+        deadline = time.monotonic() + 10
+        while sys.getrefcount(proxy) > count and time.monotonic() < deadline:
+            java.lang.System.gc()
+            time.sleep(0.01)
+        if sys.getrefcount(proxy) > count:
+            self.skipTest("Java did not release the proxy")
+        java.lang.Thread.detach()
+        try:
+            del proxy
+            self.assertFalse(java.lang.Thread.isAttached())
+        finally:
+            java.lang.Thread.attachAsDaemon()
+
     def testAttachNew(self):
         import java
         # Detach the thread

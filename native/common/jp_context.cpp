@@ -562,6 +562,25 @@ void JPContext::ReleaseGlobalRef(jobject obj)
 	JP_TRACE_OUT;
 }
 
+void JPContext::ReleaseWeakGlobalRef(jweak obj)
+{
+	JP_TRACE_IN("JPContext::ReleaseWeakGlobalRef", obj);
+	// Check if the JVM is already shutdown
+	if (m_JavaVM == nullptr)
+		return;
+
+	// As with ReleaseGlobalRef, do not attach the thread if called from an
+	// unattached thread.  This runs from destructors, and attaching here
+	// would leave a thread that the user detached attached again.  On an
+	// unattached thread the weak global handle is left allocated until JVM
+	// teardown; it does not keep its referent alive.
+	JNIEnv* env;
+	jint res = m_JavaVM->functions->GetEnv(m_JavaVM, (void**) &env, USE_JNI_VERSION);
+	if (res == JNI_OK)
+		env->functions->DeleteWeakGlobalRef(env, obj);
+	JP_TRACE_OUT;
+}
+
 /*****************************************************************************/
 // Thread code
 

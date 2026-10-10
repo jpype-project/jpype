@@ -193,7 +193,7 @@ JPProxy::~JPProxy()
 	{
 		if (m_Ref != nullptr && JPContext_global->isRunning())
 		{
-			JPContext_global->getEnv()->DeleteWeakGlobalRef(m_Ref);
+			JPContext_global->ReleaseWeakGlobalRef(m_Ref);
 		}
 	} catch (...)  // GCOVR_EXCL_LINE
 	{

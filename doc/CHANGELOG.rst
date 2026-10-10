@@ -7,6 +7,9 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed a thread that detached from the JVM being attached again when a
+    proxy was freed on it. #1502
+
   - Fixed ``startJVM()`` printing a "restricted method" / native access
     warning on JDK 22+ (``java.lang.System::load has been called ... in an
     unnamed module``). JPype now probes the JVM's supported JNI version
