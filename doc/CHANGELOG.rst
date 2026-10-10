@@ -7,6 +7,8 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Added Python 3.15 to the test and release matrix. #1492
+
   - Fixed ``startJVM()`` printing a "restricted method" / native access
     warning on JDK 22+ (``java.lang.System::load has been called ... in an
     unnamed module``). JPype now probes the JVM's supported JNI version
