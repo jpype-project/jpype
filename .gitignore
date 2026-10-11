@@ -9,6 +9,8 @@ build/
 bin
 native/*.jar
 org.jpype.jar
+/build_leak_full.json
+/build_leak_targets.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
