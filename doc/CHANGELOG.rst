@@ -7,6 +7,15 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed infinite recursion in ``@JOverride(sticky=True, rename=...)``
+    customizers (used internally by e.g. ``JList.remove``) when a second
+    sticky customizer targets a class/interface jpype has already
+    customized this way. The rename step captured whatever was currently
+    in the class's own attribute slot as "the original method" without
+    checking it was still a real (unwrapped) Java method; on a second
+    pass that slot already held the first customizer's wrapper, so the
+    wrapper ended up calling itself once installed. #1473
+
   - Fixed ``startJVM()`` printing a "restricted method" / native access
     warning on JDK 22+ (``java.lang.System::load has been called ... in an
     unnamed module``). JPype now probes the JVM's supported JNI version

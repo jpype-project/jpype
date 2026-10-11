@@ -129,8 +129,20 @@ def _applyStickyMethods(cls, sticky):
         rename = attr.get('rename', None)
         name = method.__name__
         if rename:
-            orig = type.__getattribute__(cls, name)
-            cls._customize(rename, orig)
+            # Only capture/rename an "original" the first time cls sees a
+            # sticky override of this method - i.e. while cls's own dict
+            # still holds the real (unwrapped) Java method. On any later
+            # pass (a second sticky customizer applied to the same
+            # target, or inheriting an already-wrapped ancestor's slot)
+            # cls's own dict entry is no longer a real _JMethod but a
+            # previously-installed wrapper; capturing that as "the
+            # original" makes the wrapper call itself once installed,
+            # producing infinite recursion (jpype-project/jpype#1473).
+            # Leaving the existing rename target alone preserves the
+            # true original captured on the first pass.
+            orig = cls.__dict__.get(name, None)
+            if isinstance(orig, _jpype._JMethod):
+                cls._customize(rename, orig)
         cls._customize(name, method)
 
 
