@@ -60,6 +60,15 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 
 	JP_FAULT_RETURN("PyJPObject_init.null", self);
 
+	// This is Py_tp_new -- CPython does not own or clean up self on
+	// failure, that is entirely this function's job. RAII-own it from
+	// here on so PyJPValue_assignJavaSlot() throwing (its "Missing Java
+	// slot"/"Slot assigned twice" internal-invariant checks, or any
+	// future failure mode) can't silently abandon this freshly allocated
+	// object -- every Java-object-backed Python class's constructor goes
+	// through this function, so this is a hot path, not an edge case.
+	JPPyObject selfGuard = JPPyObject::claim(self);
+
 	if (allocType != type)
 	{
 		// Polymorph back to the canonical/abstract type the caller actually
@@ -74,7 +83,7 @@ static PyObject *PyJPObject_new(PyTypeObject *type, PyObject *pyargs, PyObject *
 	}
 
 	PyJPValue_assignJavaSlot(frame, self, jv);
-	return self;
+	return selfGuard.keep();
 	JP_PY_CATCH(nullptr);
 }
 

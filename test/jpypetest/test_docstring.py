@@ -16,6 +16,7 @@
 #
 # *****************************************************************************
 import jpype
+import _jpype
 import common
 
 
@@ -37,3 +38,12 @@ class DocStringTestCase(common.JPypeTestCase):
     def testDocEnumClass(self):
         cls = jpype.JClass('java.lang.Character.UnicodeScript')
         self.assertIsNotNone(cls.__doc__)
+
+    def testDocUnbound(self):
+        # __doc__ on the metaclasses themselves (not on one of their
+        # instances) must behave like an ordinary str-or-None attribute,
+        # rather than leaking the raw getset descriptor object used to
+        # implement per-class dynamic Javadoc lookup. This is what tools
+        # doing full introspection (e.g. mypy stubgen) hit. See #1213.
+        for doc in (_jpype._JClass.__doc__, _jpype._JMethod.__doc__):
+            self.assertTrue(doc is None or isinstance(doc, str))
