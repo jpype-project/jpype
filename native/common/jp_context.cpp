@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdio.h>
+#include <pthread.h>
 #endif
 
 
@@ -167,8 +168,29 @@ void JPContext::loadEntryPoints(const string& path)
 	platform->loadLibrary((char*) path.c_str());
 	CreateJVM_Method = (jint(JNICALL *)(JavaVM **, void **, void *) )platform->getSymbol("JNI_CreateJavaVM");
 	GetCreatedJVMs_Method = (jint(JNICALL *)(JavaVM **, jsize, jsize*))platform->getSymbol("JNI_GetCreatedJavaVMs");
+	GetDefaultJavaVMInitArgs_Method = (jint(JNICALL *)(void*))platform->getSymbol("JNI_GetDefaultJavaVMInitArgs");
 	JP_TRACE_OUT;
 }
+
+namespace
+{
+
+// Probe whether the JVM shared library supports JNI_VERSION_21 (JDK 21+).
+// JNI_GetDefaultJavaVMInitArgs fills in the highest JNI version the JVM
+// supports when asked for a version it doesn't recognize, so requesting
+// 21 and checking for success tells us the JDK version without needing
+// to launch the JVM first (the option we want to add is a launch option).
+bool isJDK21OrLater(jint(JNICALL *getDefaultArgs)(void*))
+{
+	if (getDefaultArgs == nullptr)
+		return false;
+	JavaVMInitArgs scout;
+	memset(&scout, 0, sizeof (scout));
+	scout.version = 0x00150000; // JNI_VERSION_21
+	return getDefaultArgs(&scout) == JNI_OK;
+}
+
+} // namespace
 
 void JPContext::startJVM(const string& vmPath, const StringVector& args,
 		bool ignoreUnrecognized, bool convertStrings, bool interrupt)
@@ -182,15 +204,43 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	JP_TRACE("Load entry points");
 	loadEntryPoints(vmPath);
 
+	// As of JDK 22, loading native code (which JPype's support jar does via
+	// System.load) from a jar on the classpath (an unnamed module) prints a
+	// "restricted method" warning unless native access is explicitly
+	// enabled, see https://inside.java/2024/12/09/quality-heads-up/ (#1310).
+	// Default that on for JDK 21+ (where the flag is recognized) unless the
+	// caller already specified their own --enable-native-access option, and
+	// drop any user-specified one on older JDKs so it doesn't turn into a
+	// hard failure there.
+	bool jdk21 = isJDK21OrLater(GetDefaultJavaVMInitArgs_Method);
+	bool hasNativeAccessOption = false;
+	StringVector finalArgs;
+	finalArgs.reserve(args.size() + 1);
+	for (const auto& opt : args)
+	{
+		if (opt.rfind("--enable-native-access", 0) == 0)
+		{
+			if (!jdk21)
+			{
+				JP_TRACE("Dropping --enable-native-access, JDK < 21", opt);
+				continue;
+			}
+			hasNativeAccessOption = true;
+		}
+		finalArgs.push_back(opt);
+	}
+	if (jdk21 && !hasNativeAccessOption)
+		finalArgs.push_back("--enable-native-access=ALL-UNNAMED");
+
 	// Determine the memory requirements
 #define PAD(x) ((x+31)&~31)
 	size_t mem = PAD(sizeof(JavaVMInitArgs));
 	size_t oblock = mem;
-	mem += PAD(sizeof(JavaVMOption)*args.size() + 1);
+	mem += PAD(sizeof(JavaVMOption)*finalArgs.size() + 1);
 	size_t sblock = mem;
-	for (size_t i = 0; i < args.size(); i++)
+	for (size_t i = 0; i < finalArgs.size(); i++)
 	{
-		mem += PAD(args[i].size()+1);
+		mem += PAD(finalArgs[i].size()+1);
 	}
 
 	// Pack the arguments
@@ -205,15 +255,15 @@ void JPContext::startJVM(const string& vmPath, const StringVector& args,
 	jniArgs->ignoreUnrecognized = ignoreUnrecognized;
 	JP_TRACE("IgnoreUnrecognized", ignoreUnrecognized);
 
-	jniArgs->nOptions = (jint) args.size();
+	jniArgs->nOptions = (jint) finalArgs.size();
 	JP_TRACE("NumOptions", jniArgs->nOptions);
 	size_t j = sblock;
-	for (size_t i = 0; i < args.size(); i++)
+	for (size_t i = 0; i < finalArgs.size(); i++)
 	{
-		JP_TRACE("Option", args[i]);
-		strncpy(&block[j], args[i].c_str(), args[i].size());
+		JP_TRACE("Option", finalArgs[i]);
+		strncpy(&block[j], finalArgs[i].c_str(), finalArgs[i].size());
 		jniArgs->options[i].optionString = (char*) &block[j];
-		j += PAD(args[i].size()+1);
+		j += PAD(finalArgs[i].size()+1);
 	}
 
 	// Launch the JVM
@@ -515,6 +565,145 @@ void JPContext::ReleaseGlobalRef(jobject obj)
 
 /*****************************************************************************/
 // Thread code
+//
+// AttachCurrentThread{,AsDaemon}() registers the calling native thread with
+// the JVM; JNI has no mechanism of its own to notice when that thread later
+// exits. A thread that JPype attached (either explicitly via
+// attachCurrentThread()/attachCurrentThreadAsDaemon(), or implicitly via
+// getEnv() the first time an arbitrary native thread happens to call into
+// Java -- e.g. a plain Python threading.Thread that touches a Java object
+// once and returns) but that never calls detachCurrentThread() before
+// exiting leaks its JVM-side thread attachment permanently: HotSpot has no
+// way to detect that the underlying OS thread is gone. This is a real,
+// unbounded leak proportional to thread count, not call count -- confirmed
+// via the leak-sweep harness on jpype.synchronized() driven from a
+// short-lived worker-thread pool (test_synchronized.py's testSynchronized).
+//
+// Fixed with a per-thread destructor callback (pthread TLS on POSIX, fiber
+// local storage on Windows -- TlsAlloc has no destructor callback, FLS
+// does) that runs automatically when the OS thread exits, whether or not
+// anything else ran on that thread's way out. The callback detaches for
+// us if we're still attached at that point.
+namespace
+{
+#ifdef WIN32
+
+	VOID WINAPI autoDetachOnThreadExit(PVOID value)
+	{
+		// FLS's callback contract guarantees this is only called with the
+		// actual stored value, which registerAutoDetach() never sets to
+		// null -- this can't be exercised without violating that
+		// contract, kept purely as defense-in-depth.
+		if (value == nullptr)
+			return;  // GCOVR_EXCL_LINE
+		// The JVM may have been shut down -- and its shared library
+		// unloaded (JPPlatformAdapter::unloadLibrary(), called from
+		// JPContext::shutdownJVM() when freeJVM is set) -- in the time
+		// between this thread's attach and its eventual exit, since
+		// nothing orders those two events relative to each other. Calling
+		// through the JavaVM* captured at attach time in that case would
+		// dereference a dangling pointer into a library that may no
+		// longer be mapped at all. JPContext_global is only ever null
+		// before the very first JVM start, long before any thread could
+		// have registered this callback -- checked anyway, since touching
+		// the stale pointer on the (believed-impossible) chance it
+		// happened would be unsafe rather than merely redundant.
+		if (JPContext_global == nullptr)
+			return;  // GCOVR_EXCL_LINE
+		if (!JPContext_global->isRunning())
+			return;
+		JavaVM* vm = (JavaVM*) value;
+		// AttachCurrentThread{,AsDaemon}() is documented to be a no-op if
+		// this thread is already attached, so calling it first -- rather
+		// than assuming we know this thread's current attachment state --
+		// guarantees the DetachCurrentThread below is always valid to
+		// call, regardless of what may have happened to this thread's
+		// attachment between registerAutoDetach() and now.
+		JNIEnv* env;
+		vm->AttachCurrentThreadAsDaemon((void**) &env, nullptr);
+		vm->DetachCurrentThread();
+	}
+
+	DWORD autoDetachSlot()
+	{
+		static DWORD slot = FlsAlloc(autoDetachOnThreadExit);
+		return slot;
+	}
+
+	void registerAutoDetach(JavaVM* vm)
+	{
+		DWORD slot = autoDetachSlot();
+		if (FlsGetValue(slot) == nullptr)
+			FlsSetValue(slot, vm);
+	}
+
+	void unregisterAutoDetach()
+	{
+		FlsSetValue(autoDetachSlot(), nullptr);
+	}
+
+#else
+
+	void autoDetachOnThreadExit(void* value)
+	{
+		// pthread's destructor contract guarantees this is only called
+		// with the actual stored value, which registerAutoDetach() never
+		// sets to null -- this can't be exercised without violating that
+		// contract, kept purely as defense-in-depth.
+		if (value == nullptr)
+			return;  // GCOVR_EXCL_LINE
+		// The JVM may have been shut down -- and its shared library
+		// unloaded (JPPlatformAdapter::unloadLibrary(), called from
+		// JPContext::shutdownJVM() when freeJVM is set) -- in the time
+		// between this thread's attach and its eventual exit, since
+		// nothing orders those two events relative to each other. Calling
+		// through the JavaVM* captured at attach time in that case would
+		// dereference a dangling pointer into a library that may no
+		// longer be mapped at all. JPContext_global is only ever null
+		// before the very first JVM start, long before any thread could
+		// have registered this callback -- checked anyway, since touching
+		// the stale pointer on the (believed-impossible) chance it
+		// happened would be unsafe rather than merely redundant.
+		if (JPContext_global == nullptr)
+			return;  // GCOVR_EXCL_LINE
+		if (!JPContext_global->isRunning())
+			return;
+		JavaVM* vm = (JavaVM*) value;
+		// AttachCurrentThread{,AsDaemon}() is documented to be a no-op if
+		// this thread is already attached, so calling it first -- rather
+		// than assuming we know this thread's current attachment state --
+		// guarantees the DetachCurrentThread below is always valid to
+		// call, regardless of what may have happened to this thread's
+		// attachment between registerAutoDetach() and now.
+		JNIEnv* env;
+		vm->AttachCurrentThreadAsDaemon((void**) &env, nullptr);
+		vm->DetachCurrentThread();
+	}
+
+	pthread_key_t autoDetachKey()
+	{
+		static pthread_key_t key = []() {
+			pthread_key_t k;
+			pthread_key_create(&k, autoDetachOnThreadExit);
+			return k;
+		}();
+		return key;
+	}
+
+	void registerAutoDetach(JavaVM* vm)
+	{
+		pthread_key_t key = autoDetachKey();
+		if (pthread_getspecific(key) == nullptr)
+			pthread_setspecific(key, vm);
+	}
+
+	void unregisterAutoDetach()
+	{
+		pthread_setspecific(autoDetachKey(), nullptr);
+	}
+
+#endif
+} // namespace
 
 void JPContext::attachCurrentThread()
 {
@@ -522,6 +711,7 @@ void JPContext::attachCurrentThread()
 	jint res = m_JavaVM->functions->AttachCurrentThread(m_JavaVM, (void**) &env, nullptr);
 	if (res != JNI_OK)
 		JP_RAISE(PyExc_RuntimeError, "Unable to attach to thread");
+	registerAutoDetach(m_JavaVM);
 }
 
 void JPContext::attachCurrentThreadAsDaemon()
@@ -530,6 +720,7 @@ void JPContext::attachCurrentThreadAsDaemon()
 	jint res = m_JavaVM->functions->AttachCurrentThreadAsDaemon(m_JavaVM, (void**) &env, nullptr);
 	if (res != JNI_OK)
 		JP_RAISE(PyExc_RuntimeError, "Unable to attach to thread as daemon");
+	registerAutoDetach(m_JavaVM);
 }
 
 bool JPContext::isThreadAttached()
@@ -541,6 +732,7 @@ bool JPContext::isThreadAttached()
 void JPContext::detachCurrentThread()
 {
 	m_JavaVM->functions->DetachCurrentThread(m_JavaVM);
+	unregisterAutoDetach();
 }
 
 JNIEnv* JPContext::getEnv()
@@ -564,6 +756,7 @@ JNIEnv* JPContext::getEnv()
 		{
 			JP_RAISE(PyExc_RuntimeError, "Unable to attach to local thread");
 		}
+		registerAutoDetach(m_JavaVM);
 	}
 	return env;
 }
