@@ -114,6 +114,43 @@ class ProxyTestCase(common.JPypeTestCase):
         final = sys.getrefcount(runner)
         self.assertEqual(initial, final)
 
+    @common.requireInstrumentation
+    def testProxyCreationFaultDoesNotLeak(self):
+        # Regression test for a Py_INCREF(m_Instance) in JPProxy::getProxy()
+        # (native/common/jp_proxy.cpp) with no exception-safety: the incref
+        # models a reference that's supposed to be released by
+        # releaseProxyPython(), but that release only ever fires via the
+        # Java-side phantom-ref callback on m_Ref -- which never gets
+        # created if java.lang.reflect.Proxy.newInstance() (or the
+        # subsequent NewWeakGlobalRef) throws. Before the fix, any
+        # exception there permanently leaked one reference to the proxy
+        # instance.
+        @JImplements(java.lang.Runnable)
+        class MyRun(object):
+            @JOverride
+            def run(self):
+                pass
+
+        runner = MyRun()
+        al = JClass('java.util.ArrayList')()
+        initial = sys.getrefcount(runner)
+
+        # runner has never been passed to Java before, so this is its
+        # first getProxy() call -- fault the very next JNI object-method
+        # call, which lands on Proxy.newInstance() inside getProxy().
+        _jpype.fault("JPJavaFrame::CallObjectMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            al.add(runner)
+
+        final = sys.getrefcount(runner)
+        self.assertEqual(initial, final)
+
+        # The proxy must still be usable normally afterward (this is not
+        # testing the fault-handling itself, just that the leak, not the
+        # feature, was what got fixed).
+        al.add(runner)
+        self.assertIs(al.get(0), runner)
+
     def testProxyDeclFail1(self):
         itf1 = self.package.TestInterface1
         # Missing required arguments
@@ -535,6 +572,53 @@ class ProxyTestCase(common.JPypeTestCase):
 
     def testFunctionalLambda(self):
         js = JObject(lambda x: 2 * x, "java.util.function.DoubleUnaryOperator")
+        self.assertEqual(js.applyAsDouble(1), 2.0)
+
+    @common.requireInstrumentation
+    def testFunctionalConversionFaultDoesNotLeak(self):
+        # Regression test for JPConversionFunctional::convert()
+        # (native/common/jp_functional.cpp): converting a plain Python
+        # callable into a Java functional interface builds a fresh
+        # PyJPProxy "self" by hand (tp_alloc, not going through
+        # PyJPProxy_new), and the JPProxyFunctional constructor plus
+        # getProxy() both do real JNI work that can throw. A manual
+        # Py_INCREF/Py_DECREF-with-try/catch version of this leaked self
+        # (and its incref'd target/dispatch refs) permanently on any
+        # exception there -- fixed by wrapping self in this codebase's
+        # own JPPyObject RAII instead of hand-rolling the equivalent.
+        #
+        # The successful path releases its extra references
+        # asynchronously (the usual NativeReferenceQueue phantom-ref
+        # cleanup, same as every other proxy in this file), not
+        # immediately on del -- so this settles Python and Java GC before
+        # comparing refcounts, same technique the leak-sweep
+        # investigations elsewhere in this codebase use, rather than
+        # checking immediately after the call.
+        import gc
+        import time
+
+        def settle():
+            gc.collect()
+            runtime.gc()
+            time.sleep(1.0)
+            runtime.gc()
+            gc.collect()
+
+        def f(x):
+            return 2 * x
+
+        runtime = java.lang.Runtime.getRuntime()
+
+        initial = sys.getrefcount(f)
+        _jpype.fault("JPJavaFrame::CallObjectMethodA")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            JObject(f, "java.util.function.DoubleUnaryOperator")
+        settle()
+        final = sys.getrefcount(f)
+        self.assertEqual(initial, final)
+
+        # Still usable normally afterward.
+        js = JObject(f, "java.util.function.DoubleUnaryOperator")
         self.assertEqual(js.applyAsDouble(1), 2.0)
 
     def testBadImplements(self):
