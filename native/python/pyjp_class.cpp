@@ -410,6 +410,7 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases, Py_ssi
 				// GCOVR_EXCL_START
 			default:
 				PyErr_Format(PyExc_TypeError, "slot %d not implemented", slot->slot);
+				Py_DECREF(type);
 				JP_RAISE_PYTHON();
 				// GCOVR_EXCL_STOP
 		}
@@ -423,6 +424,7 @@ PyObject* PyJPClass_FromSpecWithBases(PyType_Spec *spec, PyObject *bases, Py_ssi
 			type->tp_clear==nullptr))
 	{
 		PyErr_Format(PyExc_TypeError, "GC requirements failed for %s", spec->name);
+		Py_DECREF(type);
 		JP_RAISE_PYTHON();
 	}
 
