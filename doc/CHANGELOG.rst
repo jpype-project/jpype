@@ -7,6 +7,18 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed ``jpype.addClassPath()`` called after ``startJVM()`` not being
+    picked up by ``java.sql.DriverManager``: unlike an ordinary
+    ``ServiceLoader`` consumer, ``DriverManager`` scans
+    ``META-INF/services/java.sql.Driver`` providers exactly once, the first
+    time it is touched, and never rescans, so a JDBC driver jar added to the
+    classpath afterward was otherwise invisible even though the class
+    itself loaded fine. JPype's classloader now force-initializes any
+    driver listed in a newly added jar's ``META-INF/services/java.sql.Driver``
+    so its self-registering static initializer runs, matching what
+    ``DriverManager`` would have seen had the jar been present from the
+    start. #914
+
   - Fixed ``startJVM()`` raising an uninformative ``"Can't find org.jpype.jar
     support library"`` error when ``org.jpype.jar`` fails to load because the
     running JVM is too old to support it (e.g. Java 8, since JPype 1.6.0's
