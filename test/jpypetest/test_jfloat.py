@@ -132,6 +132,18 @@ class JFloatTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             JFloat._canConvertToJava(object())
 
+    def testNumberConversions(self):
+        # Plain (non-fault-injected) exercise of int()/float()/str()/repr()
+        # on a JFloat -- see JLongTestCase.testNumberConversions in
+        # test_jlong.py for why this is a separate, fault-free test
+        # rather than reusing the @requireInstrumentation-gated ones
+        # above as a leak_targets.txt entry.
+        jd = JFloat(1.5)
+        self.assertEqual(int(jd), 1)
+        self.assertEqual(float(jd), 1.5)
+        self.assertEqual(str(jd), "1.5")
+        self.assertIsInstance(repr(jd), str)
+
     @common.requireInstrumentation
     def testArrayFault(self):
         ja = JArray(JFloat)(5)

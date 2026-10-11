@@ -87,9 +87,30 @@ void JPReferenceQueue::registerRef(JPJavaFrame &frame, jobject obj, PyObject* ho
 	if (hostRef == nullptr)
 		return;
 
-	// MATCH TO DECREF IN releasePython
+	// MATCH TO DECREF IN releasePython -- but releasePython only ever
+	// runs via the Java-side reference queue's phantom-ref callback,
+	// which requires registration below to have actually succeeded. If
+	// it throws instead (queue not installed, or the registration JNI
+	// call itself raises), that callback never gets a chance to fire, so
+	// the incref must be undone here on the throw path or hostRef leaks
+	// permanently.
 	Py_INCREF(hostRef);
-	registerRef(frame, obj, hostRef, &releasePython);
+	try
+	{
+		registerRef(frame, obj, hostRef, &releasePython);
+		// GCOVR_EXCL_START
+		// This call's only site (jp_exception.cpp's Python-to-Java
+		// exception conversion) is itself wrapped in a separate,
+		// pre-existing fail-fast guard that deliberately crashes the
+		// process on any exception there -- so this catch is unreachable
+		// through that call site without also triggering that guard
+		// first. Kept as defense-in-depth for any future caller.
+	} catch (...)
+	{
+		Py_DECREF(hostRef);
+		throw;
+	}
+	// GCOVR_EXCL_STOP
 }
 
 void JPReferenceQueue::registerRef(JPJavaFrame &frame, jobject obj, void* host, JCleanupHook func)

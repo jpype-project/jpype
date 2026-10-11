@@ -451,8 +451,19 @@ PyObject *tb_create(
 	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(PyFrame_GetLasti(pframe)));
 #endif
 	JPPyObject linenuma = JPPyObject::claim(PyLong_FromLong(linenum));
-	JPPyObject tuple = JPPyTuple_Pack(Py_None, frame.get(), lasti.get(), linenuma.get());
+	// last_traceback (the previously-built frame, i.e. this frame's caller)
+	// becomes this new traceback's tb_next -- PyTuple_Pack/the traceback
+	// constructor each take their own reference to it, so our incoming
+	// reference (owned by us: the caller received it from a prior
+	// tb_create()'s own `.keep()`) must be released here once it has been
+	// absorbed into the chain, or every non-final frame in a multi-frame
+	// trace leaks (only the last-built traceback was ever handed back to a
+	// decref'ing owner).
+	JPPyObject tuple = JPPyTuple_Pack(
+			last_traceback == nullptr ? Py_None : last_traceback,
+			frame.get(), lasti.get(), linenuma.get());
 	JPPyObject traceback = JPPyObject::accept(PyObject_Call((PyObject*) &PyTraceBack_Type, tuple.get(), NULL));
+	Py_XDECREF(last_traceback);
 
 	// We could fail in process
 	if (traceback.get() == nullptr)
