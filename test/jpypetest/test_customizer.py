@@ -158,3 +158,61 @@ class CustomizerTestCase(common.JPypeTestCase):
         self.assertIsNone(IStackImpl.__dict__.get("orig_remove"))
         with self.assertRaises(AttributeError):
             IStackImpl().remove(None)
+
+    def testRetroactiveCustomizerComposition(self):
+        # https://github.com/jpype-project/jpype/issues/1476
+        #
+        # A second customizer for a target jpype has already instantiated
+        # registers through a different path (_applyCustomizerPost,
+        # "retroactive" registration) than a customizer registered before
+        # any class exists. That path used to overwrite the target's
+        # __jclass_init__ outright instead of chaining it with whatever
+        # was already installed there (by an earlier registration, up
+        # front or itself retroactive) - silently dropping the earlier
+        # registration's sticky methods *and* explicit __jclass_init__
+        # hooks, but only for classes created *after* the retroactive
+        # registration (classes that already existed kept working, which
+        # is what made this easy to miss).
+        hook_calls = []
+
+        @jpype.JImplementationFor("jpype.override.Overrides.IRetro")
+        class _RetroA:
+            def __jclass_init__(cls):
+                hook_calls.append(('A', cls.__name__))
+
+            @jpype.JOverride(sticky=True, rename="removeA_")
+            def remove(self, obj):
+                return self.removeA_(obj) + 100
+
+        # Forces the retroactive path for the next registration: IRetro
+        # (and IRetroImpl, its only implementer so far) already exist by
+        # the time _RetroB below registers.
+        IRetroImpl = jpype.JClass("jpype.override.Overrides.IRetroImpl")
+        self.assertEqual(IRetroImpl().remove(None), 101)
+
+        hook_calls.clear()
+
+        @jpype.JImplementationFor("jpype.override.Overrides.IRetro")
+        class _RetroB:
+            def __jclass_init__(cls):
+                hook_calls.append(('B', cls.__name__))
+
+            @jpype.JOverride(sticky=True, rename="removeB_")
+            def remove(self, obj):
+                return self.removeB_(obj) + 1000
+
+        hook_calls.clear()
+        # Created only now, after _RetroB's retroactive registration -
+        # the case that lost _RetroA's contribution entirely before the
+        # fix.
+        IRetroSub = jpype.JClass("jpype.override.Overrides.IRetroSub")
+
+        # Both hooks fired for IRetroSub specifically - neither the
+        # up-front (_RetroA) nor the retroactive (_RetroB) registration
+        # was silently dropped.
+        self.assertIn(('A', 'jpype.override.Overrides.IRetroSub'), hook_calls)
+        self.assertIn(('B', 'jpype.override.Overrides.IRetroSub'), hook_calls)
+        # _RetroA's sticky rename survives for IRetroSub too - before the
+        # fix this was never set at all for a class created after the
+        # retroactive registration.
+        self.assertEqual(str(IRetroSub.removeA_), "jpype.override.Overrides.IRetroSub.remove")

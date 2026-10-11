@@ -91,4 +91,29 @@ public class Overrides
       return 1;
     }
   }
+
+  // Customizer target dedicated to the multiple-registrations-for-the-same-
+  // -target tests (__jclass_init__ hook composition, retroactive sticky
+  // registration) - kept separate from the other families above so these
+  // tests don't interact with them regardless of execution order within
+  // the shared JVM session.
+  public interface IRetro
+  {
+    int remove(Object o);
+  }
+
+  public static class IRetroImpl implements IRetro
+  {
+    public int remove(Object o)
+    {
+      return 1;
+    }
+  }
+
+  // Created (in the test) only after a second customizer for IRetro has
+  // been registered retroactively - exercises whether earlier
+  // registrations still apply to classes built afterward.
+  public static class IRetroSub extends IRetroImpl
+  {
+  }
 }

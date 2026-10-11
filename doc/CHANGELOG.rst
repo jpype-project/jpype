@@ -7,6 +7,15 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed a class/interface customizer (``@JImplementationFor``) registered
+    *after* its target already has instances silently dropping every
+    earlier customizer's sticky methods and explicit ``__jclass_init__``
+    hooks for any subclass created afterward - the retroactive-registration
+    path overwrote the target's merged ``__jclass_init__`` outright
+    instead of chaining onto it. Classes created before the later
+    registration were unaffected, which is what made this easy to miss.
+    #1476
+
   - Fixed infinite recursion in ``@JOverride(sticky=True, rename=...)``
     customizers (used internally by e.g. ``JList.remove``) when a second
     sticky customizer targets a class/interface jpype has already
