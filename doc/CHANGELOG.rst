@@ -7,6 +7,13 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Documented that the thread that calls ``startJVM()`` is attached as a
+    non-daemon thread by JVM/JNI design, regardless of JPype's usual
+    automatic daemon attachment for threads calling into Java - and that
+    starting the JVM from a disposable thread (a pool worker, a one-shot
+    setup thread) will hang the process on exit unless that thread is
+    explicitly detached. #1169
+
   - Fixed ``@JImplements`` proxies throwing ``UndeclaredThrowableException``
     when falling back to an unoverridden Java ``default`` interface method
     that takes any arguments (e.g. a default method with a
