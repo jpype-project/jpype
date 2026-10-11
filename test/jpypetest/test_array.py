@@ -613,6 +613,53 @@ class ArrayTestCase(common.JPypeTestCase):
         ja = JArray(JInt)([1, 2, 3])
         self.assertEqual(ja.length, len(ja))
 
+    def test2DArrayBuffer(self):
+        # Rectangular 2D primitive array -> memoryview success path. Each
+        # JPXXXType::copyElements/getBufferFormat is exercised once per
+        # element type (the collection-constructor branch of JPArrayView,
+        # native/common/jp_array.cpp) -- distinct from a 1D array's
+        # memoryview (which uses getView/releaseView instead) and from the
+        # ragged/zero-length error paths covered elsewhere in this file.
+        for jtype in (JBoolean, JByte, JShort, JInt, JLong, JFloat, JDouble):
+            ja = JArray(jtype, 2)([[1, 2], [3, 4]])
+            m = memoryview(ja)
+            self.assertEqual(m.ndim, 2)
+            del m
+        # JChar's setArrayRange takes str-length-1 items, not plain ints.
+        ja = JArray(JChar, 2)([['a', 'b'], ['c', 'd']])
+        m = memoryview(ja)
+        self.assertEqual(m.ndim, 2)
+        del m
+
+    def test1DArrayBuffer(self):
+        # 1D primitive array -> memoryview success path for every element
+        # type (JPXXXType::getView/releaseView/getBufferFormat/getItemSize).
+        # test_buffer.py's testToMemoryview only exercises JInt.
+        for jtype in (JBoolean, JByte, JShort, JInt, JLong, JFloat, JDouble):
+            ja = JArray(jtype)([1, 2, 3, 4])
+            m = memoryview(ja)
+            self.assertEqual(len(m), 4)
+            del m
+        ja = JArray(JChar)(['a', 'b', 'c', 'd'])
+        m = memoryview(ja)
+        self.assertEqual(len(m), 4)
+        del m
+
+    def testArraySetItemAllTypes(self):
+        # Single-index element assignment (setArrayItem, distinct from the
+        # slice-assignment path setArrayRange covers) for every primitive
+        # type -- boolean/char had no leak-target coverage of this at all,
+        # int/short/long only via their own per-type testArraySetOutOfBounds.
+        for jtype, value in ((JBoolean, True), (JByte, 5), (JShort, 5),
+                             (JInt, 5), (JLong, 5), (JFloat, 5.0),
+                             (JDouble, 5.0)):
+            ja = JArray(jtype)(3)
+            ja[1] = value
+            self.assertEqual(ja[1], value)
+        ja = JArray(JChar)(3)
+        ja[1] = 'x'
+        self.assertEqual(ja[1], 'x')
+
     def testShortcut(self):
         # Test for odd bug introduced in 1.0.0
         # This is unlikely to be reintroduced, but we can check anyway.
