@@ -60,6 +60,33 @@ Latest Changes:
     via the normal traceback chain, and no longer leak. Found via the
     same leak-detection sweep harness.
 
+  - Fixed a class/interface customizer (``@JImplementationFor``) registered
+    *after* its target already has instances silently dropping every
+    earlier customizer's sticky methods and explicit ``__jclass_init__``
+    hooks for any subclass created afterward - the retroactive-registration
+    path overwrote the target's merged ``__jclass_init__`` outright
+    instead of chaining onto it. Classes created before the later
+    registration were unaffected, which is what made this easy to miss.
+    #1476
+
+  - Fixed infinite recursion in ``@JOverride(sticky=True, rename=...)``
+    customizers (used internally by e.g. ``JList.remove``) when a second
+    sticky customizer targets a class/interface jpype has already
+    customized this way. The rename step captured whatever was currently
+    in the class's own attribute slot as "the original method" without
+    checking it was still a real (unwrapped) Java method; on a second
+    pass that slot already held the first customizer's wrapper, so the
+    wrapper ended up calling itself once installed. #1473
+
+  - Fixed ``startJVM()`` printing a "restricted method" / native access
+    warning on JDK 22+ (``java.lang.System::load has been called ... in an
+    unnamed module``). JPype now probes the JVM's supported JNI version
+    before launch and, on JDK 21+, defaults to passing
+    ``--enable-native-access=ALL-UNNAMED`` unless the caller already
+    specified their own ``--enable-native-access`` option; on older JDKs
+    any user-supplied ``--enable-native-access`` option is dropped rather
+    than causing a hard failure. #1310
+
   - ``JBoolean``/``JByte``/``JChar``/``JInt``/``JShort``/``JLong``/``JFloat``/
     ``JDouble`` are no longer tracked by the cyclic garbage collector. They
     were previously declared as ordinary Python ``class`` statements, which
