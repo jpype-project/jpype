@@ -7,6 +7,8 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Added Python 3.15 to the test and release matrix. #1492
+
   - Documented that the thread that calls ``startJVM()`` is attached as a
     non-daemon thread by JVM/JNI design, regardless of JPype's usual
     automatic daemon attachment for threads calling into Java - and that
