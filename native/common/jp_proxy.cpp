@@ -221,10 +221,24 @@ jvalue JPProxy::getProxy()
 	{
 		// Use the proxy to make an instance
 		JP_TRACE("Create handler");
+		// The matching decref lives in releaseProxyPython, which only
+		// ever runs via the Java-side phantom-ref callback on m_Ref --
+		// that callback can't fire unless both calls below succeed. If
+		// either throws (Proxy.newInstance() failing on the Java side,
+		// or the weak-global-ref creation itself raising), the incref
+		// must be undone here instead or m_Instance leaks one reference
+		// permanently.
 		Py_INCREF(m_Instance);
-		instance = frame.CallObjectMethodA(m_Proxy.get(),
-				JPContext_global->m_Proxy_NewInstanceID, nullptr);
-		m_Ref = frame.NewWeakGlobalRef(instance);
+		try
+		{
+			instance = frame.CallObjectMethodA(m_Proxy.get(),
+					JPContext_global->m_Proxy_NewInstanceID, nullptr);
+			m_Ref = frame.NewWeakGlobalRef(instance);
+		} catch (...)
+		{
+			Py_DECREF(m_Instance);
+			throw;
+		}
 	}
 	jvalue out;
 	out.l = frame.keep(instance);

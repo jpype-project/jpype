@@ -10,6 +10,117 @@ Latest Changes:
   - Fixed a thread that detached from the JVM being attached again when a
     proxy was freed on it. #1502
 
+  - Added Python 3.15 to the test and release matrix. #1492
+
+  - Documented that the thread that calls ``startJVM()`` is attached as a
+    non-daemon thread by JVM/JNI design, regardless of JPype's usual
+    automatic daemon attachment for threads calling into Java - and that
+    starting the JVM from a disposable thread (a pool worker, a one-shot
+    setup thread) will hang the process on exit unless that thread is
+    explicitly detached. #1169
+
+  - Fixed ``@JImplements`` proxies throwing ``UndeclaredThrowableException``
+    when falling back to an unoverridden Java ``default`` interface method
+    that takes any arguments (e.g. a default method with a
+    ``Collection<T>`` parameter). ``JPypeProxy.invoke()`` built the
+    ``MethodType`` used to look up the default implementation from only
+    the method's return type, silently dropping its parameter types, so
+    ``findSpecial()`` looked for a nonexistent zero-argument overload.
+    Every existing default-method test happened to use a zero-argument
+    method, which is why this went unnoticed. #1256
+
+  - Fixed ``jpype.addClassPath()`` called after ``startJVM()`` not being
+    picked up by ``java.sql.DriverManager``: unlike an ordinary
+    ``ServiceLoader`` consumer, ``DriverManager`` scans
+    ``META-INF/services/java.sql.Driver`` providers exactly once, the first
+    time it is touched, and never rescans, so a JDBC driver jar added to the
+    classpath afterward was otherwise invisible even though the class
+    itself loaded fine. JPype's classloader now force-initializes any
+    driver listed in a newly added jar's ``META-INF/services/java.sql.Driver``
+    so its self-registering static initializer runs, matching what
+    ``DriverManager`` would have seen had the jar been present from the
+    start. #914
+
+  - Fixed ``startJVM()`` raising an uninformative ``"Can't find org.jpype.jar
+    support library"`` error when ``org.jpype.jar`` fails to load because the
+    running JVM is too old to support it (e.g. Java 8, since JPype 1.6.0's
+    classfile target requires Java 11+). The underlying
+    ``UnsupportedClassVersionError`` was being discarded, which also silently
+    disabled the existing friendlier "JVM is older than required Java
+    version" diagnostic in ``jpype._core``, since that diagnostic depends on
+    seeing the real exception text. #1312
+
+  - Fixed a reference leak when implicitly converting a plain Python
+    callable (a function, lambda, or bound method) to a Java functional
+    interface -- e.g. ``JObject(lambda x: x, "java.util.function.
+    Function")``, or passing a plain callable where Java code expects a
+    functional interface. If the underlying Java-side proxy construction
+    failed for any reason, the Python callable's refcount was left
+    permanently incremented with no way to release it. Same underlying
+    cause and fix technique as the proxy-creation leak below.
+
+  - Fixed a reference leak in Java-implementing-Python proxies
+    (``@JImplements``/``JProxy``): the first time a proxy instance was
+    passed to Java, if ``java.lang.reflect.Proxy.newInstance()`` (or the
+    weak-reference bookkeeping right after it) failed for any reason, the
+    Python instance's refcount was left permanently incremented with no
+    way to release it. Found via a new leak-detection sweep harness
+    (``test/jpypetest/leaksweep.py``, run via ``make -f project/dev.mk
+    leak-sweep``) combined with fault injection.
+
+  - Fixed a JVM thread-attachment leak: any native thread that calls into
+    Java without first calling ``jpype.attachThreadToJVM()`` gets
+    implicitly attached on its first call (so it doesn't have to be
+    explicit for simple cases), but nothing previously detached that
+    thread from the JVM when it later exited -- ``detachCurrentThread()``
+    only ran on an explicit ``jpype.detachThreadFromJVM()`` call. Any
+    short-lived native thread that touched Java at all (e.g. a Python
+    ``threading.Thread`` worker calling ``jpype.synchronized()`` once and
+    exiting) permanently leaked its JVM-side thread attachment. Fixed
+    with a per-thread destructor (POSIX TLS / Windows FLS) that
+    auto-detaches on thread exit regardless of whether the thread called
+    JPype again beforehand. Found via a new leak-detection sweep harness
+    (``test/jpypetest/leaksweep.py``, run via ``make -f project/dev.mk
+    leak-sweep``).
+
+  - Fixed a native reference-count leak in ``PyJPProxy_dealloc``: every
+    ``@JImplements``-decorated class is a CPython heap type, and instance
+    creation implicitly holds a reference on it that must be released on
+    deallocation. That release was missing, so any code defining an
+    ``@JImplements`` class inside a loop (a fresh callback class per
+    iteration, or a factory function) permanently leaked one class object
+    per call. Found via a new leak-detection sweep harness
+    (``test/jpypetest/leaksweep.py``, run via ``make -f project/dev.mk
+    leak-sweep``).
+
+  - Fixed a leaked and broken synthetic traceback chain when converting a
+    Java exception's stack trace to Python: ``tb_create()`` built one
+    traceback frame per Java stack-trace element but always linked
+    ``tb_next`` to ``None`` instead of the previous frame, so only the
+    innermost frame was ever visible on ``.__traceback__.tb_next`` and
+    every earlier frame's traceback+frame object pair leaked outright.
+    Java exceptions raised into Python now expose their full stack trace
+    via the normal traceback chain, and no longer leak. Found via the
+    same leak-detection sweep harness.
+
+  - Fixed a class/interface customizer (``@JImplementationFor``) registered
+    *after* its target already has instances silently dropping every
+    earlier customizer's sticky methods and explicit ``__jclass_init__``
+    hooks for any subclass created afterward - the retroactive-registration
+    path overwrote the target's merged ``__jclass_init__`` outright
+    instead of chaining onto it. Classes created before the later
+    registration were unaffected, which is what made this easy to miss.
+    #1476
+
+  - Fixed infinite recursion in ``@JOverride(sticky=True, rename=...)``
+    customizers (used internally by e.g. ``JList.remove``) when a second
+    sticky customizer targets a class/interface jpype has already
+    customized this way. The rename step captured whatever was currently
+    in the class's own attribute slot as "the original method" without
+    checking it was still a real (unwrapped) Java method; on a second
+    pass that slot already held the first customizer's wrapper, so the
+    wrapper ended up calling itself once installed. #1473
+
   - Fixed ``startJVM()`` printing a "restricted method" / native access
     warning on JDK 22+ (``java.lang.System::load has been called ... in an
     unnamed module``). JPype now probes the JVM's supported JNI version
@@ -38,9 +149,28 @@ Latest Changes:
     Also fixed a related double-rendering bug for ``<a><code>...</code></a>``
     links exposed by the above fix. #963, #1116
 
+  - Fixed ``_jpype._JClass.__doc__``/``_jpype._JMethod.__doc__`` (i.e.
+    accessed on those metaclasses directly, not on one of their instances)
+    returning the raw internal getset descriptor object instead of a string
+    or ``None``. This tripped up full-module introspection tools such as
+    ``mypy``'s ``stubgen --inspect-mode``, which expect ``__doc__`` to
+    always be ``str``-or-``None``. Root cause: CPython's own
+    ``type.__doc__`` getter has a heap-type fallback that looks ``__doc__``
+    up directly in the type's own ``__dict__`` and invokes its descriptor
+    protocol unbound (``obj=NULL``), which for a plain getset descriptor
+    just returns the descriptor itself rather than calling the getter.
+    #1213
+
   - Fixed classpath directories/jars containing a "+" character having it
     silently converted to a space on import, corrupting the resolved
     resource path. #1413
+
+  - Fixed ``jpype.dbapi2`` calling ``PreparedStatement.getParameterMetaData()``
+    even for statements executed with no parameters, which some strict JDBC
+    drivers reject for statements containing no parameter markers.
+    Parameterless ``execute()``/``executemany()`` calls, as well as
+    parameterless ``callproc()`` calls, no longer inspect parameter
+    metadata at all. #1489
 
   - Reworked the internal object layout for Java-backed Python objects to use
     fixed, type-baked offsets instead of a runtime allocator that re-derived

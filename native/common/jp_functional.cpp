@@ -107,8 +107,22 @@ public:
 		auto *cls = (JPFunctional*) match.closure;
 		JP_TRACE_IN("JPConversionFunctional::convert");
 		JPJavaFrame frame = JPJavaFrame::inner();
-		auto *self = (PyJPProxy*) PyJPProxy_Type->tp_alloc(PyJPProxy_Type, 0);
-		JP_PY_CHECK();
+		// RAII-owned: selfGuard releases the tp_alloc reference on any
+		// exit from this scope, exception or not, so a throw from either
+		// the JPProxyFunctional constructor (base JPProxy::JPProxy() does
+		// real JNI work: NewObjectArray/SetObjectArrayElement/
+		// CallStaticObjectMethodA) or getProxy() (Proxy.newInstance())
+		// can't leak self -- self->m_Proxy stays nullptr (tp_alloc
+		// zero-fills) and m_Target/m_Dispatch stay unset/un-incref'd
+		// until each line below actually completes, so PyJPProxy_dealloc
+		// correctly tears down whatever partial state exists regardless
+		// of which line throws. A manual Py_DECREF/try-catch version of
+		// this previously shipped and did not actually work (verified via
+		// fault injection: still leaked), which is exactly why this
+		// codebase's own RAII wrapper is used here instead of hand-rolling
+		// the equivalent.
+		JPPyObject selfGuard = JPPyObject::claim((PyObject*) PyJPProxy_Type->tp_alloc(PyJPProxy_Type, 0));
+		auto *self = (PyJPProxy*) selfGuard.get();
 		JPClassList cl;
 		cl.push_back(cls);
 		self->m_Proxy = new JPProxyFunctional(self, cl);
@@ -119,7 +133,6 @@ public:
 		Py_INCREF(self->m_Dispatch);
 		jvalue v = self->m_Proxy->getProxy();
 		v.l = frame.keep(v.l);
-		Py_DECREF(self);
 		return v;
 		JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 	}

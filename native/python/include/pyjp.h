@@ -157,6 +157,13 @@ extern PyTypeObject *PyJPNumberFloat_Type;
 extern PyTypeObject *PyJPNumberBool_Type;
 extern PyTypeObject *PyJPChar_Type;
 
+// Data descriptor equivalent to a single PyGetSetDef entry, except that
+// accessing it unbound (directly on the owning type, rather than an
+// instance) safely returns None instead of the raw descriptor object or
+// misinterpreting the type object as an instance of itself. See its
+// definition in pyjp_class.cpp for the full rationale (#1213).
+PyObject* PyJP_NewUnboundSafeGetSet(getter get, setter set);
+
 
 // JPype resources
 extern PyObject *PyJPModule;
