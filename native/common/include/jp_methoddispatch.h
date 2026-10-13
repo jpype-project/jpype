@@ -23,6 +23,7 @@ class JPMethodDispatch : public JPResource
 {
 public:
 
+	// codeql[cpp/commented-out-code] - false positive, this is a docstring
 	/**
 	 * Create a new method based on class and a name;
 	 */
