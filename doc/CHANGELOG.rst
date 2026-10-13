@@ -7,6 +7,9 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed a thread that detached from the JVM being attached again when a
+    proxy was freed on it. #1502
+
   - Added Python 3.15 to the test and release matrix. #1492
 
   - Documented that the thread that calls ``startJVM()`` is attached as a
