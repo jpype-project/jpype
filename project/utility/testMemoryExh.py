@@ -8,11 +8,12 @@
 # verify function (<1k, 10k, >1Mb) as different behaviors occur at different
 # usage points.
 
-from os import path
 import _jpype
 import jpype
 from jpype.types import *
 import numpy as np
+# kept for the commented-out gc.callbacks debug hook below
+# codeql[py/unused-import]
 import gc
 import time
 
@@ -52,6 +53,8 @@ if __name__ == '__main__':
 
     print()
     kB = (1024 / 8)
+    # swap in for kB above to test the >1Mb block size
+    # codeql[py/unused-global-variable]
     MB = (1024**2 / 8)
 
     fixture = JClass("jpype.common.Fixture")()
@@ -60,6 +63,8 @@ if __name__ == '__main__':
 
         interface = jpype.JProxy("java.io.Serializable",
                                  dict={'callback': DestructionTracker(i, x).callback})
+        # Held (not "read") to keep it alive until the explicit del below.
+        # codeql[py/unused-global-variable]
         interface_container = fixture.callObject(interface)
 
         if (i % 1000) == 0:
@@ -75,6 +80,8 @@ if __name__ == '__main__':
             time.sleep(1)
 #        print(_jpype.gcStats())
         del interface, interface_container
+        # Manual debug toggles below - uncomment when tuning by hand.
+        # codeql[py/commented-out-code]
 #        if DestructionTracker.del_calls != 0:
 #            print(f'{i} We have deleted something: {DestructionTracker.del_calls}')
 #        else:
