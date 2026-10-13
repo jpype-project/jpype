@@ -220,6 +220,11 @@ public class JavadocRenderer
       } else if (name.equals("hr"))
       {
         // punt
+      } else if (name.equals("wbr"))
+      {
+        // Word-break hint only (e.g. "methodName<wbr>(args)" in JDK 21+
+        // javadoc output, to let browsers wrap long signatures). No content
+        // of its own, so there is nothing to render.
       } else if (name.equals("dl"))
       {
         renderDefinitions(element);

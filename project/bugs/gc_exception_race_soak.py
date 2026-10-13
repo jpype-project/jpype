@@ -56,6 +56,14 @@ class _RaisesOnBool:
     trigger when used in a JArray(JBoolean) slice assignment."""
 
     def __bool__(self):
+        # Deliberately SystemError, not the conventional TypeError a failed
+        # __bool__ would normally raise (CodeQL flags this as
+        # "non-standard exception in special method" - false positive here):
+        # the corrupted-exception bug this harness reproduces manifests as
+        # CPython's own "SystemError: error return without exception set",
+        # a specific, recognizable mismatch from this "SystemError: nope".
+        # A conventional TypeError here would be indistinguishable from the
+        # corrupted state and defeat the whole detection strategy below.
         raise SystemError("nope")
 
 

@@ -64,4 +64,17 @@ public class ExceptionTest
   {
     throw new RuntimeException("Inner");
   }
+
+  // #1178: exceptions from dynamically generated classes (e.g. via ASM,
+  // without a LineNumberTable) report line -1 for their frames. Simulate
+  // that here without needing to generate real bytecode, since
+  // StackTraceElement's line number can be set directly.
+  public static void throwNoLineInfo()
+  {
+    RuntimeException ex = new RuntimeException("no line info");
+    StackTraceElement noLine = new StackTraceElement(
+        "jpype.exc.GeneratedNoLineClass", "generatedMethod", "GeneratedNoLineClass.java", -1);
+    ex.setStackTrace(new StackTraceElement[]{noLine});
+    throw ex;
+  }
 }

@@ -58,8 +58,7 @@ public:
 
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
-		JPValue *value = match.getJavaSlot();
-		if (value == nullptr)
+		if (match.getJPClass() == nullptr)
 			return match.type = JPMatch::_none;
 		match.type = JPMatch::_none;
 		// Implied conversion from boxed to primitive (JLS 5.1.8)
@@ -261,7 +260,7 @@ void JPByteType::releaseView(JPArrayView& view)
 		JPJavaFrame frame = JPJavaFrame::outer();
 		frame.ReleaseByteArrayElements((jbyteArray) view.m_Array->getJava(),
 				(jbyte*) view.m_Memory, view.m_Buffer.readonly ? JNI_ABORT : 0);
-	}	catch (JPypeException&)
+	}	catch (...)
 	{
 		// This is called as part of the cleanup routine and exceptions
 		// are not permitted

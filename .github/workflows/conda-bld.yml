@@ -2,7 +2,7 @@ name: conda-bld
 
 on:
   push:
-  workflow_dispatch:
+  pull_request:
 
 jobs:
   conda_build:
@@ -19,14 +19,37 @@ jobs:
         shell: bash
         run: |
           eval "$(micromamba shell hook --shell bash)"
-
+          micromamba activate base
+      
           micromamba install -y -c conda-forge \
             boa \
             conda-forge-pinning \
             conda-verify
-
+      
           INTERNAL_PREFIX=$(conda info --base)
-
+          PINNING="$INTERNAL_PREFIX/conda_build_config.yaml"
+      
+          python3 - "$PINNING" <<'PYEOF'
+          import sys, yaml
+          from conda_build.variants import parse_config_file
+          from conda_build.config import Config
+      
+          pinning_path = sys.argv[1]
+      
+          # parse_config_file resolves platform selectors (# [linux] etc.)
+          # the same way conda-build itself does, unlike plain yaml.safe_load
+          cfg = parse_config_file(pinning_path, Config())
+      
+          zip_group = next(g for g in cfg["zip_keys"] if "python" in g)
+          override = {key: [cfg[key][-1]] for key in zip_group}
+      
+          with open("py-override.yaml", "w") as f:
+              yaml.dump(override, f, default_flow_style=False)
+          PYEOF
+      
+          cat py-override.yaml
+      
           conda mambabuild project/conda_recipe/ \
             -c conda-forge \
-            --variant-config-files "$INTERNAL_PREFIX/conda_build_config.yaml"
+            --variant-config-files "$PINNING" \
+            --variant-config-files py-override.yaml

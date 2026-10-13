@@ -376,9 +376,31 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 	} else
 	{
 		PyTypeObject *type = ((PyTypeObject*) wrapper.get());
-		// Simple objects don't have a new or init function
-		PyObject *obj2 = type->tp_alloc(type, 0);
+		// Simple objects don't have a new or init function.  If this type is
+		// abstract (kept layout-trivial so it can be mixed into any foreign
+		// family -- see PyJPClass_FromSpecWithBases), redirect the actual
+		// allocation to its hidden concrete companion, exactly as
+		// PyJPObject_new does for the ordinary constructor path. offset is
+		// no longer usable to detect abstract-ness (see PyJPObject_new's
+		// comment) -- tp_concrete is the real signal.
+		PyTypeObject *allocType = PyJPClass_getConcrete(type);
+		if (allocType == nullptr)
+			allocType = type;
+		PyObject *obj2 = allocType->tp_alloc(allocType, 0);
 		JP_PY_CHECK();
+
+		if (allocType != type)
+		{
+			// Polymorph back to the canonical/abstract type, so
+			// type(instance) stays consistent with cls->getHost() and any
+			// other identity-sensitive code -- mirrors PyJPObject_new's own
+			// polymorph-back (see pyjp_object.cpp) and the legacy
+			// PyJPValue_alloc's Py_SET_TYPE trick.
+			Py_INCREF(type);
+			Py_SET_TYPE(obj2, type);
+			Py_DECREF(allocType);
+		}
+
 		obj = JPPyObject::claim(obj2);
 	}
 

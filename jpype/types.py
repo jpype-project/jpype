@@ -56,36 +56,20 @@ __all__ = [
 ]
 
 
-class JBoolean(_jpype._JBoolean, internal=True):  # type: ignore[call-arg]
-    pass
-
-
-class JByte(_jpype._JNumberLong, internal=True):  # type: ignore[call-arg]
-    pass
-
-
-class JChar(_jpype._JChar, internal=True):  # type: ignore[call-arg]
-    pass
-
-
-class JInt(_jpype._JNumberLong, internal=True):  # type: ignore[call-arg]
-    pass
-
-
-class JShort(_jpype._JNumberLong, internal=True):  # type: ignore[call-arg]
-    pass
-
-
-class JLong(_jpype._JNumberLong, internal=True):  # type: ignore[call-arg]
-    pass
-
-
-class JFloat(_jpype._JNumberFloat, internal=True):  # type: ignore[call-arg]
-    pass
-
-
-class JDouble(_jpype._JNumberFloat, internal=True):  # type: ignore[call-arg]
-    pass
-
-
-_jpype.JChar = JChar
+# JBoolean/JByte/JChar/JInt/JShort/JLong/JFloat/JDouble are built directly
+# in C (see PyJPNumber_initType in native/python/pyjp_number.cpp and
+# PyJPChar_initType in native/python/pyjp_char.cpp) rather than declared
+# here as `class JXxx(_jpype._JYyy, internal=True): pass` statements: an
+# ordinary Python class statement -- even through the internal metaclass --
+# unconditionally picks up GC tracking from CPython's type_new, which these
+# classes can never need (tp_dictoffset == 0, inherited from their non-GC
+# family root, so they can never hold an arbitrary Python reference and so
+# can never participate in a reference cycle).
+JBoolean = _jpype.JBoolean
+JByte = _jpype.JByte
+JChar = _jpype.JChar
+JInt = _jpype.JInt
+JShort = _jpype.JShort
+JLong = _jpype.JLong
+JFloat = _jpype.JFloat
+JDouble = _jpype.JDouble

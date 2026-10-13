@@ -346,10 +346,12 @@ static PyMethodDef methodMethods[] = {
 	{nullptr},
 };
 
+// __doc__ is installed separately after type creation, via
+// PyJP_NewUnboundSafeGetSet (see pyjp_class.cpp), rather than as a plain
+// entry here - see that function's comment for why.
 struct PyGetSetDef methodGetSet[] = {
 	{"__self__", (getter) (&PyJPMethod_getSelf), nullptr, nullptr, nullptr},
 	{"__name__", (getter) (&PyJPMethod_getName), nullptr, nullptr, nullptr},
-	{"__doc__", (getter) (&PyJPMethod_getDoc), (setter) (&PyJPMethod_setDoc), nullptr, nullptr},
 	{"__annotations__", (getter) (&PyJPMethod_getAnnotations), (setter) (&PyJPMethod_setAnnotations), nullptr, nullptr},
 	{"__closure__", (getter) (&PyJPMethod_getClosure), nullptr, nullptr, nullptr},
 	{"__code__", (getter) (&PyJPMethod_getCode), nullptr, nullptr, nullptr},
@@ -397,6 +399,13 @@ void PyJPMethod_initType(PyObject* module)
 	PyJPMethod_Type = (PyTypeObject*) PyType_FromSpecWithBases(&methodSpec, tuple.get());
 	PyFunction_Type.tp_flags = flags;
 	JP_PY_CHECK();
+
+	PyObject *doc = PyJP_NewUnboundSafeGetSet((getter) PyJPMethod_getDoc, (setter) PyJPMethod_setDoc);
+	JP_PY_CHECK();
+	PyDict_SetItemString(PyJPMethod_Type->tp_dict, "__doc__", doc);
+	Py_DECREF(doc);
+	JP_PY_CHECK();
+	PyType_Modified(PyJPMethod_Type);
 
 	PyModule_AddObject(module, "_JMethod", (PyObject*) PyJPMethod_Type);
 	JP_PY_CHECK();

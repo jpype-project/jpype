@@ -47,7 +47,7 @@
 #if (_MSVC_LAND >= 201402)
 #define NO_EXCEPT_FALSE noexcept(false)
 #else
-#define NO_EXCEPT_FALSE throw(JPypeException)
+#define NO_EXCEPT_FALSE throw(JPBaseError)
 #endif
 
 #else
@@ -56,7 +56,7 @@
 #if (__cplusplus >= 201103L)
 #define NO_EXCEPT_FALSE noexcept(false)
 #else
-#define NO_EXCEPT_FALSE throw(JPypeException)
+#define NO_EXCEPT_FALSE throw(JPBaseError)
 #endif
 
 #endif
@@ -165,10 +165,10 @@ public:
 //   These must be macros so that we can update the pattern and
 //   maintain the appropriate auditing information.  C++ does not
 //   have a lot for facilities to make this easy.
-#define JP_RAISE_PYTHON()                   { throw JPypeException(JPError::_python_error, nullptr, JP_STACKINFO()); }
-#define JP_RAISE_OS_ERROR_UNIX(err, msg)    { throw JPypeException(JPError::_os_error_unix,  msg, err, JP_STACKINFO()); }
-#define JP_RAISE_OS_ERROR_WINDOWS(err, msg) { throw JPypeException(JPError::_os_error_windows,  msg, err, JP_STACKINFO()); }
-#define JP_RAISE(type, msg)                 { throw JPypeException(JPError::_python_exc, type, msg, JP_STACKINFO()); }
+#define JP_RAISE_PYTHON()                   { throw JPPythonError::fetch(JP_STACKINFO()); }
+#define JP_RAISE_OS_ERROR_UNIX(err, msg)    { throw JPInternalError(msg, err, JP_STACKINFO()); }
+#define JP_RAISE_OS_ERROR_WINDOWS(err, msg) { throw JPInternalError(msg, err, JP_STACKINFO()); }
+#define JP_RAISE(type, msg)                 { throw JPInternalError(type, msg, JP_STACKINFO()); }
 
 #ifndef PyObject_HEAD
 struct _object;
@@ -186,6 +186,7 @@ static inline JPPyObject JPPyTuple_Pack(T... args) {
 #include "jp_javaframe.h"
 #include "jp_context.h"
 #include "jp_exception.h"
+#include "jp_error.h"
 #include "jp_tracer.h"
 #include "jp_typemanager.h"
 #include "jp_encoding.h"

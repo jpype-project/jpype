@@ -2858,6 +2858,59 @@ Common Issues and Troubleshooting
     import _jpype
     _jpype.enableStacktraces(True)
 
+7. **Class Loader Conflicts with Third-Party Frameworks**: In environments
+   with multiple class loaders (e.g., OSGi, Java EE application servers,
+   Eclipse Modeling Framework), you may encounter "No matching overloads found"
+   errors even when types appear to match. This occurs because Java considers
+   classes loaded by different class loaders to be incompletely different types,
+   even if they have identical names and bytecode.
+
+   **Symptoms**: Error messages like "No matching overloads found for
+   ClassName.method(Type)" where the type shown in the error matches the
+   method signature exactly.
+
+   **Limitation**: JPype cannot automatically resolve class loader conflicts.
+   When a third-party framework uses its own class loader, classes loaded
+   through that framework are incompatible with classes loaded through JPype's
+   class loader.
+
+   **Solution**: Explicitly load classes using the same class loader as your
+   framework. When working with frameworks that use custom class loaders (e.g.,
+   OSGi, EMF), you must load the Java classes through that framework's class
+   loader rather than JPype's default:
+
+   .. code-block:: python
+
+       # Get the framework's class loader
+       framework_loader = my_framework_object.getClass().getClassLoader()
+
+       # Load the enum class using the framework's class loader
+       MyEnumClass = jpype.JClass('com.example.MyEnum', loader=framework_loader)
+
+       # Now enum values will be compatible with framework methods
+       enum_value = MyEnumClass.valueOf("VALUE")
+       framework_object.setEnum(enum_value)  # This will work!
+
+   Alternatively, use Java's ``Class.forName()`` with the specific class loader:
+
+   .. code-block:: python
+
+       from java.lang import Class
+
+       # Get the framework's class loader
+       framework_loader = my_framework_object.getClass().getClassLoader()
+
+       # Load the class using forName with the specific loader
+       MyEnumClass = Class.forName('com.example.MyEnum', True, framework_loader)
+
+       # Access enum constants through reflection
+       enum_value = MyEnumClass.getField("VALUE").get(None)
+
+   **Note**: You must use the framework's class loader consistently for all
+   related classes. Mixing classes from different loaders will result in type
+   mismatch errors. If you cannot access the framework's class loader, consider
+   configuring your framework to use a shared parent class loader.
+
 
 .. _controlling_the_jvm_best_practices_for_jvm_starting:
 
@@ -4146,6 +4199,58 @@ Use Cases of JPickler
    - Example: Serialize problematic objects for inspection after a crash.
 
 
+.. _serialization_with_jpickler_pickling_python_objects_with_java_attributes:
+
+Pickling Python Objects with Java Attributes
+=============================================
+
+JPickler serializes Java objects themselves, but it does not help with the
+more common case of a plain Python object that merely *holds* one or more
+Java objects as attributes. Python's standard `pickle` module cannot
+serialize those attributes directly, since Java-backed objects are not
+picklable.
+
+The fix is the same technique Python uses for any other unpicklable
+attribute (open file handles, sockets, and so on): exclude the Java-backed
+attributes in `__getstate__`, and rebuild them in `__setstate__` after the
+rest of the state has been restored.
+
+.. code-block:: python
+
+    import jpype
+
+    class MyModel:
+        # Names of attributes that hold Java objects and must be excluded
+        # from pickling.
+        _java_attrs = ("java_obj",)
+
+        def __init__(self):
+            self.java_obj = jpype.JClass("some.pkg.SomeClass")()
+
+        def __getstate__(self):
+            state = self.__dict__.copy()
+            for name in self._java_attrs:
+                del state[name]
+            return state
+
+        def __setstate__(self, state):
+            self.__dict__.update(state)
+            if not jpype.isJVMStarted():
+                jpype.startJVM()
+            # Recreate the excluded Java-backed attributes.
+            self.java_obj = jpype.JClass("some.pkg.SomeClass")()
+
+Listing the excluded attribute names in one place (`_java_attrs` above)
+keeps `__getstate__` from having to special-case each field, and gives
+`__setstate__` a single list to regenerate. Exactly how a Java-backed
+attribute gets rebuilt is application-specific: it may mean re-running a
+constructor, as above, or re-deriving the value from other, already-restored
+state on the object.
+
+See `issue #1019 <https://github.com/jpype-project/jpype/issues/1019>`_ for
+the original report and workaround this pattern is generalized from.
+
+
 .. _serialization_with_jpickler_conclusion_for_jpicker:
 
 Conclusion for JPicker
@@ -5432,6 +5537,86 @@ implementing dynamic threading, one can detach the thread
 whenever Java is no longer needed.  The thread will automatically reattach if
 Java is needed again.  There is a performance penalty each time a thread is
 attached and detached.
+
+
+.. _concurrent_processing_threading_deciding_daemon_or_not:
+
+Deciding Whether a Thread Should Block Shutdown
+------------------------------------------------
+
+A thread that is inside a call into Java when ``shutdownJVM()`` runs forces a
+choice: should shutdown wait for it, or proceed without it? This comes up for
+any long-lived worker (a pool thread, an event loop task, a callback invoked
+from Java) that might still be running when the application exits. There is
+no automatic right answer, so pick one of the two explicitly:
+
+1. **The JVM must stay up until this thread finishes.** Attach it as a user
+   thread with ``java.lang.Thread.attach()`` (see
+   :ref:`concurrent_processing_customizing_javalangthread` above).
+   ``shutdownJVM()`` blocks until every user thread completes, so your
+   application is responsible for architecting a way to tell that thread to
+   wrap up - a shutdown flag it checks periodically, a Java shutdown hook
+   that signals back into Python, or similar - and let it return. Nothing
+   does this for you: if the thread is never told to finish, shutdown blocks
+   forever. That hang is by design, not a bug - a user thread is a promise
+   that the JVM won't go away without it, and JPype cannot break that
+   promise on your behalf.
+
+2. **This thread's work is not required for a clean exit.** Leave it as a
+   daemon - the default for any thread that has never called ``attach()``
+   explicitly, or set explicitly with ``java.lang.Thread.attachAsDaemon()``.
+   Daemon threads never block ``shutdownJVM()``. If a daemon thread is still
+   parked inside a Java call when shutdown proceeds without it, JPype
+   detects this as soon as that call would otherwise resume and safely
+   terminates or parks the thread rather than letting it touch freed JVM
+   state.
+
+If you are unsure which applies, prefer daemon: it is the safer default, and
+getting it wrong now fails safe instead of crashing.
+
+(See `issue #1169 <https://github.com/jpype-project/jpype/issues/1169>`_ for
+the discussion this section is drawn from.)
+
+.. note::
+   The automatic daemon attachment described above applies to threads that
+   call into Java *after* the JVM is already running.  It does not apply to
+   whichever thread calls ``startJVM()`` itself.  By JNI/JVM design, the
+   thread that starts the JVM becomes its designated main thread and is
+   attached as a non-daemon (user) thread, regardless of which Python
+   thread it happens to be.  A non-daemon thread keeps the JVM - and thus
+   the whole process - alive until it either finishes or is explicitly
+   detached.
+
+   This matters if you call ``startJVM()`` from a disposable thread, such
+   as a thread pool worker or a thread that is only used to perform setup
+   and then exits::
+
+       import threading
+
+       def main():
+           import jpype
+           jpype.startJVM()
+
+       t = threading.Thread(target=main)
+       t.start()
+       t.join()
+       # The process hangs here: the thread that started the JVM has
+       # exited without detaching, and it was never a daemon thread to
+       # begin with.
+
+   To let the process exit normally in this situation, detach the
+   launching thread (optionally re-attaching it as a daemon if it still
+   needs to make Java calls afterward) before it finishes::
+
+       def main():
+           import jpype
+           jpype.startJVM()
+           thread = jpype.java.lang.Thread.currentThread()
+           thread.detach()
+           thread.attachAsDaemon()
+
+   See :ref:`concurrent_processing_customizing_javalangthread` for details
+   on ``detach()`` and ``attachAsDaemon()``.
 
 .. _concurrent_processing_threading_java_threads:
 

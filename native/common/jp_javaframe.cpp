@@ -229,7 +229,7 @@ void JPJavaFrame::check()
 		JP_TRACE_JAVA("ExceptionOccurred", th);
 		m_Env->ExceptionClear();
 		JP_TRACE_JAVA("ExceptionClear", 0);
-		throw JPypeException(*this, th, JP_STACKINFO());
+		throw JPJavaError(*this, th, JP_STACKINFO());
 	}
 }
 
@@ -1088,7 +1088,7 @@ public:
 		try
 		{
 			frame_.ReleaseStringUTFChars(jstr_, cstr);
-		}		catch (JPypeException&)
+		}		catch (...)
 		{
 			// Error during release must be eaten.
 			// If Java does not accept a release of the buffer it

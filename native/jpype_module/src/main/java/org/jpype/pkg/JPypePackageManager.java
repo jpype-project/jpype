@@ -20,7 +20,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
@@ -469,9 +468,12 @@ public class JPypePackageManager
       // Java 8 bug https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8131067
       // Zip file system provider returns doubly % encoded URIs. We resolve this
       // by re-encoding the URI after decoding it.
+      //
+      // Replace "+" with its URL-encoded representation to avoid conversion to
+      // a space and ensure correct round-trip encoding.
       uri = new URI(
               uri.getScheme(),
-              URLDecoder.decode(uri.getSchemeSpecificPart(), StandardCharsets.UTF_8),
+              URLDecoder.decode(uri.getSchemeSpecificPart().replace("+", "%2b"), "UTF-8"),
               uri.getFragment()
       );
 

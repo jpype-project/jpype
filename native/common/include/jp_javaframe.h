@@ -62,7 +62,7 @@ public:
 	 * @param size determines how many objects can be
 	 * created in this scope without additional overhead.
 	 *
-	 * @throws JPypeException if the jpype cannot
+	 * @throws JPBaseError if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
 	static JPJavaFrame outer(int size = LOCAL_FRAME_DEFAULT)
@@ -76,7 +76,7 @@ public:
 	 * @param size determines how many objects can be
 	 * created in this scope without additional overhead.
 	 *
-	 * @throws JPypeException if the jpype cannot
+	 * @throws JPBaseError if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
 	static JPJavaFrame inner(int size = LOCAL_FRAME_DEFAULT)
@@ -91,7 +91,7 @@ public:
 	 * @param size determines how many objects can be
 	 * created in this scope without additional overhead.
 	 *
-	 * @throws JPypeException if the jpype cannot
+	 * @throws JPBaseError if the jpype cannot
 	 * acquire an env handle to work with jvm.
 	 */
 	static JPJavaFrame external(JNIEnv* env, int size = LOCAL_FRAME_DEFAULT)

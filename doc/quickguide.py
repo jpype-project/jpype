@@ -691,12 +691,27 @@ entry("Implement an interface",
       "")
 
 entry("Extending classes", None, None,
-      """Support for use of Python function as Java 8 lambda is WIP.""")
+      "Not supported directly. Implement an interface instead, or create "
+      "a thin Java-side extension class with an interface for the "
+      "methods that need to be reached from Python.")
 
 entry("Lambdas",
         java('DoubleUnaryOperator u = (p->p*2);'),
         python('u=DoubleUnaryOperator@(lambda x: x*2)'),
         'Any Java functional interface can take a lambda or callable.')
+
+entry("Add methods to an existing Java class", None,
+      """
+.. code-block:: python
+
+    @JImplementationFor('java.util.Map')
+    class _JMap:
+        def __len__(self):
+            return self.size()
+""",
+      "A customizer. Adds or replaces methods/properties on a Java "
+      "wrapper class; combine with @JOverride to replace an existing "
+      "Java method rather than add a new one.")
 endSection()
 
 print(

@@ -30,6 +30,8 @@ requirements:
     - cmake
     - ninja  # [win]
     - make  # [not win]
+    # for readelf (dynamic libstdc++ linkage check)
+    - binutils # [linux]
 
   host:
     - python

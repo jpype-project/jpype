@@ -1,7 +1,0 @@
-recursive-include native *.h *.xml *.java *.jar *.class
-recursive-include examples *
-include *.rst doc/* LICENSE
-# include test/
-graft test
-prune test/classes/*
-global-exclude *.pyc
