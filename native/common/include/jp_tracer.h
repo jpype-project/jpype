@@ -66,7 +66,7 @@ public:
 		m_Error = true;
 		try
 		{
-			throw; // codeql [cpp/rethrow-no-exception]
+			throw; // lgtm [cpp/rethrow-no-exception]
 		} catch (JPBaseError& ex)
 		{
 			ex.from(info);
