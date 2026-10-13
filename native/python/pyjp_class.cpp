@@ -477,7 +477,7 @@ int PyJPClass_setattro(PyObject *self, PyObject *attr_name, PyObject *v)
 	{
 		PyErr_Format(PyExc_TypeError,
 				"attribute name must be string, not '%.200s'",
-				attr_name->ob_type->tp_name);
+				Py_TYPE(attr_name)->tp_name);
 		return -1;
 	}
 
