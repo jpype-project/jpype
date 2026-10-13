@@ -21,6 +21,15 @@
 #include "jp_primitive_accessor.h"
 #include "jp_boxedtype.h"
 #include "jp_functional.h"
+#include <chrono>
+#include <cstdio>
+#include <thread>
+#ifdef WIN32
+#include <Windows.h>
+#elif defined(__linux__)
+#include <sys/syscall.h>
+#include <unistd.h>
+#endif
 
 JPPyObject getArgs(jlongArray parameterTypePtrs,
 		jobjectArray args, PyObject* self, int addSelf)
@@ -51,6 +60,79 @@ JPPyObject getArgs(jlongArray parameterTypePtrs,
 	return pyargs;
 	JP_TRACE_OUT;
 }
+
+// GCOVR_EXCL_START
+// A daemon-thread proxy can still be blocked inside the Python call below
+// when shutdownJVM() runs: DestroyJavaVM() only waits for non-daemon Java
+// threads, so it returns - and JPContext::shutdownJVM() then frees every
+// JPClass/context resource - while this thread is still parked. Once that
+// has happened we can neither convert a return value/exception back to
+// Java (the classes needed to do so are gone) nor safely return into the
+// JNI call stack we were invoked from (it belongs to a destroyed JVM), so
+// this thread must never execute another instruction that touches JVM or
+// JPype state. Warn once, then get this thread off the JVM's corpse for
+// good - by hard-terminating it where that is safe, or parking it forever
+// where it is not.
+//
+// Coverage is excluded: exercising this requires destroying the JVM out
+// from under a live thread, which by design never returns.
+[[noreturn]] static void abandonThreadAfterShutdown(PyObject* rawReturn)
+{
+	Py_XDECREF(rawReturn);
+	fprintf(stderr, "JPype: Application error, blocked python proxy attached "
+			"as a daemon thread and called after JVM shutdown. %s\n",
+#if defined(WIN32) || defined(__linux__)
+			"Terminating thread."
+#else
+			"Parking thread permanently."
+#endif
+			);
+	fflush(stderr);
+
+	// Release the GIL we are still holding (via the caller's outer
+	// JPPyCallAcquire) with a direct C-API call rather than letting that
+	// RAII object's destructor do it during a stack unwind. Skipping this
+	// step entirely and terminating while still holding the GIL would hard
+	// freeze the rest of the interpreter forever, since no other Python
+	// thread could ever acquire it again.
+	PyEval_SaveThread();
+
+	// pthread_exit() is deliberately not used here: on glibc it unwinds the
+	// C++ stack via the same forced-unwind mechanism as pthread_cancel(),
+	// which would run JPJavaFrame's/JPPyCallAcquire's destructors (touching
+	// the destroyed JVM) as it passes through them - and, independently of
+	// that, JNI flatly forbids letting any exception cross back out through
+	// the JVM's own native-method call stub beneath us, which a forced
+	// unwind would attempt to do. We must not unwind through that stack at
+	// all, only step around it.
+#if defined(WIN32)
+	// Terminates only this thread - no destructors run, no SEH unwinding -
+	// and unlike a pthread stack, Windows itself reclaims the thread's
+	// stack on the way out. Clean and safe for exactly this "abandon
+	// everything left on this stack" situation.
+	ExitThread(1);
+#elif defined(__linux__)
+	// The raw exit syscall (as opposed to glibc's exit()/exit_group()
+	// wrapper, which would tear down the whole process) terminates only the
+	// calling thread, with no unwinding and no cleanup handlers run. The
+	// trade-off is that it also skips NPTL's own stack teardown, so this
+	// thread's stack is leaked for the remaining life of the process - a
+	// small, bounded, one-time cost, and the only way on this platform to
+	// guarantee we never execute another instruction on top of a destroyed
+	// JVM. Not extended to other POSIX platforms (e.g. macOS): raw syscall
+	// numbers are not a stable ABI there, and getting this wrong risks
+	// tearing down the whole process instead of just this thread.
+	syscall(SYS_exit, 0);
+#endif
+
+	// Either this thread was just terminated above, or (on platforms
+	// without a verified-safe hard-terminate primitive) fall back to
+	// parking: it must never execute another instruction that touches JVM
+	// or JPype state, but it is safe to simply never do so again.
+	for (;;)
+		std::this_thread::sleep_for(std::chrono::hours(24));
+}
+// GCOVR_EXCL_STOP
 
 extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 		JNIEnv *env, jclass clazz,
@@ -102,7 +184,14 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 			JPPyObject pyargs = getArgs(parameterTypePtrs, args, proxy->m_Instance->m_Target, addSelf);
 
 			JP_TRACE("Call Python");
-			JPPyObject returnValue = JPPyObject::call(PyObject_Call(callable.get(), pyargs.get(), nullptr));
+			PyObject* rawReturn = PyObject_Call(callable.get(), pyargs.get(), nullptr);
+
+			// The JVM may have been destroyed while we were blocked in the
+			// call above (see abandonThreadAfterShutdown()).
+			if (!JPContext_global->isRunning())
+				abandonThreadAfterShutdown(rawReturn); // GCOVR_EXCL_LINE
+
+			JPPyObject returnValue = JPPyObject::call(rawReturn);
 
 			JP_TRACE("Handle return", Py_TYPE(returnValue.get())->tp_name);
 			if (returnClass == JPContext_global->_void)
