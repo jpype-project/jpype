@@ -76,7 +76,12 @@ class Client(object):
         self.outQueue = ctx.Queue()
         self.process = ctx.Process(target=_execute, args=(self.inQueue, self.outQueue), daemon=True)
         self.process.start()
-        self.timeout = 20
+        # leaksweep.py's time-budgeted sweep drives a test method for far
+        # longer than the normal fast-suite default below -- it sets this
+        # env var before the test runs (individual=True's restart() calls
+        # start() again per test) rather than plumbing a parameter through
+        # every layer between the sweep driver and this IPC client.
+        self.timeout = float(os.environ.get('JPYPE_SUBRUN_TIMEOUT', '20'))
 
     def execute(self, function, *args, **kwargs):
         self.inQueue.put([function.__name__, os.path.abspath(

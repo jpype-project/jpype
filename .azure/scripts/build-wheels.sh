@@ -10,7 +10,7 @@ package_name=${package_name:-jpype1}
 if [ -n "$BUILD_PY_VERSIONS" ]; then
     IFS=' ' read -r -a include_versions <<< "$BUILD_PY_VERSIONS"
 else
-    include_versions=("310" "311" "312" "313" "314")
+    include_versions=("310" "311" "312" "313" "314" "315")
 fi
 
 echo "Building for Python versions: ${include_versions[*]}"
