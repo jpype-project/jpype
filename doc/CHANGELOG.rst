@@ -126,6 +126,14 @@ Latest Changes:
     pass that slot already held the first customizer's wrapper, so the
     wrapper ended up calling itself once installed. #1473
 
+  - Fixed ``startJVM(interrupt=False)`` crashing the process with ``SIGSEGV``
+    inside ``PyErr_SetInterruptEx`` when ``SIGTERM`` arrived
+    and the Python handler for the signal was still the default.  The native
+    ``interruptPy`` ran on a thread of the JVM without holding the GIL, and
+    CPython needs a thread state to compare the Python handler with
+    ``SIG_DFL``.  It now acquires the GIL like the other callbacks from Java
+    threads.  #1497
+
   - Fixed ``startJVM()`` printing a "restricted method" / native access
     warning on JDK 22+ (``java.lang.System::load has been called ... in an
     unnamed module``). JPype now probes the JVM's supported JNI version
