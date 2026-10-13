@@ -19,7 +19,7 @@
 #include "jp_class.h"
 
 /**
- * The class loader is reponsible for loading classes within JPype.
+ * The class loader is responsible for loading classes within JPype.
  *
  * Depending on the settings it may either use an internal boot loader
  * to get the jar from within the _jpype module, or it may use the
