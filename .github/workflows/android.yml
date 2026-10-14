@@ -114,6 +114,17 @@ jobs:
           buildozer -v android debug 2>&1 | tee "$RUNNER_TEMP/buildozer.log"
           ls -lh bin/
 
+      - name: Restore Buildozer cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            project/android/testapp/.buildozer
+            ~/.buildozer
+          key: buildozer-${{ hashFiles('project/android/testapp/buildozer.spec', 'project/android/sync_tests.py') }}-${{ hashFiles('jpype/**') }}
+          restore-keys: |
+            buildozer-${{ hashFiles('project/android/testapp/buildozer.spec', 'project/android/sync_tests.py') }}-
+            buildozer-
+
       - name: Upload APK
         uses: actions/upload-artifact@v7
         with:
