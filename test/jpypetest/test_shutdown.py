@@ -88,6 +88,156 @@ class ShutdownSignalWarningTest(unittest.TestCase):
         self.assertIn(b"PRE-JVM-RESTORED", result.stdout)
 
 
+class ShutdownParkedDaemonProxyTest(unittest.TestCase):
+    """A Python proxy invoked from a *daemon* thread can still be blocked
+    inside its Python callback when shutdownJVM() runs: DestroyJavaVM()
+    only waits for non-daemon Java threads, so it returns - and frees every
+    JPClass/context resource - while that thread is still parked
+    underneath it. Releasing the callback afterwards used to resume
+    execution on top of a destroyed JVM and segfault. JPype must instead
+    detect this in hostInvoke() and get the thread off the JVM permanently
+    (terminate it, or park it forever) rather than let it touch freed
+    state.  Run out-of-process since a regression here is a hard crash.
+
+    Covers both ways a thread can end up daemon-attached and parked inside
+    hostInvoke():
+      - java.lang.Thread(runnable): a JVM-native thread, never previously
+        seen by Python, that calls straight into the proxy (Java -> Python).
+      - a plain Python threading.Thread that calls into Java through a
+        Java-typed reference to the same proxy, which routes back into the
+        same callback on that same OS thread (Python -> Java -> Python).
+        This thread auto-attaches as a daemon via JPContext::getEnv()'s
+        AttachCurrentThreadAsDaemon fallback the first time it touches
+        Java, so it is exposed to the same race, but arrives at
+        hostInvoke() with GIL/thread-state history a java.lang.Thread never
+        has (it already had a live PyThreadState before touching Java)."""
+
+    _SPAWN_JAVA_THREAD = (
+        "jthread = jpype.java.lang.Thread(runnable)\n"
+        "jthread.setDaemon(True)\n"
+        "jthread.start()\n"
+    )
+
+    _SPAWN_PYTHON_THREAD = (
+        "jrunnable = jpype.java.lang.Runnable @ runnable\n"
+        "def worker():\n"
+        "    jrunnable.run()\n"
+        "jthread = threading.Thread(target=worker, daemon=True)\n"
+        "jthread.start()\n"
+    )
+
+    def _run(self, action, spawn):
+        script = (
+            "import threading, time, jpype\n"
+            "from jpype import JImplements, JOverride\n"
+            "jpype.startJVM(convertStrings=False)\n"
+            "started = threading.Event()\n"
+            "release = threading.Event()\n"
+            "@JImplements(jpype.java.lang.Runnable)\n"
+            "class Parked:\n"
+            "    @JOverride\n"
+            "    def run(self):\n"
+            "        started.set()\n"
+            "        release.wait()\n"
+            f"        {action}\n"
+            "runnable = Parked()\n"
+            f"{spawn}"
+            "assert started.wait(timeout=10)\n"
+            "time.sleep(0.2)\n"
+            "jpype.shutdownJVM()\n"
+            "release.set()\n"
+            "time.sleep(1)\n"
+            "print('SURVIVED')\n"
+        )
+        result = subprocess.run([sys.executable, "-c", script],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                timeout=60)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(b"SURVIVED", result.stdout)
+        self.assertIn(b"Application error, blocked python proxy attached as "
+                      b"a daemon thread and called after JVM shutdown",
+                      result.stderr)
+
+    def testRaiseAfterShutdownJavaThread(self):
+        # Callback resumes and raises - exercises the exception-conversion
+        # path (JPPythonError::toJava), which needs the freed exception
+        # classes.
+        self._run("raise RuntimeError('boom after JVM destroyed')",
+                  self._SPAWN_JAVA_THREAD)
+
+    def testCallAfterShutdownJavaThread(self):
+        # Callback resumes and makes a fresh JNI call - exercises the case
+        # where the callback doesn't merely return but tries to use the
+        # (destroyed) JVM again.
+        self._run("jpype.java.lang.System.currentTimeMillis()",
+                  self._SPAWN_JAVA_THREAD)
+
+    def testRaiseAfterShutdownPythonThread(self):
+        self._run("raise RuntimeError('boom after JVM destroyed')",
+                  self._SPAWN_PYTHON_THREAD)
+
+    def testCallAfterShutdownPythonThread(self):
+        self._run("jpype.java.lang.System.currentTimeMillis()",
+                  self._SPAWN_PYTHON_THREAD)
+
+
+@subrun.TestCase
+class AutoDetachAfterShutdownTest(unittest.TestCase):
+    """Regression test for the JVM thread-attachment-leak fix
+    (native/common/jp_context.cpp): a thread that auto-attached (or
+    explicitly attached) to the JVM and is still alive/attached when the
+    JVM shuts down must not crash the process later when it finally
+    exits and its TLS auto-detach destructor fires -- by then the
+    JavaVM* it captured at attach time may point into an already
+    dlclose()'d/FreeLibrary()'d shared library
+    (JPPlatformAdapter::unloadLibrary(), called from shutdownJVM() when
+    freeJVM is set). The destructor must check
+    JPContext_global->isRunning() before touching that pointer rather
+    than assuming its own bookkeeping is still valid. Needs subrun since
+    it starts and shuts down its own JVM."""
+
+    @classmethod
+    def setUpClass(cls):
+        import threading
+
+        jpype.startJVM(convertStrings=False)
+
+        attached = threading.Event()
+        release = threading.Event()
+
+        def worker():
+            # Implicit ("auto") attach -- first call into Java on this
+            # brand-new native thread, registered as a daemon attach so
+            # shutdownJVM()'s DestroyJavaVM() does not wait for it.
+            jpype.JString("worker")
+            attached.set()
+            # Stay alive (and attached) until told to exit, so the JVM
+            # shutdown below happens while this thread is still attached
+            # -- this thread's eventual exit (after release.set(), below)
+            # is what fires the auto-detach destructor post-shutdown.
+            release.wait(timeout=10)
+
+        t = threading.Thread(target=worker)
+        t.start()
+        if not attached.wait(timeout=10):
+            raise RuntimeError("worker thread never attached")
+
+        jpype.shutdownJVM()
+
+        # Let the still-attached worker thread exit now that the JVM is
+        # already down, then wait for it.
+        release.set()
+        t.join(timeout=10)
+        cls.workerSurvived = not t.is_alive()
+
+    def testSurvivedShutdownWhileAttached(self):
+        # Reaching this line at all means the subprocess survived a
+        # worker thread auto-detaching after the JVM it was attached to
+        # had already shut down.
+        self.assertTrue(self.workerSurvived)
+        self.assertFalse(jpype.isJVMStarted())
+
+
 @subrun.TestCase
 class ShutdownTest(unittest.TestCase):
 

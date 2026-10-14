@@ -40,10 +40,14 @@ paramstyle = 'qmark'
 
 
 class JDBCTypeProtocol(typing.Protocol):
+    # codeql[py/ineffectual-statement]
     def get(self, rs, column, st):...
+    # codeql[py/ineffectual-statement]
     def set(self, ps, column, value):...
 
 _SQLException = None
+# not currently used, kept paired with _SQLException above
+# codeql[py/unused-global-variable]
 _SQLTimeoutException = None
 _registry: typing.Dict[str, JDBCTypeProtocol] = {}
 _types: typing.List[JDBCTypeProtocol] = []
@@ -725,8 +729,6 @@ class Cursor(object):
 
     def _setParams(self, params):
         cx = self._connection
-        meta = self._statement.getParameterMetaData()
-        count = meta.getParameterCount()
 
         if isinstance(params, str):
             raise _UnsupportedTypeError(
@@ -737,6 +739,16 @@ class Cursor(object):
             raise _UnsupportedTypeError("'%s' parameters not supported" % type(params).__name__)  # pragma: no cover
 
         param_tuple = tuple(params)
+
+        # Skip inspecting parameter metadata entirely for parameterless
+        # statements.  Some strict JDBC drivers raise when
+        # getParameterMetaData() is called on a statement with no
+        # parameter markers.
+        if not param_tuple:
+            return
+
+        meta = self._statement.getParameterMetaData()
+        count = meta.getParameterCount()
 
         if len(param_tuple) != count:
             raise ProgrammingError(
@@ -969,14 +981,23 @@ class Cursor(object):
             # This is a special one as we need to deal with in and out arguments
             out = list(parameters)
             cx = self._connection
-            meta = self._statement.getParameterMetaData()
-            count = meta.getParameterCount()
-            if types is None:
-                types = [None] * count
+            # Skip inspecting parameter metadata entirely for parameterless
+            # calls.  Some strict JDBC drivers raise when
+            # getParameterMetaData() is called on a statement with no
+            # parameter markers.
+            if not parameters:
+                meta = None
+                count = 0
+                types = []
             else:
-                if len(types) != count:
-                    raise ProgrammingError(
-                        "expected '%d' types, got '%d'" % (count, len(types)))
+                meta = self._statement.getParameterMetaData()
+                count = meta.getParameterCount()
+                if types is None:
+                    types = [None] * count
+                else:
+                    if len(types) != count:
+                        raise ProgrammingError(
+                            "expected '%d' types, got '%d'" % (count, len(types)))
             for i in range(count):
                 # Lookup the JDBC Type
                 p = parameters[i]
@@ -1409,12 +1430,12 @@ def Binary(data):
 
 
 #  SQL NULL values are represented by the Python None singleton on input and output.
-_accepted = {"exact", "implicit"}
 
 
 def _populateTypes():
     global _SQLException, _SQLTimeoutException
     _SQLException = _jpype.JClass("java.sql.SQLException")
+    # codeql[py/unused-global-variable]
     _SQLTimeoutException = _jpype.JClass("java.sql.SQLTimeoutException")
     cs = _jpype.JClass("java.sql.CallableStatement")
     ps = _jpype.JClass("java.sql.PreparedStatement")

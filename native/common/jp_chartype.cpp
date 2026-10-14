@@ -48,15 +48,9 @@ JPValue JPCharType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 
 JPPyObject JPCharType::convertToPythonObject(JPJavaFrame& frame, jvalue val, bool cast)
 {
-	//	if (!cast)
-	//	{
 	JPPyObject out = JPPyObject::call(PyJPChar_Create((PyTypeObject*) _JChar, val.c));
 	PyJPValue_assignJavaSlot(frame, out.get(), JPValue(this, val));
 	return out;
-	//	}
-	//	JPPyObject tmp = JPPyObject::call(PyLong_FromLong(field(val)));
-	//	JPPyObject out = JPPyObject::call(convertLong(getHost(), (PyLongObject*) tmp.get()));
-	//	return out;
 }
 
 JPValue JPCharType::getValueFromObject(JPJavaFrame& frame, const JPValue& obj)

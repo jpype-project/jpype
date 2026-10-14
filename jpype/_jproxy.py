@@ -42,7 +42,7 @@ def _classOverrides(cls):
             attr = object.__getattribute__(v, "__joverride__")
             overrides[k] = (v, attr)
         except AttributeError:
-            pass
+            pass  # not an override, just a normal class member
     return overrides
 
 

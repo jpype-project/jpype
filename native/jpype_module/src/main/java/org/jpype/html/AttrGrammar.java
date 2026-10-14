@@ -42,6 +42,7 @@ public class AttrGrammar implements Parser.Grammar
   }
 
 //<editor-fold desc="tokens">
+  // codeql[java/class-name-matches-super-class]
   enum Token implements Parser.Token
   {
     TEXT,
@@ -117,6 +118,7 @@ public class AttrGrammar implements Parser.Grammar
 //</editor-fold>
 //<editor-fold desc="state">
 
+  // codeql[java/class-name-matches-super-class]
   enum State implements Parser.State
   {
     FREE(freeTokens, freeRules),
@@ -216,7 +218,7 @@ public class AttrGrammar implements Parser.Grammar
     public void execute(Parser parser)
     {
       Entity e2 = (Entity) parser.stack.removeLast();
-      Entity e1 = (Entity) parser.stack.removeLast();
+      parser.stack.removeLast();  // consumes the '=' token, value unused
       Entity e0 = (Entity) parser.stack.removeLast();
       AttrParser aparser = (AttrParser) parser;
       Attr attr = aparser.doc.createAttribute((String) e0.value);

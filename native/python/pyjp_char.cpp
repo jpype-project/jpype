@@ -212,15 +212,15 @@ Py_UCS2 fromJPChar(PyJPChar *self)
 {
 	if (_PyUnicode_STATE(self).ascii == 1)
 	{
-		auto *data = (Py_UCS1*) (((PyASCIIObject*) self) + 1);
+		auto *data = (Py_UCS1*) &(((PyASCIIObject*) self)[1]);
 		return data[0];
 	}
 	if (_PyUnicode_STATE(self).kind == PyUnicode_1BYTE_KIND)
 	{
-		auto *data = (Py_UCS1*) ( ((PyCompactUnicodeObject*) self) + 1);
+		auto *data = (Py_UCS1*) &(((PyCompactUnicodeObject*) self)[1]);
 		return data[0];
 	}
-	auto *data = (Py_UCS2*) ( ((PyCompactUnicodeObject*) self) + 1);
+	auto *data = (Py_UCS2*) &(((PyCompactUnicodeObject*) self)[1]);
 	return data[0];
 }
 

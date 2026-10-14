@@ -149,6 +149,7 @@ public:
 	 * It cannot fail even if the JVM is no longer operating.
 	 */
 	void ReleaseGlobalRef(jobject obj);
+	void ReleaseWeakGlobalRef(jweak obj);
 
 	// JPype services
 
@@ -202,6 +203,7 @@ private:
 
 	jint(JNICALL * CreateJVM_Method)(JavaVM **pvm, void **penv, void *args){};
 	jint(JNICALL * GetCreatedJVMs_Method)(JavaVM **pvm, jsize size, jsize * nVms){};
+	jint(JNICALL * GetDefaultJavaVMInitArgs_Method)(void *args){};
 
 private:
 
