@@ -51,6 +51,12 @@ Latest Changes:
 
     #1257
 
+  - Fixed importing a class whose static initializer fails directly from a
+    top level domain (``from org import Broken``) raising the raw
+    ``java.lang.ExceptionInInitializerError`` instead of ``ImportError``.
+    A later attempt to import the same class now reports the earlier
+    initializer failure instead of a missing dependency.
+
   - Fixed a segmentation fault when a Python proxy (e.g. implementing
     ``Runnable``) was invoked from a *daemon* Java thread and was still
     blocked inside its Python callback when ``shutdownJVM()`` ran.
