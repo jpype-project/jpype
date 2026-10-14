@@ -93,7 +93,7 @@ static int PyJPArray_init(PyObject *self, PyObject *args, PyObject *kwargs)
 		}
 
 		JPValue value(valueCls, PyJPValue_getJValue(frame, v));
-		((PyJPArray*) self)->m_Array = new JPArray(value);
+		reinterpret_cast<PyJPArray *>(self)->m_Array = new JPArray(value);
 		PyJPValue_assignJavaSlot(frame, self, value);
 		return 0;
 	}
@@ -200,9 +200,9 @@ static PyObject *PyJPArray_getItem(PyJPArray *self, PyObject *item)
 				JPValue(PyJPValue_getJPClass((PyObject*) self), PyJPValue_getJValue(frame, (PyObject*) self)));
 
 		// Set up JPArray as slice
-		JPArray *array = ((PyJPArray*) self)->m_Array;
-		((PyJPArray*) newArray.get())->m_Array = new JPArray(array,
-				(jsize) start, (jsize) stop, (jsize) step);
+		JPArray *array = self->m_Array;
+		reinterpret_cast<PyJPArray *>(newArray.get())->m_Array = new JPArray(array,
+		                                                                     (jsize) start, (jsize) stop, (jsize) step);
 		return newArray.keep();
 	}
 
@@ -224,8 +224,8 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 	// Watch out for self assignment
 	if (PyObject_IsInstance(value, (PyObject*) PyJPArray_Type))
 	{
-		jobject v1 = PyJPValue_getJValue(frame, (PyObject*) self).l;
-		jobject v2 = PyJPValue_getJValue(frame, (PyObject*) value).l;
+		jobject v1 = PyJPValue_getJValue(frame, (PyObject *)self).l;
+		jobject v2 = PyJPValue_getJValue(frame, value).l;
 		if (frame.equals(v1, v2))
 			JP_RAISE(PyExc_ValueError, "self assignment not support currently");
 	}
@@ -340,7 +340,7 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 			view->format = nullptr;
 
 		// Okay all successful so reference the parent object
-		view->obj = (PyObject*) self;
+		view->obj = reinterpret_cast<PyObject *>(self);
 		Py_INCREF(view->obj);
 		return 0;
 	} catch (...) // GCOVR_EXCL_LINE

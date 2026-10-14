@@ -44,7 +44,8 @@ class JBooleanTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPBooleanType(self):
-        ja = JArray(JBoolean)(5)  # lgtm [py/similar-function]
+        # codeql[py/similar-function]
+        ja = JArray(JBoolean)(5)
         _jpype.fault("JPBooleanType::setArrayRange")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja[1:3] = [0, 0]

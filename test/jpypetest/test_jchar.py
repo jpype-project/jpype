@@ -90,7 +90,8 @@ class JChar2TestCase(common.JPypeTestCase):
             # Special case no fault is allowed
             memoryview(ja[0:3])
         f()
-        ja = JArray(JChar)(5)  # lgtm [py/similar-function]
+        # codeql[py/similar-function]
+        ja = JArray(JChar)(5)
         _jpype.fault("JPCharType::setArrayRange")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja[1:3] = [0, 0]
