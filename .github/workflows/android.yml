@@ -35,7 +35,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  ANDROID_NDK_VERSION: 25.1.8937393    # must match android.ndk in buildozer.spec
+  ANDROID_NDK_VERSION: 25.1.8937393   # must match android.ndk in buildozer.spec
   APP_PACKAGE: org.jpype.test.jpypetest
 
 jobs:
@@ -107,16 +107,128 @@ jobs:
       - name: Stage test/jpypetest into the test app
         run: python project/android/sync_tests.py
 
-      - name: Restore Buildozer cache
-        uses: actions/cache@v4
+      - name: Build APK
+        working-directory: project/android/testapp
+        run: |
+          set -eo pipefail
+          buildozer -v android debug 2>&1 | tee "$RUNNER_TEMP/buildozer.log"
+          ls -lh bin/
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v7
         with:
-          path: |
-            project/android/testapp/.buildozer
-            ~/.buildozer
-          key: buildozer-${{ hashFiles('project/android/testapp/buildozer.spec', 'project/android/sync_tests.py') }}-${{ hashFiles('jpype/**') }}
-          restore-keys: |
-            buildozer-${{ hashFiles('project/android/testapp/buildozer.spec', 'project/android/sync_tests.py') }}-
-            buildozer-
+          name: jpypetest-apk
+          path: project/android/testapp/bin/*.apk
+          if-no-files-found: error
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: buildozer-log
+          path: ${{ runner.temp }}/buildozer.log
+          if-no-files-found: ignore
+
+  emulator-test:
+    name: On-device jpypetest (API 34, x86_64 emulator)
+    needs: build-apk
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: jpypetest-apk
+          path: apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # Kept as a file because android-emulator-runner executes `script:` line
+      # by line, which is awkward for loops.
+      - name: Write check script
+        run: |
+          cat > "$RUNNER_TEMP/check.sh" <<'EOF'
+          #!/usr/bin/env bash
+          set -uo pipefail
+          APK=$(ls apk/*.apk | head -n1)
+          ACTIVITY="$APP_PACKAGE/org.kivy.android.PythonActivity"
+          SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
+          
+          # The unittest run is verbose; the default 256K logcat ring buffer
+          # would drop most of it. Enlarge it and stream to a file.
+          adb logcat -G 16M
+          adb logcat -c
+          adb logcat -v threadtime > "$LOG" &
+          LOGCAT_PID=$!
+          
+          adb install -r "$APK" || exit 1
+          adb shell am start -n "$ACTIVITY" || exit 1
+          
+          # Wait for the end marker from main.py (up to 30 minutes), or for the
+          # app process to disappear without ever printing it.
+          for i in $(seq 1 360); do
+            if grep -q '=== jpype android testapp done ===' "$LOG"; then break; fi
+            if [ "$i" -gt 12 ] && [ -z "$(adb shell pidof "$APP_PACKAGE" | tr -d '\r')" ]; then
+              echo "app process is gone before the end marker appeared"
+              break
+            fi
+            sleep 5
+          done
+          sleep 3
+          kill "$LOGCAT_PID" 2>/dev/null || true
+          
+          fail=0
+          check() {
+            if grep -q "$1" "$LOG"; then echo "ok:   $1"; else echo "FAIL: missing '$1'"; fail=1; fi
+          }
+          check 'GOLDEN PATH: PASS'
+          check 'REGRESSION CHECK #1257: PASS'
+          check '=== jpype android testapp done ==='
+          
+          result=$(grep -o 'PORTED SUITE: ran=[0-9]* failures=[0-9]* errors=[0-9]* skipped=[0-9]*' "$LOG" | tail -n1)
+          if [ -z "$result" ]; then
+            echo "FAIL: no 'PORTED SUITE: ran=...' summary line"; fail=1
+          else
+            echo "$result"
+            echo "$result" | grep -q 'failures=0 errors=0' || fail=1
+          fi
+          
+          if grep -qE 'PORTED SUITE: (FAILED TO LOAD|FAIL to run)' "$LOG"; then
+            grep -E 'PORTED SUITE: (FAILED TO LOAD|FAIL to run)' "$LOG"; fail=1
+          fi
+          # Signature of the original #1257 crash. The harmless trailing SIGABRT
+          # from the WebView GPU thread (doc/android_build.rst) is not matched.
+          if grep -q 'terminating due to uncaught exception' "$LOG"; then
+            echo "FAIL: uncaught C++ exception in logcat"; fail=1
+          fi
+          
+          {
+            echo "### Android on-device result"
+            echo '```'
+            grep -hE 'GOLDEN PATH|PORTED SUITE: ran|REGRESSION CHECK' "$LOG" | sed 's/^.*python *: *//'
+            echo '```'
+          } >> "$SUMMARY"
+          
+          if [ "$fail" -ne 0 ]; then
+            echo "---- failing/erroring tests ----"
+            grep -E 'python *: (FAIL|ERROR)(:| )' "$LOG" | head -n 60
+          fi
+          exit "$fail"
+          EOF
+
+      - name: Run on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          LOG: ${{ github.workspace }}/logcat.txt
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          ram-size: 4096M
+          script: bash ${{ runner.temp }}/check.sh
 
       - name: Upload logcat
         if: always()
