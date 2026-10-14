@@ -68,9 +68,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            autoconf automake libtool libtool-bin pkg-config cmake \
-            zlib1g-dev libncurses-dev libffi-dev libssl-dev \
-            rsync zip unzip git
+            autoconf automake libtool libtool-bin libltdl-dev pkg-config cmake \
+            autopoint gettext zlib1g-dev libncurses-dev libtinfo6 \
+            libffi-dev libssl-dev rsync zip unzip git
           # The jpype1 recipe runs `ant -f test/build.xml javadoc`.
           ant -version
 
