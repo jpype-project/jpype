@@ -146,8 +146,6 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      # Kept as a file because android-emulator-runner executes `script:` line
-      # by line, which is awkward for loops.
       - name: Write check script
         run: |
           cat > "$RUNNER_TEMP/check.sh" <<'EOF'
@@ -156,19 +154,55 @@ jobs:
           APK=$(ls apk/*.apk | head -n1)
           ACTIVITY="$APP_PACKAGE/org.kivy.android.PythonActivity"
           SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
+          LOG="${LOG:-$RUNNER_TEMP/logcat.txt}"
           
-          # The unittest run is verbose; the default 256K logcat ring buffer
-          # would drop most of it. Enlarge it and stream to a file.
-          adb logcat -G 16M
-          adb logcat -c
+          wait_for_device_state() {
+            local retries=60
+            for i in $(seq 1 $retries); do
+              if adb devices | awk 'NR>1{print $2}' | grep -q '^device$'; then
+                echo "device state: device"
+                return 0
+              fi
+              echo "waiting for device state (device) ($i/$retries)..."
+              sleep 2
+            done
+            return 1
+          }
+          
+          wait_for_boot_completed() {
+            local retries=60
+            for i in $(seq 1 $retries); do
+              val=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+              if [ "$val" = "1" ]; then
+                echo "boot completed"
+                return 0
+              fi
+              echo "waiting for boot_completed ($i/$retries)..."
+              sleep 2
+            done
+            return 1
+          }
+          
+          adb start-server || true
+          if ! wait_for_device_state; then
+            echo "ERROR: emulator never reached device state" >&2
+            adb devices || true
+            exit 1
+          fi
+          
+          if ! wait_for_boot_completed; then
+            echo "WARNING: boot_completed not seen; continuing anyway" >&2
+          fi
+          
+          adb logcat -G 16M || true
+          adb logcat -c || true
           adb logcat -v threadtime > "$LOG" &
           LOGCAT_PID=$!
           
+          sleep 1
           adb install -r "$APK" || exit 1
           adb shell am start -n "$ACTIVITY" || exit 1
           
-          # Wait for the end marker from main.py (up to 30 minutes), or for the
-          # app process to disappear without ever printing it.
           for i in $(seq 1 360); do
             if grep -q '=== jpype android testapp done ===' "$LOG"; then break; fi
             if [ "$i" -gt 12 ] && [ -z "$(adb shell pidof "$APP_PACKAGE" | tr -d '\r')" ]; then
@@ -177,6 +211,7 @@ jobs:
             fi
             sleep 5
           done
+          
           sleep 3
           kill "$LOGCAT_PID" 2>/dev/null || true
           
@@ -199,8 +234,7 @@ jobs:
           if grep -qE 'PORTED SUITE: (FAILED TO LOAD|FAIL to run)' "$LOG"; then
             grep -E 'PORTED SUITE: (FAILED TO LOAD|FAIL to run)' "$LOG"; fail=1
           fi
-          # Signature of the original #1257 crash. The harmless trailing SIGABRT
-          # from the WebView GPU thread (doc/android_build.rst) is not matched.
+          
           if grep -q 'terminating due to uncaught exception' "$LOG"; then
             echo "FAIL: uncaught C++ exception in logcat"; fail=1
           fi
@@ -214,8 +248,11 @@ jobs:
           
           if [ "$fail" -ne 0 ]; then
             echo "---- failing/erroring tests ----"
-            grep -E 'python *: (FAIL|ERROR)(:| )' "$LOG" | head -n 60
+            grep -E 'python *: (FAIL|ERROR)(:| )' "$LOG" | tail -n 60
+            echo "---- last 400 lines of logcat ----"
+            tail -n 400 "$LOG" || true
           fi
+          
           exit "$fail"
           EOF
 
