@@ -234,6 +234,39 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 		{
 			c = PyJPValue_getJValue(frame, arg[0]).l;
 		}
+		// A java.lang.reflect.Proxy instance's own runtime method table
+		// is a genuinely distinct method identity from wherever JPype
+		// originally bound this JPMethod's methodID (an interface
+		// declaration, or the proxy class's own getMethods() result -
+		// either way, not necessarily JNI-equal to what this specific
+		// instance's vtable/itable actually resolves - confirmed
+		// empirically: Method.equals() returns false between an
+		// interface's declared Method and the same proxy class's own
+		// Method for the same name/signature). A raw JNI call (virtual
+		// or nonvirtual) using that cached methodID against a Proxy
+		// instance is otherwise correct per the JVM spec (works fine on
+		// desktop JVMs) but trips ART's CheckJNI return-type verifier on
+		// at least one Android build - confirmed via a from-scratch
+		// ART/CheckJNI abort: "the return type of CallObjectMethodA does
+		// not match java.lang.String <AnnotationType>.value()", for a
+		// correctly String-typed annotation accessor called on the
+		// runtime proxy Class.getAnnotation() returns (see
+		// test/jpypetest/test_annotation.py's testAnnotationMethodCall,
+		// and doc/android_build.rst). Routing through reflection - the
+		// same mechanism invokeCallerSensitive already uses - sidesteps
+		// this entirely, since Method.invoke() resolves against the
+		// instance's own runtime class correctly. Checked ahead of the
+		// #880 nonvirtual/virtual choice below (and regardless of
+		// m_Class->isInterface(), since a bound JPMethod for a
+		// proxy-returned object is often keyed to the proxy's own
+		// concrete class, not the interface it implements) because it
+		// takes priority over both.
+		if (frame.IsInstanceOf(c, frame.getContext()->m_ReflectProxyClass.get()))
+		{
+			JP_TRACE("invoke proxy via reflection", m_Name);
+			return invokeCallerSensitive(match, arg, instance);
+		}
+
 		jclass clazz = nullptr;
 		// Issue #880: Interface and annotation methods must always use virtual calls
 		// even when called with a specific class, as they don't have non-virtual form in JNI

@@ -27,6 +27,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import org.jpype.html.Html;
 import org.jpype.html.Parser;
+import org.jpype.pkg.JPypePackageManager;
 import org.w3c.dom.Document;
 import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.Node;
@@ -71,7 +72,14 @@ public class JavadocExtractor
   {
     InputStream is = null;
     String name = cls.getName().replace('.', '/') + ".html";
-    ClassLoader cl = ClassLoader.getSystemClassLoader();
+    // The doc HTML for a class ships wherever that class's own .class/dex
+    // entry does, so look it up via that class's own defining classloader
+    // rather than the system classloader - the latter is a boot-loader
+    // stub with no dex visibility on Android (see doc/android.rst; the
+    // same fix applies to org.jpype.html.Html's entities.txt lookup).
+    ClassLoader cl = cls.getClassLoader();
+    if (cl == null)
+      cl = ClassLoader.getSystemClassLoader();
 
     // Search the regular class path.
     is = cl.getResourceAsStream(name);
@@ -98,7 +106,15 @@ public class JavadocExtractor
     {
       // do nothing if we are not JDK 9+
     }
-    return null;
+
+    // None of the classloader-based lookups above can work on Android at
+    // all: they depend on a javadoc target having already run and placed
+    // HTML alongside compiled classes on the classpath, which nothing in
+    // the Android build does (see project/android/recipes/jpype1/
+    // __init__.py's generate_javadoc_assets, which runs that generation
+    // step itself and bundles just the resulting file(s) as a real
+    // Android asset instead, under the same per-class relative path).
+    return JPypePackageManager.openAndroidAsset("jpype-android-javadoc/" + name);
   }
 
   /**

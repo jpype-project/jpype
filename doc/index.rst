@@ -26,6 +26,7 @@ Parts of the documentation
    dbapi2
    imports
    android
+   android_build
    CHANGELOG
    develguide
 
