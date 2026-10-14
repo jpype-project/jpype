@@ -705,7 +705,13 @@ namespace
 		// call, regardless of what may have happened to this thread's
 		// attachment between registerAutoDetach() and now.
 		JNIEnv* env;
+		// Same header divergence as in JPContext::attachCurrentThread():
+		// Android's NDK jni.h wants JNIEnv**, desktop jni.h wants void**.
+#ifdef ANDROID
+		vm->AttachCurrentThreadAsDaemon(&env, nullptr);
+#else
 		vm->AttachCurrentThreadAsDaemon((void**) &env, nullptr);
+#endif
 		vm->DetachCurrentThread();
 	}
 
