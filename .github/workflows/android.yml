@@ -44,11 +44,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 150
     steps:
-      - name: Free disk space
-        run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
-          df -h /
-
       - uses: actions/checkout@v6
 
       # The harness was verified with JDK 21; a newer JDK breaks the bundled
