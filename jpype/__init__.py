@@ -19,7 +19,9 @@
 # resources on _jpype and registering class customizers).  Under PEP 810
 # global lazy imports (python -X lazy_imports=all), a plain import whose name
 # is never used is never executed.  Imports inside a try block are always
-# eager, so the block is wrapped to keep the load order deterministic.
+# eager, so the block is wrapped to keep the load order deterministic.  The
+# try exists only for that effect and must not be removed; test_lazyimports
+# fails without it.
 try:
     import _jpype
     from ._jinit import *
@@ -46,8 +48,8 @@ try:
     from . import _jio          # lgtm [py/import-own-module]
     from . import protocol      # lgtm [py/import-own-module]
     from . import _jthread      # lgtm [py/import-own-module]
-except ImportError:
-    raise
+finally:
+    pass
 
 __all__ = ['java', 'javax']
 __all__.extend(_jinit.__all__)  # type: ignore[name-defined]
