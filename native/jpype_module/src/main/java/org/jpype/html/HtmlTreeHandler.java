@@ -63,7 +63,6 @@ public class HtmlTreeHandler implements HtmlHandler
   public void startElement(String name, String attr)
   {
     name = name.toLowerCase().trim();
-    String attr0 = attr;
 
     // Html has irregular end rules.
     while (Html.OPTIONAL_ELEMENTS.contains(name))

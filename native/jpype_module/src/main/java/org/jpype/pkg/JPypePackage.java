@@ -15,6 +15,7 @@
 **************************************************************************** */
 package org.jpype.pkg;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Modifier;
@@ -134,6 +135,55 @@ public class JPypePackage
   }
 
   /**
+   * Read exactly buf.length bytes from is, looping over short reads.
+   *
+   * InputStream.read(byte[]) is allowed by contract to return fewer bytes
+   * than requested even before EOF; ignoring that would silently desync
+   * the constant-pool walk below on any stream that does.
+   *
+   * @throws EOFException if the stream ends before buf is filled.
+   */
+  private static void readFully(InputStream is, byte[] buf) throws IOException
+  {
+    int off = 0;
+    while (off < buf.length)
+    {
+      int n = is.read(buf, off, buf.length - off);
+      if (n < 0)
+        throw new EOFException("Unexpected end of class file");
+      off += n;
+    }
+  }
+
+  /**
+   * Skip exactly n bytes from is, looping over short skips.
+   *
+   * InputStream.skip(long) is allowed by contract to skip fewer bytes than
+   * requested for reasons other than EOF; a skip() that makes no progress
+   * falls back to reading (and discarding) a single byte to tell a stalled
+   * stream apart from one that is genuinely at EOF.
+   *
+   * @throws EOFException if the stream ends before n bytes are skipped.
+   */
+  private static void skipFully(InputStream is, long n) throws IOException
+  {
+    long remaining = n;
+    while (remaining > 0)
+    {
+      long skipped = is.skip(remaining);
+      if (skipped <= 0)
+      {
+        if (is.read() < 0)
+          throw new EOFException("Unexpected end of class file");
+        remaining--;
+      } else
+      {
+        remaining -= skipped;
+      }
+    }
+  }
+
+  /**
    * Determine if a class is public.
    *
    * This checks if a class file contains a public class. When importing classes
@@ -161,7 +211,7 @@ public class JPypePackage
 
       // Check the magic
       ByteBuffer header = ByteBuffer.allocate(4 + 2 + 2 + 2);
-      is.read(header.array());
+      readFully(is, header.array());
       ((Buffer) header).rewind();
       int magic = header.getInt();
       if (magic != (int) 0xcafebabe)
@@ -173,7 +223,7 @@ public class JPypePackage
       // Traverse the cp pool
       for (int i = 0; i < cpitems - 1; ++i)
       {
-        is.read(buffer3.array());
+        readFully(is, buffer3.array());
         ((Buffer) buffer3).rewind();
         byte type = buffer3.get(); // First byte is the type
 
@@ -181,7 +231,7 @@ public class JPypePackage
         switch (type)
         {
           case 1:  // Strings are variable length
-            is.skip(buffer3.getShort());
+            skipFully(is, buffer3.getShort());
             break;
           case 7:
           case 8:
@@ -190,7 +240,7 @@ public class JPypePackage
           case 20:
             break;
           case 15:
-            is.skip(1);
+            skipFully(is, 1);
             break;
           case 3:
           case 4:
@@ -200,11 +250,11 @@ public class JPypePackage
           case 12:
           case 17:
           case 18:
-            is.skip(2);
+            skipFully(is, 2);
             break;
           case 5:
           case 6:
-            is.skip(6); // double and long are special as they are double entries
+            skipFully(is, 6); // double and long are special as they are double entries
             i++; // long and double take two slots
             break;
           default:
@@ -213,7 +263,7 @@ public class JPypePackage
       }
 
       // Get the flags
-      is.read(buffer3.array());
+      readFully(is, buffer3.array());
       ((Buffer) buffer3).rewind();
       short flags = buffer3.getShort();
       return (flags & 1) == 1; // it is public if bit zero is set

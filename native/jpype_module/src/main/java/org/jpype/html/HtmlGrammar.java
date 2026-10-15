@@ -83,6 +83,7 @@ public class HtmlGrammar implements Parser.Grammar
   }
 
 //<editor-fold desc="state">
+  // codeql[java/class-name-matches-super-class]
   enum State implements Parser.State
   {
     FREE(freeTokens, freeRules),
@@ -115,6 +116,7 @@ public class HtmlGrammar implements Parser.Grammar
 
 //</editor-fold>
 //<editor-fold desc="tokens" defaultstate="collapsed">
+  // codeql[java/class-name-matches-super-class]
   enum Token implements Parser.Token
   {
     TEXT,
@@ -413,9 +415,9 @@ public class HtmlGrammar implements Parser.Grammar
     public void execute(Parser parser)
     {
       LinkedList<Entity> stack = parser.stack;
-      Entity e2 = stack.removeLast();
+      stack.removeLast();  // consumes '>', value unused
       Entity e1 = stack.removeLast();
-      Entity e0 = stack.removeLast();
+      stack.removeLast();  // consumes '<' + '/', value unused
       String content = e1.value.toString();
       getGrammar(parser).flushText(parser);
       getHandler(parser).endElement(content);
@@ -435,9 +437,9 @@ public class HtmlGrammar implements Parser.Grammar
     public void execute(Parser parser)
     {
       LinkedList<Entity> stack = parser.stack;
-      Entity e2 = stack.removeLast();
+      stack.removeLast();  // consumes '>', value unused
       Entity e1 = stack.removeLast();
-      Entity e0 = stack.removeLast();
+      stack.removeLast();  // consumes the directive marker, value unused
       String content = e1.value.toString();
       getGrammar(parser).flushText(parser);
       getHandler(parser).directive(content);

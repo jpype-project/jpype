@@ -101,6 +101,22 @@ class ImportsTestCase(common.JPypeTestCase):
         with self.assertRaises(ImportError):
             from brokenx import Fixture as Fixture2  # type: ignore
 
+    def testInitializerErrorTopLevel(self):
+        # A class imported directly from a top level domain must report
+        # initializer errors as ImportError like any other package.
+        jpype.imports.registerDomain("badinitx", alias="jpype.badinittop")
+        with self.assertRaisesRegex(ImportError, "due to initializer error"):
+            from badinitx import BadInitA  # type: ignore
+        with self.assertRaisesRegex(ImportError, "earlier initializer error"):
+            from badinitx import BadInitA  # type: ignore
+
+    def testInitializerErrorSubpackage(self):
+        jpype.imports.registerDomain("jpypex", alias="jpype")
+        with self.assertRaisesRegex(ImportError, "due to initializer error"):
+            from jpypex.badinitsub import BadInitB  # type: ignore
+        with self.assertRaisesRegex(ImportError, "earlier initializer error"):
+            from jpypex.badinitsub import BadInitB  # type: ignore
+
     def testIsPackage(self):
         import java.lang
         self.assertIsInstance(java, jpype.JPackage)
@@ -130,6 +146,25 @@ class ImportsTestCase(common.JPypeTestCase):
         t = late.Test()
         self.assertTrue(t.field == 5)
         self.assertTrue(t.method() == "Yes")
+
+    def testAddClassPathLateJdbcDriver(self):
+        # A JDBC driver added to the classpath after the JVM has started
+        # must still be discoverable by java.sql.DriverManager, even
+        # though DriverManager's own ServiceLoader-based provider scan only
+        # runs once, at its first use (see #914).
+        import pathlib
+        DriverManager = jpype.JClass("java.sql.DriverManager")
+        SQLException = jpype.JClass("java.sql.SQLException")
+        url = "jdbc:latedriver:test"
+        with self.assertRaises(SQLException):
+            DriverManager.getDriver(url)
+
+        jar_path = pathlib.Path(__file__).parent / "../jars/latedriver/latedriver.jar"
+        assert jar_path.exists(), "run `ant -f test/build.xml latedriver-jar` first"
+        jpype.addClassPath(jar_path.absolute())
+        driver = DriverManager.getDriver(url)
+        self.assertEqual(str(driver.getClass().getName()),
+                          "org.jpype.latedriver.LateDriver")
 
     def testStar(self):
         import importstar
