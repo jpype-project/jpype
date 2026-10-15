@@ -287,8 +287,8 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 			JPMatch conv(&frame, u);
 			JPClass *boxed = type->getBoxedClass(frame);
 			boxed->findJavaConversion(conv);
-			jvalue v = conv.convert();
-			frame.SetObjectArrayElement(ja, i, v.l);
+			jvalue boxedVal = conv.convert();
+			frame.SetObjectArrayElement(ja, i, boxedVal.l);
 		} else
 		{
 			frame.SetObjectArrayElement(ja, i, v[i].l);
@@ -315,9 +315,9 @@ JPPyObject JPMethod::invokeCallerSensitive(JPMethodMatch& match, JPPyObjectVecto
 	} else
 	{
 		JP_TRACE("Return object");
-		jvalue v;
-		v.l = o;
-		return retType->convertToPythonObject(frame, v, false);
+		jvalue rv;
+		rv.l = o;
+		return retType->convertToPythonObject(frame, rv, false);
 	}
 	JP_TRACE_OUT;
 }

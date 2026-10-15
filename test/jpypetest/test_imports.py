@@ -101,6 +101,22 @@ class ImportsTestCase(common.JPypeTestCase):
         with self.assertRaises(ImportError):
             from brokenx import Fixture as Fixture2  # type: ignore
 
+    def testInitializerErrorTopLevel(self):
+        # A class imported directly from a top level domain must report
+        # initializer errors as ImportError like any other package.
+        jpype.imports.registerDomain("badinitx", alias="jpype.badinittop")
+        with self.assertRaisesRegex(ImportError, "due to initializer error"):
+            from badinitx import BadInitA  # type: ignore
+        with self.assertRaisesRegex(ImportError, "earlier initializer error"):
+            from badinitx import BadInitA  # type: ignore
+
+    def testInitializerErrorSubpackage(self):
+        jpype.imports.registerDomain("jpypex", alias="jpype")
+        with self.assertRaisesRegex(ImportError, "due to initializer error"):
+            from jpypex.badinitsub import BadInitB  # type: ignore
+        with self.assertRaisesRegex(ImportError, "earlier initializer error"):
+            from jpypex.badinitsub import BadInitB  # type: ignore
+
     def testIsPackage(self):
         import java.lang
         self.assertIsInstance(java, jpype.JPackage)

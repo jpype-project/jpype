@@ -24,32 +24,46 @@ from . import _jclass
 from . import _jcustomizer
 
 # Copies of all private base types for reference
+# codeql[py/unused-global-variable]
 _JClass = _jpype._JClass
+# codeql[py/unused-global-variable]
 _JObject = _jpype._JObject
+# codeql[py/unused-global-variable]
 _JException = _jpype._JException
+# codeql[py/unused-global-variable]
 _JNumberLong = _jpype._JNumberLong
+# codeql[py/unused-global-variable]
 _JNumberFloat = _jpype._JNumberFloat
+# codeql[py/unused-global-variable]
 _JComparable = _jpype._JComparable
+# codeql[py/unused-global-variable]
 _JChar = _jpype._JChar
+# codeql[py/unused-global-variable]
 _JBoolean = _jpype._JBoolean
+# codeql[py/unused-global-variable]
 _JArray = _jpype._JArray
+# codeql[py/unused-global-variable]
 _JBuffer = _jpype._JBuffer
 
 if sys.version_info < (3, 8):  # pragma: no cover
     from typing_extensions import Protocol, runtime_checkable
-    from typing import Sequence, Mapping, Set  # lgtm [py/unused-import]
-    from typing import SupportsFloat, Callable  # lgtm [py/unused-import]
+    # codeql[py/unused-import]
+    from typing import Sequence, Mapping, Set
+    # codeql[py/unused-import]
+    from typing import SupportsFloat, Callable
 
     @runtime_checkable
     class SupportsIndex(Protocol):
+        # codeql[py/ineffectual-statement]
         def __index__(self) -> int: ...
 
 
 else:
     # 3.8 onward
     from typing import Protocol, runtime_checkable
-    from typing import SupportsIndex, SupportsFloat  # lgtm [py/unused-import]
-    # lgtm [py/unused-import]
+    # codeql[py/unused-import]
+    from typing import SupportsIndex, SupportsFloat
+    # codeql[py/unused-import]
     from typing import Sequence, Mapping, Set, Callable
 
 # Types we need
@@ -57,6 +71,7 @@ else:
 
 @runtime_checkable
 class SupportsPath(Protocol):
+    # codeql[py/ineffectual-statement]
     def __fspath__(self) -> str: ...
 
 

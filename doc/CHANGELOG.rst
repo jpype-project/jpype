@@ -45,6 +45,29 @@ Latest Changes:
     Also removed dead/unreachable code in the non-batch ``executemany()``
     fallback path.
 
+  - Fixed importing a class whose static initializer fails directly from a
+    top level domain (``from org import Broken``) raising the raw
+    ``java.lang.ExceptionInInitializerError`` instead of ``ImportError``.
+    A later attempt to import the same class now reports the earlier
+    initializer failure instead of a missing dependency.
+
+  - Fixed a segmentation fault when a Python proxy (e.g. implementing
+    ``Runnable``) was invoked from a *daemon* Java thread and was still
+    blocked inside its Python callback when ``shutdownJVM()`` ran.
+    ``DestroyJavaVM()`` only waits for non-daemon Java threads, so shutdown
+    would complete - freeing every internal class/context resource - while
+    that thread was still parked underneath it; releasing the callback
+    afterwards resumed execution on top of a destroyed JVM. JPype now
+    detects this in the native proxy dispatcher as soon as the callback
+    returns, warns to stderr, and gets the thread off the JVM permanently
+    (hard-terminated where safe, parked forever otherwise) instead of
+    letting it touch freed state.
+    
+  - Fixed a thread that detached from the JVM being attached again when a
+    proxy was freed on it. #1502
+
+  - Added Python 3.15 to the test and release matrix. #1492
+
   - Documented that the thread that calls ``startJVM()`` is attached as a
     non-daemon thread by JVM/JNI design, regardless of JPype's usual
     automatic daemon attachment for threads calling into Java - and that
