@@ -94,6 +94,35 @@ class CursorExecuteManyRepeatTestCase(common.JPypeTestCase):
         cx._jcx = mock.MagicMock()
         cx._jcx.isClosed.return_value = False
         cx._batch = batch
+        cx._setters = mock.MagicMock()
+        cur = dbapi2.Cursor(cx)
+        stmt = mock.MagicMock()
+        stmt.execute.return_value = False
+        stmt.getParameterMetaData.return_value.getParameterCount.return_value = 0
+        cx._jcx.prepareStatement.return_value = stmt
+        return cur, stmt
+
+    def test_executemany_uses_repeat_fallback_when_batch_unsupported(self):
+        # When the driver doesn't support batch updates, executemany()
+        # must fall back to executing each parameter set individually
+        # via _executeRepeat rather than addBatch()/executeBatch().
+        cur, stmt = self._cursor(batch=False)
+        stmt.getUpdateCount.side_effect = [1, 1]
+        cur.executemany("insert into t values (?)", [(), ()])
+        self.assertEqual(cur.rowcount, 2)
+        self.assertEqual(stmt.execute.call_count, 2)
+        stmt.addBatch.assert_not_called()
+        stmt.executeBatch.assert_not_called()
+
+    def test_executemany_uses_batch_when_supported(self):
+        cur, stmt = self._cursor(batch=True)
+        stmt.executeBatch.return_value = [1, 1]
+        cur.executemany("insert into t values (?)", [(), ()])
+        self.assertEqual(cur.rowcount, 2)
+        self.assertEqual(stmt.addBatch.call_count, 2)
+        stmt.executeBatch.assert_called_once()
+
+
 class CursorSetParamsTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -137,29 +166,6 @@ class CursorCallprocTestCase(common.JPypeTestCase):
         cur = dbapi2.Cursor(cx)
         stmt = mock.MagicMock()
         stmt.execute.return_value = False
-        stmt.getParameterMetaData.return_value.getParameterCount.return_value = 0
-        cx._jcx.prepareStatement.return_value = stmt
-        return cur, stmt
-
-    def test_executemany_uses_repeat_fallback_when_batch_unsupported(self):
-        # When the driver doesn't support batch updates, executemany()
-        # must fall back to executing each parameter set individually
-        # via _executeRepeat rather than addBatch()/executeBatch().
-        cur, stmt = self._cursor(batch=False)
-        stmt.getUpdateCount.side_effect = [1, 1]
-        cur.executemany("insert into t values (?)", [(), ()])
-        self.assertEqual(cur.rowcount, 2)
-        self.assertEqual(stmt.execute.call_count, 2)
-        stmt.addBatch.assert_not_called()
-        stmt.executeBatch.assert_not_called()
-
-    def test_executemany_uses_batch_when_supported(self):
-        cur, stmt = self._cursor(batch=True)
-        stmt.executeBatch.return_value = [1, 1]
-        cur.executemany("insert into t values (?)", [(), ()])
-        self.assertEqual(cur.rowcount, 2)
-        self.assertEqual(stmt.addBatch.call_count, 2)
-        stmt.executeBatch.assert_called_once()
         stmt.getUpdateCount.return_value = -1
         cx._jcx.prepareCall.return_value = stmt
         return cx, cur, stmt
