@@ -29,7 +29,7 @@ struct JPGCStats
 class JPGarbageCollection {
 public:
 
-	explicit JPGarbageCollection();
+	JPGarbageCollection() = default;
 
 	void init(JPJavaFrame& frame);
 

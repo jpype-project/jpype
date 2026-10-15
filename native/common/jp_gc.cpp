@@ -30,7 +30,7 @@
 #include <mach/mach.h>
 
 #elif __GLIBC__
-// Linux doesn't have an available rss tally so use mallinfo
+// Linux doesn't have an available rss tally so use mallinfo2
 #define USE_MALLINFO
 #include <malloc.h>
 
@@ -106,8 +106,6 @@ void JPGarbageCollection::triggered()
 		PyGC_Collect();
 	}
 }
-
-JPGarbageCollection::JPGarbageCollection() = default;
 
 void JPGarbageCollection::init(JPJavaFrame& frame)
 {
