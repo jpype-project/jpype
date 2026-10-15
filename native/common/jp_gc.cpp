@@ -84,15 +84,12 @@ static size_t getWorkingSize()
 	return sz * page_size;
 
 #elif defined(USE_MALLINFO)
-	struct mallinfo mi;
-	mi = mallinfo();
-	current = (size_t) mi.uordblks;
+	struct mallinfo2 mi = mallinfo2();
+	current = mi.uordblks;
 #endif
 
 	return current;
 }
-
-void triggerPythonGC();
 
 void JPGarbageCollection::triggered()
 {
@@ -110,24 +107,7 @@ void JPGarbageCollection::triggered()
 	}
 }
 
-JPGarbageCollection::JPGarbageCollection() : _ContextClass(nullptr) {
-	running = false;
-	in_python_gc = false;
-	java_triggered = false;
-	python_gc = nullptr;
-	_SystemClass = nullptr;
-	_gcMethodID = nullptr;
-
-	last_python = 0;
-	last_java = 0;
-	low_water = 0;
-	high_water = 0;
-	limit = 0;
-	last = 0;
-	java_count = 0;
-	python_count = 0;
-	python_triggered = 0;
-}
+JPGarbageCollection::JPGarbageCollection() = default;
 
 void JPGarbageCollection::init(JPJavaFrame& frame)
 {
