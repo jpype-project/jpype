@@ -7,6 +7,50 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - ``jpype.dbapi2``'s ``Cursor.description`` now returns each column's
+    ``AS`` alias when the query specified one, instead of always the
+    underlying table column name -- matching PEP 249 ("the name or alias
+    of the column") by using ``ResultSetMetaData.getColumnLabel()``
+    instead of ``getColumnName()``.
+
+  - ``jpype.dbapi2``'s default parameter-setter lookup
+    (``SETTERS_BY_TYPE``) now falls back to matching against the
+    ``java.sql.Array``/``Blob``/``Clob``/``NClob``/``SQLXML``/``Ref``/
+    ``RowId`` interfaces when a value's exact class isn't registered
+    directly.  Previously, passing a value fetched from one of these
+    column types back in as a parameter (e.g. copying a ``BLOB`` from one
+    table to another) always failed with ``InterfaceError: no setter
+    found for '...'``, because such values come back from the driver as
+    a vendor-specific concrete class implementing the interface, never
+    the interface itself.
+
+  - ``jpype.dbapi2`` now converts ``TIME_WITH_TIMEZONE``/
+    ``TIMESTAMP_WITH_TIMEZONE`` columns to timezone-aware
+    ``datetime.time``/``datetime.datetime`` by default when the driver
+    returns the JDK-standard ``java.time.OffsetTime``/``OffsetDateTime``
+    representation; previously these always leaked the raw,
+    driver-specific Java object through unconverted, even with default
+    converters active.
+
+  - ``jpype.dbapi2`` closes out several long-standing TODO items:
+    added ``Connection.isolation_level`` (an extension property wrapping
+    ``java.sql.Connection.get/setTransactionIsolation()``, with new
+    ``TRANSACTION_NONE``/``TRANSACTION_READ_UNCOMMITTED``/
+    ``TRANSACTION_READ_COMMITTED``/``TRANSACTION_REPEATABLE_READ``/
+    ``TRANSACTION_SERIALIZABLE`` constants) and a default adapter for
+    ``decimal.Decimal`` parameters (adapted into ``java.math.BigDecimal``,
+    matching the existing read-side ``getBigDecimal`` -> ``decimal.Decimal``
+    converter -- previously passing a plain ``decimal.Decimal`` as a query
+    parameter raised ``InterfaceError: no setter found for 'Decimal'``).
+    Also removed dead/unreachable code in the non-batch ``executemany()``
+    fallback path.
+
+  - Fixed importing a class whose static initializer fails directly from a
+    top level domain (``from org import Broken``) raising the raw
+    ``java.lang.ExceptionInInitializerError`` instead of ``ImportError``.
+    A later attempt to import the same class now reports the earlier
+    initializer failure instead of a missing dependency.
+
   - Fixed ``startJVM(interrupt=False)`` sometimes raising
     ``java.lang.InterruptedException`` (or aborting the process) instead of
     ``KeyboardInterrupt`` when ``SIGINT`` arrived while the main thread was
@@ -14,7 +58,7 @@ Latest Changes:
     The signal handler woke the main thread before it recorded the signal for
     Python, so the pending-signal check made while converting the exception
     could find nothing.  The handler now records the signal first. #1496
- 
+
   - Fixed a segmentation fault when a Python proxy (e.g. implementing
     ``Runnable``) was invoked from a *daemon* Java thread and was still
     blocked inside its Python callback when ``shutdownJVM()`` ran.
