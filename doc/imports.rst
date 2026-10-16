@@ -102,6 +102,57 @@ Example::
 
   from org.raise_ import Object  => imports "org.raise.Object"
 
+Lazy imports (Python 3.15+)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Java packages and classes can be imported with the ``lazy`` import
+statements added in Python 3.15 (:pep:`810`).  The lookup is deferred until
+the name is first used, so a lazy import may even be written before the JVM
+is started:
+
+ .. code-block:: python
+
+  import jpype
+  import jpype.imports
+
+  lazy from java.lang import String
+  lazy import java.util as ju
+
+  jpype.startJVM()
+
+  s = String('hello')        # resolved here
+  mylist = ju.ArrayList()
+
+A class that does not exist is reported as an ``ImportError`` at first use
+rather than at the import statement.
+
+Importing a Java class initializes it, which runs its static initializer.
+A lazy import defers that to the first use of the name, and an error in the
+static initializer is likewise raised at first use.  A class imported only
+for the side effect of its static initializer (for example registering a
+JDBC driver) should be imported eagerly, or initialized explicitly with
+``jpype.JClass``.
+
+When global lazy imports are enabled (``python -X lazy_imports=all`` or
+``PYTHON_LAZY_IMPORTS=all``) every plain module-level import is deferred,
+including ``import jpype.imports``.  That import is only needed for its side
+effect of installing the Java import hook, so the name is never used and the
+hook would never be installed.  ``jpype.startJVM()`` detects a pending
+``jpype.imports`` and loads it, so the usual order of importing
+``jpype.imports`` before starting the JVM works unchanged.  If
+``jpype.imports`` is imported only after the JVM is started, force it to load
+by referencing it once:
+
+ .. code-block:: python
+
+  import jpype
+  jpype.startJVM()
+
+  import jpype.imports
+  jpype.imports              # loads the Java import hook
+
+  from java.util import ArrayList
+
 Limitations
 ~~~~~~~~~~~
 

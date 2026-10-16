@@ -7,6 +7,13 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed a crash in ``startJVM()`` under Python 3.15 global lazy imports
+    (``python -X lazy_imports=all``): jpype's internal setup imports were
+    deferred and never ran.  ``startJVM()`` now also loads a pending
+    ``import jpype.imports`` so the Java import hook is installed.  Java
+    packages work with the ``lazy import`` statement, including lazy imports
+    written before the JVM is started.  #1495
+
   - ``jpype.dbapi2``'s ``Cursor.description`` now returns each column's
     ``AS`` alias when the query specified one, instead of always the
     underlying table column name -- matching PEP 249 ("the name or alias

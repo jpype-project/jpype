@@ -15,39 +15,49 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import _jpype
-from ._jinit import *
-from ._jpackage import *
-from ._jproxy import *
-from ._core import *
-from . import _core
-from ._gui import *
-from ._classpath import *
-from ._jclass import *
-from ._jobject import *
-# codeql[py/import-own-module]
-from . import _jarray
-# codeql[py/import-own-module]
-from . import _jexception
-from .types import *
-from ._jcustomizer import *
-# codeql[py/import-own-module]
-from . import nio
-# codeql[py/import-own-module]
-from . import types
-from ._jcustomizer import *
-# Import all the class customizers
-# Customizers are applied in the order that they are defined currently.
-# codeql[py/import-own-module]
-from . import _jmethod
-# codeql[py/import-own-module]
-from . import _jcollection
-# codeql[py/import-own-module]
-from . import _jio
-# codeql[py/import-own-module]
-from . import protocol
-# codeql[py/import-own-module]
-from . import _jthread
+# Most of these imports exist only for their side effects (installing
+# resources on _jpype and registering class customizers).  Under PEP 810
+# global lazy imports (python -X lazy_imports=all), a plain import whose name
+# is never used is never executed.  Imports inside a try block are always
+# eager, so the block is wrapped to keep the load order deterministic.  The
+# try exists only for that effect and must not be removed; test_lazyimports
+# fails without it.
+try:
+    import _jpype
+    from ._jinit import *
+    from ._jpackage import *
+    from ._jproxy import *
+    from ._core import *
+    from . import _core
+    from ._gui import *
+    from ._classpath import *
+    from ._jclass import *
+    from ._jobject import *
+    # codeql[py/import-own-module]
+    from . import _jarray
+    # codeql[py/import-own-module]
+    from . import _jexception
+    from .types import *
+    from ._jcustomizer import *
+    # codeql[py/import-own-module]
+    from . import nio
+    # codeql[py/import-own-module]
+    from . import types
+    from ._jcustomizer import *
+    # Import all the class customizers
+    # Customizers are applied in the order that they are defined currently.
+    # codeql[py/import-own-module]
+    from . import _jmethod
+    # codeql[py/import-own-module]
+    from . import _jcollection
+    # codeql[py/import-own-module]
+    from . import _jio
+    # codeql[py/import-own-module]
+    from . import protocol
+    # codeql[py/import-own-module]
+    from . import _jthread
+finally:
+    pass
 
 __all__ = ['java', 'javax']
 __all__.extend(_jinit.__all__)  # type: ignore[name-defined]
