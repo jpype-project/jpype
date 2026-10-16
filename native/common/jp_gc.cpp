@@ -84,7 +84,7 @@ static size_t getWorkingSize()
 	return sz * page_size;
 
 #elif defined(USE_MALLINFO)
-	struct mallinfo2 mi = mallinfo2();
+	struct mallinfo mi = mallinfo(); // fixme: mallinfo is deprecated in favor of mallinfo2 since glibc 2.33
 	current = mi.uordblks;
 #endif
 
