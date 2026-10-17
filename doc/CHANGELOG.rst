@@ -58,6 +58,14 @@ Latest Changes:
     A later attempt to import the same class now reports the earlier
     initializer failure instead of a missing dependency.
 
+  - Fixed ``startJVM(interrupt=False)`` sometimes raising
+    ``java.lang.InterruptedException`` (or aborting the process) instead of
+    ``KeyboardInterrupt`` when ``SIGINT`` arrived while the main thread was
+    blocked in a Java call such as ``Thread.sleep()`` or ``Object.wait()``.
+    The signal handler woke the main thread before it recorded the signal for
+    Python, so the pending-signal check made while converting the exception
+    could find nothing.  The handler now records the signal first. #1496
+
   - Fixed a segmentation fault when a Python proxy (e.g. implementing
     ``Runnable``) was invoked from a *daemon* Java thread and was still
     blocked inside its Python callback when ``shutdownJVM()`` ran.
@@ -183,6 +191,14 @@ Latest Changes:
     checking it was still a real (unwrapped) Java method; on a second
     pass that slot already held the first customizer's wrapper, so the
     wrapper ended up calling itself once installed. #1473
+
+  - Fixed ``startJVM(interrupt=False)`` crashing the process with ``SIGSEGV``
+    inside ``PyErr_SetInterruptEx`` when ``SIGTERM`` arrived
+    and the Python handler for the signal was still the default.  The native
+    ``interruptPy`` ran on a thread of the JVM without holding the GIL, and
+    CPython needs a thread state to compare the Python handler with
+    ``SIG_DFL``.  It now acquires the GIL like the other callbacks from Java
+    threads.  #1497
 
   - Fixed ``startJVM()`` printing a "restricted method" / native access
     warning on JDK 22+ (``java.lang.System::load has been called ... in an

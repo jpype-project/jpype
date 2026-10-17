@@ -818,14 +818,41 @@ extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeContext_onShutdown
 
 static int interruptState = 0;
 extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeSignal_interruptPy
-(JNIEnv *env, jclass cls, jint signal)
+(JNIEnv *env, jclass cls, jint signal, jobject mainThread)
 {
-	interruptState = 1;
+	// This runs on the JVM's signal handler thread, which Python has never
+	// seen.  PyErr_SetInterruptEx() compares the handler registered for the
+	// signal with SIG_DFL and SIG_IGN, and that needs an attached thread state.
+	// Without one the process crashes in PyObject_RichCompareBool() whenever
+	// Python's handler is still the default (always true for SIGTERM in a
+	// script).
+	JPPyCallAcquire callback;
 #if PY_MINOR_VERSION<10
 	PyErr_SetInterrupt();
 #else
 	PyErr_SetInterruptEx((int) signal);
 #endif
+	// Wake the main thread while still holding the GIL.  The main thread can
+	// only look at the signal that was just recorded, or make its next Java
+	// call, after it has the GIL back, and by then its Java interrupt flag is
+	// set.  Waking it before recording the signal lets it convert the
+	// InterruptedException before the signal is pending, and waking it after
+	// releasing the GIL lets a main thread that already handled the signal
+	// make a Java call that the late interrupt then hits.
+	if (mainThread != nullptr)
+	{
+		jmethodID interrupt = env->GetMethodID(env->GetObjectClass(mainThread), "interrupt", "()V");
+		if (interrupt != nullptr)
+			env->CallVoidMethod(mainThread, interrupt);
+		if (env->ExceptionCheck())
+			env->ExceptionClear();
+	}
+	// Last: interruptState tells the main thread's next Java call (see
+	// PyJPMethod_call) to clear the Java interrupt flag, so it must not be set
+	// before the flag it is meant to clear.  Set earlier, the next Java call of
+	// a running main thread consumes it, finds nothing to clear, and the
+	// interrupt that arrives afterwards stays on the main thread.
+	interruptState = 1;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_org_jpype_JPypeSignal_acknowledgePy
