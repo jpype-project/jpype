@@ -30,7 +30,7 @@
 #include <mach/mach.h>
 
 #elif __GLIBC__
-// Linux doesn't have an available rss tally so use mallinfo2
+// Linux doesn't have an available rss tally so use mallinfo
 #define USE_MALLINFO
 #include <malloc.h>
 
