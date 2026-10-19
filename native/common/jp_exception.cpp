@@ -467,7 +467,6 @@ PyObject *tb_create(
 	PyObject *tb_next = last_traceback != nullptr ? last_traceback : Py_None;
 	JPPyObject tuple = JPPyTuple_Pack(tb_next, frame.get(), lasti.get(), linenuma.get());
 	JPPyObject traceback = JPPyObject::accept(PyObject_Call((PyObject*) &PyTraceBack_Type, tuple.get(), NULL));
-	Py_XDECREF(last_traceback);
 
 	// We could fail in process
 	if (traceback.get() == nullptr)
