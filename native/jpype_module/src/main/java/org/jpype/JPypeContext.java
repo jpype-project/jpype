@@ -604,33 +604,4 @@ public class JPypeContext
     }
   }
 
-  private static long getTotalMemory()
-  {
-    return Runtime.getRuntime().totalMemory();
-  }
-
-  private static long getFreeMemory()
-  {
-    return Runtime.getRuntime().freeMemory();
-  }
-
-  private static long getMaxMemory()
-  {
-    return Runtime.getRuntime().maxMemory();
-  }
-
-  private static long getUsedMemory()
-  {
-    return Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory();
-  }
-
-  private static long getHeapMemory()
-  {
-    // java.lang.management isn't available on Android's platform API, and
-    // Runtime's own accounting is portable to every JVM (desktop and
-    // Android alike), so there's no reason to keep the management-API
-    // dependency at all.
-    Runtime runtime = Runtime.getRuntime();
-    return runtime.totalMemory() - runtime.freeMemory();
-  }
 }

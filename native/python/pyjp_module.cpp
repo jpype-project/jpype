@@ -123,6 +123,7 @@ void PyJPModule_loadResources(PyObject* module)
 		JP_PY_CHECK();
 		Py_INCREF(_JClassDoc);
 		_JMethodDoc = PyObject_GetAttrString(module, "getMethodDoc");
+		JP_PY_CHECK();
 		Py_INCREF(_JMethodDoc);
 		_JMethodAnnotations = PyObject_GetAttrString(module, "getMethodAnnotations");
 		JP_PY_CHECK();

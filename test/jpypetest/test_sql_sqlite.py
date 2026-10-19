@@ -173,6 +173,18 @@ class ConnectionTestCase(common.JPypeTestCase):
             with self.assertRaises(dbapi2.InterfaceError):
                 cx.converters = object()
 
+    def test_isolation_level(self):
+        with dbapi2.connect(db_name) as cx:
+            self.assertIsInstance(cx.isolation_level, int)
+            cx.isolation_level = dbapi2.TRANSACTION_SERIALIZABLE
+            self.assertEqual(cx.isolation_level, dbapi2.TRANSACTION_SERIALIZABLE)
+            # SQLite's JDBC driver only supports SERIALIZABLE and
+            # READ_UNCOMMITTED; anything else must raise NotSupportedError.
+            with self.assertRaises(dbapi2.NotSupportedError):
+                cx.isolation_level = dbapi2.TRANSACTION_NONE
+        with self.assertRaises(dbapi2.ProgrammingError):
+            cx.isolation_level
+
 
 class CursorTestCase(common.JPypeTestCase):
     def setUp(self):
@@ -1088,6 +1100,20 @@ class TypeTestCase(common.JPypeTestCase):
             f3 = cu.execute('select * from test').fetchone()
             self.assertEqual(f3[0], datetime.datetime(2020, 5, 21, 3, 4, 5, 123000))
 
+    def testTimestampSubMillisecondPrecision(self):
+        # sqlite-jdbc's TIMESTAMP handling only preserves millisecond
+        # resolution -- confirmed with raw JDBC calls (bypassing dbapi2's
+        # setter/getter entirely), so this is a driver limitation, not a
+        # dbapi2 bug. h2 and hsqldb round-trip full microsecond precision
+        # for the same value; see the type-mapping notes in the dbapi2
+        # guide.
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(NAME TIMESTAMP)")
+            cu.execute("insert into test(NAME) values(?)",
+                      [datetime.datetime(2020, 5, 21, 3, 4, 5, 123456)])
+            f = cu.execute('select * from test').fetchone()
+            self.assertEqual(f[0], datetime.datetime(2020, 5, 21, 3, 4, 5, 123000))
+
     def _testInt(self, tp, desc, jtype, null=True):
         with dbapi2.connect(db_name, getters=dbapi2.GETTERS_BY_NAME) as cx, cx.cursor() as cu:
             cu.execute("create table test(NAME %s)" % tp)
@@ -1167,6 +1193,18 @@ class TypeTestCase(common.JPypeTestCase):
     def testDecimal(self):
         self._testNumeric('DECIMAL', ('NAME', 'DECIMAL'), java.math.BigDecimal)
 
+    def testDecimalParam(self):
+        # decimal.Decimal has no direct setter of its own; it must be
+        # adapted into a java.math.BigDecimal before a setter can be
+        # found for it (see the default adapter registered in
+        # jpype.dbapi2._populateTypes).
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(NAME DECIMAL(10,2))")
+            cu.execute("insert into test(NAME) values(?)", [decimal.Decimal("3.14")])
+            f = cu.execute("select * from test").fetchone()
+            self.assertEqual(f[0], decimal.Decimal("3.14"))
+            self.assertIsInstance(f[0], decimal.Decimal)
+
     def _testBinary(self, tp, desc, jtype):
         with dbapi2.connect(db_name, getters=dbapi2.GETTERS_BY_NAME) as cx, cx.cursor() as cu:
             cu.execute("create table test(NAME %s)" % tp)
@@ -1239,6 +1277,21 @@ class TypeTestCase(common.JPypeTestCase):
             cu.execute("insert into test(NAME) values(?)", [None])
             f = cu.execute("select * from test").fetchone(converters=None)
             self.assertEqual(f[0], None)
+
+    def testOverflow(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(NAME SMALLINT)")
+            with self.assertRaises(dbapi2.InterfaceError):
+                cu.execute("insert into test(NAME) values(?)", [10**30], types=[dbapi2.SMALLINT])
+
+    def testExplicitTypeMismatch(self):
+        # An explicit `types=` that cannot accept the supplied value (and
+        # falls through PreparedStatement.setObject() too) must surface as
+        # InterfaceError, not propagate a raw Java TypeError.
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(NAME DATE)")
+            with self.assertRaises(dbapi2.InterfaceError):
+                cu.execute("insert into test(NAME) values(?)", [object()], types=[dbapi2.DATE])
 
 
 class OtherTestCase(common.JPypeTestCase):
