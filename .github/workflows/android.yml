@@ -8,10 +8,6 @@ name: Android
 # Two jobs on purpose: the APK build is slow (30-60+ minutes uncached), the
 # emulator part is flaky by nature. "Re-run failed jobs" then only repeats the
 # emulator job and reuses the uploaded APK.
-#
-# No caching of .buildozer: doc/android_build.rst documents that p4a reuses
-# stale jpype1 builds silently (no content hashing), so every run is a cold,
-# honest build.
 
 on:
   workflow_dispatch:
@@ -140,6 +136,7 @@ jobs:
     needs: build-apk
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    if: false  # todo: once we have a Kivy team decision. Without Kivy/python-for-android adopting it, there isn't really a userbase.
     steps:
       - uses: actions/download-artifact@v8
         with:
@@ -152,115 +149,6 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Write check script
-        run: |
-          cat > "$RUNNER_TEMP/check.sh" <<'EOF'
-          #!/usr/bin/env bash
-          set -uo pipefail
-          APK=$(ls apk/*.apk | head -n1)
-          ACTIVITY="$APP_PACKAGE/org.kivy.android.PythonActivity"
-          SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
-          LOG="${LOG:-$RUNNER_TEMP/logcat.txt}"
-          
-          wait_for_device_state() {
-            local retries=60
-            for i in $(seq 1 $retries); do
-              if adb devices | awk 'NR>1{print $2}' | grep -q '^device$'; then
-                echo "device state: device"
-                return 0
-              fi
-              echo "waiting for device state (device) ($i/$retries)..."
-              sleep 2
-            done
-            return 1
-          }
-          
-          wait_for_boot_completed() {
-            local retries=60
-            for i in $(seq 1 $retries); do
-              val=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
-              if [ "$val" = "1" ]; then
-                echo "boot completed"
-                return 0
-              fi
-              echo "waiting for boot_completed ($i/$retries)..."
-              sleep 2
-            done
-            return 1
-          }
-          
-          adb start-server || true
-          if ! wait_for_device_state; then
-            echo "ERROR: emulator never reached device state" >&2
-            adb devices || true
-            exit 1
-          fi
-          
-          if ! wait_for_boot_completed; then
-            echo "WARNING: boot_completed not seen; continuing anyway" >&2
-          fi
-          
-          adb logcat -G 16M || true
-          adb logcat -c || true
-          adb logcat -v threadtime > "$LOG" &
-          LOGCAT_PID=$!
-          
-          sleep 1
-          adb install -r "$APK" || exit 1
-          adb shell am start -n "$ACTIVITY" || exit 1
-          
-          for i in $(seq 1 360); do
-            if grep -q '=== jpype android testapp done ===' "$LOG"; then break; fi
-            if [ "$i" -gt 12 ] && [ -z "$(adb shell pidof "$APP_PACKAGE" | tr -d '\r')" ]; then
-              echo "app process is gone before the end marker appeared"
-              break
-            fi
-            sleep 5
-          done
-          
-          sleep 3
-          kill "$LOGCAT_PID" 2>/dev/null || true
-          
-          fail=0
-          check() {
-            if grep -q "$1" "$LOG"; then echo "ok:   $1"; else echo "FAIL: missing '$1'"; fail=1; fi
-          }
-          check 'GOLDEN PATH: PASS'
-          check 'REGRESSION CHECK #1257: PASS'
-          check '=== jpype android testapp done ==='
-          
-          result=$(grep -o 'PORTED SUITE: ran=[0-9]* failures=[0-9]* errors=[0-9]* skipped=[0-9]*' "$LOG" | tail -n1)
-          if [ -z "$result" ]; then
-            echo "FAIL: no 'PORTED SUITE: ran=...' summary line"; fail=1
-          else
-            echo "$result"
-            echo "$result" | grep -q 'failures=0 errors=0' || fail=1
-          fi
-          
-          if grep -qE 'PORTED SUITE: (FAILED TO LOAD|FAIL to run)' "$LOG"; then
-            grep -E 'PORTED SUITE: (FAILED TO LOAD|FAIL to run)' "$LOG"; fail=1
-          fi
-          
-          if grep -q 'terminating due to uncaught exception' "$LOG"; then
-            echo "FAIL: uncaught C++ exception in logcat"; fail=1
-          fi
-          
-          {
-            echo "### Android on-device result"
-            echo '```'
-            grep -hE 'GOLDEN PATH|PORTED SUITE: ran|REGRESSION CHECK' "$LOG" | sed 's/^.*python *: *//'
-            echo '```'
-          } >> "$SUMMARY"
-          
-          if [ "$fail" -ne 0 ]; then
-            echo "---- failing/erroring tests ----"
-            grep -E 'python *: (FAIL|ERROR)(:| )' "$LOG" | tail -n 60
-            echo "---- last 400 lines of logcat ----"
-            tail -n 400 "$LOG" || true
-          fi
-          
-          exit "$fail"
-          EOF
 
       - name: Run on emulator
         uses: reactivecircus/android-emulator-runner@v2
