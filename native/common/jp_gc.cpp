@@ -16,7 +16,6 @@
 #include <Python.h>
 #include "jpype.h"
 #include "pyjp.h"
-#include "jp_reference_queue.h"
 #include "jp_gc.h"
 
 #ifdef WIN32
@@ -49,7 +48,7 @@ static int page_size;
 #endif
 #define DELTA_LIMIT 20*1024*1024l
 
-size_t getWorkingSize()
+static size_t getWorkingSize()
 {
 	size_t current = 0;
 #if defined(USE_PROCESS_INFO)
@@ -85,15 +84,12 @@ size_t getWorkingSize()
 	return sz * page_size;
 
 #elif defined(USE_MALLINFO)
-	struct mallinfo mi;
-	mi = mallinfo();
-	current = (size_t) mi.uordblks;
+	struct mallinfo mi = mallinfo(); // fixme: mallinfo is deprecated in favor of mallinfo2 since glibc 2.33
+	current = mi.uordblks;
 #endif
 
 	return current;
 }
-
-void triggerPythonGC();
 
 void JPGarbageCollection::triggered()
 {
@@ -109,26 +105,6 @@ void JPGarbageCollection::triggered()
 		JPPyCallAcquire callback;
 		PyGC_Collect();
 	}
-}
-
-JPGarbageCollection::JPGarbageCollection()
-{
-	running = false;
-	in_python_gc = false;
-	java_triggered = false;
-	python_gc = nullptr;
-	_SystemClass = nullptr;
-	_gcMethodID = nullptr;
-
-	last_python = 0;
-	last_java = 0;
-	low_water = 0;
-	high_water = 0;
-	limit = 0;
-	last = 0;
-	java_count = 0;
-	python_count = 0;
-	python_triggered = 0;
 }
 
 void JPGarbageCollection::init(JPJavaFrame& frame)
@@ -155,11 +131,6 @@ void JPGarbageCollection::init(JPJavaFrame& frame)
 
 	jclass ctxt = JPContext_global->m_ContextClass.get();
 	_ContextClass = ctxt;
-	_totalMemoryID = frame.GetStaticMethodID(ctxt, "getTotalMemory", "()J");
-	_freeMemoryID = frame.GetStaticMethodID(ctxt, "getFreeMemory", "()J");
-	_maxMemoryID = frame.GetStaticMethodID(ctxt, "getMaxMemory", "()J");
-	_usedMemoryID = frame.GetStaticMethodID(ctxt, "getUsedMemory", "()J");
-	_heapMemoryID = frame.GetStaticMethodID(ctxt, "getHeapMemory", "()J");
 
 	running = true;
 	high_water = getWorkingSize();
@@ -249,20 +220,6 @@ void JPGarbageCollection::onEnd()
 			limit = high_water + (high_water>>3) + 8 * (current - last);
 		}
 
-#if 0
-		{
-			JPJavaFrame frame = JPJavaFrame::outer();
-			jlong totalMemory = frame.CallStaticLongMethodA(_ContextClass, _totalMemoryID, nullptr);
-			jlong freeMemory = frame.CallStaticLongMethodA(_ContextClass, _freeMemoryID, nullptr);
-			jlong maxMemory = frame.CallStaticLongMethodA(_ContextClass, _maxMemoryID, nullptr);
-			jlong usedMemory = frame.CallStaticLongMethodA(_ContextClass, _usedMemoryID, nullptr);
-			jlong heapMemory = frame.CallStaticLongMethodA(_ContextClass, _heapMemoryID, nullptr);
-			printf("consider gc run=%d (current=%ld, low=%ld, high=%ld, limit=%ld) %ld\n", run_gc,
-				current, low_water, high_water, limit, limit - pred);
-			printf(" java total=%ld free=%ld max=%ld used=%ld heap=%ld\n", totalMemory, freeMemory, maxMemory, usedMemory, heapMemory);
-		}
-#endif
-
 		if (run_gc > 0)
 		{
 			// Move up the low water
@@ -276,8 +233,7 @@ void JPGarbageCollection::onEnd()
 	// GCOVR_EXCL_STOP
 }
 
-void JPGarbageCollection::getStats(JPGCStats& stats)
-{
+void JPGarbageCollection::getStats(JPGCStats& stats) const {
 	// GCOVR_EXCL_START
 	stats.current_rss = getWorkingSize();
 	stats.min_rss = low_water;

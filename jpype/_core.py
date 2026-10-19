@@ -401,6 +401,12 @@ def startJVM(
                     f"{jvmpath} is older than required Java version{version}") from ex
         raise
 
+    # Under PEP 810 global lazy imports (python -X lazy_imports=all) a bare
+    # "import jpype.imports" is deferred until the name is used, so the Java
+    # import hook would never be installed.  Load it now if it was requested.
+    if "jpype.imports" in getattr(sys, "lazy_modules", ()):
+        from . import imports  # noqa: F401
+
 
 def initializeResources():
     global _JVM_started
@@ -518,7 +524,11 @@ def _JTerminate():
         pass  # we are exiting anyway, nothing to do about a shutdown failure here
 
 
-atexit.register(_JTerminate)
+# Android has no shutdownJVM()/_jpype.shutdown at all (DVM can't be
+# stopped mid-process, see doc/android.rst) - only register this hook where
+# there's something for it to call.
+if hasattr(_jpype, 'shutdown'):
+    atexit.register(_JTerminate)
 
 
 @deprecated("java.lang.Thread.isAttached")

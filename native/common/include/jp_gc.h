@@ -26,11 +26,10 @@ struct JPGCStats
 	long long python_triggered;
 } ;
 
-class JPGarbageCollection
-{
+class JPGarbageCollection {
 public:
 
-	explicit JPGarbageCollection();
+	JPGarbageCollection() = default;
 
 	void init(JPJavaFrame& frame);
 
@@ -47,32 +46,26 @@ public:
 	 */
 	void onEnd();
 
-	void getStats(JPGCStats& stats);
+	void getStats(JPGCStats& stats) const;
 
 private:
-	bool running;
-	bool in_python_gc;
-	bool java_triggered;
-	PyObject *python_gc;
-	jclass _SystemClass;
-	jclass _ContextClass;
-	jmethodID _gcMethodID;
+	bool running{};
+	bool in_python_gc{};
+	bool java_triggered{};
+	PyObject *python_gc{};
+	jclass _SystemClass{};
+	jclass _ContextClass{};
+	jmethodID _gcMethodID{};
 
-	jmethodID _totalMemoryID;
-	jmethodID _freeMemoryID;
-	jmethodID _maxMemoryID;
-	jmethodID _usedMemoryID;
-	jmethodID _heapMemoryID;
-
-	size_t last_python;
-	size_t last_java;
-	size_t low_water;
-	size_t high_water;
-	size_t limit;
-	size_t last;
-	int java_count;
-	int python_count;
-	int python_triggered;
+	size_t last_python{};
+	size_t last_java{};
+	size_t low_water{};
+	size_t high_water{};
+	size_t limit{};
+	size_t last{};
+	int java_count{};
+	int python_count{};
+	int python_triggered{};
 } ;
 
 #endif /* JP_GC_H */
