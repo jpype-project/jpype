@@ -451,25 +451,34 @@ PyObject *tb_create(
 	JPPyObject lasti = JPPyObject::claim(PyLong_FromLong(PyFrame_GetLasti(pframe)));
 #endif
 	JPPyObject linenuma = JPPyObject::claim(PyLong_FromLong(linenum));
-	// last_traceback (the previously-built frame, i.e. this frame's caller)
-	// becomes this new traceback's tb_next -- PyTuple_Pack/the traceback
-	// constructor each take their own reference to it, so our incoming
-	// reference (owned by us: the caller received it from a prior
-	// tb_create()'s own `.keep()`) must be released here once it has been
-	// absorbed into the chain, or every non-final frame in a multi-frame
-	// trace leaks (only the last-built traceback was ever handed back to a
-	// decref'ing owner).
-	JPPyObject tuple = JPPyTuple_Pack(
-			last_traceback == nullptr ? Py_None : last_traceback,
-			frame.get(), lasti.get(), linenuma.get());
+	// Callers build these one stack frame at a time, innermost (where the
+	// exception was raised) first, threading each new, more-outer frame's
+	// tb_next to the previously created, more-inner one - last_traceback
+	// here is that previous frame. Chaining through it is what makes the
+	// full call chain walkable via tb_next; passing Py_None instead (as
+	// this used to do, silently dropping the last_traceback parameter
+	// entirely) collapsed every multi-frame Java stack trace down to just
+	// its single outermost frame. That went unnoticed because on desktop
+	// it happened to coincide with what a couple of tests checked, but
+	// Android's real call chain has extra, legitimate frames beneath the
+	// harness code (the JNI/bootstrap frames Python's own execution
+	// thread runs under there), and collapsing down to just the
+	// outermost of those broke visibly (see test_exc.py's testCause).
+	PyObject *tb_next = last_traceback != nullptr ? last_traceback : Py_None;
+	JPPyObject tuple = JPPyTuple_Pack(tb_next, frame.get(), lasti.get(), linenuma.get());
 	JPPyObject traceback = JPPyObject::accept(PyObject_Call((PyObject*) &PyTraceBack_Type, tuple.get(), NULL));
-	Py_XDECREF(last_traceback);
 
 	// We could fail in process
 	if (traceback.get() == nullptr)
 	{
 		return nullptr;
 	}
+
+	// The new traceback object holds its own reference to last_traceback
+	// (PyTraceBack_Type's constructor increfs each tuple element it
+	// keeps), so our own reference to it is redundant now that we're
+	// handing off the newly created, outer traceback in its place.
+	Py_XDECREF(last_traceback);
 
 	return traceback.keep();
 }
