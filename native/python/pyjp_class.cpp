@@ -975,8 +975,7 @@ static int PyJPClass_setHints(PyObject *self, PyObject *value, PyObject *closure
 	JP_PY_TRY("PyJPClass_setHints", self);
 	PyJPModule_getContext();
 	auto *cls = (PyJPClass*) self;
-	PyObject *hints = cls->m_Class->getHints();
-	if (hints != nullptr)
+	if (cls->m_Class->hasHints())
 	{
 		PyErr_SetString(PyExc_AttributeError, "_hints can't be set");
 		return -1;
@@ -1700,5 +1699,14 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 	// Call the post load routine to attach inner classes
 	JP_TRACE("call post");
 	args = JPPyTuple_Pack(self);
-	JPPyObject rc2 = JPPyObject::call(PyObject_Call(_JClassPost, args.get(), nullptr));
+	try
+	{
+		JPPyObject rc2 = JPPyObject::call(PyObject_Call(_JClassPost, args.get(), nullptr));
+	} catch (...)
+	{
+		// Failed customizers must not leave usable conversion hints behind.
+		cls->setHints(nullptr);
+		throw;
+	}
+	cls->completeHints();
 }

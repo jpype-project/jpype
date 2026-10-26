@@ -16,6 +16,7 @@
 #ifndef _JP_CLASS_H_
 #define _JP_CLASS_H_
 
+#include <atomic>
 #include "jp_modifier.h"
 
 class JPClass : public JPResource
@@ -35,10 +36,12 @@ public:
 
 	PyTypeObject* getHost()
 	{
-		return (PyTypeObject*) m_Host.get();
+		return (PyTypeObject*) m_HostReady.load(std::memory_order_acquire);
 	}
 
 	void setHints(PyObject* host);
+	bool hasHints() const;
+	void completeHints();
 
 	PyObject* getHints();
 
@@ -208,7 +211,10 @@ protected:
 	string               m_CanonicalName;
 	jint                 m_Modifiers;
 	JPPyObject           m_Host;
+	std::atomic<PyObject*> m_HostReady{nullptr};
 	JPPyObject           m_Hints;
+	std::atomic<PyObject*> m_HintsReady{nullptr};
+	std::atomic<bool> m_HintsComplete{false};
 } ;
 
 #endif // _JPPOBJECTTYPE_H_

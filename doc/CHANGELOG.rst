@@ -7,6 +7,9 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed a free-threaded crash when class initialization and argument
+    conversion first use the same Java class concurrently. #1507
+
   - JPype now runs end-to-end on Android for the first time, verified via a
     new project-local build/test harness (``project/android/``, see
     ``doc/android_build.rst``) that cross-compiles ``_jpype`` for Android,

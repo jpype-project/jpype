@@ -308,8 +308,7 @@ def getClassHints(name):
         name = name.__name__
     hints = _jpype._hints.get(name, None)
     if not hints:
-        hints = JClassHints()
-        _jpype._hints[name] = hints
+        hints = _jpype._hints.setdefault(name, JClassHints())
     return hints
 
 
