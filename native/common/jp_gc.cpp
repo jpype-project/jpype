@@ -256,7 +256,9 @@ void JPGarbageCollection::onEnd()
 		if (pred > (Py_ssize_t) limit)
 		{
 			run_gc = 2;
-			limit = high_water + (high_water>>3) + 8 * slope;
+			// Headroom is deliberately not scaled by the growth rate: that
+			// raises the limit fastest when memory grows fastest.
+			limit = high_water + (high_water>>3);
 		}
 
 		if (run_gc > 0)
