@@ -143,7 +143,8 @@ void JPGarbageCollection::triggered()
 		forcing_collection = false;
 	}
 	int64_t end = nowNs();
-	next_forced_ns = end + std::max(FORCED_GC_MIN_INTERVAL_NS,
+	// Parenthesized so that the max macro from Windows.h does not apply
+	next_forced_ns = end + (std::max)(FORCED_GC_MIN_INTERVAL_NS,
 			FORCED_GC_BACKOFF * (end - start));
 	forcing_gc = false;
 }
