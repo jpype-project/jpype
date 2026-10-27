@@ -7,6 +7,12 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Python collections forced by Java collections are now serialized and
+    throttled by their own cost, so allocation-heavy Java code no longer
+    leaves Python threads in the garbage collector most of the time.  The
+    shared collection state is atomic, the collection callback is registered
+    once, and the collector is stopped at context shutdown. #1506
+
   - JPype now runs end-to-end on Android for the first time, verified via a
     new project-local build/test harness (``project/android/``, see
     ``doc/android_build.rst``) that cross-compiles ``_jpype`` for Android,
