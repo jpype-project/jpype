@@ -17,6 +17,7 @@
 import gc
 import time
 import jpype
+import _jpype
 import common
 
 
@@ -26,6 +27,18 @@ class GCReflectionTestCase(common.JPypeTestCase):
     def testCallbackRegisteredOnce(self):
         names = [getattr(c, "__name__", "") for c in gc.callbacks]
         self.assertEqual(names.count("_collect"), 1)
+
+    def testStats(self):
+        stats = _jpype.gcStats()
+        self.assertEqual(set(stats), {"current", "java", "python", "max",
+                                      "min", "triggered"})
+        for value in stats.values():
+            self.assertIsInstance(value, int)
+            self.assertGreaterEqual(value, 0)
+        self.assertGreaterEqual(stats["max"], stats["min"])
+        before = stats["triggered"]
+        gc.collect()
+        self.assertGreaterEqual(_jpype.gcStats()["triggered"], before)
 
     def testForcedCollectionsAreThrottled(self):
         # Java garbage alone used to force a full Python collection for
