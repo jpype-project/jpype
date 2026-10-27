@@ -16,9 +16,11 @@
 #
 import gc
 import time
+import unittest
 import jpype
 import _jpype
 import common
+import subrun
 
 
 class GCReflectionTestCase(common.JPypeTestCase):
@@ -67,3 +69,26 @@ class GCReflectionTestCase(common.JPypeTestCase):
             gc.callbacks.remove(callback)
         del heap
         self.assertLess(spent[0], 0.5 * wall)
+
+
+@subrun.TestCase
+class GCMemoryTriggerTest(unittest.TestCase):
+    """Growth of the process past the collection limit runs a Java
+    collection.  This needs a fresh JVM so that the limit is the one set
+    when the JVM started."""
+
+    @classmethod
+    def setUpClass(cls):
+        jpype.startJVM(convertStrings=False)
+
+    def testGrowthRunsJavaCollection(self):
+        gc.collect()
+        before = _jpype.gcStats()["triggered"]
+        hold = []
+        for step in range(12):
+            # Sizes below the malloc mmap threshold, so that they are visible
+            # to every platform's measure of memory use.
+            hold.append([bytes([i % 250 + 1]) * 65536 for i in range(100)])
+            gc.collect()
+        self.assertGreater(_jpype.gcStats()["triggered"], before)
+        del hold
