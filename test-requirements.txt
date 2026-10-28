@@ -1,5 +1,6 @@
 pytest
-pytest-parallel
+pytest-run-parallel
+pytest-xdist
 pytest-randomly
 pyinstaller
 jedi==0.18.0
