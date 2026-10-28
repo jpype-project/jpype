@@ -46,19 +46,23 @@ obj = None
 class MyThread(threading.Thread):
     def run(self):
         global glob, success, obj
-        with synchronized(obj):
-            # Increment the global resource
-            glob += 1
+        self.error = None
+        try:
+            with synchronized(obj):
+                # Increment the global resource
+                glob += 1
 
-            # Wait for a while
-            time.sleep(0.1)
+                # Let other threads attempt to enter the Java monitor.
+                time.sleep(0.1)
 
-            # If anything else accessed then it was a fail
-            if glob != 1:
-                success = False
+                # If anything else accessed then it was a fail
+                if glob != 1:
+                    success = False
 
-            # Decrement the global resoure
-            glob -= 1
+                # Decrement the global resource
+                glob -= 1
+        except BaseException as ex:
+            self.error = ex
 
 
 class SynchronizedTestCase(common.JPypeTestCase):
@@ -76,7 +80,7 @@ class SynchronizedTestCase(common.JPypeTestCase):
         tl = []
         # Create 10 threads trying to access the same resource
         for i in range(0, 10):
-            tl.append(MyThread())
+            tl.append(MyThread(daemon=True))
 
         # Release them at the same time
         for i in tl:
@@ -84,10 +88,16 @@ class SynchronizedTestCase(common.JPypeTestCase):
 
         # Wait for all to finish
         for i in tl:
-            i.join()
+            i.join(timeout=10)
+
+        self.assertTrue(all(not t.is_alive() for t in tl), "monitor worker hung")
+        for t in tl:
+            if t.error is not None:
+                raise t.error
 
         # Verify they did not trample each other
         self.assertTrue(success)
+        self.assertEqual(glob, 0)
 
     def testSyncronizedFail(self):
         with self.assertRaisesRegex(TypeError, "Java object is required"):
