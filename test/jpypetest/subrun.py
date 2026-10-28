@@ -172,6 +172,7 @@ def _prepare(orig, individual=False):
             self.name = name
             self.__name__ = name
             self.__qualname__ = "%s.%s" % (clsname, name)
+            self.__globals__ = globals()
 
         def __call__(self):
             ProxyClass._client.execute(_hook, filename, clsname, self.name)
