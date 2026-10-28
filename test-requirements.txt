@@ -5,8 +5,6 @@ pyinstaller
 jedi==0.18.0
 numpy
 pandas
+polars
 DBUtils
 typing_extensions
-
-# Exclude polars when running on free-threaded Python
-polars ; "free-threading" not in sys_abi_features
