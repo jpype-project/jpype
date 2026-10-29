@@ -40,38 +40,32 @@ def pytest_collection_modifyitems(config, items):
         common.fast = True
 
 convertStrings = None
+_jvm_started_by_conftest = False
 
-@pytest.fixture(scope="session")
-def jvm_session(request):
-    """Starts a JVM with testing jars on classpath and additional options."""
-    global convertStrings
+
+def _start_jvm(config):
+    """Start the JVM used by the whole test session (once per process)."""
+    global convertStrings, _jvm_started_by_conftest
     import _jpype
     from pathlib import Path
     import logging
-    import warnings
-    #import faulthandler
-
-    # This installs signal handlers before the JVM is started.
-    # Note, that these handler most likely will be overridden by the JVMs own handlers.
-    #faulthandler.enable()
-
 
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
 
     assert not jpype.isJVMStarted()
 
-    classpath = request.config.getoption("--classpath")
-    convertStrings = request.config.getoption("--convertStrings")
-    jacoco = request.config.getoption("--jacoco")
-    checkjni = request.config.getoption("--checkjni")
+    classpath = config.getoption("--classpath")
+    convertStrings = config.getoption("--convertStrings")
+    jacoco = config.getoption("--jacoco")
+    checkjni = config.getoption("--checkjni")
 
     root = Path(__file__).parent.resolve()
     classes = root / '../classes'
     assert classes.exists()
     jpype.addClassPath(classes)
     jvm_path = jpype.getDefaultJVMPath()
-    logger.info("Running testsuite using JVM %s",jvm_path)
+    logger.info("Running testsuite using JVM %s", jvm_path)
     classpath_arg = "-Djava.class.path=%s"
     args = ["-ea", "-Xmx256M", "-Xms16M",
             #"-Xrs"  # disable signal handler for sigsegv, sigabrt
@@ -81,9 +75,11 @@ def jvm_session(request):
     if classpath:
         # This needs to be relative to run location
         jpype.addClassPath(Path(classpath).resolve())
-        warnings.warn("using jar instead of thunks")
+        config.issue_config_time_warning(
+            UserWarning("using jar instead of thunks"), stacklevel=2)
     if convertStrings:
-        warnings.warn("using deprecated convertStrings")
+        config.issue_config_time_warning(
+            UserWarning("using deprecated convertStrings"), stacklevel=2)
     if jacoco:
         lib_dir = (root / '../../lib')
         assert lib_dir.exists()
@@ -91,7 +87,8 @@ def jvm_session(request):
         assert jar.exists()
         args.append(
             f"-javaagent:{jar}=destfile=build/coverage/jacoco.exec,includes=org.jpype.*")
-        warnings.warn("using JaCoCo")
+        config.issue_config_time_warning(
+            UserWarning("using JaCoCo"), stacklevel=2)
 
     jpype.addClassPath(root / "../../lib/*")  # jars downloaded by ivy to root lib directory.
     jpype.addClassPath(root / "../jar/*")  # jars in test directory.
@@ -100,3 +97,32 @@ def jvm_session(request):
     _jpype.enableStacktraces(True)
     jpype.startJVM(jvm_path, *args,
                    convertStrings=convertStrings)
+    _jvm_started_by_conftest = True
+
+
+def pytest_sessionstart(session):
+    """Start the JVM before any test module is collected.
+
+    Plugins that inspect the tests while collecting (e.g. pytest-run-parallel
+    resolves ``java.lang.X`` attribute chains from the test modules' globals)
+    would otherwise hit JPype's "Unable to import 'java.lang' without JVM"
+    RuntimeError, because the JVM was only started lazily by the first test.
+
+    With pytest-xdist the controller process neither collects nor runs tests,
+    so only the processes with ``dist == "no"`` (plain runs and xdist workers)
+    start a JVM.
+    """
+    if getattr(session.config.option, "dist", "no") != "no":
+        return
+    _start_jvm(session.config)
+
+
+@pytest.fixture(scope="session")
+def jvm_session(request):
+    """Makes sure the JVM with the testing jars and options is running.
+
+    Normally it was already started in pytest_sessionstart; this is the fallback
+    for when this conftest was loaded too late for that hook to be called.
+    """
+    if not _jvm_started_by_conftest:
+        _start_jvm(request.config)
