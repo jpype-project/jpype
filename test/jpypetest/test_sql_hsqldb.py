@@ -1,5 +1,7 @@
 # This file is Public Domain and may be used without restrictions,
 # because noone should have to waste their lives typing this again.
+import pytest
+
 import _jpype
 import jpype
 from jpype.types import *
@@ -22,6 +24,11 @@ except ImportError:
 db_name = "jdbc:hsqldb:mem:myDb"
 #db_name = "jdbc:derby:memory:myDb"
 #first = "jdbc:derby:memory:myDb;create=True"
+
+# These tests share process-wide, in-memory JDBC databases (and the JVM), so
+# running the same test body concurrently in several threads (pytest-run-parallel)
+# makes them collide.  Run every test in this module in a single thread.
+pytestmark = pytest.mark.thread_unsafe
 
 
 def setUpModule(module):

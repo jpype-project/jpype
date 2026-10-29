@@ -7,6 +7,8 @@ package_name=${package_name:-jpype1}
 # BUILD_PY_VERSIONS: space-separated minor versions to build.
 # e.g. "38 39" or "310 311 312 313 314"
 # Defaults to modern versions if not passed in.
+# NOTE: the match below is a prefix match on the directory name (cp314-), so it intentionally includes the
+# free-threaded interpreters shipped by the manylinux images (cp314-cp314t, cp315-cp315t) next to the regular ones.
 if [ -n "$BUILD_PY_VERSIONS" ]; then
     IFS=' ' read -r -a include_versions <<< "$BUILD_PY_VERSIONS"
 else
@@ -86,5 +88,7 @@ for PYBIN in "${pys[@]}"; do
     echo "Verifying installation for $PYBIN"
     "${PYBIN}/python" -m pip install ${package_name} --no-index -f /io/wheelhouse
     "${PYBIN}/python" -c "import jpype; print(\"JPype version {} installed successfully\".format(jpype.__version__))"
+    # On free-threaded interpreters, importing jpype must not re-enable the global interpreter lock.
+    "${PYBIN}/python" -c "import sys, sysconfig, jpype; assert not (sysconfig.get_config_var('Py_GIL_DISABLED') and sys._is_gil_enabled()), 'importing jpype re-enabled the global interpreter lock'"
 done
 
