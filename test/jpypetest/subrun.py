@@ -172,6 +172,7 @@ def _prepare(orig, individual=False):
             self.name = name
             self.__name__ = name
             self.__qualname__ = "%s.%s" % (clsname, name)
+            self.__globals__ = globals()
 
         def __call__(self):
             ProxyClass._client.execute(_hook, filename, clsname, self.name)
@@ -187,5 +188,11 @@ def _prepare(orig, individual=False):
     type.__setattr__(ProxyClass, "_setUpClass", orig.setUpClass)
     type.__setattr__(ProxyClass, "_tearDown", orig.tearDown)
     type.__setattr__(ProxyClass, "_tearDownClass", orig.tearDownClass)
+
+    # All tests of the class share one subprocess (ProxyClass._client) and its
+    # IPC queues, so they must not be run concurrently by pytest-run-parallel.
+    # pytest is not available on Android, hence the guard.
+    if common.pytest is not None:
+        common.pytest.mark.thread_unsafe(ProxyClass)
 
     return ProxyClass

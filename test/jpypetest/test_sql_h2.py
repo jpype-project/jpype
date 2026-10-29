@@ -21,6 +21,11 @@ except ImportError:
 
 db_name = "jdbc:h2:mem:testdb"
 
+# These tests share process-wide, in-memory JDBC databases (and the JVM), so
+# running the same test body concurrently in several threads (pytest-run-parallel)
+# makes them collide.  Run every test in this module in a single thread.
+pytestmark = pytest.mark.thread_unsafe
+
 def setUpModule(module):
     from common import java_version
     version = java_version()
