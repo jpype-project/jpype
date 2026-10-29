@@ -17,6 +17,8 @@
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_gc.h"
+#include <algorithm>
+#include <chrono>
 
 #ifdef WIN32
 #define USE_PROCESS_INFO
@@ -40,13 +42,30 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-static int statm_fd;
+static std::atomic<int> statm_fd{-1};
 static int page_size;
 
 #else
 #define USE_NONE
 #endif
-#define DELTA_LIMIT 20*1024*1024l
+#define DELTA_LIMIT (20*1024*1024l)
+
+// A collection forced from a Java collection must not take more than about
+// one part in FORCED_GC_BACKOFF of the wall time, and never runs more often
+// than FORCED_GC_MIN_INTERVAL_NS.  Java can collect many times a second
+// under allocation pressure, and each forced Python collection is a full one.
+static const int64_t FORCED_GC_MIN_INTERVAL_NS = 50 * 1000 * 1000;
+static const int64_t FORCED_GC_BACKOFF = 4;
+
+// Set on the reference thread while it runs a forced collection so that the
+// gc callbacks fired by that collection can recognize it as their own.
+static thread_local bool forcing_collection = false;
+
+static int64_t nowNs()
+{
+	return std::chrono::duration_cast<std::chrono::nanoseconds>(
+			std::chrono::steady_clock::now().time_since_epoch()).count();
+}
 
 static size_t getWorkingSize()
 {
@@ -64,8 +83,11 @@ static size_t getWorkingSize()
 
 #elif defined(USE_PROC_INFO)
 	char bytes[32];
-	lseek(statm_fd, SEEK_SET, 0);
-	int len = read(statm_fd, bytes, 32);
+	int fd = statm_fd.load();
+	if (fd < 0)
+		return 0;
+	// pread so that concurrent callers do not share a file offset
+	int len = (int) pread(fd, bytes, sizeof (bytes), 0);
 	long long sz = 0;
 	int i = 0;
 	for (; i < len; i++)
@@ -93,18 +115,38 @@ static size_t getWorkingSize()
 
 void JPGarbageCollection::triggered()
 {
-	// If we were triggered from Java call a Python cleanup
-	if (!in_python_gc)
-	{
-		// trigger Python gc
-		in_python_gc = true;
-		java_triggered = true;
-		java_count++;
+	if (!running)
+		return;
 
-		// Lock Python so we call trigger a GC
-		JPPyCallAcquire callback;
-		PyGC_Collect();
+	// Only one forced collection at a time, and not before the cool down
+	// from the previous one has expired.
+	if (forcing_gc.exchange(true))
+		return;
+	if (nowNs() < next_forced_ns.load())
+	{
+		forcing_gc = false;
+		return;
 	}
+
+	int64_t start = nowNs();
+	{
+		forcing_collection = true;
+		try
+		{
+			// Lock Python so we can trigger a GC
+			JPPyCallAcquire callback;
+			if (running)
+				PyGC_Collect();
+		} catch (...) // GCOVR_EXCL_LINE
+		{
+		}
+		forcing_collection = false;
+	}
+	int64_t end = nowNs();
+	// Parenthesized so that the max macro from Windows.h does not apply
+	next_forced_ns = end + (std::max)(FORCED_GC_MIN_INTERVAL_NS,
+			FORCED_GC_BACKOFF * (end - start));
+	forcing_gc = false;
 }
 
 void JPGarbageCollection::init(JPJavaFrame& frame)
@@ -120,10 +162,16 @@ void JPGarbageCollection::init(JPJavaFrame& frame)
 	// Find the callbacks
 	JPPyObject callbacks = JPPyObject::call(PyObject_GetAttrString(python_gc, "callbacks"));
 
-	// Hook up our callback
+	// Hook up our callback unless the module already did
 	JPPyObject collect = JPPyObject::call(PyObject_GetAttrString(PyJPModule, "_collect"));
-	PyList_Append(callbacks.get(), collect.get());
-	JP_PY_CHECK();
+	int installed = PySequence_Contains(callbacks.get(), collect.get());
+	if (installed < 0)
+		JP_PY_CHECK();
+	if (installed == 0)
+	{
+		PyList_Append(callbacks.get(), collect.get());
+		JP_PY_CHECK();
+	}
 
 	// Get the Java System gc so we can trigger
 	_SystemClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/System"));
@@ -141,7 +189,9 @@ void JPGarbageCollection::shutdown()
 {
 	running = false;
 #if defined(USE_PROC_INFO)
-	close(statm_fd);
+	int fd = statm_fd.exchange(-1);
+	if (fd >= 0)
+		close(fd);
 #endif
 }
 
@@ -150,9 +200,8 @@ void JPGarbageCollection::onStart()
 	// GCOVR_EXCL_START
 	// GC is triggered outside of user control.  Including it in
 	// coverage just creates random statistics.
-	if (!running)
+	if (!running || forcing_collection)
 		return;
-	getWorkingSize();
 	in_python_gc = true;
 	// GCOVR_EXCL_STOP
 }
@@ -162,17 +211,10 @@ void JPGarbageCollection::onEnd()
 	// GCOVR_EXCL_START
 	// GC is triggered outside of user control.  Including it in
 	// coverage just creates random statistics.
-	if (!running)
+	if (!running || forcing_collection)
 		return;
-	if (java_triggered)
+	if (in_python_gc.exchange(false))
 	{
-		// Remove our lock so that we can watch for triggers
-		java_triggered = false;
-		return;
-	}
-	if (in_python_gc)
-	{
-		in_python_gc = false;
 		python_count++;
 		int run_gc = 0;
 
@@ -182,10 +224,7 @@ void JPGarbageCollection::onEnd()
 		if (current < low_water)
 			low_water = current;
 
-		if (java_triggered)
-			last_java = current;
-		else
-			last_python = current;
+		last_python = current;
 
 		// Things are getting better so use high water as limit
 		if (current == low_water)
@@ -212,12 +251,15 @@ void JPGarbageCollection::onEnd()
 		}
 
 		// Predict if we will cross the limit soon.
-		Py_ssize_t pred = current + 2 * (current - last);
+		Py_ssize_t slope = (Py_ssize_t) current - (Py_ssize_t) last;
+		Py_ssize_t pred = (Py_ssize_t) current + 2 * slope;
 		last = current;
-		if ((Py_ssize_t) pred > (Py_ssize_t) limit)
+		if (pred > (Py_ssize_t) limit)
 		{
 			run_gc = 2;
-			limit = high_water + (high_water>>3) + 8 * (current - last);
+			// Headroom is deliberately not scaled by the growth rate: that
+			// raises the limit fastest when memory grows fastest.
+			limit = high_water + (high_water>>3);
 		}
 
 		if (run_gc > 0)
