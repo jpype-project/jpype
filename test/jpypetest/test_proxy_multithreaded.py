@@ -18,7 +18,9 @@
 from jpype import *
 import common
 import time
+import pytest
 
+pytestmark = pytest.mark.thread_unsafe
 
 class C:
     def testMethodInt(self):

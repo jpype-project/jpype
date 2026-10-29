@@ -22,11 +22,10 @@ from jpype.types import *
 
 
 def _Character():
-    # A plain JClass lookup, deferred until actually called (this module
-    # is imported at pytest collection time, before the jvm_session
-    # fixture starts the JVM - see conftest.py, so a module-level lookup
-    # or a `jpype.java.lang.Character` reference evaluated too early would
-    # fail on desktop). Works the same way on both platforms.
+    # A plain JClass lookup, deferred until actually called, so the module
+    # stays importable without a running JVM (e.g. when run outside of
+    # pytest, where conftest.py does not start it). Works the same way on
+    # both platforms.
     return jpype.JClass('java.lang.Character')
 
 

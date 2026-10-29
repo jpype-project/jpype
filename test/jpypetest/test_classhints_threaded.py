@@ -20,7 +20,9 @@ from pathlib import Path
 import subprocess
 import sys
 import unittest
+import pytest
 
+pytestmark = pytest.mark.thread_unsafe
 
 class ClassHintsThreadedTest(unittest.TestCase):
     def testConversionDuringClassInitialization(self):
