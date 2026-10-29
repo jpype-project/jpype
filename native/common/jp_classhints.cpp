@@ -345,6 +345,8 @@ public:
 	JPMatch::Type matches(JPClass *cls, JPMatch &match) override
 	{
 		auto *pyhints = (PyJPClassHints*) cls->getHints();
+		if (pyhints == nullptr)
+			return match.type = JPMatch::_none;
 		JPClassHints *hints = pyhints->m_Hints;
 		hints->getConversion(match, cls);
 		return match.type;
@@ -353,6 +355,8 @@ public:
 	void getInfo(JPClass *cls, JPConversionInfo &info) override
 	{
 		auto *pyhints = (PyJPClassHints*) cls->getHints();
+		if (pyhints == nullptr)
+			return;
 		JPClassHints *hints = pyhints->m_Hints;
 		hints->getInfo(cls, info);
 	}
@@ -689,8 +693,7 @@ public:
 		if (!assignable)
 		{
 			auto *pyhints = (PyJPClassHints*) cls->getHints();
-			JPClassHints *hints = pyhints->m_Hints;
-			if (hints->m_ConvertJava)
+			if (pyhints != nullptr && pyhints->m_Hints->m_ConvertJava)
 				return match.type;
 		}
 
