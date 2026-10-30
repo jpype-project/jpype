@@ -18,29 +18,23 @@
 import jpype
 import common
 
-@common.threadUnsafe  # the Java class ClosableTest contains static fields 
 class CloseableTestCase(common.JPypeTestCase):
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     def testCloseable(self):
-        CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")
-        CloseableTest.reset()
+        CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")()
         self.assertFalse(CloseableTest.closed)
-        with CloseableTest() as myFile:
+        with CloseableTest as myFile:
             myFile.print_("hello 1")
         self.assertEqual(CloseableTest.printed, "hello 1")
         self.assertTrue(CloseableTest.closed)
 
     def testCloseableFail(self):
-        CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")
-        CloseableTest.reset()
+        CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")()
         CloseableTest.willfail = True
         self.assertFalse(CloseableTest.closed)
         ex1 = None
         try:
-            with CloseableTest() as myFile:
+            with CloseableTest as myFile:
                 myFile.print_("hello 1")
                 try:
                     raise Exception('foo')
@@ -53,11 +47,10 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertTrue(CloseableTest.closed)
 
     def testCloseablePyExcept(self):
-        CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")
-        CloseableTest.reset()
+        CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")()
         self.assertFalse(CloseableTest.closed)
         try:
-            with CloseableTest() as myFile:
+            with CloseableTest as myFile:
                 myFile.print_("hello 2")
                 raise TypeError("Python exception")
                 myFile.print_("there")
@@ -67,12 +60,11 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertTrue(CloseableTest.closed)
 
     def testCloseablePyExceptFail(self):
-        CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")
-        CloseableTest.reset()
+        CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")()
         CloseableTest.willfail = True
         self.assertFalse(CloseableTest.closed)
         try:
-            with CloseableTest() as myFile:
+            with CloseableTest as myFile:
                 myFile.print_("hello 3")
                 raise TypeError("Python exception")
                 myFile.print_("there")
@@ -83,11 +75,10 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertTrue(CloseableTest.failed)
 
     def testCloseableJExcept(self):
-        CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")
-        CloseableTest.reset()
+        CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")()
         self.assertFalse(CloseableTest.closed)
         try:
-            with CloseableTest() as myFile:
+            with CloseableTest as myFile:
                 myFile.print_("hello 4")
                 myFile.throwException()
                 myFile.print_("there")
@@ -99,12 +90,11 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertTrue(CloseableTest.closed)
 
     def testCloseableJExceptFail(self):
-        CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")
-        CloseableTest.reset()
+        CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")()
         CloseableTest.willfail = True
         self.assertFalse(CloseableTest.closed)
         try:
-            with CloseableTest() as myFile:
+            with CloseableTest as myFile:
                 myFile.print_("hello 5")
                 myFile.throwException()
                 myFile.print_("there")
