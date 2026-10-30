@@ -1,5 +1,7 @@
 pytest
-pytest-run-parallel
+# until https://github.com/Quansight-Labs/pytest-run-parallel/pull/191 is not merged/released
+git+https://github.com/seberg/pytest-run-parallel.git@feature/prepare-args-hook#egg=pytest-run-parallel
+#pytest-run-parallel
 pytest-xdist
 pytest-randomly
 pyinstaller
