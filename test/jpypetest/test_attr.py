@@ -23,8 +23,6 @@ import common
 
 
 class AttributeTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     # jpype.attr.ClassWithBuffer imports java.awt.image.BufferStrategy -
     # AWT isn't part of Android's platform API (see doc/android.rst), so
@@ -40,6 +38,7 @@ class AttributeTestCase(common.JPypeTestCase):
         h = jpype.java.lang.StringBuffer()
         h.delete(0, 0)
 
+    @common.threadUnsafe
     def testCallStaticString(self):
         h = JClass('jpype.attr.Test1')()
         v = h.testString(JString("abcd"), JString("efghi"))
@@ -112,6 +111,7 @@ class AttributeTestCase(common.JPypeTestCase):
         h = JClass('jpype.attr.Test1')()
         self.assertEqual(h.stringValue, "Foo")
 
+    @common.threadUnsafe  # here we modify a static field, do not run in parallel!
     def testSetStaticValue(self):
         JClass('jpype.attr.Test1').objectValue = java.lang.Integer(43)
         self.assertEqual(str(JClass('jpype.attr.Test1').objectValue), "43")
