@@ -1625,8 +1625,15 @@ JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 	// Check the cache for speed
 
 	auto *host = (PyObject*) cls->getHost();
-	if (host == nullptr)
+	if (host == nullptr || !cls->isHostComplete())
 	{
+		// Either the wrapper does not exist yet, or another thread is still
+		// running the post load step (inner classes, customizers) on it.
+		// Going through newWrapper() serializes on the same lock that the
+		// creating thread holds, so we only return once the class is
+		// complete.  The lock is reentrant for the creating thread, which
+		// legitimately sees its own half built class while it recurses
+		// (PyJPClass_hook returns immediately when a host already exists).
 		frame.newWrapper(cls);
 		host = (PyObject*) cls->getHost();
 	}

@@ -68,6 +68,7 @@ class SynchronizedTestCase(common.JPypeTestCase):
         global glob, success, obj
         obj = jpype.JClass("java.lang.Object")()
 
+    @common.threadUnsafe
     def testSynchronized(self):
         global glob, success
         glob = 0

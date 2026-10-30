@@ -30,11 +30,12 @@ except ImportError:
 
 
 class JDoubleTestCase(common.JPypeTestCase):
+    fixture = common.perThread(lambda: JClass("jpype.common.Fixture")())
+
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.value = 1.0 + 1.0 / 65536
         self.cls = JClass("jpype.common.Fixture")
-        self.fixture = self.cls()
 
     def compareDoubleEqual(self, x, y, msg=None):
         if x == y:
@@ -229,11 +230,12 @@ class JDoubleTestCase(common.JPypeTestCase):
         self.fixture.double_field = q
         self.assertEqual(self.fixture.double_field, q)
         self.assertEqual(self.fixture.getDouble(), q)
-        #  Check static field
-        self.cls.static_double_field = q
-        self.assertEqual(self.fixture.static_double_field, q)
-        self.assertEqual(self.fixture.getStaticDouble(), q)
-        self.assertEqual(self.cls.getStaticDouble(), q)
+        #  Check static field (one value per JVM, so serialize)
+        with common.staticFixtureLock:
+            self.cls.static_double_field = q
+            self.assertEqual(self.fixture.static_double_field, q)
+            self.assertEqual(self.fixture.getStaticDouble(), q)
+            self.assertEqual(self.cls.getStaticDouble(), q)
         #  Check call
         self.assertEqual(self.fixture.callDouble(q), q)
         self.assertEqual(self.cls.callStaticDouble(q), q)
@@ -252,8 +254,9 @@ class JDoubleTestCase(common.JPypeTestCase):
         import math
         nan = float("nan")
         self.assertTrue(math.isnan(self.fixture.callDouble(nan)))
-        self.fixture.static_double_field = nan
-        self.assertTrue(math.isnan(self.fixture.static_double_field))
+        with common.staticFixtureLock:
+            self.fixture.static_double_field = nan
+            self.assertTrue(math.isnan(self.fixture.static_double_field))
         self.fixture.double_field = nan
         self.assertTrue(math.isnan(self.fixture.double_field))
 
@@ -261,8 +264,9 @@ class JDoubleTestCase(common.JPypeTestCase):
         import math
         inf = float("inf")
         self.assertTrue(math.isinf(self.fixture.callDouble(inf)))
-        self.fixture.static_double_field = inf
-        self.assertTrue(math.isinf(self.fixture.static_double_field))
+        with common.staticFixtureLock:
+            self.fixture.static_double_field = inf
+            self.assertTrue(math.isinf(self.fixture.static_double_field))
         self.fixture.double_field = inf
         self.assertTrue(math.isinf(self.fixture.double_field))
 

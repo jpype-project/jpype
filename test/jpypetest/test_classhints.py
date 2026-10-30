@@ -79,6 +79,7 @@ class ClassHintsTestCase(common.JPypeTestCase):
         self.assertIsInstance(jpype.JObject(
             pathlib.Path(__file__).absolute(), JFile), JFile)
 
+    @common.threadUnsafe
     def testConvertExact(self):
         cht = self.ClassHintsTest
         with self.assertRaises(TypeError):
@@ -92,6 +93,7 @@ class ClassHintsTestCase(common.JPypeTestCase):
         self.assertIsInstance(cht.input, self.MyCustom)
         self.assertEqual(cht.input.arg, "hello")
 
+    @common.threadUnsafe
     def testConvertAttribute(self):
         cht = self.ClassHintsTest
         with self.assertRaises(TypeError):

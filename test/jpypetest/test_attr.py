@@ -279,6 +279,7 @@ class AttributeTestCase(common.JPypeTestCase):
     # (a passed-in object isn't kept alive past the call) isn't in
     # question, this is purely the stress loop's sizing assumption not
     # transferring to ART's memory model.
+    @common.threadUnsafe
     @common.skipOnAndroid("loop count scales with Runtime.freeMemory(), impractically large under ART's heap model")
     def testPassedObjectGetsCleanedUp(self):
         import platform

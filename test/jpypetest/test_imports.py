@@ -101,6 +101,7 @@ class ImportsTestCase(common.JPypeTestCase):
         with self.assertRaises(ImportError):
             from brokenx import Fixture as Fixture2  # type: ignore
 
+    @common.threadUnsafe
     def testInitializerErrorTopLevel(self):
         # A class imported directly from a top level domain must report
         # initializer errors as ImportError like any other package.
@@ -110,6 +111,7 @@ class ImportsTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(ImportError, "earlier initializer error"):
             from badinitx import BadInitA  # type: ignore
 
+    @common.threadUnsafe
     def testInitializerErrorSubpackage(self):
         jpype.imports.registerDomain("jpypex", alias="jpype")
         with self.assertRaisesRegex(ImportError, "due to initializer error"):
@@ -131,6 +133,7 @@ class ImportsTestCase(common.JPypeTestCase):
         self.assertTrue("B" in u)
         self.assertTrue("sub" in u)
 
+    @common.threadUnsafe
     def testAddClassPath(self):
         import pathlib
         import org.jpype as ojp
@@ -147,6 +150,7 @@ class ImportsTestCase(common.JPypeTestCase):
         self.assertTrue(t.field == 5)
         self.assertTrue(t.method() == "Yes")
 
+    @common.threadUnsafe
     def testAddClassPathLateJdbcDriver(self):
         # A JDBC driver added to the classpath after the JVM has started
         # must still be discoverable by java.sql.DriverManager, even

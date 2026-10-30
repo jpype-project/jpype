@@ -150,6 +150,7 @@ class JMethodTestCase(common.JPypeTestCase):
         self.assertIsInstance(jpype.JString(
             "foo").substring.matchReport(), str)
 
+    @common.threadUnsafe
     def testMethodHelp(self):
         import io
         import contextlib

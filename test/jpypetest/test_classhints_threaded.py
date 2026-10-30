@@ -163,3 +163,116 @@ else:
             self.assertTrue(all(hint is hints[0] for hint in hints))
         finally:
             _jpype._hints.pop(name, None)
+
+
+class ClassCreationThreadedTest(unittest.TestCase):
+    """A class must not be handed to a second thread before it is complete.
+
+    The Python wrapper of a Java class is published before the post load
+    step (customizers, inner classes) has run.  Another thread asking for
+    the same class in that window used to receive a class that was missing
+    its inner classes, e.g. ``DerivedTest.Base``.
+    """
+
+    def testClassIsCompleteWhenReturnedToSecondThread(self):
+        script = r'''
+import sys
+import threading
+import _jpype
+import jpype
+
+published = threading.Event()
+release = threading.Event()
+started = threading.Event()
+finished = threading.Event()
+results = {}
+original_post = _jpype._jclassPost
+name = "jpype.overloads.DerivedTest"
+
+def delayed_post(cls, *args):
+    if cls.__name__ == name:
+        published.set()
+        if not release.wait(5):
+            raise RuntimeError("class initialization was not released")
+    return original_post(cls, *args)
+
+_jpype._jclassPost = delayed_post
+jpype.startJVM(classpath=[sys.argv[1]])
+
+def create():
+    try:
+        results["creator"] = jpype.JClass(name)
+    except BaseException as ex:
+        results["creator"] = ex
+
+def lookup():
+    started.set()
+    try:
+        results["waiter"] = jpype.JClass(name)
+    except BaseException as ex:
+        results["waiter"] = ex
+    finally:
+        finished.set()
+
+creator = threading.Thread(target=create, daemon=True)
+waiter = threading.Thread(target=lookup, daemon=True)
+creator.start()
+try:
+    assert published.wait(5), "class wrapper was not published"
+    waiter.start()
+    assert started.wait(5), "lookup did not start"
+    assert not finished.wait(0.2), "second thread got an unfinished class"
+finally:
+    release.set()
+creator.join(5)
+waiter.join(5)
+assert not creator.is_alive() and not waiter.is_alive(), "class creation deadlock"
+for key in ("creator", "waiter"):
+    assert not isinstance(results[key], BaseException), results[key]
+    assert hasattr(results[key], "Base"), "%s class lacks its inner classes" % key
+assert results["creator"] is results["waiter"]
+print("CLASS COMPLETE", flush=True)
+'''
+        classes = Path(__file__).resolve().parents[1] / "classes"
+        result = subprocess.run(
+            [sys.executable, "-c", script, str(classes)],
+            capture_output=True, text=True, timeout=30,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("CLASS COMPLETE", result.stdout)
+
+    def testConcurrentFirstUseHasInnerClasses(self):
+        script = r'''
+import sys
+import threading
+import jpype
+
+jpype.startJVM(classpath=[sys.argv[1]])
+cases = (("jpype.overloads.DerivedTest", "Base"),
+         ("jpype.overloads.InterfaceOverload", "BothOverloads"))
+bad = []
+for name, inner in cases:
+    barrier = threading.Barrier(8, timeout=10)
+
+    def work():
+        barrier.wait()
+        if not hasattr(jpype.JClass(name), inner):
+            bad.append(name)
+
+    threads = [threading.Thread(target=work) for _ in range(8)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(30)
+    assert all(not thread.is_alive() for thread in threads), "deadlock"
+assert not bad, bad
+print("INNER CLASSES OK", flush=True)
+'''
+        classes = Path(__file__).resolve().parents[1] / "classes"
+        for _ in range(3):
+            result = subprocess.run(
+                [sys.executable, "-c", script, str(classes)],
+                capture_output=True, text=True, timeout=60,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("INNER CLASSES OK", result.stdout)
