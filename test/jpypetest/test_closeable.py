@@ -18,7 +18,7 @@
 import jpype
 import common
 
-
+@common.threadUnsafe  # the Java class ClosableTest contains static fields 
 class CloseableTestCase(common.JPypeTestCase):
 
     def setUp(self):
