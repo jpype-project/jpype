@@ -20,7 +20,7 @@ from jpype.types import *
 from jpype import JPackage, java
 import common
 
-
+@common.threadUnsafe # this class writes static fields in a shared Java class
 class FieldsTestCase(common.JPypeTestCase):
 
     def setUp(self):

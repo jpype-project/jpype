@@ -36,9 +36,10 @@ class JClassTestCase(common.JPypeTestCase):
     - ``mro``
     """
 
+    fixture = common.perThread(lambda: JClass("jpype.common.Fixture")())
+
     def setUp(self):
         common.JPypeTestCase.setUp(self)
-        self.fixture = JClass('jpype.common.Fixture')()
 
     def testSetAttrPythonField(self):
         cls = JClass('java.lang.String')
@@ -74,8 +75,9 @@ class JClassTestCase(common.JPypeTestCase):
             obj.args = 1
 
     def testAttrStaticField(self):
-        self.fixture.static_object_field = "fred"
-        self.assertEqual(self.fixture.static_object_field, "fred")
+        with common.staticFixtureLock:
+            self.fixture.static_object_field = "fred"
+            self.assertEqual(self.fixture.static_object_field, "fred")
 
     def testGetAttrField(self):
         v = self.fixture.object_field

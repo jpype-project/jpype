@@ -32,10 +32,11 @@ VALUES = [random.randint(-2**63, 2**63 - 1) for i in range(10)]
 
 
 class JLongTestCase(common.JPypeTestCase):
+    fixture = common.perThread(lambda: JClass("jpype.common.Fixture")())
+
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.cls = JClass("jpype.common.Fixture")
-        self.fixture = self.cls()
 
     @common.requireInstrumentation
     def testJPNumberLong_int(self):
@@ -232,11 +233,12 @@ class JLongTestCase(common.JPypeTestCase):
         self.fixture.long_field = q
         self.assertEqual(self.fixture.long_field, q)
         self.assertEqual(self.fixture.getLong(), q)
-        #  Check static field
-        self.cls.static_long_field = q
-        self.assertEqual(self.fixture.static_long_field, q)
-        self.assertEqual(self.fixture.getStaticLong(), q)
-        self.assertEqual(self.cls.getStaticLong(), q)
+        #  Check static field (one value per JVM, so serialize)
+        with common.staticFixtureLock:
+            self.cls.static_long_field = q
+            self.assertEqual(self.fixture.static_long_field, q)
+            self.assertEqual(self.fixture.getStaticLong(), q)
+            self.assertEqual(self.cls.getStaticLong(), q)
         #  Check call
         self.assertEqual(self.fixture.callLong(q), q)
         self.assertEqual(self.cls.callStaticLong(q), q)

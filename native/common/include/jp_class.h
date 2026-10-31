@@ -43,6 +43,19 @@ public:
 	bool hasHints() const;
 	void completeHints();
 
+	/** Check if the Python wrapper has been fully constructed.
+	 *
+	 * The host is published as soon as the type object exists, but the
+	 * post load step (customizers, inner classes) runs afterwards.  On
+	 * free-threaded Python another thread may observe the host in between,
+	 * so anything handing the host to Python code must wait until this is
+	 * true.  Hints are completed as the very last step of PyJPClass_hook.
+	 */
+	bool isHostComplete() const
+	{
+		return m_HintsComplete.load(std::memory_order_acquire);
+	}
+
 	PyObject* getHints();
 
 public:
