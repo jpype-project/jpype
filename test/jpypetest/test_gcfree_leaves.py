@@ -30,8 +30,6 @@ _LEAVES = (JBoolean, JByte, JChar, JInt, JShort, JLong, JFloat, JDouble)
 
 
 class GcFreeLeavesTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testNotGCTracked(self):
         for cls in _LEAVES:

@@ -23,9 +23,6 @@ import common
 
 class ReprTestCase(common.JPypeTestCase):
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     def testClass(self):
         cls = JClass("java.lang.String")
         self.assertIsInstance(str(cls), str)

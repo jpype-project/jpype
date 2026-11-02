@@ -22,9 +22,6 @@ import common
 
 class ComparableTestCase(common.JPypeTestCase):
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     def testComparable(self):
         a = jpype.java.time.Instant.ofEpochSecond(10000000)
         b = jpype.java.time.Instant.ofEpochSecond(10000001)

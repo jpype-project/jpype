@@ -21,8 +21,6 @@ import common
 
 
 class ModuleTestCase2(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testMonitorOnNull(self):
         value = jpype.JObject(None)

@@ -23,9 +23,6 @@ import collections.abc
 
 class CollectionCase(common.JPypeTestCase):
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     @common.requirePythonAfter((3, 6, 0))
     def testCollectionABC(self):
         JCollection = JClass('java.util.Collection')
@@ -54,9 +51,6 @@ class CollectionCase(common.JPypeTestCase):
 
 class CollectionIteratorCase(common.JPypeTestCase):
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     def testIterator(self):
         al = JClass("java.util.ArrayList")()
         itr = al.iterator()
@@ -64,9 +58,6 @@ class CollectionIteratorCase(common.JPypeTestCase):
 
 
 class CollectionListCase(common.JPypeTestCase):
-
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testListAdd(self):
         collection = JClass("java.util.ArrayList")()
@@ -148,9 +139,6 @@ class CollectionListCase(common.JPypeTestCase):
 
 
 class CollectionMapCase(common.JPypeTestCase):
-
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testIterateMap(self):
         collection = JClass('java.util.HashMap')()
@@ -279,9 +267,6 @@ class CollectionMapCase(common.JPypeTestCase):
 
 
 class CollectionEnumerationCase(common.JPypeTestCase):
-
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testEnumeration(self):
         st = JClass('java.util.StringTokenizer')("this is a test")
