@@ -23,8 +23,6 @@ import common
 
 
 class AttributeTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     # jpype.attr.ClassWithBuffer imports java.awt.image.BufferStrategy -
     # AWT isn't part of Android's platform API (see doc/android.rst), so
@@ -113,9 +111,12 @@ class AttributeTestCase(common.JPypeTestCase):
         self.assertEqual(h.stringValue, "Foo")
 
     def testSetStaticValue(self):
-        JClass('jpype.attr.Test1').objectValue = java.lang.Integer(43)
-        self.assertEqual(str(JClass('jpype.attr.Test1').objectValue), "43")
-        JClass('jpype.attr.Test1').reset()
+        # objectValue exists once per JVM, so serialize the write/read/reset
+        # across the threads running this test body.
+        with common.staticFixtureLock:
+            JClass('jpype.attr.Test1').objectValue = java.lang.Integer(43)
+            self.assertEqual(str(JClass('jpype.attr.Test1').objectValue), "43")
+            JClass('jpype.attr.Test1').reset()
 
     def testSetNonStaticValue(self):
         h = JClass('jpype.attr.Test1')()
@@ -279,6 +280,7 @@ class AttributeTestCase(common.JPypeTestCase):
     # (a passed-in object isn't kept alive past the call) isn't in
     # question, this is purely the stress loop's sizing assumption not
     # transferring to ART's memory model.
+    @common.threadUnsafe
     @common.skipOnAndroid("loop count scales with Runtime.freeMemory(), impractically large under ART's heap model")
     def testPassedObjectGetsCleanedUp(self):
         import platform

@@ -15,14 +15,15 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import sys
-import _jpype
-import jpype
-from jpype.types import *
-import common
-import types
 import functools
 import inspect
+import types
+
+import _jpype
+import common
+
+import jpype
+from jpype.types import JClass, JInt
 
 # Code from stackoverflow
 # Reference http://stackoverflow.com/questions/13503079/how-to-create-a-copy-of-a-python-function
@@ -37,11 +38,11 @@ def copy_func(f):
     g = functools.update_wrapper(g, f)
     return g
 
-
+@common.threadUnsafe  # we assign to a singleton (in the backend) JClass instance.
 class JMethodTestCase(common.JPypeTestCase):
     """ Test for methods of JMethod (_jpype._JMethod)
 
-    This should test how well the object matchs a Python3 function.
+    This should test how well the object matches a Python3 function.
      * __self__: should appear on a bound, None otherwise.
      * __name__: should be set
      * __qualname__: should be set
@@ -150,6 +151,7 @@ class JMethodTestCase(common.JPypeTestCase):
         self.assertIsInstance(jpype.JString(
             "foo").substring.matchReport(), str)
 
+    @common.threadUnsafe
     def testMethodHelp(self):
         import io
         import contextlib

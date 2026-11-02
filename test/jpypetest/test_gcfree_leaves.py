@@ -34,26 +34,26 @@ class GcFreeLeavesTestCase(common.JPypeTestCase):
         common.JPypeTestCase.setUp(self)
 
     def testNotGCTracked(self):
+        # subTest is not thread-safe under pytest-run-parallel (the body
+        # runs on several threads sharing one TestCase instance).
         for cls in _LEAVES:
-            with self.subTest(cls=cls):
-                self.assertFalse(cls.__flags__ & _HAVE_GC)
+            self.assertFalse(cls.__flags__ & _HAVE_GC,
+                             "%s should not be GC tracked" % cls)
 
     def testIdentityWithModuleAttribute(self):
         for cls in _LEAVES:
-            with self.subTest(cls=cls):
-                self.assertIs(getattr(_jpype, cls.__name__), cls)
+            self.assertIs(getattr(_jpype, cls.__name__), cls,
+                          "%s is not the module-level type" % cls)
 
     def testModuleNameRepr(self):
         for cls in _LEAVES:
-            with self.subTest(cls=cls):
-                self.assertEqual(cls.__module__, "jpype.types")
-                self.assertEqual(repr(cls), "<java class '%s'>" % cls.__name__)
+            self.assertEqual(cls.__module__, "jpype.types")
+            self.assertEqual(repr(cls), "<java class '%s'>" % cls.__name__)
 
     def testCannotExtend(self):
         for cls in _LEAVES:
-            with self.subTest(cls=cls):
-                with self.assertRaises(TypeError):
-                    type("Sub" + cls.__name__, (cls,), {})
+            with self.assertRaises(TypeError, msg="%s should not be extendable" % cls):
+                type("Sub" + cls.__name__, (cls,), {})
 
     def testInstancesNotTracked(self):
         self.assertFalse(gc.is_tracked(JInt(5)))
@@ -93,5 +93,4 @@ class GcFreeLeavesTestCase(common.JPypeTestCase):
 
     def testPickle(self):
         for value in (JInt(5), JLong(5), JBoolean(True)):
-            with self.subTest(value=value):
-                self.assertEqual(pickle.loads(pickle.dumps(value)), value)
+            self.assertEqual(pickle.loads(pickle.dumps(value)), value)

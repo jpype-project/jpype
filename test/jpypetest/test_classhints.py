@@ -79,6 +79,7 @@ class ClassHintsTestCase(common.JPypeTestCase):
         self.assertIsInstance(jpype.JObject(
             pathlib.Path(__file__).absolute(), JFile), JFile)
 
+    @common.threadUnsafe
     def testConvertExact(self):
         cht = self.ClassHintsTest
         with self.assertRaises(TypeError):
@@ -92,6 +93,7 @@ class ClassHintsTestCase(common.JPypeTestCase):
         self.assertIsInstance(cht.input, self.MyCustom)
         self.assertEqual(cht.input.arg, "hello")
 
+    @common.threadUnsafe
     def testConvertAttribute(self):
         cht = self.ClassHintsTest
         with self.assertRaises(TypeError):
@@ -105,6 +107,7 @@ class ClassHintsTestCase(common.JPypeTestCase):
         self.assertIsInstance(cht.input, self.MyCustom)
         self.assertIsInstance(cht.input.arg, MyImpl)
 
+    @common.threadUnsafe  # registers a process-wide conversion
     def testClassCustomizer(self):
 
         @jpype.JConversion("java.lang.Class", instanceof=ClassProxy)
@@ -114,6 +117,7 @@ class ClassHintsTestCase(common.JPypeTestCase):
         hints = jpype.JClass('java.lang.Class')._hints
         self.assertTrue(ClassProxy in hints.implicit)
 
+    @common.threadUnsafe  # registers a process-wide conversion
     def testArrayCustomizer(self):
 
         @jpype.JConversion(jpype.JInt[:], instanceof=ArrayProxy)
@@ -123,6 +127,7 @@ class ClassHintsTestCase(common.JPypeTestCase):
         hints = jpype.JClass(jpype.JInt[:])._hints
         self.assertTrue(ArrayProxy in hints.implicit)
 
+    @common.threadUnsafe  # registers a process-wide conversion
     def testStringCustomizer(self):
 
         @jpype.JConversion("java.lang.String", instanceof=StringProxy)

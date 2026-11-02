@@ -31,6 +31,7 @@ class CustomizerTestCase(common.JPypeTestCase):
         common.JPypeTestCase.setUp(self)
         self.fixture = JClass('jpype.common.Fixture')()
 
+    @common.threadUnsafe
     def testSticky(self):
         @jpype.JImplementationFor("jpype.override.A")
         class _A:
@@ -45,6 +46,7 @@ class CustomizerTestCase(common.JPypeTestCase):
         self.assertEqual(str(A.remove_), "jpype.override.A.remove")
         self.assertEqual(str(B.remove_), "jpype.override.B.remove")
 
+    @common.threadUnsafe
     def testStickyInheritanceAndInterfaceDepth(self):
         # General correctness coverage for sticky methods across an
         # inheritance chain and an interface extended farther down than
@@ -119,6 +121,7 @@ class CustomizerTestCase(common.JPypeTestCase):
         self.assertEqual(ISubOverride().remove(None), 100002)
         self.assertEqual(str(ISubOverride.remove_), "jpype.override.Overrides.ISubOverride.remove")
 
+    @common.threadUnsafe
     def testStickyMismatchedRenameStack(self):
         # Three sticky customizers stacked on the same target, the last
         # using a *different* rename than the first two. The first two
@@ -159,6 +162,7 @@ class CustomizerTestCase(common.JPypeTestCase):
         with self.assertRaises(AttributeError):
             IStackImpl().remove(None)
 
+    @common.threadUnsafe
     def testRetroactiveCustomizerComposition(self):
         # https://github.com/jpype-project/jpype/issues/1476
         #
