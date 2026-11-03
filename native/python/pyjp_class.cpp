@@ -14,6 +14,7 @@
    See NOTICE file for details.
  *****************************************************************************/
 #include <algorithm>
+#include <atomic>
 #include <cstddef>
 #include <Python.h>
 #include <frameobject.h>
@@ -87,7 +88,9 @@ struct PyJPClass
 	// same reason (see those field comments): it's a permanent, JVM-lifetime
 	// edge that must stay invisible to the cyclic GC rather than become an
 	// uncollectable 2-node cycle tp_clear can never actually break.
-	PyObject *nullBoxed;
+	// Atomic because several threads may cast None to the same boxed class
+	// at once; the first published singleton must never be replaced.
+	std::atomic<PyObject*> nullBoxed{nullptr};
 } ;
 
 PyObject* PyJPClassMagic = nullptr;
@@ -151,16 +154,28 @@ PyObject* PyJPClass_GetNullBoxed(PyTypeObject* type)
 {
 	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
 		return nullptr;
-	return ((PyJPClass*) type)->nullBoxed;
+	return ((PyJPClass*) type)->nullBoxed.load(std::memory_order_acquire);
 }
 
-void PyJPClass_SetNullBoxed(PyTypeObject* type, PyObject* obj)
+PyObject* PyJPClass_GetOrSetNullBoxed(PyTypeObject* type, PyObject* obj)
 {
 	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
-		return;
+	{
+		// No wrapper type to cache in; the caller still owns "obj" and wraps
+		// the borrowed reference, exactly like the cached branch below.
+		return obj;
+	}
+	// Keep the first singleton that wins.  Replacing it would leave any
+	// instance already handed out no longer identical to the cached one,
+	// which is how null-ness is recognised for the reconstructing boxed
+	// families (Long/Short/Byte/Boolean/Character).
 	Py_XINCREF(obj);
-	Py_XDECREF(((PyJPClass*) type)->nullBoxed);
-	((PyJPClass*) type)->nullBoxed = obj;
+	PyObject *expected = nullptr;
+	if (((PyJPClass*) type)->nullBoxed.compare_exchange_strong(
+			expected, obj, std::memory_order_acq_rel))
+		return obj;
+	Py_XDECREF(obj);
+	return expected;
 }
 
 /**
@@ -200,7 +215,8 @@ static int PyJPClass_traverse(PyJPClass *self, visitproc visit, void *arg)
 	// us - causing a gc refcount underflow assertion at shutdown.
 	if (PyType_Type.tp_traverse((PyObject*) self, visit, arg) != 0)
 		return -1; // GCOVR_EXCL_LINE
-	Py_VISIT(self->m_Doc);
+	if (PyJPSlot_visit((PyObject*) self, &self->m_Doc, visit, arg) != 0)
+		return -1; // GCOVR_EXCL_LINE
 	// self->tp_concrete is the one genuinely OWNED edge in the abstract/
 	// concrete pair (see the struct PyJPClass field comments) -- but is
 	// deliberately not visited here anyway: it is a permanent, JVM-lifetime
@@ -227,7 +243,8 @@ static int PyJPClass_traverse(PyJPClass *self, visitproc visit, void *arg)
 static int PyJPClass_clear(PyJPClass *self)
 {
 	PyType_Type.tp_clear((PyObject*) self);
-	Py_CLEAR(self->m_Doc);
+	PyObject *doc = PyJPSlot_take((PyObject*) self, &self->m_Doc);
+	Py_XDECREF(doc);
 	return 0;
 }
 
@@ -928,21 +945,51 @@ static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
 	JPClass* cls = frame.findClass((jclass) typeVal.l);
 	JP_TRACE("Set host", cls, typeCls->getCanonicalName().c_str());
 	if (cls->getHost() == nullptr)
-		cls->setHost(self);
+		cls->setBoundHost(self);
 	((PyJPClass*) self)->m_Class = cls;
 	return 0;
 	JP_PY_CATCH(-1);
+}
+
+static PyObject *PyJPClass_isComplete(PyJPClass *self, PyObject *closure)
+{
+	JP_PY_TRY("PyJPClass_isComplete");
+	JPClass *cls = self->m_Class;
+	return PyBool_FromLong(cls != nullptr && cls->isHostComplete());
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_hints");
 	PyJPModule_getContext();
-	JPPyObject hints = JPPyObject::use(self->m_Class->getHints());
+	JPClass *cls = self->m_Class;
+	JPPyObject hints = JPPyObject::use(cls->getHints());
 	if (hints.get() == nullptr)
 		Py_RETURN_NONE; // GCOVR_EXCL_LINE only triggered if JClassPost failed
 
-	if (PyObject_HasAttrString((PyObject*) self, "returns") == 1)
+	// The conversion information is built once and then published through a
+	// release/acquire flag.  Exactly one thread may build it; the others wait
+	// and then pick up the finished attributes.
+	//
+	// JClassHints bumps "_version" whenever a conversion is registered.  A
+	// cached build is only reusable while the version still matches, so a
+	// JConversion added after the first access is picked up on the next one.
+	long version = -1;
+	PyObject *versionObj = PyObject_GetAttrString(hints.get(), "_version");
+	if (versionObj != nullptr)
+	{
+		version = PyLong_AsLong(versionObj);
+		Py_DECREF(versionObj);
+		if (PyErr_Occurred())
+			PyErr_Clear();
+	} else
+		PyErr_Clear();
+	if (cls->isHintsInfoReady() && cls->getHintsInfoVersion() == version)
+		return hints.keep();
+
+	PyJPSingleFlight flight(cls);
+	if (cls->isHintsInfoReady() && cls->getHintsInfoVersion() == version)
 		return hints.keep();
 
 	// Copy in info.
@@ -959,13 +1006,14 @@ static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 	info.exact = exact.get();
 	info.expl = expl.get();
 	info.none = none.get();
-	self->m_Class->getConversionInfo(info);
+	cls->getConversionInfo(info);
 	PyObject_SetAttrString(hints.get(), "returns", ret.get());
 	PyObject_SetAttrString(hints.get(), "implicit", implicit.get());
 	PyObject_SetAttrString(hints.get(), "exact", exact.get());
 	PyObject_SetAttrString(hints.get(), "explicit", expl.get());
 	PyObject_SetAttrString(hints.get(), "none", none.get());
 	PyObject_SetAttrString(hints.get(), "attributes", attribs.get());
+	cls->completeHintsInfo(version);
 	return hints.keep();
 	JP_PY_CATCH(nullptr);
 }
@@ -1279,20 +1327,23 @@ static PyObject *PyJPClass_getDoc(PyJPClass *self, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_getDoc");
 	JPJavaFrame frame = JPJavaFrame::outer();
-	if (self->m_Doc)
-	{
-		Py_INCREF(self->m_Doc);
-		return self->m_Doc;
-	}
+	PyObject *cached = PyJPSlot_peek((PyObject*) self, &self->m_Doc);
+	if (cached != nullptr)
+		return cached;
+
+	// Exactly one thread builds the documentation (it may extract the Javadoc, which is expensive and must not run
+	// twice), the others wait for it and then pick up the result (see PyJPSingleFlight).
+	PyJPSingleFlight docFlight(&self->m_Doc);
+	cached = PyJPSlot_peek((PyObject*) self, &self->m_Doc);
+	if (cached != nullptr)
+		return cached;
 
 	// Pack the arguments
 	{
 		JP_TRACE("Pack arguments");
 		JPPyObject args = JPPyTuple_Pack(self);
 		JP_TRACE("Call Python");
-		self->m_Doc = PyObject_Call(_JClassDoc, args.get(), nullptr);
-		Py_XINCREF(self->m_Doc);
-		return self->m_Doc;
+		return PyJPSlot_publish((PyObject*) self, &self->m_Doc, PyObject_Call(_JClassDoc, args.get(), nullptr));
 	}
 	JP_PY_CATCH(nullptr);
 }
@@ -1300,9 +1351,7 @@ static PyObject *PyJPClass_getDoc(PyJPClass *self, void *ctxt)
 int PyJPClass_setDoc(PyJPClass *self, PyObject *obj, void *ctxt)
 {
 	JP_PY_TRY("PyJPClass_setDoc");
-	Py_CLEAR(self->m_Doc);
-	self->m_Doc = obj;
-	Py_XINCREF(self->m_Doc);
+	PyJPSlot_replace((PyObject*) self, &self->m_Doc, obj);
 	return 0;
 	JP_PY_CATCH(-1);
 }
@@ -1330,6 +1379,7 @@ static PyMethodDef classMethods[] = {
 	{"_canCast", (PyCFunction) PyJPClass_canCast, METH_O, ""},
 	{"__getitem__", (PyCFunction) PyJPClass_array, METH_O | METH_COEXIST, ""},
 	{"_customize", (PyCFunction) PyJPClass_customize, METH_VARARGS, ""},
+	{"_isComplete", (PyCFunction) PyJPClass_isComplete, METH_NOARGS, ""},
 	{nullptr},
 };
 
@@ -1622,13 +1672,35 @@ JPPyObject PyJPClass_getBases(JPJavaFrame &frame, JPClass* cls)
 JPPyObject PyJPClass_create(JPJavaFrame &frame, JPClass* cls)
 {
 	JP_TRACE_IN("PyJPClass_create", cls);
+	// A null JPClass here means the caller could not resolve the Java class
+	// (for example findClass() returning 0 while the JVM is shutting down).
+	// Raise a Python error instead of dereferencing the null pointer.
+	if (cls == nullptr)
+		JP_RAISE(PyExc_RuntimeError, "Unable to create a wrapper for a null Java class");
+
 	// Check the cache for speed
 
 	auto *host = (PyObject*) cls->getHost();
-	if (host == nullptr)
+	if (host == nullptr || !cls->isHostComplete())
 	{
+		// A previous post load failed.  The half built wrapper is retained so
+		// the creating thread can unwind, but it must never escape.
+		if (cls->isHostFailed())
+			JP_RAISE(PyExc_RuntimeError,
+					"Java class '" + cls->getCanonicalName() + "' failed to initialize");
+
+		// Either the wrapper does not exist yet, or another thread is still
+		// running the post load step (inner classes, customizers) on it.
+		// Going through newWrapper() serializes on the same lock that the
+		// creating thread holds, so we only return once the class is
+		// complete.  The lock is reentrant for the creating thread, which
+		// legitimately sees its own half built class while it recurses
+		// (PyJPClass_hook returns immediately when a host already exists).
 		frame.newWrapper(cls);
 		host = (PyObject*) cls->getHost();
+		if (cls->isHostFailed())
+			JP_RAISE(PyExc_RuntimeError,
+					"Java class '" + cls->getCanonicalName() + "' failed to initialize");
 	}
 	return JPPyObject::use(host);
 	JP_TRACE_OUT;
@@ -1704,8 +1776,11 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 		JPPyObject rc2 = JPPyObject::call(PyObject_Call(_JClassPost, args.get(), nullptr));
 	} catch (...)
 	{
-		// Failed customizers must not leave usable conversion hints behind.
-		cls->setHints(nullptr);
+		// A failed customizer must leave a permanent failure marker: the
+		// half built wrapper is still published (the creating thread needs
+		// it while unwinding) but later lookups raise instead of handing it
+		// to Python code.
+		cls->failHints();
 		throw;
 	}
 	cls->completeHints();

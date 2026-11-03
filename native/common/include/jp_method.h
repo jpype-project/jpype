@@ -15,6 +15,7 @@
  *****************************************************************************/
 #ifndef _JPMETHOD_H_
 #define _JPMETHOD_H_
+#include <atomic>
 #include "jp_modifier.h"
 class JPMethod;
 
@@ -36,6 +37,17 @@ public:
 	void setParameters(
 			JPClass *returnType,
 			JPClassList&& parameterTypes);
+
+	/** Check if the return and parameter types have been resolved.
+	 *
+	 * Type resolution is lazy and happens on the first call. Several
+	 * threads may reach a method at the same time, so the flag is
+	 * published with release/acquire ordering after the types are set.
+	 */
+	bool hasParameters() const
+	{
+		return m_ParametersReady.load(std::memory_order_acquire);
+	}
 
 	/** Check to see if this overload matches the argument list.
 	 *
@@ -112,9 +124,10 @@ private:
 	jmethodID                m_MethodID{};
 	JPClass*                 m_ReturnType{};
 	JPClassList              m_ParameterTypes;
+	std::atomic<bool>        m_ParametersReady{false};
 	JPMethodList             m_MoreSpecificOverloads;
 	jint                     m_Modifiers{};
-	long                     m_Hash{-1};
+	std::atomic<long>        m_Hash{-1};
 } ;
 
 #endif // _JPMETHOD_H_

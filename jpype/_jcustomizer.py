@@ -238,6 +238,21 @@ class JClassHints(_jpype._JClassHints):
         self.bases = []
         self.implementations = []
         self.instantiated = False
+        # Bumped whenever a conversion changes, so the cached conversion
+        # information in _JClass._hints is rebuilt on the next access.
+        self._version = 0
+
+    def _addTypeConversion(self, *args):
+        super()._addTypeConversion(*args)
+        self._version += 1
+
+    def _addAttributeConversion(self, *args):
+        super()._addAttributeConversion(*args)
+        self._version += 1
+
+    def _excludeConversion(self, *args):
+        super()._excludeConversion(*args)
+        self._version += 1
 
     def registerClassBase(self, base):
         """ (internal) Add an implementation for a class
@@ -308,7 +323,8 @@ def getClassHints(name):
         name = name.__name__
     hints = _jpype._hints.get(name, None)
     if not hints:
-        hints = _jpype._hints.setdefault(name, JClassHints())
+        hints = JClassHints()
+        hints = _jpype._hints.setdefault(name, hints)
     return hints
 
 

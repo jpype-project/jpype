@@ -18,6 +18,11 @@
 #include <Python.h>
 #include "jpype.h"
 #include "jp_pythontypes.h"
+#include <condition_variable>
+#include <memory>
+#include <mutex>
+#include <thread>
+#include <unordered_map>
 
 // Py_SET_TYPE/Py_SET_REFCNT/Py_SET_SIZE became public macros in CPython 3.9
 // (bpo-39573); before that, Py_TYPE(obj)/Py_REFCNT(obj)/Py_SIZE(obj)
@@ -30,6 +35,200 @@
 #define Py_SET_REFCNT(obj, refcnt) ((Py_REFCNT(obj) = (refcnt)))
 #define Py_SET_SIZE(obj, size) ((Py_SIZE(obj) = (size)))
 #endif
+
+// Critical sections (per-object locks of the free-threaded build) exist since CPython 3.13 and are no-ops
+// in builds with a global interpreter lock. Older versions always have the lock, so plain blocks are enough.
+// NOTE: the macros open a block; never "return", "goto" or "break" out of it.
+#if PY_VERSION_HEX < 0x030D0000
+#ifndef Py_BEGIN_CRITICAL_SECTION
+#define Py_BEGIN_CRITICAL_SECTION(op) {
+#define Py_END_CRITICAL_SECTION() }
+#endif
+#endif
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Lazily filled slots of Python objects (documentation, annotations, ...), shared by all threads.
+//
+// Every access to such a slot happens inside a critical section on the owning object (a no-op with a global
+// interpreter lock) and takes or releases a strong reference before the section ends; a slot is never read twice for
+// one decision. Reference counts are dropped outside of the section, because that can run arbitrary code.
+
+// New reference to the value of a slot, or NULL (without an error) if it is not set yet.
+inline PyObject *PyJPSlot_peek(PyObject *owner, PyObject **slot)
+{
+	PyObject *value = nullptr;
+	Py_BEGIN_CRITICAL_SECTION(owner);
+	value = *slot;
+	Py_XINCREF(value);
+	Py_END_CRITICAL_SECTION();
+	return value;
+}
+
+// Publish a lazily computed value. Steals the reference to "computed" (NULL passes through, with the Python error
+// already set). If another thread was faster, its value wins and ours is dropped, so all callers observe the same
+// object. Returns a new reference.
+inline PyObject *PyJPSlot_publish(PyObject *owner, PyObject **slot, PyObject *computed)
+{
+	if (computed == nullptr)
+		return nullptr;
+	PyObject *result = nullptr;
+	Py_BEGIN_CRITICAL_SECTION(owner);
+	if (*slot == nullptr)
+	{
+		*slot = computed;       // the slot owns one reference ...
+		Py_INCREF(computed);    // ... and the caller keeps the original one
+		result = computed;
+		computed = nullptr;
+	}
+	else
+	{
+		result = *slot;
+		Py_INCREF(result);
+	}
+	Py_END_CRITICAL_SECTION();
+	Py_XDECREF(computed);
+	return result;
+}
+
+// Replace the value of a slot (the __doc__ / __annotations__ setters). Does not steal a reference.
+inline void PyJPSlot_replace(PyObject *owner, PyObject **slot, PyObject *value)
+{
+	Py_XINCREF(value);
+	PyObject *old = nullptr;
+	Py_BEGIN_CRITICAL_SECTION(owner);
+	old = *slot;
+	*slot = value;
+	Py_END_CRITICAL_SECTION();
+	Py_XDECREF(old);
+}
+
+// Visit a slot from tp_traverse. The visitor itself does not run Python code, so it is safe inside the section; the
+// temporary reference is dropped afterwards (outside of the section).
+inline int PyJPSlot_visit(PyObject *owner, PyObject **slot, visitproc visit, void *arg)
+{
+	PyObject *value = PyJPSlot_peek(owner, slot);
+	if (value == nullptr)
+		return 0;
+	int result = visit(value, arg);
+	Py_DECREF(value);
+	return result;
+}
+
+// Detach a slot from tp_clear and return its reference. The caller owns the returned reference and must drop it
+// outside of the critical section, because that can run arbitrary __del__ code.
+inline PyObject *PyJPSlot_take(PyObject *owner, PyObject **slot)
+{
+	PyObject *value = nullptr;
+	Py_BEGIN_CRITICAL_SECTION(owner);
+	value = *slot;
+	*slot = nullptr;
+	Py_END_CRITICAL_SECTION();
+	return value;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Single flight for values that are expensive to build and must be built only once (documentation, conversion info).
+//
+// The coordinating mutex is only held while claiming/finishing the build, never while the value is being built.
+// Building enters Java and Python and may take other locks (the Java type factory monitor in particular); holding a
+// global mutex across that would invert lock order against PyJPClass_hook -> _jclassPost -> __doc__.
+//
+// Waiters block detached (JPPyCallRelease) so they neither stall the builder's interpreter nor its GC, and retry after
+// the builder finishes or fails. Re-entry from the building thread is allowed without waiting (method doc builds its
+// class doc); the outer guard remains responsible for waking the waiters. Usage:
+//
+//     PyObject *cached = PyJPSlot_peek(...);  if (cached) return cached;   // fast path
+//     PyJPSingleFlight flight(slot);
+//     cached = PyJPSlot_peek(...);            if (cached) return cached;   // somebody finished while we waited
+//     ... build, then PyJPSlot_publish(...)
+class PyJPSingleFlight
+{
+	struct State
+	{
+		bool building = false;
+		std::thread::id owner;
+		std::condition_variable cv;
+	};
+
+public:
+	explicit PyJPSingleFlight(const void *key) : m_Key(key)
+	{
+		for (;;)
+		{
+			std::shared_ptr<State> state;
+			{
+				std::lock_guard<std::mutex> lock(Mutex());
+				auto &slot = Map()[key];
+				if (!slot)
+					slot = std::make_shared<State>();
+				state = slot;
+				if (!state->building)
+				{
+					state->building = true;
+					state->owner = std::this_thread::get_id();
+					m_State = state;
+					m_Owner = true;
+					return;
+				}
+				if (state->owner == std::this_thread::get_id())
+				{
+					// Nested build on the same thread: do not wait for ourselves.
+					// The outer guard clears the building flag when it finishes.
+					m_State = state;
+					m_Owner = false;
+					return;
+				}
+			}
+			// Keep our own reference to the state: the owner erases the map
+			// entry when it finishes, so a reference into the map would dangle.
+			// Wait detached so the builder can run Python and the GC.
+			JPPyCallRelease release;
+			std::unique_lock<std::mutex> lock(Mutex());
+			state->cv.wait(lock, [&state] { return !state->building; });
+		}
+	}
+
+	~PyJPSingleFlight()
+	{
+		finish();
+	}
+
+	void finish()
+	{
+		if (m_Finished)
+			return;
+		m_Finished = true;
+		if (!m_Owner)
+			return;
+		{
+			std::lock_guard<std::mutex> lock(Mutex());
+			m_State->building = false;
+			Map().erase(m_Key);
+		}
+		m_State->cv.notify_all();
+	}
+
+	PyJPSingleFlight(const PyJPSingleFlight&) = delete;
+	PyJPSingleFlight& operator=(const PyJPSingleFlight&) = delete;
+
+private:
+	static std::mutex &Mutex()
+	{
+		static std::mutex mutex;
+		return mutex;
+	}
+
+	static std::unordered_map<const void *, std::shared_ptr<State>> &Map()
+	{
+		static std::unordered_map<const void *, std::shared_ptr<State>> map;
+		return map;
+	}
+
+	const void *m_Key;
+	std::shared_ptr<State> m_State;
+	bool m_Owner = false;
+	bool m_Finished = false;
+};
 
 class JPStackInfo;
 #ifdef JP_TRACING_ENABLE
@@ -233,7 +432,7 @@ JPClass*      PyJPClass_GetClass(PyTypeObject* type);
 // null cast (JPBoxedType::convertToPythonObject); null until then, and
 // always null for non-boxed types.
 PyObject*     PyJPClass_GetNullBoxed(PyTypeObject* type);
-void          PyJPClass_SetNullBoxed(PyTypeObject* type, PyObject* obj);
+PyObject*     PyJPClass_GetOrSetNullBoxed(PyTypeObject* type, PyObject* obj);
 
 // Class methods to add to the spec tables
 void       PyJPValue_free(void* obj);

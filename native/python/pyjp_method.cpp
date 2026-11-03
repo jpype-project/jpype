@@ -36,18 +36,24 @@ struct PyJPMethod
 static int PyJPMethod_traverse(PyJPMethod *self, visitproc visit, void *arg)
 {
 	Py_VISIT(self->m_Instance);
-	Py_VISIT(self->m_Doc);
-	Py_VISIT(self->m_Annotations);
-	Py_VISIT(self->m_CodeRep);
+	if (PyJPSlot_visit((PyObject*) self, &self->m_Doc, visit, arg) != 0)
+		return -1;
+	if (PyJPSlot_visit((PyObject*) self, &self->m_Annotations, visit, arg) != 0)
+		return -1;
+	if (PyJPSlot_visit((PyObject*) self, &self->m_CodeRep, visit, arg) != 0)
+		return -1;
 	return 0;
 }
 
 static int PyJPMethod_clear(PyJPMethod *self)
 {
 	Py_CLEAR(self->m_Instance);
-	Py_CLEAR(self->m_Doc);
-	Py_CLEAR(self->m_Annotations);
-	Py_CLEAR(self->m_CodeRep);
+	PyObject *doc = PyJPSlot_take((PyObject*) self, &self->m_Doc);
+	Py_XDECREF(doc);
+	PyObject *annotations = PyJPSlot_take((PyObject*) self, &self->m_Annotations);
+	Py_XDECREF(annotations);
+	PyObject *code = PyJPSlot_take((PyObject*) self, &self->m_CodeRep);
+	Py_XDECREF(code);
 	return 0;
 }
 
@@ -62,6 +68,7 @@ static void PyJPMethod_dealloc(PyJPMethod *self)
 	JP_PY_CATCH_NONE(); // GCOVR_EXCL_LINE
 }
 
+
 static PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)
 {
 	JP_PY_TRY("PyJPMethod_get");
@@ -73,16 +80,9 @@ static PyObject *PyJPMethod_get(PyJPMethod *self, PyObject *obj, PyObject *type)
 		return (PyObject*) self;
 	}
 	PyJPMethod *out = (PyJPMethod*) PyJPMethod_create(self->m_Method, obj).keep();
-	if (self->m_Doc != nullptr)
-	{
-		out->m_Doc = self->m_Doc;
-		Py_INCREF(out->m_Doc);
-	}
-	if (self->m_Annotations != nullptr)
-	{
-		out->m_Annotations = self->m_Annotations;
-		Py_INCREF(out->m_Annotations);
-	}
+	// "out" is not shared yet, so it can be filled without a lock; the references come from peek.
+	out->m_Doc = PyJPSlot_peek((PyObject*) self, &self->m_Doc);
+	out->m_Annotations = PyJPSlot_peek((PyObject*) self, &self->m_Annotations);
 	return (PyObject*) out;
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
@@ -186,11 +186,15 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 	JP_PY_TRY("PyJPMethod_getDoc");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer();
-	if (self->m_Doc)
-	{
-		Py_INCREF(self->m_Doc);
-		return self->m_Doc;
-	}
+	PyObject *cached = PyJPSlot_peek((PyObject*) self, &self->m_Doc);
+	if (cached != nullptr)
+		return cached;
+
+	// Exactly one thread builds the documentation, the others wait for it (see PyJPSingleFlight).
+	PyJPSingleFlight docFlight(&self->m_Doc);
+	cached = PyJPSlot_peek((PyObject*) self, &self->m_Doc);
+	if (cached != nullptr)
+		return cached;
 
 	// Convert the overloads
 	JP_TRACE("Convert overloads");
@@ -215,19 +219,16 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 		JPPyObject obj(context->_java_lang_Class->convertToPythonObject(frame, v, true));
 		JPPyObject args = JPPyTuple_Pack(self, obj.get(), ov.get());
 		JP_TRACE("Call Python");
-		self->m_Doc = PyObject_Call(_JMethodDoc, args.get(), nullptr);
-		Py_XINCREF(self->m_Doc);
-		return self->m_Doc;
+		return PyJPSlot_publish((PyObject*) self, &self->m_Doc, PyObject_Call(_JMethodDoc, args.get(), nullptr));
 	}
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
+
 int PyJPMethod_setDoc(PyJPMethod *self, PyObject *obj, void *ctxt)
 {
 	JP_PY_TRY("PyJPMethod_setDoc");
-	Py_CLEAR(self->m_Doc);
-	self->m_Doc = obj;
-	Py_XINCREF(self->m_Doc);
+	PyJPSlot_replace((PyObject*) self, &self->m_Doc, obj);
 	return 0;
 	JP_PY_CATCH(-1); // GCOVR_EXCL_LINE
 }
@@ -237,11 +238,14 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 	JP_PY_TRY("PyJPMethod_getAnnotations");
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer();
-	if (self->m_Annotations)
-	{
-		Py_INCREF(self->m_Annotations);
-		return self->m_Annotations;
-	}
+	PyObject *cached = PyJPSlot_peek((PyObject*) self, &self->m_Annotations);
+	if (cached != nullptr)
+		return cached;
+
+	PyJPSingleFlight annotationFlight(&self->m_Annotations);
+	cached = PyJPSlot_peek((PyObject*) self, &self->m_Annotations);
+	if (cached != nullptr)
+		return cached;
 
 	// Convert the overloads
 	JP_TRACE("Convert overloads");
@@ -266,33 +270,40 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 		JPPyObject obj(context->_java_lang_Class->convertToPythonObject(frame, v, true));
 		JPPyObject args = JPPyTuple_Pack(self, obj.get(), ov.get());
 		JP_TRACE("Call Python");
-		self->m_Annotations = PyObject_Call(_JMethodAnnotations, args.get(), nullptr);
+		return PyJPSlot_publish((PyObject*) self, &self->m_Annotations, PyObject_Call(_JMethodAnnotations, args.get(), nullptr));
 	}
-
-	Py_XINCREF(self->m_Annotations);
-	return self->m_Annotations;
 	JP_PY_CATCH(nullptr); // GCOVR_EXCL_LINE
 }
 
+
 int PyJPMethod_setAnnotations(PyJPMethod *self, PyObject* obj, void *ctx)
 {
-	Py_CLEAR(self->m_Annotations);
-	self->m_Annotations = obj;
-	Py_XINCREF(self->m_Annotations);
+	PyJPSlot_replace((PyObject*) self, &self->m_Annotations, obj);
 	return 0;
 }
+
 
 PyObject *PyJPMethod_getCodeAttr(PyJPMethod *self, void *ctx, const char *attr)
 {
 	JP_PY_TRY("PyJPMethod_getCodeAttr");
 	PyJPModule_getContext();
-	if (self->m_CodeRep == nullptr)
+	PyObject *code = PyJPSlot_peek((PyObject*) self, &self->m_CodeRep);
+	if (code == nullptr)
 	{
-		JPPyObject args = JPPyTuple_Pack(self);
-		JP_TRACE("Call Python");
-		self->m_CodeRep = PyObject_Call(_JMethodCode, args.get(), nullptr);
+		PyJPSingleFlight codeFlight(&self->m_CodeRep);
+		code = PyJPSlot_peek((PyObject*) self, &self->m_CodeRep);
+		if (code == nullptr)
+		{
+			JPPyObject args = JPPyTuple_Pack(self);
+			JP_TRACE("Call Python");
+			code = PyJPSlot_publish((PyObject*) self, &self->m_CodeRep, PyObject_Call(_JMethodCode, args.get(), nullptr));
+			if (code == nullptr)
+				return nullptr;
+		}
 	}
-	return PyObject_GetAttrString(self->m_CodeRep, attr);
+	PyObject *out = PyObject_GetAttrString(code, attr);
+	Py_DECREF(code);
+	return out;
 	JP_PY_CATCH(nullptr);
 }
 

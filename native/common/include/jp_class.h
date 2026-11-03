@@ -19,6 +19,22 @@
 #include <atomic>
 #include "jp_modifier.h"
 
+/** Life cycle of the Python wrapper of a Java class.
+ *
+ * The wrapper is published before the post load step (customizers, inner
+ * classes) has run, so another thread may observe it in between.  Only a
+ * completed wrapper may be handed to Python code.  A failed post load is
+ * permanent: the half built wrapper must never escape.
+ */
+enum class JPClassHostState : unsigned char
+{
+	uninitialized,
+	inProgress,     // published by the class factory, post load still running
+	awaitingHints,  // bound from Python (class_ setter), hints not assigned yet
+	complete,
+	failed
+};
+
 class JPClass : public JPResource
 {
 public:
@@ -32,18 +48,83 @@ public:
 			jint modifiers);
 	~JPClass() override;
 
+	/** Publish the host from the class factory.
+	 *
+	 * The post load step (customizers, inner classes) follows and completes
+	 * the host.  Only the first publication changes the state.
+	 */
 	void setHost(PyObject* host);
+
+	/** Publish a host that is bound from Python (the class_ setter).
+	 *
+	 * Such a wrapper has no post load step of its own; assigning its hints
+	 * finalizes it.
+	 */
+	void setBoundHost(PyObject* host);
 
 	PyTypeObject* getHost()
 	{
 		return (PyTypeObject*) m_HostReady.load(std::memory_order_acquire);
 	}
 
+	JPClassHostState getHostState() const
+	{
+		return m_HostState.load(std::memory_order_acquire);
+	}
+
 	void setHints(PyObject* host);
 	bool hasHints() const;
 	void completeHints();
 
+	/** Mark the wrapper as permanently failed.
+	 *
+	 * Called when the post load step raises.  The host remains published so
+	 * the creating thread can still recurse while unwinding, but every
+	 * later lookup raises instead of returning the half built class.
+	 */
+	void failHints();
+
+	/** Check if the Python wrapper has been fully constructed.
+	 *
+	 * The host is published as soon as the type object exists, but the
+	 * post load step (customizers, inner classes) runs afterwards.  On
+	 * free-threaded Python another thread may observe the host in between,
+	 * so anything handing the host to Python code must wait until this is
+	 * true.  Hints are completed as the very last step of PyJPClass_hook
+	 * (or by the finalizing class_/_hints setters).
+	 */
+	bool isHostComplete() const
+	{
+		return getHostState() == JPClassHostState::complete;
+	}
+
+	bool isHostFailed() const
+	{
+		return getHostState() == JPClassHostState::failed;
+	}
+
 	PyObject* getHints();
+
+	/** Conversion information on the hints object is built lazily exactly
+	 * once.  This flag publishes it with release/acquire ordering.
+	 */
+	bool isHintsInfoReady() const
+	{
+		return m_HintsInfoReady.load(std::memory_order_acquire);
+	}
+
+	long getHintsInfoVersion() const
+	{
+		return m_HintsInfoVersion.load(std::memory_order_acquire);
+	}
+
+	void completeHintsInfo(long version)
+	{
+		// Publish the version before the flag so a reader that sees the flag
+		// also sees the version it was built from.
+		m_HintsInfoVersion.store(version, std::memory_order_relaxed);
+		m_HintsInfoReady.store(true, std::memory_order_release);
+	}
 
 public:
 	void ensureMembers(JPJavaFrame& frame);
@@ -214,7 +295,9 @@ protected:
 	std::atomic<PyObject*> m_HostReady{nullptr};
 	JPPyObject           m_Hints;
 	std::atomic<PyObject*> m_HintsReady{nullptr};
-	std::atomic<bool> m_HintsComplete{false};
+	std::atomic<JPClassHostState> m_HostState{JPClassHostState::uninitialized};
+	std::atomic<bool>    m_HintsInfoReady{false};
+	std::atomic<long>    m_HintsInfoVersion{-1};
 } ;
 
 #endif // _JPPOBJECTTYPE_H_
