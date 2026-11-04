@@ -190,11 +190,8 @@ static PyObject *PyJPMethod_getDoc(PyJPMethod *self, void *ctxt)
 	if (cached != nullptr)
 		return cached;
 
-	// Exactly one thread builds the documentation, the others wait for it (see PyJPSingleFlight).
-	PyJPSingleFlight docFlight(&self->m_Doc);
-	cached = PyJPSlot_peek((PyObject*) self, &self->m_Doc);
-	if (cached != nullptr)
-		return cached;
+	// Concurrent callers may each build it; the first one published wins (see PyJPSlot_publish). Never wait for
+	// another builder: building enters Java and Python and may block on locks that builder's waiters hold.
 
 	// Convert the overloads
 	JP_TRACE("Convert overloads");
@@ -242,10 +239,7 @@ PyObject *PyJPMethod_getAnnotations(PyJPMethod *self, void *ctxt)
 	if (cached != nullptr)
 		return cached;
 
-	PyJPSingleFlight annotationFlight(&self->m_Annotations);
-	cached = PyJPSlot_peek((PyObject*) self, &self->m_Annotations);
-	if (cached != nullptr)
-		return cached;
+	// First published wins, as for __doc__.
 
 	// Convert the overloads
 	JP_TRACE("Convert overloads");
@@ -290,16 +284,12 @@ PyObject *PyJPMethod_getCodeAttr(PyJPMethod *self, void *ctx, const char *attr)
 	PyObject *code = PyJPSlot_peek((PyObject*) self, &self->m_CodeRep);
 	if (code == nullptr)
 	{
-		PyJPSingleFlight codeFlight(&self->m_CodeRep);
-		code = PyJPSlot_peek((PyObject*) self, &self->m_CodeRep);
+		// First published wins, as for __doc__.
+		JPPyObject args = JPPyTuple_Pack(self);
+		JP_TRACE("Call Python");
+		code = PyJPSlot_publish((PyObject*) self, &self->m_CodeRep, PyObject_Call(_JMethodCode, args.get(), nullptr));
 		if (code == nullptr)
-		{
-			JPPyObject args = JPPyTuple_Pack(self);
-			JP_TRACE("Call Python");
-			code = PyJPSlot_publish((PyObject*) self, &self->m_CodeRep, PyObject_Call(_JMethodCode, args.get(), nullptr));
-			if (code == nullptr)
-				return nullptr;
-		}
+			return nullptr;
 	}
 	PyObject *out = PyObject_GetAttrString(code, attr);
 	Py_DECREF(code);

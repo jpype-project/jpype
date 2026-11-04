@@ -31,7 +31,10 @@ _SEP = _os.path.pathsep
 # is recorded in _CLASSPATHS and, when the JVM is already running, loaded into
 # the Java class loader.  Serialize them so concurrent callers cannot observe
 # a half-applied update or lose an append.  Reentrant because a JVM
-# initializer may call back into the classpath API.
+# initializer may call back into the classpath API.  startJVM holds this lock
+# for the whole start (see _core._jvm_start_locked), so a concurrent
+# addClassPath() cannot slip in between the classpath snapshot and the JVM
+# becoming available.
 _classpath_lock = threading.RLock()
 
 __all__ = ['addClassPath', 'getClassPath']

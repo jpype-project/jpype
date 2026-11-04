@@ -194,6 +194,24 @@ def _jvm_locked(func):
     return wrapper
 
 
+def _jvm_start_locked(func):
+    """Run startJVM with the lifecycle and classpath locks held.
+
+    startJVM snapshots the classpath long before the JVM is running.  An
+    addClassPath() from another thread in between would see the JVM as not
+    started, record the path only in _CLASSPATHS, and the path would never
+    reach the class loader.  Holding the classpath lock for the whole start
+    makes addClassPath() wait until the JVM is fully initialized, so it then
+    loads the path directly.  Lock order is always JVM lock, then classpath
+    lock (getClassPath/addClassPath only ever take the latter).
+    """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        with _jvm_lock, _classpath._classpath_lock:
+            return func(*args, **kwargs)
+    return wrapper
+
+
 def interactive():
     return bool(getattr(sys, 'ps1', sys.flags.interactive))
 
@@ -226,7 +244,7 @@ def _findTemp():  # pragma: no cover
     raise RuntimeError("Unable to find non-ansii path.")
 
 
-@_jvm_locked
+@_jvm_start_locked
 def startJVM(
     *jvmargs: str,
     jvmpath: typing.Optional[_PathOrStr] = None,

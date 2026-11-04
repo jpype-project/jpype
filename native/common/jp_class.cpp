@@ -45,34 +45,52 @@ JPClass::JPClass(JPJavaFrame& frame,
 
 JPClass::~JPClass()= default;
 
-void JPClass::setHost(PyObject* host)
+// The host and the hints are published once and never replaced.  Callers
+// receive them as borrowed pointers (getHost/getHints), so replacing one would
+// drop the reference a concurrent reader is still using.  The pointer slot is
+// therefore claimed with a compare-and-swap, and only the winner stores the
+// owning reference.  The caller keeps "host" alive for the duration of the
+// call, so the object is valid between the swap and taking the reference.
+bool JPClass::setHost(PyObject* host)
 {
+	PyObject *expected = nullptr;
+	if (!m_HostReady.compare_exchange_strong(expected, host,
+			std::memory_order_acq_rel, std::memory_order_acquire))
+		return false;
 	m_Host = JPPyObject::use(host);
-	m_HostReady.store(host, std::memory_order_release);
-	JPClassHostState expected = JPClassHostState::uninitialized;
-	m_HostState.compare_exchange_strong(expected, JPClassHostState::inProgress,
+	JPClassHostState state = JPClassHostState::uninitialized;
+	m_HostState.compare_exchange_strong(state, JPClassHostState::inProgress,
 			std::memory_order_acq_rel, std::memory_order_acquire);
+	return true;
 }
 
-void JPClass::setBoundHost(PyObject* host)
+bool JPClass::setBoundHost(PyObject* host)
 {
+	PyObject *expected = nullptr;
+	if (!m_HostReady.compare_exchange_strong(expected, host,
+			std::memory_order_acq_rel, std::memory_order_acquire))
+		return false;
 	m_Host = JPPyObject::use(host);
-	m_HostReady.store(host, std::memory_order_release);
-	JPClassHostState expected = JPClassHostState::uninitialized;
-	m_HostState.compare_exchange_strong(expected, JPClassHostState::awaitingHints,
+	JPClassHostState state = JPClassHostState::uninitialized;
+	m_HostState.compare_exchange_strong(state, JPClassHostState::awaitingHints,
 			std::memory_order_acq_rel, std::memory_order_acquire);
+	return true;
 }
 
-void JPClass::setHints(PyObject* host)
+bool JPClass::setHints(PyObject* hints)
 {
-	m_Hints = JPPyObject::use(host);
-	m_HintsReady.store(host, std::memory_order_release);
+	PyObject *expected = nullptr;
+	if (!m_HintsReady.compare_exchange_strong(expected, hints,
+			std::memory_order_acq_rel, std::memory_order_acquire))
+		return false;
+	m_Hints = JPPyObject::use(hints);
 	// A host bound from Python has no post load step, so assigning its hints
 	// finalizes it.  During the class factory's post load the state is
 	// inProgress and PyJPClass_hook completes it after the post returns.
-	JPClassHostState expected = JPClassHostState::awaitingHints;
-	m_HostState.compare_exchange_strong(expected, JPClassHostState::complete,
+	JPClassHostState state = JPClassHostState::awaitingHints;
+	m_HostState.compare_exchange_strong(state, JPClassHostState::complete,
 			std::memory_order_acq_rel, std::memory_order_acquire);
+	return true;
 }
 
 bool JPClass::hasHints() const

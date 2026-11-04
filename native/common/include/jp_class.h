@@ -51,16 +51,17 @@ public:
 	/** Publish the host from the class factory.
 	 *
 	 * The post load step (customizers, inner classes) follows and completes
-	 * the host.  Only the first publication changes the state.
+	 * the host.  Only the first publication wins: returns false if a host
+	 * was already published (the host is never replaced).
 	 */
-	void setHost(PyObject* host);
+	bool setHost(PyObject* host);
 
 	/** Publish a host that is bound from Python (the class_ setter).
 	 *
 	 * Such a wrapper has no post load step of its own; assigning its hints
-	 * finalizes it.
+	 * finalizes it.  Returns false if a host was already published.
 	 */
-	void setBoundHost(PyObject* host);
+	bool setBoundHost(PyObject* host);
 
 	PyTypeObject* getHost()
 	{
@@ -72,7 +73,8 @@ public:
 		return m_HostState.load(std::memory_order_acquire);
 	}
 
-	void setHints(PyObject* host);
+	// Returns false if hints were already published; they are never replaced.
+	bool setHints(PyObject* hints);
 	bool hasHints() const;
 	void completeHints();
 
@@ -120,9 +122,12 @@ public:
 
 	void completeHintsInfo(long version)
 	{
-		// Publish the version before the flag so a reader that sees the flag
-		// also sees the version it was built from.
-		m_HintsInfoVersion.store(version, std::memory_order_relaxed);
+		// Both stores are release.  On the first build a reader synchronizes
+		// through the flag.  On a rebuild the flag is already true, so the
+		// flag store orders nothing new; the reader synchronizes through the
+		// version instead (it compares it with acquire), which must therefore
+		// be a release store too.
+		m_HintsInfoVersion.store(version, std::memory_order_release);
 		m_HintsInfoReady.store(true, std::memory_order_release);
 	}
 

@@ -944,8 +944,9 @@ static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
 
 	JPClass* cls = frame.findClass((jclass) typeVal.l);
 	JP_TRACE("Set host", cls, typeCls->getCanonicalName().c_str());
-	if (cls->getHost() == nullptr)
-		cls->setBoundHost(self);
+	// Publishes only if no host exists yet (compare-and-swap, so this cannot
+	// race the class factory into replacing an already published host).
+	cls->setBoundHost(self);
 	((PyJPClass*) self)->m_Class = cls;
 	return 0;
 	JP_PY_CATCH(-1);
@@ -988,9 +989,12 @@ static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 	if (cls->isHintsInfoReady() && cls->getHintsInfoVersion() == version)
 		return hints.keep();
 
-	PyJPSingleFlight flight(cls);
-	if (cls->isHintsInfoReady() && cls->getHintsInfoVersion() == version)
-		return hints.keep();
+	// Not built yet (or stale).  Concurrent callers may each build it; the
+	// results are identical for the same version and every attribute store is
+	// atomic, so the duplicate work is harmless.  Waiting for another builder
+	// instead could deadlock: building enters Java and may block on the type
+	// factory monitor, whose holder can be running customizers that come back
+	// here.
 
 	// Copy in info.
 	JPConversionInfo info;
@@ -1023,12 +1027,13 @@ static int PyJPClass_setHints(PyObject *self, PyObject *value, PyObject *closure
 	JP_PY_TRY("PyJPClass_setHints", self);
 	PyJPModule_getContext();
 	auto *cls = (PyJPClass*) self;
-	if (cls->m_Class->hasHints())
+	// Check and set in one step: two concurrent setters must not both succeed,
+	// the second would drop the hints the first one published.
+	if (!cls->m_Class->setHints(value))
 	{
 		PyErr_SetString(PyExc_AttributeError, "_hints can't be set");
 		return -1;
 	}
-	cls->m_Class->setHints(value);
 	return 0;
 	JP_PY_CATCH(-1);
 }
@@ -1331,12 +1336,9 @@ static PyObject *PyJPClass_getDoc(PyJPClass *self, void *ctxt)
 	if (cached != nullptr)
 		return cached;
 
-	// Exactly one thread builds the documentation (it may extract the Javadoc, which is expensive and must not run
-	// twice), the others wait for it and then pick up the result (see PyJPSingleFlight).
-	PyJPSingleFlight docFlight(&self->m_Doc);
-	cached = PyJPSlot_peek((PyObject*) self, &self->m_Doc);
-	if (cached != nullptr)
-		return cached;
+	// Concurrent callers may each build the documentation; the first one published wins (see PyJPSlot_publish).
+	// Waiting for another builder could deadlock: _jclassDoc creates class wrappers (type factory monitor), and the
+	// monitor holder may be running a customizer that reads this __doc__.
 
 	// Pack the arguments
 	{
@@ -1766,7 +1768,13 @@ void PyJPClass_hook(JPJavaFrame &frame, JPClass* cls)
 
 	// Attach the cache  (adds reference, thus wrapper lives to end of JVM)
 	JP_TRACE("set host");
-	cls->setHost((PyObject*) self);
+	if (!cls->setHost((PyObject*) self))
+	{
+		// A host was bound from Python (the class_ setter) while we built
+		// ours.  That one is canonical; drop ours without running the post
+		// load step on a type nobody can reach.
+		return;
+	}
 
 	// Call the post load routine to attach inner classes
 	JP_TRACE("call post");

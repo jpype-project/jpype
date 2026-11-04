@@ -16,6 +16,11 @@
 #ifndef JP_CLASSHINTS_H
 #define JP_CLASSHINTS_H
 
+#include <atomic>
+#include <memory>
+#include <mutex>
+#include <vector>
+
 class JPConversion
 {
 public:
@@ -98,9 +103,34 @@ public:
 
 	void getInfo(JPClass *cls, JPConversionInfo &info);
 
-	bool m_ConvertJava;
+	std::atomic<bool> m_ConvertJava{false};
 private:
-	std::list<JPConversion*> conversions;
+	using ConversionList = std::vector<JPConversion*>;
+
+	using Snapshot = std::shared_ptr<const ConversionList>;
+
+	/** Publish a new conversion list built from the current one.
+	 *
+	 * The list is read on every overload resolution, possibly while another
+	 * thread registers a JConversion.  Readers take a reference-counted,
+	 * immutable snapshot (an atomic shared_ptr load, which never runs Python
+	 * code) and iterate it without any lock held; a replaced snapshot is
+	 * freed when its last reader lets go.  Writers serialize on m_Lock, copy
+	 * the current snapshot, apply their change and publish the copy.  The
+	 * conversions themselves live as long as the hints (m_Owned), so a
+	 * pointer from an old snapshot always stays valid.
+	 */
+	template <class Edit>
+	void update(Edit edit);
+
+	Snapshot snapshot() const
+	{
+		return std::atomic_load(&m_Conversions);
+	}
+
+	std::mutex m_Lock;
+	std::vector<std::unique_ptr<JPConversion>> m_Owned; // owns every conversion, guarded by m_Lock
+	Snapshot m_Conversions;                              // accessed only through std::atomic_load/store
 } ;
 
 extern JPConversion *hintsConversion;
