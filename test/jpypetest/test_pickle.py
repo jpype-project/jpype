@@ -18,11 +18,18 @@
 import os
 import pickle
 import sys
+import tempfile
 
 import common
 import jpype
 from jpype import java
 from jpype.pickle import JPickler, JUnpickler
+
+
+def _newPickleFile():
+    fd, name = tempfile.mkstemp(suffix=".pic")
+    os.close(fd)
+    return name
 
 
 def dump(fname):
@@ -33,15 +40,17 @@ def dump(fname):
 
 
 class PickleTestCase(common.JPypeTestCase):
-    def setUp(self):
-        super(PickleTestCase, self).setUp()
-        self.filename = "test.pic"
+    # Every parallel copy of a test body runs on its own thread but shares
+    # the TestCase instance, so a single fixed file name would be clobbered.
+    # perThread gives each one a private temporary file instead.
+    filename = common.perThread(_newPickleFile)
 
     def tearDown(self):
-        try:
-            os.unlink(self.filename)
-        except OSError:
-            pass
+        for name in self.__dict__.get("_perthread_filename", {}).values():
+            try:
+                os.unlink(name)
+            except OSError:
+                pass
 
     def testString(self):
         try:

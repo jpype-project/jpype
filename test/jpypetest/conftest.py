@@ -53,7 +53,13 @@ def _start_jvm(config):
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
 
-    assert not jpype.isJVMStarted()
+    if jpype.isJVMStarted():
+        # Another plugin (or a user's conftest) already started it.  Reuse
+        # that JVM instead of failing an assertion; the test fixture also
+        # checks this flag.
+        logger.info("JVM already started; reusing it for the test session")
+        _jvm_started_by_conftest = True
+        return
 
     classpath = config.getoption("--classpath")
     convertStrings = config.getoption("--convertStrings")
@@ -110,9 +116,16 @@ def pytest_sessionstart(session):
 
     With pytest-xdist the controller process neither collects nor runs tests,
     so only the processes with ``dist == "no"`` (plain runs and xdist workers)
-    start a JVM.
+    start a JVM.  Workers are recognised by their ``workerinput`` attribute;
+    in an xdist worker ``dist`` is forced to ``"no"``, but the controller keeps
+    the user supplied value.
     """
-    if getattr(session.config.option, "dist", "no") != "no":
+    if getattr(session.config.option, "help", False):
+        return
+    if getattr(session.config.option, "collectonly", False):
+        return
+    is_worker = hasattr(session.config, "workerinput")
+    if not is_worker and getattr(session.config.option, "dist", "no") != "no":
         return
     _start_jvm(session.config)
 

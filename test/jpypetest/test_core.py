@@ -16,6 +16,9 @@
 #
 # *****************************************************************************
 from unittest import mock
+import subprocess
+import sys
+import unittest
 import jpype
 import common
 from jpype.types import *
@@ -25,6 +28,7 @@ class JCharTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
 
+    @common.threadUnsafe
     def testShutdownHook(self):
         Thread = JClass("java.lang.Thread")
         Runnable = JClass("java.lang.Runnable")
@@ -57,3 +61,53 @@ class JCharTestCase(common.JPypeTestCase):
         th.start()
         th.join()
         self.assertTrue(run.rc)
+
+
+class JVMStartupConcurrencyTestCase(unittest.TestCase):
+
+    @common.threadUnsafe
+    def testConcurrentStartOnlyOneWins(self):
+        # A fresh interpreter is required: the test JVM is already running.
+        # Without a lifecycle lock, free-threaded callers can all pass the
+        # isStarted() check and race inside JPContext::startJVM.
+        script = (
+            "import threading, traceback\n"
+            "import jpype\n"
+            "count = 8\n"
+            "barrier = threading.Barrier(count)\n"
+            "outcomes = []\n"
+            "outcomes_lock = threading.Lock()\n"
+            "def worker():\n"
+            "    barrier.wait()\n"
+            "    try:\n"
+            "        jpype.startJVM(convertStrings=False)\n"
+            "    except OSError:\n"
+            "        result = 'already-started'\n"
+            "    except BaseException:\n"
+            "        result = traceback.format_exc()\n"
+            "    else:\n"
+            "        result = 'started'\n"
+            "    finally:\n"
+            "        # The winner created the JVM on this Python thread; detach it\n"
+            "        # so interpreter shutdown does not wait on it forever.\n"
+            "        try:\n"
+            "            jpype.java.lang.Thread.detach()\n"
+            "        except BaseException:\n"
+            "            pass\n"
+            "    with outcomes_lock:\n"
+            "        outcomes.append(result)\n"
+            "threads = [threading.Thread(target=worker) for _ in range(count)]\n"
+            "for thread in threads:\n"
+            "    thread.start()\n"
+            "for thread in threads:\n"
+            "    thread.join()\n"
+            "assert outcomes.count('started') == 1, outcomes\n"
+            "assert outcomes.count('already-started') == count - 1, outcomes\n"
+            "assert jpype.isJVMStarted()\n"
+            "print('ONE-START')\n"
+        )
+        result = subprocess.run([sys.executable, "-c", script],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                timeout=180)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(b"ONE-START", result.stdout)

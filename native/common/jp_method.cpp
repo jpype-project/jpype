@@ -44,6 +44,8 @@ void JPMethod::setParameters(
 {
 	m_ReturnType = returnType;
 	m_ParameterTypes = parameterTypes;
+	// Publish the completed type cache only after both fields are set.
+	m_ParametersReady.store(true, std::memory_order_release);
 }
 
 string JPMethod::toString() const
@@ -426,7 +428,7 @@ bool JPMethod::checkMoreSpecificThan(JPMethod* other) const
 
 void JPMethod::ensureTypeCache()
 {
-	if (m_ReturnType != (JPClass*) (-1))
+	if (m_ParametersReady.load(std::memory_order_acquire))
 		return;
 
 	JPContext_global->getTypeManager()->populateMethod(this, m_Method.get());

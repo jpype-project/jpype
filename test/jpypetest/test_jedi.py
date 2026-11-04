@@ -30,6 +30,7 @@ try:
 except:
     pass
 
+@common.threadUnsafe
 class JediTestCase(common.JPypeTestCase):
     """Test tab completion on JPype objects
     """

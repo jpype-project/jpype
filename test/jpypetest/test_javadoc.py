@@ -15,19 +15,16 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import jpype
-from jpype.types import *
-from jpype import java
 import common
+
+import jpype
+from jpype.types import JString
 
 
 class HtmlTestCase(common.JPypeTestCase):
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     def testEntities(self):
-        html = JClass("org.jpype.html.Html")
+        html = jpype.JClass("org.jpype.html.Html")
         for k, v in html.ENTITIES.items():
             u = html.decode("&" + str(k) + ";")
             self.assertIsInstance(u, JString)

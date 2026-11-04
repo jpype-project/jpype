@@ -45,16 +45,52 @@ JPClass::JPClass(JPJavaFrame& frame,
 
 JPClass::~JPClass()= default;
 
-void JPClass::setHost(PyObject* host)
+// The host and the hints are published once and never replaced.  Callers
+// receive them as borrowed pointers (getHost/getHints), so replacing one would
+// drop the reference a concurrent reader is still using.  The pointer slot is
+// therefore claimed with a compare-and-swap, and only the winner stores the
+// owning reference.  The caller keeps "host" alive for the duration of the
+// call, so the object is valid between the swap and taking the reference.
+bool JPClass::setHost(PyObject* host)
 {
+	PyObject *expected = nullptr;
+	if (!m_HostReady.compare_exchange_strong(expected, host,
+			std::memory_order_acq_rel, std::memory_order_acquire))
+		return false;
 	m_Host = JPPyObject::use(host);
-	m_HostReady.store(host, std::memory_order_release);
+	JPClassHostState state = JPClassHostState::uninitialized;
+	m_HostState.compare_exchange_strong(state, JPClassHostState::inProgress,
+			std::memory_order_acq_rel, std::memory_order_acquire);
+	return true;
 }
 
-void JPClass::setHints(PyObject* host)
+bool JPClass::setBoundHost(PyObject* host)
 {
-	m_Hints = JPPyObject::use(host);
-	m_HintsReady.store(host, std::memory_order_release);
+	PyObject *expected = nullptr;
+	if (!m_HostReady.compare_exchange_strong(expected, host,
+			std::memory_order_acq_rel, std::memory_order_acquire))
+		return false;
+	m_Host = JPPyObject::use(host);
+	JPClassHostState state = JPClassHostState::uninitialized;
+	m_HostState.compare_exchange_strong(state, JPClassHostState::awaitingHints,
+			std::memory_order_acq_rel, std::memory_order_acquire);
+	return true;
+}
+
+bool JPClass::setHints(PyObject* hints)
+{
+	PyObject *expected = nullptr;
+	if (!m_HintsReady.compare_exchange_strong(expected, hints,
+			std::memory_order_acq_rel, std::memory_order_acquire))
+		return false;
+	m_Hints = JPPyObject::use(hints);
+	// A host bound from Python has no post load step, so assigning its hints
+	// finalizes it.  During the class factory's post load the state is
+	// inProgress and PyJPClass_hook completes it after the post returns.
+	JPClassHostState state = JPClassHostState::awaitingHints;
+	m_HostState.compare_exchange_strong(state, JPClassHostState::complete,
+			std::memory_order_acq_rel, std::memory_order_acquire);
+	return true;
 }
 
 bool JPClass::hasHints() const
@@ -64,7 +100,18 @@ bool JPClass::hasHints() const
 
 void JPClass::completeHints()
 {
-	m_HintsComplete.store(true, std::memory_order_release);
+	// Never resurrect a failed wrapper.
+	JPClassHostState state = m_HostState.load(std::memory_order_acquire);
+	while (state != JPClassHostState::failed
+			&& !m_HostState.compare_exchange_weak(state, JPClassHostState::complete,
+			std::memory_order_acq_rel, std::memory_order_acquire))
+	{
+	}
+}
+
+void JPClass::failHints()
+{
+	m_HostState.store(JPClassHostState::failed, std::memory_order_release);
 }
 
 jclass JPClass::getJavaClass() const
@@ -437,13 +484,27 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 
 PyObject* JPClass::getHints()
 {
-	PyObject* out = m_HintsReady.load(std::memory_order_acquire);
-	if (out != nullptr && m_HintsComplete.load(std::memory_order_acquire))
-		return out;
+	JPClassHostState state = m_HostState.load(std::memory_order_acquire);
+	if (state == JPClassHostState::complete)
+		return m_HintsReady.load(std::memory_order_acquire);
+	if (state == JPClassHostState::failed)
+	{
+		JP_RAISE(PyExc_RuntimeError,
+				"Java class '" + m_CanonicalName + "' failed to initialize");
+	}
+	if (state == JPClassHostState::awaitingHints)
+		return m_HintsReady.load(std::memory_order_acquire);
 	// Wait for _jclassPost to finish before using the host in another thread.
-	// The wrapper lock is reentrant for calls made by the creating thread.
+	// The wrapper lock is reentrant for calls made by the creating thread,
+	// which legitimately sees its own half built class while it recurses.
 	JPJavaFrame frame = JPJavaFrame::outer();
 	frame.newWrapper(this);
+	state = m_HostState.load(std::memory_order_acquire);
+	if (state == JPClassHostState::failed)
+	{
+		JP_RAISE(PyExc_RuntimeError,
+				"Java class '" + m_CanonicalName + "' failed to initialize");
+	}
 	return m_HintsReady.load(std::memory_order_acquire);
 }
 

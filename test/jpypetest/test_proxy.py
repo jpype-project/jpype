@@ -133,6 +133,11 @@ class ProxyTestCase(common.JPypeTestCase):
 
         runner = MyRun()
         al = JClass('java.util.ArrayList')()
+        # Initialize the proxy machinery (and the classes it needs) before
+        # arming the fault.  A fault during a first-use class initialization
+        # would leave that class permanently failed, so the retry below could
+        # not succeed depending on test order.
+        JClass('java.util.ArrayList')().add(MyRun())
         initial = sys.getrefcount(runner)
 
         # runner has never been passed to Java before, so this is its
@@ -621,6 +626,14 @@ class ProxyTestCase(common.JPypeTestCase):
 
         def f(x):
             return 2 * x
+
+        def warmup(x):
+            return x
+
+        # Initialize the functional interface before arming the fault: a fault
+        # during first-use class initialization leaves the class permanently
+        # failed, so the normal use after the fault would not be possible.
+        JObject(warmup, "java.util.function.DoubleUnaryOperator")
 
         runtime = java.lang.Runtime.getRuntime()
 

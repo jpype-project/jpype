@@ -139,8 +139,9 @@ JPPyObject JPBoxedType::convertToPythonObject(JPJavaFrame& frame, jvalue value, 
 				built = JPPyObject::call(PyJPChar_Create(wrapperType, 0));
 			else
 				built = PyJPNumber_create(frame, wrapper, JPValue(cls, value));
-			PyJPClass_SetNullBoxed(wrapperType, built.get());
-			nullBoxed = built.get();
+			// Another thread may have installed the singleton while we were
+			// building ours.  Always use the first one published.
+			nullBoxed = PyJPClass_GetOrSetNullBoxed(wrapperType, built.get());
 		}
 		return JPPyObject::use(nullBoxed);
 	}

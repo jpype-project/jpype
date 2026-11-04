@@ -157,6 +157,7 @@ class ExceptionTestCase(common.JPypeTestCase):
             ex1 = ex
         self.assertEqual(ex1.args, ("Got it",))
 
+    @common.threadUnsafe
     def testExcCauseChained1(self):
         import jpype.imports
         try:
@@ -171,6 +172,7 @@ class ExceptionTestCase(common.JPypeTestCase):
         self.assertTrue(ex1.__cause__.__traceback__ is not None)
         self.assertTrue(ex1.__cause__.__cause__.__traceback__ is not None)
 
+    @common.threadUnsafe
     def testExcCauseChained2(self):
         try:
             JClass('org.jpype.fail.BadInitializer2')

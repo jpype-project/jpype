@@ -40,6 +40,38 @@ done
 
 echo "Found Python bins for build: ${pys[@]}"
 
+if [ ${#pys[@]} -eq 0 ]; then
+    echo "ERROR: no Python interpreters matched BUILD_PY_VERSIONS='${include_versions[*]}'"
+    exit 1
+fi
+
+# When the caller pins the versions explicitly, every requested minor version
+# must be present and, for 3.14+, so must the free-threaded variant.  A typo in
+# BUILD_PY_VERSIONS or a changed image would otherwise silently drop wheels.
+if [ -n "$BUILD_PY_VERSIONS" ]; then
+    for v in "${include_versions[@]}"; do
+        found=false
+        found_ft=false
+        for pybin in /opt/python/cp*/bin; do
+            dir=$(basename $(dirname "$pybin"))
+            if [[ "$dir" =~ ^cp${v}- ]]; then
+                found=true
+            fi
+            if [ "$v" -ge 314 ] && [ "$dir" = "cp${v}-cp${v}t" ]; then
+                found_ft=true
+            fi
+        done
+        if ! $found; then
+            echo "ERROR: no interpreter for Python cp${v} in the manylinux image"
+            exit 1
+        fi
+        if [ "$v" -ge 314 ] && ! $found_ft; then
+            echo "ERROR: expected free-threaded interpreter cp${v}-cp${v}t is missing"
+            exit 1
+        fi
+    done
+fi
+
 yum install -y java-11-openjdk-devel ant
 export JAVA_HOME=$(ls -d /usr/lib/jvm/java-11-openjdk-* | head -n 1)
 export JAVAC=$JAVA_HOME/bin/javac

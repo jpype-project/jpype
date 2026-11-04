@@ -438,7 +438,12 @@ JNIEXPORT void JNICALL Java_org_jpype_manager_TypeFactoryNative_populateMethod(
 	JPClassList cargs;
 	convert(frame, argumentTypes, cargs);
 	auto *methodPtr = (JPMethod*) method;
-	methodPtr->setParameters((JPClass*) returnType, std::move(cargs));
+	// TypeManager.populateMethod() is synchronized, so this callback runs
+	// one method at a time.  Several threads can still reach the same
+	// method before the first one publishes its types; only the first
+	// result is written, otherwise the assignment would race with readers.
+	if (!methodPtr->hasParameters())
+		methodPtr->setParameters((JPClass*) returnType, std::move(cargs));
 	JP_JAVA_CATCH();  // GCOVR_EXCL_LINE
 }
 

@@ -31,6 +31,96 @@
 #define Py_SET_SIZE(obj, size) ((Py_SIZE(obj) = (size)))
 #endif
 
+// Critical sections (per-object locks of the free-threaded build) exist since CPython 3.13 and are no-ops
+// in builds with a global interpreter lock. Older versions always have the lock, so plain blocks are enough.
+// NOTE: the macros open a block; never "return", "goto" or "break" out of it.
+#if PY_VERSION_HEX < 0x030D0000
+#ifndef Py_BEGIN_CRITICAL_SECTION
+#define Py_BEGIN_CRITICAL_SECTION(op) {
+#define Py_END_CRITICAL_SECTION() }
+#endif
+#endif
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Lazily filled slots of Python objects (documentation, annotations, ...), shared by all threads.
+//
+// Every access to such a slot happens inside a critical section on the owning object (a no-op with a global
+// interpreter lock) and takes or releases a strong reference before the section ends; a slot is never read twice for
+// one decision. Reference counts are dropped outside of the section, because that can run arbitrary code.
+
+// New reference to the value of a slot, or NULL (without an error) if it is not set yet.
+inline PyObject *PyJPSlot_peek(PyObject *owner, PyObject **slot)
+{
+	PyObject *value = nullptr;
+	Py_BEGIN_CRITICAL_SECTION(owner);
+	value = *slot;
+	Py_XINCREF(value);
+	Py_END_CRITICAL_SECTION();
+	return value;
+}
+
+// Publish a lazily computed value. Steals the reference to "computed" (NULL passes through, with the Python error
+// already set). If another thread was faster, its value wins and ours is dropped, so all callers observe the same
+// object. Returns a new reference.
+inline PyObject *PyJPSlot_publish(PyObject *owner, PyObject **slot, PyObject *computed)
+{
+	if (computed == nullptr)
+		return nullptr;
+	PyObject *result = nullptr;
+	Py_BEGIN_CRITICAL_SECTION(owner);
+	if (*slot == nullptr)
+	{
+		*slot = computed;       // the slot owns one reference ...
+		Py_INCREF(computed);    // ... and the caller keeps the original one
+		result = computed;
+		computed = nullptr;
+	}
+	else
+	{
+		result = *slot;
+		Py_INCREF(result);
+	}
+	Py_END_CRITICAL_SECTION();
+	Py_XDECREF(computed);
+	return result;
+}
+
+// Replace the value of a slot (the __doc__ / __annotations__ setters). Does not steal a reference.
+inline void PyJPSlot_replace(PyObject *owner, PyObject **slot, PyObject *value)
+{
+	Py_XINCREF(value);
+	PyObject *old = nullptr;
+	Py_BEGIN_CRITICAL_SECTION(owner);
+	old = *slot;
+	*slot = value;
+	Py_END_CRITICAL_SECTION();
+	Py_XDECREF(old);
+}
+
+// Visit a slot from tp_traverse. The visitor itself does not run Python code, so it is safe inside the section; the
+// temporary reference is dropped afterwards (outside of the section).
+inline int PyJPSlot_visit(PyObject *owner, PyObject **slot, visitproc visit, void *arg)
+{
+	PyObject *value = PyJPSlot_peek(owner, slot);
+	if (value == nullptr)
+		return 0;
+	int result = visit(value, arg);
+	Py_DECREF(value);
+	return result;
+}
+
+// Detach a slot from tp_clear and return its reference. The caller owns the returned reference and must drop it
+// outside of the critical section, because that can run arbitrary __del__ code.
+inline PyObject *PyJPSlot_take(PyObject *owner, PyObject **slot)
+{
+	PyObject *value = nullptr;
+	Py_BEGIN_CRITICAL_SECTION(owner);
+	value = *slot;
+	*slot = nullptr;
+	Py_END_CRITICAL_SECTION();
+	return value;
+}
+
 class JPStackInfo;
 #ifdef JP_TRACING_ENABLE
 #define JP_PY_TRY(...) \
@@ -233,7 +323,7 @@ JPClass*      PyJPClass_GetClass(PyTypeObject* type);
 // null cast (JPBoxedType::convertToPythonObject); null until then, and
 // always null for non-boxed types.
 PyObject*     PyJPClass_GetNullBoxed(PyTypeObject* type);
-void          PyJPClass_SetNullBoxed(PyTypeObject* type, PyObject* obj);
+PyObject*     PyJPClass_GetOrSetNullBoxed(PyTypeObject* type, PyObject* obj);
 
 // Class methods to add to the spec tables
 void       PyJPValue_free(void* obj);

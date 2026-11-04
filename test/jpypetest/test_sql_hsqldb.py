@@ -28,7 +28,7 @@ db_name = "jdbc:hsqldb:mem:myDb"
 # These tests share process-wide, in-memory JDBC databases (and the JVM), so
 # running the same test body concurrently in several threads (pytest-run-parallel)
 # makes them collide.  Run every test in this module in a single thread.
-pytestmark = pytest.mark.thread_unsafe
+pytestmark = common.threadUnsafeMark
 
 
 def setUpModule(module):

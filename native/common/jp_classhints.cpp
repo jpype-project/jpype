@@ -101,24 +101,31 @@ JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool ca
 }
 
 JPConversion::~JPConversion() = default;
-JPClassHints::JPClassHints()
-{
-	m_ConvertJava = false;
-}
+JPClassHints::JPClassHints() = default;
 
-JPClassHints::~JPClassHints()
+// The conversions are owned by m_Owned and released with it.  No reader can
+// be active any more: the hints object is dying.
+JPClassHints::~JPClassHints() = default;
+
+template <class Edit>
+void JPClassHints::update(Edit edit)
 {
-	for (auto & conversion : conversions)
-	{
-		delete conversion;
-	}
-	conversions.clear();
+	std::lock_guard<std::mutex> guard(m_Lock);
+	Snapshot current = snapshot();
+	auto next = std::make_shared<ConversionList>();
+	if (current)
+		*next = *current;
+	edit(*next);
+	std::atomic_store(&m_Conversions, Snapshot(std::move(next)));
 }
 
 JPMatch::Type JPClassHints::getConversion(JPMatch& match, JPClass *cls)
 {
 	JPConversion *best = nullptr;
-	for (auto & conversion : conversions)
+	Snapshot conversions = snapshot();
+	if (!conversions)
+		return match.type = JPMatch::_none;
+	for (auto & conversion : *conversions)
 	{
 		JPMatch::Type quality = conversion->matches(cls, match);
 		if (quality > JPMatch::_explicit)
@@ -231,7 +238,12 @@ void JPClassHints::addAttributeConversion(const string &attribute, PyObject *con
 {
 	JP_TRACE_IN("JPClassHints::addAttributeConversion", this);
 	JP_TRACE(attribute);
-	conversions.push_back(new JPAttributeConversion(attribute, conversion));
+	auto *created = new JPAttributeConversion(attribute, conversion);
+	update([this, created](ConversionList & list)
+	{
+		m_Owned.emplace_back(created);
+		list.push_back(created);
+	});
 	JP_TRACE_OUT;
 }
 
@@ -316,26 +328,37 @@ private:
 void JPClassHints::addTypeConversion(PyObject *type, PyObject *method, bool exact)
 {
 	JP_TRACE_IN("JPClassHints::addTypeConversion", this);
+	auto *created = new JPTypeConversion(type, method, exact);
+	// Set before publishing, so a reader that finds the conversion also sees the flag.
 	if (PyJPClass_Check(type))
-		m_ConvertJava = true;
-	conversions.push_back(new JPTypeConversion(type, method, exact));
+		m_ConvertJava.store(true, std::memory_order_release);
+	update([this, created](ConversionList & list)
+	{
+		m_Owned.emplace_back(created);
+		list.push_back(created);
+	});
 	JP_TRACE_OUT;
 }
 
 void JPClassHints::excludeConversion(PyObject *type)
 {
 	JP_TRACE_IN("JPClassHints::addTypeConversion", this);
-	conversions.push_front(new JPNoneConversion(type));
+	auto *created = new JPNoneConversion(type);
+	update([this, created](ConversionList & list)
+	{
+		m_Owned.emplace_back(created);
+		list.insert(list.begin(), created);
+	});
 	JP_TRACE_OUT;
 }
 
 void JPClassHints::getInfo(JPClass *cls, JPConversionInfo &info)
 {
-	for (auto iter = conversions.begin();
-			iter != conversions.end(); ++iter)
-	{
-		(*iter)->getInfo(cls, info);
-	}
+	Snapshot conversions = snapshot();
+	if (!conversions)
+		return;
+	for (auto conversion : *conversions)
+		conversion->getInfo(cls, info);
 }
 
 class JPHintsConversion : public JPConversion

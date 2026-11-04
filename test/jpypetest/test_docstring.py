@@ -35,6 +35,38 @@ class DocStringTestCase(common.JPypeTestCase):
         cls = jpype.JClass('java.lang.String')
         self.assertIsNotNone(cls.substring.__doc__)
 
+    def testConcurrentMethodMetadata(self):
+        # __doc__ (which also lazily extracts the class Javadoc),
+        # __annotations__ and __code__ are cached in method slots.  Every
+        # thread must see the same fully built objects, never a partial one.
+        cls = jpype.JClass('java.util.ArrayList')
+        method = cls.add
+
+        def worker(index):
+            return (method.__doc__, method.__annotations__,
+                    method.__code__)
+
+        results = common.runConcurrently(worker, 8)
+        doc, annotations, code = results[0]
+        self.assertIsNotNone(doc)
+        self.assertIsInstance(annotations, dict)
+        self.assertIsNotNone(code)
+        for other in results[1:]:
+            self.assertIs(doc, other[0])
+            self.assertIs(annotations, other[1])
+            self.assertIs(code, other[2])
+
+    def testConcurrentClassDoc(self):
+        cls = jpype.JClass('java.util.LinkedHashMap')
+
+        def worker(index):
+            return cls.__doc__
+
+        results = common.runConcurrently(worker, 8)
+        self.assertIsNotNone(results[0])
+        for other in results[1:]:
+            self.assertIs(results[0], other)
+
     def testDocEnumClass(self):
         cls = jpype.JClass('java.lang.Character.UnicodeScript')
         self.assertIsNotNone(cls.__doc__)

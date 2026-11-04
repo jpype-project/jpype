@@ -1060,6 +1060,7 @@ class FaultTestCase(common.JPypeTestCase):
     # attachThreadToJVM()/detachThreadFromJVM() are removed on Android -
     # Android's JVM is always already attached (see doc/android.rst's
     # "Removed JPype Services").
+    @common.threadUnsafe
     @common.skipOnAndroid("attachThreadToJVM/detachThreadFromJVM removed on Android")
     def testDetachThread(self):
         self.assertTrue(_jpype.isThreadAttachedToJVM())

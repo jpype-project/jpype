@@ -60,7 +60,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 	{
 		// bestMatch.m_Hash is the hash of the current arguments.
 		// If we assume the method 'knows' the hash it was last validated with:
-		if (cachedMethod->m_Hash == bestMatch.m_Hash)
+		if (cachedMethod->m_Hash.load(std::memory_order_relaxed) == bestMatch.m_Hash)
 		{
 			bestMatch.m_Overload = cachedMethod;
 			bestMatch.m_Overload->matches(frame, bestMatch, callInstance, arg);
@@ -214,8 +214,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 
 	if (bestMatch.m_Type >= JPMatch::_implicit)
 	{
-		// Isn't m_Hash a shared resource? 
-		bestMatch.m_Overload->m_Hash = bestMatch.m_Hash;
+		bestMatch.m_Overload->m_Hash.store(bestMatch.m_Hash, std::memory_order_relaxed);
 		m_LastOverload.store(bestMatch.m_Overload, std::memory_order_relaxed);
 	}
 

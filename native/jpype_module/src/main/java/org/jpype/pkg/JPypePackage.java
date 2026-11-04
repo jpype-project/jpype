@@ -109,29 +109,34 @@ public class JPypePackage
    */
   public String[] getContents()
   {
-    checkCache();
-    ArrayList<String> out = new ArrayList<>();
-    for (String key : contents.keySet())
+    // Paths into a jar file system are only valid while that file system is
+    // open, and another thread may close it to make room for its own.
+    synchronized (JPypePackageManager.FS_LOCK)
     {
-      URI uri = contents.get(key);
-      // If there is anything null, then skip it.
-      if (uri == null)
-        continue;
-      Path p = JPypePackageManager.getPath(uri);
-
-      // package are acceptable
-      if (Files.isDirectory(p))
-        out.add(key);
-
-      // classes must be public
-      else if (uri.toString().endsWith(".class"))
+      checkCache();
+      ArrayList<String> out = new ArrayList<>();
+      for (String key : contents.keySet())
       {
-        // Make sure it is public
-        if (isPublic(p))
+        URI uri = contents.get(key);
+        // If there is anything null, then skip it.
+        if (uri == null)
+          continue;
+        Path p = JPypePackageManager.getPath(uri);
+
+        // package are acceptable
+        if (Files.isDirectory(p))
           out.add(key);
+
+        // classes must be public
+        else if (uri.toString().endsWith(".class"))
+        {
+          // Make sure it is public
+          if (isPublic(p))
+            out.add(key);
+        }
       }
+      return out.toArray(new String[out.size()]);
     }
-    return out.toArray(new String[out.size()]);
   }
 
   /**

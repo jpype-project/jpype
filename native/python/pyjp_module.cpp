@@ -754,7 +754,7 @@ static PyObject* PyJPModule_trace(PyObject *module, PyObject *args)
 // GCOVR_EXCL_STOP
 
 #ifdef JP_INSTRUMENTATION
-uint32_t _PyJPModule_fault_code = -1;
+thread_local uint32_t _PyJPModule_fault_code = -1;
 
 static PyObject* PyJPModule_fault(PyObject *module, PyObject *args)
 {
