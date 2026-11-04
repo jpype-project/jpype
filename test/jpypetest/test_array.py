@@ -16,6 +16,7 @@
 #
 # *****************************************************************************
 import sys
+import struct
 import _jpype
 import jpype
 from jpype.types import *
@@ -645,6 +646,50 @@ class ArrayTestCase(common.JPypeTestCase):
         m = memoryview(ja)
         self.assertEqual(len(m), 4)
         del m
+
+    def testConcurrentBufferExports(self):
+        # Concurrent exports share one JPArrayView and bump its reference
+        # count.  A lost count deletes the view while another export still
+        # uses it, and a double count deletes it twice; neither is visible to
+        # a single-threaded memoryview test.
+        ja = JArray(JInt)(list(range(256)))
+
+        def worker(index):
+            for _ in range(50):
+                m = memoryview(ja)
+                try:
+                    self.assertEqual(len(m), 256)
+                    values = struct.unpack('=256i', bytes(m))
+                    self.assertEqual(values[0], 0)
+                    self.assertEqual(values[index], index)
+                    self.assertEqual(values[255], 255)
+                finally:
+                    m.release()
+            return True
+
+        self.assertTrue(all(common.runConcurrently(worker, 8)))
+        # The array is still usable after all exports were released.
+        with memoryview(ja) as m:
+            self.assertEqual(len(m), 256)
+
+    def testConcurrent2DBufferExports(self):
+        # Multi-dimensional exports build a rectangular copy in JPArrayView;
+        # the first publisher wins and every later export reuses it.
+        ja = JArray(JInt, 2)([[1, 2, 3], [4, 5, 6]])
+
+        def worker(index):
+            for _ in range(25):
+                m = memoryview(ja)
+                try:
+                    self.assertEqual(m.ndim, 2)
+                    self.assertEqual(m.shape, (2, 3))
+                    values = struct.unpack('=6i', bytes(m))
+                    self.assertEqual(values[1 * 3 + 2], 6)
+                finally:
+                    m.release()
+            return True
+
+        self.assertTrue(all(common.runConcurrently(worker, 8)))
 
     def testArraySetItemAllTypes(self):
         # Single-index element assignment (setArrayItem, distinct from the

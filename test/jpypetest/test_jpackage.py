@@ -70,6 +70,27 @@ class JPackageTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             self.jl.__setattr__(object(), 1)
 
+    def testConcurrentPackageScan(self):
+        # Package enumeration opens jar file systems and closes the least
+        # recently used one when too many are open.  A path obtained by one
+        # thread must stay valid until it finishes reading it, so the Java
+        # side serializes the whole scan.
+        cases = [
+            ('org.jpype.missing', 'Test'),
+            ('org.jpype.mrjar', 'A'),
+            ('org.jpype.unsatisfied', 'TestClass'),
+            ('java.lang', 'String'),
+        ]
+
+        def worker(index):
+            name, expected = cases[index % len(cases)]
+            for _ in range(25):
+                contents = dir(JPackage(name))
+                self.assertIn(expected, contents)
+            return True
+
+        self.assertTrue(all(common.runConcurrently(worker, 8)))
+
     def testInvalid(self):
         JL = JPackage("java.lng")
         with self.assertRaisesRegex(AttributeError, "Java package 'java.lng' is not valid"):

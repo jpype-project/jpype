@@ -464,11 +464,28 @@ class BoxedTestCase(common.JPypeTestCase):
         # Long/Boolean/Char keep no per-instance Java value, so
         # JObject(None, cls) must always resolve to the exact same per-class
         # singleton object, not a fresh instance each call.
+        # A plain loop rather than subTest: pytest-run-parallel runs this
+        # body on several threads sharing one TestCase instance, and
+        # unittest's subTest bookkeeping (self._subtest) is not thread-safe.
         for cls in (JBoolean, JByte, JShort, JInt, JLong, JChar):
-            with self.subTest(cls=cls):
-                n1 = JObject(None, cls)
-                n2 = JObject(None, cls)
-                self.assertIs(n1, n2)
+            n1 = JObject(None, cls)
+            n2 = JObject(None, cls)
+            self.assertIs(n1, n2, f"null singleton for {cls} was not stable")
+
+    def testConcurrentNullSingleton(self):
+        # The null singleton is published with a compare-and-exchange: the
+        # first thread to build it wins and every other thread must receive
+        # that exact object, not a duplicate that would break null identity.
+        for cls in (JBoolean, JByte, JShort, JInt, JLong, JChar):
+            def worker(index, cls=cls):
+                return JObject(None, cls)
+
+            results = common.runConcurrently(worker, 8)
+            first = results[0]
+            self.assertIsNotNone(first)
+            for other in results[1:]:
+                self.assertIs(first, other,
+                              f"concurrent null cast for {cls} was not stable")
 
     def testNullSingletonDistinctPerClass(self):
         nInt = JObject(None, JInt)

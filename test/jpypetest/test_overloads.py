@@ -150,6 +150,32 @@ class OverloadTestCase(common.JPypeTestCase):
         self.assertEqual('Character', test1.testPrimitive(
             java.lang.Character('5')))
 
+    def testConcurrentOverloadResolution(self):
+        # The dispatch cache (last overload + per-overload argument hash) is
+        # written on every call.  Concurrent calls with different argument
+        # types must never observe a half-updated entry: the wrong overload
+        # would be selected and return another primitive's name.
+        test1 = self.__jp.Test1()
+        cases = [
+            (JByte, 'byte'),
+            (JShort, 'short'),
+            (JInt, 'int'),
+            (JLong, 'long'),
+            (JFloat, 'float'),
+            (JDouble, 'double'),
+            (JBoolean, 'boolean'),
+            (JChar, 'char'),
+        ]
+
+        def worker(index):
+            jtype, expected = cases[index % len(cases)]
+            value = '5' if jtype is JChar else 5
+            for _ in range(200):
+                self.assertEqual(expected, test1.testPrimitive(jtype(value)))
+            return True
+
+        self.assertTrue(all(common.runConcurrently(worker, 8)))
+
     def testInstanceVsClassMethod(self):
         # this behaviour is different than the one in java, so maybe we should change it?
         test1 = self.__jp.Test1()
