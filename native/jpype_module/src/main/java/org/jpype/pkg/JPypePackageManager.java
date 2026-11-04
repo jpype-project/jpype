@@ -66,6 +66,15 @@ public class JPypePackageManager
   final static FileSystemProvider jfsp = getFileSystemProvider("jar");
   final static Map<String, String> env = new HashMap<>();
   final static LinkedList<FileSystem> fs = new LinkedList<>();
+  /**
+   * Guards the open jar file systems.
+   *
+   * getPath() closes the least recently used jar file system once too many
+   * are open, which must not happen while another thread is still reading
+   * through a path of that file system.  Everything that obtains a path and
+   * uses it therefore runs under this (reentrant) lock.
+   */
+  final static Object FS_LOCK = new Object();
 
   /**
    * Checks if a package exists.
@@ -77,8 +86,11 @@ public class JPypePackageManager
   public static boolean isPackage(String name)
   {
     String path = name.indexOf('.') != -1 ? name.replace(".", "/") : name;
-    if (isModulePackage(path) || isBasePackage(path) || isJarPackage(path))
-      return true;
+    synchronized (FS_LOCK)
+    {
+      if (isModulePackage(path) || isBasePackage(path) || isJarPackage(path))
+        return true;
+    }
     if (jfsp == null && modules.isEmpty())
       return isPackageAsset(path);
     return false;
@@ -310,9 +322,12 @@ public class JPypePackageManager
     Map<String, URI> out = new HashMap<>();
     packageName = packageName.replace(".", "/");
     // We need to merge all the file systems into one view like the classloader
-    getJarContents(out, packageName);
-    getBaseContents(out, packageName);
-    getModuleContents(out, packageName);
+    synchronized (FS_LOCK)
+    {
+      getJarContents(out, packageName);
+      getBaseContents(out, packageName);
+      getModuleContents(out, packageName);
+    }
     return out;
   }
 
