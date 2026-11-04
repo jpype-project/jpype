@@ -31,8 +31,6 @@ def _Character():
 
 
 class JChar2TestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testCharRange(self):
         self.assertEqual(ord(str(jpype.JChar(65))), 65)

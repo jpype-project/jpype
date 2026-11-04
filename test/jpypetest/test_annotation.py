@@ -21,8 +21,6 @@ import common
 
 
 class AnnotationTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testAnnotationMethodCall(self):
         """Test issue #880: Annotation methods must use virtual JNI calls"""

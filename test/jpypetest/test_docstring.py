@@ -22,9 +22,6 @@ import common
 
 class DocStringTestCase(common.JPypeTestCase):
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     def testDocClass(self):
         cls = jpype.JClass('java.util.Iterator')
         self.assertIsNotNone(cls.__doc__)

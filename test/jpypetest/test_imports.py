@@ -40,10 +40,6 @@ def isJavaEnum(tp):
 
 
 class ImportsTestCase(common.JPypeTestCase):
-    def setUp(self):
-        #        logger = logging.getLogger(__name__)
-        #        logger.info("TEST:JImports")
-        common.JPypeTestCase.setUp(self)
 
     @common.unittest.skipUnless(haveJImports(), "jpype.imports not available")
     def testImportPackage(self):
