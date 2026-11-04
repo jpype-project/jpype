@@ -1,7 +1,8 @@
 pytest
-# until https://github.com/Quansight-Labs/pytest-run-parallel/pull/191 is not merged/released
-git+https://github.com/seberg/pytest-run-parallel.git@feature/prepare-args-hook#egg=pytest-run-parallel
-#pytest-run-parallel
+# until https://github.com/Quansight-Labs/pytest-run-parallel/pull/191 is merged/released
+# pytest-run-parallel requires Python 3.10+.  The 3.8/3.9 legs do not run it
+# (they use xdist only), so skip the install instead of failing the resolve.
+pytest-run-parallel @ git+https://github.com/seberg/pytest-run-parallel.git@f854f9e0d0ecb709cb09f287d95643f192e7f3aa ; python_version >= "3.10"
 pytest-xdist
 pytest-randomly
 pyinstaller

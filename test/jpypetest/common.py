@@ -16,6 +16,7 @@
 #
 # *****************************************************************************
 from functools import lru_cache
+import importlib.util
 
 try:
     import pytest
@@ -68,11 +69,22 @@ def threadUnsafe(obj):
     that change process wide state (class customizers and conversions, class
     path, one shot JVM class initialization, sys.stdout, ...), that share
     mutable Java fixtures through ``self``, or that measure memory must opt
-    out.  A no-op where pytest is not available (Android).
+    out.  A no-op where pytest is not available (Android) or where
+    pytest-run-parallel is not installed (Python < 3.10, which runs serially).
     """
-    if pytest is not None:
+    if pytest is not None and importlib.util.find_spec("pytest_run_parallel") is not None:
         return pytest.mark.thread_unsafe(obj)
     return obj
+
+
+#: Module-level form of :func:`threadUnsafe` for ``pytestmark = ...``.
+#: Empty when the plugin is unavailable, so old interpreters emit no
+#: unknown-mark warnings.
+threadUnsafeMark = (
+    [pytest.mark.thread_unsafe]
+    if pytest is not None and importlib.util.find_spec("pytest_run_parallel") is not None
+    else []
+)
 
 
 #: Serializes tests that write a static field of a shared Java fixture and

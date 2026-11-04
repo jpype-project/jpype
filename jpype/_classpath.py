@@ -18,6 +18,7 @@
 from __future__ import annotations # for py38
 
 import os as _os
+import threading
 from pathlib import Path
 from typing import Union
 
@@ -25,6 +26,13 @@ import _jpype
 
 _CLASSPATHS: list[Path] = []
 _SEP = _os.path.pathsep
+
+# addClassPath() and getClassPath() form a check-then-act sequence: the path
+# is recorded in _CLASSPATHS and, when the JVM is already running, loaded into
+# the Java class loader.  Serialize them so concurrent callers cannot observe
+# a half-applied update or lose an append.  Reentrant because a JVM
+# initializer may call back into the classpath API.
+_classpath_lock = threading.RLock()
 
 __all__ = ['addClassPath', 'getClassPath']
 
@@ -44,29 +52,30 @@ def addClassPath(path1: Union[str, _os.PathLike]) -> None:
     import inspect
     global _CLASSPATHS
 
-    # Convert to an absolute path.  Note that
-    # relative paths will be resolve based on the location
-    # of the caller rather than the JPype directory.
-    path1 = Path(path1)
-    if not path1.is_absolute():
-        path2 = Path(inspect.stack(1)[1].filename).parent.resolve()
-        path1 = path2.joinpath(path1)
+    with _classpath_lock:
+        # Convert to an absolute path.  Note that
+        # relative paths will be resolve based on the location
+        # of the caller rather than the JPype directory.
+        path1 = Path(path1)
+        if not path1.is_absolute():
+            path2 = Path(inspect.stack(1)[1].filename).parent.resolve()
+            path1 = path2.joinpath(path1)
 
-    # If the JVM is already started then we will have to load the paths
-    # immediately into the JPypeClassLoader
-    if _jpype.isStarted():
-        Paths = _jpype.JClass('java.nio.file.Paths')
-        JContext = _jpype.JClass('org.jpype.JPypeContext')
-        classLoader = JContext.getInstance().getClassLoader()
-        if path1.name == "*":
-            paths = list(path1.parent.glob("*.jar"))
-            if len(paths) == 0:
-                return
-            for path in paths:
-                classLoader.addPath(Paths.get(str(path)))
-        else:
-            classLoader.addPath(Paths.get(str(path1)))
-    _CLASSPATHS.append(path1)
+        # If the JVM is already started then we will have to load the paths
+        # immediately into the JPypeClassLoader
+        if _jpype.isStarted():
+            Paths = _jpype.JClass('java.nio.file.Paths')
+            JContext = _jpype.JClass('org.jpype.JPypeContext')
+            classLoader = JContext.getInstance().getClassLoader()
+            if path1.name == "*":
+                paths = list(path1.parent.glob("*.jar"))
+                if len(paths) == 0:
+                    return
+                for path in paths:
+                    classLoader.addPath(Paths.get(str(path)))
+            else:
+                classLoader.addPath(Paths.get(str(path1)))
+        _CLASSPATHS.append(path1)
 
 
 def getClassPath(env: bool = True) -> str:
@@ -81,21 +90,22 @@ def getClassPath(env: bool = True) -> str:
     global _CLASSPATHS
     global _SEP
 
-    # Merge the environment path
-    classPath = list(_CLASSPATHS)
-    envPath = _os.environ.get("CLASSPATH")
-    if env and envPath:
-        classPath.extend([Path(i) for i in envPath.split(_SEP)])
+    with _classpath_lock:
+        # Merge the environment path
+        classPath = list(_CLASSPATHS)
+        envPath = _os.environ.get("CLASSPATH")
+        if env and envPath:
+            classPath.extend([Path(i) for i in envPath.split(_SEP)])
 
-    out = []
-    for path in classPath:
-        if path == '':
-            continue
-        if path.name == "*":
-            paths = list(path.parent.glob("*.jar"))
-            if len(paths) == 0:
+        out = []
+        for path in classPath:
+            if path == '':
                 continue
-            out.extend(paths)
-        else:
-            out.append(path)
-    return _SEP.join([str(i) for i in out])
+            if path.name == "*":
+                paths = list(path.parent.glob("*.jar"))
+                if len(paths) == 0:
+                    continue
+                out.extend(paths)
+            else:
+                out.append(path)
+        return _SEP.join([str(i) for i in out])

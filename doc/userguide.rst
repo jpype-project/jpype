@@ -5654,13 +5654,16 @@ system access safely.
 
 Some operations remain serialized or are inherently process-global:
 
-- Starting or shutting down the JVM affects every thread and must not run
-  concurrently with other JPype calls.
+- Starting or shutting down the JVM affects every thread.
+  ``startJVM`` and ``shutdownJVM`` are serialized with each other, but a
+  lifecycle operation must still not overlap ordinary JPype calls from other
+  threads.
 - Registering customizers, conversions, or exclusions changes behavior for
   all threads.  Finish configuration before starting worker threads.
 - Changing the classpath or loading a new package can update shared caches.
-  These operations are synchronized internally, but avoiding concurrent use
-  makes the ordering of the updates predictable.
+  ``addClassPath`` and ``getClassPath`` are serialized so a caller never sees
+  a half-applied update, but class loading can still race a late update.
+  Add paths before starting worker threads when possible.
 
 Most JPype wrapper objects are immutable after creation and can be read from
 multiple threads.  Mutable wrappers, including arrays and buffers, and the

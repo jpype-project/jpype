@@ -18,9 +18,11 @@
 from __future__ import annotations
 
 import atexit
+import functools
 import os
 from pathlib import Path
 import sys
+import threading
 import typing
 
 import _jpype
@@ -175,6 +177,22 @@ def _expandClassPath(
 
 _JVM_started = False
 
+# Serializes JVM lifecycle operations.  These are process-global: a start must
+# not race another start or a shutdown, even on GIL builds where the thread can
+# switch during the Python-side setup before _jpype.startup is called.  The
+# lock is reentrant because startJVM calls getClassPath() and user JVM
+# initializers may call back into JPype.
+_jvm_lock = threading.RLock()
+
+
+def _jvm_locked(func):
+    """Run a lifecycle function with the process-wide JVM lock held."""
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        with _jvm_lock:
+            return func(*args, **kwargs)
+    return wrapper
+
 
 def interactive():
     return bool(getattr(sys, 'ps1', sys.flags.interactive))
@@ -208,6 +226,7 @@ def _findTemp():  # pragma: no cover
     raise RuntimeError("Unable to find non-ansii path.")
 
 
+@_jvm_locked
 def startJVM(
     *jvmargs: str,
     jvmpath: typing.Optional[_PathOrStr] = None,
@@ -408,6 +427,7 @@ def startJVM(
         from . import imports  # noqa: F401
 
 
+@_jvm_locked
 def initializeResources():
     global _JVM_started
     _jpype._java_lang_Class = None
@@ -495,6 +515,7 @@ def initializeResources():
     _JVM_started = True
 
 
+@_jvm_locked
 def shutdownJVM():
     """ Shuts down the JVM.
 
@@ -502,7 +523,6 @@ def shutdownJVM():
     Java objects. Due to limitations in the JPype, it is not possible to
     restart the JVM after being terminated.
     """
-    import threading
     import jpype.config
     if threading.current_thread() is not threading.main_thread():
         raise RuntimeError("Shutdown must be called from main thread")
@@ -519,7 +539,14 @@ def _JTerminate():
         import jpype.config
         # We are exiting anyway so no need to free resources
         if jpype.config.onexit:
-            _jpype.shutdown(jpype.config.destroy_jvm, False)
+            # Never block interpreter shutdown on a daemon thread that may
+            # have been frozen while holding the lifecycle lock.  If the lock
+            # is busy, that thread is already starting or stopping the JVM.
+            if _jvm_lock.acquire(blocking=False):
+                try:
+                    _jpype.shutdown(jpype.config.destroy_jvm, False)
+                finally:
+                    _jvm_lock.release()
     except RuntimeError:
         pass  # we are exiting anyway, nothing to do about a shutdown failure here
 
