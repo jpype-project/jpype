@@ -279,3 +279,74 @@ class JClassTestCase(common.JPypeTestCase):
         # failures.  A partial loaded class can lead to crashes.
         with self.assertRaises(JClass("java.lang.NoClassDefFoundError")):
             JClass("org.jpype.unsatisfied.TestClass")
+
+
+class JClassInitializeTestCase(common.JPypeTestCase):
+    """ JClass(name, initialize=False) must not run the static initializer. """
+
+    def _compile(self, name):
+        # A fresh class per test: initialization happens once per class.
+        import pathlib
+        import shutil
+        import tempfile
+        compiler = jpype.JClass("javax.tools.ToolProvider").getSystemJavaCompiler()
+        if compiler is None:
+            self.skipTest("no system Java compiler")
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        src = pathlib.Path(d) / "initprobe" / (name + ".java")
+        src.parent.mkdir()
+        src.write_text(
+            "package initprobe;\n"
+            "public class %s {\n"
+            "  public static int sfield = 3;\n"
+            "  public int ifield = 4;\n"
+            "  static { System.setProperty(\"initprobe.%s\", \"ran\"); }\n"
+            "  public static int method() { return 5; }\n"
+            "}\n" % (name, name))
+        out = pathlib.Path(d) / "classes"
+        out.mkdir()
+        rc = compiler.run(None, None, None, jpype.JArray(jpype.JString)(
+            [str(src), "-d", str(out)]))
+        self.assertEqual(rc, 0)
+        jpype.addClassPath(out.absolute())
+        return "initprobe." + name
+
+    def _ran(self, name):
+        return jpype.JClass("java.lang.System").getProperty(
+            "initprobe." + name.split(".")[-1]) is not None
+
+    def testDefaultInitializes(self):
+        name = self._compile("InitDefault")
+        jpype.JClass(name)
+        self.assertTrue(self._ran(name))
+
+    def testNoLoader(self):
+        name = self._compile("InitNoLoader")
+        cls = jpype.JClass(name, initialize=False)
+        self.assertFalse(self._ran(name))
+        # Using the class initializes it, and its members still work.
+        self.assertEqual(cls.sfield, 3)
+        self.assertTrue(self._ran(name))
+        self.assertEqual(cls.method(), 5)
+        self.assertEqual(cls().ifield, 4)
+
+    def testWithLoader(self):
+        name = self._compile("InitLoader")
+        # Classes added with addClassPath() live in the JPype class loader.
+        cls = jpype.JClass(name, loader=_jpype.JPypeClassLoader,
+                           initialize=False)
+        self.assertFalse(self._ran(name))
+        self.assertEqual(cls.method(), 5)
+        self.assertTrue(self._ran(name))
+
+    def testStaticMethodInitializes(self):
+        name = self._compile("InitMethod")
+        cls = jpype.JClass(name, initialize=False)
+        self.assertFalse(self._ran(name))
+        cls.method()
+        self.assertTrue(self._ran(name))
+
+    def testNotFound(self):
+        with self.assertRaises(TypeError):
+            jpype.JClass("initprobe.DoesNotExist", initialize=False)

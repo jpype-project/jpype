@@ -76,8 +76,19 @@ class JClass(_jpype._JClass, metaclass=JClassMeta):
       TypeError: if the component class is invalid or could not be found.
     """
     def __new__(cls, jc, loader=None, initialize=True):
-        if loader and isinstance(jc, str):
-            jc = _jpype._java_lang_Class.forName(jc, initialize, loader)
+        if isinstance(jc, str) and not jc.endswith(">"):
+            if loader:
+                jc = _jpype._java_lang_Class.forName(jc, initialize, loader)
+            elif not initialize:
+                # Without a loader the name lookup always initializes the
+                # class, so resolve it here with initialization off.  If it
+                # cannot be found this way (inner classes written with dots,
+                # primitives, arrays), the normal lookup below applies.
+                try:
+                    jc = _jpype._java_lang_Class.forName(
+                        jc, False, _jpype.JPypeClassLoader)
+                except _jpype._getClass("java.lang.ClassNotFoundException"):
+                    pass
 
         # Handle generics
         if isinstance(jc, str) and jc.endswith(">"):

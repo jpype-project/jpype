@@ -15,6 +15,7 @@
  *****************************************************************************/
 #ifndef _JPFIELD_H_
 #define _JPFIELD_H_
+#include <atomic>
 
 /**
  * Field object
@@ -29,7 +30,6 @@ public:
 			JPClass *cls,
 			const string& name,
 			jobject field,
-			jfieldID fid,
 			JPClass *fieldType,
 			jint modifiers);
 
@@ -74,10 +74,16 @@ public:
 	}
 
 private:
+	// The field ID is resolved on first use rather than at wrapper creation:
+	// JNI FromReflectedField initializes the declaring class, which would
+	// run its static initializer for JClass(name, initialize=False).  The
+	// lookup is idempotent, so concurrent first uses may both resolve it.
+	jfieldID getFieldID(JPJavaFrame& frame);
+
 	string           m_Name;
 	JPClass*         m_Class;
 	JPObjectRef      m_Field;
-	jfieldID         m_FieldID;
+	std::atomic<jfieldID> m_FieldID{nullptr};
 	JPClass*         m_Type;
 	jint             m_Modifiers;
 } ;

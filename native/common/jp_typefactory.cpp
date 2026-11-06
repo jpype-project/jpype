@@ -392,12 +392,12 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineField(
 	string cname = frame.toStringUTF8(name);
 	JP_TRACE("class", cls);
 	JP_TRACE(cname);
-	jfieldID fid = frame.FromReflectedField(field);
+	// The field ID is resolved lazily by JPField (see JPField::getFieldID).
 	return (jlong) (new JPField(
 			frame,
 			(JPClass*) cls,
 			cname,
-			field, fid,
+			field,
 			(JPClass*) fieldType,
 			modifiers));
 	JP_JAVA_CATCH(0);  // GCOVR_EXCL_LINE
@@ -411,7 +411,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethod(
 {
 	JPJavaFrame frame = JPJavaFrame::external(env);
 	JP_JAVA_TRY("JPTypeFactory_defineMethod");
-	jmethodID mid = frame.FromReflectedMethod(method);
+	// The method ID is resolved lazily by JPMethod (see JPMethod::getMethodID).
 	JPMethodList cover;
 	convert(frame, overloadList, cover);
 	string cname = frame.toStringUTF8(name);
@@ -420,7 +420,7 @@ JNIEXPORT jlong JNICALL Java_org_jpype_manager_TypeFactoryNative_defineMethod(
 			frame,
 			(JPClass*) cls,
 			cname,
-			method, mid,
+			method,
 			cover,
 			modifiers));
 	JP_JAVA_CATCH(0);
