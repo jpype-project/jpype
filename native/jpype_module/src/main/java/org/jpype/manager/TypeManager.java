@@ -128,7 +128,10 @@ public class TypeManager
       return 0;
 
     long out;
-    if (cls.isSynthetic() && cls.getSimpleName().contains("$Lambda$"))
+    // Lambda classes are named Outer$$Lambda$N/0x... up to JDK 20 and
+    // Outer$$Lambda/0x... from JDK 21, so only match the common "$$Lambda".
+    if (cls.isSynthetic() && cls.getName().contains("$$Lambda")
+            && cls.getInterfaces().length > 0)
     {
       // If is it lambda, we need a special wrapper
       // we don't want to create a class each time in that case.
