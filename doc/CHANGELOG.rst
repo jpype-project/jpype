@@ -7,6 +7,12 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed inconsistent Python to Java ``char`` conversion: a ``bytes`` value
+    above 0x7f is no longer sign-extended when assigned into a ``char[]``,
+    ``JChar()`` of a non-BMP string now raises ``ValueError`` instead of
+    silently truncating, and ``JChar()`` of a ``bytearray`` is length-checked
+    like ``bytes``. #1537
+
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The

@@ -499,3 +499,24 @@ class JCharTestCase_2(common.JPypeTestCase):
         self.assertEqual(1 & JChar("x"), 0)
         self.assertEqual(JChar("x") | 1, 121)
         self.assertEqual(1 | JChar("x"), 121)
+
+    def testBytesAreNotSignExtended(self):
+        a = JArray(JChar)(2)
+        a[0] = b'\xe9'
+        a[0:1] = [b'\xe9']
+        self.assertEqual(ord(str(a[0])), 0xe9)
+        self.assertEqual(ord(str(JChar(b'\xe9'))), 0xe9)
+
+    def testNonBmpRejected(self):
+        emoji = chr(0x1F600)
+        with self.assertRaises(ValueError):
+            JChar(emoji)
+        a = JArray(JChar)(1)
+        with self.assertRaises(ValueError):
+            a[0] = emoji
+
+    def testBytearrayLengthChecked(self):
+        self.assertEqual(ord(str(JChar(bytearray(b'a')))), 97)
+        for bad in (bytearray(b'abc'), bytearray()):
+            with self.assertRaises(TypeError):
+                JChar(bad)

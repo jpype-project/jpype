@@ -236,7 +236,8 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 		if (sz != 1)
 			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
-		jchar c = PyBytes_AsString(pyobj)[0];
+		// Bytes are Latin-1 code points; do not sign-extend through char.
+		jchar c = (unsigned char) PyBytes_AsString(pyobj)[0];
 		if (PyErr_Occurred())
 			JP_RAISE_PYTHON();
 		return c;
@@ -261,7 +262,8 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 		if (sz != 1)
 			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
-		jchar c = PyBytes_AsString(pyobj)[0];
+		// Bytes are Latin-1 code points; do not sign-extend through char.
+		jchar c = (unsigned char) PyBytes_AsString(pyobj)[0];
 		JP_PY_CHECK();
 		return c;
 	}

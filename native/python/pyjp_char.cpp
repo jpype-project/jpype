@@ -59,7 +59,7 @@ static Py_UCS4 ord(PyObject *c)
 			return PyUnicode_READ_CHAR(c, 0);
 	} else if (PyBytes_Check(c) && PyBytes_GET_SIZE(c) == 1)
 		return (Py_UCS4) ((unsigned char) *PyBytes_AS_STRING(c));
-	else if (PyByteArray_Check(c) &&  PyByteArray_GET_SIZE(c))
+	else if (PyByteArray_Check(c) && PyByteArray_GET_SIZE(c) == 1)
 		return (Py_UCS4) ((unsigned char) *PyByteArray_AS_STRING(c));
 	return (Py_UCS4) - 1;
 }
@@ -266,6 +266,11 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	JPValue jv;
 	PyObject *in = PyTuple_GetItem(pyargs, 0);
 	Py_UCS4 cv = ord(in);
+	if (cv != (Py_UCS4) - 1 && cv > 0xffff)
+	{
+		PyErr_SetString(PyExc_ValueError, "Unable to pack 4 byte unicode into Java char");
+		return nullptr;
+	}
 
 	JPJavaFrame frame = JPJavaFrame::outer();
 	if (cv != (Py_UCS4) - 1)
