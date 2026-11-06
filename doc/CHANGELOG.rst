@@ -7,6 +7,12 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed ``JChar`` arithmetic (``+``, ``-``, ``*``, ``&``, ...) reading the
+    other operand as a char whenever it was any Java value, which produced
+    nonsense results (``JChar('a') + java.lang.Integer(7)``) and could read
+    past the end of the other object.  Only real Java chars are now read as
+    chars; other operands take the normal Python path. #1536
+
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
