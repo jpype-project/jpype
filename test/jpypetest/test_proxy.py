@@ -705,3 +705,52 @@ class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):
         startJVM()
         assert isinstance(MyImpl(), MyImpl)
     
+
+
+class ProxyReturnConversionTestCase(common.JPypeTestCase):
+    """ A proxy return value is converted like a method argument: implicit
+    conversions are accepted, explicit (narrowing) ones are not. """
+
+    def _proxy(self, interface, method, value):
+        # Calling through the Java object makes the return value go through
+        # the Java return-type conversion; the Python object would not.
+        namespace = {method: JOverride(lambda self: value)}
+        return JObject(JImplements(interface)(type("P", (), namespace))())
+
+    def testFloatToIntRejected(self):
+        for value in (1.5, 2.0):
+            proxy = self._proxy("java.util.function.IntSupplier", "getAsInt", value)
+            with self.assertRaises(TypeError, msg=repr(value)):
+                proxy.getAsInt()
+
+    def testFloatToOtherIntegralRejected(self):
+        for interface, method in (("java.util.function.LongSupplier", "getAsLong"),
+                                  ("java.util.function.BooleanSupplier", "getAsBoolean")):
+            proxy = self._proxy(interface, method, 1.5)
+            with self.assertRaises(TypeError, msg=interface):
+                getattr(proxy, method)()
+
+    def testLibraryFloatToIntRejected(self):
+        np = __import__("pytest").importorskip("numpy")
+        proxy = self._proxy("java.util.function.IntSupplier", "getAsInt", np.float64(1.5))
+        with self.assertRaises(TypeError):
+            proxy.getAsInt()
+
+    def testIntegralToIntAccepted(self):
+        for value in (5, True, JInt(7)):
+            proxy = self._proxy("java.util.function.IntSupplier", "getAsInt", value)
+            self.assertEqual(proxy.getAsInt(), int(value))
+
+    def testWideningAccepted(self):
+        # int -> double and float -> double are implicit, as for arguments.
+        for value in (3, 1.5, JInt(2)):
+            proxy = self._proxy("java.util.function.DoubleSupplier", "getAsDouble", value)
+            self.assertEqual(proxy.getAsDouble(), float(value))
+        proxy = self._proxy("java.util.function.LongSupplier", "getAsLong", 2 ** 40)
+        self.assertEqual(proxy.getAsLong(), 2 ** 40)
+
+    def testReferenceReturnsAccepted(self):
+        proxy = self._proxy("java.util.function.Supplier", "get", "text")
+        self.assertEqual(proxy.get(), "text")
+        proxy = self._proxy("java.util.function.Supplier", "get", None)
+        self.assertIsNone(proxy.get())
