@@ -7,6 +7,13 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed ``JClass(name, initialize=False)`` running the class's static
+    initializer anyway.  Creating the wrapper resolved every field and method
+    ID eagerly, and JNI initializes the declaring class when it does; they are
+    now resolved on first use.  Without a ``loader`` the name was also always
+    looked up with initialization on; ``initialize=False`` is now honored
+    there too. #1529
+
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
