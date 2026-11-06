@@ -7,6 +7,12 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed subclassing a final Java class being silently accepted: creating a
+    subclass of a final class such as ``java.lang.String`` now raises
+    ``TypeError``.  The check never ran in builds without instrumentation
+    (the ``JP_BLOCK`` macro compiled its body away) and, where it did run,
+    did not stop the subclass from being created. #1535
+
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The

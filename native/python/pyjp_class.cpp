@@ -527,6 +527,7 @@ int PyJPClass_init(PyObject *self, PyObject *args, PyObject *kwargs)
 			{
 				PyErr_Format(PyExc_TypeError, "Cannot extend final class '%s'",
 						((PyTypeObject*) item)->tp_name);
+				return -1;
 			}
 		}
 	}
