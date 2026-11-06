@@ -37,8 +37,15 @@ public class JPypeSignal
       signalHandlerClazz
     }, (proxy, method, args) ->
     {
-      main.interrupt();
-      interruptPy(signal);
+      // Record the signal for Python and wake the main thread.  Both happen
+      // in one native call, under the GIL.  The order matters in both
+      // directions: if the main thread is blocked in Thread.sleep() or
+      // Object.wait() and wakes first, JPJavaError::toPython() can convert
+      // the InterruptedException before the signal is recorded and Python
+      // sees InterruptedException instead of KeyboardInterrupt; if the signal
+      // is recorded and handled first, the interrupt can land on the next,
+      // unrelated Java call of the main thread.
+      interruptPy(signal, main);
       return null;
     });
   }
@@ -61,7 +68,7 @@ public class JPypeSignal
     }
   }
 
-  native static void interruptPy(int signal);
+  native static void interruptPy(int signal, Thread main);
 
   native static void acknowledgePy();
 }
