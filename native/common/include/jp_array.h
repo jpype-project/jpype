@@ -27,7 +27,7 @@ public:
 	JPArrayView(JPArray* array, jobject collection);
 	~JPArrayView();
 	void reference();
-	bool unreference();
+	bool unreference(bool release = true);
 public:
 	JPArray *m_Array;
 	void *m_Memory{};
