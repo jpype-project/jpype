@@ -7,6 +7,15 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Brought the Java ``List``/``Map`` customizers closer to Python semantics:
+    slice bounds are clamped like Python lists (``lst[1:100]``,
+    ``lst[-100:]``, ``lst[2:1]``, including slice assignment and ``del``) and a
+    zero step raises ``ValueError``; ``index()`` raises ``ValueError`` for a
+    missing item instead of returning -1; ``+=`` extends the list with any
+    iterable instead of adding it as a single element; ``n * lst`` works;
+    ``del map[key]`` raises ``KeyError`` for a missing key; and ``Map.Entry``
+    accepts negative indexes. #1520
+
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
