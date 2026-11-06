@@ -270,6 +270,12 @@ static void PyJPArray_releaseBuffer(PyJPArray *self, Py_buffer *view)
 		JPJavaFrame frame = JPJavaFrame::outer();
 		if (self->m_View == nullptr || !self->m_View->unreference())
 			return;
+	} else
+	{
+		// The JVM is gone so nothing can be released to it, but the shared
+		// view still belongs to every export that has not been released yet.
+		if (self->m_View == nullptr || !self->m_View->unreference(false))
+			return;
 	}
 	delete self->m_View;
 	self->m_View = nullptr;
@@ -280,7 +286,7 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 {
 	JP_PY_TRY("PyJPArray_getBuffer");
 	JPJavaFrame frame = JPJavaFrame::outer();
-	if (self->m_Array == nullptr)
+	if (self->m_Array == nullptr || self->m_Array->getJava() == nullptr)
 		JP_RAISE(PyExc_ValueError, "Null array");
 
 	if (!self->m_Array->getClass()->isPrimitiveArray())
@@ -361,7 +367,7 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 {
 	JP_PY_TRY("PyJPArrayPrimitive_getBuffer");
 	JPJavaFrame frame = JPJavaFrame::outer();
-	if (self->m_Array == nullptr)
+	if (self->m_Array == nullptr || self->m_Array->getJava() == nullptr)
 		JP_RAISE(PyExc_ValueError, "Null array");
 	try
 	{
