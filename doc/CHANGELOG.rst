@@ -7,6 +7,13 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed ``dbapi2`` ``Cursor.callproc()`` failing on OUT and INOUT
+    parameters: they are now registered on the underlying
+    ``CallableStatement`` using the driver's reported parameter type, so
+    PEP 249 aliases without a JDBC code (such as ``STRING``) work, and output
+    values without a registered converter (such as ``int``) are returned
+    unchanged instead of raising ``KeyError``. #1519
+
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The

@@ -741,6 +741,39 @@ class CursorTestCase(common.JPypeTestCase):
             self.assertEqual(len(r[0]), 1)
             self.assertEqual(r[0][0], "foo")
 
+    def _procedure(self, cu, name, ddl):
+        try:
+            cu.execute("drop procedure %s" % name)
+        except dbapi2.Error:
+            pass
+        cu.execute(ddl)
+
+    def test_callprocOut(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            self._procedure(cu, "p_out", "CREATE PROCEDURE p_out(IN a INT, OUT b INT) "
+                            "BEGIN ATOMIC SET b = a * 2; END")
+            self.assertEqual(cu.callproc("p_out", (21, 0)), [21, 42])
+
+    def test_callprocInOut(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            self._procedure(cu, "p_inout", "CREATE PROCEDURE p_inout(INOUT a INT) "
+                            "BEGIN ATOMIC SET a = a + 1; END")
+            self.assertEqual(cu.callproc("p_inout", (41,)), [42])
+
+    def test_callprocOutString(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            self._procedure(cu, "p_str", "CREATE PROCEDURE p_str(IN a VARCHAR(10), OUT b VARCHAR(20)) "
+                            "BEGIN ATOMIC SET b = a || '!'; END")
+            r = cu.callproc("p_str", ("hi", ""))
+            self.assertEqual(r, ["hi", "hi!"])
+            self.assertIsInstance(r[1], str)
+
+    def test_callprocOutNoConverters(self):
+        with dbapi2.connect(db_name, converters=None) as cx, cx.cursor() as cu:
+            self._procedure(cu, "p_out2", "CREATE PROCEDURE p_out2(IN a INT, OUT b INT) "
+                            "BEGIN ATOMIC SET b = a * 2; END")
+            self.assertEqual(cu.callproc("p_out2", (4, 0)), [4, 8])
+
     def test_callprocBad(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             with self.assertRaises(dbapi2.ProgrammingError):
