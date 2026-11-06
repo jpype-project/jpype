@@ -7,6 +7,11 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed ``JPypeContext.getStackTrace`` throwing
+    ``ArrayIndexOutOfBoundsException`` when the enclosing exception's stack
+    trace is empty (cleared or never filled in), which dropped the cause's
+    Java frames from the Python traceback. #1532
+
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
