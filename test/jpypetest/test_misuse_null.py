@@ -99,6 +99,44 @@ class BadConversionTestCase(common.JPypeTestCase):
         sub = JClass("java.util.concurrent.atomic.AtomicLong")(9)
         self.assertEqual(self._convert(lambda: sub).get(), 9)
 
+    def testProxyOfWrongType(self):
+        @JImplements("java.lang.Runnable")
+        class Wrong:
+            @JOverride
+            def run(self):
+                pass
+
+        class Source:
+            pass
+
+        @JConversion(self.Target, exact=Source)
+        def convert(jcls, value):
+            return Wrong()
+
+        with self.assertRaises(TypeError):
+            JObject(Source(), JClass(self.Target))
+
+    def testProxyOfRightType(self):
+        @JImplements("java.lang.Runnable")
+        class Right:
+            @JOverride
+            def run(self):
+                pass
+
+        class Source:
+            pass
+
+        @JConversion("java.lang.Runnable", exact=Source)
+        def convert(jcls, value):
+            return Right()
+
+        self.assertIsNotNone(JObject(Source(), JClass("java.lang.Runnable")))
+
+    def testNullResult(self):
+        # A typed null is a valid result for any reference type.
+        obj = self._convert(lambda: JObject(None, JClass(self.Target)))
+        self.assertIsNotNone(obj)
+
 
 class MonitorTestCase(common.JPypeTestCase):
 

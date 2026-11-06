@@ -124,11 +124,6 @@ static PyObject *PyJPProxy_class(PyJPProxy *self, void *context)
 {
 	JP_PY_TRY("PyJPProxy_class");
 	JPJavaFrame frame = JPJavaFrame::outer();
-	if (self->m_Proxy == nullptr)
-	{
-		PyErr_SetString(PyExc_RuntimeError, "proxy is not initialized");
-		return nullptr;
-	}
 	JPClass* cls = self->m_Proxy->getInterfaces()[0];
 	return PyJPClass_create(frame, cls).keep();
 	JP_PY_CATCH(nullptr);
