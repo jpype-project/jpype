@@ -16,7 +16,6 @@
 #
 # *****************************************************************************
 from . import _jcustomizer
-import sys as _sys
 from . import _jexception
 
 # This contains a customizer for closeable so that we can use the python "with"
@@ -46,10 +45,10 @@ class _JCloseable(object):
         return self
 
     def __exit__(self, exception_type, exception_value, traceback):
-        info = _sys.exc_info()
         try:
             self.close()
         except _jexception.JException as jex:
-            # Eat the second exception if we are already handling one.
-            if (info[0] is None):
+            # Eat the second exception only if the with body itself failed;
+            # being inside an unrelated except block does not count.
+            if exception_type is None:
                 raise jex

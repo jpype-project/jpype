@@ -7,6 +7,11 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed ``with`` on a Java ``AutoCloseable`` silently swallowing an
+    exception from ``close()`` when the statement ran inside an unrelated
+    ``except`` block.  ``__exit__`` now looks at its own exception argument
+    rather than ``sys.exc_info()``. #1521
+
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
