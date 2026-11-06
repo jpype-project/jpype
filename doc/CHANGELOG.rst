@@ -7,6 +7,11 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed ``JClass("pkg.Outer.Inner")`` failing with ``TypeError`` for classes
+    added with ``addClassPath()`` after the JVM started.  The dotted
+    inner-class fallback used the one-argument ``Class.forName``, which only
+    searches the system class loader, instead of the JPype class loader. #1525
+
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
