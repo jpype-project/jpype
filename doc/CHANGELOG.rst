@@ -7,6 +7,10 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed non-deferred ``@JImplements`` classes running ``__init__`` twice per
+    instantiation; ``__new__`` called it and ``type.__call__`` called it
+    again.  It now runs once, as for ``deferred=True``. #1528
+
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The

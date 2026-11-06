@@ -644,6 +644,22 @@ class ProxyTestCase(common.JPypeTestCase):
                 def run(self):
                     pass
 
+    def testInitCalledOnce(self):
+        for deferred in (False, True):
+            calls = []
+
+            @JImplements("java.lang.Runnable", deferred=deferred)
+            class R:
+                def __init__(self, x, y=None):
+                    calls.append((x, y))
+
+                @JOverride
+                def run(self):
+                    pass
+
+            R(1, y=2)
+            self.assertEqual(calls, [(1, 2)], "deferred=%s" % deferred)
+
     def testInternal(self):
         with self.assertRaises(TypeError):
             _jpype._JProxy(None, None, None)
