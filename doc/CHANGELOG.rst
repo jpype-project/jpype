@@ -7,6 +7,12 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed ``hash()`` raising ``SystemError`` for Java objects whose
+    ``hashCode()`` is -1 (CPython's hash error sentinel); it is now mapped
+    to -2.  ``_JProxy.hashCode()`` also no longer ignores an error from
+    hashing an unhashable target, so it raises the original ``TypeError``
+    instead of a ``SystemError``. #1534
+
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
