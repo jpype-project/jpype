@@ -87,20 +87,13 @@ public class ProxyExecutor
 
   }
 
-  public int waitForExecutedTasks()
+  public int waitForExecutedTasks() throws Exception
   {
     int returns = 0;
 
     for (Future<Integer> task : executedTasks)
     {
-      try
-      {
-        returns += task.get();
-      } catch (Exception ex)
-      {
-        System.out.println("An exception has thrown during execution");
-        ex.printStackTrace();
-      }
+      returns += task.get(15, TimeUnit.SECONDS);
     }
     return returns;
   }
@@ -119,20 +112,21 @@ public class ProxyExecutor
     public Integer call() throws Exception
     {
 
-      int result = 0;
-
-      try
+      int intValue = proxy.testMethodInt();
+      ReturnObject objectValue = proxy.testMethodObject();
+      String stringValue = proxy.testMethodString();
+      List<ReturnObject> listValue = proxy.testMethodList(5);
+      if (intValue != 5 || objectValue == null || objectValue.getNumber() != 3
+              || !"Hallo".equals(stringValue) || listValue == null || listValue.size() != 5)
       {
-        int intValue = proxy.testMethodInt();
-        ReturnObject objectValue = proxy.testMethodObject();
-        String stringValue = proxy.testMethodString();
-        List<ReturnObject> listValue = proxy.testMethodList(5);
-      } catch (Exception ex)
-      {
-        ex.printStackTrace();
+        throw new IllegalStateException("Unexpected callback result");
       }
-
-      return 1; //result;
+      for (int i = 0; i < listValue.size(); ++i)
+      {
+        if (listValue.get(i).getNumber() != i)
+          throw new IllegalStateException("Unexpected callback list value");
+      }
+      return 1;
     }
 
   }

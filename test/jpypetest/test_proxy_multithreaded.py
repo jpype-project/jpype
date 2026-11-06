@@ -18,6 +18,7 @@
 from jpype import *
 import common
 import time
+import threading
 
 
 class C:
@@ -86,14 +87,8 @@ class ProxyMultiThreadedTestCase(common.JPypeTestCase):
         The Java part will call the same callback instance from different
         threads at a time.
 
-        Jpype library will throw an exception and the proxy method won't be
-        called:
-            java.lang.RuntimeException: Python exception thrown:
-                AttributeError: 'NoneType' object has no attribute 'getName'
-                at jpype.JPypeInvocationHandler.hostInvoke(Native Method)
-            at jpype.JPypeInvocationHandler.invoke(
-                JPypeInvocationHandler.java:10)
-            ...
+        Each task must complete all callbacks with the expected values;
+        callback failures must reach the test through Future.get().
         """
         proxy = JProxy(self.package.TestInterface4, inst=C())
 
@@ -115,14 +110,7 @@ class ProxyMultiThreadedTestCase(common.JPypeTestCase):
         The Java part will call the proxy method from different callback
         instances and from different threads at a time.
 
-        Jpype library will throw an exception and the proxy method won't be
-        called:
-            java.lang.RuntimeException: Python exception thrown:
-                AttributeError: 'NoneType' object has no attribute 'getName'
-                at jpype.JPypeInvocationHandler.hostInvoke(Native Method)
-            at jpype.JPypeInvocationHandler.invoke(
-                JPypeInvocationHandler.java:10)
-            ...
+        Each independent callback instance must return the expected values.
         """
 
         self.executor = self.package.ProxyExecutor(10)
@@ -139,3 +127,33 @@ class ProxyMultiThreadedTestCase(common.JPypeTestCase):
         expected = self.executor.getExpectedTasks()
         self.assertEqual(result, expected,
                          "Executed Tasks should be the same.")
+
+    def testCallbackFailureIsReported(self):
+        raised = threading.Event()
+
+        class FailingCallback(C):
+            def testMethodInt(self):
+                raised.set()
+                raise ValueError("intentional callback failure")
+
+        proxy = JProxy(self.package.TestInterface4, inst=FailingCallback())
+        self.executor = self.package.ProxyExecutor(1)
+        self.executor.registerProxy(proxy, 1)
+        self.executor.runExecutor()
+        with self.assertRaises(java.util.concurrent.ExecutionException) as caught:
+            self.executor.waitForExecutedTasks()
+        self.assertTrue(raised.is_set())
+        self.assertIsNotNone(caught.exception.getCause())
+
+    def testWrongCallbackResultIsReported(self):
+        class WrongCallback(C):
+            def testMethodInt(self):
+                return 9
+
+        proxy = JProxy(self.package.TestInterface4, inst=WrongCallback())
+        self.executor = self.package.ProxyExecutor(1)
+        self.executor.registerProxy(proxy, 1)
+        self.executor.runExecutor()
+        with self.assertRaises(java.util.concurrent.ExecutionException) as caught:
+            self.executor.waitForExecutedTasks()
+        self.assertIsInstance(caught.exception.getCause(), java.lang.IllegalStateException)
