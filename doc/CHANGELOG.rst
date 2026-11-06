@@ -7,6 +7,19 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed several ``dbapi2`` deviations from PEP 249 (the ``callproc`` OUT
+    parameter problems are tracked separately): ``connect()`` now passes
+    keyword arguments such as ``user=``/``password=`` to the driver, and
+    rejects a ``driver_args`` that is not a mapping or ``Properties``; a
+    per-call ``converters=`` mapping on ``fetch*()`` is applied; a
+    ``java.sql.SQLException`` raised while executing a statement is mapped to
+    ``IntegrityError``, ``DataError``, ``NotSupportedError``,
+    ``OperationalError`` or ``ProgrammingError`` instead of escaping raw or
+    always becoming ``ProgrammingError``; ``nextset()`` and ``lastrowid`` on
+    a cursor that has not executed raise ``ProgrammingError``;
+    ``fetchmany()`` restores the result set's fetch size; and the ``types=``
+    given to ``fetch*()`` apply to that call only. #1519
+
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
