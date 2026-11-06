@@ -881,6 +881,11 @@ PyObject* PyJPClass_subclasscheck(PyTypeObject *type, PyTypeObject *test)
 	if ((PyObject*) type == _JException)
 		return PyBool_FromLong(testClass->isThrowable());
 
+	if (!PyType_Check((PyObject*) test))
+	{
+		PyErr_SetString(PyExc_TypeError, "issubclass() arg 1 must be a class");
+		return nullptr;
+	}
 	PyObject* mro1 = test->tp_mro;
 	Py_ssize_t n1 = PyTuple_Size(mro1);
 	for (int i = 0; i < n1; ++i)
@@ -934,10 +939,22 @@ static int PyJPClass_setClass(PyObject *self, PyObject *type, PyObject *closure)
 	JP_PY_CATCH(-1);
 }
 
+// The Java class behind a wrapper type.  The abstract bases (JArray,
+// JException, JInterface, ...) have none, and must not be dereferenced.
+static JPClass *requireClass(PyJPClass *self)
+{
+	if (self->m_Class == nullptr)
+		PyErr_Format(PyExc_TypeError, "'%s' is not a concrete Java class",
+				((PyTypeObject*) self)->tp_name);
+	return self->m_Class;
+}
+
 static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_hints");
 	PyJPModule_getContext();
+	if (self->m_Class == nullptr)
+		Py_RETURN_NONE;  // abstract base: no conversion hints
 	JPPyObject hints = JPPyObject::use(self->m_Class->getHints());
 	if (hints.get() == nullptr)
 		Py_RETURN_NONE; // GCOVR_EXCL_LINE only triggered if JClassPost failed
@@ -975,6 +992,11 @@ static int PyJPClass_setHints(PyObject *self, PyObject *value, PyObject *closure
 	JP_PY_TRY("PyJPClass_setHints", self);
 	PyJPModule_getContext();
 	auto *cls = (PyJPClass*) self;
+	if (cls->m_Class == nullptr)
+	{
+		PyErr_SetString(PyExc_AttributeError, "_hints can't be set");
+		return -1;
+	}
 	PyObject *hints = cls->m_Class->getHints();
 	if (hints != nullptr)
 	{
@@ -1019,7 +1041,9 @@ static PyObject *PyJPClass_canCast(PyJPClass *self, PyObject *other)
 	JP_PY_TRY("PyJPClass_canCast");
 	JPJavaFrame frame = JPJavaFrame::outer();
 
-	JPClass *cls = self->m_Class;
+	JPClass *cls = requireClass(self);
+	if (cls == nullptr)
+		return nullptr;
 
 	// Test the conversion
 	JPMatch match(&frame, other);
@@ -1036,7 +1060,9 @@ static PyObject *PyJPClass_canConvertToJava(PyJPClass *self, PyObject *other)
 	JP_PY_TRY("PyJPClass_canConvertToJava");
 	JPJavaFrame frame = JPJavaFrame::outer();
 
-	JPClass *cls = self->m_Class;
+	JPClass *cls = requireClass(self);
+	if (cls == nullptr)
+		return nullptr;
 
 	// Test the conversion
 	JPMatch match(&frame, other);
@@ -1169,7 +1195,12 @@ static PyObject *PyJPClass_cast(PyJPClass *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPClass_cast");
 	JPJavaFrame frame = JPJavaFrame::outer();
-	JPClass *type = self->m_Class;
+	// Reflected "obj @ JClass" reaches here with the left operand as self
+	if (!PyObject_TypeCheck((PyObject*) self, PyJPClass_Type))
+		Py_RETURN_NOTIMPLEMENTED;
+	JPClass *type = requireClass(self);
+	if (type == nullptr)
+		return nullptr;
 	JPClass *valCls = PyJPValue_getJPClass(other);
 
 	// Cast on non-Java
@@ -1249,7 +1280,9 @@ static PyObject *PyJPClass_convertToJava(PyJPClass *self, PyObject *other)
 	JP_PY_TRY("PyJPClass_convertToJava");
 	JPJavaFrame frame = JPJavaFrame::outer();
 
-	JPClass *cls = self->m_Class;
+	JPClass *cls = requireClass(self);
+	if (cls == nullptr)
+		return nullptr;
 
 	// Test the conversion
 	JPMatch match(&frame, other);
