@@ -369,10 +369,21 @@ static Py_ssize_t PyJPChar_len(PyJPChar *self)
 	JP_PY_CATCH(-1);  // GCOVR_EXCL_LINE
 }
 
+// The Java class of an operand only if it really is a Java char (JChar or
+// java.lang.Character).  Other Java values (String, Integer, Double, ...)
+// are not chars and must not be read with fromJPChar; they take the
+// plain-operand path instead.
+static JPClass *charOperandClass(PyObject *obj)
+{
+	if (!PyObject_TypeCheck(obj, PyJPChar_Type))
+		return nullptr;
+	return PyJPValue_getJPClass(obj);
+}
+
 static PyObject *apply(PyObject *first, PyObject *second, PyObject* (*func)(PyObject*, PyObject*))
 {
-	JPClass *cls0 = PyJPValue_getJPClass(first);
-	JPClass *cls1 = PyJPValue_getJPClass(second);
+	JPClass *cls0 = charOperandClass(first);
+	JPClass *cls1 = charOperandClass(second);
 	if (cls0 != nullptr && cls1 != nullptr)
 	{
 		if (assertNotNullClass(first, cls0))
@@ -427,8 +438,8 @@ static  PyObject *PyJPChar_xor(PyObject *first, PyObject *second)
 static  PyObject *PyJPChar_add(PyObject *first, PyObject *second)
 {
 	JP_PY_TRY("PyJPChar_add");
-	JPClass *cls0 = PyJPValue_getJPClass(first);
-	JPClass *cls1 = PyJPValue_getJPClass(second);
+	JPClass *cls0 = charOperandClass(first);
+	JPClass *cls1 = charOperandClass(second);
 	if (cls0 != nullptr && cls1 != nullptr)
 	{
 		if (assertNotNullClass(first, cls0))

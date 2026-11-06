@@ -499,3 +499,19 @@ class JCharTestCase_2(common.JPypeTestCase):
         self.assertEqual(1 & JChar("x"), 0)
         self.assertEqual(JChar("x") | 1, 121)
         self.assertEqual(1 | JChar("x"), 121)
+
+    def testArithmeticWithNonCharJavaOperand(self):
+        Integer = jpype.JClass("java.lang.Integer")
+        # The other operand must not be read as a char just because it is a
+        # Java value.
+        c = JChar('a')
+        self.assertEqual(c + Integer(7), 104)
+        self.assertEqual(Integer(7) + c, 104)
+        self.assertEqual(c * JDouble(2.0), 194.0)
+        self.assertEqual(c - JInt(7), 90)
+        self.assertEqual(c & JInt(0x0f), 1)
+        for op in (lambda a, b: a + b, lambda a, b: b + a,
+                   lambda a, b: a - b, lambda a, b: a * b):
+            with self.assertRaises(TypeError):
+                op(c, JString('xyz'))
+        self.assertEqual(c + JChar('b'), 97 + 98)
