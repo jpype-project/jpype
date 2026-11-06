@@ -7,6 +7,11 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed the ``datetime`` to ``java.time.Instant`` conversion discarding
+    the UTC offset of an aware datetime and corrupting microseconds through a
+    float round trip.  Aware datetimes are now converted to UTC (naive ones
+    are still taken as UTC) and the sub-second part is computed exactly. #1522
+
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The

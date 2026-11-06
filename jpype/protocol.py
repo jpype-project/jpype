@@ -115,10 +115,14 @@ def _JMapConvert(jcls, obj):
 
 @_jcustomizer.JConversion("java.time.Instant", exact=datetime.datetime)
 def _JInstantConversion(jcls, obj):
-    utc = obj.replace(tzinfo=datetime.timezone.utc).timestamp()
-    sec = int(utc)
-    nsec = int((utc - sec) * 1e9)
-    return jcls.ofEpochSecond(sec, nsec)
+    # Naive datetimes are taken as UTC; aware ones are converted to it.
+    utc = datetime.timezone.utc
+    if obj.tzinfo is None or obj.utcoffset() is None:
+        obj = obj.replace(tzinfo=utc)
+    # Integer arithmetic keeps microseconds exact (a float timestamp does not).
+    delta = obj - datetime.datetime(1970, 1, 1, tzinfo=utc)
+    return jcls.ofEpochSecond(delta.days * 86400 + delta.seconds,
+                              delta.microseconds * 1000)
 
 
 # Types needed for SQL
