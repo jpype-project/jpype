@@ -7,6 +7,11 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
+  - Fixed a lone high surrogate in a Java string swallowing the next
+    3-byte character when converting to Python.  A high surrogate now
+    pairs only with a following low surrogate; any other unpaired surrogate
+    is reported the same way regardless of what follows it. #1538
+
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The

@@ -352,33 +352,38 @@ unsigned int JPEncodingJavaUTF8::fetch(std::istream& in) const
 		return -1;
 	}
 
-	// Surrogate code should be followed by 3 byte utf8 code
-	unsigned int next = in.peek();
-	if (next == (unsigned int) (-1) || (next & 0xf0) != 0xe0)
-		return out; // unpaired surrogate error.
+	// A high surrogate (0xD800-0xDBFF) must be followed by a 3 byte code in
+	// the low surrogate range (0xDC00-0xDFFF).  Anything else leaves it
+	// unpaired: return it alone and leave the next character unconsumed,
+	// rather than swallowing it into a bogus code point.
+	if ((out & 0xfc00) != 0xd800)
+		return out; // lone low surrogate
 
-	// Grab the low word for surrogate code
-	c0 = in.get();
+	unsigned int n[3];
+	int got = 0;
+	while (got < 3)
+	{
+		n[got] = in.get();
+		if (in.eof())
+			break;
+		got++;
+	}
+	if (got == 3 && (n[0] & 0xf0) == 0xe0
+			&& (n[1] & 0xc0) == 0x80 && (n[2] & 0xc0) == 0x80)
+	{
+		unsigned int next = ((n[0] & 0xf) << 12) + ((n[1] & 0x3f) << 6) + (n[2] & 0x3f);
+		if ((next & 0xfc00) == 0xdc00)
+		{
+			unsigned int q1 = (out & 0x3ff);
+			unsigned int q2 = (next & 0x3ff);
+			return 0x10000 + (q1 << 10) + q2;
+		}
+	}
 
-	// Note: we should technically check to see what the first byte is here.
-	// for a valid code point it must be 0xED.  But if the user has
-	// manually encoded an invalid string there is not much we can
-	// do as we already are pulling bytes for the next character assuming
-	// it was a valid coding. We don't really want to throw an exception
-	// because this routine can happen at any point that string is being
-	// passed, including reporting of an exception.
-	//
-	// Manually encoding invalid code points and asking them to be
-	// converted is undefined behavior, but I don't know the path
-	// to nethack.
-
-	c1 = in.get();
-	c2 = in.get();
-	next = ((c0 & 0xf) << 12) + ((c1 & 0x3f) << 6) + (c2 & 0x3f);
-	if (in.eof())
-		return -1;
-	unsigned int q1 = (out & 0x3ff);
-	unsigned int q2 = (next & 0x3ff);
-	return 0x10000 + (q1 << 10) + q2;
+	// Not a low surrogate: push back what was read and report the lone one.
+	in.clear();
+	for (int i = 0; i < got; i++)
+		in.unget();
+	return out;
 }
 
