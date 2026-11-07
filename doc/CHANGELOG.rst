@@ -7,15 +7,6 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
-  - Fixed several interpreter crashes from misuse of the class API, which now
-    raise Python exceptions: the private ``_canCast``, ``_cast``,
-    ``_canConvertToJava`` and ``_convertToJava`` methods and ``_hints`` on the
-    abstract bases ``JArray``, ``JException`` and ``JInterface``; a reflected
-    ``obj @ JClass`` or ``obj @ JPackage`` with a non-Java left operand;
-    ``issubclass()`` with a Java ``Class`` object that is not a Python type;
-    ``_jpype._collect()`` without arguments; and ``_jpype.gcStats()`` before
-    the JVM starts or after it is shut down. Part of #1526
-
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
