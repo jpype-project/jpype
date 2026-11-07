@@ -3,7 +3,7 @@
    rendered as one more bullet, with its own types nested beneath it.
    towncrier already indents continuation lines by 2 (all_bullets), hence the
    indent() widths are 2 less than the text column. #}
-- **{{ versiondata.version }}**
+- **{{ versiondata.version }} - {{ versiondata.date }}**
 
 {% for section, _ in sections.items() %}
 {% if section and sections[section] %}

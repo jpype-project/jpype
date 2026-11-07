@@ -10,8 +10,8 @@ Changelog entries (news fragments)
 
 The changelog in ``doc/CHANGELOG.rst`` is assembled at release time by
 `towncrier <https://towncrier.readthedocs.io/>`__.  Do not edit it
-directly; CI rejects pull requests that do.  Instead, every pull request with a user-visible change adds a
-short file to ``doc/changes/``, named::
+directly; CI rejects pull requests that do.  Instead, every pull request
+with a user-visible change adds a short file to ``doc/changes/``, named::
 
     doc/changes/<PR number>.<type>.rst
 
@@ -68,6 +68,6 @@ To preview how pending fragments will render::
 
     towncrier build --draft --version next
 
-At release time a maintainer runs ``towncrier build --version <version>``,
-which writes the entries into ``doc/CHANGELOG.rst`` and deletes the fragments
-(see ``doc/release.rst``).
+At release time a maintainer runs ``towncrier build``, which writes the
+entries into ``doc/CHANGELOG.rst`` under the new version and deletes the
+fragments (see ``doc/release.rst``).
