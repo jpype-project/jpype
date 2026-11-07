@@ -659,6 +659,30 @@ class ProxyTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             proxy.hashCode()
 
+    # Free-threaded runs (pytest-run-parallel): this counts process-wide gc
+    # objects, so once common.threadUnsafe is available on master, decorate
+    # this test with it.
+    def testInternalArgumentErrorsDoNotLeak(self):
+        import gc
+        gc.collect()
+        # Hold strong references to proxies left over from earlier tests.
+        # Their lifetime is otherwise tied to the Java side, which may
+        # release them while the loop runs and make the count drop; pinned
+        # here, the count can only change by what the loop itself leaks.
+        before = [o for o in gc.get_objects() if type(o) is _jpype._JProxy]
+        try:
+            for _ in range(100):
+                for bad in [(None, None, 5), (None, None, []),
+                            (None, None, [1]), ()]:
+                    with self.assertRaises(TypeError):
+                        _jpype._JProxy(*bad)
+            gc.collect()
+            after = sum(1 for o in gc.get_objects()
+                        if type(o) is _jpype._JProxy)
+            self.assertEqual(len(before), after)
+        finally:
+            del before
+
 
 @subrun.TestCase(individual=True)
 class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):
