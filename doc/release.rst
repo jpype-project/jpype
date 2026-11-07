@@ -32,10 +32,14 @@ Full process:
           Check the manylinux image for Linux
     - [ ] Update jpype/pyproject.toml `required-python` line to match the current builds.
     - [ ] Check patterns in .azure/scripts/build-wheels.sh
-    - [ ] Edit doc/CHANGELOG.rst
+    - [ ] Review the pending news fragments in doc/changes
+          ``towncrier build --draft --version {version}``
 - [ ] Create a release candidate
     - [ ] Bump the version to release
         ``bumpversion release``
+    - [ ] Assemble the changelog from the news fragments (this removes them)
+        ``towncrier build --version {version}``
+        ``git commit -m "Changelog for {version}"``
     - [ ] Send the release to be evaluated
         ``git push``
     - [ ] Verify CI on Azure  ([Azure](https://dev.azure.com/jpype-project/jpype/_build?definitionId=1))

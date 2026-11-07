@@ -5,6 +5,8 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 
+.. towncrier release notes start
+
 - **1.7.2.dev0**
 
   - Python collections forced by Java collections are now serialized and
