@@ -1,0 +1,31 @@
+name: Changelog
+
+# Fails a pull request that adds no news fragment to doc/changes/.
+# Add the "skip-changelog" label to a PR that needs none.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  news-fragment:
+    name: news fragment
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        # towncrier diffs against the base branch, so it needs the history.
+        fetch-depth: 0
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.x'
+    - name: Install towncrier
+      run: pip install towncrier
+    - name: Check for a news fragment
+      env:
+        BASE_REF: ${{ github.base_ref }}
+      run: towncrier check --compare-with "origin/$BASE_REF"

@@ -48,9 +48,15 @@ then add the fragment.  To reference an issue instead, name the file after
 the issue number.  Changes with no user impact (typos, test-only edits) need
 no fragment.
 
-To preview how pending fragments will render::
+CI fails a pull request that adds no fragment.  If a change really needs
+none, a maintainer can add the ``skip-changelog`` label to the pull request.
+To run the same check locally::
 
     pip install towncrier
+    towncrier check --compare-with origin/master
+
+To preview how pending fragments will render::
+
     towncrier build --draft --version next
 
 At release time a maintainer runs ``towncrier build --version <version>``,

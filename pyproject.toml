@@ -39,6 +39,7 @@ dependencies = [
 docs = [
     'sphinx',
     'sphinx-rtd-theme',
+    'towncrier',
 ]
 tests = [
     "pytest",
@@ -125,6 +126,8 @@ start_string = ".. towncrier release notes start\n"
 issue_format = "`#{issue} <https://github.com/jpype-project/jpype/issues/{issue}>`__"
 wrap = false
 all_bullets = true
+# The developer section's subdirectory, not a fragment (`towncrier check` is strict).
+ignore = ["dev"]
 
 # Sections: user-facing fragments go directly in doc/changes/, notes for people
 # working on JPype itself (build, internals, CI) go in doc/changes/dev/.
