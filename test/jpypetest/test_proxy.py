@@ -666,7 +666,10 @@ class ProxyTestCase(common.JPypeTestCase):
                     _jpype._JProxy(*bad)
         gc.collect()
         after = sum(1 for o in gc.get_objects() if type(o) is _jpype._JProxy)
-        self.assertEqual(before, after)
+        # Proxies left over from earlier tests can be released while this
+        # loop runs (Java decides when), so the count may drop; a leak would
+        # instead add one object per failed call.
+        self.assertLessEqual(after, before)
 
 
 @subrun.TestCase(individual=True)
