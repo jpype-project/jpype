@@ -7,11 +7,6 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
-  - Fixed ``JArray.of()`` crashing on a 0-dimensional buffer (now a
-    ``TypeError``), and raising ``ArrayIndexOutOfBoundsException`` for a buffer
-    with a zero-length axis such as ``(0, 3)`` or ``(2, 0, 3)``; it now returns
-    an empty array of that shape. Part of #1526
-
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
