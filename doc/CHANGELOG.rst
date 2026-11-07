@@ -7,11 +7,6 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
-  - Fixed public classes with a large constant pool (over 32767 entries) or a
-    string constant of 32 KB or more disappearing from ``dir(JPackage(...))``
-    and package contents.  The class-file scanner read the constant-pool
-    count and UTF8 lengths as signed values; they are now unsigned. #1531
-
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
