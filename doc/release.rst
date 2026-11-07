@@ -40,6 +40,9 @@ Full process:
     - [ ] Assemble the changelog from the news fragments (this removes them)
         ``towncrier build --version {version}``
         ``git commit -m "Changelog for {version}"``
+        A pull request carrying this commit (e.g. merging the release back
+        into master) edits doc/CHANGELOG.rst, so it needs the
+        ``skip-changelog`` label to pass CI.
     - [ ] Send the release to be evaluated
         ``git push``
     - [ ] Verify CI on Azure  ([Azure](https://dev.azure.com/jpype-project/jpype/_build?definitionId=1))
