@@ -7,17 +7,6 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
-  - Fixed several interpreter crashes that now raise Python exceptions:
-    reading or writing a field of a typed null object (now a
-    ``NullPointerException``); ``memoryview()`` of a null Java array; a
-    ``@JConversion`` function returning a primitive for a reference type,
-    returning an object of the wrong Java type, or a proxy of the wrong type
-    (the result is now checked); raising a null Java exception from a proxy
-    (now a ``NullPointerException``); using an uninitialized or re-initialized
-    ``synchronized`` monitor; reading ``__javaclass__`` of a proxy after the
-    JVM is shut down; and releasing one exported buffer of a Java array after
-    shutdown freeing the view shared with the others. Part of #1526
-
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
