@@ -23,7 +23,7 @@ import common
 try:
     import numpy as np
 except ImportError:  # pragma: no cover
-    np = None
+    np = None  # type: ignore[assignment]
 
 
 def _empty(ctype, *shape):
