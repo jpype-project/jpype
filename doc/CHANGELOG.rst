@@ -7,11 +7,6 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
-  - Fixed Java lambdas not being recognized on JDK 21 and later, where each
-    lambda got its own wrapper type (``Outer$$Lambda/0x...``) instead of being
-    treated as its functional interface.  The detection looked for
-    ``$Lambda$``, which only matches the naming used up to JDK 20. #1530
-
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
