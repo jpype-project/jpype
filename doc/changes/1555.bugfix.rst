@@ -1,0 +1,6 @@
+Fixed ``JClass(name, initialize=False)`` running the class's static
+initializer anyway.  Creating the wrapper resolved every field and method
+ID eagerly, and JNI initializes the declaring class when it does; they are
+now resolved on first use.  Without a ``loader`` the name was also always
+looked up with initialization on; ``initialize=False`` is now honored
+there too. #1529
