@@ -7,14 +7,6 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
-  - A Python proxy method's return value is now held to the same standard as
-    a method argument: it must convert implicitly to the declared Java return
-    type.  Returning ``1.5`` from a method declared to return ``int`` (or
-    ``long``/``short``/``byte``/``boolean``) used to be silently narrowed
-    through an explicit conversion and now raises ``TypeError``.  Integers,
-    and widening such as ``int`` or ``float`` to ``double``, are unaffected.
-    Use ``int(value)`` to narrow deliberately. #1540
-
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
