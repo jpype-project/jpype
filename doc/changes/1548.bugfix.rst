@@ -1,0 +1,4 @@
+Fixed ``with`` on a Java ``AutoCloseable`` silently swallowing an
+exception from ``close()`` when the statement ran inside an unrelated
+``except`` block.  ``__exit__`` now looks at its own exception argument
+rather than ``sys.exc_info()``. #1521
