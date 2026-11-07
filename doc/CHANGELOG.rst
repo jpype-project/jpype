@@ -7,14 +7,6 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
-  - Fixed javadoc docstring rendering: HTML entity decoding no longer skips
-    the character after an entity (``&lt;&gt;`` was decoded to ``<&gt;``),
-    no longer throws on a bare ``&`` or an unknown entity (which lost the
-    whole docstring), decodes hexadecimal and above-BMP numeric references,
-    and maps ``&#0;`` to U+FFFD instead of leaving a NUL.  A first word
-    longer than the line width no longer has its first character replaced
-    by a newline. #1523
-
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
