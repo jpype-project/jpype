@@ -1,0 +1,4 @@
+Fixed a lone high surrogate in a Java string swallowing the next
+3-byte character when converting to Python.  A high surrogate now
+pairs only with a following low surrogate; any other unpaired surrogate
+is reported the same way regardless of what follows it. #1538
