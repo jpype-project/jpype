@@ -7,12 +7,6 @@ Latest Changes:
 
 - **1.7.2.dev0**
 
-  - Fixed a Java class genuinely named like a mangled Python keyword (such
-    as ``pass_``) being listed by ``dir()`` but impossible to reach through
-    the package or ``from pkg import pass_``.  The lookup stripped the
-    underscore unconditionally; it now tries the name as written as well.
-    If both ``pass`` and ``pass_`` exist, ``pass_`` still means ``pass``. #1533
-
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer
     leaves Python threads in the garbage collector most of the time.  The
