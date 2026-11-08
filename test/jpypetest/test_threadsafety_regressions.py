@@ -315,3 +315,60 @@ assert grown < 150, "RSS grew by %d MB" % grown
 print("ARRAY EXPORT OK", flush=True)
 '''
         _run(script, "ARRAY EXPORT OK", timeout=180)
+
+
+class SlotTraverseRaceTest(unittest.TestCase):
+
+    def testTraverseWhileSlotsChange(self):
+        """tp_traverse reads the lazy slots without a lock.
+
+        This is only safe because every caller of tp_traverse stops the world
+        on free-threaded builds.  Replace __doc__/__annotations__ on shared
+        method objects while other threads collect and call
+        gc.get_referents(), which would visit freed objects otherwise.
+        """
+        script = r'''
+import gc
+import threading
+import jpype
+
+jpype.startJVM()
+s = jpype.JClass("java.lang.String")("x")
+methods = [getattr(s, n) for n in ("length", "trim", "isEmpty", "hashCode")] * 8
+stop = threading.Event()
+errors = []
+
+def writer(i):
+    try:
+        n = 0
+        while not stop.is_set():
+            m = methods[(i + n) % len(methods)]
+            m.__doc__ = "doc %d %d" % (i, n)   # a fresh object every time
+            m.__annotations__ = {"return": str(n)}
+            m.__doc__
+            n += 1
+    except BaseException as ex:
+        errors.append(ex)
+
+def collector():
+    try:
+        while not stop.is_set():
+            gc.collect()
+            for m in methods:
+                gc.get_referents(m)
+    except BaseException as ex:
+        errors.append(ex)
+
+threads = [threading.Thread(target=writer, args=(i,)) for i in range(4)]
+threads += [threading.Thread(target=collector) for _ in range(2)]
+for t in threads:
+    t.start()
+stop.wait(3)
+stop.set()
+for t in threads:
+    t.join(30)
+assert all(not t.is_alive() for t in threads), "hang"
+assert not errors, errors
+print("TRAVERSE OK", flush=True)
+'''
+        _run(script, "TRAVERSE OK", timeout=60)

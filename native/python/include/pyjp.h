@@ -104,16 +104,15 @@ inline void PyJPSlot_replace(PyObject *owner, PyObject **slot, PyObject *value)
 	Py_XDECREF(old);
 }
 
-// Visit a slot from tp_traverse. The visitor itself does not run Python code, so it is safe inside the section; the
-// temporary reference is dropped afterwards (outside of the section).
+// Visit a slot from tp_traverse. Read it directly, without the critical section or a temporary reference, like
+// CPython's own types do. On free-threaded builds every caller of tp_traverse stops the world first (the collector,
+// gc.get_referents and gc.get_referrers), so no other thread can replace the slot meanwhile; on GIL builds the GIL
+// excludes the writers. Taking a reference inside tp_traverse is outside its contract.
 inline int PyJPSlot_visit(PyObject *owner, PyObject **slot, visitproc visit, void *arg)
 {
-	PyObject *value = PyJPSlot_peek(owner, slot);
-	if (value == nullptr)
-		return 0;
-	int result = visit(value, arg);
-	Py_DECREF(value);
-	return result;
+	(void) owner;
+	Py_VISIT(*slot);
+	return 0;
 }
 
 // Detach a slot from tp_clear and return its reference. The caller owns the returned reference and must drop it
