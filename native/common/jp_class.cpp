@@ -482,29 +482,27 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
+// Returns the hints, or nullptr if the class has none usable.  A class whose
+// post load failed has no hints: it simply cannot be converted to, so overload
+// resolution moves on to the other candidates.  Raising here would break every
+// call that merely tests such a class as a candidate, e.g. foo("x") with the
+// overloads foo(Object) and foo(Failed).  The class itself is never handed out,
+// because PyJPClass_create raises for it.
 PyObject* JPClass::getHints()
 {
 	JPClassHostState state = m_HostState.load(std::memory_order_acquire);
-	if (state == JPClassHostState::complete)
+	if (state == JPClassHostState::complete
+			|| state == JPClassHostState::awaitingHints)
 		return m_HintsReady.load(std::memory_order_acquire);
 	if (state == JPClassHostState::failed)
-	{
-		JP_RAISE(PyExc_RuntimeError,
-				"Java class '" + m_CanonicalName + "' failed to initialize");
-	}
-	if (state == JPClassHostState::awaitingHints)
-		return m_HintsReady.load(std::memory_order_acquire);
+		return nullptr;
 	// Wait for _jclassPost to finish before using the host in another thread.
 	// The wrapper lock is reentrant for calls made by the creating thread,
 	// which legitimately sees its own half built class while it recurses.
 	JPJavaFrame frame = JPJavaFrame::outer();
 	frame.newWrapper(this);
-	state = m_HostState.load(std::memory_order_acquire);
-	if (state == JPClassHostState::failed)
-	{
-		JP_RAISE(PyExc_RuntimeError,
-				"Java class '" + m_CanonicalName + "' failed to initialize");
-	}
+	if (m_HostState.load(std::memory_order_acquire) == JPClassHostState::failed)
+		return nullptr;
 	return m_HintsReady.load(std::memory_order_acquire);
 }
 

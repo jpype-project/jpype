@@ -108,12 +108,19 @@ caller.join(5)
 assert not creator.is_alive() and not caller.is_alive(), "initialization deadlock"
 if sys.argv[2] in ("fail", "fail-java", "late-fail"):
     assert len(errors) == 2, errors
-    # One error is the customizer failure itself; the other is the concurrent
-    # conversion, which must observe the permanent failure and raise instead
-    # of using the half-built class.
-    assert all(isinstance(ex, RuntimeError) for ex in errors), errors
-    assert any("failed to initialize" in str(ex) for ex in errors), errors
+    # One error is the customizer failure itself.  The other is the
+    # concurrent call: it waited for the class, saw that it failed and found
+    # no usable conversion, instead of using the half-built class.
+    assert sum(isinstance(ex, RuntimeError) and "intentional" in str(ex)
+               for ex in errors) == 1, errors
+    assert sum(isinstance(ex, TypeError) for ex in errors) == 1, errors
     assert not converted.is_set(), "conversion used a failed class"
+    # A failed class only drops out as a candidate; the other overloads
+    # still resolve.  pick(Object) is never an exact match, so pick(Custom)
+    # is always tested as a candidate.
+    assert harness.pick("value") == "Object"
+    assert harness.pick(jpype.JString("value")) == "Object"
+    assert harness.pick(1) == "Object"
     # The failure is permanent: a later lookup must raise, not return the
     # half-built wrapper.
     try:

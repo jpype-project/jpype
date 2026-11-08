@@ -967,7 +967,7 @@ static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 	JPClass *cls = self->m_Class;
 	JPPyObject hints = JPPyObject::use(cls->getHints());
 	if (hints.get() == nullptr)
-		Py_RETURN_NONE; // GCOVR_EXCL_LINE only triggered if JClassPost failed
+		Py_RETURN_NONE; // no hints yet, or the class failed to initialize
 
 	// The conversion information is built once and then published through a
 	// release/acquire flag.  Exactly one thread may build it; the others wait
