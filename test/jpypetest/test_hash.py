@@ -22,9 +22,6 @@ import sys
 
 class HashTestCase(common.JPypeTestCase):
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     def testHashString(self):
         self.assertIsNotNone(hash(jpype.java.lang.String("upside down")))
         self.assertIsNotNone(hash(jpype.JString("upside down")))

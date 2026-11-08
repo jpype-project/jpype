@@ -20,8 +20,6 @@ import common
 
 
 class ClosedTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testObjects(self):
         from jpype import java

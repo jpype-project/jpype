@@ -28,9 +28,6 @@ extern "C"
 static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 {
 	JP_PY_TRY("PyJPProxy_new");
-	auto *self = (PyJPProxy*) type->tp_alloc(type, 0);
-	JP_PY_CHECK();
-
 	// Parse arguments
 	PyObject *instance;
 	PyObject *dispatch;
@@ -64,10 +61,23 @@ static PyObject *PyJPProxy_new(PyTypeObject *type, PyObject *args, PyObject *kwa
 		interfaces.push_back(cls);
 	}
 
-	if (dispatch == Py_None)
-		self->m_Proxy = new JPProxyDirect(self, interfaces);
-	else
-		self->m_Proxy = new JPProxyIndirect(self, interfaces);
+	// Allocate only after every argument has been validated so the error
+	// paths above have nothing to release.
+	auto *self = (PyJPProxy*) type->tp_alloc(type, 0);
+	JP_PY_CHECK();
+
+	try
+	{
+		if (dispatch == Py_None)
+			self->m_Proxy = new JPProxyDirect(self, interfaces);
+		else
+			self->m_Proxy = new JPProxyIndirect(self, interfaces);
+	} catch (...)
+	{
+		// dealloc tolerates a null m_Proxy/m_Target/m_Dispatch
+		Py_DECREF(self);
+		throw;
+	}
 	self->m_Target = instance;
 	self->m_Dispatch = dispatch;
 	self->m_Convert = (convert != 0);

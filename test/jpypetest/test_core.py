@@ -22,8 +22,6 @@ from jpype.types import *
 
 
 class JCharTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testShutdownHook(self):
         Thread = JClass("java.lang.Thread")

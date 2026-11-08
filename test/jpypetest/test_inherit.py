@@ -24,9 +24,6 @@ import common
 class InheritTestCase(common.JPypeTestCase):
     """ test for isinstance and issubclass """
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     def assertIsSubclass(self, a, b):
         if not issubclass(a, b):
             raise AssertionError("'%s' is not a subclass of '%s'" % (a, b))

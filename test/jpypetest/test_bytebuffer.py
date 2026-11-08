@@ -21,8 +21,6 @@ import common
 
 
 class ByteBufferCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testConvertToDirectBuffer(self):
         a = bytearray([0, 0, 0, 0])

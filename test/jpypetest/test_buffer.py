@@ -35,8 +35,6 @@ def haveNumpy():
 
 
 class BufferTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testToMemoryview(self):
         data = [1, 2, 3, 4, 5]

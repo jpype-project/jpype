@@ -23,9 +23,6 @@ class GenericTestCase(common.JPypeTestCase):
     """ Test for JClass with generic types
     """
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     def testArray0(self):
         cls = jpype.JClass('java.util.ArrayList<>')
 
