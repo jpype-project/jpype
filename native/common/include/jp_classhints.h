@@ -107,30 +107,32 @@ public:
 private:
 	using ConversionList = std::vector<JPConversion*>;
 
-	using Snapshot = std::shared_ptr<const ConversionList>;
-
 	/** Publish a new conversion list built from the current one.
 	 *
 	 * The list is read on every overload resolution, possibly while another
-	 * thread registers a JConversion.  Readers take a reference-counted,
-	 * immutable snapshot (an atomic shared_ptr load, which never runs Python
-	 * code) and iterate it without any lock held; a replaced snapshot is
-	 * freed when its last reader lets go.  Writers serialize on m_Lock, copy
-	 * the current snapshot, apply their change and publish the copy.  The
-	 * conversions themselves live as long as the hints (m_Owned), so a
-	 * pointer from an old snapshot always stays valid.
+	 * thread registers a JConversion.  Readers load the current list with a
+	 * single acquire load and iterate it without any lock or reference count.
+	 * Writers serialize on m_Lock, copy the current list, apply their change
+	 * and publish the copy with a release store.
+	 *
+	 * A reader may still be iterating a list after it was replaced, so no
+	 * published list is ever freed before the hints themselves (m_Lists).
+	 * Registrations are rare and happen mostly at startup, so the retained
+	 * lists cost little.  The conversions live as long as the hints too
+	 * (m_Owned), so every pointer in an old list stays valid.
 	 */
 	template <class Edit>
 	void update(Edit edit);
 
-	Snapshot snapshot() const
+	const ConversionList *snapshot() const
 	{
-		return std::atomic_load(&m_Conversions);
+		return m_Conversions.load(std::memory_order_acquire);
 	}
 
 	std::mutex m_Lock;
-	std::vector<std::unique_ptr<JPConversion>> m_Owned; // owns every conversion, guarded by m_Lock
-	Snapshot m_Conversions;                              // accessed only through std::atomic_load/store
+	std::vector<std::unique_ptr<JPConversion>> m_Owned;         // owns every conversion, guarded by m_Lock
+	std::vector<std::unique_ptr<const ConversionList>> m_Lists; // every list ever published, guarded by m_Lock
+	std::atomic<const ConversionList*> m_Conversions{nullptr};  // the current list, one of m_Lists
 } ;
 
 extern JPConversion *hintsConversion;

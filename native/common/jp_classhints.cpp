@@ -103,26 +103,28 @@ JPMethodMatch::JPMethodMatch(JPJavaFrame &frame, JPPyObjectVector& args, bool ca
 JPConversion::~JPConversion() = default;
 JPClassHints::JPClassHints() = default;
 
-// The conversions are owned by m_Owned and released with it.  No reader can
-// be active any more: the hints object is dying.
+// The conversions and every published list are owned by m_Owned and m_Lists
+// and released with them.  No reader can be active any more: the hints object
+// is dying.
 JPClassHints::~JPClassHints() = default;
 
 template <class Edit>
 void JPClassHints::update(Edit edit)
 {
 	std::lock_guard<std::mutex> guard(m_Lock);
-	Snapshot current = snapshot();
-	auto next = std::make_shared<ConversionList>();
-	if (current)
-		*next = *current;
+	const ConversionList *current = m_Conversions.load(std::memory_order_relaxed);
+	auto next = current ? std::make_unique<ConversionList>(*current)
+			: std::make_unique<ConversionList>();
 	edit(*next);
-	std::atomic_store(&m_Conversions, Snapshot(std::move(next)));
+	const ConversionList *published = next.get();
+	m_Lists.emplace_back(std::move(next));
+	m_Conversions.store(published, std::memory_order_release);
 }
 
 JPMatch::Type JPClassHints::getConversion(JPMatch& match, JPClass *cls)
 {
 	JPConversion *best = nullptr;
-	Snapshot conversions = snapshot();
+	const ConversionList *conversions = snapshot();
 	if (!conversions)
 		return match.type = JPMatch::_none;
 	for (auto & conversion : *conversions)
@@ -354,7 +356,7 @@ void JPClassHints::excludeConversion(PyObject *type)
 
 void JPClassHints::getInfo(JPClass *cls, JPConversionInfo &info)
 {
-	Snapshot conversions = snapshot();
+	const ConversionList *conversions = snapshot();
 	if (!conversions)
 		return;
 	for (auto conversion : *conversions)
