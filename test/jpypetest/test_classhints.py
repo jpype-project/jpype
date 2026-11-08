@@ -114,7 +114,7 @@ class ClassHintsTestCase(common.JPypeTestCase):
         def ClassCustomizer(jcls, obj):
             return obj.proxy
 
-        hints = jpype.JClass('java.lang.Class')._hints
+        hints = jpype.JClass('java.lang.Class')._conversionInfo()
         self.assertTrue(ClassProxy in hints.implicit)
 
     @common.threadUnsafe  # registers a process-wide conversion
@@ -124,7 +124,7 @@ class ClassHintsTestCase(common.JPypeTestCase):
         def ArrayCustomizer(jcls, obj):
             return obj.proxy
 
-        hints = jpype.JClass(jpype.JInt[:])._hints
+        hints = jpype.JClass(jpype.JInt[:])._conversionInfo()
         self.assertTrue(ArrayProxy in hints.implicit)
 
     @common.threadUnsafe  # registers a process-wide conversion
@@ -134,5 +134,5 @@ class ClassHintsTestCase(common.JPypeTestCase):
         def STringCustomizer(jcls, obj):
             return obj.proxy
 
-        hints = jpype.JClass("java.lang.String")._hints
+        hints = jpype.JClass("java.lang.String")._conversionInfo()
         self.assertTrue(StringProxy in hints.implicit)

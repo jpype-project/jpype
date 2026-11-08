@@ -198,17 +198,18 @@ else:
             self.assertTrue(cls._isComplete(), cls)
             hints = cls._hints
             self.assertIsNotNone(hints, cls)
-            # The conversion information is populated exactly once.
-            self.assertTrue(hasattr(hints, "returns"), cls)
-            self.assertTrue(hasattr(hints, "implicit"), cls)
-            self.assertTrue(hasattr(hints, "exact"), cls)
-            self.assertTrue(hasattr(hints, "explicit"), cls)
-            self.assertTrue(hasattr(hints, "none"), cls)
-            self.assertTrue(hasattr(hints, "attributes"), cls)
             self.assertIs(cls._hints, hints, cls)
+            info = cls._conversionInfo()
+            for key in ("returns", "implicit", "exact", "explicit", "none",
+                        "attributes"):
+                self.assertIsInstance(getattr(info, key), list, (cls, key))
 
     def testConcurrentHintsAccessIsStable(self):
-        """The conversion info is one complete object, not a partial mix."""
+        """Concurrent readers share one hints object and get complete info.
+
+        Each _conversionInfo() call builds its own lists, so no reader can see
+        another reader's half built result.
+        """
         import threading
         import _jpype
 
@@ -223,8 +224,9 @@ else:
             try:
                 barrier.wait()
                 hints = cls._hints
+                info = cls._conversionInfo()
                 results.append(
-                    (hints, tuple(len(getattr(hints, key)) for key in keys)))
+                    (hints, tuple(len(getattr(info, key)) for key in keys)))
             except BaseException as ex:
                 errors.append(ex)
 

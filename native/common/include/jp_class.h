@@ -107,30 +107,6 @@ public:
 
 	PyObject* getHints();
 
-	/** Conversion information on the hints object is built lazily exactly
-	 * once.  This flag publishes it with release/acquire ordering.
-	 */
-	bool isHintsInfoReady() const
-	{
-		return m_HintsInfoReady.load(std::memory_order_acquire);
-	}
-
-	long getHintsInfoVersion() const
-	{
-		return m_HintsInfoVersion.load(std::memory_order_acquire);
-	}
-
-	void completeHintsInfo(long version)
-	{
-		// Both stores are release.  On the first build a reader synchronizes
-		// through the flag.  On a rebuild the flag is already true, so the
-		// flag store orders nothing new; the reader synchronizes through the
-		// version instead (it compares it with acquire), which must therefore
-		// be a release store too.
-		m_HintsInfoVersion.store(version, std::memory_order_release);
-		m_HintsInfoReady.store(true, std::memory_order_release);
-	}
-
 public:
 	void ensureMembers(JPJavaFrame& frame);
 
@@ -301,8 +277,6 @@ protected:
 	JPPyObject           m_Hints;
 	std::atomic<PyObject*> m_HintsReady{nullptr};
 	std::atomic<JPClassHostState> m_HostState{JPClassHostState::uninitialized};
-	std::atomic<bool>    m_HintsInfoReady{false};
-	std::atomic<long>    m_HintsInfoVersion{-1};
 } ;
 
 #endif // _JPPOBJECTTYPE_H_

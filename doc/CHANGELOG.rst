@@ -21,11 +21,14 @@ Latest Changes:
     holds a lock while calling Java or Python, and the garbage collector
     visits those slots through the same protocol.
 
-  - Fixed a race reading the conversion information behind ``_hints``: the
-    getter now serializes the population and publishes it only when every
-    list is complete, so another thread can no longer observe a partially
-    filled ``JClassHints``.  The result is cached until a ``JConversion`` or
-    exclusion is registered, so dynamically added conversions still appear.
+  - Fixed a race reading the conversion information of a class.  The six
+    introspection lists (``returns``, ``implicit``, ``exact``, ``explicit``,
+    ``none``, ``attributes``) were stored as attributes on the shared
+    ``JClassHints`` object, where concurrent readers could see a partially
+    filled or outdated set.  They are now built per call by the private
+    ``JClass._conversionInfo()``, which returns a fresh namespace, and
+    ``JClass._hints`` returns only the hints object.  Nothing in JPype reads
+    these lists; they exist for introspection.
 
   - Fixed a race in Java package scanning on free-threaded Python.  Jar
     file systems are closed when too many are open, so package contents and

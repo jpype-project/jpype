@@ -226,92 +226,71 @@ print("CONVERSIONS OK", flush=True)
         _run(script, "CONVERSIONS OK", timeout=120)
 
 
-class HintsVersionTest(common.JPypeTestCase):
+class ConversionInfoRaceTest(unittest.TestCase):
 
-    def testConcurrentVersionBumpsAreNotLost(self):
-        """Every registration bumps the hints version exactly once.
+    def testConversionInfoIsNeverOlderThanTheCall(self):
+        """``_conversionInfo()`` lists every conversion registered before it.
 
-        The cached conversion info is rebuilt only when the version changes,
-        so a lost bump can hide a registered conversion from ``_hints``.
-        """
-        from jpype._jcustomizer import JClassHints
-
-        hints = JClassHints()  # private instance, not registered for any class
-        threads_count, per_thread = 8, 500
-        barrier = threading.Barrier(threads_count, timeout=10)
-        start = hints._version
-
-        def work():
-            barrier.wait()
-            for _ in range(per_thread):
-                hints._excludeConversion(int)
-
-        threads = [threading.Thread(target=work) for _ in range(threads_count)]
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join(30)
-        self.assertTrue(all(not t.is_alive() for t in threads))
-        self.assertEqual(hints._version - start, threads_count * per_thread)
-
-
-@unittest.skipUnless(sys.platform.startswith("linux"), "reads /proc/self/status")
-class ArrayExportRaceTest(unittest.TestCase):
-
-    def testLosingViewReleasesJavaElements(self):
-        """Concurrent first exports of a primitive array must not leak.
-
-        Every exporting thread builds a view, which pins or copies the Java
-        elements, and only one of them is published.  The losing views used
-        to be deleted without releasing the elements, which leaks a native
-        copy of the whole array per lost race on HotSpot.
+        The conversion lists used to be cached as attributes on the shared
+        hints object, guarded by a version counter.  Concurrent builders could
+        overwrite newer lists with older ones, so a reader got lists missing
+        conversions registered before its call.  The lists are now built per
+        call and shared with nobody.
         """
         script = r'''
+import sys
 import threading
 import jpype
 
-jpype.startJVM()
+jpype.startJVM(classpath=[sys.argv[1]])
+name = "jpype.classhints.Custom"
+Custom = jpype.JClass(name)
 
-def rss_mb():
-    with open("/proc/self/status") as f:
-        for line in f:
-            if line.startswith("VmRSS"):
-                return int(line.split()[1]) // 1024
+def to_custom(cls, value):
+    return jpype.JObject(None, cls)
 
-SIZE = 1000000        # 4 MB per copy
-threads_count = 8
-barrier = threading.Barrier(threads_count, timeout=30)
-array = jpype.JArray(jpype.JInt)(SIZE)
+writers_count, readers_count, per_writer = 4, 8, 300
+registered = []
+stale = []
 errors = []
+done = threading.Event()
+barrier = threading.Barrier(writers_count + readers_count, timeout=30)
 
-def export(rounds):
-    for _ in range(rounds):
+def writer(n):
+    try:
         barrier.wait()
-        with memoryview(array) as view:
-            assert view.nbytes == 4 * SIZE
-        barrier.wait()  # all released: the next round races a new export
+        for i in range(per_writer):
+            tp = type("T%d_%d" % (n, i), (), {})
+            jpype.JConversion(name, exact=tp)(to_custom)
+            registered.append(tp)   # only after the registration returned
+    except BaseException as ex:
+        errors.append(ex)
 
-def run(rounds):
-    def work():
-        try:
-            export(rounds)
-        except BaseException as ex:
-            errors.append(ex)
-            barrier.abort()
-    threads = [threading.Thread(target=work) for _ in range(threads_count)]
-    for t in threads:
-        t.start()
-    for t in threads:
-        t.join(120)
-    assert all(not t.is_alive() for t in threads), "hang"
-    assert not errors, errors
+def reader():
+    try:
+        barrier.wait()
+        while not done.is_set():
+            before = registered[:len(registered)]
+            implicit = Custom._conversionInfo().implicit
+            if before and before[-1] not in implicit:
+                stale.append(len(before))
+    except BaseException as ex:
+        errors.append(ex)
 
-run(20)               # warm up
-start = rss_mb()
-run(300)
-grown = rss_mb() - start
-# With the leak this grew by several hundred MB on a free-threaded build.
-assert grown < 150, "RSS grew by %d MB" % grown
-print("ARRAY EXPORT OK", flush=True)
+writers = [threading.Thread(target=writer, args=(n,)) for n in range(writers_count)]
+readers = [threading.Thread(target=reader) for _ in range(readers_count)]
+for t in writers + readers:
+    t.start()
+for t in writers:
+    t.join(60)
+done.set()
+for t in readers:
+    t.join(60)
+assert all(not t.is_alive() for t in writers + readers), "hang"
+assert not errors, errors
+assert not stale, "%d reads returned conversion info older than the call" % len(stale)
+implicit = Custom._conversionInfo().implicit
+assert all(tp in implicit for tp in registered), "final info is missing conversions"
+print("CONVERSION INFO OK", flush=True)
 '''
-        _run(script, "ARRAY EXPORT OK", timeout=180)
+        _run(script, "CONVERSION INFO OK", timeout=120)

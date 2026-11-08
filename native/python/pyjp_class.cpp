@@ -964,39 +964,21 @@ static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 {
 	JP_PY_TRY("PyJPClass_hints");
 	PyJPModule_getContext();
-	JPClass *cls = self->m_Class;
-	JPPyObject hints = JPPyObject::use(cls->getHints());
+	JPPyObject hints = JPPyObject::use(self->m_Class->getHints());
 	if (hints.get() == nullptr)
 		Py_RETURN_NONE; // no hints yet, or the class failed to initialize
+	return hints.keep();
+	JP_PY_CATCH(nullptr);
+}
 
-	// The conversion information is built once and then published through a
-	// release/acquire flag.  Exactly one thread may build it; the others wait
-	// and then pick up the finished attributes.
-	//
-	// JClassHints bumps "_version" whenever a conversion is registered.  A
-	// cached build is only reusable while the version still matches, so a
-	// JConversion added after the first access is picked up on the next one.
-	long version = -1;
-	PyObject *versionObj = PyObject_GetAttrString(hints.get(), "_version");
-	if (versionObj != nullptr)
-	{
-		version = PyLong_AsLong(versionObj);
-		Py_DECREF(versionObj);
-		if (PyErr_Occurred())
-			PyErr_Clear();
-	} else
-		PyErr_Clear();
-	if (cls->isHintsInfoReady() && cls->getHintsInfoVersion() == version)
-		return hints.keep();
-
-	// Not built yet (or stale).  Concurrent callers may each build it; the
-	// results are identical for the same version and every attribute store is
-	// atomic, so the duplicate work is harmless.  Waiting for another builder
-	// instead could deadlock: building enters Java and may block on the type
-	// factory monitor, whose holder can be running customizers that come back
-	// here.
-
-	// Copy in info.
+// Describe which Python types the conversion rules of this class accept and
+// return, sorted into six lists, as a types.SimpleNamespace.  It is built on
+// every call and shared with nobody, so concurrent callers and concurrent
+// JConversion registrations need no coordination.  Only introspection uses it.
+static PyObject *PyJPClass_conversionInfo(PyJPClass *self, PyObject *)
+{
+	JP_PY_TRY("PyJPClass_conversionInfo");
+	PyJPModule_getContext();
 	JPConversionInfo info;
 	JPPyObject ret = JPPyObject::call(PyList_New(0));
 	JPPyObject implicit = JPPyObject::call(PyList_New(0));
@@ -1010,15 +992,16 @@ static PyObject *PyJPClass_hints(PyJPClass *self, PyObject *closure)
 	info.exact = exact.get();
 	info.expl = expl.get();
 	info.none = none.get();
-	cls->getConversionInfo(info);
-	PyObject_SetAttrString(hints.get(), "returns", ret.get());
-	PyObject_SetAttrString(hints.get(), "implicit", implicit.get());
-	PyObject_SetAttrString(hints.get(), "exact", exact.get());
-	PyObject_SetAttrString(hints.get(), "explicit", expl.get());
-	PyObject_SetAttrString(hints.get(), "none", none.get());
-	PyObject_SetAttrString(hints.get(), "attributes", attribs.get());
-	cls->completeHintsInfo(version);
-	return hints.keep();
+	self->m_Class->getConversionInfo(info);
+
+	JPPyObject kwargs = JPPyObject::call(Py_BuildValue("{sOsOsOsOsOsO}",
+			"returns", ret.get(), "implicit", implicit.get(),
+			"exact", exact.get(), "explicit", expl.get(),
+			"none", none.get(), "attributes", attribs.get()));
+	JPPyObject types = JPPyObject::call(PyImport_ImportModule("types"));
+	JPPyObject ns = JPPyObject::call(PyObject_GetAttrString(types.get(), "SimpleNamespace"));
+	JPPyObject args = JPPyObject::call(PyTuple_New(0));
+	return PyObject_Call(ns.get(), args.get(), kwargs.get());
 	JP_PY_CATCH(nullptr);
 }
 
@@ -1376,6 +1359,7 @@ static PyMethodDef classMethods[] = {
 	{"__subclasscheck__", (PyCFunction) PyJPClass_subclasscheck, METH_O, ""},
 	{"mro", (PyCFunction) PyJPClass_mro, METH_NOARGS, ""},
 	{"_canConvertToJava", (PyCFunction) PyJPClass_canConvertToJava, METH_O, ""},
+	{"_conversionInfo", (PyCFunction) PyJPClass_conversionInfo, METH_NOARGS, ""},
 	{"_convertToJava", (PyCFunction) PyJPClass_convertToJava, METH_O, ""},
 	{"_cast", (PyCFunction) PyJPClass_cast, METH_O, ""},
 	{"_canCast", (PyCFunction) PyJPClass_canCast, METH_O, ""},

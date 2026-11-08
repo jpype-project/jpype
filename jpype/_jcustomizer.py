@@ -15,17 +15,10 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
-import threading
 
 import _jpype
 
 __all__ = ['JImplementationFor', 'JConversion']
-
-# Guards JClassHints._version.  "+= 1" is a read-modify-write: on the
-# free-threaded build two concurrent registrations could both store the same
-# value, and the cached conversion info would never pick up the second one.
-# Registrations are rare, so one lock for all hints is enough.
-_version_lock = threading.Lock()
 
 # Member types that are copied from the prototype
 _jcopymembers = (str, property, staticmethod, classmethod)
@@ -246,25 +239,6 @@ class JClassHints(_jpype._JClassHints):
         self.bases = []
         self.implementations = []
         self.instantiated = False
-        # Bumped whenever a conversion changes, so the cached conversion
-        # information in _JClass._hints is rebuilt on the next access.
-        self._version = 0
-
-    def _bumpVersion(self):
-        with _version_lock:
-            self._version += 1
-
-    def _addTypeConversion(self, *args):
-        super()._addTypeConversion(*args)
-        self._bumpVersion()
-
-    def _addAttributeConversion(self, *args):
-        super()._addAttributeConversion(*args)
-        self._bumpVersion()
-
-    def _excludeConversion(self, *args):
-        super()._excludeConversion(*args)
-        self._bumpVersion()
 
     def registerClassBase(self, base):
         """ (internal) Add an implementation for a class
