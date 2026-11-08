@@ -253,3 +253,65 @@ class HintsVersionTest(common.JPypeTestCase):
             t.join(30)
         self.assertTrue(all(not t.is_alive() for t in threads))
         self.assertEqual(hints._version - start, threads_count * per_thread)
+
+
+@unittest.skipUnless(sys.platform.startswith("linux"), "reads /proc/self/status")
+class ArrayExportRaceTest(unittest.TestCase):
+
+    def testLosingViewReleasesJavaElements(self):
+        """Concurrent first exports of a primitive array must not leak.
+
+        Every exporting thread builds a view, which pins or copies the Java
+        elements, and only one of them is published.  The losing views used
+        to be deleted without releasing the elements, which leaks a native
+        copy of the whole array per lost race on HotSpot.
+        """
+        script = r'''
+import threading
+import jpype
+
+jpype.startJVM()
+
+def rss_mb():
+    with open("/proc/self/status") as f:
+        for line in f:
+            if line.startswith("VmRSS"):
+                return int(line.split()[1]) // 1024
+
+SIZE = 1000000        # 4 MB per copy
+threads_count = 8
+barrier = threading.Barrier(threads_count, timeout=30)
+array = jpype.JArray(jpype.JInt)(SIZE)
+errors = []
+
+def export(rounds):
+    for _ in range(rounds):
+        barrier.wait()
+        with memoryview(array) as view:
+            assert view.nbytes == 4 * SIZE
+        barrier.wait()  # all released: the next round races a new export
+
+def run(rounds):
+    def work():
+        try:
+            export(rounds)
+        except BaseException as ex:
+            errors.append(ex)
+            barrier.abort()
+    threads = [threading.Thread(target=work) for _ in range(threads_count)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join(120)
+    assert all(not t.is_alive() for t in threads), "hang"
+    assert not errors, errors
+
+run(20)               # warm up
+start = rss_mb()
+run(300)
+grown = rss_mb() - start
+# With the leak this grew by several hundred MB on a free-threaded build.
+assert grown < 150, "RSS grew by %d MB" % grown
+print("ARRAY EXPORT OK", flush=True)
+'''
+        _run(script, "ARRAY EXPORT OK", timeout=180)

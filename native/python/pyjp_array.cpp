@@ -267,8 +267,8 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 // object; without it, concurrent exports create several views, lose counts and delete a view twice.
 //
 // Building a view is expensive (allocation, class lookup, JNI array access for multi-dimensional arrays), so it happens
-// outside the critical section. The first thread to publish wins and the losing view is deleted; the section therefore
-// only guards the pointer and the reference count.
+// outside the critical section. The first thread to publish wins; the losing view gives its Java elements back and is
+// deleted. The section therefore only guards the pointer and the reference count.
 static void PyJPArray_acquireView(PyJPArray *self, jobject collection, Py_buffer *out)
 {
 	JPArrayView *view = nullptr;
@@ -301,7 +301,13 @@ static void PyJPArray_acquireView(PyJPArray *self, jobject collection, Py_buffer
 			view = self->m_View;
 			Py_END_CRITICAL_SECTION();
 		}
-		delete created;
+		// Another thread published first.  Our view pinned or copied the
+		// Java elements in its constructor; give them back before deleting it.
+		if (created != nullptr)
+		{
+			created->discard();
+			delete created;
+		}
 	}
 	*out = view->m_Buffer;
 }
