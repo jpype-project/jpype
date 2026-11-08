@@ -13,19 +13,20 @@ Latest Changes:
   - A class whose customizer (``@JImplementationFor``) or post-load step
     fails is now marked permanently failed.  Later lookups raise
     ``RuntimeError`` instead of returning a half-built wrapper with no hints,
-    inner classes, or customizers.
+    inner classes, or customizers.  Overload resolution treats such a class
+    as not convertible, so a call that matches another overload still works.
 
   - Fixed a lock-order inversion between the class-documentation lock and
-    the Java type-factory monitor.  Documentation, ``__annotations__`` and
-    ``__code__`` are now built by a per-slot single-flight guard that never
-    holds a lock while calling Java or Python, and the garbage collector
-    visits those slots through the same protocol.
+    the Java type-factory monitor.  The lock is gone: documentation,
+    ``__annotations__`` and ``__code__`` are computed without holding any
+    lock.  Threads that access them for the first time at once may each
+    compute the value, but only the first one published is kept, so every
+    caller sees the same object.
 
-  - Fixed a race reading the conversion information behind ``_hints``: the
-    getter now serializes the population and publishes it only when every
-    list is complete, so another thread can no longer observe a partially
-    filled ``JClassHints``.  The result is cached until a ``JConversion`` or
-    exclusion is registered, so dynamically added conversions still appear.
+  - Fixed a race between registering a ``JConversion`` (or an exclusion)
+    and resolving calls on other threads.  The per-class conversion list was
+    appended to while other threads iterated it.  Every change now publishes
+    a new immutable list, which readers use without taking a lock.
 
   - Fixed a race in Java package scanning on free-threaded Python.  Jar
     file systems are closed when too many are open, so package contents and
