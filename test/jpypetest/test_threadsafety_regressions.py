@@ -372,3 +372,47 @@ assert not errors, errors
 print("TRAVERSE OK", flush=True)
 '''
         _run(script, "TRAVERSE OK", timeout=60)
+
+
+class ClasspathCustomizerDeadlockTest(unittest.TestCase):
+
+    def testAddClassPathFromCustomizerWhileAnotherThreadAdds(self):
+        """addClassPath() must not call Java while holding the classpath lock.
+
+        Loading a path into the running JVM creates class wrappers, which
+        takes the type factory monitor.  A customizer runs with that monitor
+        held; if it calls addClassPath() while another thread holds the
+        classpath lock and waits for the monitor, neither can proceed.
+        """
+        script = r'''
+import sys
+import tempfile
+import threading
+import time
+import jpype
+
+in_customizer = threading.Event()
+first, second = tempfile.mkdtemp(), tempfile.mkdtemp()
+
+@jpype.JImplementationFor("jpype.classhints.Custom")
+class _Customizer:
+    def __jclass_init__(cls):
+        # Runs with the type factory monitor held.
+        in_customizer.set()
+        time.sleep(0.5)               # let the other thread enter addClassPath
+        jpype.addClassPath(second)
+
+jpype.startJVM(classpath=[sys.argv[1]])
+creator = threading.Thread(target=lambda: jpype.JClass("jpype.classhints.Custom"), daemon=True)
+creator.start()
+assert in_customizer.wait(10), "customizer did not run"
+adder = threading.Thread(target=lambda: jpype.addClassPath(first), daemon=True)
+adder.start()
+creator.join(15)
+adder.join(15)
+assert not creator.is_alive() and not adder.is_alive(), "classpath deadlock"
+paths = jpype.getClassPath(env=False)
+assert first in paths and second in paths, paths
+print("CLASSPATH OK", flush=True)
+'''
+        _run(script, "CLASSPATH OK", timeout=60)

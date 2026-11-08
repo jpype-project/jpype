@@ -37,10 +37,13 @@ Latest Changes:
     thread-local, so parallel tests can no longer clear or observe another
     thread's injected fault.
 
-  - Serialized JVM start/shutdown and classpath updates from Python.  These
-    are process-global check-then-act sequences: without a lock, free-threaded
-    callers could all pass the "already started" check and race inside the
-    native startup path, or observe a half-applied classpath update.
+  - Serialized JVM start/shutdown from Python, and made ``addClassPath``
+    safe against a concurrent start.  Without a lock, free-threaded callers
+    could all pass the "already started" check and race inside the native
+    startup path, and a path added while ``startJVM`` ran could be recorded
+    too late to reach the class loader.  ``addClassPath`` makes no Java calls
+    while holding its lock, so a customizer may call it while another thread
+    adds a path.
 
   - Fixed a native crash on free-threaded Python when a Java class wrapper
     was requested for a class that could not be resolved (``nullptr``),

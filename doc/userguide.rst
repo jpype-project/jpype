@@ -5660,10 +5660,17 @@ Some operations remain serialized or are inherently process-global:
   threads.
 - Registering customizers, conversions, or exclusions changes behavior for
   all threads.  Finish configuration before starting worker threads.
+- Setting up a Java class for its first use, including running its
+  customizers (``@JImplementationFor``), happens one class at a time across
+  the process, with a lock held.  A customizer must therefore not wait for
+  another thread that loads a Java class for the first time or uses the class
+  being customized: that thread waits for the customizer to finish, and
+  neither proceeds.  This is the same rule as for Python module code that runs
+  at import time.
 - Changing the classpath or loading a new package can update shared caches.
-  ``addClassPath`` and ``getClassPath`` are serialized so a caller never sees
-  a half-applied update, but class loading can still race a late update.
-  Add paths before starting worker threads when possible.
+  ``addClassPath`` can be called from several threads, and a path added while
+  ``startJVM`` runs is not lost, but class loading can still race a late
+  update.  Add paths before starting worker threads when possible.
 
 Most JPype wrapper objects are immutable after creation and can be read from
 multiple threads.  Mutable wrappers, including arrays and buffers, and the
