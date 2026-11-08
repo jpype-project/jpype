@@ -62,6 +62,13 @@ inline PyObject *PyJPSlot_peek(PyObject *owner, PyObject **slot)
 // Publish a lazily computed value. Steals the reference to "computed" (NULL passes through, with the Python error
 // already set). If another thread was faster, its value wins and ours is dropped, so all callers observe the same
 // object. Returns a new reference.
+//
+// Racing threads therefore each compute the value; only one result is kept. This is deliberate. Holding the
+// owner's critical section while computing would not prevent it: the builders (_jclassDoc, getMethodDoc, ...) call
+// Java, which detaches the thread (PyEval_SaveThread) and so suspends its critical sections. A real lock held across
+// the computation would make it single-flight but deadlocks: the builder creates class wrappers under the type
+// factory monitor, whose holder may be running a customizer that reads this slot (DocBuildDeadlockTest). The cost
+// of racing is one extra build per racing thread on the first access only (about 2.5 ms for a class __doc__).
 inline PyObject *PyJPSlot_publish(PyObject *owner, PyObject **slot, PyObject *computed)
 {
 	if (computed == nullptr)
