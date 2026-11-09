@@ -15,6 +15,7 @@
  *****************************************************************************/
 #ifndef _JPMETHOD_H_
 #define _JPMETHOD_H_
+#include <atomic>
 #include "jp_modifier.h"
 class JPMethod;
 
@@ -27,7 +28,6 @@ public:
 			JPClass* claz,
 			const string& name,
 			jobject mth,
-			jmethodID mid,
 			JPMethodList& moreSpecific,
 			jint modifiers);
 
@@ -102,6 +102,11 @@ public:
 private:
 	void packArgs(JPJavaFrame &frame, JPMethodMatch &match, vector<jvalue> &v, JPPyObjectVector &arg);
 	void ensureTypeCache();
+	// Resolved on first use rather than at wrapper creation: JNI
+	// FromReflectedMethod initializes the declaring class, which would run
+	// its static initializer for JClass(name, initialize=False).  The lookup
+	// is idempotent, so concurrent first uses may both resolve it.
+	jmethodID getMethodID(JPJavaFrame& frame);
 
 	JPMethod(const JPMethod& o);
 
@@ -109,7 +114,7 @@ private:
 	JPClass*                 m_Class{};
 	string                   m_Name;
 	JPObjectRef              m_Method;
-	jmethodID                m_MethodID{};
+	std::atomic<jmethodID>   m_MethodID{nullptr};
 	JPClass*                 m_ReturnType{};
 	JPClassList              m_ParameterTypes;
 	JPMethodList             m_MoreSpecificOverloads;

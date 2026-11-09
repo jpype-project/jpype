@@ -22,14 +22,12 @@ JPMethod::JPMethod(JPJavaFrame& frame,
 		JPClass* claz,
 		const string& name,
 		jobject mth,
-		jmethodID mid,
 		JPMethodList& moreSpecific,
 		jint modifiers)
 : m_Method(frame, mth)
 {
 	m_Class = claz;
 	m_Name = name;
-	m_MethodID = mid;
 	m_MoreSpecificOverloads = moreSpecific;
 	m_Modifiers = modifiers;
 	m_ReturnType = (JPClass*) (-1);
@@ -37,6 +35,17 @@ JPMethod::JPMethod(JPJavaFrame& frame,
 
 JPMethod::~JPMethod()
 = default;
+
+jmethodID JPMethod::getMethodID(JPJavaFrame& frame)
+{
+	jmethodID mid = m_MethodID.load(std::memory_order_acquire);
+	if (mid == nullptr)
+	{
+		mid = frame.FromReflectedMethod(m_Method.get());
+		m_MethodID.store(mid, std::memory_order_release);
+	}
+	return mid;
+}
 
 void JPMethod::setParameters(
 		JPClass *returnType,
@@ -220,7 +229,7 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 	{
 		JP_TRACE("invoke static", m_Name);
 		jclass claz = m_Class->getJavaClass();
-		return retType->invokeStatic(frame, claz, m_MethodID, &v[0]);
+		return retType->invokeStatic(frame, claz, getMethodID(frame), &v[0]);
 	} else
 	{
 		jobject c;
@@ -278,7 +287,7 @@ JPPyObject JPMethod::invoke(JPJavaFrame& frame, JPMethodMatch& match, JPPyObject
 		{
 			JP_TRACE("invoke virtual", m_Name);
 		}
-		return retType->invoke(frame, c, clazz, m_MethodID, &v[0]);
+		return retType->invoke(frame, c, clazz, getMethodID(frame), &v[0]);
 	}
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
@@ -362,7 +371,7 @@ JPValue JPMethod::invokeConstructor(JPJavaFrame& frame, JPMethodMatch& match, JP
 	vector<jvalue> v(alen + 1);
 	packArgs(frame, match, v, arg);
 	JPPyCallRelease call;
-	return JPValue(m_Class, frame.NewObjectA(m_Class->getJavaClass(), m_MethodID, &v[0]));
+	return JPValue(m_Class, frame.NewObjectA(m_Class->getJavaClass(), getMethodID(frame), &v[0]));
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
