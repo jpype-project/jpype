@@ -78,6 +78,11 @@ ignore_missing_imports = true
 addopts = ["--verbose", "-p", "no:faulthandler"]
 testpaths = ["test", "jpype/_pyinstaller"]
 
+[tool.coverage.run]
+# Also measure Python subprocesses, such as the subrun.TestCase children that
+# run tests in their own JVM.  Needs coverage 7.10+.
+patch = ["subprocess"]
+
 
 [tool.scikit-build]
 build-dir = "build/{wheel_tag}"
