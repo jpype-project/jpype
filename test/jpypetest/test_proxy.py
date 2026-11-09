@@ -668,6 +668,13 @@ class ProxyTestCase(common.JPypeTestCase):
         with self.assertRaises(TypeError):
             _jpype._JProxy(None, None, [type])
 
+    def testInternalHashCodeOfUnhashableTarget(self):
+        # The hash error must surface as the original TypeError, not a
+        # SystemError from returning a result with an exception set.
+        proxy = _jpype._JProxy([], None, [JClass("java.lang.Runnable")])
+        with self.assertRaises(TypeError):
+            proxy.hashCode()
+
     # Free-threaded runs (pytest-run-parallel): this counts process-wide gc
     # objects, so once common.threadUnsafe is available on master, decorate
     # this test with it.

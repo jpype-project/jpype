@@ -247,7 +247,10 @@ static Py_hash_t PyJPObject_hash(PyObject *obj)
 	jobject o = PyJPValue_getJValue(frame, obj).l;
 	if (o == nullptr)
 		return Py_TYPE(Py_None)->tp_hash(Py_None);
-	return frame.hashCode(o);
+	// -1 is CPython's error sentinel for hashes; a Java hashCode() of -1
+	// must be mapped to -2, as CPython does for its own objects.
+	Py_hash_t h = frame.hashCode(o);
+	return h == -1 ? -2 : h;
 	JP_PY_CATCH(0);
 }
 

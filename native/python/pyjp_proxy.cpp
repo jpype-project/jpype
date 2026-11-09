@@ -153,9 +153,11 @@ static PyObject *PyJPProxy_equals(PyJPProxy *self, PyObject *other)
 
 static PyObject *PyJPProxy_hash(PyJPProxy *self)
 {
-	if (self->m_Target != Py_None)
-		return PyLong_FromLong((int) PyObject_Hash(self->m_Target));
-	return PyLong_FromLong((int) PyObject_Hash((PyObject*) self));
+	PyObject *target = (self->m_Target != Py_None) ? self->m_Target : (PyObject*) self;
+	Py_hash_t h = PyObject_Hash(target);
+	if (h == -1 && PyErr_Occurred())
+		return nullptr;
+	return PyLong_FromLong((int) h);
 }
 
 static PyObject *PyJPProxy_toString(PyJPProxy *self)
