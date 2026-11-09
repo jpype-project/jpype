@@ -52,6 +52,21 @@ class CloseableTestCase(common.JPypeTestCase):
         self.assertEqual(CloseableTest.printed, "hello 1")
         self.assertTrue(CloseableTest.closed)
 
+    def testCloseableFailInsideExceptBlock(self):
+        # A close() failure must still propagate when the with body succeeded,
+        # even if the with statement runs inside an unrelated except handler.
+        CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")
+        CloseableTest.reset()
+        CloseableTest.willfail = True
+        try:
+            raise ValueError("unrelated, already handled")
+        except ValueError:
+            with self.assertRaises(jpype.JException):
+                with CloseableTest() as myFile:
+                    myFile.print_("hello 6")
+        self.assertTrue(CloseableTest.closed)
+        self.assertTrue(CloseableTest.failed)
+
     def testCloseablePyExcept(self):
         CloseableTest = jpype.JClass("jpype.closeable.CloseableTest")
         CloseableTest.reset()

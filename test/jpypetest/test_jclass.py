@@ -308,3 +308,26 @@ class JClassLambdaTestCase(common.JPypeTestCase):
         # classes, only for lambda proxies.
         ArrayList = jpype.JClass("java.util.ArrayList")
         self.assertIs(type(ArrayList()), ArrayList)
+
+
+class JClassFinalTestCase(common.JPypeTestCase):
+
+    def testExtendFinalClass(self):
+        # java.lang.String is final: creating a subclass must fail rather
+        # than silently produce a class whose Java base cannot be extended.
+        String = jpype.JClass("java.lang.String")
+        with self.assertRaisesRegex(TypeError, "Cannot extend final class"):
+            class Sub(String, internal=True):
+                pass
+
+    def testExtendFinalBoxedClass(self):
+        with self.assertRaisesRegex(TypeError, "Cannot extend final class"):
+            class Sub(jpype.JClass("java.lang.Integer"), internal=True):
+                pass
+
+    def testExtendNonFinalClass(self):
+        # A non-final class is still a valid base.
+        Base = jpype.JClass("java.lang.Number")
+        class Sub(Base, internal=True):
+            pass
+        self.assertIn(Base, Sub.__mro__)
