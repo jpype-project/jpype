@@ -16,13 +16,21 @@
 #
 # *****************************************************************************
 import unittest
+from pathlib import Path
 
 import _jpype
 import jpype
 from jpype import *
 import common
+import subrun
 
 
+# A fault that fires while a class is first being wrapped marks that class as
+# failed for the rest of the process.  Which classes are still unwrapped when
+# a fault test runs depends on the test order, so in the shared test process a
+# fault could poison a class like java.lang.Object[] and break unrelated tests.
+# Running this case in its own JVM keeps that damage contained.
+@subrun.TestCase
 class FaultTestCase(common.JPypeTestCase):
     """ Test for fault paths in JPype
 
@@ -56,6 +64,13 @@ class FaultTestCase(common.JPypeTestCase):
     Coffee is advised.
 
     """
+
+    @classmethod
+    def setUpClass(cls):
+        # Runs in the subrun child, which has no conftest and thus no JVM.
+        classes = Path(__file__).parent / "../classes"
+        assert classes.exists()
+        jpype.startJVM("-ea", classpath=classes.absolute(), convertStrings=False)
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)

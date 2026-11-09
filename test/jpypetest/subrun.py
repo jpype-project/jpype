@@ -178,7 +178,10 @@ def _prepare(orig, individual=False):
             ProxyClass._client.execute(_hook, filename, clsname, self.name)
 
     for k, v in orig.__dict__.items():
-        if k.startswith("test"):
+        # Only wrap what unittest would collect.  A test disabled with
+        # @unittest.SkipTest is an exception instance, not a function, and
+        # must stay uncollected here too.
+        if k.startswith("test") and callable(v):
             test = ProxyMethod("_" + k)
             test.__name__ = k
             type.__setattr__(ProxyClass, k, test)
