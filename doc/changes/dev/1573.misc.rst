@@ -1,0 +1,1 @@
+The Android workflow caches the python-for-android dependency builds and always rebuilds jpype1 from the checkout, with a check that fails the build if p4a reused a stale jpype1.
