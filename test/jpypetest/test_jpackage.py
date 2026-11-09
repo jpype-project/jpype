@@ -74,3 +74,39 @@ class JPackageTestCase(common.JPypeTestCase):
         JL = JPackage("java.lng")
         with self.assertRaisesRegex(AttributeError, "Java package 'java.lng' is not valid"):
             getattr(JL, "foo")
+
+
+class JPackageLargeClassTestCase(common.JPypeTestCase):
+    """ Public classes with a very large constant pool or a very long string
+    constant must still be listed (their sizes overflow a signed short). """
+
+    def testLargeClassesAreListed(self):
+        import pathlib
+        import shutil
+        import tempfile
+        compiler = jpype.JClass("javax.tools.ToolProvider").getSystemJavaCompiler()
+        if compiler is None:
+            self.skipTest("no system Java compiler")
+        d = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, d, True)
+        pkg = pathlib.Path(d) / "src" / "bigpkg"
+        pkg.mkdir(parents=True)
+        (pkg / "Small.java").write_text("package bigpkg;\npublic class Small {}\n")
+        # A 40000 byte UTF8 constant: its length does not fit a signed short
+        (pkg / "BigString.java").write_text(
+            "package bigpkg;\npublic class BigString {\n"
+            "  public static final String S = \"%s\";\n}\n" % ("x" * 40000))
+        # Each distinct int constant adds a field name and a constant: more
+        # than 32767 constant pool entries in total
+        fields = "".join("  public static final int f%d = %d;\n" % (i, 100000 + i)
+                         for i in range(17000))
+        (pkg / "ManyConst.java").write_text(
+            "package bigpkg;\npublic class ManyConst {\n%s}\n" % fields)
+        out = pathlib.Path(d) / "classes"
+        out.mkdir()
+        rc = compiler.run(None, None, None, jpype.JArray(jpype.JString)(
+            [str(p) for p in pkg.glob("*.java")] + ["-d", str(out)]))
+        self.assertEqual(rc, 0)
+        jpype.addClassPath(out.absolute())
+        self.assertEqual(sorted(dir(jpype.JPackage("bigpkg"))),
+                         ["BigString", "ManyConst", "Small"])

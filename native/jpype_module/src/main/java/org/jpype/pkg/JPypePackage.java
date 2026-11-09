@@ -218,7 +218,8 @@ public class JPypePackage
         return false;
       header.getShort(); // skip major
       header.getShort(); // skip minor
-      short cpitems = header.getShort(); // get the number of items
+      // The count and the UTF8 lengths below are unsigned 16 bit values.
+      int cpitems = header.getShort() & 0xffff; // get the number of items
 
       // Traverse the cp pool
       for (int i = 0; i < cpitems - 1; ++i)
@@ -231,7 +232,7 @@ public class JPypePackage
         switch (type)
         {
           case 1:  // Strings are variable length
-            skipFully(is, buffer3.getShort());
+            skipFully(is, buffer3.getShort() & 0xffff);
             break;
           case 7:
           case 8:
