@@ -136,10 +136,15 @@ template <class type_t> PyObject *convertMultiArray(
 					break;
 				indices[u - j - 1] = 0;
 			}
-			// Commit the current section
+			// Commit the current section.  Mode 0, not JNI_COMMIT: JNI_COMMIT
+			// copies back but does not release, so the critical region is
+			// never left.  ART only re-enables its moving GC on release
+			// (mode != JNI_COMMIT), so each call blocked the next GC forever
+			// and deadlocked the thread; on JVMs that return a copy it leaked
+			// the copy.  HotSpot ignores the mode here.
 			indices[u] = 0;
 			JP_TRACE_JAVA("ReleasePrimitiveArrayCritical", mem);
-			frame.getEnv()->ReleasePrimitiveArrayCritical(a0, mem, JNI_COMMIT);
+			frame.getEnv()->ReleasePrimitiveArrayCritical(a0, mem, 0);
 			frame.DeleteLocalRef(a0);
 
 			// If we hit the shape of the uppermost we are done
