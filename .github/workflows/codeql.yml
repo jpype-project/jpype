@@ -30,7 +30,9 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
-          queries: +security-and-quality
+          # AlertSuppression.ql turns in-source `codeql[<query-id>]` comments
+          # into SARIF suppressions; without it those comments are ignored.
+          queries: +security-and-quality,codeql/${{ matrix.language }}-queries:AlertSuppression.ql
           config: |
             paths-ignore:
               - "test/**"
