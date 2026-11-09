@@ -281,6 +281,35 @@ class JClassTestCase(common.JPypeTestCase):
             JClass("org.jpype.unsatisfied.TestClass")
 
 
+class JClassLambdaTestCase(common.JPypeTestCase):
+    """ A lambda is wrapped as its functional interface, not as the hidden
+    synthetic class the JVM generates for it. """
+
+    def testLambdaIsItsInterface(self):
+        Function = jpype.JClass("java.util.function.Function")
+        f = Function.identity()
+        self.assertIs(type(f), Function)
+        self.assertNotIn("Lambda", type(f).__name__)
+
+    def testDifferentLambdasShareOneType(self):
+        Function = jpype.JClass("java.util.function.Function")
+        UnaryOperator = jpype.JClass("java.util.function.UnaryOperator")
+        self.assertIs(type(Function.identity()), type(Function.identity()))
+        self.assertIs(type(UnaryOperator.identity()), UnaryOperator)
+
+    def testLambdaStillWorks(self):
+        Function = jpype.JClass("java.util.function.Function")
+        f = Function.identity()
+        self.assertEqual(f.apply("x"), "x")
+        self.assertIsInstance(f, Function)
+
+    def testRegularClassesUnaffected(self):
+        # A synthetic or hidden-looking name must not matter for ordinary
+        # classes, only for lambda proxies.
+        ArrayList = jpype.JClass("java.util.ArrayList")
+        self.assertIs(type(ArrayList()), ArrayList)
+
+
 class JClassFinalTestCase(common.JPypeTestCase):
 
     def testExtendFinalClass(self):
