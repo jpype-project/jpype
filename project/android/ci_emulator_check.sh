@@ -11,6 +11,9 @@
 #   APP_PACKAGE  default org.jpype.test.jpypetest
 #   LOG          where the logcat capture goes (default: ./logcat.txt)
 #   RUN_TIMEOUT  seconds to wait for the end marker (default: 1800)
+#   STALL_TIMEOUT  seconds without new output from the app before the run
+#                is treated as hung (default: 300)
+#   DIAG_DIR     where thread dumps of a hung app go (default: ./hang-diagnostics)
 set -uo pipefail
 
 APK="${APK:-$(ls apk/*.apk 2>/dev/null | head -n1)}"
@@ -18,6 +21,8 @@ APP_PACKAGE="${APP_PACKAGE:-org.jpype.test.jpypetest}"
 ACTIVITY="$APP_PACKAGE/org.kivy.android.PythonActivity"
 LOG="${LOG:-$PWD/logcat.txt}"
 RUN_TIMEOUT="${RUN_TIMEOUT:-1800}"
+STALL_TIMEOUT="${STALL_TIMEOUT:-300}"
+DIAG_DIR="${DIAG_DIR:-$PWD/hang-diagnostics}"
 SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
 
 START_MARKER='=== jpype android testapp starting ==='
@@ -39,6 +44,35 @@ app_gone() {
     sleep 2
   done
   return 0
+}
+
+# Lines the app printed through Python's stdout (logcat tag "python"); the
+# ported suite prints one per test, so this stops growing when it hangs.
+app_output_lines() { grep -c ' python *: ' "$1" 2>/dev/null || true; }
+
+# Native and Java stacks of every thread of a hung app, so a deadlock can be
+# diagnosed after the fact (needs the root adbd from step 1).
+dump_hang() {
+  local pid
+  pid=$(adb shell pidof "$APP_PACKAGE" 2>/dev/null | tr -d '\r')
+  mkdir -p "$DIAG_DIR"
+  if [ -z "$pid" ]; then
+    echo "no app process to dump"
+    return
+  fi
+  echo "dumping threads of pid $pid into $DIAG_DIR"
+  adb shell "for t in /proc/$pid/task/*; do echo \"\$(basename \$t) \$(cat \$t/comm) \$(cat \$t/wchan 2>/dev/null) \$(grep State: \$t/status)\"; done" \
+    > "$DIAG_DIR/threads.txt" 2>&1
+  timeout 120 adb shell debuggerd -b "$pid" > "$DIAG_DIR/native-stacks.txt" 2>&1
+  timeout 120 adb shell debuggerd -j "$pid" > "$DIAG_DIR/java-stacks.txt" 2>&1
+  # Fallback for the Java side: ART's own SIGQUIT dump, written to /data/anr.
+  adb shell kill -3 "$pid" >/dev/null 2>&1
+  sleep 10
+  adb pull /data/anr "$DIAG_DIR/anr" >/dev/null 2>&1 || true
+  echo "---- threads (tid name wchan State) ----"
+  cat "$DIAG_DIR/threads.txt"
+  echo "---- Java threads ----"
+  grep -E '^"|^  \| state=|^  at |^  - (waiting|locked)' "$DIAG_DIR/java-stacks.txt" | head -n 300
 }
 
 # --- 1. wait until the device is really up -------------------------------
@@ -77,6 +111,13 @@ adb shell settings put system user_rotation 0 >/dev/null 2>&1 || true
 adb shell svc power stayon true >/dev/null 2>&1 || true
 adb shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1 || true
 adb shell wm dismiss-keyguard >/dev/null 2>&1 || true
+
+# Root adbd (google_apis images allow it) for the thread dumps in dump_hang.
+# It restarts adbd, so it must happen here, before logcat is captured.
+if adb root >/dev/null 2>&1; then
+  timeout 120 adb wait-for-device
+  sleep 2
+fi
 
 # --- 2. install, then launch (retrying only start-up deaths) ----------------
 if ! adb install -r "$APK"; then
@@ -120,16 +161,37 @@ for attempt in 1 2 3; do
 done
 CUR_LOG="$LOG.attempt$attempt"
 
+hung=0
 if [ "$started" -eq 1 ]; then
   deadline=$(( $(date +%s) + RUN_TIMEOUT ))
-  while [ "$(date +%s)" -lt "$deadline" ]; do
+  last_lines=$(app_output_lines "$CUR_LOG")
+  last_progress=$(date +%s)
+  while :; do
     grep -qF "$END_MARKER" "$CUR_LOG" && break
     if app_gone; then
       echo "app process is gone before '$END_MARKER' appeared"
       break
     fi
+    now=$(date +%s)
+    lines=$(app_output_lines "$CUR_LOG")
+    if [ "$lines" != "$last_lines" ]; then
+      last_lines=$lines
+      last_progress=$now
+    elif [ $(( now - last_progress )) -ge "$STALL_TIMEOUT" ]; then
+      echo "::error::no output from the app for ${STALL_TIMEOUT}s - it looks hung"
+      echo "last output:"
+      grep ' python *: ' "$CUR_LOG" | tail -n 5
+      hung=1
+      break
+    fi
+    if [ "$now" -ge "$deadline" ]; then
+      echo "::error::'$END_MARKER' did not appear within ${RUN_TIMEOUT}s"
+      hung=1
+      break
+    fi
     sleep 5
   done
+  [ "$hung" -eq 1 ] && dump_hang
   sleep 3
 fi
 cleanup
@@ -167,6 +229,7 @@ fi
   echo "### Android on-device result"
   echo
   echo "launch attempts: $attempt"
+  [ "$hung" -eq 1 ] && echo "**hung** - thread dumps are in the logcat artifact (hang-diagnostics/)"
   echo '```'
   grep -hE 'GOLDEN PATH|PORTED SUITE|REGRESSION CHECK' "$CUR_LOG" | sed 's/^.*python *: *//'
   echo '```'
