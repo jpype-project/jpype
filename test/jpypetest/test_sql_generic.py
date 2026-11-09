@@ -7,8 +7,6 @@ import unittest.mock as mock
 
 
 class ConnectionIsolationLevelTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def _connection(self):
         cx = object.__new__(dbapi2.Connection)
@@ -32,8 +30,6 @@ class ConnectionIsolationLevelTestCase(common.JPypeTestCase):
 
 
 class ConnectionCommitRollbackErrorTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def _connection(self):
         cx = object.__new__(dbapi2.Connection)
@@ -60,8 +56,6 @@ class ConnectionCommitRollbackErrorTestCase(common.JPypeTestCase):
 
 
 class ConnectionTypeinfoTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def test_typeinfo_unknown_data_type_raises(self):
         # A driver reporting a JDBC type code that isn't in the module's
@@ -86,8 +80,6 @@ class ConnectionTypeinfoTestCase(common.JPypeTestCase):
 
 
 class CursorExecuteManyRepeatTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def _cursor(self, batch):
         cx = mock.MagicMock(spec=dbapi2.Connection)
@@ -124,8 +116,6 @@ class CursorExecuteManyRepeatTestCase(common.JPypeTestCase):
 
 
 class CursorSetParamsTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def _cursor(self):
         cx = mock.MagicMock(spec=dbapi2.Connection)
@@ -154,8 +144,6 @@ class CursorSetParamsTestCase(common.JPypeTestCase):
 
 
 class CursorCallprocTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def _cursor(self):
         cx = mock.MagicMock(spec=dbapi2.Connection)
@@ -191,8 +179,6 @@ class CursorCallprocTestCase(common.JPypeTestCase):
 
 
 class SQLModuleTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def assertIsSubclass(self, a, b):
         self.assertTrue(issubclass(a, b), "`%s` is not a subclass of `%s`" % (a.__name__, b.__name__))
@@ -286,8 +272,6 @@ class SQLModuleTestCase(common.JPypeTestCase):
 
 
 class SQLTablesTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testStr(self):
         for i in dbapi2._types:

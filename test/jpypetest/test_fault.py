@@ -57,9 +57,6 @@ class FaultTestCase(common.JPypeTestCase):
 
     """
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     @common.requireInstrumentation
     def testJPArray_new(self):
         _jpype.fault("PyJPArray_new")

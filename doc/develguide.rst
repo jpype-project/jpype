@@ -1,6 +1,9 @@
 Developer Guide
 ===============
 
+For how to contribute a change, including the changelog entry that every
+pull request needs, see ``CONTRIBUTING.rst`` in the repository root.
+
 Overview
 --------
 

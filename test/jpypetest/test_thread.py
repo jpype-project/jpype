@@ -23,8 +23,6 @@ from jpype.imports import *
 
 
 class ThreadTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     @pytest.mark.filterwarnings("ignore::DeprecationWarning")
     def testAttach(self):

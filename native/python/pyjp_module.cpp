@@ -1093,6 +1093,12 @@ void PyJPModule_installGC(PyObject* module)
 
 	// Hook up our callback
 	JPPyObject collect = JPPyObject::call(PyObject_GetAttrString(module, "_collect"));
-	PyList_Append(callbacks.get(), collect.get());
-	JP_PY_CHECK();
+	int installed = PySequence_Contains(callbacks.get(), collect.get());
+	if (installed < 0)
+		JP_PY_CHECK();
+	if (installed == 0)
+	{
+		PyList_Append(callbacks.get(), collect.get());
+		JP_PY_CHECK();
+	}
 }

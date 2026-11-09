@@ -84,9 +84,6 @@ class ModuleStartTestCase(unittest.TestCase):
 
 class ModuleTestCase(common.JPypeTestCase):
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     def testIsPackage(self):
         self.assertTrue(_jpype.isPackage("java"))
         self.assertFalse(_jpype.isPackage("jva"))
@@ -105,9 +102,6 @@ class ModuleTestCase(common.JPypeTestCase):
 
 
 class JInitTestCase(common.JPypeTestCase):
-
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testJInit(self):
         with mock.patch("_jpype.isStarted") as started:

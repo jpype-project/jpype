@@ -16,6 +16,9 @@
 #ifndef JP_GC_H
 #define JP_GC_H
 
+#include <atomic>
+#include <cstdint>
+
 struct JPGCStats
 {
 	long long python_rss;
@@ -34,6 +37,12 @@ public:
 	void init(JPJavaFrame& frame);
 
 	void shutdown();
+
+	/**
+	 * Called from the Java reference thread when a Java collection has
+	 * happened.  Reflects it into a Python collection, at most one at a
+	 * time and throttled by the cost of the previous reflection.
+	 */
 	void triggered();
 
 	/**
@@ -49,9 +58,13 @@ public:
 	void getStats(JPGCStats& stats) const;
 
 private:
-	bool running{};
-	bool in_python_gc{};
-	bool java_triggered{};
+	std::atomic<bool> running{false};
+	std::atomic<bool> in_python_gc{false};
+	// Claimed by the thread performing a forced (Java triggered) collection.
+	std::atomic<bool> forcing_gc{false};
+	// Earliest time (steady clock, ns) at which another forced collection
+	// may start.
+	std::atomic<int64_t> next_forced_ns{0};
 	PyObject *python_gc{};
 	jclass _SystemClass{};
 	jclass _ContextClass{};
@@ -63,7 +76,6 @@ private:
 	size_t high_water{};
 	size_t limit{};
 	size_t last{};
-	int java_count{};
 	int python_count{};
 	int python_triggered{};
 } ;

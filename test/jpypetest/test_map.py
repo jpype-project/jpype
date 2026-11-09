@@ -23,9 +23,6 @@ class JMapTestCase(common.JPypeTestCase):
     """ Test for methods of java.lang.Map
     """
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     def testLen(self):
         cls = jpype.JClass('java.util.HashMap')
         obj = cls()

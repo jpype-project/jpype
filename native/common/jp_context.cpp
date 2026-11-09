@@ -509,6 +509,7 @@ void JPContext::initializeResources(JNIEnv* env, bool interrupt)
 void JPContext::onShutdown()
 {
 	m_Running = false;
+	m_GC->shutdown();
 }
 
 void JPContext::shutdownJVM(bool destroyJVM, bool freeJVM)

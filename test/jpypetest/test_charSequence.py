@@ -23,8 +23,6 @@ import common
 
 
 class ConversionCharSequenceTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testAutoConvert(self):
         Instant = jpype.JClass("java.time.Instant")

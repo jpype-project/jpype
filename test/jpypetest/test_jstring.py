@@ -22,8 +22,6 @@ import common
 
 
 class JStringTestCase(common.JPypeTestCase):
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
 
     def testAddself(self):
         a = jpype.JString("abc")

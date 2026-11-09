@@ -22,9 +22,6 @@ import common
 
 class ForNameTestCase(common.JPypeTestCase):
 
-    def setUp(self):
-        common.JPypeTestCase.setUp(self)
-
     # Class.forName(String) resolves the caller's classloader via ART's own
     # native caller-sensitivity machinery, which - reached here through
     # JPype's own JNI call, not a real interpreted Java frame - resolves to
