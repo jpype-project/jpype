@@ -9,11 +9,14 @@ name: Android
 # emulator part is flaky by nature. "Re-run failed jobs" then only repeats the
 # emulator job and reuses the uploaded APK.
 #
-# No caching of .buildozer: p4a reuses an existing dist without hashing the
-# jpype1 recipe's sources (doc/android_build.rst), so a restored cache ships
-# jpype from an older commit - and skips the recipe step that writes
-# project/android/recipes/jpype1/generated/, which then breaks the APK build.
-# Every run is a cold, honest build (~16 minutes).
+# Caching: the dependency builds (hostpython3, python3, openssl, numpy, ...)
+# take ~12 of the ~16 minutes and are cached in .buildozer. jpype1 itself is
+# never served from the cache: p4a reuses an existing dist and installed
+# packages without hashing recipe sources (doc/android_build.rst, "Stale
+# rebuilds"), so the "Force a fresh jpype1 build" step deletes every jpype1
+# artifact before each build, and "Check that jpype1 was rebuilt" fails the
+# job if p4a skipped it anyway. The cache key has no restore-keys fallback:
+# any change to the dependency inputs means a full cold build.
 
 on:
   workflow_dispatch:
@@ -104,12 +107,64 @@ jobs:
       - name: Stage test/jpypetest into the test app
         run: python project/android/sync_tests.py
 
+      # Everything that decides how the cached dependencies were built:
+      # buildozer.spec (requirements, NDK, API levels), the local numpy
+      # recipe, and the buildozer/p4a versions. buildozer clones p4a from
+      # master, so its current commit goes into the key.
+      - name: Compute Buildozer cache key
+        id: bzkey
+        run: |
+          bz=$(pip show buildozer | awk '/^Version:/{print $2}')
+          p4a=$(git ls-remote https://github.com/kivy/python-for-android.git refs/heads/master | cut -c1-12)
+          test -n "$bz" && test -n "$p4a"
+          echo "key=buildozer-deps-v1-bz$bz-p4a$p4a-${{ hashFiles('project/android/testapp/buildozer.spec', 'project/android/recipes/numpy/**') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Buildozer cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            project/android/testapp/.buildozer
+            ~/.buildozer
+          key: ${{ steps.bzkey.outputs.key }}
+
+      # The list from doc/android_build.rst ("Stale rebuilds"), plus
+      # javaclasses (jpype1 copies its Java sources there; every recipe's
+      # postbuild_arch refills it on each run) and the generated/ assets.
+      # Harmless on a cold build, where none of it exists yet.
+      - name: Force a fresh jpype1 build
+        run: |
+          B=project/android/testapp/.buildozer/android/platform/build-x86_64
+          I="$B/build/python-installs/jpypetest/x86_64"
+          rm -rf "$B/dists/jpypetest" \
+                 "$B"/build/other_builds/jpype1-* \
+                 "$B/build/javaclasses/jpypetest" \
+                 "$I/jpype" "$I"/jpype1-*.dist-info "$I/_jpype.so" \
+                 project/android/recipes/jpype1/generated
+
       - name: Build APK
         working-directory: project/android/testapp
         run: |
           set -eo pipefail
           buildozer -v android debug 2>&1 | tee "$RUNNER_TEMP/buildozer.log"
           ls -lh bin/
+
+      - name: Check that jpype1 was rebuilt
+        run: |
+          L="$RUNNER_TEMP/buildozer.log"
+          fail=0
+          if grep -q 'compatible recipes, using this one' "$L"; then
+            echo "::error::p4a reused an existing dist instead of creating one"; fail=1
+          fi
+          if grep -q 'jpype1 said it is already built' "$L"; then
+            echo "::error::p4a skipped compiling jpype1"; fail=1
+          fi
+          if ! grep -q 'Postbuilding jpype1 for x86_64' "$L"; then
+            echo "::error::jpype1's postbuild step did not run"; fail=1
+          fi
+          if [ ! -s project/android/recipes/jpype1/generated/android-packages.txt ]; then
+            echo "::error::recipes/jpype1/generated/ was not regenerated"; fail=1
+          fi
+          exit "$fail"
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
