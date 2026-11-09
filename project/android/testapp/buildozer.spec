@@ -6,6 +6,12 @@ source.dir = .
 source.include_exts = py
 version = 0.1
 
+# buildozer defaults to landscape. The stock emulator AVD boots in portrait,
+# so a landscape app forces a display rotation right at launch - on CI the
+# activity was torn down (webview's onDestroy kills the process) during asset
+# extraction, before Python ever ran. Match the emulator instead.
+orientation = portrait
+
 # jpype1 is resolved via p4a.local_recipes below, against
 # project/android/recipes/jpype1, which builds from this repo's own
 # working tree (see that recipe's docstring).

@@ -136,8 +136,12 @@ jobs:
     needs: build-apk
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    if: false  # todo: once we have a Kivy team decision. Without Kivy/python-for-android adopting it, there isn't really a userbase.
     steps:
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: project/android
+          sparse-checkout-cone-mode: true
+
       - uses: actions/download-artifact@v8
         with:
           name: jpypetest-apk
@@ -149,7 +153,6 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-
       - name: Run on emulator
         uses: reactivecircus/android-emulator-runner@v2
         env:
@@ -159,12 +162,13 @@ jobs:
           target: google_apis
           arch: x86_64
           ram-size: 4096M
-          script: bash ${{ runner.temp }}/check.sh
+          disable-animations: true
+          script: bash project/android/ci_emulator_check.sh
 
       - name: Upload logcat
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: logcat
-          path: logcat.txt
+          path: logcat.txt*
           if-no-files-found: ignore
