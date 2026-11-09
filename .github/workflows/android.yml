@@ -98,13 +98,6 @@ jobs:
       - name: Stage test/jpypetest into the test app
         run: python project/android/sync_tests.py
 
-      - name: Build APK
-        working-directory: project/android/testapp
-        run: |
-          set -eo pipefail
-          buildozer -v android debug 2>&1 | tee "$RUNNER_TEMP/buildozer.log"
-          ls -lh bin/
-
       - name: Restore Buildozer cache
         uses: actions/cache@v4
         with:
@@ -115,6 +108,13 @@ jobs:
           restore-keys: |
             buildozer-${{ hashFiles('project/android/testapp/buildozer.spec', 'project/android/sync_tests.py') }}-
             buildozer-
+
+      - name: Build APK
+        working-directory: project/android/testapp
+        run: |
+          set -eo pipefail
+          buildozer -v android debug 2>&1 | tee "$RUNNER_TEMP/buildozer.log"
+          ls -lh bin/
 
       - name: Upload APK
         uses: actions/upload-artifact@v7

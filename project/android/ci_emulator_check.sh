@@ -28,7 +28,18 @@ if [ -z "$APK" ] || [ ! -f "$APK" ]; then
   exit 1
 fi
 
-app_pid() { adb shell pidof "$APP_PACKAGE" 2>/dev/null | tr -d '\r'; }
+# True only if adb answers and the app has no process, twice in a row.
+# pidof exits 1 when there is no such process; any other failure (adb
+# offline or reconnecting) is not taken as "gone".
+app_gone() {
+  local n
+  for n in 1 2; do
+    adb shell pidof "$APP_PACKAGE" >/dev/null 2>&1
+    [ $? -eq 1 ] || return 1
+    sleep 2
+  done
+  return 0
+}
 
 # --- 1. wait until the device is really up -------------------------------
 adb start-server >/dev/null 2>&1 || true
@@ -75,6 +86,7 @@ fi
 
 adb logcat -G 16M >/dev/null 2>&1 || true
 : > "$LOG"
+rm -f "$LOG".attempt*
 LOGCAT_PID=
 cleanup() { [ -n "$LOGCAT_PID" ] && kill "$LOGCAT_PID" 2>/dev/null; }
 trap cleanup EXIT
@@ -95,7 +107,10 @@ for attempt in 1 2 3; do
 
   for i in $(seq 1 60); do       # up to ~2 min for the start marker
     if grep -qF "$START_MARKER" "$LOG.attempt$attempt"; then started=1; break; fi
-    if [ "$i" -gt 5 ] && [ -z "$(app_pid)" ]; then
+    if [ "$i" -gt 5 ] && app_gone; then
+      # logcat reaches the host file with a delay; a crash right after
+      # the marker must still count as started, not be retried away.
+      if grep -qF "$START_MARKER" "$LOG.attempt$attempt"; then started=1; break; fi
       echo "app process died before '$START_MARKER' appeared"
       break
     fi
@@ -109,7 +124,7 @@ if [ "$started" -eq 1 ]; then
   deadline=$(( $(date +%s) + RUN_TIMEOUT ))
   while [ "$(date +%s)" -lt "$deadline" ]; do
     grep -qF "$END_MARKER" "$CUR_LOG" && break
-    if [ -z "$(app_pid)" ]; then
+    if app_gone; then
       echo "app process is gone before '$END_MARKER' appeared"
       break
     fi
