@@ -1,1 +1,1 @@
-The Android workflow runs the ported test suite on an x86_64 emulator again (``project/android/ci_emulator_check.sh``).
+The Android workflow runs the ported test suite on an x86_64 emulator again (``project/android/ci_emulator_check.sh``), dumps all threads of a hung test app, and caches the python-for-android dependency builds while always rebuilding jpype1 from the checkout.
