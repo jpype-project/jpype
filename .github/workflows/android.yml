@@ -8,6 +8,12 @@ name: Android
 # Two jobs on purpose: the APK build is slow (30-60+ minutes uncached), the
 # emulator part is flaky by nature. "Re-run failed jobs" then only repeats the
 # emulator job and reuses the uploaded APK.
+#
+# No caching of .buildozer: p4a reuses an existing dist without hashing the
+# jpype1 recipe's sources (doc/android_build.rst), so a restored cache ships
+# jpype from an older commit - and skips the recipe step that writes
+# project/android/recipes/jpype1/generated/, which then breaks the APK build.
+# Every run is a cold, honest build (~16 minutes).
 
 on:
   workflow_dispatch:
@@ -97,17 +103,6 @@ jobs:
 
       - name: Stage test/jpypetest into the test app
         run: python project/android/sync_tests.py
-
-      - name: Restore Buildozer cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            project/android/testapp/.buildozer
-            ~/.buildozer
-          key: buildozer-${{ hashFiles('project/android/testapp/buildozer.spec', 'project/android/sync_tests.py') }}-${{ hashFiles('jpype/**') }}
-          restore-keys: |
-            buildozer-${{ hashFiles('project/android/testapp/buildozer.spec', 'project/android/sync_tests.py') }}-
-            buildozer-
 
       - name: Build APK
         working-directory: project/android/testapp
