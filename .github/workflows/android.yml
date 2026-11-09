@@ -152,8 +152,11 @@ jobs:
         run: |
           L="$RUNNER_TEMP/buildozer.log"
           fail=0
-          if grep -q 'compatible recipes, using this one' "$L"; then
-            echo "::error::p4a reused an existing dist instead of creating one"; fail=1
+          # A reused dist skips the whole build phase, so this line is then
+          # missing. ("<dist> has compatible recipes, using this one" is no
+          # signal: buildozer prints it in every build, after the dist exists.)
+          if ! grep -q 'Building jpype1 for x86_64' "$L"; then
+            echo "::error::p4a did not run jpype1's build (reused an existing dist?)"; fail=1
           fi
           if grep -q 'jpype1 said it is already built' "$L"; then
             echo "::error::p4a skipped compiling jpype1"; fail=1
