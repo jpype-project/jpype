@@ -416,3 +416,184 @@ assert first in paths and second in paths, paths
 print("CLASSPATH OK", flush=True)
 '''
         _run(script, "CLASSPATH OK", timeout=60)
+
+
+class LazySlotFirstAccessTest(unittest.TestCase):
+
+    def testFirstAccessPublishesOneObject(self):
+        """Concurrent first reads of a method's lazy slots return one object.
+
+        ``__doc__``, ``__annotations__`` and ``__code__`` are built on first
+        access.  Every thread racing to build one must get the same object,
+        and so must later reads; the unsynchronized slots used to hand each
+        racer its own result and keep whichever was stored last.
+        """
+        script = r'''
+import threading
+import jpype
+
+jpype.startJVM()
+threads_count = 8
+barrier = threading.Barrier(threads_count, timeout=30)
+errors = []
+mismatch = []
+# Methods nobody has touched yet in this interpreter: their __doc__,
+# __annotations__ and __code__ slots are still empty.
+names = ("add", "remove", "contains", "indexOf", "lastIndexOf", "subList",
+         "toArray", "removeIf", "retainAll", "ensureCapacity", "trimToSize",
+         "replaceAll", "sort", "spliterator", "forEach")
+classes = [jpype.JClass(c) for c in ("java.util.ArrayList", "java.util.LinkedList",
+                                    "java.util.Vector")]
+methods = [getattr(c, n) for c in classes for n in names if hasattr(c, n)]
+results = [[None] * threads_count for _ in methods]
+
+def work(t):
+    try:
+        for i, m in enumerate(methods):
+            barrier.wait()
+            results[i][t] = (m.__doc__, m.__annotations__, m.__code__)
+    except BaseException as ex:
+        errors.append(ex)
+        barrier.abort()
+
+threads = [threading.Thread(target=work, args=(t,)) for t in range(threads_count)]
+for t in threads:
+    t.start()
+for t in threads:
+    t.join(120)
+assert all(not t.is_alive() for t in threads), "hang"
+assert not errors, errors
+for m, per_thread in zip(methods, results):
+    for k, key in enumerate(("__doc__", "__annotations__", "__code__")):
+        values = [r[k] for r in per_thread]
+        if any(v is not values[0] for v in values):
+            mismatch.append((m.__qualname__, key))
+        if getattr(m, key) is not values[0]:
+            mismatch.append((m.__qualname__, key, "later read"))
+assert not mismatch, mismatch[:10]
+print("SLOTS OK", len(methods), flush=True)
+'''
+        _run(script, "SLOTS OK", timeout=300)
+
+
+class BoxedNullRaceTest(unittest.TestCase):
+
+    def testFirstNullCastKeepsOneSingleton(self):
+        """Concurrent first casts of None to a boxed type share one singleton.
+
+        Null-ness of the reconstructing boxed types is recognised by identity
+        with a cached singleton.  Racing first casts used to replace it, so
+        an instance handed out earlier was no longer that singleton.
+        """
+        script = r'''
+import threading
+import jpype
+
+jpype.startJVM()
+threads_count = 8
+names = ("Boolean", "Byte", "Short", "Integer", "Long", "Character")
+barrier = threading.Barrier(threads_count, timeout=30)
+results = {n: [None] * threads_count for n in names}
+errors = []
+
+def work(t):
+    try:
+        for n in names:
+            cls = jpype.JClass("java.lang." + n)
+            barrier.wait()
+            results[n][t] = jpype.JObject(None, cls)   # first cast of None
+    except BaseException as ex:
+        errors.append(ex)
+        barrier.abort()
+
+threads = [threading.Thread(target=work, args=(t,)) for t in range(threads_count)]
+for t in threads:
+    t.start()
+for t in threads:
+    t.join(60)
+assert all(not t.is_alive() for t in threads), "hang"
+assert not errors, errors
+bad = []
+for n in names:
+    first = jpype.JObject(None, jpype.JClass("java.lang." + n))
+    if any(v is not first for v in results[n]):
+        bad.append(n)
+    if not all(v == None for v in results[n]):   # noqa: E711
+        bad.append(n + " not null")
+assert not bad, bad
+print("BOXED OK", flush=True)
+'''
+        _run(script, "BOXED OK", timeout=300)
+
+
+class MethodTypeCacheRaceTest(unittest.TestCase):
+
+    def testFirstResolutionIsComplete(self):
+        """Concurrent first resolutions of a method see its complete signature.
+
+        Parameter and return types are resolved lazily.  The return type used
+        to be published before the parameter types, so a racing thread could
+        take the method as resolved and match against no parameters.  Races
+        thousands of fresh overload sets; a hit is probabilistic.
+        """
+        script = r'''
+import threading
+import jpype
+
+jpype.startJVM()
+threads_count = 8
+barrier = threading.Barrier(threads_count, timeout=30)
+errors = []
+
+# Overload sets whose parameter types were never resolved in this interpreter.
+# _matches() resolves them on first use and needs no valid arguments.
+pkgs = {
+    "java.lang": ("StringBuilder", "StringBuffer", "Character", "Integer", "Long",
+                  "Short", "Byte", "Double", "Float", "Math", "StrictMath",
+                  "Thread", "ThreadGroup", "ClassLoader", "Runtime", "ProcessBuilder"),
+    "java.util": ("ArrayList", "LinkedList", "Vector", "HashMap", "TreeMap", "HashSet",
+                  "TreeSet", "ArrayDeque", "PriorityQueue", "Hashtable", "LinkedHashMap",
+                  "BitSet", "Calendar", "GregorianCalendar", "Date", "Random", "Scanner",
+                  "Locale", "UUID", "Optional", "Objects", "Arrays", "Collections",
+                  "StringJoiner", "Properties", "IdentityHashMap", "WeakHashMap",
+                  "Formatter", "StringTokenizer", "Base64", "Timer", "EnumSet"),
+    "java.io": ("File", "StringReader", "StringWriter", "PrintWriter", "PrintStream",
+                "BufferedReader", "ByteArrayOutputStream", "DataOutputStream"),
+    "java.math": ("BigInteger", "BigDecimal"),
+    "java.util.concurrent": ("ConcurrentHashMap", "ConcurrentLinkedQueue",
+                             "CopyOnWriteArrayList", "LinkedBlockingQueue",
+                             "ThreadPoolExecutor", "CompletableFuture", "Executors"),
+}
+methods = []
+for pkg, names in pkgs.items():
+    for n in names:
+        cls = jpype.JClass(pkg + "." + n)
+        for attr in sorted(vars(cls)):
+            m = vars(cls)[attr]
+            if type(m).__name__ == "_JMethod":
+                methods.append(m)
+args = ("x",)
+results = [[None] * threads_count for _ in methods]
+
+def work(t):
+    try:
+        for i, m in enumerate(methods):
+            barrier.wait()
+            results[i][t] = m._matches(*args)
+    except BaseException as ex:
+        errors.append(ex)
+        barrier.abort()
+
+threads = [threading.Thread(target=work, args=(t,)) for t in range(threads_count)]
+for t in threads:
+    t.start()
+for t in threads:
+    t.join(300)
+assert all(not t.is_alive() for t in threads), "hang"
+assert not errors, errors
+bad = [m.__qualname__ for m, r in zip(methods, results)
+       if any(v != m._matches(*args) for v in r)]
+assert not bad, (len(bad), bad[:10])
+print("TYPECACHE OK", len(methods), flush=True)
+'''
+        _run(script, "TYPECACHE OK", timeout=300)

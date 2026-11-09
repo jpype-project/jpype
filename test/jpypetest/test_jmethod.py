@@ -38,7 +38,6 @@ def copy_func(f):
     g = functools.update_wrapper(g, f)
     return g
 
-@common.threadUnsafe  # we assign to a singleton (in the backend) JClass instance.
 class JMethodTestCase(common.JPypeTestCase):
     """ Test for methods of JMethod (_jpype._JMethod)
 
@@ -80,6 +79,8 @@ class JMethodTestCase(common.JPypeTestCase):
         self.assertEqual(self.obj.substring.__qualname__,
                          "java.lang.String.substring")
 
+    # Temporarily replaces the slot on the shared String.substring object.
+    @common.threadUnsafe
     def testMethodDoc(self):
         self.assertIsInstance(self.cls.substring.__doc__, str)
         self.assertIsInstance(self.obj.substring.__doc__, str)
@@ -94,6 +95,8 @@ class JMethodTestCase(common.JPypeTestCase):
         self.assertIsInstance(inspect.getdoc(self.obj.substring), str)
         self.assertIsInstance(inspect.getdoc(self.obj.format), str)
 
+    # Temporarily replaces the slot on the shared String.substring object.
+    @common.threadUnsafe
     def testMethodAnnotations(self):
         self.assertIsInstance(self.cls.substring.__annotations__, dict)
         self.assertIsNotNone(self.obj.substring.__annotations__)
