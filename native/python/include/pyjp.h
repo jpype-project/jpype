@@ -329,6 +329,8 @@ JPClass*      PyJPClass_GetClass(PyTypeObject* type);
 // null cast (JPBoxedType::convertToPythonObject); null until then, and
 // always null for non-boxed types.
 PyObject*     PyJPClass_GetNullBoxed(PyTypeObject* type);
+// Publish "obj" as the null singleton unless another thread was first.
+// Returns a new reference to the singleton in use.
 PyObject*     PyJPClass_GetOrSetNullBoxed(PyTypeObject* type, PyObject* obj);
 
 // Class methods to add to the spec tables

@@ -157,24 +157,30 @@ PyObject* PyJPClass_GetNullBoxed(PyTypeObject* type)
 	return ((PyJPClass*) type)->nullBoxed.load(std::memory_order_acquire);
 }
 
+// Returns a new reference to the null singleton of "type": the one another
+// thread published first, otherwise "obj", which is then cached.  A new
+// reference, so the result stays valid after the caller drops its own
+// reference to "obj".  Without a wrapper type there is no cache, and "obj"
+// itself is returned.
 PyObject* PyJPClass_GetOrSetNullBoxed(PyTypeObject* type, PyObject* obj)
 {
+	Py_XINCREF(obj); // the caller's reference
 	if (type == nullptr || Py_TYPE(type) != (PyTypeObject*) PyJPClass_Type)
-	{
-		// No wrapper type to cache in; the caller still owns "obj" and wraps
-		// the borrowed reference, exactly like the cached branch below.
 		return obj;
-	}
 	// Keep the first singleton that wins.  Replacing it would leave any
 	// instance already handed out no longer identical to the cached one,
 	// which is how null-ness is recognised for the reconstructing boxed
 	// families (Long/Short/Byte/Boolean/Character).
-	Py_XINCREF(obj);
+	Py_XINCREF(obj); // the cache's reference, if we win
 	PyObject *expected = nullptr;
 	if (((PyJPClass*) type)->nullBoxed.compare_exchange_strong(
 			expected, obj, std::memory_order_acq_rel))
 		return obj;
+	// Lost: drop both references to ours and return the published one.  The
+	// cache keeps it for the life of the type.
 	Py_XDECREF(obj);
+	Py_XDECREF(obj);
+	Py_INCREF(expected);
 	return expected;
 }
 
