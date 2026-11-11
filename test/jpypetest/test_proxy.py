@@ -545,6 +545,20 @@ class ProxyTestCase(common.JPypeTestCase):
         self.assertIsInstance(s.toString(), java.lang.String)
         self.assertIsInstance(s.hashCode(), int)
 
+    def testToStringUsesStr(self):
+        # Without a toString method, Java's toString() calls the
+        # instance's __str__.
+        @JImplements("java.util.function.DoubleUnaryOperator")
+        class R(object):
+            @JOverride
+            def applyAsDouble(self, d):
+                return d
+
+            def __str__(self):
+                return "R-str"
+        s = JObject(R(), "java.util.function.DoubleUnaryOperator")
+        self.assertEqual(s.toString(), "R-str")
+
     def testDeferredCheckingFailure(self):
         @JImplements("java.lang.Runnable", deferred=True)
         class MyImpl(object):
