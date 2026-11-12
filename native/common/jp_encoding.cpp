@@ -27,7 +27,11 @@
 // Examples of bad encodings:
 //   - non-utf8 such as extended ascii passed from python
 //   - encoded forbidden utf passed from python
-//   - truncated surrogate codes passed from java
+//
+// Unpaired surrogates from java are the exception: Java strings may
+// legally hold them, so they are passed through as lone surrogate code
+// points rather than truncated, and the character after them is kept.
+// Python's strict UTF-8 decode then rejects them with UnicodeDecodeError.
 //
 // The secondary problem is that string conversion is part of exception
 // handling.  And the last thing we want to do is throw an exception
@@ -315,6 +319,15 @@ void JPEncodingJavaUTF8::encode(std::ostream& out, unsigned int c) const
 // manually encode a string with an invalid coding.
 //
 
+// Decode a 3 byte code (lead 1110xxxx, then two 10xxxxxx continuations).
+static bool decode3(unsigned int c0, unsigned int c1, unsigned int c2, unsigned int& cp)
+{
+	if ((c0 & 0xf0) != 0xe0 || (c1 & 0xc0) != 0x80 || (c2 & 0xc0) != 0x80)
+		return false;
+	cp = ((c0 & 0xf) << 12) + ((c1 & 0x3f) << 6) + (c2 & 0x3f);
+	return true;
+}
+
 unsigned int JPEncodingJavaUTF8::fetch(std::istream& in) const
 {
 	unsigned int out = 0;
@@ -338,9 +351,8 @@ unsigned int JPEncodingJavaUTF8::fetch(std::istream& in) const
 	unsigned int c2 = in.get();
 	if (in.eof()) return -1;
 
-	if ((c0 & 0xf0) == 0xe0 && (c1 & 0xc0) == 0x80 && (c2 & 0xc0) == 0x80)
+	if (decode3(c0, c1, c2, out))
 	{
-		out = ((c0 & 0xf) << 12) + ((c1 & 0x3f) << 6) + (c2 & 0x3f);
 		// 0xD800-0xDF00 are surrogate codes for 6 byte encoding
 		// High code is 0xD800-0xDBFF, Low code is 0xDC00-0xDFFF
 
@@ -368,16 +380,12 @@ unsigned int JPEncodingJavaUTF8::fetch(std::istream& in) const
 			break;
 		got++;
 	}
-	if (got == 3 && (n[0] & 0xf0) == 0xe0
-			&& (n[1] & 0xc0) == 0x80 && (n[2] & 0xc0) == 0x80)
+	unsigned int next;
+	if (got == 3 && decode3(n[0], n[1], n[2], next) && (next & 0xfc00) == 0xdc00)
 	{
-		unsigned int next = ((n[0] & 0xf) << 12) + ((n[1] & 0x3f) << 6) + (n[2] & 0x3f);
-		if ((next & 0xfc00) == 0xdc00)
-		{
-			unsigned int q1 = (out & 0x3ff);
-			unsigned int q2 = (next & 0x3ff);
-			return 0x10000 + (q1 << 10) + q2;
-		}
+		unsigned int q1 = (out & 0x3ff);
+		unsigned int q2 = (next & 0x3ff);
+		return 0x10000 + (q1 << 10) + q2;
 	}
 
 	// Not a low surrogate: push back what was read and report the lone one.
