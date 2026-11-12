@@ -1,0 +1,4 @@
+Fixed public classes with a large constant pool (over 32767 entries) or a
+string constant of 32 KB or more disappearing from ``dir(JPackage(...))``
+and package contents.  The class-file scanner read the constant-pool
+count and UTF8 lengths as signed values; they are now unsigned. #1531

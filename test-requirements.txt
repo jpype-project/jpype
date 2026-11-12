@@ -1,6 +1,9 @@
 pytest
 pytest-randomly
 pytest-xdist
+# patch = subprocess (pyproject.toml) needs 7.10+, which needs Python 3.9+.
+# It measures the subrun.TestCase child processes.
+coverage>=7.10 ; python_version >= "3.9"
 pyinstaller
 jedi==0.18.0
 numpy

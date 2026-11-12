@@ -67,6 +67,34 @@ class ClassHintsTestCase(common.JPypeTestCase):
         Instant = jpype.JClass("java.time.Instant")
         self.assertIsInstance(jpype.JObject(now, Instant), Instant)
 
+    def testInstantAwareDatetime(self):
+        import datetime
+        Instant = jpype.JClass("java.time.Instant")
+        tz = datetime.timezone(datetime.timedelta(hours=5))
+        dt = datetime.datetime(2024, 1, 1, 12, tzinfo=tz)
+        self.assertEqual(str(jpype.JObject(dt, Instant)), "2024-01-01T07:00:00Z")
+
+    def testInstantNaiveIsUtc(self):
+        import datetime
+        Instant = jpype.JClass("java.time.Instant")
+        dt = datetime.datetime(2024, 1, 1, 12)
+        self.assertEqual(str(jpype.JObject(dt, Instant)), "2024-01-01T12:00:00Z")
+
+    def testInstantMicrosecondsExact(self):
+        import datetime
+        Instant = jpype.JClass("java.time.Instant")
+        for us, expected in [(1, "2024-01-01T00:00:00.000001Z"),
+                             (123457, "2024-01-01T00:00:00.123457Z"),
+                             (999999, "2024-01-01T00:00:00.999999Z")]:
+            dt = datetime.datetime(2024, 1, 1, 0, 0, 0, us)
+            self.assertEqual(str(jpype.JObject(dt, Instant)), expected)
+
+    def testInstantBeforeEpoch(self):
+        import datetime
+        Instant = jpype.JClass("java.time.Instant")
+        dt = datetime.datetime(1969, 12, 31, 23, 59, 59, 500000)
+        self.assertEqual(str(jpype.JObject(dt, Instant)), "1969-12-31T23:59:59.500Z")
+
     def testPath(self):
         import pathlib
         JPath = jpype.JClass("java.nio.file.Path")
