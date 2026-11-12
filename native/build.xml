@@ -7,6 +7,10 @@
 	<property name="src" location="jpype_module/src/main/java"/>
 	<property name="build" location="build"/>
 
+	<!-- Line number tables are needed by JaCoCo to report line coverage.
+	     CMake sets this when configured with ENABLE_COVERAGE. -->
+	<property name="javac.debug" value="false"/>
+
 	<target name="test" depends="compile">
 	</target>
 
@@ -21,6 +25,8 @@
 			target="${JAVA_VERSION}"
 			excludes="**/Reflector0.java"
             includeantruntime="false"
+			debug="${javac.debug}"
+			debuglevel="lines,vars,source"
 			>
 			<src path="${src}"/>
 		</javac>
@@ -29,6 +35,8 @@
 			target="${JAVA_VERSION}"
 			includes="**/Reflector0.java"
             includeantruntime="false"
+			debug="${javac.debug}"
+			debuglevel="lines,vars,source"
 			>
 			<src path="${src}"/>
 		</javac>
