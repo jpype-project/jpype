@@ -1,0 +1,4 @@
+Fixed the ``datetime`` to ``java.time.Instant`` conversion discarding
+the UTC offset of an aware datetime and corrupting microseconds through a
+float round trip.  Aware datetimes are now converted to UTC (naive ones
+are still taken as UTC) and the sub-second part is computed exactly. #1522

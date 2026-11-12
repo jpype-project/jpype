@@ -1,0 +1,1 @@
+Python coverage now includes code run by tests in ``subrun.TestCase`` child processes, using coverage.py's ``patch = subprocess`` option.  This needs coverage 7.10 or newer, which is now listed in ``test-requirements.txt``.

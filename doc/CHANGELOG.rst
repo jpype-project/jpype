@@ -5,7 +5,13 @@ This changelog *only* contains changes from the *first* pypi release (0.5.4.3) o
 
 Latest Changes:
 
+.. towncrier release notes start
+
 - **1.7.2.dev0**
+
+  - Fixed ``_jpype._JProxy.__new__`` leaking the proxy object on every
+    argument error.  The object is now allocated only after the arguments
+    have been validated. #1539
 
   - Python collections forced by Java collections are now serialized and
     throttled by their own cost, so allocation-heavy Java code no longer

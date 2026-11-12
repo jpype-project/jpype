@@ -1,0 +1,45 @@
+name: Changelog
+
+# Requires every pull request to add a news fragment to doc/changes/ and not
+# to edit doc/CHANGELOG.rst, which towncrier assembles at release time.
+# Add the "skip-changelog" label to a PR that needs neither (no user-visible
+# change, or a release / merge-back PR that edits the changelog on purpose).
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  news-fragment:
+    name: news fragment
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'skip-changelog') }}
+    env:
+      BASE: origin/${{ github.base_ref }}
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        # Both checks diff against the base branch, so they need the history.
+        fetch-depth: 0
+    - name: Check that doc/CHANGELOG.rst is not edited directly
+      run: |
+        if git diff --quiet "$BASE...HEAD" -- doc/CHANGELOG.rst; then
+          echo "doc/CHANGELOG.rst is unchanged."
+        else
+          echo "::error file=doc/CHANGELOG.rst::Do not edit doc/CHANGELOG.rst directly. Move your entry into a news fragment in doc/changes/ (see CONTRIBUTING.rst). Release PRs that edit the changelog on purpose need the skip-changelog label."
+          exit 1
+        fi
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.x'
+    - name: Install towncrier
+      run: pip install towncrier
+    - name: Check for a news fragment
+      run: |
+        if ! towncrier check --compare-with "$BASE"; then
+          echo "::error::This PR needs a news fragment, named doc/changes/<PR number>.<type>.rst (or doc/changes/dev/... for developer-only changes); see the towncrier output above and CONTRIBUTING.rst. If the change needs none, a maintainer can add the skip-changelog label."
+          exit 1
+        fi
