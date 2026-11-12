@@ -12,7 +12,10 @@
 #   LOG          where the logcat capture goes (default: ./logcat.txt)
 #   RUN_TIMEOUT  seconds to wait for the end marker (default: 1800)
 #   STALL_TIMEOUT  seconds without new output from the app before the run
-#                is treated as hung (default: 300)
+#                is treated as hung (default: 30; the whole suite runs in
+#                about 8s and never goes 2s without output, while a hung app
+#                can be killed by the emulator - e.g. when Play Services
+#                restarts - before a longer timeout gets to dump its threads)
 #   DIAG_DIR     where thread dumps of a hung app go (default: ./hang-diagnostics)
 set -uo pipefail
 
@@ -21,7 +24,7 @@ APP_PACKAGE="${APP_PACKAGE:-org.jpype.test.jpypetest}"
 ACTIVITY="$APP_PACKAGE/org.kivy.android.PythonActivity"
 LOG="${LOG:-$PWD/logcat.txt}"
 RUN_TIMEOUT="${RUN_TIMEOUT:-1800}"
-STALL_TIMEOUT="${STALL_TIMEOUT:-300}"
+STALL_TIMEOUT="${STALL_TIMEOUT:-30}"
 DIAG_DIR="${DIAG_DIR:-$PWD/hang-diagnostics}"
 SUMMARY="${GITHUB_STEP_SUMMARY:-/dev/null}"
 
