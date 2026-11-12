@@ -206,11 +206,18 @@ needed; this was verified against SDK cmdline-tools already present at
 
     ~/android-sdk/cmdline-tools/latest/bin/sdkmanager \
         "emulator" \
-        "system-images;android-34;google_apis;x86_64" \
+        "system-images;android-34;default;x86_64" \
         "ndk;25.1.8937393"
 
     ~/android-sdk/cmdline-tools/latest/bin/avdmanager create avd \
-        -n jpype-test -k "system-images;android-34;google_apis;x86_64"
+        -n jpype-test -k "system-images;android-34;default;x86_64"
+
+The ``default`` image is plain AOSP, without Google Play Services. On a
+``google_apis`` image the test app's WebView uses the Play Services fonts
+provider, and Android kills the app mid-suite whenever
+``com.google.android.gms.persistent`` restarts (logcat: ``depends on provider
+com.google.android.gms/.fonts.provider.FontsProvider in dying proc``). CI uses
+the same image.
 
 p4a's toolchain (as of the version in use when this was written) still looks
 for ``sdkmanager``/``avdmanager`` at the legacy ``tools/bin/`` location
