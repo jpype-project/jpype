@@ -1,0 +1,1 @@
+The macOS release wheels are now built on the ``macos-15`` Azure Pipelines image instead of ``macos-14``, which is retired on 2026-11-23.  The test leg that used ``macos-14`` moved to ``macos-15`` too.  The wheels still target macOS 11.0 and later.
