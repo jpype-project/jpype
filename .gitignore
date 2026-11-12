@@ -110,7 +110,7 @@ cmake_install.cmake
 _jpype.so
 org.jpype.jar
 .build_history
-CLAUDE.md
+/CLAUDE.md
 plan/
 project/pr
 project/issues
