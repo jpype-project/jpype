@@ -64,14 +64,13 @@ set(DEST_JAR_FN "${DEST_JAR}/${JPYPE_JAR_FN}")
 message(STATUS "Destination Python extension: ${DEST_EXTENSION}")
 message(STATUS "Destination JAR: ${DEST_JAR}")
 
-find_program(ANT_EXECUTABLE ant)
-
-# Development builds (editable or plain CMake) compile the JAR from source
-# whenever a JDK and Ant are available, so Java changes are picked up.  In an
+# Development builds (editable or plain CMake) with a JDK always compile the
+# JAR from source (this requires Ant), so Java changes are picked up.  In an
 # editable build, SRC_JAR is the previous build's output (DEST_JAR is the
 # source dir), so treating it as a cache would freeze the Java code.
-if(Java_Development_FOUND AND ANT_EXECUTABLE AND (NOT SKBUILD OR EDITABLE))
-    message(STATUS "JDK and Ant available (dev/editable build). Building JAR from source.")
+# Wheel builds keep using the cached JAR and need no Ant.
+if(Java_Development_FOUND AND (NOT SKBUILD OR EDITABLE))
+    message(STATUS "JDK available (dev/editable build). Building JAR from source.")
     set(ENABLE_BUILD_JAR ON)
 # We want to cache DEST_JAR, so people do not need a JDK, but only a C++ compiler to build jpype.
 elseif(EXISTS "${SRC_JAR}")
