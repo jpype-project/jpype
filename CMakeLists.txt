@@ -64,8 +64,17 @@ set(DEST_JAR_FN "${DEST_JAR}/${JPYPE_JAR_FN}")
 message(STATUS "Destination Python extension: ${DEST_EXTENSION}")
 message(STATUS "Destination JAR: ${DEST_JAR}")
 
+find_program(ANT_EXECUTABLE ant)
+
+# Development builds (editable or plain CMake) compile the JAR from source
+# whenever a JDK and Ant are available, so Java changes are picked up.  In an
+# editable build, SRC_JAR is the previous build's output (DEST_JAR is the
+# source dir), so treating it as a cache would freeze the Java code.
+if(Java_Development_FOUND AND ANT_EXECUTABLE AND (NOT SKBUILD OR EDITABLE))
+    message(STATUS "JDK and Ant available (dev/editable build). Building JAR from source.")
+    set(ENABLE_BUILD_JAR ON)
 # We want to cache DEST_JAR, so people do not need a JDK, but only a C++ compiler to build jpype.
-if(EXISTS "${SRC_JAR}")
+elseif(EXISTS "${SRC_JAR}")
     message(STATUS "FOUND ${SRC_JAR}. Using from cache.")
     file(COPY_FILE "${SRC_JAR}" "${DEST_JAR_FN}")
 elseif(Java_Development_FOUND)
@@ -85,27 +94,19 @@ if(ENABLE_BUILD_JAR)
     # this is the build artifact of Ant.
     set(JAR_OUTPUT "${CMAKE_SOURCE_DIR}/native/build/lib/${JPYPE_JAR_FN}")
 
-    # we also need to copy the JAR_OUTPUT to CMAKE_CURRENT_BINARY_DIR
-    add_custom_command(
-            OUTPUT "${JAR_OUTPUT}"
+    # Copy the Ant build artifact to current cmake output dir (required for editable installs).
+    set(DEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${JPYPE_JAR_FN}")
+
+    # Run Ant on every build: CMake doesn't know the Java sources, and Ant
+    # only recompiles what changed, so this is cheap when nothing did.
+    # Both commands are in one target, so they run in order (also on MSBuild).
+    add_custom_target(jpype_jar ALL
             COMMAND "${ANT_EXECUTABLE}" -f "${CMAKE_SOURCE_DIR}/native/build.xml"
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different "${JAR_OUTPUT}" "${DEST_FILE}"
+            BYPRODUCTS "${JAR_OUTPUT}" "${DEST_FILE}"
             WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
             COMMENT "Building ${JAR_OUTPUT} with Apache Ant"
     )
-    # link ant command with output jar
-    add_custom_target(jpype_jar ALL DEPENDS "${JAR_OUTPUT}")
-
-    # Copy the Ant build artifact to current cmake output dir (required for editable installs).
-    set(DEST_FILE "${CMAKE_CURRENT_BINARY_DIR}/${JPYPE_JAR_FN}")
-    add_custom_command(
-            OUTPUT "${DEST_FILE}"
-            COMMAND ${CMAKE_COMMAND} -E copy "${JAR_OUTPUT}" "${DEST_FILE}"
-            DEPENDS "${JAR_OUTPUT}"   # ensures it only runs after the source exists
-            COMMENT "Copying ${JAR_OUTPUT} to internal destination"
-    )
-    add_custom_target(copy_jar ALL DEPENDS "${DEST_FILE}")
-    # Explicitly link targets so MSBuild doesn't run them in parallel.
-    add_dependencies(copy_jar jpype_jar)
     # finally install the jar to DEST_JAR, which makes it available for wheel building.
     install(
             FILES "${DEST_FILE}"
@@ -124,17 +125,14 @@ endif()
 if(BUILD_TEST_HARNESS AND (NOT SKBUILD OR ${EDITABLE}))
     find_program(ANT_EXECUTABLE ant REQUIRED)
     set(TEST_HARNESS_OUTPUT ${CMAKE_SOURCE_DIR})
-    set(TEST_SENTINEL "${TEST_HARNESS_OUTPUT}/test/classes/org/jpype/JPypeTest.class")
 
-    add_custom_command(
-        OUTPUT "${TEST_SENTINEL}"
+    # Run Ant on every build (it is incremental), so changes to the harness
+    # sources are picked up.
+    add_custom_target(build_tests ALL
         COMMAND "${ANT_EXECUTABLE}" -f "test/build.xml"
         WORKING_DIRECTORY "${TEST_HARNESS_OUTPUT}"
-        #DEPENDS jpype_jar  # Ensure the main org.jpype.jar is built first
         COMMENT "Building JPype Java Test Harness via Ant"
     )
-
-    add_custom_target(build_tests ALL DEPENDS "${TEST_SENTINEL}")
 elseif(BUILD_TEST_HARNESS)
     message(STATUS "Skipping Java test harness build (SKBUILD_STATE=${SKBUILD_STATE}) — dev/editable only.")
 endif()
