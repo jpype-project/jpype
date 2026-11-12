@@ -1,0 +1,1 @@
+Fixed Java lambdas not being recognized on Android, where each lambda got its own wrapper type (``Outer$$ExternalSyntheticLambdaN``) instead of being treated as its functional interface.  D8 compiles lambdas into classes with that name, which the ``$$Lambda`` check for desktop JVMs did not match.
