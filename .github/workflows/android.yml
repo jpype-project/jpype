@@ -82,10 +82,9 @@ jobs:
         run: |
           SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
           echo "SDK=$SDK"
-          # Timed separately to see where the ~2 minutes of this step go.
-          time sudo chown -R "$USER" "$SDK"
-          time (yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true)
-          time "$SDK/cmdline-tools/latest/bin/sdkmanager" "ndk;${ANDROID_NDK_VERSION}"
+          sudo chown -R "$USER" "$SDK"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" "ndk;${ANDROID_NDK_VERSION}"
           mkdir -p "$SDK/tools/bin"
           ln -sf "$SDK/cmdline-tools/latest/bin/sdkmanager" "$SDK/tools/bin/sdkmanager"
           ln -sf "$SDK/cmdline-tools/latest/bin/avdmanager" "$SDK/tools/bin/avdmanager"
