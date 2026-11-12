@@ -115,7 +115,7 @@ adb shell svc power stayon true >/dev/null 2>&1 || true
 adb shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1 || true
 adb shell wm dismiss-keyguard >/dev/null 2>&1 || true
 
-# Root adbd (google_apis images allow it) for the thread dumps in dump_hang.
+# Root adbd (default and google_apis images allow it) for the thread dumps in dump_hang.
 # It restarts adbd, so it must happen here, before logcat is captured.
 if adb root >/dev/null 2>&1; then
   timeout 120 adb wait-for-device
