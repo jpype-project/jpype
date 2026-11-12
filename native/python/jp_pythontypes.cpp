@@ -232,19 +232,19 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 #if defined(PYPY_VERSION)
 	if (PyBytes_Check(pyobj))
 	{
-		int sz = PyBytes_Size(pyobj);
+		Py_ssize_t sz = PyBytes_Size(pyobj);
 		if (sz != 1)
 			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
-		// Bytes are Latin-1 code points; do not sign-extend through char.
-		jchar c = (unsigned char) PyBytes_AsString(pyobj)[0];
-		if (PyErr_Occurred())
+		const char *data = PyBytes_AsString(pyobj);
+		if (data == nullptr)
 			JP_RAISE_PYTHON();
-		return c;
+		// Bytes are Latin-1 code points; do not sign-extend through char.
+		return (unsigned char) data[0];
 	}
 	if (PyUnicode_Check(pyobj))
 	{
-		if (PyUnicode_GetLength(pyobj) > 1)
+		if (PyUnicode_GetLength(pyobj) != 1)
 			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		PyUnicode_READY(pyobj);
@@ -262,14 +262,15 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 		if (sz != 1)
 			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
+		const char *data = PyBytes_AsString(pyobj);
+		if (data == nullptr)
+			JP_RAISE_PYTHON();
 		// Bytes are Latin-1 code points; do not sign-extend through char.
-		jchar c = (unsigned char) PyBytes_AsString(pyobj)[0];
-		JP_PY_CHECK();
-		return c;
+		return (unsigned char) data[0];
 	}
 	if (PyUnicode_Check(pyobj))
 	{
-		if (PyUnicode_GetLength(pyobj) > 1)
+		if (PyUnicode_GetLength(pyobj) != 1)
 			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		PyUnicode_READY(pyobj);

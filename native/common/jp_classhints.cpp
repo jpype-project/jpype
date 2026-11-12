@@ -395,6 +395,23 @@ public:
 		JP_TRACE("char[]");
 		jvalue res;
 
+		if (PyBytes_Check(match.object))
+		{
+			// Bytes are Latin-1 code points, as for a single char and for
+			// JArray(JChar)(bytes); they are not decoded as UTF-8.
+			char *buffer = nullptr;
+			Py_ssize_t size = 0;
+			if (PyBytes_AsStringAndSize(match.object, &buffer, &size) == -1)
+				JP_RAISE_PYTHON();
+			std::vector<jchar> chars(static_cast<size_t>(size));
+			for (Py_ssize_t i = 0; i < size; ++i)
+				chars[i] = (unsigned char) buffer[i];
+			jcharArray array = frame->NewCharArray((jsize) size);
+			frame->SetCharArrayRegion(array, 0, (jsize) size, chars.data());
+			res.l = array;
+			return res;
+		}
+
 		// Convert to a string
 		string str = JPPyString::asStringUTF8(match.object);
 

@@ -503,17 +503,56 @@ class JCharTestCase_2(common.JPypeTestCase):
     def testBytesAreNotSignExtended(self):
         a = JArray(JChar)(2)
         a[0] = b'\xe9'
-        a[0:1] = [b'\xe9']
+        a[1:2] = [b'\xe9']
         self.assertEqual(ord(str(a[0])), 0xe9)
+        self.assertEqual(ord(str(a[1])), 0xe9)
         self.assertEqual(ord(str(JChar(b'\xe9'))), 0xe9)
+        fixture = JClass("jpype.common.Fixture")()
+        fixture.char_field = b'\xe9'
+        self.assertEqual(ord(str(fixture.char_field)), 0xe9)
+
+    def testBytesToCharArrayAreLatin1(self):
+        # Same result as JArray(JChar)(bytes), not a UTF-8 decode.
+        String = JClass("java.lang.String")
+        self.assertEqual(str(String.copyValueOf(b'a\xe9b')), 'a\xe9b')
+        self.assertEqual(str(String.copyValueOf(b'\xc3\xa9')), '\xc3\xa9')
+        self.assertEqual(str(JArray(JChar)(b'\xc3\xa9')), '\xc3\xa9')
+
+    def testCharBufferIsNotSignExtended(self):
+        # A 'c' buffer item is a single byte, read as 0..255.
+        buf = memoryview(b'\xe9').cast('c')
+        self.assertEqual(ord(str(JArray.of(buf, JChar)[0])), 0xe9)
+        self.assertEqual(list(JArray(JShort)(buf)), [0xe9])
+        self.assertEqual(ord(str(JArray(JChar)(buf)[0])), 0xe9)
+
+    def testEmptyStrRejected(self):
+        a = JArray(JChar)(1)
+        for bad in ('', b''):
+            with self.assertRaisesRegex(ValueError, "length 1"):
+                a[0:1] = [bad]
 
     def testNonBmpRejected(self):
         emoji = chr(0x1F600)
         with self.assertRaises(ValueError):
             JChar(emoji)
+        with self.assertRaises(ValueError):
+            JClass("java.lang.Character")(emoji)
         a = JArray(JChar)(1)
         with self.assertRaises(ValueError):
             a[0] = emoji
+        with self.assertRaises(ValueError):
+            a[0:1] = [emoji]
+
+    def testIntIsACast(self):
+        # Like JByte(300), JChar of an int truncates rather than raising.
+        self.assertEqual(ord(str(JChar(0x1F600))), 0xF600)
+
+    def testNullCharacterRejected(self):
+        null = jpype.JObject(None, JClass("java.lang.Character"))
+        with self.assertRaisesRegex(TypeError, "null"):
+            JChar(null)
+        with self.assertRaisesRegex(TypeError, "null"):
+            JClass("java.lang.Character")(null)
 
     def testBytearrayLengthChecked(self):
         self.assertEqual(ord(str(JChar(bytearray(b'a')))), 97)

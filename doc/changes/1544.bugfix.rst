@@ -1,5 +1,14 @@
-Fixed inconsistent Python to Java ``char`` conversion: a ``bytes`` value
-above 0x7f is no longer sign-extended when assigned into a ``char[]``,
-``JChar()`` of a non-BMP string now raises ``ValueError`` instead of
-silently truncating, and ``JChar()`` of a ``bytearray`` is length-checked
-like ``bytes``. #1537
+Fixed inconsistent Python to Java ``char`` conversion
+(`#1537 <https://github.com/jpype-project/jpype/issues/1537>`__).
+``bytes`` are now read as Latin-1 code points everywhere: a byte above 0x7f
+is no longer sign-extended when assigned into a ``char`` or ``char[]``, and
+``bytes`` passed to a ``char[]`` parameter are no longer decoded as UTF-8
+(which silently dropped invalid bytes), matching ``JArray(JChar)(bytes)``.
+Items of a ``'c'``-format buffer (such as a ``ctypes.c_char`` array) are
+likewise read as 0 to 255, not -128 to 127, when copied into any primitive
+array.  ``JChar()`` and ``java.lang.Character()`` of a string outside the
+BMP now raise ``ValueError`` (``java.lang.Character()`` raised
+``OverflowError``, ``JChar()`` truncated), ``JChar()`` of a Java ``null``
+raises ``TypeError`` instead of returning ``'\x00'``, an empty string
+assigned into a ``char[]`` raises ``ValueError``, and ``JChar()`` of a
+``bytearray`` is length-checked like ``bytes``.

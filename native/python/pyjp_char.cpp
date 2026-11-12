@@ -49,17 +49,17 @@ struct PyJPChar
 #define _PyUnicode_WSTR(op) (((PyASCIIObject*)(op))->wstr)
 #define _PyUnicode_WSTR_LENGTH(op)  (((PyCompactUnicodeObject*)(op))->wstr_length)
 
+// The character JChar() is given, or (Py_UCS4) -1 if it is not one.
 static Py_UCS4 ord(PyObject *c)
 {
-	if (PyUnicode_Check(c))
-	{
-		if (PyUnicode_READY(c) == -1)
-			return -1;
-		if (PyUnicode_GET_LENGTH(c) == 1)
-			return PyUnicode_READ_CHAR(c, 0);
-	} else if (PyBytes_Check(c) && PyBytes_GET_SIZE(c) == 1)
-		return (Py_UCS4) ((unsigned char) *PyBytes_AS_STRING(c));
-	else if (PyByteArray_Check(c) && PyByteArray_GET_SIZE(c) == 1)
+	// str and bytes go through the same conversion as assignment into a
+	// char, so the rules (Latin-1 bytes, nothing outside the BMP) live in
+	// one place.
+	if ((PyUnicode_Check(c) || PyBytes_Check(c)) && JPPyString::checkCharUTF16(c))
+		return JPPyString::asCharUTF16(c);
+	// bytearray is accepted only here: checkCharUTF16 leaves it out so that
+	// it does not match char[] (#598).
+	if (PyByteArray_Check(c) && PyByteArray_GET_SIZE(c) == 1)
 		return (Py_UCS4) ((unsigned char) *PyByteArray_AS_STRING(c));
 	return (Py_UCS4) - 1;
 }
@@ -265,12 +265,12 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 
 	JPValue jv;
 	PyObject *in = PyTuple_GetItem(pyargs, 0);
-	Py_UCS4 cv = ord(in);
-	if (cv != (Py_UCS4) - 1 && cv > 0xffff)
-	{
-		PyErr_SetString(PyExc_ValueError, "Unable to pack 4 byte unicode into Java char");
+	// A Java null Character is stored as U+0000; it has no value to copy.
+	if (PyObject_TypeCheck(in, PyJPChar_Type) && assertNotNull(in))
 		return nullptr;
-	}
+	Py_UCS4 cv = ord(in);
+	if (cv == (Py_UCS4) - 1 && PyErr_Occurred())
+		return nullptr;
 
 	JPJavaFrame frame = JPJavaFrame::outer();
 	if (cv != (Py_UCS4) - 1)
