@@ -380,6 +380,17 @@ static JPClass *charOperandClass(PyObject *obj)
 	return PyJPValue_getJPClass(obj);
 }
 
+// A non-char operand that is a Java null (for example JObject(None, JInt))
+// must raise rather than be handed to PyNumber_*, which would read the null
+// singleton as 0.  Plain Python operands have no Java class and pass.
+static int assertOperandNotNull(PyObject *obj)
+{
+	JPClass *cls = PyJPValue_getJPClass(obj);
+	if (cls == nullptr)
+		return 0;
+	return assertNotNullClass(obj, cls);
+}
+
 static PyObject *apply(PyObject *first, PyObject *second, PyObject* (*func)(PyObject*, PyObject*))
 {
 	JPClass *cls0 = charOperandClass(first);
@@ -396,7 +407,7 @@ static PyObject *apply(PyObject *first, PyObject *second, PyObject* (*func)(PyOb
 	}
 	else if (cls0 != nullptr)
 	{
-		if (assertNotNullClass(first, cls0))
+		if (assertNotNullClass(first, cls0) || assertOperandNotNull(second))
 			return nullptr;
 		// Promote to int as per Java rules
 		JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*)first)));
@@ -404,7 +415,7 @@ static PyObject *apply(PyObject *first, PyObject *second, PyObject* (*func)(PyOb
 	}
 	else if (cls1 != nullptr)
 	{
-		if (assertNotNullClass(second, cls1))
+		if (assertNotNullClass(second, cls1) || assertOperandNotNull(first))
 			return nullptr;
 		// Promote to int as per Java rules
 		JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*)second)));
@@ -452,7 +463,7 @@ static  PyObject *PyJPChar_add(PyObject *first, PyObject *second)
 	}
 	else if (cls0 != nullptr)
 	{
-		if (assertNotNullClass(first, cls0))
+		if (assertNotNullClass(first, cls0) || assertOperandNotNull(second))
 			return nullptr;
 		if (PyUnicode_Check(second))
 			return PyUnicode_Concat(first, second);
@@ -463,7 +474,7 @@ static  PyObject *PyJPChar_add(PyObject *first, PyObject *second)
 	}
 	else if (cls1 != nullptr)
 	{
-		if (assertNotNullClass(second, cls1))
+		if (assertNotNullClass(second, cls1) || assertOperandNotNull(first))
 			return nullptr;
 		if (PyUnicode_Check(first))
 			return PyUnicode_Concat(first, second);
