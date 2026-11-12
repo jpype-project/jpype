@@ -55,6 +55,8 @@ endif()
 if(ENABLE_COVERAGE)
     message(WARNING "ENABLE_COVERAGE set — forcing Debug build for coverage correctness")
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    # JaCoCo can only report line coverage for classes with line number tables.
+    set(ANT_ARGS "-Djavac.debug=true")
 endif()
 
 
@@ -100,7 +102,7 @@ if(ENABLE_BUILD_JAR)
     # only recompiles what changed, so this is cheap when nothing did.
     # Both commands are in one target, so they run in order (also on MSBuild).
     add_custom_target(jpype_jar ALL
-            COMMAND "${ANT_EXECUTABLE}" -f "${CMAKE_SOURCE_DIR}/native/build.xml"
+            COMMAND "${ANT_EXECUTABLE}" -f "${CMAKE_SOURCE_DIR}/native/build.xml" ${ANT_ARGS}
             COMMAND ${CMAKE_COMMAND} -E copy_if_different "${JAR_OUTPUT}" "${DEST_FILE}"
             BYPRODUCTS "${JAR_OUTPUT}" "${DEST_FILE}"
             WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
