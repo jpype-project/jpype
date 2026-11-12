@@ -1,0 +1,12 @@
+Fixed ``startJVM(interrupt=False)`` sometimes raising
+``java.lang.InterruptedException`` (or aborting the process) instead of
+``KeyboardInterrupt`` when ``SIGINT`` arrived while the main thread was
+blocked in a Java call such as ``Thread.sleep()`` or ``Object.wait()``.  The
+signal handler woke the main thread before it recorded the signal for Python,
+so the pending-signal check made while converting the exception could find
+nothing.  The handler now records the signal first.  The same handler also
+crashed the process with ``SIGSEGV`` inside ``PyErr_SetInterruptEx`` when
+``SIGTERM`` arrived and the Python handler for the signal was still the
+default, because the native ``interruptPy`` ran on a thread of the JVM
+without holding the GIL.  It now acquires the GIL like the other callbacks
+from Java threads (issues 1496 and 1497).
