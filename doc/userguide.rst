@@ -1789,6 +1789,13 @@ Character specialization
 
 - The Java class `JChar[]` has additional customizations to work better with
   string types.
+- ``bytes`` become a `JChar[]` in two different ways.  Creating an array,
+  ``JArray(JChar)(b)``, copies element by element: each byte is one char (a
+  Latin-1 code point), so the array is as long as ``b``.  Passing ``bytes``
+  to a Java method that takes a ``char[]`` treats them as text and decodes
+  them as UTF-8; invalid UTF-8 raises ``UnicodeDecodeError``.  For
+  ``'é'.encode()`` the first gives two chars and the second gives one.  Pass
+  a ``str`` (``b.decode(...)``) to choose the encoding yourself.
 - Java arrays do not support additional mathematical operations at this time.
 - Creating a Java array is required for pass-by-reference syntax when using Java
   methods that modify array contents.
