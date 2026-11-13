@@ -432,6 +432,42 @@ class _UnsupportedTypeError(InterfaceError, TypeError):
     pass
 
 
+def _translateError(ex):
+    """ (internal) Map a java.sql.SQLException onto the PEP 249 hierarchy.
+
+    The exception, its chained ``getNextException()`` and its causes are
+    inspected, as batch updates wrap the real failure.  Anything not
+    recognized is a ProgrammingError.
+    """
+    JClass = _jpype.JClass
+    integrity = JClass("java.sql.SQLIntegrityConstraintViolationException")
+    data = JClass("java.sql.SQLDataException")
+    unsupported = JClass("java.sql.SQLFeatureNotSupportedException")
+    operational = (JClass("java.sql.SQLNonTransientConnectionException"),
+                   JClass("java.sql.SQLTransientConnectionException"),
+                   JClass("java.sql.SQLTimeoutException"))
+    pending = [ex]
+    seen = 0
+    while pending and seen < 16:
+        seen += 1
+        e = pending.pop(0)
+        state = e.getSQLState() if isinstance(e, _SQLException) else None
+        state = str(state) if state is not None else ""
+        if isinstance(e, integrity) or state.startswith("23"):
+            return IntegrityError
+        if isinstance(e, data) or state.startswith("22"):
+            return DataError
+        if isinstance(e, unsupported) or state.startswith("0A"):
+            return NotSupportedError
+        if isinstance(e, operational) or state.startswith("08"):
+            return OperationalError
+        for nxt in ((e.getNextException() if isinstance(e, _SQLException) else None),
+                    e.getCause()):
+            if nxt is not None and nxt is not e:
+                pending.append(nxt)
+    return ProgrammingError
+
+
 ###############################################################################
 # Connection
 
@@ -478,16 +514,20 @@ def connect(dsn, *, driver=None, driver_args=None,
             info.setProperty(k, v)
         connection = DM.getConnection(dsn, info)
 
-    # User supplied nothing
+    # User supplied nothing: use the kwargs, if any, as the driver properties
     elif driver_args is None:
-        connection = DM.getConnection(dsn)
+        if kwargs:
+            info = Properties()
+            for k, v in kwargs.items():
+                info.setProperty(k, v)
+            connection = DM.getConnection(dsn, info)
+        else:
+            connection = DM.getConnection(dsn)
 
-    # Otherwise use the kwargs
     else:
-        info = Properties()
-        for k, v in kwargs.items():
-            info.setProperty(k, v)
-        connection = DM.getConnection(None, info)
+        raise _UnsupportedTypeError(
+            "driver_args must be a mapping or java.util.Properties, not '%s'"
+            % type(driver_args).__name__)
 
     return Connection(connection, adapters, converters, setters, getters)
 
@@ -880,7 +920,7 @@ class Cursor(object):
                     row.append(converter(value))
                 else:
                     # find the column converter by type
-                    converter = cx._converters.get(type(value), _nop)
+                    converter = converters.get(type(value), _nop)
                     row.append(converter(value))
             return row
         except TypeError as ex:
@@ -1160,7 +1200,11 @@ class Cursor(object):
 
     def _executeone(self, params):
         self._setParams(params)
-        if self._statement.execute():
+        try:
+            hasResults = self._statement.execute()
+        except _SQLException as ex:
+            raise _translateError(ex)(str(ex.getMessage())) from ex
+        if hasResults:
             self._onResultSet(self._statement.getResultSet())
         self._rowcount = self._statement.getUpdateCount()
         return self._rowcount
@@ -1227,8 +1271,8 @@ class Cursor(object):
                 "'%s' is not supported" % type(seq_of_parameters).__name__)
         try:
             counts = self._statement.executeBatch()
-        except _SQLException as ex:  # pragma: no cover
-            raise ProgrammingError(ex.message()) from ex
+        except _SQLException as ex:
+            raise _translateError(ex)(str(ex.getMessage())) from ex
         self._rowcount = sum(counts)
         if self._rowcount < 0:  # pragma: no cover
             self._rowcount = -1
@@ -1258,9 +1302,15 @@ class Cursor(object):
         self._check_executed()
         if not self._resultSet.next():
             return None
+        saved = self._columnTypes
         if types is not None:
             self._columnTypes = types
-        return self._fetchRow(converters)
+        try:
+            return self._fetchRow(converters)
+        finally:
+            # types apply to this call only
+            if types is not None:
+                self._columnTypes = saved
 
     def fetchmany(self, size=None, *, types=None, converters=_default):
         """ Fetch multiple results.
@@ -1286,18 +1336,24 @@ class Cursor(object):
         self._check_executed()
         if size is None:
             size = self._arraysize
-        # Set a fetch size
+        # Set a fetch size, remembering the one the user had
+        oldSize = self._resultSet.getFetchSize()
         self._resultSet.setFetchSize(size)
         rows = []
+        saved = self._columnTypes
         if types is not None:
             self._columnTypes = types
-        for i in range(size):
-            if not self._resultSet.next():
-                break
-            row = self._fetchRow(converters)
-            rows.append(row)
-        # Restore the default fetch size
-        self._resultSet.setFetchSize(0)
+        try:
+            for i in range(size):
+                if not self._resultSet.next():
+                    break
+                row = self._fetchRow(converters)
+                rows.append(row)
+        finally:
+            # types apply to this call only
+            if types is not None:
+                self._columnTypes = saved
+            self._resultSet.setFetchSize(oldSize)
         return rows
 
     def fetchall(self, *, types=None, converters=_default):
@@ -1311,11 +1367,17 @@ class Cursor(object):
         self._check_executed()
         # Set a fetch size
         rows = []
+        saved = self._columnTypes
         if types is not None:
             self._columnTypes = types
-        while self._resultSet.next():
-            row = self._fetchRow(converters)
-            rows.append(row)
+        try:
+            while self._resultSet.next():
+                row = self._fetchRow(converters)
+                rows.append(row)
+        finally:
+            # types apply to this call only
+            if types is not None:
+                self._columnTypes = saved
         return rows
 
     def __iter__(self):
@@ -1341,7 +1403,11 @@ class Cursor(object):
         An Error (or subclass) exception is raised if the previous call to
         ``.execute*()`` did not produce any result set or no call was issued yet.
         """
-        self._resultSet.close()
+        self._validate()
+        if self._statement is None:
+            raise ProgrammingError("execute() first")
+        if self._resultSet is not None:
+            self._resultSet.close()
         if self._statement.getMoreResults():  # pragma: no cover
             self._onResultSet(self._statement.getResultSet())
             return True
@@ -1377,6 +1443,8 @@ class Cursor(object):
         """
         if self._last is not None:
             return self._last
+        if self._statement is None:
+            raise ProgrammingError("execute() first")
         with self._statement.getGeneratedKeys() as rs:
             if rs.isClosed():
                 return self._last
