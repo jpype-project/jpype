@@ -960,10 +960,15 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameObjectArray(self):
+        # Wrap Object[] before arming the fault.  Wrapping calls
+        # Class.getDeclaredClasses(), which is caller sensitive up to JDK 21
+        # and thus goes through NewObjectArray; the fault would fire there
+        # and mark the class as failed.
+        ObjectArray = JArray(JObject)
         _jpype.fault("JPJavaFrame::NewObjectArray")
         with self.assertRaisesRegex(SystemError, "fault"):
-            JArray(JObject)(1)
-        ja = JArray(JObject)(1)
+            ObjectArray(1)
+        ja = ObjectArray(1)
         _jpype.fault("JPJavaFrame::SetObjectArrayElement")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja[0] = None
