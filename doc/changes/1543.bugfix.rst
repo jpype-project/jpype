@@ -1,0 +1,6 @@
+Fixed a lone high surrogate in a Java string swallowing the next
+3-byte character when converting to Python.  A high surrogate now
+pairs only with a following low surrogate.  Every unpaired surrogate
+now raises ``UnicodeDecodeError``, including a high surrogate followed
+by a character in U+0800-U+FFFF, which used to convert silently to
+the wrong text. #1538

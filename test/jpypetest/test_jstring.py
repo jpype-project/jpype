@@ -205,3 +205,31 @@ class JStringTestCase(common.JPypeTestCase):
 
         s2 = JString(bytes([65, 66, 67]))
         self.assertEqual(s2, "ABC")
+
+    @common.skipOnAndroid("toStringUTF8 bypasses the transcoder on Android")
+    def testLoneSurrogateDoesNotSwallowNextChar(self):
+        # A lone high surrogate used to merge with whatever 3-byte character
+        # followed it, silently dropping that character.  Every unpaired
+        # surrogate must now fail the same way, whatever follows it, and
+        # the transcoded bytes must still hold every original character.
+        String = JClass("java.lang.String")
+        hi, hi2, lo = chr(0xd800), chr(0xd83d), chr(0xdc00)
+        euro = chr(0x20ac)
+        for chars in [[lo, euro, 'X'], [hi, euro, 'X'], ['A', hi, 'B'],
+                      [hi2, hi2, chr(0xde00)], [hi], ['X', lo], [hi, euro]]:
+            s = String(JArray(JChar)(chars))
+            with self.assertRaises(UnicodeDecodeError, msg=ascii(chars)) as cm:
+                str(s)
+            # Round trip through UTF-16 to combine any valid pair in chars
+            # the way the transcoder does, keeping the lone surrogates.
+            expected = ''.join(chars).encode('utf-16-le', 'surrogatepass') \
+                .decode('utf-16-le', 'surrogatepass')
+            self.assertEqual(
+                cm.exception.object.decode('utf-8', 'surrogatepass'),
+                expected, msg=ascii(chars))
+
+    @common.skipOnAndroid("toStringUTF8 bypasses the transcoder on Android")
+    def testValidSurrogatePairStillDecodes(self):
+        String = JClass("java.lang.String")
+        s = String(JArray(JChar)(['A', chr(0xd83d), chr(0xde00), chr(0x20ac)]))
+        self.assertEqual(str(s), 'A\U0001f600' + chr(0x20ac))
