@@ -16,6 +16,11 @@
 #ifndef JP_CLASSHINTS_H
 #define JP_CLASSHINTS_H
 
+#include <atomic>
+#include <memory>
+#include <mutex>
+#include <vector>
+
 class JPConversion
 {
 public:
@@ -98,9 +103,36 @@ public:
 
 	void getInfo(JPClass *cls, JPConversionInfo &info);
 
-	bool m_ConvertJava;
+	std::atomic<bool> m_ConvertJava{false};
 private:
-	std::list<JPConversion*> conversions;
+	using ConversionList = std::vector<JPConversion*>;
+
+	/** Publish a new conversion list built from the current one.
+	 *
+	 * The list is read on every overload resolution, possibly while another
+	 * thread registers a JConversion.  Readers load the current list with a
+	 * single acquire load and iterate it without any lock or reference count.
+	 * Writers serialize on m_Lock, copy the current list, apply their change
+	 * and publish the copy with a release store.
+	 *
+	 * A reader may still be iterating a list after it was replaced, so no
+	 * published list is ever freed before the hints themselves (m_Lists).
+	 * Registrations are rare and happen mostly at startup, so the retained
+	 * lists cost little.  The conversions live as long as the hints too
+	 * (m_Owned), so every pointer in an old list stays valid.
+	 */
+	template <class Edit>
+	void update(Edit edit);
+
+	const ConversionList *snapshot() const
+	{
+		return m_Conversions.load(std::memory_order_acquire);
+	}
+
+	std::mutex m_Lock;
+	std::vector<std::unique_ptr<JPConversion>> m_Owned;         // owns every conversion, guarded by m_Lock
+	std::vector<std::unique_ptr<const ConversionList>> m_Lists; // every list ever published, guarded by m_Lock
+	std::atomic<const ConversionList*> m_Conversions{nullptr};  // the current list, one of m_Lists
 } ;
 
 extern JPConversion *hintsConversion;

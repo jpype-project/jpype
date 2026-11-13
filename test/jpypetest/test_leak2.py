@@ -50,6 +50,7 @@ class Tracer(object):
 # This test finds reference counting leak by attaching an
 # object that lives as long as the wrapper is alive.
 # It can't detect Java reference counter leaks.
+@common.threadUnsafe
 class Leak2TestCase(common.JPypeTestCase):
 
     def setUp(self):

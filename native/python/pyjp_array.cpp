@@ -16,6 +16,7 @@
 #include <cstddef>
 #include "jpype.h"
 #include "pyjp.h"
+#include <exception>
 #include "jp_array.h"
 #include "jp_arrayclass.h"
 
@@ -261,18 +262,93 @@ static int PyJPArray_assignSubscript(PyJPArray *self, PyObject *item, PyObject *
 	JP_PY_CATCH(-1);
 }
 
+// The JPArrayView is shared by all buffer exports of an array: it is created by the first export, counts the exports and
+// is destroyed by the last release. That bookkeeping (check, counting, deletion) is one critical section on the array
+// object; without it, concurrent exports create several views, lose counts and delete a view twice.
+//
+// Building a view is expensive (allocation, class lookup, JNI array access for multi-dimensional arrays), so it happens
+// outside the critical section. The first thread to publish wins; the losing view gives its Java elements back and is
+// deleted. The section therefore only guards the pointer and the reference count.
+static void PyJPArray_acquireView(PyJPArray *self, jobject collection, Py_buffer *out)
+{
+	JPArrayView *view = nullptr;
+	{
+		Py_BEGIN_CRITICAL_SECTION(self);
+		view = self->m_View;
+		if (view != nullptr)
+			view->reference();
+		Py_END_CRITICAL_SECTION();
+	}
+
+	if (view == nullptr)
+	{
+		// The array is not exported yet.  Build the view without holding the
+		// per-array lock and publish it only if no other thread won the race.
+		JPArrayView *created = nullptr;
+		if (collection != nullptr)
+			created = new JPArrayView(self->m_Array, collection);
+		else
+			created = new JPArrayView(self->m_Array);
+
+		{
+			Py_BEGIN_CRITICAL_SECTION(self);
+			if (self->m_View == nullptr)
+			{
+				self->m_View = created;
+				created = nullptr;
+			}
+			self->m_View->reference();
+			view = self->m_View;
+			Py_END_CRITICAL_SECTION();
+		}
+		// Another thread published first.  Our view pinned or copied the
+		// Java elements in its constructor; give them back before deleting it.
+		if (created != nullptr)
+		{
+			created->discard();
+			delete created;
+		}
+	}
+	*out = view->m_Buffer;
+}
+
+// Count one export less. Returns the view if this was the last one (it is no longer reachable from the array and
+// must be deleted by the caller), otherwise nullptr. Without a running JVM the Java resources are gone, so the view is
+// dropped without releasing them.
+static JPArrayView *PyJPArray_releaseView(PyJPArray *self, bool running)
+{
+	JPArrayView *dead = nullptr;
+	std::exception_ptr error;
+	Py_BEGIN_CRITICAL_SECTION(self);
+	try
+	{
+		if (self->m_View != nullptr && (!running || self->m_View->unreference()))
+		{
+			dead = self->m_View;
+			self->m_View = nullptr;
+		}
+	} catch (...)
+	{
+		error = std::current_exception();
+	}
+	Py_END_CRITICAL_SECTION();
+	if (error)
+		std::rethrow_exception(error);
+	return dead;
+}
+
 static void PyJPArray_releaseBuffer(PyJPArray *self, Py_buffer *view)
 {
 	JP_PY_TRY("PyJPArrayPrimitive_releaseBuffer");
 	JPContext* context = JPContext_global;
+	JPArrayView *dead;
 	if (context->isRunning())
 	{
 		JPJavaFrame frame = JPJavaFrame::outer();
-		if (self->m_View == nullptr || !self->m_View->unreference())
-			return;
-	}
-	delete self->m_View;
-	self->m_View = nullptr;
+		dead = PyJPArray_releaseView(self, true);
+	} else
+		dead = PyJPArray_releaseView(self, false);
+	delete dead;
 	JP_PY_CATCH(); // GCOVR_EXCL_LINE
 }
 
@@ -321,11 +397,8 @@ int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 	// If it is rectangular so try to create a view
 	try
 	{
-		if (self->m_View == nullptr)
-			self->m_View = new JPArrayView(self->m_Array, result);
+		PyJPArray_acquireView(self, result, view);
 		JP_PY_CHECK();
-		self->m_View->reference();
-		*view = self->m_View->m_Buffer;
 
 		// If strides are not requested and this is a slice then fail
 		if ((flags & PyBUF_STRIDES) != PyBUF_STRIDES)
@@ -371,12 +444,7 @@ int PyJPArrayPrimitive_getBuffer(PyJPArray *self, Py_buffer *view, int flags)
 			return -1;
 		}
 
-		if (self->m_View == nullptr)
-		{
-			self->m_View = new JPArrayView(self->m_Array);
-		}
-		self->m_View->reference();
-		*view = self->m_View->m_Buffer;
+		PyJPArray_acquireView(self, nullptr, view);
 
 		// We are always contiguous so no need to check that here.
 		view->readonly = 1;

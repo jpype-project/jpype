@@ -31,11 +31,12 @@ except ImportError:
 
 
 class JFloatTestCase(common.JPypeTestCase):
+    fixture = common.perThread(lambda: JClass("jpype.common.Fixture")())
+
     def setUp(self):
         common.JPypeTestCase.setUp(self)
         self.value = 1.0 + 1.0 / 65536
         self.cls = JClass("jpype.common.Fixture")
-        self.fixture = self.cls()
 
     def compareFloatEqual(self, x, y, msg=None):
         if x == y:
@@ -242,11 +243,12 @@ class JFloatTestCase(common.JPypeTestCase):
         self.fixture.float_field = q
         self.assertEqual(self.fixture.float_field, q)
         self.assertEqual(self.fixture.getFloat(), q)
-        #  Check static field
-        self.cls.static_float_field = q
-        self.assertEqual(self.fixture.static_float_field, q)
-        self.assertEqual(self.fixture.getStaticFloat(), q)
-        self.assertEqual(self.cls.getStaticFloat(), q)
+        #  Check static field (one value per JVM, so serialize)
+        with common.staticFixtureLock:
+            self.cls.static_float_field = q
+            self.assertEqual(self.fixture.static_float_field, q)
+            self.assertEqual(self.fixture.getStaticFloat(), q)
+            self.assertEqual(self.cls.getStaticFloat(), q)
         #  Check call
         self.assertEqual(self.fixture.callFloat(q), q)
         self.assertEqual(self.cls.callStaticFloat(q), q)
@@ -272,8 +274,9 @@ class JFloatTestCase(common.JPypeTestCase):
         import math
         nan = float("nan")
         self.assertTrue(math.isnan(self.fixture.callFloat(nan)))
-        self.fixture.static_float_field = nan
-        self.assertTrue(math.isnan(self.fixture.static_float_field))
+        with common.staticFixtureLock:
+            self.fixture.static_float_field = nan
+            self.assertTrue(math.isnan(self.fixture.static_float_field))
         self.fixture.float_field = nan
         self.assertTrue(math.isnan(self.fixture.float_field))
 
@@ -281,8 +284,9 @@ class JFloatTestCase(common.JPypeTestCase):
         import math
         inf = float("inf")
         self.assertTrue(math.isinf(self.fixture.callFloat(inf)))
-        self.fixture.static_float_field = inf
-        self.assertTrue(math.isinf(self.fixture.static_float_field))
+        with common.staticFixtureLock:
+            self.fixture.static_float_field = inf
+            self.assertTrue(math.isinf(self.fixture.static_float_field))
         self.fixture.float_field = inf
         self.assertTrue(math.isinf(self.fixture.float_field))
 

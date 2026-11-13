@@ -10,6 +10,88 @@ Latest Changes:
   - Fixed a free-threaded crash when class initialization and argument
     conversion first use the same Java class concurrently. #1507
 
+  - A class whose customizer (``@JImplementationFor``) or post-load step
+    fails is now marked permanently failed.  Later lookups raise
+    ``RuntimeError`` instead of returning a half-built wrapper with no hints,
+    inner classes, or customizers.  Overload resolution treats such a class
+    as not convertible, so a call that matches another overload still works.
+
+  - Fixed a lock-order inversion between the class-documentation lock and
+    the Java type-factory monitor.  The lock is gone: documentation,
+    ``__annotations__`` and ``__code__`` are computed without holding any
+    lock.  Threads that access them for the first time at once may each
+    compute the value, but only the first one published is kept, so every
+    caller sees the same object.
+
+  - Fixed a race between registering a ``JConversion`` (or an exclusion)
+    and resolving calls on other threads.  The per-class conversion list was
+    appended to while other threads iterated it.  Every change now publishes
+    a new immutable list, which readers use without taking a lock.
+
+  - Fixed a race in Java package scanning on free-threaded Python.  Jar
+    file systems are closed when too many are open, so package contents and
+    class lookups now use the same ``FS_LOCK``; a thread can no longer read
+    through a path whose file system another thread just closed.
+
+  - The fault-injection code used by instrumented builds is now
+    thread-local, so parallel tests can no longer clear or observe another
+    thread's injected fault.
+
+  - Serialized JVM start/shutdown from Python, and made ``addClassPath``
+    safe against a concurrent start.  Without a lock, free-threaded callers
+    could all pass the "already started" check and race inside the native
+    startup path, and a path added while ``startJVM`` ran could be recorded
+    too late to reach the class loader.  ``addClassPath`` makes no Java calls
+    while holding its lock, so a customizer may call it while another thread
+    adds a path.
+
+  - Fixed a native crash on free-threaded Python when a Java class wrapper
+    was requested for a class that could not be resolved (``nullptr``),
+    for example while the JVM was shutting down. ``PyJPClass_create()``
+    now raises ``RuntimeError`` instead of dereferencing the null pointer.
+
+  - Fixed a race in exported array buffers on free-threaded Python.
+    Concurrent exports of the same array could each create a separate
+    internal view, corrupt the export reference count, and free the view
+    twice. The view's creation, reference counting, and destruction are
+    now serialized through a critical section on the array object.
+
+  - Fixed a race resolving the parameter and return types of a Java method
+    lazily. On free-threaded Python, threads could observe a partially
+    initialized method type cache and fail overload matching (for example
+    reporting that no overload accepts a string). The cache is now published
+    atomically only after it is complete.
+
+  - Fixed a race creating the null singleton of the reconstructing boxed
+    types (``Boolean``, ``Byte``, ``Short``, ``Integer``, ``Long`` and
+    ``Character``). Concurrent casts of ``None`` could replace the cached
+    instance, so null-ness checks based on singleton identity and comparisons
+    such as ``!= 0`` could fail. The first published singleton is now kept.
+
+  - Fixed several test-isolation problems in the free-threaded parallel test
+    suite: the shutdown hook test is marked thread-unsafe, tests using
+    ``unittest.subTest`` no longer do so when they run concurrently, and the
+    pickle tests use a private temporary file per thread instead of one
+    shared ``test.pic``.  The field-attribute tests now use a per-thread
+    fixture object and serialize only their writes to Java static fields, so
+    they run concurrently again instead of being marked thread-unsafe.
+    Static-field writes in the remaining tests take the same lock.
+
+  - The free-threaded CI legs now run the suite in one process with parallel
+    threads (capped at the runner's CPU count, up to four), random order, and
+    three repeated passes, and ``pytest-run-parallel`` is pinned to a commit
+    so local and CI runs use the same plugin.  Because the plugin requires
+    Python 3.10+, the 3.8/3.9 legs install it conditionally, run under xdist
+    only, and treat the thread-safety markers as no-ops.  The release jobs
+    also check that the expected free-threaded interpreters
+    (``cp314t``/``cp315t``) are actually present in the manylinux images and
+    that the wheels import with the GIL off.
+
+  - Documented free-threaded support and the operations that remain
+    process-global or serialized, and added the PyPI
+    ``Programming Language :: Python :: Free Threading :: 3 - Stable``
+    classifier.
+
   - JPype now runs end-to-end on Android for the first time, verified via a
     new project-local build/test harness (``project/android/``, see
     ``doc/android_build.rst``) that cross-compiles ``_jpype`` for Android,

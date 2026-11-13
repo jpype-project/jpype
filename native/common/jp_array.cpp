@@ -240,6 +240,14 @@ void JPArrayView::reference()
 	m_RefCount++;
 }
 
+void JPArrayView::discard()
+{
+	if (m_Owned || m_RefCount != 0)
+		return;
+	auto *type = dynamic_cast<JPPrimitiveType*>( m_Array->getClass()->getComponentType());
+	type->releaseView(*this);
+}
+
 bool JPArrayView::unreference()
 {
 	m_RefCount--;

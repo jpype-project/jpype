@@ -13,6 +13,9 @@ The tests verify:
 - Class.forName() with explicit loader works
 - Multiple access patterns (direct, valueOf, JPackage) are consistent
 """
+from pathlib import Path
+import tempfile
+import threading
 import jpype
 import common
 
@@ -145,3 +148,59 @@ class ClassLoaderTestCase(common.JPypeTestCase):
         test_obj = self.TestInterface()
         test_obj.setRole(role)
         self.assertEqual(test_obj.getRoleAsString(), "Slave")
+
+
+class ClassPathConcurrencyTestCase(common.JPypeTestCase):
+
+    @common.threadUnsafe
+    def testConcurrentClassPathUpdateIsSerialized(self):
+        """getClassPath must not observe a half-applied addClassPath."""
+        from jpype import _classpath
+
+        class BlockingList(list):
+            def __init__(self):
+                super().__init__()
+                self.entered = threading.Event()
+                self.release = threading.Event()
+
+            def append(self, item):
+                self.entered.set()
+                if not self.release.wait(10):
+                    raise RuntimeError("test did not release addClassPath")
+                super().append(item)
+
+        paths = BlockingList()
+        previous = _classpath._CLASSPATHS
+        _classpath._CLASSPATHS = paths
+        writer = None
+        reader = None
+        result = []
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                path = Path(tmp) / "late"
+                path.mkdir()
+                writer = threading.Thread(
+                    target=jpype.addClassPath, args=(path,))
+                writer.start()
+                self.assertTrue(
+                    paths.entered.wait(10),
+                    "addClassPath did not reach its classpath update")
+
+                reader = threading.Thread(
+                    target=lambda: result.append(jpype.getClassPath()))
+                reader.start()
+                reader.join(0.2)
+                self.assertTrue(
+                    reader.is_alive(),
+                    "getClassPath did not wait for addClassPath")
+        finally:
+            paths.release.set()
+            if writer is not None:
+                writer.join(10)
+            if reader is not None:
+                reader.join(10)
+            _classpath._CLASSPATHS = previous
+
+        self.assertFalse(writer.is_alive())
+        self.assertFalse(reader.is_alive())
+        self.assertIn(str(path), result[0])

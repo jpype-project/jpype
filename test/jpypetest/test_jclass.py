@@ -87,12 +87,14 @@ class JClassTestCase(common.JPypeTestCase):
 
     def testGetAttrStaticField_2(self):
         cls = JClass('jpype.common.Fixture')
-        cls.static_object_field = "fred"
-        self.assertEqual(cls.static_object_field, "fred")
+        with common.staticFixtureLock:
+            cls.static_object_field = "fred"
+            self.assertEqual(cls.static_object_field, "fred")
 
     def testSetAttrStaticField_3(self):
         cls = JClass('jpype.common.Fixture')
-        cls.static_object_field = "fred"
+        with common.staticFixtureLock:
+            cls.static_object_field = "fred"
 
     def testGetAttrField(self):
         cls = JClass('jpype.common.Fixture')

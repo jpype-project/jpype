@@ -16,13 +16,21 @@
 #
 # *****************************************************************************
 import unittest
+from pathlib import Path
 
 import _jpype
 import jpype
 from jpype import *
 import common
+import subrun
 
 
+# A fault that fires while a class is first being wrapped marks that class as
+# failed for the rest of the process.  Which classes are still unwrapped when
+# a fault test runs depends on the test order, so in the shared test process a
+# fault could poison a class like java.lang.Object[] and break unrelated tests.
+# Running this case in its own JVM keeps that damage contained.
+@subrun.TestCase
 class FaultTestCase(common.JPypeTestCase):
     """ Test for fault paths in JPype
 
@@ -56,6 +64,13 @@ class FaultTestCase(common.JPypeTestCase):
     Coffee is advised.
 
     """
+
+    @classmethod
+    def setUpClass(cls):
+        # Runs in the subrun child, which has no conftest and thus no JVM.
+        classes = Path(__file__).parent / "../classes"
+        assert classes.exists()
+        jpype.startJVM("-ea", classpath=classes.absolute(), convertStrings=False)
 
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -945,10 +960,15 @@ class FaultTestCase(common.JPypeTestCase):
 
     @common.requireInstrumentation
     def testJPJavaFrameObjectArray(self):
+        # Wrap Object[] before arming the fault.  Wrapping calls
+        # Class.getDeclaredClasses(), which is caller sensitive up to JDK 21
+        # and thus goes through NewObjectArray; the fault would fire there
+        # and mark the class as failed.
+        ObjectArray = JArray(JObject)
         _jpype.fault("JPJavaFrame::NewObjectArray")
         with self.assertRaisesRegex(SystemError, "fault"):
-            JArray(JObject)(1)
-        ja = JArray(JObject)(1)
+            ObjectArray(1)
+        ja = ObjectArray(1)
         _jpype.fault("JPJavaFrame::SetObjectArrayElement")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja[0] = None
@@ -1060,6 +1080,7 @@ class FaultTestCase(common.JPypeTestCase):
     # attachThreadToJVM()/detachThreadFromJVM() are removed on Android -
     # Android's JVM is always already attached (see doc/android.rst's
     # "Removed JPype Services").
+    @common.threadUnsafe
     @common.skipOnAndroid("attachThreadToJVM/detachThreadFromJVM removed on Android")
     def testDetachThread(self):
         self.assertTrue(_jpype.isThreadAttachedToJVM())

@@ -132,17 +132,16 @@ JPPyObject JPBoxedType::convertToPythonObject(JPJavaFrame& frame, jvalue value, 
 	if (cast && value.l == nullptr && PyJPClass_GetJValueFn(wrapperType) != nullptr)
 	{
 		PyObject *nullBoxed = PyJPClass_GetNullBoxed(wrapperType);
-		if (nullBoxed == nullptr)
-		{
-			JPPyObject built;
-			if (this->getPrimitive() == context->_char)
-				built = JPPyObject::call(PyJPChar_Create(wrapperType, 0));
-			else
-				built = PyJPNumber_create(frame, wrapper, JPValue(cls, value));
-			PyJPClass_SetNullBoxed(wrapperType, built.get());
-			nullBoxed = built.get();
-		}
-		return JPPyObject::use(nullBoxed);
+		if (nullBoxed != nullptr)
+			return JPPyObject::use(nullBoxed);
+		JPPyObject built;
+		if (this->getPrimitive() == context->_char)
+			built = JPPyObject::call(PyJPChar_Create(wrapperType, 0));
+		else
+			built = PyJPNumber_create(frame, wrapper, JPValue(cls, value));
+		// Another thread may have installed the singleton while we were
+		// building ours.  Always use the first one published.
+		return JPPyObject::claim(PyJPClass_GetOrSetNullBoxed(wrapperType, built.get()));
 	}
 
 	JPPyObject obj;

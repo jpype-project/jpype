@@ -18,12 +18,12 @@ package jpype.closeable;
 class CloseableTest implements java.io.Closeable
 {
 
-  public static boolean closed = false;
-  public static String printed = "";
-  public static boolean willfail = false;
-  public static boolean failed = false;
+  public boolean closed = false;
+  public String printed = "";
+  public boolean willfail = false;
+  public boolean failed = false;
 
-  public static void reset()
+  public void reset()
   {
     closed = false;
     willfail = false;

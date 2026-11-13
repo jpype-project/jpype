@@ -28,6 +28,10 @@ public:
 	~JPArrayView();
 	void reference();
 	bool unreference();
+	// Release the Java elements of a view that was never published (it lost
+	// the race to become the array's export).  Its reference count is still
+	// zero, so unreference() would never release them.
+	void discard();
 public:
 	JPArray *m_Array;
 	void *m_Memory{};

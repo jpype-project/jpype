@@ -24,4 +24,17 @@ public class ClassHintsTest
   {
     input = c;
   }
+
+  // Overloads for checking that a Custom whose initialization failed does not
+  // break resolution of the other candidate.  Object is never an exact match,
+  // so Custom is always tested.
+  public static String pick(Object o)
+  {
+    return "Object";
+  }
+
+  public static String pick(Custom c)
+  {
+    return "Custom";
+  }
 }

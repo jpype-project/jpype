@@ -5493,18 +5493,19 @@ Threading
 =========
 
 JPype supports all types of threading subject to the restrictions placed by
-Python.  Java is inherently threaded and support a vast number of threading
-styles such as execution pools, futures, and ordinary thread.  Python is
-somewhat more limited.  At its heart Python is inherently single threaded
-and requires a master lock known as the GIL (Global Interpreter Lock) to
-be held every time a Python call is made.  Python threads are thus more
-cooperative that Java threads.
+Python.  Java is inherently threaded and supports a vast number of threading
+styles such as execution pools, futures, and ordinary threads.  On the
+default CPython build, Python is single-threaded from the interpreter's
+perspective and requires a master lock known as the GIL (Global Interpreter
+Lock) to be held every time a Python call is made.  Python threads are thus
+more cooperative than Java threads.  Free-threaded builds remove the GIL;
+see :ref:`concurrent_processing_threading_free_threaded_python` below.
 
-To deal with this behavior, JPype releases the GIL every time it leaves from
-Python into Java to any user defined method.  Shorter defined calls such as
-to get a string name from from a class may not release the GIL.  Every time
-the GIL is released it is another opportunity for Python to switch to a different
-cooperative thread.
+To deal with this behavior on GIL-enabled builds, JPype releases the GIL
+every time it leaves Python into Java to any user defined method.  Shorter
+defined calls such as to get a string name from from a class may not release
+the GIL.  Every time the GIL is released it is another opportunity for Python
+to switch to a different cooperative thread.
 
 .. _concurrent_processing_threading_python_threads:
 
@@ -5638,6 +5639,49 @@ they interact with Java depends on their nature. As stated earlier, any OS-
 level threads will work without problem. Emulated threads, like microthreads,
 will appear as a single thread to Java, so special care will have to be taken
 for synchronization.
+
+.. _concurrent_processing_threading_free_threaded_python:
+
+Free-Threaded Python
+--------------------
+
+JPype supports the CPython free-threaded build (the ``cp314t`` and ``cp315t``
+ABI tags) with the GIL disabled.  The native runtime is safe for concurrent
+use: class initialization and hints are published only after they are
+complete, method metadata and conversion caches are synchronized, exported
+array buffer views are reference counted, and package scans share jar file
+system access safely.
+
+Some operations remain serialized or are inherently process-global:
+
+- Starting or shutting down the JVM affects every thread.
+  ``startJVM`` and ``shutdownJVM`` are serialized with each other, but a
+  lifecycle operation must still not overlap ordinary JPype calls from other
+  threads.
+- Registering customizers, conversions, or exclusions changes behavior for
+  all threads.  Finish configuration before starting worker threads.
+- Setting up a Java class for its first use, including running its
+  customizers (``@JImplementationFor``), happens one class at a time across
+  the process, with a lock held.  A customizer must therefore not wait for
+  another thread that loads a Java class for the first time or uses the class
+  being customized: that thread waits for the customizer to finish, and
+  neither proceeds.  This is the same rule as for Python module code that runs
+  at import time.
+- Changing the classpath or loading a new package can update shared caches.
+  ``addClassPath`` can be called from several threads, and a path added while
+  ``startJVM`` runs is not lost, but class loading can still race a late
+  update.  Add paths before starting worker threads when possible.
+
+Most JPype wrapper objects are immutable after creation and can be read from
+multiple threads.  Mutable wrappers, including arrays and buffers, and the
+Java objects they refer to are only as thread-safe as the underlying Java
+class.  Shared mutable Python state still requires caller-side
+synchronization, and a JPype object should not be mutated concurrently unless
+the corresponding Java API documents that it is thread-safe.
+
+Free-threaded behavior is exercised in CI by running the full test suite in
+one process with multiple parallel threads, randomized order, and repeated
+passes.
 
 
 .. _concurrent_processing_customizing_javalangthread:
