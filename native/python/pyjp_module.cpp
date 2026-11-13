@@ -612,8 +612,13 @@ PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 	JPContext* context = JPContext_global;
 	if (!context->isRunning())
 		Py_RETURN_NONE;
+	if (!PyTuple_Check(obj) || PyTuple_Size(obj) < 1)
+	{
+		PyErr_SetString(PyExc_TypeError, "_collect requires a phase argument");
+		return nullptr;
+	}
 	PyObject *a1 = PyTuple_GetItem(obj, 0);
-	if (!PyUnicode_Check(a1))
+	if (!PyUnicode_Check(a1) || PyUnicode_GetLength(a1) < 3)
 	{
 		PyErr_SetString(PyExc_TypeError, "Bad callback argument");
 		return nullptr;
@@ -632,6 +637,7 @@ PyObject *PyJPModule_collect(PyObject* module, PyObject *obj)
 
 PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 {
+	JP_PY_TRY("PyJPModule_gcStats");
 	JPContext *context = PyJPModule_getContext();
 	JPGCStats stats;
 	context->m_GC->getStats(stats);
@@ -650,6 +656,7 @@ PyObject *PyJPModule_gcStats(PyObject* module, PyObject *obj)
 	PyDict_SetItemString(out, "triggered", res = PyLong_FromSsize_t((Py_ssize_t)(stats.python_triggered)));
 	Py_DECREF(res);
 	return out;
+	JP_PY_CATCH(nullptr);
 }
 // GCOVR_EXCL_STOP
 
