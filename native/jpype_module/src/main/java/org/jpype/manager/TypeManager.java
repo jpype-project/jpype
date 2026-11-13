@@ -130,7 +130,11 @@ public class TypeManager
     long out;
     // Lambda classes are named Outer$$Lambda$N/0x... up to JDK 20 and
     // Outer$$Lambda/0x... from JDK 21, so only match the common "$$Lambda".
-    if (cls.isSynthetic() && cls.getName().contains("$$Lambda")
+    // On Android, D8 turns lambdas into classes named
+    // Outer$$ExternalSyntheticLambdaN at build time.
+    String name = cls.getName();
+    if (cls.isSynthetic()
+            && (name.contains("$$Lambda") || name.contains("$$ExternalSyntheticLambda"))
             && cls.getInterfaces().length > 0)
     {
       // If is it lambda, we need a special wrapper
