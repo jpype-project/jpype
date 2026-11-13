@@ -1,0 +1,4 @@
+Fixed ``JClass("pkg.Outer.Inner")`` failing with ``TypeError`` for classes
+added with ``addClassPath()`` after the JVM started.  The dotted
+inner-class fallback used the one-argument ``Class.forName``, which only
+searches the system class loader, instead of the JPype class loader. #1525

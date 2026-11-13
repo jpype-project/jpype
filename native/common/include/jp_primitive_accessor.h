@@ -102,6 +102,24 @@ template <class type_t> PyObject *convertMultiArray(
 		return nullptr;
 	}
 
+	// An empty buffer has nothing to copy, and the copy loop below always
+	// reads the first row.  Array.newInstance builds the right shape, for
+	// example int[0][3] or int[2][0][3].
+	if (view.shape != nullptr)
+	{
+		for (int i = 0; i < view.ndim; ++i)
+		{
+			if (view.shape[i] == 0)
+			{
+				jobject empty = frame.newArrayInstance(cls->getJavaClass(), (jintArray) dims);
+				JPClass *emptyType = frame.findClassForObject(empty);
+				jvalue ev;
+				ev.l = empty;
+				return emptyType->convertToPythonObject(frame, ev, false).keep();
+			}
+		}
+	}
+
 	// Reserve space for array.
 	auto contents = (jobjectArray) context->_java_lang_Object->newArrayOf(frame, subs);
 	std::vector<Py_ssize_t> indices(view.ndim);

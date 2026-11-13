@@ -374,10 +374,32 @@ static Py_ssize_t PyJPChar_len(PyJPChar *self)
 	JP_PY_CATCH(-1);  // GCOVR_EXCL_LINE
 }
 
+// The Java class of an operand only if it really is a Java char (JChar or
+// java.lang.Character).  Other Java values (String, Integer, Double, ...)
+// are not chars and must not be read with fromJPChar; they take the
+// plain-operand path instead.
+static JPClass *charOperandClass(PyObject *obj)
+{
+	if (!PyObject_TypeCheck(obj, PyJPChar_Type))
+		return nullptr;
+	return PyJPValue_getJPClass(obj);
+}
+
+// A non-char operand that is a Java null (for example JObject(None, JInt))
+// must raise rather than be handed to PyNumber_*, which would read the null
+// singleton as 0.  Plain Python operands have no Java class and pass.
+static int assertOperandNotNull(PyObject *obj)
+{
+	JPClass *cls = PyJPValue_getJPClass(obj);
+	if (cls == nullptr)
+		return 0;
+	return assertNotNullClass(obj, cls);
+}
+
 static PyObject *apply(PyObject *first, PyObject *second, PyObject* (*func)(PyObject*, PyObject*))
 {
-	JPClass *cls0 = PyJPValue_getJPClass(first);
-	JPClass *cls1 = PyJPValue_getJPClass(second);
+	JPClass *cls0 = charOperandClass(first);
+	JPClass *cls1 = charOperandClass(second);
 	if (cls0 != nullptr && cls1 != nullptr)
 	{
 		if (assertNotNullClass(first, cls0))
@@ -390,7 +412,7 @@ static PyObject *apply(PyObject *first, PyObject *second, PyObject* (*func)(PyOb
 	}
 	else if (cls0 != nullptr)
 	{
-		if (assertNotNullClass(first, cls0))
+		if (assertNotNullClass(first, cls0) || assertOperandNotNull(second))
 			return nullptr;
 		// Promote to int as per Java rules
 		JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*)first)));
@@ -398,7 +420,7 @@ static PyObject *apply(PyObject *first, PyObject *second, PyObject* (*func)(PyOb
 	}
 	else if (cls1 != nullptr)
 	{
-		if (assertNotNullClass(second, cls1))
+		if (assertNotNullClass(second, cls1) || assertOperandNotNull(first))
 			return nullptr;
 		// Promote to int as per Java rules
 		JPPyObject v = JPPyObject::call(PyLong_FromLong(fromJPChar((PyJPChar*)second)));
@@ -432,8 +454,8 @@ static  PyObject *PyJPChar_xor(PyObject *first, PyObject *second)
 static  PyObject *PyJPChar_add(PyObject *first, PyObject *second)
 {
 	JP_PY_TRY("PyJPChar_add");
-	JPClass *cls0 = PyJPValue_getJPClass(first);
-	JPClass *cls1 = PyJPValue_getJPClass(second);
+	JPClass *cls0 = charOperandClass(first);
+	JPClass *cls1 = charOperandClass(second);
 	if (cls0 != nullptr && cls1 != nullptr)
 	{
 		if (assertNotNullClass(first, cls0))
@@ -446,7 +468,7 @@ static  PyObject *PyJPChar_add(PyObject *first, PyObject *second)
 	}
 	else if (cls0 != nullptr)
 	{
-		if (assertNotNullClass(first, cls0))
+		if (assertNotNullClass(first, cls0) || assertOperandNotNull(second))
 			return nullptr;
 		if (PyUnicode_Check(second))
 			return PyUnicode_Concat(first, second);
@@ -457,7 +479,7 @@ static  PyObject *PyJPChar_add(PyObject *first, PyObject *second)
 	}
 	else if (cls1 != nullptr)
 	{
-		if (assertNotNullClass(second, cls1))
+		if (assertNotNullClass(second, cls1) || assertOperandNotNull(first))
 			return nullptr;
 		if (PyUnicode_Check(first))
 			return PyUnicode_Concat(first, second);

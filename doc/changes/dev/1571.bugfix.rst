@@ -1,0 +1,1 @@
+Fixed releasing a Java array buffer leaving a Python error set when the release failed, so the next unrelated call raised ``SystemError: ... returned a result with an exception set``.  Re-enabled the fault tests that were disabled with FIXME notes.

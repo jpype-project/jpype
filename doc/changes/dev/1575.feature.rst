@@ -1,0 +1,1 @@
+CodeQL alerts with an in-source ``codeql[<query-id>]`` comment are now dismissed automatically on master ("won't fix", "Suppressed via SARIF") by the ``advanced-security/dismiss-alerts`` action, and reopened once the comment is removed.  Code scanning ignores the SARIF suppressions that ``AlertSuppression.ql`` (#1574) adds, so those alerts stayed open before.
