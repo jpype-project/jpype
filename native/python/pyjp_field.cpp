@@ -34,6 +34,20 @@ static void PyJPField_dealloc(PyJPField *self)
 	Py_TYPE(self)->tp_free(self);
 }
 
+// A field cannot be read or written through a null object; raise the
+// NullPointerException that Java itself would.
+static jobject requireInstance(JPJavaFrame &frame, PyObject *obj)
+{
+	jobject inst = PyJPValue_getJValue(frame, obj).l;
+	if (inst == nullptr)
+	{
+		frame.ThrowNew(frame.FindClass("java/lang/NullPointerException"),
+				"Cannot access a field of a null object");
+		frame.check();
+	}
+	return inst;
+}
+
 static PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 {
 	JP_PY_TRY("PyJPField_get");
@@ -48,7 +62,7 @@ static PyObject *PyJPField_get(PyJPField *self, PyObject *obj, PyObject *type)
 	if (PyJPValue_getJPClass(obj) == nullptr)
 		JP_RAISE(PyExc_AttributeError, "Field requires instance value");
 
-	return self->m_Field->getField(PyJPValue_getJValue(frame, obj).l).keep();
+	return self->m_Field->getField(requireInstance(frame, obj)).keep();
 	JP_PY_CATCH(nullptr);
 }
 
@@ -76,7 +90,7 @@ static int PyJPField_set(PyJPField *self, PyObject *obj, PyObject *pyvalue)
 		PyErr_Format(PyExc_AttributeError, "Field requires instance value, not '%s'", Py_TYPE(obj)->tp_name);
 		return -1;
 	}
-	self->m_Field->setField(PyJPValue_getJValue(frame, obj).l, pyvalue);
+	self->m_Field->setField(requireInstance(frame, obj), pyvalue);
 	return 0;
 	JP_PY_CATCH(-1);
 }

@@ -172,6 +172,12 @@ public:
 		{
 			jvalue v = PyJPValue_getJValue(*match.frame, ret.get());
 			JP_TRACE("Value", v.l);
+			// Primitive classes never consult user conversions, so the target
+			// is a reference type and the result must be one too.
+			if (retCls->isPrimitive())
+				JP_RAISE(PyExc_TypeError, "Conversion to a Java object must not return a Java primitive");
+			if (v.l != nullptr && !match.frame->IsInstanceOf(v.l, cls->getJavaClass()))
+				JP_RAISE(PyExc_TypeError, "Conversion returned an object of the wrong Java type");
 			v.l = match.frame->NewLocalRef(v.l);
 			return v;
 		}
@@ -180,6 +186,8 @@ public:
 		{
 			jvalue v = proxy->getProxy();
 			JP_TRACE("Proxy", v.l);
+			if (!match.frame->IsInstanceOf(v.l, cls->getJavaClass()))
+				JP_RAISE(PyExc_TypeError, "Conversion returned a proxy of the wrong Java type");
 			v.l = match.frame->NewLocalRef(v.l);
 			return v;
 		}
