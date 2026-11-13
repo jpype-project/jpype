@@ -31,6 +31,30 @@ class JMapTestCase(common.JPypeTestCase):
         obj.put("c", 3)
         self.assertEqual(len(obj), 3)
 
+    def testDelMissingKey(self):
+        obj = jpype.JClass('java.util.HashMap')()
+        obj.put("a", 1)
+        obj.put("n", None)
+        del obj["a"]
+        del obj["n"]  # present with a null value
+        self.assertEqual(len(obj), 0)
+        with self.assertRaises(KeyError):
+            del obj["missing"]
+        with self.assertRaises(KeyError):
+            del obj[1.5]  # wrong key type
+
+    def testEntryNegativeIndex(self):
+        obj = jpype.JClass('java.util.HashMap')()
+        obj.put("k", "v")
+        entry = next(iter(obj.entrySet()))
+        self.assertEqual(entry[0], "k")
+        self.assertEqual(entry[-1], "v")
+        self.assertEqual(entry[-2], "k")
+        with self.assertRaises(IndexError):
+            entry[2]
+        with self.assertRaises(IndexError):
+            entry[-3]
+
     def testIter(self):
         cls = jpype.JClass('java.util.TreeMap')
         obj = cls()

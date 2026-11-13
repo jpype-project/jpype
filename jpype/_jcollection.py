@@ -59,19 +59,13 @@ class _JCollection(object):
 
 
 def _sliceAdjust(slc, size):
-    start = slc.start
-    stop = slc.stop
-    if slc.step and (slc.step > 1 or slc.step < 0):
+    # slice.indices clamps the bounds the way Python lists do and rejects a
+    # zero step with ValueError.
+    start, stop, step = slc.indices(size)
+    if step != 1:
         raise TypeError("Stride not supported")
-    if start is None:
-        start = 0
-    if stop is None:
-        stop = size
-    if start < 0:
-        start += size
-    if stop < 0:
-        stop += size
-    return slice(start, stop)
+    # An empty (reversed) range selects nothing at its start.
+    return slice(start, max(start, stop))
 
 
 @_jcustomizer.JImplementationFor('java.util.List')
@@ -125,9 +119,12 @@ class _JList(object):
 
     def index(self, obj):
         try:
-            return self.indexOf(obj)
+            ndx = self.indexOf(obj)
         except TypeError:
+            ndx = -1
+        if ndx < 0:
             raise ValueError("%s is not in list" % repr(obj))
+        return ndx
 
     def count(self, obj):
         try:
@@ -160,7 +157,9 @@ class _JList(object):
         return self.remove_(_jtypes.JInt(idx))
 
     def __iadd__(self, obj):
-        self.add(obj)
+        # Like Python's list +=, any iterable extends the list (a str adds
+        # its characters).
+        self.extend(list(obj) if isinstance(obj, str) else obj)
         return self
 
     def __add__(self, obj):
@@ -173,6 +172,8 @@ class _JList(object):
         for i in range(obj):
             new.extend(self)
         return new
+
+    __rmul__ = __mul__
 
     @JOverride(sticky=True, rename='remove_')
     def remove(self, obj):
@@ -203,7 +204,13 @@ class _JMap(object):
         return self.keySet().iterator()
 
     def __delitem__(self, i):
-        return self.remove(i)
+        try:
+            present = self.containsKey(i)
+        except TypeError:
+            present = False  # wrong key type can't be present either
+        if not present:
+            raise KeyError('%s' % i)
+        self.remove(i)
 
     def __getitem__(self, ndx):
         try:
@@ -242,6 +249,8 @@ class _JMapEntry(object):
         return 2
 
     def __getitem__(self, x):
+        if x < 0:
+            x += 2
         if x == 0:
             return self.getKey()
         if x == 1:
