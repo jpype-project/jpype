@@ -1448,9 +1448,9 @@ characters numerically can corrupt their encoding.
    print(java_char)  # Output: 'A'
 
 `JChar` of a string or ``bytes`` requires exactly one character; a string
-outside the Basic Multilingual Plane raises ``ValueError``, and ``bytes``
-are read as Latin-1.  `JChar` of an integer is a cast like Java's
-``(char) x``: it keeps the low 16 bits, so ``JChar(0x1F600)`` is
+outside the Basic Multilingual Plane raises ``ValueError``, and a single
+byte is read as a Latin-1 code point.  `JChar` of an integer is a cast like
+Java's ``(char) x``: it keeps the low 16 bits, so ``JChar(0x1F600)`` is
 ``'\uf600'``.  Assigning an out-of-range integer to a ``char`` field or
 array element raises ``OverflowError`` instead.
 

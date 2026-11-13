@@ -511,12 +511,16 @@ class JCharTestCase_2(common.JPypeTestCase):
         fixture.char_field = b'\xe9'
         self.assertEqual(ord(str(fixture.char_field)), 0xe9)
 
-    def testBytesToCharArrayAreLatin1(self):
-        # Same result as JArray(JChar)(bytes), not a UTF-8 decode.
+    def testBytesToCharArrayParameterAreUTF8(self):
+        # bytes passed where Java expects a char[] are decoded as UTF-8.
         String = JClass("java.lang.String")
-        self.assertEqual(str(String.copyValueOf(b'a\xe9b')), 'a\xe9b')
-        self.assertEqual(str(String.copyValueOf(b'\xc3\xa9')), '\xc3\xa9')
-        self.assertEqual(str(JArray(JChar)(b'\xc3\xa9')), '\xc3\xa9')
+        self.assertEqual(str(String.copyValueOf(b'abc')), 'abc')
+        self.assertEqual(str(String.copyValueOf(b'\xc3\xa9')), '\xe9')
+        self.assertEqual(str(String.copyValueOf('\U0001F600'.encode())),
+                         '\U0001F600')
+        # Invalid UTF-8 raises rather than being silently cut short.
+        with self.assertRaises(UnicodeDecodeError):
+            String.copyValueOf(b'a\xe9b')
 
     def testCharBufferIsNotSignExtended(self):
         # A 'c' buffer item is a single byte, read as 0..255.

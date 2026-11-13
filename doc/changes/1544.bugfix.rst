@@ -1,9 +1,9 @@
 Fixed inconsistent Python to Java ``char`` conversion
 (`#1537 <https://github.com/jpype-project/jpype/issues/1537>`__).
-``bytes`` are now read as Latin-1 code points everywhere: a byte above 0x7f
-is no longer sign-extended when assigned into a ``char`` or ``char[]``, and
-``bytes`` passed to a ``char[]`` parameter are no longer decoded as UTF-8
-(which silently dropped invalid bytes), matching ``JArray(JChar)(bytes)``.
+A single byte is now read as a Latin-1 code point: a byte above 0x7f is no
+longer sign-extended when assigned into a ``char`` or ``char[]``.  ``bytes``
+passed to a ``char[]`` parameter are still decoded as UTF-8, but invalid
+UTF-8 now raises ``UnicodeDecodeError`` instead of being silently cut short.
 Items of a ``'c'``-format buffer (such as a ``ctypes.c_char`` array) are
 likewise read as 0 to 255, not -128 to 127, when copied into any primitive
 array.  ``JChar()`` and ``java.lang.Character()`` of a string outside the
