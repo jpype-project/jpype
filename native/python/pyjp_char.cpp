@@ -268,6 +268,15 @@ static PyObject * PyJPChar_new(PyTypeObject *type, PyObject *pyargs, PyObject * 
 	// A Java null Character is stored as U+0000; it has no value to copy.
 	if (PyObject_TypeCheck(in, PyJPChar_Type) && assertNotNull(in))
 		return nullptr;
+	// A boxed Character of a str outside the BMP has always raised
+	// OverflowError, where JChar and assignment into a char raise
+	// ValueError; keep the type for callers that catch it.
+	if (!cls->isPrimitive() && PyUnicode_Check(in) && PyUnicode_GetLength(in) == 1
+			&& PyUnicode_ReadChar(in, 0) > 0xffff)
+	{
+		PyErr_SetString(PyExc_OverflowError, "Unable to convert int into char range");
+		return nullptr;
+	}
 	Py_UCS4 cv = ord(in);
 	if (cv == (Py_UCS4) - 1 && PyErr_Occurred())
 		return nullptr;

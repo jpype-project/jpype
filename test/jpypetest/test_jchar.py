@@ -531,15 +531,18 @@ class JCharTestCase_2(common.JPypeTestCase):
 
     def testEmptyStrRejected(self):
         a = JArray(JChar)(1)
-        for bad in ('', b''):
-            with self.assertRaisesRegex(ValueError, "length 1"):
-                a[0:1] = [bad]
+        with self.assertRaisesRegex(ValueError, "length 1"):
+            a[0:1] = [b'']
+        # An empty str keeps the IndexError it has always raised.
+        with self.assertRaisesRegex(IndexError, "length 1"):
+            a[0:1] = ['']
 
     def testNonBmpRejected(self):
         emoji = chr(0x1F600)
         with self.assertRaises(ValueError):
             JChar(emoji)
-        with self.assertRaises(ValueError):
+        # The boxed type keeps the OverflowError it has always raised.
+        with self.assertRaises(OverflowError):
             JClass("java.lang.Character")(emoji)
         a = JArray(JChar)(1)
         with self.assertRaises(ValueError):

@@ -244,7 +244,12 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 	}
 	if (PyUnicode_Check(pyobj))
 	{
-		if (PyUnicode_GetLength(pyobj) != 1)
+		Py_ssize_t len = PyUnicode_GetLength(pyobj);
+		// An empty str has always raised IndexError here; keep the type
+		// for callers that catch it.
+		if (len == 0)
+			JP_RAISE(PyExc_IndexError, "Char must be length 1");
+		if (len != 1)
 			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		PyUnicode_READY(pyobj);
@@ -270,7 +275,12 @@ jchar JPPyString::asCharUTF16(PyObject* pyobj)
 	}
 	if (PyUnicode_Check(pyobj))
 	{
-		if (PyUnicode_GetLength(pyobj) != 1)
+		Py_ssize_t len = PyUnicode_GetLength(pyobj);
+		// An empty str has always raised IndexError here; keep the type
+		// for callers that catch it.
+		if (len == 0)
+			JP_RAISE(PyExc_IndexError, "Char must be length 1");
+		if (len != 1)
 			JP_RAISE(PyExc_ValueError, "Char must be length 1");
 
 		PyUnicode_READY(pyobj);
