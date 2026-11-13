@@ -40,9 +40,12 @@ JPValue JPCharType::newInstance(JPJavaFrame& frame, JPPyObjectVector& args)
 		JP_RAISE(PyExc_TypeError, "bad args");  // GCOVR_EXCL_LINE
 	jvalue jv;
 
-	// This is a cast so we must not fail
-	int overflow;
-	jv.c = PyLong_AsLongAndOverflow(args[0], &overflow);
+	// This is a cast so we must not fail: keep the low 16 bits, like
+	// Java's (char) cast and the other primitive casts.
+	unsigned long long v = PyLong_AsUnsignedLongLongMask(args[0]);
+	if (v == (unsigned long long) - 1 && PyErr_Occurred())
+		JP_RAISE_PYTHON();  // GCOVR_EXCL_LINE
+	jv.c = (jchar) v;
 	return JPValue(this, jv);
 }
 

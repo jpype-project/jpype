@@ -546,6 +546,10 @@ class JCharTestCase_2(common.JPypeTestCase):
     def testIntIsACast(self):
         # Like JByte(300), JChar of an int truncates rather than raising.
         self.assertEqual(ord(str(JChar(0x1F600))), 0xF600)
+        self.assertEqual(ord(str(JChar(-1))), 0xFFFF)
+        # Beyond a C long, keep the low 16 bits like JByte does.
+        self.assertEqual(str(JChar(2**64 + 65)), 'A')
+        self.assertEqual(str(JChar(-2**64 + 65)), 'A')
 
     def testNullCharacterRejected(self):
         null = jpype.JObject(None, JClass("java.lang.Character"))

@@ -1447,6 +1447,13 @@ characters numerically can corrupt their encoding.
    java_char = JChar('A')
    print(java_char)  # Output: 'A'
 
+`JChar` of a string or ``bytes`` requires exactly one character; a string
+outside the Basic Multilingual Plane raises ``ValueError``, and ``bytes``
+are read as Latin-1.  `JChar` of an integer is a cast like Java's
+``(char) x``: it keeps the low 16 bits, so ``JChar(0x1F600)`` is
+``'\uf600'``.  Assigning an out-of-range integer to a ``char`` field or
+array element raises ``OverflowError`` instead.
+
 .. _jpype_types_primitive_types_jbyte,_jshort,_jint,_jlong:
 
 JByte, JShort, JInt, JLong

@@ -11,4 +11,6 @@ BMP now raise ``ValueError`` (``java.lang.Character()`` raised
 ``OverflowError``, ``JChar()`` truncated), ``JChar()`` of a Java ``null``
 raises ``TypeError`` instead of returning ``'\x00'``, an empty string
 assigned into a ``char[]`` raises ``ValueError``, and ``JChar()`` of a
-``bytearray`` is length-checked like ``bytes``.
+``bytearray`` is length-checked like ``bytes``.  ``JChar()`` of an
+integer too large for a C ``long`` now keeps the low 16 bits like Java's
+``(char)`` cast instead of giving ``'\uffff'``.
