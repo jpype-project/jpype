@@ -1447,6 +1447,14 @@ characters numerically can corrupt their encoding.
    java_char = JChar('A')
    print(java_char)  # Output: 'A'
 
+`JChar` of a string or ``bytes`` requires exactly one character; a string
+outside the Basic Multilingual Plane raises ``ValueError``
+(``java.lang.Character`` raises ``OverflowError`` for it), and a single
+byte is read as a Latin-1 code point.  `JChar` of an integer is a cast like
+Java's ``(char) x``: it keeps the low 16 bits, so ``JChar(0x1F600)`` is
+``'\uf600'``.  Assigning an out-of-range integer to a ``char`` field or
+array element raises ``OverflowError`` instead.
+
 .. _jpype_types_primitive_types_jbyte,_jshort,_jint,_jlong:
 
 JByte, JShort, JInt, JLong
@@ -1781,6 +1789,13 @@ Character specialization
 
 - The Java class `JChar[]` has additional customizations to work better with
   string types.
+- ``bytes`` become a `JChar[]` in two different ways.  Creating an array,
+  ``JArray(JChar)(b)``, copies element by element: each byte is one char (a
+  Latin-1 code point), so the array is as long as ``b``.  Passing ``bytes``
+  to a Java method that takes a ``char[]`` treats them as text and decodes
+  them as UTF-8; invalid UTF-8 raises ``UnicodeDecodeError``.  For
+  ``'é'.encode()`` the first gives two chars and the second gives one.  Pass
+  a ``str`` (``b.decode(...)``) to choose the encoding yourself.
 - Java arrays do not support additional mathematical operations at this time.
 - Creating a Java array is required for pass-by-reference syntax when using Java
   methods that modify array contents.

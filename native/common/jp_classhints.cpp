@@ -396,7 +396,20 @@ public:
 		jvalue res;
 
 		// Convert to a string
-		string str = JPPyString::asStringUTF8(match.object);
+		string str;
+		if (PyBytes_Check(match.object))
+		{
+			// Bytes are decoded as UTF-8.  Decode strictly so that invalid
+			// input raises rather than being silently cut short.
+			char *buffer = nullptr;
+			Py_ssize_t size = 0;
+			if (PyBytes_AsStringAndSize(match.object, &buffer, &size) == -1)
+				JP_RAISE_PYTHON();  // GCOVR_EXCL_LINE
+			JPPyObject decoded = JPPyObject::call(
+					PyUnicode_DecodeUTF8(buffer, size, nullptr));
+			str = JPPyString::asStringUTF8(decoded.get());
+		} else
+			str = JPPyString::asStringUTF8(match.object);
 
 		// Convert to new java string
 		jstring jstr = frame->fromStringUTF8(str);

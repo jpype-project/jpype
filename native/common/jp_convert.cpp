@@ -216,7 +216,6 @@ jconverter getConverter(const char* from, int itemsize, const char* to)
 	switch (from[0])
 	{
 		case '?':
-		case 'c':
 		case 'b':
 			switch (to[0])
 			{
@@ -230,6 +229,9 @@ jconverter getConverter(const char* from, int itemsize, const char* to)
 				case 'd': return &Convert<int8_t>::toD;
 			}
 			break;
+		// A 'c' item is one byte of a bytes object, which Python reads as
+		// 0..255 (a Latin-1 code point for char), so it is unsigned.
+		case 'c':
 		case 'B':
 			switch (to[0])
 			{
