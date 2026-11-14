@@ -15,6 +15,8 @@
 #   See NOTICE file for details.
 #
 # *****************************************************************************
+import warnings
+
 import common
 import jpype
 import _jpype
@@ -175,3 +177,20 @@ class ConversionTestCase(common.JPypeTestCase):
         ja = byte_array_class(b)
         self.assertEqual(len(ja), 5)
         self.assertEqual(ja[0], 1)
+
+    def testBytesToCharArrayDeprecated(self):
+        """Implicit bytes -> char[] warns; str and explicit decode do not"""
+        String = jpype.JClass("java.lang.String")
+        with self.assertWarnsRegex(DeprecationWarning, "char\\[\\]"):
+            self.assertEqual(str(String.copyValueOf("é".encode())), "é")
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            self.assertEqual(str(String.copyValueOf("é")), "é")
+            self.assertEqual(str(String.copyValueOf("é".encode().decode())), "é")
+
+    def testBytesToCharArrayWarningAsError(self):
+        String = jpype.JClass("java.lang.String")
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            with self.assertRaises(DeprecationWarning):
+                String.copyValueOf(b"abc")
