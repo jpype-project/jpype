@@ -421,6 +421,26 @@ void JPInternalError::toJava()
 	JP_TRACE_OUT; // GCOVR_EXCL_LINE
 }
 
+/** Make a name safe for PyCode_NewEmpty, which decodes strict UTF-8.
+ * Unpaired surrogates (legal in Java names) are written as \\udXXX escapes.
+ */
+static string tb_safe_name(const string& name)
+{
+	JPPyObject raw = JPPyObject::accept(PyBytes_FromStringAndSize(name.c_str(), (Py_ssize_t) name.size()));
+	if (raw.get() != nullptr)
+	{
+		JPPyObject uni = JPPyObject::accept(PyUnicode_FromEncodedObject(raw.get(), "UTF-8", "surrogatepass"));
+		if (uni.get() != nullptr)
+		{
+			JPPyObject esc = JPPyObject::accept(PyUnicode_AsEncodedString(uni.get(), "UTF-8", "backslashreplace"));
+			if (esc.get() != nullptr)
+				return string(PyBytes_AsString(esc.get()), (size_t) PyBytes_Size(esc.get()));
+		}
+	}
+	PyErr_Clear();
+	return "<unprintable>";
+}
+
 PyObject *tb_create(
 		PyObject *last_traceback,
 		PyObject *dict,
@@ -431,18 +451,23 @@ PyObject *tb_create(
 	// Create a code for this frame. (ref count is 1)
 	JPPyObject code = JPPyObject::accept((PyObject*)PyCode_NewEmpty(filename, funcname, linenum));
 
-	// If we don't get the code object there is no point
+	// If this frame can't be built, drop it but keep the frames already built.
 	if (code.get() == nullptr)
-		return nullptr;
+	{
+		PyErr_Clear();
+		return last_traceback;
+	}
 
 	// Create a frame for the traceback.
 	PyThreadState *state = PyThreadState_GET();
 	PyFrameObject *pframe = PyFrame_New(state, (PyCodeObject*) code.get(), dict, NULL);
 	JPPyObject frame = JPPyObject::accept((PyObject*)pframe);
 
-	// If we don't get the frame object there is no point
 	if (frame.get() == nullptr)
-		return nullptr;
+	{
+		PyErr_Clear();
+		return last_traceback;
+	}
 
 	// Create a traceback
 #if PY_MINOR_VERSION<11
@@ -471,7 +496,8 @@ PyObject *tb_create(
 	// We could fail in process
 	if (traceback.get() == nullptr)
 	{
-		return nullptr;
+		PyErr_Clear();
+		return last_traceback;
 	}
 
 	// The new traceback object holds its own reference to last_traceback
@@ -538,6 +564,8 @@ JPPyObject PyTrace_FromJavaException(JPJavaFrame& frame, jthrowable th, jthrowab
 		if (lineNum<0)
 			lineNum = 0;
 
+		filename = tb_safe_name(filename);
+		method = tb_safe_name(method);
 		last_traceback = tb_create(last_traceback, dict,  filename.c_str(),
 				method.c_str(), lineNum);
 		frame.DeleteLocalRef(jclassname);
