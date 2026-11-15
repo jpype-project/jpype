@@ -1,3 +1,4 @@
+// --- file: python/pyjp_classhints.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -141,16 +142,15 @@ static PyMethodDef classMethods[] = {
 };
 
 static PyType_Slot hintsSlots[] = {
-	{ Py_tp_new ,    (void*) PyJPClassHints_new},
-	{ Py_tp_init,    (void*) PyJPClassHints_init},
+	{ Py_tp_new ,	(void*) PyJPClassHints_new},
+	{ Py_tp_init,	(void*) PyJPClassHints_init},
 	{ Py_tp_dealloc, (void*) PyJPClassHints_dealloc},
-	{ Py_tp_str,     (void*) PyJPClassHints_str},
-	{ Py_tp_doc,     (void*) "Java Class Hints"},
+	{ Py_tp_str,	 (void*) PyJPClassHints_str},
+	{ Py_tp_doc,	 (void*) "Java Class Hints"},
 	{ Py_tp_methods, (void*) classMethods},
 	{0}
 };
 
-PyTypeObject *PyJPClassHints_Type = nullptr;
 PyType_Spec PyJPClassHintsSpec = {
 	"_jpype._JClassHints",
 	sizeof (PyJPClassHints),
@@ -163,10 +163,11 @@ PyType_Spec PyJPClassHintsSpec = {
 }
 #endif
 
-void PyJPClassHints_initType(PyObject* module)
+void PyJPClassHints_initType(PyObject* module, PyJPModuleState* st)
 {
-	PyJPClassHints_Type = (PyTypeObject*) PyType_FromSpec(&PyJPClassHintsSpec);
+	st->PyJPClassHints_Type = (PyTypeObject*) PyType_FromSpec(&PyJPClassHintsSpec);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE sanity check
-	PyModule_AddObject(module, "_JClassHints", (PyObject*) PyJPClassHints_Type);
+	Py_INCREF((PyObject*) st->PyJPClassHints_Type);
+	PyModule_AddObject(module, "_JClassHints", (PyObject*) st->PyJPClassHints_Type);
 	JP_PY_CHECK(); // GCOVR_EXCL_LINE sanity check
 }

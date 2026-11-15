@@ -1,3 +1,4 @@
+// --- file: common/jp_class.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -15,14 +16,20 @@
  *****************************************************************************/
 #include "jpype.h"
 #include "pyjp.h"
+#include "jp_array.h"
+#include "jp_arrayclass.h"
 #include "jp_field.h"
 #include "jp_methoddispatch.h"
 #include "jp_method.h"
+#include "jp_proxy.h"
 
-JPClass::JPClass(
+JPClass::JPClass(JPJavaFrame& frame,
+		jclass clss,
 		const string& name,
 		jint modifiers)
 {
+	m_Context = frame.getContext();
+	m_Class = frame.storeGlobal(clss);
 	m_CanonicalName = name;
 	m_SuperClass = nullptr;
 	m_Interfaces = JPClassList();
@@ -35,15 +42,19 @@ JPClass::JPClass(JPJavaFrame& frame,
 		JPClass* super,
 		const JPClassList& interfaces,
 		jint modifiers)
-: m_Class(frame, clss)
 {
+	m_Context = frame.getContext();
+	m_Class = frame.storeGlobal(clss);
 	m_CanonicalName = name;
 	m_SuperClass = super;
 	m_Interfaces = interfaces;
 	m_Modifiers = modifiers;
 }
 
-JPClass::~JPClass()= default;
+JPClass::~JPClass() 
+{
+	tryRelease(m_Class);
+}
 
 void JPClass::setHost(PyObject* host)
 {
@@ -55,9 +66,9 @@ void JPClass::setHints(PyObject* host)
 	m_Hints = JPPyObject::use(host);
 }
 
-jclass JPClass::getJavaClass() const
+jclass JPClass::getJavaClass(JPJavaFrame& frame) const
 {
-	jclass cls = m_Class.get();
+	jclass cls = (jclass) frame.retrieveGlobal(m_Class);
 	// This sanity check should not be possible to exercise
 	if (cls == nullptr)
 		JP_RAISE(PyExc_RuntimeError, "Class is null"); // GCOVR_EXCL_LINE
@@ -66,9 +77,9 @@ jclass JPClass::getJavaClass() const
 
 void JPClass::ensureMembers(JPJavaFrame& frame)
 {
-	JPContext* context = JPContext_global;
+	JPContext* context = frame.getContext();
 	JPTypeManager* typeManager = context->getTypeManager();
-	typeManager->populateMembers(this);
+	typeManager->populateMembers(frame, this);
 }
 
 void JPClass::assignMembers(JPMethodDispatch* ctor,
@@ -107,40 +118,31 @@ JPClass* JPClass::newArrayType(JPJavaFrame &frame, long d)
 	if (isPrimitive())
 		ss << (dynamic_cast<JPPrimitiveType*>( this))->getTypeCode();
 	else if (isArray())
-		ss << getName();
+		ss << getName(frame);
 	else
-		ss << "L" << getName() << ";";
+		ss << "L" << getName(frame) << ";";
 	return frame.findClassByName(ss.str());
 }
 
 jarray JPClass::newArrayOf(JPJavaFrame& frame, jsize sz)
 {
-	return frame.NewObjectArray(sz, getJavaClass(), nullptr);
+	return frame.NewObjectArray(sz, getJavaClass(frame), nullptr);
 }
 //</editor-fold>
 //<editor-fold desc="acccessors" defaultstate="collapsed">
 
 // GCOVR_EXCL_START
 // This is currently only used in tracing
-
-string JPClass::toString() const
+string JPClass::toString(JPJavaFrame& frame) const
 {
-	// This sanity check will not be hit in normal operation
-	if (JPContext_global == nullptr)
-		return m_CanonicalName;  // GCOVR_EXCL_LINE
-	JPJavaFrame frame = JPJavaFrame::outer();
-	return frame.toString(m_Class.get());
+	return frame.toString(getJavaClass(frame));
 }
 // GCOVR_EXCL_STOP
 
-string JPClass::getName() const
+string JPClass::getName(JPJavaFrame& frame) const
 {
-	// This sanity check will not be hit in normal operation
-	if (JPContext_global == nullptr)
-		return m_CanonicalName;  // GCOVR_EXCL_LINE
-	JPJavaFrame frame = JPJavaFrame::outer();
 	return frame.toString(frame.CallObjectMethodA(
-			(jobject) m_Class.get(), JPContext_global->m_Class_GetNameID, nullptr));
+			getJavaClass(frame), frame.getContext()->m_Class_GetNameID, nullptr));
 }
 
 //</editor-fold>
@@ -219,11 +221,11 @@ JPPyObject JPClass::invoke(JPJavaFrame& frame, jobject obj, jclass clazz, jmetho
 void JPClass::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObject* obj)
 {
 	JP_TRACE_IN("JPClass::setStaticField");
-	JPMatch match(&frame, obj);
+	JPMatch match(frame, obj);
 	if (findJavaConversion(match) < JPMatch::_implicit)
 	{
 		std::stringstream err;
-		err << "unable to convert to " << getCanonicalName();
+		err << "unable to convert to " << getCanonicalName(frame);
 		JP_RAISE(PyExc_TypeError, err.str());
 	}
 	jobject val = match.convert().l;
@@ -234,11 +236,11 @@ void JPClass::setStaticField(JPJavaFrame& frame, jclass c, jfieldID fid, PyObjec
 void JPClass::setField(JPJavaFrame& frame, jobject c, jfieldID fid, PyObject* obj)
 {
 	JP_TRACE_IN("JPClass::setField");
-	JPMatch match(&frame, obj);
+	JPMatch match(frame, obj);
 	if (findJavaConversion(match) < JPMatch::_implicit)
 	{
 		std::stringstream err;
-		err << "unable to convert to " << getCanonicalName();
+		err << "unable to convert to " << getCanonicalName(frame);
 		JP_RAISE(PyExc_TypeError, err.str());
 	}
 	jobject val = match.convert().l;
@@ -253,34 +255,38 @@ void JPClass::setArrayRange(JPJavaFrame& frame, jarray a,
 	JP_TRACE_IN("JPClass::setArrayRange");
 	auto array = (jobjectArray) a;
 
-	// Verify before we start the conversion, as we wont be able
-	// to abort once we start
+	// Match every item before starting the conversion, as we won't be
+	// able to abort once we start writing into the array. The matched
+	// items and their JPMatch results are held here (rather than
+	// re-matching in a second pass below) so findJavaConversion runs
+	// exactly once per item -- re-matching would recompute a decision
+	// already made, and for a nested array element that decision can
+	// itself be an expensive recursive match.
 	JPPySequence seq = JPPySequence::use(vals);
+	std::vector<JPPyObject> items;
+	std::vector<JPMatch> matches;
+	items.reserve(length);
+	matches.reserve(length);
 	JP_TRACE("Verify argument types");
 	for (int i = 0; i < length; i++)
 	{
-		JPPyObject v = seq[i];
-		JPMatch match(&frame, v.get());
-		if (findJavaConversion(match) < JPMatch::_implicit)
+		items.push_back(seq[i]);
+		matches.emplace_back(frame, items.back().get());
+		if (findJavaConversion(matches.back()) < JPMatch::_implicit)
 			JP_RAISE(PyExc_TypeError, "Unable to convert");
 	}
 
 	JP_TRACE("Copy");
 	int index = start;
 	for (int i = 0; i < length; i++, index += step)
-	{
-		JPPyObject v = seq[i];
-		JPMatch match(&frame, v.get());
-		findJavaConversion(match);
-		frame.SetObjectArrayElement(array, index, match.convert().l);
-	}
+		frame.SetObjectArrayElement(array, index, matches[i].convert().l);
 	JP_TRACE_OUT;
 }
 
 void JPClass::setArrayItem(JPJavaFrame& frame, jarray a, jsize ndx, PyObject* val)
 {
 	JP_TRACE_IN("JPClass::setArrayItem");
-	JPMatch match(&frame, val);
+	JPMatch match(frame, val);
 	findJavaConversion(match);
 	JP_TRACE("Type", getCanonicalName());
 	if ( match.type < JPMatch::_implicit)
@@ -307,13 +313,24 @@ JPPyObject JPClass::getArrayItem(JPJavaFrame& frame, jarray a, jsize ndx)
 	JP_TRACE_OUT;
 }
 
+JPArray* JPClass::createArrayWrapper(const JPValue& value)
+{
+	return new JPArrayObject(value);
+}
+
+JPArrayClass* JPClass::createArrayClass(JPJavaFrame& frame, jclass cls,
+		const string& name, JPClass* superClass, jint modifiers)
+{
+	return new JPArrayClass(frame, cls, name, superClass, this, modifiers);
+}
+
 //</editor-fold>
 //<editor-fold desc="conversion" defaultstate="collapsed">
 
 JPValue JPClass::getValueFromObject(JPJavaFrame& frame, const JPValue& obj)
 {
 	JP_TRACE_IN("JPClass::getValueFromObject");
-	return JPValue(this, obj.getJavaObject());
+	return JPValue(this, obj.getJavaObject(frame));
 	JP_TRACE_OUT;
 }
 
@@ -321,6 +338,8 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 {
 	JP_TRACE_IN("JPClass::convertToPythonObject");
 	JPClass *cls = this;
+	JPContext* context = frame.getContext();
+	PyJPModuleState* state = context->modulestate;
 	if (!cast)
 	{
 		//  Returning None likely incorrect from java prospective.
@@ -343,9 +362,44 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 			return JPPyObject::getNone();
 		}
 
-		cls = frame.findClassForObject(value.l);
-		if (cls != this)
-			return cls->convertToPythonObject(frame, value, true);
+		// findClassForObject is a JNI upcall into Java's TypeManager (a
+		// bytecode-level HashMap.get, not just a native call) -- for the
+		// very common case where the runtime class is exactly the
+		// declared one (no covariant override in play), a cheap
+		// GetObjectClass + IsSameObject against the class we already hold
+		// a global ref to answers the same question without it.
+		if (!frame.IsSameObject(frame.GetObjectClass(value.l), getJavaClass(frame)))
+		{
+			cls = frame.findClassForObject(value.l);
+			if (cls != this)
+				return cls->convertToPythonObject(frame, value, true);
+		}
+	}
+
+	// Special path for proxy that need automatic unwrapping
+	if (isProxy())
+	{
+		jlong hostPtr = frame.CallStaticLongMethodA(context->m_ProxyTypeClass, context->m_ProxyType_GetInstanceID, &value);
+		JPProxy *proxy = (JPProxy*) hostPtr;
+		// Smuggler guard: this proxy's PyObject* was allocated by the
+		// interpreter that created it (proxy->m_Context), not necessarily
+		// the interpreter running right now. Handing pproxy->m_Target
+		// straight back into a different interpreter's Python code is a
+		// cross-interpreter object-safety violation - own-GIL
+		// subinterpreters (plan/MultiPhaseInit.md) have separate
+		// allocators/arenas, so touching it here would be memory
+		// corruption, not just a wrong answer. See plan/Smuggler.md.
+		if (proxy->m_Context != context)
+		{
+			JP_RAISE(PyExc_RuntimeError,
+					"Python object crossed into a different interpreter "
+					"than the one that created it (smuggled proxy)");
+		}
+		PyJPProxy *pproxy = proxy->m_Instance;
+		if (pproxy->m_Convert && pproxy->m_Target != Py_None)
+			return JPPyObject::use(pproxy->m_Target);
+		else
+			return JPPyObject::use((PyObject*) pproxy);
 	}
 
 	JPPyObject obj;
@@ -370,7 +424,8 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 						JPPyString::fromStringUTF8(frame.toString(value.l)).get());
 			}
 		}
-		JPPyObject tuple1 = JPPyTuple_Pack(_JObjectKey, tuple0.get());
+		PyJPModuleState* st = frame.getContext()->modulestate;
+		JPPyObject tuple1 = JPPyTuple_Pack(st->JObjectKey, tuple0.get());
 		// Exceptions need new and init
 		obj = JPPyObject::call(PyObject_Call(wrapper.get(), tuple1.get(), nullptr));
 	} else
@@ -387,7 +442,7 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 		if (allocType == nullptr)
 			allocType = type;
 		PyObject *obj2 = allocType->tp_alloc(allocType, 0);
-		JP_PY_CHECK();
+		JP_PY_CHECK_NULL(obj2);
 
 		if (allocType != type)
 		{
@@ -410,12 +465,17 @@ JPPyObject JPClass::convertToPythonObject(JPJavaFrame& frame, jvalue value, bool
 	JP_TRACE_OUT;
 }
 
-JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
+JPMatch::Type JPClass::findJavaConversionImpl(JPMatch &match)
 {
-	JP_TRACE_IN("JPClass::findJavaConversion");
+	JP_TRACE_IN("JPClass::findJavaConversionImpl");
+	// A dynamic proxy can only ever be assigned to an interface -- never
+	// a plain class, which this is (an actual interface is constructed
+	// as a JPInterfaceType instead; see
+	// TypeFactoryNative_defineObjectClass) -- so proxyConversion is
+	// deliberately not tried here at all.
 	if (nullConversion->matches(this, match)
 			|| objectConversion->matches(this, match)
-			|| proxyConversion->matches(this, match)
+			|| pythonConversion->matches(this, match)
 			|| hintsConversion->matches(this, match))
 		return match.type;
 	JP_TRACE("No match");
@@ -423,23 +483,154 @@ JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
 	JP_TRACE_OUT;
 }
 
-PyObject* JPClass::getHints()
+void JPClass::clearConversionCache()
+{
+	m_ConversionCache.clear();
+}
+
+JPMatch::Type JPClass::findJavaConversion(JPMatch &match)
+{
+	JP_TRACE_IN("JPClass::findJavaConversion");
+	if (m_ConversionCacheGeneration != JPClassHints::s_Generation)
+	{
+		m_ConversionCache.clear();
+		m_ConversionCacheGeneration = JPClassHints::s_Generation;
+	}
+
+	auto *type = Py_TYPE(match.object);
+	JPConversion *cachedConversion;
+	JPMatch::Type cachedType;
+	if (m_ConversionCache.lookup(type, cachedConversion, cachedType))
+	{
+		match.conversion = cachedConversion;
+		// See the comment on m_ConversionCache: every cacheable conversion
+		// uses closure == this, except this one fixed, known exception.
+		match.closure = (cachedConversion == boxBooleanConversion)
+				? (void*) match.frame->getContext()->_java_lang_Boolean
+				: (void*) this;
+		return match.type = cachedType;
+	}
+
+	match.cacheable = true;
+	JPMatch::Type result = findJavaConversionImpl(match);
+	if (match.cacheable)
+		m_ConversionCache.store(type, match.conversion, result);
+	return result;
+	JP_TRACE_OUT;
+}
+
+namespace
+{
+
+// Shared by sequenceCheck/sequenceCheckList/sequenceCheckTuple below:
+// given one already-fetched element, either take the bare-compare fast
+// path against the running {cachedType, cachedQuality} slot, or fall to
+// findJavaConversion and (re)fill that slot when the result is cacheable.
+// Factored out so the three container-specific loops share this logic
+// textually instead of tripling it -- each loop itself still stays
+// branch-free per element, since only the *indexing* operation differs
+// between them, not this step.
+inline void sequenceCheckStep(JPClass *self, JPMatch &match, PyObject *obj,
+		PyTypeObject *&cachedType, JPMatch::Type &cachedQuality)
+{
+	PyTypeObject *itemType = Py_TYPE(obj);
+	if (itemType == cachedType)
+	{
+		if (cachedQuality < match.type)
+			match.type = cachedQuality;
+		return;
+	}
+
+	JPMatch imatch(*match.frame, obj);
+	self->findJavaConversion(imatch);
+	if (imatch.cacheable)
+	{
+		cachedType = itemType;
+		cachedQuality = imatch.type;
+	}
+	if (imatch.type < match.type)
+		match.type = imatch.type;
+}
+
+} // namespace
+
+void JPClass::sequenceCheck(JPMatch& match, JPPySequence& seq, jlong length)
+{
+	JP_TRACE_IN("JPClass::sequenceCheck");
+	// See the declaration in jp_class.h for the full rationale: a single
+	// {PyTypeObject*, quality} slot for the whole scan, filled from the
+	// ordinary findJavaConversion() on a miss and trusted for later
+	// same-typed elements only when that call reported cacheable -- the
+	// same flag findJavaConversion()'s own per-class cache already keys
+	// on, set correctly by every JPConversion::matches() already, so this
+	// needs no per-type knowledge to stay correct for any JPClass.
+	//
+	// This is the general path (used when the sequence isn't a plain list
+	// or tuple -- see sequenceCheckList/Tuple for those), so element
+	// access still goes through seq[i]'s ordinary PySequence_GetItem.
+	match.type = JPMatch::_implicit;
+	// nullptr doubles as the "nothing cached yet" sentinel -- Py_TYPE(obj)
+	// is never null for a real object, so no separate bool is needed to
+	// distinguish an empty slot from a real cached type.
+	PyTypeObject *cachedType = nullptr;
+	JPMatch::Type cachedQuality = JPMatch::_none;
+	for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
+	{
+		JPPyObject item = seq[i];
+		sequenceCheckStep(this, match, item.get(), cachedType, cachedQuality);
+	}
+	JP_TRACE_OUT;
+}
+
+void JPClass::sequenceCheckList(JPMatch& match, PyObject* listObj, jlong length)
+{
+	JP_TRACE_IN("JPClass::sequenceCheckList");
+	// Same algorithm as sequenceCheck (see there for the cacheable
+	// rationale), but for a PyList_CheckExact object specifically:
+	// PyList_GET_ITEM indexes straight into the list's backing array with
+	// a borrowed reference (valid for the object's lifetime, no
+	// PySequence_GetItem protocol dispatch, no refcount churn per
+	// element).
+	match.type = JPMatch::_implicit;
+	PyTypeObject *cachedType = nullptr;
+	JPMatch::Type cachedQuality = JPMatch::_none;
+	for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
+	{
+		PyObject *obj = PyList_GET_ITEM(listObj, (Py_ssize_t) i);
+		sequenceCheckStep(this, match, obj, cachedType, cachedQuality);
+	}
+	JP_TRACE_OUT;
+}
+
+void JPClass::sequenceCheckTuple(JPMatch& match, PyObject* tupleObj, jlong length)
+{
+	JP_TRACE_IN("JPClass::sequenceCheckTuple");
+	// Same as sequenceCheckList, for a PyTuple_CheckExact object.
+	match.type = JPMatch::_implicit;
+	PyTypeObject *cachedType = nullptr;
+	JPMatch::Type cachedQuality = JPMatch::_none;
+	for (jlong i = 0; i < length && match.type > JPMatch::_none; i++)
+	{
+		PyObject *obj = PyTuple_GET_ITEM(tupleObj, (Py_ssize_t) i);
+		sequenceCheckStep(this, match, obj, cachedType, cachedQuality);
+	}
+	JP_TRACE_OUT;
+}
+
+PyObject* JPClass::getHints(JPJavaFrame& frame)
 {
 	PyObject* out = m_Hints.get();
 	if (out != nullptr)
 		return out;
-	// Force creation
-	JPJavaFrame frame = JPJavaFrame::outer();
 	PyJPClass_create(frame, this);
 	return m_Hints.get();
 }
 
-void JPClass::getConversionInfo(JPConversionInfo &info)
+void JPClass::getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info)
 {
 	JP_TRACE_IN("JPClass::getConversionInfo");
-	JPJavaFrame frame = JPJavaFrame::outer();
-	objectConversion->getInfo(this, info);
-	hintsConversion->getInfo(this, info);
+	objectConversion->getInfo(frame, this, info);
+	hintsConversion->getInfo(frame, this, info);
 	PyList_Append(info.ret, PyJPClass_create(frame, this).get());
 	JP_TRACE_OUT;
 }
@@ -449,7 +640,7 @@ void JPClass::getConversionInfo(JPConversionInfo &info)
 
 bool JPClass::isAssignableFrom(JPJavaFrame& frame, JPClass* o)
 {
-	return frame.IsAssignableFrom(m_Class.get(), o->getJavaClass()) != 0;
+	return frame.IsAssignableFrom(getJavaClass(frame), o->getJavaClass(frame)) != 0;
 }
 
 //</editor-fold>

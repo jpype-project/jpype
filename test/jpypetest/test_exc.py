@@ -207,7 +207,7 @@ class StackTraceTestCase(common.JPypeTestCase):
     def testEmptyEnclosingTrace(self):
         # An enclosing exception whose trace was cleared (or never filled in)
         # must not break extracting the cause's frames.
-        ctx = JClass("org.jpype.JPypeContext").getInstance()
+        ctx = JClass("org.jpype.internal.Support")
         inner = self._thrown()
         outer = JClass("java.lang.RuntimeException")("outer", inner)
         outer.setStackTrace(JArray(JClass("java.lang.StackTraceElement"))(0))
@@ -215,7 +215,7 @@ class StackTraceTestCase(common.JPypeTestCase):
         self.assertEqual(len(frames), 4 * len(inner.getStackTrace()))
 
     def testEnclosingTraceTrimsCommonFrames(self):
-        ctx = JClass("org.jpype.JPypeContext").getInstance()
+        ctx = JClass("org.jpype.internal.Support")
         inner = self._thrown()
         self.assertEqual(len(ctx.getStackTrace(inner, None)),
                          4 * len(inner.getStackTrace()))

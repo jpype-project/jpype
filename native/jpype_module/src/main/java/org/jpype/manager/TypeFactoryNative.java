@@ -1,3 +1,4 @@
+// --- file: org/jpype/manager/TypeFactoryNative.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -26,16 +27,17 @@ import java.lang.reflect.Field;
  */
 public class TypeFactoryNative implements TypeFactory
 {
-
-  public long context;
+  public TypeFactoryNative()
+  {
+  }
 
   @Override
-  public native void newWrapper(long context, long cls);
+  public native void newWrapper(long ctx, long cls);
 
   @Override
   public native long defineArrayClass(
-          long context,
-          Class cls,
+          long ctx,
+          Class<?> cls,
           String name,
           long superClass,
           long componentPtr,
@@ -43,8 +45,8 @@ public class TypeFactoryNative implements TypeFactory
 
   @Override
   public native long defineObjectClass(
-          long context,
-          Class cls,
+          long ctx,
+          Class<?> cls,
           String name,
           long superClass,
           long[] interfaces,
@@ -52,15 +54,14 @@ public class TypeFactoryNative implements TypeFactory
 
   @Override
   public native long definePrimitive(
-          long context,
+          long ctx,
           String name,
-          Class cls,
-          long boxedPtr,
+          Class<?> cls,
           int modifiers);
 
   @Override
   public native void assignMembers(
-          long context,
+          long ctx,
           long cls,
           long ctorMethod,
           long[] methodList,
@@ -68,7 +69,7 @@ public class TypeFactoryNative implements TypeFactory
 
   @Override
   public native long defineField(
-          long context,
+          long ctx,
           long cls,
           String name,
           Field field,
@@ -77,7 +78,7 @@ public class TypeFactoryNative implements TypeFactory
 
   @Override
   public native long defineMethod(
-          long context,
+          long ctx,
           long cls,
           String name,
           Executable method,
@@ -86,14 +87,14 @@ public class TypeFactoryNative implements TypeFactory
 
   @Override
   public native void populateMethod(
-          long context,
+          long ctx,
           long method,
           long returnType,
           long[] argumentTypes);
 
   @Override
   public native long defineMethodDispatch(
-          long context,
+          long ctx,
           long cls,
           String name,
           long[] overloadList,
@@ -101,6 +102,6 @@ public class TypeFactoryNative implements TypeFactory
 
   @Override
   public native void destroy(
-          long context,
+          long ctx,
           long[] resources, int sz);
 }

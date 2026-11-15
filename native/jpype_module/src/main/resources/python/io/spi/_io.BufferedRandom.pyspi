@@ -1,0 +1,7 @@
+kind: class
+module: _io
+class: BufferedRandom
+interface: python.io.PyBufferedRandom
+lazy: true
+---
+METHODS = {}

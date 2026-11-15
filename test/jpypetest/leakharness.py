@@ -242,7 +242,7 @@ class LeakChecker:
     def memTestBudget(self, func, size, budget_seconds):
         # Time-budgeted sibling of memTest(): same per-batch growth-rate
         # computation and the same "4 clean batches" minority-suffices
-        # tolerance rule (see plan/LeakCheckHarness.md for why that ratio
+        # tolerance rule (that ratio
         # is calibrated, not arbitrary -- a real leak grows in nearly
         # every batch, GC-timing noise only occasionally), but loops
         # batches until budget_seconds of wall-clock has elapsed instead

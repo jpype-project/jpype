@@ -1,3 +1,4 @@
+// --- file: org/jpype/javadoc/JavadocExtractor.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -27,7 +28,7 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import org.jpype.html.Html;
 import org.jpype.html.Parser;
-import org.jpype.pkg.JPypePackageManager;
+import org.jpype.pkg.PackageManager;
 import org.w3c.dom.Document;
 import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.Node;
@@ -114,7 +115,7 @@ public class JavadocExtractor
     // __init__.py's generate_javadoc_assets, which runs that generation
     // step itself and bundles just the resulting file(s) as a real
     // Android asset instead, under the same per-class relative path).
-    return JPypePackageManager.openAndroidAsset("jpype-android-javadoc/" + name);
+    return PackageManager.openAndroidAsset("jpype-android-javadoc/" + name);
   }
 
   /**

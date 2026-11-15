@@ -1,3 +1,4 @@
+// --- file: common/jp_voidtype.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -16,8 +17,8 @@
 #include "jpype.h"
 #include "jp_voidtype.h"
 
-JPVoidType::JPVoidType()
-: JPPrimitiveType("void")
+JPVoidType::JPVoidType(JPJavaFrame& frame, jclass cls)
+: JPPrimitiveType(frame, cls, "void")
 {
 }
 
@@ -76,7 +77,7 @@ JPPyObject JPVoidType::convertToPythonObject(JPJavaFrame& frame, jvalue val, boo
 	return JPPyObject::getNone();
 }
 
-JPMatch::Type JPVoidType::findJavaConversion(JPMatch &match)
+JPMatch::Type JPVoidType::findJavaConversionImpl(JPMatch &match)
 {
 	return match.type = JPMatch::_none;
 }
@@ -113,11 +114,11 @@ jarray JPVoidType::newArrayOf(JPJavaFrame& frame, jsize)
 	JP_RAISE(PyExc_SystemError, "void cannot be the type of an array.");
 }
 
-void JPVoidType::getView(JPArrayView& view)
+void JPVoidType::getView(JPJavaFrame& frame, JPArrayView& view)
 {
 }
 
-void JPVoidType::releaseView(JPArrayView& view)
+void JPVoidType::releaseView(JPJavaFrame& frame, JPArrayView& view)
 {
 }
 
@@ -134,6 +135,12 @@ Py_ssize_t JPVoidType::getItemSize()
 void JPVoidType::copyElements(JPJavaFrame &frame,
 		jarray a, jsize start, jsize len,
 		void* memory, int offset)
+{
+}
+
+void JPVoidType::setElements(JPJavaFrame &frame,
+		jarray a, jsize start, jsize len,
+		const void* memory, int offset)
 {
 }
 
@@ -154,6 +161,12 @@ jdouble JPVoidType::getAsDouble(jvalue v)
 
 PyObject *JPVoidType::newMultiArray(JPJavaFrame &frame,
 		JPPyBuffer& view, int subs, int base, jobject dims)
+{
+	return nullptr;
+}
+
+jobject JPVoidType::newMultiArrayObject(JPJavaFrame &frame,
+		JPPyBuffer& view, jconverter converter, int subs, int base, jobject dims)
 {
 	return nullptr;
 }

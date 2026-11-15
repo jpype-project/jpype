@@ -1,3 +1,4 @@
+// --- file: common/jp_gc.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,11 +15,28 @@
    See NOTICE file for details.
  *****************************************************************************/
 #include <Python.h>
+#include <mutex>
 #include "jpype.h"
 #include "pyjp.h"
 #include "jp_gc.h"
 #include <algorithm>
 #include <chrono>
+
+// True process-wide global (like s_ClassClass in jp_classloader.cpp) -
+// java.lang.System is the same object regardless of context.  Never
+// released - it lives for the process.
+static jclass s_SystemClass = nullptr;
+static jmethodID s_GcMethodID = nullptr;
+
+static void bindImmortals(JPJavaFrame& frame)
+{
+	static std::once_flag lookupOnce;
+	std::call_once(lookupOnce, [&frame]()
+	{
+		s_SystemClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/System"));
+		s_GcMethodID = frame.GetStaticMethodID(s_SystemClass, "gc", "()V");
+	});
+}
 
 #ifdef WIN32
 #define USE_PROCESS_INFO
@@ -42,8 +60,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-static std::atomic<int> statm_fd{-1};
-static int page_size;
 
 #else
 #define USE_NONE
@@ -67,7 +83,7 @@ static int64_t nowNs()
 			std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
-static size_t getWorkingSize()
+size_t JPGarbageCollection::getWorkingSize() const
 {
 	size_t current = 0;
 #if defined(USE_PROCESS_INFO)
@@ -119,7 +135,9 @@ void JPGarbageCollection::triggered()
 		return;
 
 	// Only one forced collection at a time, and not before the cool down
-	// from the previous one has expired.
+	// from the previous one has expired.  This is decided before taking the
+	// GIL so that Java collections arriving faster than Python can usefully
+	// respond cost almost nothing.
 	if (forcing_gc.exchange(true))
 		return;
 	if (nowNs() < next_forced_ns.load())
@@ -134,7 +152,7 @@ void JPGarbageCollection::triggered()
 		try
 		{
 			// Lock Python so we can trigger a GC
-			JPPyCallAcquire callback;
+			JPPyCallAcquire callback(m_Context->modulestate);
 			if (running)
 				PyGC_Collect();
 		} catch (...) // GCOVR_EXCL_LINE
@@ -149,36 +167,36 @@ void JPGarbageCollection::triggered()
 	forcing_gc = false;
 }
 
+JPGarbageCollection::JPGarbageCollection(JPContext* context)
+: m_Context(context)
+{
+}
+
 void JPGarbageCollection::init(JPJavaFrame& frame)
 {
 #if defined(USE_PROC_INFO)
 	statm_fd = open("/proc/self/statm", O_RDONLY);
 	page_size = getpagesize();
 #endif
-	// Get the Python garbage collector
-	JPPyObject gc = JPPyObject::call(PyImport_ImportModule("gc"));
-	python_gc = gc.keep();
+	m_Context = frame.getContext();
+	PyJPModuleState* st = m_Context->modulestate;
 
-	// Find the callbacks
-	JPPyObject callbacks = JPPyObject::call(PyObject_GetAttrString(python_gc, "callbacks"));
-
-	// Hook up our callback unless the module already did
-	JPPyObject collect = JPPyObject::call(PyObject_GetAttrString(PyJPModule, "_collect"));
-	int installed = PySequence_Contains(callbacks.get(), collect.get());
-	if (installed < 0)
-		JP_PY_CHECK();
-	if (installed == 0)
+	// Defensive check to ensure state resources are fully populated
+	if (st != nullptr && st->gc_callbacks != nullptr && st->collect != nullptr)
 	{
-		PyList_Append(callbacks.get(), collect.get());
-		JP_PY_CHECK();
+		// Hook up our callback unless it is already registered
+		int installed = PySequence_Contains(st->gc_callbacks, st->collect);
+		if (installed < 0)
+			JP_PY_CHECK();
+		if (installed == 0)
+		{
+			PyList_Append(st->gc_callbacks, st->collect);
+			JP_PY_CHECK();
+		}
 	}
 
 	// Get the Java System gc so we can trigger
-	_SystemClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/System"));
-	_gcMethodID = frame.GetStaticMethodID(_SystemClass, "gc", "()V");
-
-	jclass ctxt = JPContext_global->m_ContextClass.get();
-	_ContextClass = ctxt;
+	bindImmortals(frame);
 
 	running = true;
 	high_water = getWorkingSize();
@@ -267,8 +285,8 @@ void JPGarbageCollection::onEnd()
 			// Move up the low water
 			low_water = (low_water + high_water) / 2;
 			// Don't reset the limit if it was count triggered
-			JPJavaFrame frame = JPJavaFrame::outer();
-			frame.CallStaticVoidMethodA(_SystemClass, _gcMethodID, nullptr);
+			JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+			frame.CallStaticVoidMethodA(s_SystemClass, s_GcMethodID, nullptr);
 			python_triggered++;
 		}
 	}

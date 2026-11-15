@@ -53,9 +53,13 @@ try:
     # codeql[py/import-own-module]
     from . import _jio
     # codeql[py/import-own-module]
+    from . import _jreflect
+    # codeql[py/import-own-module]
     from . import protocol
     # codeql[py/import-own-module]
     from . import _jthread
+    # codeql[py/import-own-module]
+    from . import _jbridge
 finally:
     pass
 

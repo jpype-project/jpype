@@ -1,0 +1,7 @@
+kind: class
+module: _io
+class: BufferedWriter
+interface: python.io.PyBufferedWriter
+lazy: true
+---
+METHODS = {}

@@ -26,3 +26,12 @@ build:
   apt_packages:
     - openjdk-11-jdk
     - ant
+  jobs:
+    post_build:
+      # Java API reference: Sphinx/autodoc only covers the Python side, so
+      # the Java-facing reverse-bridge API (python.*, org.jpype) is built
+      # separately with Javadoc and hosted as a static subtree alongside
+      # the Sphinx site, linked from doc/api.rst. See plan/DOCS.md.
+      - ant -f native/build.xml javadoc
+      - mkdir -p $READTHEDOCS_OUTPUT/html/javadoc
+      - cp -r native/build/javadoc/. $READTHEDOCS_OUTPUT/html/javadoc/

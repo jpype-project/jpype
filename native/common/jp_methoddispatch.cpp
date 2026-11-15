@@ -1,3 +1,4 @@
+// --- file: common/jp_methoddispatch.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -37,6 +38,37 @@ JPMethodDispatch::~JPMethodDispatch()
 const string& JPMethodDispatch::getName() const
 {
 	return m_Name;
+}
+
+bool JPMethodDispatch::raiseNoMatch(JPJavaFrame& frame, JPPyObjectVector& arg, bool callInstance, bool raise)
+{
+	if (!raise)
+		return false;
+	std::stringstream ss;
+	if (JPModifier::isConstructor(m_Modifiers))
+		ss << "No matching overloads found for constructor " << m_Class->getCanonicalName(frame) << "(";
+	else
+	{
+		ss << "No matching overloads found for ";
+		if (!callInstance)
+			ss << "*static* ";
+		ss << m_Class->getCanonicalName(frame) << "." << getName() << "(";
+	}
+	size_t start = callInstance ? 1 : 0;
+	for (size_t i = start; i < arg.size(); ++i)
+	{
+		if (i != start)
+			ss << ",";
+		ss << Py_TYPE(arg[i])->tp_name;
+	}
+	ss << ")" << ", options are:" << std::endl;
+	for (auto current : m_Overloads)
+	{
+			ss << "\t" << current->toString();
+		ss << std::endl;
+	}
+	JP_RAISE(PyExc_TypeError, ss.str());
+	return false; // GCOVR_EXCL_LINE
 }
 
 bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch, JPPyObjectVector& arg,
@@ -162,9 +194,9 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 		// We have two possible overloads so we declare an error
 		std::stringstream ss;
 		if (JPModifier::isConstructor(m_Modifiers))
-			ss << "Ambiguous overloads found for constructor " << m_Class->getCanonicalName() << "(";
+			ss << "Ambiguous overloads found for constructor " << m_Class->getCanonicalName(frame) << "(";
 		else
-			ss << "Ambiguous overloads found for " << m_Class->getCanonicalName() << "." << getName() << "(";
+			ss << "Ambiguous overloads found for " << m_Class->getCanonicalName(frame) << "." << getName() << "(";
 		size_t start = callInstance ? 1 : 0;
 		for (size_t i = start; i < arg.size(); ++i)
 		{
@@ -183,34 +215,7 @@ bool JPMethodDispatch::findOverload(JPJavaFrame& frame, JPMethodMatch &bestMatch
 
 	// If we can't find a matching overload throw an error.
 	if (!bestMatch.m_Overload)
-	{
-		if (!raise)
-			return false;
-		std::stringstream ss;
-		if (JPModifier::isConstructor(m_Modifiers))
-			ss << "No matching overloads found for constructor " << m_Class->getCanonicalName() << "(";
-		else
-		{
-			ss << "No matching overloads found for ";
-			if (!callInstance)
-				ss << "*static* ";
-			ss << m_Class->getCanonicalName() << "." << getName() << "(";
-		}
-		size_t start = callInstance ? 1 : 0;
-		for (size_t i = start; i < arg.size(); ++i)
-		{
-			if (i != start)
-				ss << ",";
-			ss << Py_TYPE(arg[i])->tp_name;
-		}
-		ss << ")" << ", options are:" << std::endl;
-		for (auto current : m_Overloads)
-		{
-				ss << "\t" << current->toString();
-			ss << std::endl;
-		}
-		JP_RAISE(PyExc_TypeError, ss.str());
-	}
+		return raiseNoMatch(frame, arg, callInstance, raise);
 
 	if (bestMatch.m_Type >= JPMatch::_implicit)
 	{
@@ -250,14 +255,14 @@ bool JPMethodDispatch::matches(JPJavaFrame& frame, JPPyObjectVector& args, bool 
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
-string JPMethodDispatch::matchReport(JPPyObjectVector& args)
+string JPMethodDispatch::matchReport(JPJavaFrame& frame, JPPyObjectVector& args)
 {
 	std::stringstream res;
 	res << "Match report for method " << m_Name << ", has " << m_Overloads.size() << " overloads." << std::endl;
 
 	for (auto current : m_Overloads)
 	{
-			res << "  " << current->matchReport(args);
+			res << "  " << current->matchReport(frame, args);
 	}
 	return res.str();
 }

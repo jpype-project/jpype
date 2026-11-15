@@ -20,8 +20,7 @@
 """Config-driven, time-budgeted leak-detection sweep.
 
 Generalizes test_leak.py's proven fixed-batch LeakChecker/memTest to a
-curated, time-budgeted run across multiple tests (see
-plan/LeakCheckHarness.md for the full design rationale). Each target listed
+curated, time-budgeted run across multiple tests. Each target listed
 in a config file (default: leak_targets.txt, next to this script) gets run
 through leakharness.memTestBudget() for its own configured wall-clock
 budget, in its own subrun-isolated, fresh small-heap JVM subprocess -- the
@@ -185,8 +184,16 @@ def _generic_worker(module_file, qualname, budget_seconds, size, result_queue):
         result_queue.put((label, leaky, None, 'leak' if leaky else None))
     except BaseException as e:  # noqa: BLE001 -- must reach the parent regardless
         import traceback
-        result_queue.put((
-            "%s:%s" % (module_file, qualname), True, traceback.format_exc(), 'error'))
+        import unittest
+        label = "%s:%s" % (module_file, qualname)
+        # A target that cannot run in this build (for example one that needs
+        # an instrumented build) skips on its first call; that is not an
+        # error in the sweep.
+        cause = e if isinstance(e, unittest.SkipTest) else e.__cause__
+        if isinstance(cause, unittest.SkipTest):
+            result_queue.put((label, False, str(cause), 'skip'))
+            return
+        result_queue.put((label, True, traceback.format_exc(), 'error'))
 
 
 def run_generic_entry(module_file, qualname, budget_seconds, size=1000,
@@ -257,7 +264,10 @@ def main(argv=None):
             print("[submit +%.1fs] %s" % (time.monotonic() - sweep_start, entry))
         for future in concurrent.futures.as_completed(futures):
             label, ok, elapsed, message, kind = future.result()
-            status = "PASS" if ok else ("ERROR" if kind == 'error' else "LEAK")
+            if kind == 'skip':
+                status = "SKIP"
+            else:
+                status = "PASS" if ok else ("ERROR" if kind == 'error' else "LEAK")
             print("[%s +%.1fs] %s (%.1fs)" %
                   (status, time.monotonic() - sweep_start, label, elapsed))
             if not ok:

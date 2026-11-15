@@ -1,3 +1,4 @@
+// --- file: common/jp_classloader.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -14,61 +15,70 @@
    See NOTICE file for details.
  *****************************************************************************/
 #include <Python.h>
+#include <mutex>
 #include <jpype.h>
 #include <pyjp.h>
 #include <jp_classloader.h>
+#include <jp_context.h>
+
+// True process-wide globals (like s_GlobalPoolClass in jp_context.cpp),
+// resolved once regardless of how many JPContext/subinterpreters come and
+// go - there is one JVM, so java.lang.Class and the system classloader are
+// the same object every time.  Never released - they live for the process.
+static jclass s_ClassClass = nullptr;
+static jobject s_SystemClassLoader = nullptr;
+static jmethodID s_ForNameID = nullptr;
+
+static void bindImmortals(JPJavaFrame& frame)
+{
+	static std::once_flag lookupOnce;
+	std::call_once(lookupOnce, [&frame]()
+	{
+		s_ClassClass = (jclass) frame.NewGlobalRef(frame.FindClass("java/lang/Class"));
+		s_ForNameID = frame.GetStaticMethodID(s_ClassClass, "forName",
+				"(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
+		jclass classLoaderClass = frame.FindClass("java/lang/ClassLoader");
+		jmethodID getSystemClassLoader
+				= frame.GetStaticMethodID(classLoaderClass, "getSystemClassLoader", "()Ljava/lang/ClassLoader;");
+		s_SystemClassLoader = frame.NewGlobalRef(
+				frame.CallStaticObjectMethodA(classLoaderClass, getSystemClassLoader, nullptr));
+	});
+}
 
 jobject JPClassLoader::getBootLoader()
 {
-	return m_BootLoader.get();
+	return m_BootLoader;
 }
 
 JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 {
 	JP_TRACE_IN("JPClassLoader::JPClassLoader");
 
-	// Define the class loader
-	m_ClassClass = JPClassRef(frame, frame.FindClass("java/lang/Class"));
-	m_ForNameID = frame.GetStaticMethodID(m_ClassClass.get(), "forName",
-			"(Ljava/lang/String;ZLjava/lang/ClassLoader;)Ljava/lang/Class;");
+	bindImmortals(frame);
 
-	jclass dynamicLoaderClass = frame.getEnv()->FindClass("org/jpype/JPypeClassLoader");
+	jclass dynamicLoaderClass = frame.getEnv()->FindClass("org/jpype/internal/DynamicClassLoader");
 	if (dynamicLoaderClass != nullptr)
 	{
+		// The loader JPype's -Djava.system.class.loader launch flag
+		// installed, if any (desktop).
+		jobject parentLoader = s_SystemClassLoader;
 #ifdef ANDROID
-		// ClassLoader.getSystemClassLoader() (the #else branch) exists to
-		// find whatever classloader JPype's own -Djava.system.class.loader
-		// JVM launch flag installed - a late-loading mechanism to work
-		// around JPMS module-boundary restrictions on a desktop JVM.
-		// Android has no such flag (startJVM() doesn't run there) and no
-		// JPMS, so that call answers a question that doesn't apply: it
-		// returns Android's minimal boot loader stub, which can't see the
-		// app's own dex classes (including org.jpype.* itself) at all. Use
-		// the classloader that actually defined org.jpype.JPypeClassLoader
-		// instead - guaranteed to have that visibility, since that's
-		// exactly what just loaded it. (Confirmed necessary: this was
-		// breaking Class.forName("org.jpype.Reflector0", ..., loader) in
-		// JPypeContext.createContext() even after Reflector0 was correctly
-		// compiled into the APK.) Trying this same substitution
-		// unconditionally regressed two desktop non-ASCII-classpath tests
-		// that depend on the real getSystemClassLoader() late-load
-		// behavior, so it must stay Android-only.
-		jmethodID getClassLoaderID = frame.GetMethodID(m_ClassClass.get(),
+		// On Android there is no such flag (startJVM() doesn't run there)
+		// and no JPMS, and getSystemClassLoader() returns a minimal boot
+		// loader stub that cannot see the app's own dex classes (including
+		// org.jpype.* itself). Use the classloader that actually defined
+		// DynamicClassLoader instead - guaranteed to have that visibility.
+		// This must stay Android-only: on desktop it regresses the
+		// non-ASCII-classpath late-load behavior of the real system loader.
+		jmethodID getClassLoaderID = frame.GetMethodID(s_ClassClass,
 				"getClassLoader", "()Ljava/lang/ClassLoader;");
-		m_ParentClassLoader = JPObjectRef(frame,
-				frame.CallObjectMethodA((jobject) dynamicLoaderClass, getClassLoaderID, nullptr));
-#else
-		jclass classLoaderClass = frame.FindClass("java/lang/ClassLoader");
-		jmethodID getSystemClassLoader = frame.GetStaticMethodID(classLoaderClass,
-				"getSystemClassLoader", "()Ljava/lang/ClassLoader;");
-		m_ParentClassLoader = JPObjectRef(frame,
-				frame.CallStaticObjectMethodA(classLoaderClass, getSystemClassLoader, nullptr));
+		parentLoader = frame.CallObjectMethodA((jobject) dynamicLoaderClass, getClassLoaderID, nullptr);
 #endif
 
 		// Use the one in place already
-		if (frame.IsInstanceOf(m_ParentClassLoader.get(), dynamicLoaderClass))
+		if (frame.IsInstanceOf(parentLoader, dynamicLoaderClass))
 		{
-			m_BootLoader = m_ParentClassLoader;
+			m_BootLoader = frame.NewGlobalRef(parentLoader);
 			return;
 		}
 
@@ -76,8 +86,8 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 		jmethodID newDyLoader = frame.GetMethodID(dynamicLoaderClass, "<init>",
 				"(Ljava/lang/ClassLoader;)V");
 		jvalue v;
-		v.l = m_ParentClassLoader.get();
-		m_BootLoader = JPObjectRef(frame, frame.NewObjectA(dynamicLoaderClass, newDyLoader, &v));
+		v.l = parentLoader;
+		m_BootLoader = frame.NewGlobalRef(frame.NewObjectA(dynamicLoaderClass, newDyLoader, &v));
 		return;
 	}
 	// org.jpype was not loaded already so we can't proceed.  Report the
@@ -96,6 +106,12 @@ JPClassLoader::JPClassLoader(JPJavaFrame& frame)
 	JP_TRACE_OUT;  // GCOVR_EXCL_LINE
 }
 
+void JPClassLoader::release(JPContext* context)
+{
+	context->ReleaseGlobalRef(m_BootLoader);
+	m_BootLoader = nullptr;
+}
+
 jclass JPClassLoader::findClass(JPJavaFrame& frame, const string& name)
 {
 #ifdef ANDROID
@@ -108,7 +124,7 @@ jclass JPClassLoader::findClass(JPJavaFrame& frame, const string& name)
 	jvalue v[3];
 	v[0].l = frame.NewStringUTF(name.c_str());
 	v[1].z = true;
-	v[2].l = m_BootLoader.get();
-	return (jclass) frame.CallStaticObjectMethodA(m_ClassClass.get(), m_ForNameID, v);
+	v[2].l = m_BootLoader;
+	return (jclass) frame.CallStaticObjectMethodA(s_ClassClass, s_ForNameID, v);
 #endif
 }

@@ -1,0 +1,2 @@
+Marker resource so PackageManager.isJarPackage() has a real, non-module,
+non-jar classpath directory to find (see PackageManagerNGTest).

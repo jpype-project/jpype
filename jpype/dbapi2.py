@@ -236,7 +236,7 @@ URL = JDBCType(None, None, 'getURL', 'setURL')
 
 
 def _asPython(x):
-    return x._py()
+    return x.toPython()
 
 
 def _offsetTimeToPy(v):

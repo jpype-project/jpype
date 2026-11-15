@@ -115,17 +115,17 @@ inherit from :py:class:`jpype.dbapi2.Error`.  This is the exception inheritance 
     |__Warning
     |__Error
        |__InterfaceError
-       |__java.sql.SQLError
+       |__java.sql.SQLException
        |  |__java.sql.BatchUpdateException
-       |  |__java.sql.RowSetWarning
-       |  |__java.sql.SerialException
+       |  |__javax.sql.rowset.RowSetWarning
+       |  |__javax.sql.rowset.serial.SerialException
        |  |__java.sql.SQLClientInfoException
        |  |__java.sql.SQLNonTransientException
        |  |__java.sql.SQLRecoverableException
        |  |__java.sql.SQLTransientException
        |  |__java.sql.SQLWarning
-       |  |__java.sql.SyncFactoryException
-       |  |__java.sql.SyncProviderException
+       |  |__javax.sql.rowset.spi.SyncFactoryException
+       |  |__javax.sql.rowset.spi.SyncProviderException
        |
        |__DatabaseError
           |__DataError
@@ -289,8 +289,6 @@ SQL types.  These functions are:
 For the most part these constructors are largely redundant because 
 adapters can provide the same functionality and Java types
 can be used directly to communicate type information.
-
-.. `JDBC Types`
 
 `JDBC Types`_
 =============

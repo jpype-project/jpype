@@ -32,7 +32,7 @@ struct JPGCStats
 class JPGarbageCollection {
 public:
 
-	JPGarbageCollection() = default;
+	explicit JPGarbageCollection(JPContext* context);
 
 	void init(JPJavaFrame& frame);
 
@@ -58,6 +58,9 @@ public:
 	void getStats(JPGCStats& stats) const;
 
 private:
+	size_t getWorkingSize() const;
+
+	JPContext* m_Context;
 	std::atomic<bool> running{false};
 	std::atomic<bool> in_python_gc{false};
 	// Claimed by the thread performing a forced (Java triggered) collection.
@@ -66,9 +69,6 @@ private:
 	// may start.
 	std::atomic<int64_t> next_forced_ns{0};
 	PyObject *python_gc{};
-	jclass _SystemClass{};
-	jclass _ContextClass{};
-	jmethodID _gcMethodID{};
 
 	size_t last_python{};
 	size_t last_java{};
@@ -78,6 +78,15 @@ private:
 	size_t last{};
 	int python_count{};
 	int python_triggered{};
+
+	// Only used by getWorkingSize()'s USE_PROC_INFO path (generic non-glibc
+	// Linux). Per-instance rather than process-static: each interpreter
+	// (main + every subinterpreter) has its own JPGarbageCollection, and a
+	// shared fd would let one interpreter's shutdown() close a fd another
+	// interpreter's getWorkingSize() is still reading from.  Atomic because
+	// shutdown() can race the reference thread.
+	std::atomic<int> statm_fd{-1};
+	int page_size{};
 } ;
 
 #endif /* JP_GC_H */

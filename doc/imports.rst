@@ -47,7 +47,7 @@ Imported packages are added to the directory of the base module.
 
   mystr = java.lang.String('hello')
   mylist = java.util.LinkedList()
-  path = java.nio.files.Paths.get() 
+  path = java.nio.file.Paths.get('a.txt')
 
 2) Import of the package path as a module
 -----------------------------------------
@@ -61,8 +61,8 @@ Example:
  .. code-block:: python
 
   import java.nio as nio
-  bb = nio.ByteBuffer()
-  path = nio.file.Path()
+  bb = nio.ByteBuffer.allocate(16)
+  path = nio.file.Paths.get('a.txt')
 
 3) Import a class from an object
 --------------------------------

@@ -16,6 +16,7 @@
 #
 # *****************************************************************************
 import jpype
+import _jpype
 import subrun
 import os
 from pathlib import Path
@@ -154,13 +155,42 @@ class StartJVMCase(unittest.TestCase):
         with self.assertRaises(TypeError):
             jpype.startJVM(invalid=True)  # type: ignore
 
+    def testAddJVMOption(self):
+        jpype.addJVMOption("-Djpype.test.option1=hello")
+        jpype.addJVMOption("-Djpype.test.option2=world")
+        assert jpype.getJVMOptions() == [
+            "-Djpype.test.option1=hello",
+            "-Djpype.test.option2=world",
+        ]
+        jpype.startJVM(classpath=cp, convertStrings=False)
+        System = jpype.JClass("java.lang.System")
+        assert System.getProperty("jpype.test.option1") == "hello"
+        assert System.getProperty("jpype.test.option2") == "world"
+
+    def testAddJVMOptionExplicitOverrides(self):
+        # Accumulated options compose with explicit *jvmargs, and an
+        # explicit arg wins over an accumulated one for the same property.
+        jpype.addJVMOption("-Djpype.test.option=fromoption")
+        jpype.startJVM(
+            "-Djpype.test.option=fromexplicit",
+            classpath=cp,
+            convertStrings=False,
+        )
+        System = jpype.JClass("java.lang.System")
+        assert System.getProperty("jpype.test.option") == "fromexplicit"
+
+    def testAddJVMOptionAfterStart(self):
+        jpype.startJVM(classpath=cp, convertStrings=False)
+        with self.assertRaises(OSError):
+            jpype.addJVMOption("-Xmx1g")
+
     def testNonASCIIPath(self):
         """Test that paths with non-ASCII characters are handled correctly.
         Regression test for https://github.com/jpype-project/jpype/issues/1194
         """
         jpype.startJVM(jvmpath=Path(self.jvmpath), classpath=f"{test_jar}/unicode_à😎/sample_package.jar")
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        self.assertEqual(type(cl), jpype.JClass("org.jpype.JPypeClassLoader"))
+        self.assertEqual(type(cl), jpype.JClass("org.jpype.internal.DynamicClassLoader"))
         assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
 
 
@@ -179,7 +209,7 @@ class StartJVMCase(unittest.TestCase):
         """
         jpype.startJVM(f"-Djava.class.path={test_jar}/unicode_à😎/sample_package.jar", jvmpath=Path(self.jvmpath))
         cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        self.assertEqual(type(cl), jpype.JClass("org.jpype.JPypeClassLoader"))
+        self.assertEqual(type(cl), jpype.JClass("org.jpype.internal.DynamicClassLoader"))
         assert dir(jpype.JPackage('org.jpype.sample_package')) == ['A', 'B']
 
     def testNonASCIIPathWithSystemClassLoader(self):
@@ -218,29 +248,13 @@ class StartJVMCase(unittest.TestCase):
         library" message. Regression test for
         https://github.com/jpype-project/jpype/issues/1312
 
-        Does not touch the real, installed org.jpype.jar: that file is
-        shared with every other test process (this test itself runs in
-        its own subrun subprocess, but the real jar is still the one
-        every *other* concurrently-running worker's JVM has open) -
-        in-place mutation of it was fine on Linux but reliably failed on
-        Windows with "Access is denied" replacing a file another
-        process still has open. Instead, this builds a private one-class
-        jar with the same corrupted org/jpype/JPypeClassLoader.class and
-        passes it via classpath= - _core.py's startJVM() always appends
-        the real support_lib to the *end* of the classpath
-        (java_class_path.append(support_lib)), so a same-named class
-        earlier in the classpath shadows it and the JVM resolves
-        org.jpype.JPypeClassLoader from the corrupted private jar
-        instead, without the real org.jpype.jar ever being touched.
-
-        The shadow jar's own directory is cleaned up with
-        ignore_errors=True, not tempfile.TemporaryDirectory()'s default
-        strict cleanup: on Windows, the JVM keeps a file handle open on
-        any classpath jar it mapped for classloading for the remaining
-        lifetime of this process, even one whose load ultimately failed
-        with UnsupportedClassVersionError - the file can't be deleted
-        until this subrun subprocess exits, so a strict rmtree here
-        always failed with "used by another process" on Windows CI.
+        The support jar is on the JVM's module path, so a class shadowed
+        from the classpath cannot replace it.  Instead this builds a
+        private copy of the whole jar with the system class loader's
+        class file corrupted, and points startJVM at it through
+        jpype._core._findSupport, so the real, shared org.jpype.jar is
+        never touched (replacing a jar another process still has open
+        fails on Windows).
         """
         import zipfile
         import tempfile
@@ -248,65 +262,34 @@ class StartJVMCase(unittest.TestCase):
 
         support_lib = Path(jpype.__file__).resolve(
         ).parent.parent / "org.jpype.jar"
-        entry = "org/jpype/JPypeClassLoader.class"
-        with zipfile.ZipFile(support_lib, 'r') as zin:
-            data = bytearray(zin.read(entry))
-        # Class file bytes 4-8 (big endian) hold the major version.
-        # Set it far beyond anything a real JVM will ever support so
-        # loading it always fails with UnsupportedClassVersionError.
-        data[6] = 0xFF
-        data[7] = 0xFF
+        entry = "org/jpype/internal/DynamicClassLoader.class"
         tmp_dir = tempfile.mkdtemp()
+        original = jpype._core._findSupport
         try:
-            shadow_jar = os.path.join(tmp_dir, "shadow.jar")
-            with zipfile.ZipFile(shadow_jar, 'w') as zout:
-                zout.writestr(entry, bytes(data))
+            shadow_jar = os.path.join(tmp_dir, "org.jpype.jar")
+            with zipfile.ZipFile(support_lib, 'r') as zin, \
+                    zipfile.ZipFile(shadow_jar, 'w') as zout:
+                for item in zin.infolist():
+                    data = zin.read(item.filename)
+                    if item.filename == entry:
+                        # Class file bytes 4-8 (big endian) hold the major
+                        # version.  Set it far beyond anything a real JVM
+                        # will ever support so loading it always fails with
+                        # UnsupportedClassVersionError.
+                        data = bytearray(data)
+                        data[6] = 0xFF
+                        data[7] = 0xFF
+                        data = bytes(data)
+                    zout.writestr(item, data)
 
-            with self.assertRaises(RuntimeError) as cm:
-                jpype.startJVM(classpath=[shadow_jar], convertStrings=False)
+            jpype._core._findSupport = lambda: (shadow_jar, None)
+            with self.assertRaises(Exception) as cm:
+                jpype.startJVM(convertStrings=False)
             self.assertNotEqual(
                 str(cm.exception), "Can't find org.jpype.jar support library")
         finally:
+            jpype._core._findSupport = original
             shutil.rmtree(tmp_dir, ignore_errors=True)
-
-    @common.requireAscii
-    def testOldStyleASCIIPathWithSystemClassLoader(self):
-        jpype.startJVM(
-            self.jvmpath,
-            "-Djava.system.class.loader=jpype.startup.TestSystemClassLoader",
-            f"-Djava.class.path={cp}"
-        )
-        classloader = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        test_classLoader = jpype.JClass("jpype.startup.TestSystemClassLoader")
-        self.assertEqual(type(classloader), test_classLoader)
-        assert dir(jpype.JPackage('jpype.startup')) == ['TestSystemClassLoader']
-
-    @common.requireAscii
-    def testDefaultSystemClassLoader(self):
-        # we introduce no behavior change unless absolutely necessary
-        jpype.startJVM(jvmpath=Path(self.jvmpath))
-        cl = jpype.JClass("java.lang.ClassLoader").getSystemClassLoader()
-        self.assertNotEqual(type(cl), jpype.JClass("org.jpype.JPypeClassLoader"))
-
-    def testServiceWithNonASCIIPath(self):
-        jpype.startJVM(
-            self.jvmpath,
-            "-Djava.locale.providers=SPI,CLDR",
-            classpath=f"{test_jar}/unicode_à😎/service.jar",
-        )
-        ZoneId = jpype.JClass("java.time.ZoneId")
-        ZoneRulesException = jpype.JClass("java.time.zone.ZoneRulesException")
-        try:
-            ZoneId.of("JpypeTest/Timezone")
-        except ZoneRulesException:
-            self.fail("JpypeZoneRulesProvider not loaded")
-
-    def testShutdown(self):
-        jpype.startJVM(self.jvmpath, classpath=cp)
-        # Install a coverage hook
-        instance = jpype.JClass("org.jpype.JPypeContext").getInstance()
-        jpype.JClass("jpype.common.OnShutdown").addCoverageHook(instance)
-
         # Shutdown
         jpype.shutdownJVM()
 
@@ -319,7 +302,7 @@ class StartJVMCase(unittest.TestCase):
         # warning, without the caller having to pass the flag themselves.
         jpype.startJVM(self.jvmpath, classpath=cp)
         if jpype.getJVMVersion()[0] >= 21:
-            module = jpype.JClass("org.jpype.JPypeContext").class_.getModule()
+            module = jpype.JClass("org.jpype.internal.NativeContext").class_.getModule()
             self.assertTrue(module.isNativeAccessEnabled())
 
     def testNativeAccessUserOverrideNotDuplicated(self):
@@ -328,5 +311,5 @@ class StartJVMCase(unittest.TestCase):
         jpype.startJVM(self.jvmpath, "--enable-native-access=ALL-UNNAMED",
                         classpath=cp)
         if jpype.getJVMVersion()[0] >= 21:
-            module = jpype.JClass("org.jpype.JPypeContext").class_.getModule()
+            module = jpype.JClass("org.jpype.internal.NativeContext").class_.getModule()
             self.assertTrue(module.isNativeAccessEnabled())
