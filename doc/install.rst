@@ -26,7 +26,7 @@ Source Install
 Installing from source requires:
 
 Python
-  JPype works CPython 3.5 or later. Both the runtime and the development
+  JPype works with CPython 3.8 or later. Both the runtime and the development
   package are required.
 
 Java
@@ -34,7 +34,7 @@ Java
 
   JPype source distribution includes a copy of the Java JNI header
   and precompiled Java code, thus the Java Development Kit (JDK) is not required.
-  JPype has been tested with Java versions from Java 1.8 to Java 13.
+  JPype requires Java 11 or later.
 
 C++
   A C++ compiler which matches the ABI used to build CPython.
@@ -45,8 +45,8 @@ JDK
   directly from the git repository.
 
 Once these requirements have been met, one can use pip to build from either the
-source distribution or directly from the repository.  Specific requirements from
-different achitectures are listed below_.
+source distribution or directly from the repository.  Specific requirements for
+different architectures are listed below_.
 
 
 Build using pip
@@ -83,20 +83,28 @@ from `PyPi <http://pypi.python.org/pypi/JPype1>`__.
 
 **2. Build the source with desired options**
 
-Compile JPype using the `build <https://pypi.org/project/build/>` module (this will produce a wheel): ::
+Compile JPype using the `build <https://pypi.org/project/build/>`__ module (this will produce a wheel): ::
 
   python -m build /path/to/source
 
-A number of additional argument may be provided.
+JPype's build is driven by CMake (via `scikit-build-core
+<https://scikit-build-core.readthedocs.io/>`__), so additional options are
+passed through as CMake defines using ``-C``/``--config-setting``:
 
---enable-build-jar   Force setup to recreate the jar from scratch. 
---enable-tracing     Build a verison of JPype with full logging to the 
-                     console. This can be used to diagnose tricky JNI
-                     issues.
+``-DENABLE_BUILD_JAR=ON``
+  Force the build to recreate the jar from scratch (default: on).
+
+``-DENABLE_TRACING=ON``
+  Build a version of JPype with full JNI-call logging to the console.
+  This can be used to diagnose tricky JNI issues.
+
+``-DENABLE_COVERAGE=ON``
+  Build with instrumentation for coverage measurement and fault
+  injection (see :ref:`instrumentation`).
 
 For example::
 
-    python -m build /path/to/source -C--global-option=build_ext -C--global-option="--enable-tracing"
+    python -m build /path/to/source -C cmake.args="-DENABLE_TRACING=ON"
 
 After building, JPype can be tested using the test bench. The test
 bench requires JDK to build.
@@ -115,8 +123,8 @@ If it fails...
 ~~~~~~~~~~~~~~
 
 Most failures happen when setup.py is unable to find the JDK home directory
-which shouble be set in the enviroment variable ``JAVA_HOME``.  If this
-happens, preform the following steps:
+which should be set in the environment variable ``JAVA_HOME``.  If this
+happens, perform the following steps:
 
 1. Identify the location of your systems JDK installation and explicitly passing
    it to setup.py. ::
@@ -140,7 +148,7 @@ different machines.
 Debian/Ubuntu
 :::::::::::::
 
-Debian/Ubuntu users will have to install ``g++`` and ``python-dev``.
+Debian/Ubuntu users will have to install ``g++`` and ``python3-dev``.
 Use:
 
     sudo apt-get install g++ python3-dev

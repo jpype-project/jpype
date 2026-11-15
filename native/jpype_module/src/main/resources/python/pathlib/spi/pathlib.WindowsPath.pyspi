@@ -1,0 +1,38 @@
+kind: class
+module: pathlib
+class: WindowsPath
+interface: python.pathlib.PyPath
+lazy: true
+---
+def _compare_to(x, other):
+    return (x > other) - (x < other)
+
+
+def _join(x, *segments):
+    return x.joinpath(*[str(s) for s in segments])
+
+
+METHODS = {
+    ".name": lambda x: x.name,
+    ".stem": lambda x: x.stem,
+    ".suffix": lambda x: x.suffix,
+    ".suffixes": lambda x: x.suffixes,
+    ".parts": lambda x: list(x.parts),
+    ".parent": lambda x: x.parent,
+    ".anchor": lambda x: x.anchor,
+    ".drive": lambda x: x.drive,
+    ".root": lambda x: x.root,
+    ".isAbsolute": lambda x: x.is_absolute(),
+    ".asPosix": lambda x: x.as_posix(),
+    ".join": _join,
+    ".withName": lambda x, name: x.with_name(str(name)),
+    ".withSuffix": lambda x, suffix: x.with_suffix(str(suffix)),
+    ".matches": lambda x, pattern: x.match(str(pattern)),
+    ".isRelativeTo": lambda x, other: x.is_relative_to(other),
+    ".relativeTo": lambda x, other: x.relative_to(other),
+    ".exists": lambda x: x.exists(),
+    ".isFile": lambda x: x.is_file(),
+    ".isDirectory": lambda x: x.is_dir(),
+    ".isSymlink": lambda x: x.is_symlink(),
+    ".compareTo": _compare_to,
+}

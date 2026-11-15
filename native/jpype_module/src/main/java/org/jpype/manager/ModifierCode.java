@@ -1,3 +1,4 @@
+// --- file: org/jpype/manager/ModifierCode.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -23,7 +24,6 @@ import java.util.EnumSet;
  * <p>
  * These pretty much match Java plus a few codes we need.
  *
- * @author nelson85
  */
 public enum ModifierCode
 {
@@ -39,6 +39,7 @@ public enum ModifierCode
   VARARGS(0x0080),
   ENUM(0x4000),
   ABSTRACT(0x0400),
+  
   // Special flags for classes required for JPype
   SPECIAL(0x00010000),
   THROWABLE(0x00020000),
@@ -49,6 +50,8 @@ public enum ModifierCode
   PRIMITIVE_ARRAY(0x00400000),
   COMPARABLE(0x00800000),
   BUFFER(0x01000000),
+  PYTHON(0x02000000),
+  PROXY(0x04000000),
   CTOR(0x10000000),
   BEAN_ACCESSOR(0x20000000),
   BEAN_MUTATOR(0x40000000);

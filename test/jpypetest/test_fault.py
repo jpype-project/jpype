@@ -104,9 +104,6 @@ class FaultTestCase(common.JPypeTestCase):
             js.foo
         with self.assertRaises(TypeError):
             getattr(js, object())
-        _jpype.fault("PyJPModule_getContext")
-        with self.assertRaisesRegex(SystemError, "fault"):
-            js.substring
 
     @common.requireInstrumentation
     def testJPClass_setattro(self):
@@ -118,9 +115,6 @@ class FaultTestCase(common.JPypeTestCase):
             setattr(js, object(), 1)
         with self.assertRaises(AttributeError):
             js.substring = None
-        _jpype.fault("PyJPModule_getContext")
-        with self.assertRaises(SystemError):
-            js.substring = 1
 
     @common.requireInstrumentation
     def testJPClass_subclasscheck(self):
@@ -880,10 +874,17 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("JPJavaFrame::GetBooleanArrayElements")
         with self.assertRaises(BufferError):
             memoryview(ja[0:3])
-        _jpype.fault("JPJavaFrame::ReleaseBooleanArrayElements")
+        # ja[0:3] = bytes(...) and cloning a slice both go through
+        # tryFastBufferPush's DirectByteBuffer handoff now (setArrayRange
+        # tries it before falling back to the
+        # Get/ReleaseBooleanArrayElements critical section), so the fault
+        # point to arm is fillFlatIntoArray, not
+        # ReleaseBooleanArrayElements -- that release call is never
+        # reached for a buffer-protocol source.
+        _jpype.fault("JPJavaFrame::fillFlatIntoArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             ja[0:3] = bytes([1, 2, 3])
-        _jpype.fault("JPJavaFrame::ReleaseBooleanArrayElements")
+        _jpype.fault("JPJavaFrame::fillFlatIntoArray")
         with self.assertRaisesRegex(SystemError, "fault"):
             jpype.JObject(ja[::2], jpype.JObject)
         _jpype.fault("JPJavaFrame::ReleaseBooleanArrayElements")

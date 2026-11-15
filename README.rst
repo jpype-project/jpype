@@ -54,7 +54,7 @@ LLNL-CODE- 812311
 .. _Codecov: https://codecov.io/gh/jpype-project/jpype
 .. |implementation| image:: https://img.shields.io/pypi/implementation/jpype1.svg
 .. |pyversions| image:: https://img.shields.io/pypi/pyversions/jpype1.svg
-.. |javaversions| image:: https://img.shields.io/badge/java-11%20%7C%2017%20%7C%2021%20%7C%2025-purple.svg
+.. |javaversions| image:: https://img.shields.io/badge/java-8%20%7C%209%20%7C%2011-purple.svg
 .. |jvm| image:: https://img.shields.io/badge/jvm-Open%20%7C%20Oracle%20%7C%20Corretto-purple.svg
 .. |platform| image:: https://img.shields.io/conda/pn/conda-forge/jpype1.svg
 .. |license| image:: https://img.shields.io/github/license/jpype-project/jpype.svg

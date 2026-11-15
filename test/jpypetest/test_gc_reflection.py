@@ -15,6 +15,8 @@
 #   See NOTICE file for details.
 #
 import gc
+import sys
+import sysconfig
 import time
 import unittest
 import jpype
@@ -71,6 +73,11 @@ class GCReflectionTestCase(common.JPypeTestCase):
         self.assertLess(spent[0], 0.5 * wall)
 
 
+# The collector measures memory with glibc mallinfo on Linux.  A free-threaded
+# build allocates through mimalloc, whose mappings mallinfo cannot see, so
+# growth is never observed there and this test cannot pass.
+@unittest.skipIf(sysconfig.get_config_var("Py_GIL_DISABLED") and sys.platform.startswith("linux"),
+                 "memory growth is not visible to mallinfo on free-threaded Linux builds")
 @subrun.TestCase
 class GCMemoryTriggerTest(unittest.TestCase):
     """Growth of the process past the collection limit runs a Java

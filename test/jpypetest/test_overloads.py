@@ -513,6 +513,38 @@ class OverloadDispatchCacheTestCase(common.JPypeTestCase):
             self.Test3.sumIntArray([1, 2, "notanumber", 4])
         self.assertEqual(self.Test3.sumIntArray(list(range(20))), 190)
 
+    def testMixedListStillWorks(self):
+        # bool fails PyLong_CheckExact (it's a distinct type from int in
+        # Python) but is still a valid int; a custom __index__ object is
+        # valid too. Both must still convert correctly, cached or not.
+        self.assertEqual(self.Test3.sumIntArray([1, 2, 3, True, 5]), 12)
+
+        class Indexable:
+            def __index__(self):
+                return 99
+        self.assertEqual(
+            self.Test3.sumIntArray([1, 2, Indexable()]), 102)
+
+    def testIntArrayExtractionPaths(self):
+        # Regression coverage for JPIntType::setArrayRange's fast
+        # (PyList_CheckExact + PyLong_CheckExact) vs general (PyIndex_Check
+        # + PyLong_AsLongLong) extraction paths and the handoff between them.
+
+        # bool at the very first position -- fast path must break out
+        # immediately (i == 0) and hand off cleanly, not skip element 0.
+        self.assertEqual(self.Test3.sumIntArray([True, True, 3]), 5)
+
+        # Non-list sequence (tuple): PyList_CheckExact is false, so this
+        # must go straight to the general path for every element.
+        self.assertEqual(self.Test3.sumIntArray(tuple(range(5))), 10)
+
+        # A value that fits Python's arbitrary-precision int (passes
+        # PyLong_CheckExact, so takes the fast path) but overflows even a
+        # 64-bit range -- PyLong_AsLong must surface this as OverflowError,
+        # not silently truncate or crash.
+        with self.assertRaises(OverflowError):
+            self.Test3.sumIntArray([10 ** 30])
+
 
 class VarArgsHierarchyTestCase(common.JPypeTestCase):
     """Fixed-arity vs varargs overload specificity across primitives,

@@ -59,12 +59,14 @@ GENERIC:test_proxy.py:ProxyTestCase.testProxyLeak:60:200
 # this async-cleanup workload shape -- not yet distinguished).
 GENERIC:test_bytebuffer.py:ByteBufferCase.testConvertToDirectBuffer:60
 
-# NOTE: three targets removed here (test_arrayRaggedPush.py
-# ArrayRaggedPushTestCase.testRectangularInt3D, test_arrayToList.py
-# ArrayToListTestCase.testMultiDimJagged/testEachPrimitiveType) -- these
-# test files exercise embedding-branch-only bulk array-transfer features
-# (pullTo/pushFrom, JArray.toList()) that don't exist on master. Only
-# backport these targets once/if that feature itself lands here.
+# Multi-dimensional (3D) rectangular array push.
+GENERIC:test_arrayRaggedPush.py:ArrayRaggedPushTestCase.testRectangularInt3D:60
+
+# Ragged (jagged) 2D array pull via JArray.toList().
+GENERIC:test_arrayToList.py:ArrayToListTestCase.testMultiDimJagged:60
+
+# Bulk primitive-array-to-list pull across every primitive type.
+GENERIC:test_arrayToList.py:ArrayToListTestCase.testEachPrimitiveType:60
 
 # Custom user-defined Java class instantiation + non-static field access.
 GENERIC:test_attr.py:AttributeTestCase.testGetNonStatic:60
@@ -210,10 +212,25 @@ GENERIC:test_hints.py:HintsTestCase.testCollection:60
 # generation (contrast the @JImplements-based entries above).
 GENERIC:test_virtual.py:VirtualsTestCase.testCallBooleanImplements:60
 
-# NOTE: test_bridge.py:JBridgeTestCase.testIterable removed here --
-# test_bridge.py exercises an embedding-branch-only JBridge customizer
-# feature that doesn't exist on master. Re-add this target once/if the
-# JBridge feature itself lands here.
+# Python-list -> Java-Iterable implicit-conversion customizer path.
+# Investigated: the original FLAKY sanity-pass result (one short run showing
+# steady ~262-524 bytes/call growth, followed immediately by a clean PASS at
+# the same config) did not reproduce across 7 further runs at varying
+# budget/size (a 30-batch/200-call run plus 6 shorter budget-based runs) --
+# all clean, zero RSS/JVM growth. Traced `PyIterable@obj`'s actual path
+# (JPConversionPython::convert() in jp_classhints.cpp): it builds a JPProxy
+# via the org.jpype ProxyFactory, which deduplicates/caches the *dynamic
+# Java proxy Type* by interface set (so this is NOT the same
+# per-call-fresh-class mechanism as testProxyLeak above -- confirmed, not
+# assumed); only a Java proxy *instance* is created fresh per call, and its
+# lifetime is tied to the Python-side PyJPProxy object via
+# JPProxy::getProxy()'s Py_INCREF + the JPProxy::releaseProxyPython cleanup
+# callback, released through the same NativeReferenceQueue/phantom-ref async
+# cleanup machinery already verified leak-free elsewhere in this file (see
+# testPassedObjectGetsCleanedUp above). No accounting gap found. Conclusion:
+# most likely GC-timing/measurement noise from a single short run, not a
+# real leak -- downgrading this from an open flaky finding.
+GENERIC:test_bridge.py:JBridgeTestCase.testIterable:60
 
 # JInterface meta-class identity/subclass check.
 GENERIC:test_inherit.py:InheritTestCase.testInterface:60
@@ -228,11 +245,11 @@ GENERIC:test_annotation.py:AnnotationTestCase.testAnnotationMethodCall:60
 # numpy string-array -> Java String[] conversion (JArray.of with dtype).
 GENERIC:test_arrayFromBuffer.py:ArrayFromBufferTestCase.testStringArray1D:60
 
-# NOTE: two targets removed here (test_arrayMultiDimBuffer.py
-# ArrayMultiDimBufferTestCase.testPush2D, test_arrayPullPush.py
-# ArrayPullToTestCase.testContiguousFastPath) -- both exercise the
-# embedding-branch-only bulk array-transfer feature (pullTo/pushFrom)
-# that doesn't exist on master.
+# Multi-dimensional (2D) numpy buffer push into a Java array.
+GENERIC:test_arrayMultiDimBuffer.py:ArrayMultiDimBufferTestCase.testPush2D:60
+
+# Java array -> Python buffer pull, contiguous fast path.
+GENERIC:test_arrayPullPush.py:ArrayPullToTestCase.testContiguousFastPath:60
 
 # Boxed java.lang.Integer construction/round-trip.
 GENERIC:test_boxed.py:BoxedTestCase.testInteger:60
@@ -293,9 +310,8 @@ GENERIC:test_jobject.py:JClassTestCase.testGetAttrField:60
 # JPackage attribute resolution to a JClass.
 GENERIC:test_jpackage.py:JPackageTestCase.testCreate:60
 
-# NOTE: test_jreflect.py:JReflectMethodTestCase.testInstanceMethodTakesInstanceFirst
-# removed here -- exercises java.lang.reflect.Method.toPython(), an
-# embedding-branch-only feature that doesn't exist on master.
+# Reflected java.lang.reflect.Method.toPython() dispatch cache.
+GENERIC:test_jreflect.py:JReflectMethodTestCase.testInstanceMethodTakesInstanceFirst:60
 
 # JString construction from str and from bytes.
 GENERIC:test_jstring.py:JStringTestCase.testConversion:60

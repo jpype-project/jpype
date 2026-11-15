@@ -16,8 +16,8 @@
 #ifndef _JP_ERROR_H_
 #define _JP_ERROR_H_
 
-/* The result of the exception-model split (see plan/ExceptionRefactor.md):
- * one concrete C++ type per exception origin, replacing the single
+/* The exception-model split: one concrete C++ type per exception origin,
+ * replacing the single
  * type-tag-plus-union design JPypeException used to have, so each type only
  * carries (and only knows how to convert) the payload that is actually valid
  * for it, instead of relying on convention/comments to track which union
@@ -57,9 +57,15 @@ public:
 	virtual void toPython() = 0;
 
 	/** Transfer handling of this exception to Java: throw the appropriate
-	 * Java exception on the current JNI frame.
+	 * Java exception on the current JNI frame. context is the JPContext to
+	 * do the throwing through - required since not every origin captures
+	 * one at construction time (JPPythonError/JPInternalError can be built
+	 * from macro sites with no context in scope, e.g. deep inside generic
+	 * conversion code), so the caller - which always has a real context or
+	 * frame in hand at the point it is actually catching and converting -
+	 * supplies it instead of falling back to an ambient global.
 	 */
-	virtual void toJava() = 0;
+	virtual void toJava(JPContext* context) = 0;
 
 	/** Put a captured Python exception back on the thread state, for
 	 * callers that need it live (e.g. to chain it as a cause) before they
@@ -83,20 +89,51 @@ class JPJavaError : public JPBaseError
 {
 public:
 	JPJavaError(JPJavaFrame& frame, jthrowable th, const JPStackInfo& stackInfo)
-	: JPBaseError(frame.toString(th), stackInfo), m_Throwable(frame, th)
+	: JPBaseError(frame.toString(th), stackInfo),
+	  m_Context(frame.getContext()),
+	  m_Throwable((jthrowable) frame.NewGlobalRef(th))
 	{
+	}
+
+	// The copy constructor for an object thrown as an exception must be
+	// declared noexcept, including any implicitly-defined copy
+	// constructors. Any function declared noexcept that terminates by
+	// throwing an exception violates ERR55-CPP. Honor exception
+	// specifications.
+	JPJavaError(const JPJavaError& ex) noexcept
+	: JPBaseError(ex), m_Context(ex.m_Context), m_Throwable(nullptr)
+	{
+		if (m_Context != nullptr && ex.m_Throwable != nullptr && m_Context->isRunning())
+		{
+			JPJavaFrame frame = JPJavaFrame::outer(m_Context);
+			m_Throwable = (jthrowable) frame.NewGlobalRef(ex.m_Throwable);
+		}
+	}
+
+	JPJavaError& operator=(const JPJavaError& ex) = delete;
+
+	~JPJavaError() override
+	{
+		// ReleaseGlobalRef is the sanctioned destructor-safe release - it
+		// checks m_Context is still running internally, so this cannot fail
+		// even if the JVM has since shut down. m_Context itself is captured
+		// once at construction (see above) rather than resolved ambiently,
+		// so this is safe under multiple sub-interpreters.
+		if (m_Context != nullptr && m_Throwable != nullptr)
+			m_Context->ReleaseGlobalRef(m_Throwable);
 	}
 
 	jthrowable getThrowable() const
 	{
-		return m_Throwable.get();
+		return m_Throwable;
 	}
 
 	void toPython() override;
-	void toJava() override;
+	void toJava(JPContext* context) override;
 
 private:
-	JPThrowableRef m_Throwable;
+	JPContext* m_Context;
+	jthrowable m_Throwable;
 };
 
 /**
@@ -138,7 +175,7 @@ public:
 	}
 
 	void toPython() override;
-	void toJava() override;
+	void toJava(JPContext* context) override;
 
 	void restorePythonError() override
 	{
@@ -190,7 +227,7 @@ public:
 	}
 
 	void toPython() override;
-	void toJava() override;
+	void toJava(JPContext* context) override;
 
 private:
 	void* m_PyExcType;

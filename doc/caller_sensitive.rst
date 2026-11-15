@@ -34,7 +34,7 @@ The following methods use the caller sensitive (as of JDK 12):
   - ``java.lang.Class.getNestMembers``
   - ``java.lang.ClassLoader.getParent``
   - ``java.lang.ClassLoader.getPlatformClassLoader``
-  - ``java.lang.invoke,MethodHandleProxies.asInterfaceInstance``
+  - ``java.lang.invoke.MethodHandleProxies.asInterfaceInstance``
   - ``java.lang.invoke.MethodHandles.lookup``
   - ``java.lang.Module.addReads``
   - ``java.lang.Module.addExports``
@@ -43,7 +43,6 @@ The following methods use the caller sensitive (as of JDK 12):
   - ``java.lang.Module.getResourceAsStream``
   - ``java.lang.Package.getPackage``
   - ``java.lang.Package.getPackages``
-  - ``java.lang.reflect.AccessibleObject.setAccessible``
   - ``java.lang.reflect.AccessibleObject.setAccessible``
   - ``java.lang.reflect.AccessibleObject.trySetAccessible``
   - ``java.lang.reflect.AccessibleObject.canAccess``
@@ -79,7 +78,6 @@ The following methods use the caller sensitive (as of JDK 12):
   - ``java.lang.StackWalker.forEach``
   - ``java.lang.StackWalker.getCallerClass``
   - ``java.lang.System.getLogger``
-  - ``java.lang.System.getLogger``
   - ``java.lang.System.load``
   - ``java.lang.System.loadLibrary``
   - ``java.lang.Thread.getContextClassLoader``
@@ -92,7 +90,6 @@ The following methods use the caller sensitive (as of JDK 12):
   - ``java.util.ResourceBundle.clearCache``
   - ``java.util.ServiceLoader.load``
   - ``java.util.ServiceLoader.loadInstalled``
-  - ``java.util.logging.Logger.getLogger``
   - ``java.util.logging.Logger.getLogger``
   - ``java.util.logging.Logger.getAnonymousLogger``
   - ``java.sql.DriverManager.getConnection``

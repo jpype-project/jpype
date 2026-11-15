@@ -57,7 +57,8 @@ homepage = "https://github.com/jpype-project/jpype"
 
 [[tool.mypy.overrides]]
 module = [
-    "_jpype", # todo: add a proper _jpype.pyi file
+    "_jpype",
+    "_jpyne",
     "commonx",
     "brokenx",
     "java.*",
@@ -88,7 +89,7 @@ patch = ["subprocess"]
 build-dir = "build/{wheel_tag}"
 build.verbose = true
 logging.level = "INFO"
-wheel.packages = ["jpype", "jpype._pyinstaller", "_jpype"]
+wheel.packages = ["jpype", "jpype._pyinstaller", "_jpype", "_jpyne"]
 # editable mode installs an import hook to redirect the extension and the python code.
 # since this does not work for the JAR, CMake copies the JAR next to CMakelists.txt (root).
 editable.mode = "redirect"

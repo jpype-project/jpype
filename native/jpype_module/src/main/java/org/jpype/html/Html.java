@@ -1,3 +1,4 @@
+// --- file: org/jpype/html/Html.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -25,14 +26,14 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import org.jpype.JPypeContext;
-import org.jpype.pkg.JPypePackageManager;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
 
 public class Html
 {
-
+  final static Logger LOGGER = Logger.getLogger(Html.class.getName());
   public final static HashSet<String> VOID_ELEMENTS = new HashSet<>();
   public final static HashSet<String> OPTIONAL_ELEMENTS = new HashSet<>();
   public final static HashSet<String> OPTIONAL_CLOSE = new HashSet<>();
@@ -56,6 +57,10 @@ public class Html
             "th:td", "p:li"));
   }
 
+  private Html()
+  {
+  }
+
   public static Parser<Document> newParser()
   {
     return new HtmlParser();
@@ -73,29 +78,38 @@ public class Html
 
   static
   {
-    // entities.txt ships alongside this class's own .class file (same jar
-    // on desktop, same dex on Android), so it's always reachable through
-    // this class's own defining classloader. ClassLoader.getSystemClassLoader()
-    // works for that by coincidence on desktop (there, the system
-    // classloader and this class's own loader are the same app classloader)
-    // but not on Android, where getSystemClassLoader() returns a boot-loader
-    // stub with no dex visibility at all (see doc/android.rst) - every
-    // lookup through it returns null there, which crashed this static
-    // initializer with an NPE on Android before this fix.
-    // entities.txt is a plain resource file, not a .class - even placed
-    // correctly under this class's own defining classloader, it still
-    // doesn't reach the built APK on Android (Android Gradle's default
-    // java source set silently drops non-.java files from src/main/java;
-    // see project/android/recipes/jpype1/__init__.py's
-    // generate_package_markers for the same issue with the package-list
-    // asset). So on Android this falls back to the bundled copy shipped
-    // as a real Android asset (see JPypePackageManager.openAndroidAsset,
-    // and buildozer.spec's android.add_assets for how it gets bundled).
-    ClassLoader cl = Html.class.getClassLoader();
-    InputStream resourceStream = cl.getResourceAsStream("org/jpype/html/entities.txt");
-    InputStream is = resourceStream != null ? resourceStream
-            : JPypePackageManager.openAndroidAsset("jpype-android-html-entities.txt");
-    try (InputStream stream = is; InputStreamReader isr = new InputStreamReader(stream); BufferedReader rd = new BufferedReader(isr))
+    // Use the class itself to get the resource, not the System ClassLoader
+    try (InputStream is = Html.class.getResourceAsStream("/org/jpype/resources/entities.txt"))
+    {
+      if (is == null)
+      {
+        throw new RuntimeException("Resource not found: org/jpype/resources/entities.txt");
+      }
+      try (InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8); BufferedReader rd = new BufferedReader(isr))
+      {
+        String line;
+        while ((line = rd.readLine()) != null)
+        {
+          if (line.startsWith("#") || line.trim().isEmpty())
+            continue;
+          String[] parts = line.split("\\s+");
+          if (parts.length >= 2)
+          {
+            ENTITIES.put(parts[0], Integer.parseInt(parts[1]));
+          }
+        }
+      }
+    } catch (IOException ex)
+    {
+      LOGGER.log(Level.SEVERE, "Failed to load HTML entities", ex);
+    }
+  }
+
+  /*
+  static
+  {
+    ClassLoader cl = ClassLoader.getSystemClassLoader();
+    try (InputStream is = cl.getResourceAsStream("org/jpype/html/entities.txt"); InputStreamReader isr = new InputStreamReader(is); BufferedReader rd = new BufferedReader(isr))
     {
       while (true)
       {
@@ -112,7 +126,7 @@ public class Html
       throw new RuntimeException(ex);
     }
   }
-
+   */
   public static String decode(String s)
   {
     if (!s.contains("&"))

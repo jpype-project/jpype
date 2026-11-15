@@ -56,8 +56,7 @@ def addClassPath(path1: Union[str, _os.PathLike]) -> None:
     # immediately into the JPypeClassLoader
     if _jpype.isStarted():
         Paths = _jpype.JClass('java.nio.file.Paths')
-        JContext = _jpype.JClass('org.jpype.JPypeContext')
-        classLoader = JContext.getInstance().getClassLoader()
+        classLoader = _jpype.context().getClassLoader()
         if path1.name == "*":
             paths = list(path1.parent.glob("*.jar"))
             if len(paths) == 0:

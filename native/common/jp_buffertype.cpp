@@ -1,3 +1,4 @@
+// --- file: common/jp_buffertype.cpp ---
 /*****************************************************************************
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -27,11 +28,7 @@ JPBufferType::JPBufferType(JPJavaFrame& frame,
 : JPClass(frame, cls, name, superClass, interfaces, modifiers)
 {
 	// Use name to get the type
-	if (name == "java.nio.Buffer")
-	{
-		m_Type = "b";
-		m_Size = 1;
-	} else if (name == "java.nio.ByteBuffer")
+	if (name == "java.nio.Buffer" || name == "java.nio.ByteBuffer")
 	{
 		m_Type = "b";
 		m_Size = 1;

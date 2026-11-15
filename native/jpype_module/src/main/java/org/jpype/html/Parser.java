@@ -1,3 +1,4 @@
+// --- file: org/jpype/html/Parser.java ---
 /* ****************************************************************************
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -42,6 +43,7 @@ public class Parser<T>
     this.grammar = grammar;
   }
 
+  @SuppressWarnings("unchecked")
   public T parse(InputStream is)
   {
     ByteBuffer incoming = ByteBuffer.allocate(1024);
@@ -68,6 +70,7 @@ public class Parser<T>
     return (T) grammar.end(this);
   }
 
+  @SuppressWarnings("unchecked")
   public T parse(String str)
   {
     byte[] b = str.getBytes();
@@ -219,7 +222,7 @@ public class Parser<T>
      *
      * @param p
      */
-    public void start(Parser p);
+    public void start(Parser<?> p);
 
     /**
      * Should check the state of the stack, fail if bad, or return the final
@@ -228,7 +231,7 @@ public class Parser<T>
      * @param p
      * @return
      */
-    public Object end(Parser p);
+    public Object end(Parser<?> p);
   }
 
   /**
@@ -275,7 +278,7 @@ public class Parser<T>
     }
 
     @Override
-    public boolean apply(Parser parser, Entity entity)
+    public boolean apply(Parser<?> parser, Entity entity)
     {
       LinkedList<Entity> stack = parser.stack;
       int n = stack.size();
@@ -296,7 +299,7 @@ public class Parser<T>
       return true;
     }
 
-    abstract public void execute(Parser parser);
+    abstract public void execute(Parser<?> parser);
   }
 
 //</editor-fold>

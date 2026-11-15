@@ -1,6 +1,15 @@
 API Reference
 =============
 
+This page covers the Python-calling-Java API (autodoc-generated from the
+``jpype`` module's docstrings). The reverse-bridge Java API -- ``python.*``
+and ``org.jpype`` -- is documented separately as generated Javadoc, since
+Sphinx autodoc can't read Java sources: see the `Java API Reference
+<javadoc/index.html>`_ (built and hosted separately -- unresolvable when
+building this documentation locally without also running
+``ant -f native/build.xml javadoc``, but resolves correctly once deployed
+alongside the Sphinx site).
+
 JVM Functions
 ~~~~~~~~~~~~~
 
@@ -10,6 +19,8 @@ These functions control and start the JVM.
 .. autofunction:: jpype.shutdownJVM
 .. autofunction:: jpype.getDefaultJVMPath
 .. autofunction:: jpype.getClassPath
+.. autofunction:: jpype.addJVMOption
+.. autofunction:: jpype.getJVMOptions
 .. autodecorator:: jpype.onJVMStart
 
 Class importing
@@ -70,8 +81,8 @@ with Java classes.
 Proxies
 ~~~~~~~
 
-JPype can implement Java interfaces either by using decorators or by manually 
-creating a JProxy.  Java only support proxying interfaces, thus we cannot 
+JPype can implement Java interfaces either by using decorators or by manually
+creating a JProxy.  Java only supports proxying interfaces, thus we cannot
 extend an existing Java class.
 
 .. autoclass:: jpype.JProxy
@@ -82,8 +93,8 @@ Customized Classes
 
 JPype provides standard customizers for Java interfaces so that Java objects 
 have syntax matching the corresponding Python objects. The customizers are 
-automatically bound to the class on creation without user intervention.  We are 
-documentating the functions that each customizer adds here.  Information about
+automatically bound to the class on creation without user intervention.  We are
+documenting the functions that each customizer adds here.  Information about
 Java methods can be found in the Javadoc.
 
 These internal classes can be used as example of how to implement your own 

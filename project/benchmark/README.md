@@ -1,10 +1,10 @@
 # Cross-library call-overhead benchmarks
 
 Compares JPype's general per-call overhead against jpy, jep, pyjnius, and
-GraalPy, to establish a baseline against which future conversion-path
-optimization work can be measured, and (for GraalPy specifically) how far
-JPype is behind a bridge with a genuine tiered JIT (Truffle/Graal) instead
-of an interpreter.
+GraalPy, to check whether the JPClass::findJavaConversion caching work
+(native/common/include/jp_conversioncache.h) has closed the gap, and (for
+GraalPy specifically) how far JPype is behind a bridge with a genuine
+tiered JIT (Truffle/Graal) instead of an interpreter.
 
 Laid out as one directory per library -- `jpype/`, `jpy/`, `jep/`,
 `pyjnius/`, `graalpy/` -- with matching filenames across all five, one

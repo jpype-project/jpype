@@ -111,9 +111,6 @@ class _JArrayProto(object):
     def __str__(self):
         return str(list(self))
 
-    def __iter__(self):
-        return _JavaArrayIter(self)
-
     def __reversed__(self):
         for elem in self[::-1]:
             yield elem
@@ -177,22 +174,13 @@ def _toJavaClass(tp):
 # missing: __contains__ (required for in)
 # Cannot be Mutable because java arrays are fixed in length
 
-
-class _JavaArrayIter(object):
-    def __init__(self, a):
-        self._array = a
-        self._ndx = -1
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        self._ndx += 1
-        if self._ndx >= len(self._array):
-            raise StopIteration
-        return self._array[self._ndx]
-
-    next = __next__
+# Iteration (list(arr), for x in arr, tuple(arr), *arr, ...) is handled by
+# the native sq_item slot (PyJPArray_sqItem, native/python/pyjp_array.cpp)
+# via CPython's built-in PySeqIter fallback -- no __iter__ defined here on
+# purpose. Defining a Python-level __iter__ would populate tp_iter and
+# permanently shadow that fallback, which is exactly the per-element
+# Python-call overhead this was changed to avoid (see
+# plan/ArrayToListBulk.md).
 
 # **********************************************************
 # Char array customizer

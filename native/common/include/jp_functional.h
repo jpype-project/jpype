@@ -16,6 +16,15 @@
 #ifndef JP_FUNCTIONAL_H
 #define JP_FUNCTIONAL_H
 
+// Deliberately JPClass, not JPInterfaceType: JPClass::findJavaConversionImpl's
+// chain includes pythonConversion (the reverse bridge's structural probe),
+// which JPInterfaceType's chain does not. A functional interface reached
+// only through JPInterfaceType would lose that fallback entirely -- a plain
+// python function/lambda would only ever be tried against the arg-count-based
+// JPConversionFunctional below, never against the bridge's own tagged
+// python.lang.Py* interfaces (PyCallable, PySubscript, PyIter, ...), which
+// are *also* classified as functional (single abstract method, e.g.
+// PyObject.builtin()) and therefore constructed as JPFunctional too.
 class JPFunctional : public JPClass
 {
 public:
@@ -27,15 +36,15 @@ public:
 			jint modifiers);
 	~JPFunctional() override;
 
-	JPMatch::Type findJavaConversion(JPMatch &match) override;
-	void getConversionInfo(JPConversionInfo &info) override;
+	JPMatch::Type findJavaConversionImpl(JPMatch &match) override;
+	void getConversionInfo(JPJavaFrame& frame, JPConversionInfo &info) override;
 
-	string getMethod()
+	PyObject* getMethod()
 	{
 		return m_Method;
 	}
 protected:
-	string  m_Method;
+	PyObject*  m_Method;
 } ;
 
 #endif /* JP_FUNCTIONAL_H */

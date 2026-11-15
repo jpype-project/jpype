@@ -1,0 +1,18 @@
+kind: class
+module: io
+class: IOBase
+interface: python.io.PyIOBase
+---
+def _io_seek(x, offset, whence=0):
+    return x.seek(offset, whence)
+
+METHODS = {
+    ".close": lambda x: x.close(),
+    ".closed": lambda x: x.closed,
+    ".flush": lambda x: x.flush(),
+    ".readable": lambda x: x.readable(),
+    ".writable": lambda x: x.writable(),
+    ".seekable": lambda x: x.seekable(),
+    ".seek": _io_seek,
+    ".tell": lambda x: x.tell(),
+}

@@ -1,0 +1,8 @@
+kind: class
+module: _io
+class: BytesIO
+interface: python.io.PyBytesIO
+---
+METHODS = {
+    ".getvalue": lambda x: x.getvalue(),
+}

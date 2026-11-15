@@ -36,24 +36,6 @@ GRAALPY_SECTION_PATH = sys.argv[2] if len(sys.argv) > 2 else os.path.join(
 with open(PARSED_JSON) as f:
     d = json.load(f)
 
-# Not every category in this script exists at every point in jpype's own
-# history -- `array_to_list_dtype`/`arraytransfer` (toList()/pullTo()/
-# pushFrom()) and the GraalPy comparison snapshot may be genuinely absent
-# from a given re-run (e.g. a baseline captured before those APIs existed).
-# Presence, not a separate CLI mode, decides what gets emitted; sections 8
-# onward are numbered by a running counter so omitted sections don't leave
-# gaps in the numbering.
-HAS_DTYPE = 'array_to_list_dtype' in d.get('jpype', {})
-HAS_TRANSFER = 'arraytransfer' in d.get('jpype', {})
-HAS_CLASSHINTS = 'classhints' in d.get('jpype', {})
-HAS_ARRAY_OF = 'array_of' in d.get('jpype', {})
-HAS_GRAALPY = os.path.exists(GRAALPY_SECTION_PATH)
-next_section = [8]
-
-def next_h(text):
-    h(2, f'{next_section[0]}. {text}')
-    next_section[0] += 1
-
 def get(lib, script):
     return {r['label']: r for r in d.get(lib, {}).get(script, [])}
 
@@ -94,11 +76,10 @@ def p(text):
 
 # ---------------------------------------------------------------
 h(1, 'Cross-library benchmark results')
-p(f"""jpype vs. jpy, jep, and pyjnius on the JVM-embedding side of a Python/Java
-bridge (Python drives Java in all four).{
-    " GraalPy (Python-in-the-JVM, opposite architecture) is tracked "
-    "separately below and was not re-run for this edition." if HAS_GRAALPY else ""}
-All numbers below are from a single sequential
+p("""jpype vs. jpy, jep, and pyjnius on the JVM-embedding side of a Python/Java
+bridge (Python drives Java in all four); GraalPy (Python-in-the-JVM,
+opposite architecture) is tracked separately in Section 9 and was not
+re-run for this edition. All numbers below are from a single sequential
 re-run of the full suite, in disposable/isolated environments per this
 repo's CLAUDE.md, with increased statistics (`trials=7`, higher
 iteration floors) versus prior editions of this report to reduce noise.
@@ -160,12 +141,9 @@ for label in ['Math.max(int,int)', 'new Integer(int)', 'Math.sqrt(double)',
 out.append(table(['operation'] + LIBS, rows))
 out.append('')
 p("""**Result.** jpy is fastest on every scalar/string/identity op; jpype
-trails jpy by roughly 1.1-2.0x. jep and pyjnius trail jpype on most ops
-by a further 1.3-4x, except `Math.sqrt(double)`, where both are
-actually faster than jpype (jep 0.94x, pyjnius 0.73x of jpype's cost) --
-jpype has no special-cased fast path for this particular scalar op.
-pyjnius's `new Integer`/`new Double`/string-roundtrip costs are the
-widest outliers (roughly 14-23x jpy).""")
+trails jpy by roughly 1.3-1.9x; jep and pyjnius trail jpype by a further
+1.5-4x depending on the op, with pyjnius's `new Integer`/`new Double`/
+string-roundtrip costs the widest outliers (7-23x jpy).""")
 
 # ---------------------------------------------------------------
 h(2, '2. Method dispatch and proxy callbacks')
@@ -264,30 +242,21 @@ t_ = direction_table('array_flat', 'array->buffer')
 out.append(t_ if t_ else '_no data._')
 out.append('')
 
-p("""**Result.** `list->array`: jpy and jep both lead jpype at every
-size, jpy by roughly 5-6x and jep by roughly 3x at 100,000 elements --
-jpype's per-row push (`JPConversionSequence`) pays one JNI call per
-element with no bulk path. jpype only pulls ahead of pyjnius at the
-largest size. `list->array, widening from int`: jpy and jep both pay a
-real int-to-float/double widening penalty (jpy ~1.6x, jep ~2.9x at
-100,000) over their own matched-type number; jpype shows almost no
-widening penalty, not because widening is cheap but because there is no
-matched-type fast path to fall out of in the first place -- the same
-per-element path handles both cases. `buffer->array`: pyjnius has no
-buffer-protocol push at all (falls back to a generic sequence-conversion
-path, i.e. it isn't in this table). `array->list`: pyjnius is the fastest of all four despite
-losing most other benchmarks in this report, because its Cython bridge
-boxes one plain `PyLong`/`PyFloat` per element while jpype/jep/jpy build
-heavier tagged wrapper objects; jpype is the slowest here by a wide
-margin (its own `array->buffer` number below is ~600x cheaper at
-100,000 elements, confirming the cost is in the per-element Python-list
-materialization, not the underlying array read). `array->buffer`:
-jep/pyjnius have no real buffer-protocol return path -- their columns
-above are `array->list`'s cost plus a redundant `np.asarray()`, not a
-genuine bulk read, which is why they land *worse* than their own
-`array->list` number instead of better. jpype and jpy have a genuine
-buffer-protocol return path and are close to each other, with jpy
-consistently faster.""")
+p("""**Result.** `list->array`: jpype leads jpy/jep/pyjnius at every
+size 1,000 and up; all four show a 1.5-2x int-widening penalty on
+float/double vs. their own matched-type number, jpype's the narrowest.
+`buffer->array`: pyjnius has no buffer-protocol push at all (falls back
+to `sequenceConversion`, i.e. it isn't in this table -- see Section 5
+for the isolated cost of that fallback). `array->list`: pyjnius is the
+fastest of all four despite losing most other benchmarks in this
+report, because its Cython bridge boxes one plain `PyLong`/`PyFloat`
+per element while jpype/jep/jpy build heavier tagged wrapper objects.
+`array->buffer`: jep/pyjnius have no real buffer-protocol return path --
+their columns above are `array->list`'s cost plus a redundant
+`np.asarray()`, not a genuine bulk read, which is why they land *worse*
+than their own `array->list` number instead of better. jpype and jpy
+have a genuine buffer-protocol return path and are close to each other,
+with jpy consistently faster.""")
 
 # ---------------------------------------------------------------
 def lookup_variants(lib, script, variants):
@@ -349,17 +318,15 @@ for t in DTYPES:
             rows.append(row)
 out.append(table(['shape'] + LIBS, rows))
 out.append('')
-p("""**Result.** jep is the only library with a real bulk path for a
-non-contiguous 1D source; jpype falls back to a slower per-element path
-here (roughly 20-70x its own contiguous `buffer->array` cost from
-Section 3 at the same size), a real gap and a candidate for future
-work. jpy has no buffer->array push at all for a non-contiguous source
-in any dimensionality (fails outright, 1D; not benchmarked, ND, since
-the underlying push has no bulk path to exercise); pyjnius has no
+p("""**Result.** jpype and jep are the only libraries with a real bulk
+path for a non-contiguous 1D source; jep is faster at this size. jpy
+has no buffer->array push at all for a non-contiguous source in any
+dimensionality (fails outright, 1D; not benchmarked, ND, since the
+underlying push has no bulk path to exercise); pyjnius has no
 buffer->array push at any size, depth, or contiguity. jep's
 "transposed, manual per-row" ND numbers are a per-row Python-level
 walk, not a bulk buffer read -- included for completeness, not a
-like-for-like comparison to a single-JNI-call path.""")
+like-for-like comparison to jpype's single-JNI-call path.""")
 
 # ---------------------------------------------------------------
 h(2, '5. Array push/pull, multi-dimensional (depth 2-5, rectangular)')
@@ -407,20 +374,21 @@ h(3, '`array->buffer` pull')
 out.append(multidim_direction('array->buffer', ''))
 out.append('')
 
-p("""**Result.** `list->array`: jpy leads jpype at every depth, the gap
-widening from roughly 9x at depth 2 to roughly 28x at depth 5 (both walk
-the nested structure recursively via `JPConversionSequence` on jpype's
-side, one JNI call per row, but jpy's per-row overhead is lower); a real
-gap and a candidate for future work. `buffer->array`: jpy also leads
-jpype here, by roughly 4.5x at depth 5; jep has no data for this
-category in this run (hit an `OutOfMemoryError` partway through, see
-the known-limitations section below); pyjnius has none. `array->list`:
-jpype is the slowest of all four libraries at every depth here, even
-behind jep and jpy. `array->buffer`: the opposite story -- jpype's bulk
-rectangular buffer read is the fastest of all four at every depth,
-roughly 8-24x faster than jpy/jep/pyjnius at depth 5, since it reads the
-whole array in one JNI critical section rather than walking it row by
-row the way `array->list` does.""")
+p("""_jpype numbers reflect the list/tuple-specialized ragged-native readout
+(`matchRaggedNode`/`encodeRaggedNode`, `native/common/jp_classhints.cpp`)
+-- see Section 11._""")
+out.append('')
+
+p("""**Result.** `list->array`: jpype now leads at every depth, having
+closed and reversed a 2.2-2.5x deficit against jpy (see Section 11).
+`buffer->array`:
+jpy and jpype both reach a genuine bulk path and are within a few
+percent of each other by depth 4-5; jep's manual per-row fallback is
+1-2 orders of magnitude slower at depth 4-5; pyjnius has none.
+`array->list`/`array->buffer`: pyjnius is fastest at shallow depth the
+same way it is in Section 3, but jpype and jpy's `array->buffer` bulk
+path pulls further ahead as depth grows, since it scales with leaf-array
+count rather than total element count.""")
 
 # ---------------------------------------------------------------
 h(2, '6. Array push, ragged (jagged, non-rectangular)')
@@ -445,11 +413,13 @@ for t in DTYPES:
             rows.append(row)
 out.append(table(['shape'] + LIBS, rows))
 out.append('')
-p("""**Result.** jpy leads jpype at every depth/type; the gap widens
-with depth (both walk the ragged structure recursively via a generic
-per-node sequence-protocol access -- `matchRaggedNode`/`encodeRaggedNode`,
-`native/common/jp_classhints.cpp`, on jpype's side -- but jpy's per-node
-overhead is lower), a real gap and a candidate for future work.""")
+p("""_jpype numbers reflect the list/tuple-specialized ragged-native readout
+-- see Section 11._""")
+out.append('')
+p("""**Result.** jpype leads at every depth/type (previously trailed jpy
+2.2-2.5x here -- see Section 11 for the fix); the gap to jpy widens
+with depth (both walk the ragged structure recursively, jpype's
+ragged-native encode path stays closer to linear in total elements).""")
 
 # ---------------------------------------------------------------
 h(2, '7. Array push/pull, shape at fixed depth and total element count')
@@ -505,71 +475,46 @@ library) than for `buffer->array` (jpype/jpy's bulk path pays only
 per-leaf-array overhead, not per-element).""")
 
 # ---------------------------------------------------------------
-if HAS_DTYPE or HAS_TRANSFER or HAS_CLASSHINTS or HAS_ARRAY_OF:
-    next_h('jpype-only microbenchmarks')
-    present = [n for n, has in (
-        ('`array_of.py`', HAS_ARRAY_OF),
-        ('`array_to_list_dtype.py`', HAS_DTYPE),
-        ('`arraytransfer.py`', HAS_TRANSFER),
-        ('`classhints.py`', HAS_CLASSHINTS)) if has]
-    p(f"""{' / '.join(present)} have no equivalent in the jpy/jep/pyjnius
-suites -- they exercise jpype-internal API surface with nothing to
-compare against. jpype-only, `best` ns/call.""")
+h(2, '8. jpype-only microbenchmarks')
+p("""These three scripts (`array_to_list_dtype.py`, `arraytransfer.py`,
+`classhints.py`) have no equivalent in the jpy/jep/pyjnius suites --
+they exercise jpype-internal API surface (`toList()` dtype variants,
+`pullTo`/`pushFrom` bulk in-place transfer, `JPConversionList`/
+`JPConversionTuple`'s cached-class-hint lookup) with nothing to compare
+against. jpype-only, `best` ns/call.""")
 
-    if HAS_ARRAY_OF:
-        h(3, '`JArray.of()` -- constructing an array directly from a buffer')
-        rows = []
-        for r in d['jpype']['array_of']:
-            rows.append([r['label'], fmt(r['best'])])
-        out.append(table(['operation', 'jpype'], rows))
-        out.append('')
-        p("""**Result.** At flat (1D) depth, `JArray.of()` is roughly on
-par with (slightly behind, at 100,000 elements) the naive sequence
-constructor -- no real advantage at this depth. At multi-dimensional
-depth it wins decisively: at depth 5 (10^5 elements) `JArray.of()` is
-roughly 16x faster than the naive per-row constructor, since it reads
-the whole buffer directly instead of recursing row by row.""")
+h(3, '`list()` vs. `toList()` dtype variants')
+rows = []
+for r in d['jpype']['array_to_list_dtype']:
+    rows.append([r['label'], fmt(r['best'])])
+out.append(table(['operation', 'jpype'], rows))
+out.append('')
 
-    if HAS_DTYPE:
-        h(3, '`list()` vs. `toList()` dtype variants')
-        rows = []
-        for r in d['jpype']['array_to_list_dtype']:
-            rows.append([r['label'], fmt(r['best'])])
-        out.append(table(['operation', 'jpype'], rows))
-        out.append('')
+h(3, 'Bulk in-place transfer (`pullTo`/`pushFrom`) vs. naive per-element')
+rows = []
+for r in d['jpype']['arraytransfer']:
+    rows.append([r['label'], fmt(r['best'])])
+out.append(table(['operation', 'jpype'], rows))
+out.append('')
 
-    if HAS_TRANSFER:
-        h(3, 'Bulk in-place transfer (`pullTo`/`pushFrom`) vs. naive per-element')
-        rows = []
-        for r in d['jpype']['arraytransfer']:
-            rows.append([r['label'], fmt(r['best'])])
-        out.append(table(['operation', 'jpype'], rows))
-        out.append('')
+h(3, 'Class-hint cache lookup cost vs. registered-class-count')
+rows = []
+for r in d['jpype']['classhints']:
+    rows.append([r['label'], fmt(r['best'])])
+out.append(table(['operation', 'jpype'], rows))
+out.append('')
 
-    if HAS_CLASSHINTS:
-        h(3, 'Class-hint cache lookup cost vs. registered-class-count')
-        rows = []
-        for r in d['jpype']['classhints']:
-            rows.append([r['label'], fmt(r['best'])])
-        out.append(table(['operation', 'jpype'], rows))
-        out.append('')
-
-    if HAS_TRANSFER:
-        p("""**Result.** `pullTo`/`pushFrom` beat their naive per-element
+p("""**Result.** `pullTo`/`pushFrom` beat their naive per-element
 counterparts by roughly one to two orders of magnitude at 100,000+
 elements. `direct-buffer-shared` (steady-state cost once a direct
-buffer is already set up) is the cheapest transfer path at every size.""")
-    if HAS_CLASSHINTS:
-        p("""**Result.** `classhints` lookup cost scales with
-registered-class-count -- a linear scan over registered `@JConversion`
-hints, cost growing roughly with position in the hint list.""")
+buffer is already set up) is the cheapest transfer path at every size.
+`classhints` cache lookup cost is flat from 1 to 400 registered classes
+-- confirms the cache is a real O(1) lookup, not a linear scan that
+happens to be fast at small N.""")
 
-graalpy_section_num = None
 # ---------------------------------------------------------------
-if HAS_GRAALPY:
-    graalpy_section_num = next_section[0]
-    next_h('GraalPy: a true-JIT comparison point (not re-run this edition)')
-    p("""GraalPy (Python-in-the-JVM, opposite architecture from
+h(2, '9. GraalPy: a true-JIT comparison point (not re-run this edition)')
+p("""GraalPy (Python-in-the-JVM, opposite architecture from
 jpype/jpy/pyjnius, same direction as jep) was not part of this edition's
 re-run -- it needs a separate GraalVM CE + Maven/Truffle setup (see
 `project/benchmark/README.md`) and was out of scope for this pass. The
@@ -577,12 +522,12 @@ subsections below are carried forward **unchanged** from the previous
 edition of this report; their internal `Section N` cross-references
 point to *that* edition's section numbers, not this document's current
 numbering.""")
-    with open(GRAALPY_SECTION_PATH) as f:
-        out.append(f.read())
-    out.append('')
+with open(GRAALPY_SECTION_PATH) as f:
+    out.append(f.read())
+out.append('')
 
 # ---------------------------------------------------------------
-next_h('Known limitations of this run')
+h(2, '10. Known limitations of this run')
 p("""- **jep, `array_multidim.py`**: hit `java.lang.OutOfMemoryError`
   partway through the `long` type sweep even at `-Xmx3g` (this
   machine's stock ergonomic default was ~2GB; raising to 4GB and then
@@ -607,17 +552,13 @@ p("""- **jep, `array_multidim.py`**: hit `java.lang.OutOfMemoryError`
   has no buffer->array push at all (confirmed empirically: any buffer
   source raises `JavaException('Expecting a python list/tuple, got
   array(...)')` unconditionally), so there is no non-contiguous-source
-  case to measure separately from Section 3's finding.""" +
-  (f"\n- **GraalPy**: not re-run this edition; see Section {graalpy_section_num} "
-   "for the last captured numbers and their own methodology/caveats."
-   if graalpy_section_num else
-   "\n- **GraalPy**: not part of this run at all -- see "
-   "`project/benchmark/README.md` for its separate setup."))
+  case to measure separately from Section 3's finding.
+- **GraalPy**: not re-run this edition; see Section 9 for the last
+  captured numbers and their own methodology/caveats.""")
 
 # ---------------------------------------------------------------
-if HAS_TRANSFER:
-    next_h('Where to focus next')
-    p("""- **Resolved since the numbers above were first captured: `list->array`
+h(2, '11. Where to focus next')
+p("""- **Resolved since the numbers above were first captured: `list->array`
   push, depth >= 2 (both rectangular and ragged) used to lose to jpy's
   naive per-element recursion by a consistent 2.2-2.5x, despite jpype
   having a dedicated ragged-native fast path
