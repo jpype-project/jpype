@@ -1,0 +1,6 @@
+Fixed a memory leak when Java threads call into Python.  In 1.7.0 and 1.7.1
+every callback from a Java-created thread (executors, listeners, event
+handlers) that created a Java-backed Python object leaked one
+``_jpype._JAlloc`` heap type of about 1.5 KB, so long running processes grew
+without bound.  The per-thread allocator type was removed by the object layout
+rework (#1445); a regression test now covers the callback path.
