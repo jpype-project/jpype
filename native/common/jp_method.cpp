@@ -129,7 +129,7 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, 
 		if (len == tlen)
 		{
 			// Try direct
-			size_t last = tlen - 1 - methodMatch.m_Offset;
+			size_t last = tlen - 1 + methodMatch.m_Offset;
 			methodMatch.m_Type = type->findJavaConversion(methodMatch.m_Arguments[last]);
 			JP_TRACE("Direct vargs", methodMatch.m_Type);
 		}
@@ -188,9 +188,9 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	if (match.m_IsVarIndirect)
 	{
 		JP_TRACE("Pack indirect varargs");
-		len = tlen - 1;
+		len = tlen - 1 + match.m_Offset;
 		auto* type = dynamic_cast<JPArrayClass*>( m_ParameterTypes[tlen - 1]);
-		v[tlen - 1 - match.m_Skip] = type->convertToJavaVector(frame, arg, (jsize) tlen - 1, (jsize) arg.size());
+		v[tlen - 1 - match.m_Skip + match.m_Offset] = type->convertToJavaVector(frame, arg, (jsize) (tlen - 1 + match.m_Offset), (jsize) arg.size());
 	}
 
 	JP_TRACE("Pack fixed total=", len - match.m_Offset);

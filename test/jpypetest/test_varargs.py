@@ -122,3 +122,13 @@ class VarArgsTestCase(common.JPypeTestCase):
         self.assertEqual(var.callString1("a"), 0)
         self.assertEqual(var.callString1("a", "b"), 1)
         self.assertEqual(var.callString1("a", "b", "c"), 2)
+
+    def testStaticVarArgsCalledOnInstance(self):
+        # A static varargs method called through an instance (#1527)
+        x = self.String("x")
+        self.assertEqual(self.String.format("%s|%s", "a", "b"), "a|b")
+        self.assertEqual(x.format("%s|%s", "a", "b"), "a|b")
+        self.assertEqual(x.format("%s", "a"), "a")
+        self.assertEqual(x.format("none"), "none")
+        self.assertEqual(x.join("-", "a", "b"), "a-b")
+        self.assertEqual(x.join("-", "a"), "a")
