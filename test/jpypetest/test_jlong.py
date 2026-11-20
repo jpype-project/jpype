@@ -186,8 +186,11 @@ class JLongTestCase(common.JPypeTestCase):
         class q(object):
             @jpype.JOverride
             def getAsLong(self):
-                return 4.5  # this will hit explicit conversion
-        self.assertEqual(JObject(q()).getAsLong(), 4)
+                return 4.5
+        # A proxy return value must convert implicitly, as a method argument
+        # does; narrowing a float is an explicit conversion and is refused.
+        with self.assertRaises(TypeError):
+            JObject(q()).getAsLong()
 
     def testFromLong(self):
         self.assertEqual(JLong(12345), 12345)

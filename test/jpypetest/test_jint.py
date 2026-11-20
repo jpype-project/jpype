@@ -171,8 +171,11 @@ class JIntTestCase(common.JPypeTestCase):
         class q(object):
             @jpype.JOverride
             def getAsInt(self):
-                return 4.5  # this will hit explicit conversion
-        self.assertEqual(JObject(q()).getAsInt(), 4)
+                return 4.5
+        # A proxy return value must convert implicitly, as a method argument
+        # does; narrowing a float is an explicit conversion and is refused.
+        with self.assertRaises(TypeError):
+            JObject(q()).getAsInt()
 
     def testFromLong(self):
         self.assertEqual(JInt(12345), 12345)

@@ -29,7 +29,20 @@
 #elif defined(__linux__)
 #include <sys/syscall.h>
 #include <unistd.h>
+
 #endif
+
+// A proxy return value must convert implicitly to the declared Java return
+// type; an explicit conversion (a narrowing such as float to int) is refused,
+// the same as for a method argument.
+static void requireImplicitReturn(JPMatch::Type type)
+{
+	if (type == JPMatch::_explicit)
+		JP_RAISE(PyExc_TypeError, "Return value requires an explicit conversion to the required type.");
+	if (type < JPMatch::_implicit)
+		JP_RAISE(PyExc_TypeError, "Return value is not compatible with required type.");
+}
+
 
 JPPyObject getArgs(jlongArray parameterTypePtrs,
 		jobjectArray args, PyObject* self, int addSelf)
@@ -210,11 +223,14 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 
 			// We must box here.
 			JPMatch returnMatch(&frame, returnValue.get());
+			// The return value is held to the same standard as a method
+			// argument: an implicit conversion is accepted, but an explicit
+			// one (such as narrowing 1.5 to an int) is not, as that would
+			// silently change the value.
 			if (returnClass->isPrimitive())
 			{
 				JP_TRACE("Box return");
-				if (returnClass->findJavaConversion(returnMatch) == JPMatch::_none)
-					JP_RAISE(PyExc_TypeError, "Return value is not compatible with required type.");
+				requireImplicitReturn(returnClass->findJavaConversion(returnMatch));
 				jvalue res = returnMatch.convert();
 				auto *boxed =  dynamic_cast<JPBoxedType *>( (dynamic_cast<JPPrimitiveType*>( returnClass))->getBoxedClass(frame));
 				jvalue res2;
@@ -222,11 +238,8 @@ extern "C" JNIEXPORT jobject JNICALL Java_org_jpype_proxy_JPypeProxy_hostInvoke(
 				return frame.keep(res2.l);
 			}
 
-			if (returnClass->findJavaConversion(returnMatch) == JPMatch::_none)
-			{
-				JP_TRACE("Cannot convert");
-				JP_RAISE(PyExc_TypeError, "Return value is not compatible with required type.");
-			}
+			JP_TRACE("Check return conversion");
+			requireImplicitReturn(returnClass->findJavaConversion(returnMatch));
 
 			JP_TRACE("Convert return to", returnClass->getCanonicalName());
 			jvalue res = returnMatch.convert();
