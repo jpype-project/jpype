@@ -15,6 +15,7 @@
 #   See NOTICE file for details.
 #
 import gc
+import threading
 import time
 import unittest
 import jpype
@@ -45,15 +46,26 @@ class GCReflectionTestCase(common.JPypeTestCase):
     def testForcedCollectionsAreThrottled(self):
         # Java garbage alone used to force a full Python collection for
         # nearly every Java collection, which left Python threads in the
-        # collector most of the time when the Python heap was large.
-        spent = [0.0]
-        started = [0.0]
+        # collector most of the time when the Python heap was large (#1506).
+        #
+        # Only the collections that Java forces are throttled.  They run on
+        # the reference queue thread, so time only collections on other
+        # threads than this one.  Collections that this thread's own
+        # allocations cause, and the System.gc() that the _collect callback
+        # may run when one ends, are outside the throttle and their cost
+        # depends on the machine; counting them made the test flaky (#1592).
+        main = threading.get_ident()
+        forced = []
+        started = {}
 
         def callback(phase, info):
+            tid = threading.get_ident()
+            if tid == main:
+                return
             if phase == "start":
-                started[0] = time.perf_counter()
-            else:
-                spent[0] += time.perf_counter() - started[0]
+                started[tid] = time.perf_counter()
+            elif tid in started:
+                forced.append(time.perf_counter() - started.pop(tid))
 
         heap = [[i, str(i), {i: [i]}] for i in range(200000)]
         gc.collect()
@@ -61,14 +73,25 @@ class GCReflectionTestCase(common.JPypeTestCase):
         byte = jpype.JClass("java.lang.Byte").TYPE
         gc.callbacks.append(callback)
         try:
+            # Run for at least 2 s, and on until Java has forced a couple
+            # of collections: after a slow forced collection (Windows, a
+            # busy agent, an earlier test) the throttle's cool down alone
+            # can cover 2 s.  The bound below holds for any run length.
             t0 = time.perf_counter()
-            while time.perf_counter() - t0 < 2.0:
+            while True:
                 Array.newInstance(byte, 1 << 20)
+                elapsed = time.perf_counter() - t0
+                if elapsed >= 2.0 and len(forced) >= 2 or elapsed >= 20.0:
+                    break
             wall = time.perf_counter() - t0
         finally:
             gc.callbacks.remove(callback)
         del heap
-        self.assertLess(spent[0], 0.5 * wall)
+        if not forced:
+            self.skipTest("Java forced no Python collection in %.1f s" % wall)
+        # The throttle keeps forced collections to about one part in five of
+        # the wall time; without it they take nearly all of it.
+        self.assertLess(sum(forced), 0.5 * wall)
 
 
 @subrun.TestCase
