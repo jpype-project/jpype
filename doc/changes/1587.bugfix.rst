@@ -1,0 +1,4 @@
+Fixed Java names containing an unpaired UTF-16 surrogate: a class with such a
+member name can now be wrapped (the member keeps its exact name), and a stack
+frame with such a name no longer drops itself and the frames inside it from the
+Python traceback. Fixes #1577

@@ -294,6 +294,10 @@ bool JPPyString::check(PyObject* obj)
 
 /** Create a new string from utf8 encoded string.
  * Note: java utf8 is not utf8.
+ *
+ * Java strings may hold unpaired surrogates, which arrive here as 3-byte
+ * sequences that strict UTF-8 rejects.  They are decoded with surrogatepass
+ * so the Python str keeps the exact UTF-16 content.
  */
 JPPyObject JPPyString::fromStringUTF8(const string& str)
 {
@@ -301,7 +305,7 @@ JPPyObject JPPyString::fromStringUTF8(const string& str)
 
 	// Python 3 is always unicode
 	JPPyObject bytes = JPPyObject::call(PyBytes_FromStringAndSize(str.c_str(), len));
-	return JPPyObject::call(PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "strict"));
+	return JPPyObject::call(PyUnicode_FromEncodedObject(bytes.get(), "UTF-8", "surrogatepass"));
 }
 
 string JPPyString::asStringUTF8(PyObject* pyobj)
