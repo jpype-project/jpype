@@ -1,0 +1,5 @@
+Fixed subclassing a final Java class being silently accepted: creating a
+subclass of a final class such as ``java.lang.String`` now raises
+``TypeError``.  The check never ran in builds without instrumentation
+(the ``JP_BLOCK`` macro compiled its body away) and, where it did run,
+did not stop the subclass from being created. #1535

@@ -1,0 +1,4 @@
+Fixed ``JArray.of()`` crashing on a 0-dimensional buffer (now a
+``TypeError``), and raising ``ArrayIndexOutOfBoundsException`` for a buffer
+with a zero-length axis such as ``(0, 3)`` or ``(2, 0, 3)``; it now returns
+an empty array of that shape. Part of #1526

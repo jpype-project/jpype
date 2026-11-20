@@ -88,9 +88,8 @@ def _createJProxy(cls, *intf):
     actualIntf = _prepareInterfaces(cls, intf)
 
     def new(tp, *args, **kwargs):
-        self = _jpype._JProxy.__new__(tp, None, None, actualIntf)
-        tp.__init__(self, *args, **kwargs)
-        return self
+        # type.__call__ runs __init__ on the returned instance.
+        return _jpype._JProxy.__new__(tp, None, None, actualIntf)
 
     members = {'__new__': new}
     # Return the augmented class

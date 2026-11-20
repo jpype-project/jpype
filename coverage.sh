@@ -15,6 +15,6 @@ $PYTHON -m pytest -rsx -v test/jpypetest \
 java -jar lib/org.jacoco.cli-0.8.5-nodeps.jar report build/coverage/jacoco.exec \
 	--classfiles build/classes/ \
 	--html build/coverage/java \
-	--sourcefiles native/java
+	--sourcefiles native/jpype_module/src/main/java
 mkdir build/coverage/cpp
 gcovr -r . --html-details -o build/coverage/cpp/jpype.html --exclude-unreachable-branches --exclude-throw-branches

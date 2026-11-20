@@ -1,0 +1,4 @@
+Fixed ``JPypeContext.getStackTrace`` throwing
+``ArrayIndexOutOfBoundsException`` when the enclosing exception's stack
+trace is empty (cleared or never filled in), which dropped the cause's
+Java frames from the Python traceback. #1532

@@ -556,7 +556,8 @@ public class JPypeContext
     if (trace == null || enclosing == null)
       return toFrames(trace);
     StackTraceElement[] te = enclosing.getStackTrace();
-    if (te == null)
+    // An enclosing trace can be empty if it was cleared or never filled in.
+    if (te == null || te.length == 0)
       return toFrames(trace);
     for (int i = 0; i < trace.length; ++i)
     {

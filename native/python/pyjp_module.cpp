@@ -986,6 +986,14 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype, P
 	// the type.
 	auto *pcls = dynamic_cast<JPPrimitiveType *>( cls);
 
+	// A scalar buffer has no axis to index; the conversion below takes the
+	// last dimension as the row length.
+	if (view.ndim < 1)
+	{
+		PyErr_SetString(PyExc_TypeError, "0-dimensional buffers cannot be converted to a Java array");
+		return nullptr;
+	}
+
 	// Convert the shape
 	Py_ssize_t subs = 1;
 	Py_ssize_t base = 1;

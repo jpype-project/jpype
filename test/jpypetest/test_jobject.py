@@ -205,6 +205,14 @@ class JClassTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             self.fixture.static_object_field = None
 
+    def testHashCodeMinusOne(self):
+        # -1 is CPython's hash error sentinel; a Java hashCode() of -1 must
+        # still be hashable.
+        o = JClass("java.util.Optional").of(java.lang.Integer(-1))
+        self.assertEqual(o.hashCode(), -1)
+        self.assertEqual(hash(o), -2)
+        self.assertEqual({o: 1}[o], 1)
+
     def testHashNone(self):
         self.assertEqual(hash(JObject(None)), hash(None))
 
