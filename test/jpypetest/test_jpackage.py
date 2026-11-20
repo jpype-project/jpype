@@ -80,6 +80,7 @@ class JPackageLargeClassTestCase(common.JPypeTestCase):
     """ Public classes with a very large constant pool or a very long string
     constant must still be listed (their sizes overflow a signed short). """
 
+    @common.skipOnAndroid("javax.tools (the system Java compiler) not available on Android")
     def testLargeClassesAreListed(self):
         import pathlib
         import shutil
