@@ -16,6 +16,7 @@
 #
 # *****************************************************************************
 import _jpype
+from functools import update_wrapper
 
 __all__ = ["JProxy", "JImplements"]
 
@@ -74,7 +75,7 @@ def _createJProxyDeferred(cls, *intf):
 
     members = {'__new__': new}
     # Return the augmented class
-    return type("proxy.%s" % cls.__name__, (cls, _jpype._JProxy), members)
+    return type(cls.__name__, (cls, _jpype._JProxy), members)
 
 
 def _createJProxy(cls, *intf):
@@ -93,7 +94,7 @@ def _createJProxy(cls, *intf):
 
     members = {'__new__': new}
     # Return the augmented class
-    return type("proxy.%s" % cls.__name__, (cls, _jpype._JProxy), members)
+    return type(cls.__name__, (cls, _jpype._JProxy), members)
 
 
 def JImplements(*interfaces, deferred=False, **kwargs):
@@ -135,12 +136,21 @@ def JImplements(*interfaces, deferred=False, **kwargs):
                pass
 
     """
-    if deferred:
-        def JProxyCreator(cls):
-            return _createJProxyDeferred(cls, *interfaces, **kwargs)
-    else:
-        def JProxyCreator(cls):
-            return _createJProxy(cls, *interfaces, **kwargs)
+
+    def JProxyCreator(cls):
+        if deferred:
+            wrapper_cls = _createJProxyDeferred(cls, *interfaces, **kwargs)
+        else:
+            wrapper_cls = _createJProxy(cls, *interfaces, **kwargs)
+        # Ensure documentation and metadata is preserved by copying special attributes
+        # from the original class to the wrapper class.
+        update_wrapper(
+            wrapper_cls,
+            cls,
+            updated=(),
+        )
+        return wrapper_cls
+
     return JProxyCreator
 
 
