@@ -282,6 +282,9 @@ static PyObject *PyJPPackage_dir(PyObject *self)
 static PyObject *PyJPPackage_cast(PyObject *self, PyObject *other)
 {
 	JP_PY_TRY("PyJPPackage_cast");
+	// Reflected "obj @ package" reaches here with the left operand as self
+	if (!PyObject_TypeCheck(self, PyJPPackage_Type))
+		Py_RETURN_NOTIMPLEMENTED;
 	PyObject *dict = PyModule_GetDict(self);
 	PyObject* matmul = PyDict_GetItemString(dict, "__matmul__");
 	if (matmul == nullptr)
