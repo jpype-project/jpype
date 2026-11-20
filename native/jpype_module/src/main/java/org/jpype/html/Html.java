@@ -113,95 +113,106 @@ public class Html
     }
   }
 
+  /**
+   * Decode the HTML entities in a string.
+   *
+   * Named entities (<code>&amp;lt;</code>) and decimal or hexadecimal numeric
+   * references (<code>&amp;#60;</code>, <code>&amp;#x3c;</code>) are replaced.
+   * Anything that is not a well formed, known entity, such as a bare
+   * ampersand, is left as written. This is used on documentation text, so it
+   * must never throw.
+   *
+   * @param s is the text to decode.
+   * @return the decoded text.
+   */
   public static String decode(String s)
   {
-    if (!s.contains("&"))
+    if (s.indexOf('&') < 0)
       return s;
 
-    int dead = 0;
-    byte[] b = s.getBytes(StandardCharsets.UTF_8);
-    for (int i = 0; i < b.length; ++i)
+    int n = s.length();
+    StringBuilder sb = new StringBuilder(n);
+    int i = 0;
+    while (i < n)
     {
-      if (b[i] != '&')
+      char ch = s.charAt(i);
+      if (ch != '&')
+      {
+        sb.append(ch);
+        ++i;
         continue;
-
-      int i1 = i;
-      int i2 = i + 1;
-      if (i2 == b.length)
-        break;
-      if (b[i2] == '#')
-      {
-        // Try to be robust when there is no ;
-        for (i = i2 + 1; i < b.length; ++i)
-        {
-          if (!Character.isDigit(b[i]))
-            break;
-        }
-      } else
-      {
-        for (i = i2; i < b.length; ++i)
-        {
-          if (b[i] == ';')
-            break;
-        }
       }
-      int i3 = i;
-      int c = 0;
-      if (b[i2] == '#')
+      int end = decodeEntity(s, i, sb);
+      if (end < 0)
       {
-        i2++;
-        try
-        {
-          c = Integer.parseInt(new String(b, i2, i3 - i2, StandardCharsets.UTF_8));
-        } catch (NumberFormatException ex)
-        {
-
-        }
+        sb.append('&');
+        ++i;
       } else
-      {
-        String e = new String(b, i2, i3 - i2, StandardCharsets.UTF_8);
-        Integer c2 = ENTITIES.get(e);
-        if (c2 == null)
-          throw new RuntimeException("Bad entity " + e);
-        c = c2;
-      }
-
-      // Substitute
-      if (c < 128)
-      {
-        b[i1++] = (byte) c;
-      } else if (c < 0x0800)
-      {
-        b[i1++] = (byte) (0xc0 + ((c >> 6) & 0x1f));
-        // codeql[java/constant-comparison]
-        if (i1 < b.length)
-          // codeql[java/index-out-of-bounds]
-          b[i1++] = (byte) (0x80 + (c & 0x3f));
-      } else
-      {
-        b[i1++] = (byte) (0xe0 + ((c >> 12) & 0x0f));
-        // codeql[java/constant-comparison]
-        if (i1 < b.length)
-          // codeql[java/index-out-of-bounds]
-          b[i1++] = (byte) (0x80 + ((c >> 6) & 0x3f));
-        if (i1 < b.length)
-          b[i1++] = (byte) (0x80 + (c & 0x3f));
-      }
-      if (i3 < b.length && b[i3] == ';')
-        i3++;
-      dead += i3 - i1;
-      for (; i1 < i3; ++i1)
-        b[i1] = 0;
-      i = i3;
+        i = end;
     }
-    int j = 0;
-    byte[] b2 = new byte[b.length - dead];
-    for (int i = 0; i < b.length; ++i)
+    return sb.toString();
+  }
+
+  /**
+   * Decode the entity starting at the ampersand at <code>start</code>.
+   *
+   * @return the index just past the entity, or -1 if it is not a valid one
+   * (nothing is appended in that case).
+   */
+  private static int decodeEntity(String s, int start, StringBuilder sb)
+  {
+    int n = s.length();
+    int j = start + 1;
+    if (j >= n)
+      return -1;
+
+    if (s.charAt(j) == '#')
     {
-      if (b[i] != 0)
-        b2[j++] = b[i];
+      ++j;
+      int radix = 10;
+      if (j < n && (s.charAt(j) == 'x' || s.charAt(j) == 'X'))
+      {
+        radix = 16;
+        ++j;
+      }
+      int digits = j;
+      long value = 0;
+      while (j < n && Character.digit(s.charAt(j), radix) >= 0)
+      {
+        // Saturate so an absurdly long reference cannot overflow.
+        if (value <= 0x10FFFF)
+          value = value * radix + Character.digit(s.charAt(j), radix);
+        ++j;
+      }
+      if (j == digits)
+        return -1;
+      // Be robust when the closing semicolon is missing.
+      if (j < n && s.charAt(j) == ';')
+        ++j;
+      // NUL, surrogates and out of range values cannot be represented.
+      if (value == 0 || value > 0x10FFFF
+              || (value >= 0xD800 && value <= 0xDFFF))
+        value = 0xFFFD;
+      sb.appendCodePoint((int) value);
+      return j;
     }
-    return new String(b2, StandardCharsets.UTF_8);
+
+    int name = j;
+    while (j < n && isEntityChar(s.charAt(j)))
+      ++j;
+    if (j == name || j >= n || s.charAt(j) != ';')
+      return -1;
+    Integer c = ENTITIES.get(s.substring(name, j));
+    if (c == null)
+      return -1;
+    sb.appendCodePoint(c);
+    return j + 1;
+  }
+
+  private static boolean isEntityChar(char c)
+  {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+            || (c >= '0' && c <= '9');
   }
 //</editor-fold>
 }
