@@ -97,6 +97,23 @@ class ProxyTestCase(common.JPypeTestCase):
         al.add(runner)
         self.assertIs(al.get(0), runner)
 
+    def testJImplementsPreservesMetadata(self):
+        @JImplements(java.lang.Runnable)
+        class MyRun(object):
+            """My documented runnable."""
+            @JOverride
+            def run(self):
+                """Run docs."""
+                pass
+
+        self.assertEqual(MyRun.__doc__, "My documented runnable.")
+        self.assertEqual(MyRun.__name__, "MyRun")
+        self.assertEqual(MyRun.__qualname__.split(".")[-1], "MyRun")
+        self.assertEqual(MyRun.__module__, __name__)
+        self.assertEqual(MyRun.run.__name__, "run")
+        self.assertEqual(MyRun.run.__doc__, "Run docs.")
+        self.assertEqual(MyRun.run.__qualname__.split(".")[-1], "run")
+
     def testProxyLeak(self):
 
         @JImplements(java.lang.Runnable)
@@ -765,4 +782,19 @@ class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):
 
         startJVM()
         assert isinstance(MyImpl(), MyImpl)
-    
+
+    def testDeferredPreservesMetadata(self):
+        @JImplements("java.lang.Runnable", deferred=True)
+        class MyImpl(object):
+            """My deferred runnable."""
+            @JOverride
+            def run(self):
+                """Run docs."""
+                pass
+
+        self.assertEqual(MyImpl.__doc__, "My deferred runnable.")
+        self.assertEqual(MyImpl.__name__, "MyImpl")
+        self.assertEqual(MyImpl.__module__, __name__)
+        self.assertEqual(MyImpl.run.__name__, "run")
+        self.assertEqual(MyImpl.run.__doc__, "Run docs.")
+        self.assertEqual(MyImpl.run.__qualname__.split(".")[-1], "run")

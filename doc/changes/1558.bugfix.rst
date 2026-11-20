@@ -1,0 +1,5 @@
+Fixed a Java class genuinely named like a mangled Python keyword (such
+as ``pass_``) being listed by ``dir()`` but impossible to reach through
+the package or ``from pkg import pass_``.  The lookup stripped the
+underscore unconditionally; it now tries the name as written as well.
+If both ``pass`` and ``pass_`` exist, ``pass_`` still means ``pass``. #1533
