@@ -227,6 +227,56 @@ class JListTestCase(common.JPypeTestCase):
         lst += 'D'
         self.assertElementsEqual(obj, lst)
 
+    def testIAddMultiple(self):
+        obj = jpype.JClass('java.util.ArrayList')(['a'])
+        obj += ['x', 'y']
+        obj += 'zw'
+        self.assertEqual(list(obj), ['a', 'x', 'y', 'z', 'w'])
+
+    def testRMul(self):
+        obj = jpype.JClass('java.util.ArrayList')(['a', 'b'])
+        self.assertEqual(list(3 * obj), ['a', 'b'] * 3)
+        self.assertEqual(list(obj * 2), ['a', 'b'] * 2)
+
+    def testIndexMissing(self):
+        obj = jpype.JClass('java.util.ArrayList')(['a', 'b', 'c'])
+        self.assertEqual(obj.index('b'), 1)
+        with self.assertRaises(ValueError):
+            obj.index('zzz')
+
+    def testSliceClamping(self):
+        cls = jpype.JClass('java.util.ArrayList')
+        lst = ['a', 'b', 'c']
+        for sl in (slice(1, 100), slice(-100, None), slice(2, 1),
+                   slice(None, None), slice(-100, 100), slice(5, 7),
+                   slice(-1, None), slice(None, -1)):
+            self.assertEqual(list(cls(lst)[sl]), lst[sl], sl)
+
+    def testSliceAssignClamping(self):
+        cls = jpype.JClass('java.util.ArrayList')
+        for sl in (slice(1, 100), slice(-100, 1), slice(2, 1), slice(100, None)):
+            lst = ['a', 'b', 'c']
+            obj = cls(lst)
+            lst[sl] = ['Z']
+            obj[sl] = ['Z']
+            self.assertEqual(list(obj), lst, sl)
+
+    def testSliceDeleteClamping(self):
+        cls = jpype.JClass('java.util.ArrayList')
+        for sl in (slice(1, 100), slice(-100, 1), slice(2, 1)):
+            lst = ['a', 'b', 'c']
+            obj = cls(lst)
+            del lst[sl]
+            del obj[sl]
+            self.assertEqual(list(obj), lst, sl)
+
+    def testSliceStep(self):
+        obj = jpype.JClass('java.util.ArrayList')(['a', 'b', 'c'])
+        with self.assertRaises(ValueError):
+            obj[::0]
+        with self.assertRaises(TypeError):
+            obj[::2]
+
     def testAdd(self):
         lst = ['A', 'B', 'C']
         cls = jpype.JClass('java.util.ArrayList')
