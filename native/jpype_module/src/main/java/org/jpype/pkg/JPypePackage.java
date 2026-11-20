@@ -79,7 +79,18 @@ public class JPypePackage
   {
     // We can't use the url contents as the contents may be incomplete due
     // to bugs in the JVM classloaders.  Instead we will have to probe.
-    String basename = pkg + "." + JPypeKeywords.unwrap(name);
+    // A Python keyword is shown with a trailing underscore (pass -> pass_),
+    // so try the unmangled name first.  The name as written is also tried
+    // because a class may genuinely be called pass_.
+    String unwrapped = JPypeKeywords.unwrap(name);
+    Object found = probe(pkg + "." + unwrapped);
+    if (found == null && !unwrapped.equals(name))
+      found = probe(pkg + "." + name);
+    return found;
+  }
+
+  private static Object probe(String basename)
+  {
     ClassLoader cl = JPypeContext.getInstance().getClassLoader();
     try
     {
@@ -90,7 +101,7 @@ public class JPypePackage
       }
 
       // Else probe for a class.
-      Class<?> cls = Class.forName(basename, false, JPypeContext.getInstance().getClassLoader());
+      Class<?> cls = Class.forName(basename, false, cl);
       if (Modifier.isPublic(cls.getModifiers()))
         return Class.forName(basename, true, cl);
     } catch (ClassNotFoundException ex)
