@@ -32,6 +32,8 @@ struct PyJPMonitor
 static int PyJPMonitor_init(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_init");
+	// A repeated __init__ must not leak (or lose) the monitor it replaces.
+	delete self->m_Monitor;
 	self->m_Monitor = nullptr;
 	JPContext *context = PyJPModule_getContext();
 	JPJavaFrame frame = JPJavaFrame::outer();
@@ -91,6 +93,11 @@ static PyObject *PyJPMonitor_enter(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_enter");
 	JPJavaFrame frame = JPJavaFrame::outer();
+	if (self->m_Monitor == nullptr)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "monitor is not initialized");
+		return nullptr;
+	}
 	self->m_Monitor->enter();
 	Py_RETURN_NONE;
 	JP_PY_CATCH(nullptr);
@@ -100,6 +107,11 @@ static PyObject *PyJPMonitor_exit(PyJPMonitor *self, PyObject *args)
 {
 	JP_PY_TRY("PyJPMonitor_exit");
 	JPJavaFrame frame = JPJavaFrame::outer();
+	if (self->m_Monitor == nullptr)
+	{
+		PyErr_SetString(PyExc_RuntimeError, "monitor is not initialized");
+		return nullptr;
+	}
 	self->m_Monitor->exit();
 	Py_RETURN_NONE;
 	JP_PY_CATCH(nullptr);

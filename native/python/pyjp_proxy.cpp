@@ -132,9 +132,11 @@ void PyJPProxy_dealloc(PyJPProxy* self)
 
 static PyObject *PyJPProxy_class(PyJPProxy *self, void *context)
 {
+	JP_PY_TRY("PyJPProxy_class");
 	JPJavaFrame frame = JPJavaFrame::outer();
 	JPClass* cls = self->m_Proxy->getInterfaces()[0];
 	return PyJPClass_create(frame, cls).keep();
+	JP_PY_CATCH(nullptr);
 }
 
 static PyObject *PyJPProxy_inst(PyJPProxy *self, void *context)
