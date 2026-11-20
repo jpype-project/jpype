@@ -71,6 +71,23 @@ class ConnectTestCase(common.JPypeTestCase):
         self.assertEqual(cx.converters, m)
 
 
+    def testConnectKwargs(self):
+        url = "jdbc:h2:mem:kwtest;DB_CLOSE_DELAY=-1"
+        # The first connection creates the database with these credentials.
+        keep = dbapi2.connect(url, driver_args={"user": "sa", "password": "secret"})
+        try:
+            with dbapi2.connect(url, user="sa", password="secret") as cx:
+                self.assertIsInstance(cx, dbapi2.Connection)
+            with self.assertRaises(dbapi2.Error):
+                dbapi2.connect(url, user="sa", password="wrong")
+        finally:
+            keep.close()
+
+    def testConnectBadDriverArgs(self):
+        with self.assertRaises(dbapi2.InterfaceError):
+            dbapi2.connect(db_name, driver_args=[], user="sa")
+
+
 class ConnectionTestCase(common.JPypeTestCase):
     def setUp(self):
         common.JPypeTestCase.setUp(self)
@@ -684,6 +701,42 @@ class CursorTestCase(common.JPypeTestCase):
             if nxt:
                 self.assertEqual(cu.fetchone(), booze)
 
+    def test_nextsetFresh(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            with self.assertRaises(dbapi2.ProgrammingError):
+                cu.nextset()
+
+    def test_lastrowidFresh(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            with self.assertRaises(dbapi2.ProgrammingError):
+                cu.lastrowid
+
+    def test_integrityError(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table uniq (id int primary key)")
+            cu.execute("insert into uniq values (1)")
+            with self.assertRaises(dbapi2.IntegrityError):
+                cu.execute("insert into uniq values (1)")
+            with self.assertRaises(dbapi2.IntegrityError):
+                cu.executemany("insert into uniq values (?)", [(2,), (1,)])
+
+    def test_executeWrongParameterCount(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table pc (id int)")
+            # Must be a DB-API error, not a raw java.sql.SQLException
+            with self.assertRaises(dbapi2.DatabaseError):
+                cu.execute("select * from pc where id = ?", ())
+
+    def test_fetchTypesAreNotSticky(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table ty (id int)")
+            cu.executemany("insert into ty values (?)", [(i,) for i in range(4)])
+            cu.execute("select id from ty")
+            self.assertEqual(cu.fetchone(types=[dbapi2.STRING]), ["0"])
+            self.assertEqual(cu.fetchone(), [1])
+            self.assertEqual(cu.fetchmany(1, types=[dbapi2.STRING]), [["2"]])
+            self.assertEqual(cu.fetchall(), [[3]])
+
     def test_lastrowid(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
             cu.execute("create table booze(id identity auto_increment not null, name varchar(255), PRIMARY KEY (id))")
@@ -881,6 +934,14 @@ class ConverterTestCase(common.JPypeTestCase):
             cu.execute("select name from test")
             with self.assertRaises(dbapi2.ProgrammingError):
                 cu.fetchone(converters=[str, str])
+
+    def testConvertersPerCallByType(self):
+        with dbapi2.connect(db_name) as cx, cx.cursor() as cu:
+            cu.execute("create table test(name varchar(20))")
+            cu.executemany("insert into test(name) values(?)", [['a'], ['b']])
+            cu.execute("select name from test")
+            rows = cu.fetchall(converters={java.lang.String: lambda v: "CONVERTED"})
+            self.assertEqual(rows, [["CONVERTED"], ["CONVERTED"]])
 
     def testConvertersNone(self):
         with dbapi2.connect(db_name) as cx, cx.cursor() as cu:

@@ -143,6 +143,22 @@ class CursorSetParamsTestCase(common.JPypeTestCase):
         cur._statement.getParameterMetaData.assert_called_once()
 
 
+class CursorFetchSizeTestCase(common.JPypeTestCase):
+
+    def test_fetchmany_restores_user_fetch_size(self):
+        cx = mock.MagicMock(spec=dbapi2.Connection)
+        cx._jcx = mock.MagicMock()
+        cx._jcx.isClosed.return_value = False
+        cur = dbapi2.Cursor(cx)
+        rs = mock.MagicMock()
+        rs.getFetchSize.return_value = 7
+        rs.next.return_value = False
+        cur._resultSet = rs
+        cur.fetchmany(2)
+        self.assertEqual(rs.setFetchSize.call_args_list,
+                         [mock.call(2), mock.call(7)])
+
+
 class CursorCallprocTestCase(common.JPypeTestCase):
 
     def _cursor(self):
