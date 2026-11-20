@@ -1,0 +1,1 @@
+Converting a buffer to a multidimensional Java array (for example ``JArray.of`` with a NumPy array) no longer leaves the JVM unable to run a garbage collection on Android, which deadlocked the calling thread, and no longer leaks memory on JVMs that copy primitive arrays.

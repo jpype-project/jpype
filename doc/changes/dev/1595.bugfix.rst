@@ -1,0 +1,1 @@
+``testForcedCollectionsAreThrottled`` no longer fails at random on slow or busy agents: it now times only the Python collections that Java forces, which are the ones the throttle limits, instead of every collection during the test. #1592
