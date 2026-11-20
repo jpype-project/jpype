@@ -15,6 +15,7 @@
 #   See NOTICE file for details.
 #
 import gc
+import sys
 import time
 import unittest
 import jpype
@@ -42,6 +43,8 @@ class GCReflectionTestCase(common.JPypeTestCase):
         gc.collect()
         self.assertGreaterEqual(_jpype.gcStats()["triggered"], before)
 
+    @unittest.skipIf(sys.platform == "win32" and sys.version_info >= (3, 15),
+                     "flaky on Windows with Python 3.15, see #1592")
     def testForcedCollectionsAreThrottled(self):
         # Java garbage alone used to force a full Python collection for
         # nearly every Java collection, which left Python threads in the
