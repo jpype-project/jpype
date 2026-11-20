@@ -1,0 +1,1 @@
+The release pipeline can build Windows and macOS wheels again: ``wheels.yml`` called ``uv pip wheel``, which uv does not have, and ``release.yml`` did not set ``UV_SYSTEM_PYTHON``, so ``uv pip install`` found no environment to install into.
