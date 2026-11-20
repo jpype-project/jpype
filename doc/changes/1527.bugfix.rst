@@ -1,0 +1,5 @@
+Fixed a static varargs method called through an instance (for example
+``JString("x").format("%s|%s", "a", "b")``) packing its arguments into the
+wrong slots, and crashing the interpreter when the method's only parameter
+is the varargs array and it got exactly one argument (for example
+``stream.of(x)``).
