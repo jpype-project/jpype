@@ -15,7 +15,7 @@
 #   See NOTICE file for details.
 #
 import gc
-import sys
+import threading
 import time
 import unittest
 import jpype
@@ -43,20 +43,29 @@ class GCReflectionTestCase(common.JPypeTestCase):
         gc.collect()
         self.assertGreaterEqual(_jpype.gcStats()["triggered"], before)
 
-    @unittest.skipIf(sys.platform == "win32" and sys.version_info >= (3, 15),
-                     "flaky on Windows with Python 3.15, see #1592")
     def testForcedCollectionsAreThrottled(self):
         # Java garbage alone used to force a full Python collection for
         # nearly every Java collection, which left Python threads in the
-        # collector most of the time when the Python heap was large.
-        spent = [0.0]
-        started = [0.0]
+        # collector most of the time when the Python heap was large (#1506).
+        #
+        # Only the collections that Java forces are throttled.  They run on
+        # the reference queue thread, so time only collections on other
+        # threads than this one.  Collections that this thread's own
+        # allocations cause, and the System.gc() that the _collect callback
+        # may run when one ends, are outside the throttle and their cost
+        # depends on the machine; counting them made the test flaky (#1592).
+        main = threading.get_ident()
+        forced = []
+        started = {}
 
         def callback(phase, info):
+            tid = threading.get_ident()
+            if tid == main:
+                return
             if phase == "start":
-                started[0] = time.perf_counter()
-            else:
-                spent[0] += time.perf_counter() - started[0]
+                started[tid] = time.perf_counter()
+            elif tid in started:
+                forced.append(time.perf_counter() - started.pop(tid))
 
         heap = [[i, str(i), {i: [i]}] for i in range(200000)]
         gc.collect()
@@ -71,7 +80,12 @@ class GCReflectionTestCase(common.JPypeTestCase):
         finally:
             gc.callbacks.remove(callback)
         del heap
-        self.assertLess(spent[0], 0.5 * wall)
+        # The loop must actually have made Java force collections, or the
+        # test checks nothing.
+        self.assertGreater(len(forced), 0)
+        # The throttle keeps forced collections to about one part in five of
+        # the wall time; without it they take nearly all of it.
+        self.assertLess(sum(forced), 0.5 * wall)
 
 
 @subrun.TestCase
