@@ -1,4 +1,4 @@
-Fixed Javadoc extraction (``help()``/``__doc__`` on Java classes) being
+Fixed Javadoc extraction (:obj:`help() <help>`/``__doc__`` on Java classes) being
 silently broken on JDK 17+: an unhandled ``<wbr>`` tag (used by JDK 21+'s
 javadoc output to hint line-wraps in long signatures) crashed extraction
 outright, and a ``https:`` typo in the external-link check caused every

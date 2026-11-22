@@ -1,4 +1,4 @@
-Fixed ``@JImplements`` proxies throwing ``UndeclaredThrowableException``
+Fixed :obj:`@JImplements <jpype.JImplements>` proxies throwing ``UndeclaredThrowableException``
 when falling back to an unoverridden Java ``default`` interface method
 that takes any arguments (e.g. a default method with a
 ``Collection<T>`` parameter). ``JPypeProxy.invoke()`` built the

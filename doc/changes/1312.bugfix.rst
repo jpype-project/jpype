@@ -1,4 +1,4 @@
-Fixed ``startJVM()`` raising an uninformative ``"Can't find org.jpype.jar
+Fixed :obj:`startJVM() <jpype.startJVM>` raising an uninformative ``"Can't find org.jpype.jar
 support library"`` error when ``org.jpype.jar`` fails to load because the
 running JVM is too old to support it (e.g. Java 8, since JPype 1.6.0's
 classfile target requires Java 11+). The underlying

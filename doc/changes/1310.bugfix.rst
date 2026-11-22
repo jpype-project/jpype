@@ -1,4 +1,4 @@
-Fixed ``startJVM()`` printing a "restricted method" / native access
+Fixed :obj:`startJVM() <jpype.startJVM>` printing a "restricted method" / native access
 warning on JDK 22+ (``java.lang.System::load has been called ... in an
 unnamed module``). JPype now probes the JVM's supported JNI version
 before launch and, on JDK 21+, defaults to passing

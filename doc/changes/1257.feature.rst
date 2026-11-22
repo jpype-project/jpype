@@ -36,6 +36,6 @@ the harness):
 - The Android bootstrap path never marked the native context as
   running, so every Java call immediately after a successful bootstrap
   failed with a spurious "JVM is not running" error.
-- An ``atexit`` shutdown hook assumed a function Android never
+- An :obj:`atexit` shutdown hook assumed a function Android never
   registers, producing a harmless but noisy ignored exception on every
   process exit.

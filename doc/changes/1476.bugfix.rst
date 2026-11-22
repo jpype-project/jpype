@@ -1,4 +1,4 @@
-Fixed a class/interface customizer (``@JImplementationFor``) registered
+Fixed a class/interface customizer (:obj:`@JImplementationFor <jpype.JImplementationFor>`) registered
 *after* its target already has instances silently dropping every
 earlier customizer's sticky methods and explicit ``__jclass_init__``
 hooks for any subclass created afterward - the retroactive-registration

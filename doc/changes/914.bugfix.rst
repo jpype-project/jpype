@@ -1,4 +1,4 @@
-Fixed ``jpype.addClassPath()`` called after ``startJVM()`` not being
+Fixed ``jpype.addClassPath()`` called after :obj:`startJVM() <jpype.startJVM>` not being
 picked up by ``java.sql.DriverManager``: unlike an ordinary
 ``ServiceLoader`` consumer, ``DriverManager`` scans
 ``META-INF/services/java.sql.Driver`` providers exactly once, the first

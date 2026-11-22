@@ -34,7 +34,12 @@ sys.path.insert(0, os.path.abspath('.'))
 extensions = ['sphinx.ext.napoleon',
         'sphinx.ext.autodoc',
        'sphinx.ext.autosectionlabel',
+       'sphinx.ext.intersphinx',
 ]
+
+# Lets :obj:`TypeError` and the like (used in the changelog) link to the
+# Python documentation.
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
 autosectionlabel_prefix_document = True
 
