@@ -26,3 +26,17 @@ build:
   apt_packages:
     - openjdk-11-jdk
     - ant
+  jobs:
+    # Render the pending news fragments into doc/CHANGELOG.rst as an
+    # "unreleased" section, like the Azure documentation job, so PR previews
+    # and "latest" show them.  Skipped for tagged releases (their changelog is
+    # final) and when there are no fragments (right after a release).  The
+    # edit only exists in the RTD checkout; --keep leaves the fragments.
+    pre_build:
+      - |
+        if [ "$READTHEDOCS_VERSION_TYPE" != "tag" ] && \
+           find doc/changes -name '*.rst' ! -name template.rst | grep -q .; then
+          python -m pip install towncrier
+          version=$(python -c "import re; print(re.search(r'__version__ = \"(.+)\"', open('jpype/__init__.py').read())[1])")
+          python -m towncrier build --keep --version "$version (unreleased)"
+        fi

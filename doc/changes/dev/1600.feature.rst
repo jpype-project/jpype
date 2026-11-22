@@ -1,4 +1,1 @@
-The documentation job on Azure now renders all news fragments into the
-changelog as an "unreleased" section before building, so each PR's
-documentation artifact shows the pending changes, and a fragment with
-broken RST fails the build.
+The documentation builds on Azure and Read the Docs now render all news fragments into the changelog as an "unreleased" section, so each PR's documentation artifact and RTD preview show the pending changes, and on Azure a fragment with broken RST fails the build.
