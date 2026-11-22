@@ -299,7 +299,7 @@ class JClassTestCase(common.JPypeTestCase):
     def testDeprecated(self):
         # this one should issue a warning
         jo = JClass("java.lang.Object")
-        with self.assertWarns(DeprecationWarning):
+        with self.assertWarns(jpype.JPypeDeprecationWarning):
             self.assertIsInstance(JObject(None, object), jo)
 
     def testGetSetBad(self):

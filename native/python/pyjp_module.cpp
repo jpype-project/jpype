@@ -74,6 +74,7 @@ PyObject* _JChar = nullptr;
 PyObject* _JObject = nullptr;
 PyObject* _JInterface = nullptr;
 PyObject* _JException = nullptr;
+PyObject* _JDeprecationWarning = nullptr;
 PyObject* _JClassPre = nullptr;
 PyObject* _JClassPost = nullptr;
 PyObject* _JClassDoc = nullptr;
@@ -112,6 +113,9 @@ void PyJPModule_loadResources(PyObject* module)
 		_JException = PyObject_GetAttrString(module, "JException");
 		JP_PY_CHECK();
 		Py_INCREF(_JException);
+		_JDeprecationWarning = PyObject_GetAttrString(module, "JPypeDeprecationWarning");
+		JP_PY_CHECK();
+		Py_INCREF(_JDeprecationWarning);
 		_JClassPre = PyObject_GetAttrString(module, "_jclassPre");
 		JP_PY_CHECK();
 		Py_INCREF(_JClassPre);
