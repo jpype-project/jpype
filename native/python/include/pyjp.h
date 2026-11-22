@@ -172,6 +172,8 @@ extern PyObject *_JChar;
 extern PyObject *_JObject;
 extern PyObject *_JInterface;
 extern PyObject *_JException;
+// Category for JPype deprecations; visible by default (FutureWarning).
+extern PyObject *_JDeprecationWarning;
 extern PyObject *_JClassPre;
 extern PyObject *_JClassPost;
 extern PyObject *_JClassDoc;
