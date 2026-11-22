@@ -1,4 +1,4 @@
-Fixed ``jpype.dbapi2`` calling ``PreparedStatement.getParameterMetaData()``
+Fixed :obj:`jpype.dbapi2` calling :jobj:`PreparedStatement.getParameterMetaData() <java.sql.PreparedStatement.getParameterMetaData()>`
 even for statements executed with no parameters, which some strict JDBC
 drivers reject for statements containing no parameter markers.
 Parameterless ``execute()``/``executemany()`` calls, as well as

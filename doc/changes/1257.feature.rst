@@ -20,14 +20,14 @@ the harness):
   without this.
 - Two ``native/jpype_module`` Java sources
   (``JPypeContext.getHeapMemory()``, ``JPypeUtilities``'s sealed-class
-  detection) used ``java.lang.management``/``MethodHandleProxies``,
+  detection) used :jobj:`java.lang.management`/:jobj:`MethodHandleProxies <java.lang.invoke.MethodHandleProxies>`,
   neither available on Android's platform API - replaced with portable
   equivalents that work identically on desktop and Android.
 - A required Java source file (``Reflector0``, used to get a
   correctly-shaped Java stack frame for invoking caller-sensitive
   methods) was missing from the Android build entirely, since it lives
   outside the source tree JPype's own build normally compiles from.
-- ``ClassLoader.getSystemClassLoader()`` - used to work around JPMS
+- :jobj:`ClassLoader.getSystemClassLoader() <java.lang.ClassLoader.getSystemClassLoader()>` - used to work around JPMS
   module-boundary restrictions during JPype's late class-loading on a
   desktop JVM launch - returns a stub on Android that can't see the
   app's own classes at all, unlike desktop where JPype's own JVM launch

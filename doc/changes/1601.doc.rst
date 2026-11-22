@@ -1,0 +1,1 @@
+:obj:`jpype.addClassPath` and the :obj:`jpype.dbapi2` module are now in the API reference, and the changelog links the JPype, Python and Java names it mentions.

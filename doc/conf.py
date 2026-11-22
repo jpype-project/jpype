@@ -38,8 +38,13 @@ extensions = ['sphinx.ext.napoleon',
 ]
 
 # Lets :obj:`TypeError` and the like (used in the changelog) link to the
-# Python documentation.
-intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
+# Python documentation.  The inventory is read from a copy in the repository
+# so the build needs no network access and cannot fail on a download (the
+# remote one is only a fallback).  Refresh it now and then with
+#   curl -o doc/intersphinx/python3.inv https://docs.python.org/3/objects.inv
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', ('intersphinx/python3.inv', None)),
+}
 
 autosectionlabel_prefix_document = True
 
@@ -377,3 +382,60 @@ texinfo_documents = [
 #texinfo_no_detailmenu = False
 
 napoleon_custom_sections = ["Static Methods", "Virtual Methods", "Constructors"]
+
+
+# :jobj:`java.lang.String` links a Java class to its Javadoc.  Also accepted
+# are a package (``java.lang.management``), a method without arguments
+# (``java.sql.PreparedStatement.getParameterMetaData()``, linked to its
+# anchor) and the explicit-title form :jobj:`DriverManager <java.sql.DriverManager>`.
+JAVADOC = 'https://docs.oracle.com/en/java/javase/21/docs/api/'
+# Module of a package, by longest matching prefix; everything else is java.base.
+JAVA_MODULES = {
+    'java.sql': 'java.sql',
+    'javax.sql': 'java.sql',
+    'java.lang.management': 'java.management',
+    'java.awt': 'java.desktop',
+    'javax.swing': 'java.desktop',
+    'java.util.logging': 'java.logging',
+    'java.net.http': 'java.net.http',
+}
+
+
+def javadoc_url(target):
+    member = None
+    parts = target.split('.')
+    # The class is the first segment that starts with an upper-case letter;
+    # a segment after it is a member.
+    cls = next((i for i, p in enumerate(parts) if p[:1].isupper()), None)
+    if cls is None:
+        pkg, page = parts, 'package-summary'
+    else:
+        pkg = parts[:cls]
+        if cls + 1 < len(parts):
+            member = '.'.join(parts[cls + 1:])
+            parts = parts[:cls + 1]
+        page = '.'.join(parts[cls:])
+    pkgname = '.'.join(pkg)
+    module = next((m for p, m in sorted(JAVA_MODULES.items(), reverse=True)
+                   if pkgname == p or pkgname.startswith(p + '.')), 'java.base')
+    url = JAVADOC + module + '/' + '/'.join(pkg) + '/' + page + '.html'
+    # Javadoc anchors only match a method without arguments as "name()".
+    if member and member.endswith('()'):
+        url += '#' + member
+    return url
+
+
+def jobj_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
+    from docutils import nodes
+    from docutils.utils import unescape
+    text = unescape(text)
+    if text.endswith('>') and ' <' in text:
+        title, target = text[:-1].rsplit(' <', 1)
+    else:
+        title = target = text
+    literal = nodes.literal(title, title, classes=['xref', 'java'])
+    return [nodes.reference(rawtext, '', literal, refuri=javadoc_url(target.strip()))], []
+
+
+def setup(app):
+    app.add_role('jobj', jobj_role)
