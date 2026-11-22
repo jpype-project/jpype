@@ -1,0 +1,1 @@
+Fixed crash when calling isinstance(obj, JException) before JVM starts or after JVM shutdown.

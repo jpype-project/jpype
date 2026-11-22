@@ -1,0 +1,1 @@
+Fixed ambiguous overload resolution for bytearray between byte[] and char[].

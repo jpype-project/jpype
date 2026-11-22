@@ -1,0 +1,3 @@
+Fixed a GC refcount-accounting bug in the internal Java-class metaclass
+where `tp_traverse`/`tp_clear` did not chain to `type`'s own
+implementation.
