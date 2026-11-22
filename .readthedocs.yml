@@ -26,3 +26,9 @@ build:
   apt_packages:
     - openjdk-11-jdk
     - ant
+  jobs:
+    # Render the pending news fragments into the changelog, like the Azure
+    # documentation job, so PR previews and "latest" show them.  Tagged
+    # releases keep their final changelog.
+    pre_build:
+      - test "$READTHEDOCS_VERSION_TYPE" = tag || sh doc/render-unreleased-changelog.sh
