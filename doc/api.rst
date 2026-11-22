@@ -90,6 +90,11 @@ to cast to a specific object type.
 
 .. _threading:
 
+Warnings
+~~~~~~~~
+
+.. autoclass:: jpype.JPypeDeprecationWarning
+
 Threading
 ~~~~~~~~~
 
