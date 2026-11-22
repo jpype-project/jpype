@@ -1,4 +1,4 @@
-Fixed ``JChar`` arithmetic (``+``, ``-``, ``*``, ``&``, ...) reading the
+Fixed :obj:`JChar <jpype.JChar>` arithmetic (``+``, ``-``, ``*``, ``&``, ...) reading the
 other operand as a char whenever it was any Java value, which produced
 nonsense results (``JChar('a') + java.lang.Integer(7)``) and could read
 past the end of the other object.  Only real Java chars are now read as
