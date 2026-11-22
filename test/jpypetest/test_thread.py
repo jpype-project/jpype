@@ -24,7 +24,7 @@ from jpype.imports import *
 
 class ThreadTestCase(common.JPypeTestCase):
 
-    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+    @pytest.mark.filterwarnings("ignore::jpype.JPypeDeprecationWarning")
     def testAttach(self):
         # Make sure we are attached to start the test
         jpype.attachThreadToJVM()
@@ -69,7 +69,7 @@ class ThreadTestCase(common.JPypeTestCase):
         finally:
             java.lang.Thread.attachAsDaemon()
 
-    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+    @pytest.mark.filterwarnings("ignore::jpype.JPypeDeprecationWarning")
     def testAttachTwiceRegistersAutoDetachOnce(self):
         # Attaching an already-attached thread a second time without an
         # intervening detach must not re-register the auto-detach TLS
