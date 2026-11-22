@@ -395,6 +395,17 @@ public:
 		JP_TRACE("char[]");
 		jvalue res;
 
+		// bytes are decoded as UTF-8 here, but JArray(JChar)(b) widens each
+		// byte to one char.  Warn from convert() rather than matches() so
+		// overload resolution does not warn for candidates that lose.
+		if (PyBytes_Check(match.object))
+		{
+			if (PyErr_WarnEx(_JDeprecationWarning,
+					"Implicit conversion of bytes to char[] is deprecated and "
+					"will be removed; pass bytes.decode(<encoding>) instead", 1) < 0)
+				JP_PY_CHECK();
+		}
+
 		// Convert to a string
 		string str = JPPyString::asStringUTF8(match.object);
 
