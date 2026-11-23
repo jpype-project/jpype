@@ -1,0 +1,1 @@
+Fixed memory leak with int and float conversions.

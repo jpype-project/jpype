@@ -1,0 +1,2 @@
+Documented the "JVM DLL not found" error on Apple Silicon Macs and its
+cause (a Python/JDK CPU architecture mismatch, e.g. arm64 vs x86_64).

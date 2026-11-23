@@ -18,7 +18,9 @@
 import multiprocessing as mp
 import inspect
 import os
+import pickle
 import sys
+import time
 import traceback
 import queue
 import unittest
@@ -44,6 +46,39 @@ def _import(filename):
     return origin
 
 
+class _RemoteTraceback(Exception):
+    """Carries the traceback text of an exception raised in the child."""
+
+    def __init__(self, tb):
+        super().__init__(tb)
+        self.tb = tb
+
+    def __str__(self):
+        return self.tb
+
+
+def _portable(ret, out, ex, tb):
+    """Return a result tuple that survives the trip through the queue.
+
+    ``Queue.put`` pickles in a feeder thread; when that fails the item is
+    dropped and the parent only sees a timeout.  Java exceptions, for
+    example, do not pickle.  Check here and replace what does not survive
+    with a plain error that names the original.
+    """
+    try:
+        pickle.loads(pickle.dumps(ex))
+    except Exception:
+        ex = RuntimeError(f"{type(ex).__qualname__}: {ex}")
+    try:
+        pickle.loads(pickle.dumps(ret))
+    except Exception as ex2:
+        if ex is None:
+            ex = RuntimeError("unpicklable return value of type "
+                              f"{type(ret).__qualname__}: {ex2}")
+        ret = None
+    return [ret, out, ex, tb]
+
+
 def _execute(inQueue, outQueue):
     while True:
         datum = inQueue.get()
@@ -51,19 +86,19 @@ def _execute(inQueue, outQueue):
             break
         ex = None
         ret = None
+        tb = None
         (func_name, func_file, args, kwargs) = datum
+        f = io.StringIO()
         try:
-            f = io.StringIO()
             with redirect_stdout(f):
                 module = _import(func_file)
                 func = getattr(module, func_name)
                 ret = func(*args, **kwargs)
         except Exception as ex1:
-            traceback.print_exc()
+            tb = traceback.format_exc()
+            sys.stderr.write(tb)
             ex = ex1
-        out = f.getvalue()
-        # This may fail if we get a Java exception so timeout is used
-        outQueue.put([ret, out, ex])
+        outQueue.put(_portable(ret, f.getvalue(), ex, tb))
 
 
 class Client(object):
@@ -86,12 +121,36 @@ class Client(object):
     def execute(self, function, *args, **kwargs):
         self.inQueue.put([function.__name__, os.path.abspath(
             inspect.getfile(function)), args, kwargs])
-        try:
-            (ret, out, ex) = self.outQueue.get(True, self.timeout)
-        except queue.Empty:
-            raise AssertionError("function {func} FAILED with args: {args} and kwargs: {kwargs}"
-                                 .format(func=function, args=args, kwargs=kwargs))
+        what = f"function {function} with args: {args} and kwargs: {kwargs}"
+        deadline = time.monotonic() + self.timeout
+        while True:
+            try:
+                (ret, out, ex, tb) = self.outQueue.get(True, 0.25)
+                break
+            except queue.Empty:
+                pass
+            if not self.process.is_alive():
+                # The result may have been written just before the exit.
+                try:
+                    (ret, out, ex, tb) = self.outQueue.get(True, 0.5)
+                    break
+                except queue.Empty:
+                    raise AssertionError(
+                        f"subprocess died (exit code {self.process.exitcode}) "
+                        f"while running {what}") from None
+            if time.monotonic() > deadline:
+                # Kill it so that later calls fail fast instead of each
+                # waiting out the timeout, and stop() does not hang.
+                self.process.kill()
+                self.process.join()
+                raise AssertionError(
+                    f"subprocess did not answer within {self.timeout}s "
+                    f"while running {what}")
+        if out:
+            sys.stdout.write(out)
         if ex is not None:
+            if tb is not None:
+                raise ex from _RemoteTraceback(tb)
             raise ex
         return ret
 
@@ -100,7 +159,8 @@ class Client(object):
         self.start()
 
     def stop(self):
-        self.inQueue.put(None)
+        if self.process.is_alive():
+            self.inQueue.put(None)
         self.process.join()
 
     def __enter__(self):

@@ -1,0 +1,8 @@
+Fixed a reference leak in Java-implementing-Python proxies
+(:obj:`@JImplements <jpype.JImplements>`/:obj:`JProxy <jpype.JProxy>`): the first time a proxy instance was
+passed to Java, if :jobj:`java.lang.reflect.Proxy.newInstance() <java.lang.reflect.Proxy>` (or the
+weak-reference bookkeeping right after it) failed for any reason, the
+Python instance's refcount was left permanently incremented with no
+way to release it. Found via a new leak-detection sweep harness
+(``test/jpypetest/leaksweep.py``, run via ``make -f project/dev.mk
+leak-sweep``) combined with fault injection.

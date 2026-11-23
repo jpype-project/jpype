@@ -5,6 +5,9 @@ JPype DBAPI2 Guide
 `Introduction`
 ==============
 
+.. module:: jpype.dbapi2
+   :synopsis: Python DB-API 2.0 (PEP 249) interface to JDBC drivers.
+
 One common use of JPype is to provide access to databases using JDBC.  The JDBC
 API is well established, very capable, and supports most databases.
 JPype can be used to access JDBC both directly or through the use of the Python

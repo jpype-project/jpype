@@ -9,6 +9,7 @@ These functions control and start the JVM.
 .. autofunction:: jpype.startJVM
 .. autofunction:: jpype.shutdownJVM
 .. autofunction:: jpype.getDefaultJVMPath
+.. autofunction:: jpype.addClassPath
 .. autofunction:: jpype.getClassPath
 .. autodecorator:: jpype.onJVMStart
 
@@ -37,14 +38,62 @@ Class Factories
 Java Types
 ~~~~~~~~~~
 
-JPype has types for each of the Java primitives: ``JBoolean``, ``JByte``,
-``JShort``, ``JInt``, ``JLong``, ``JFloat`` and ``JDouble``.  There is one
-class for working with Java objects, ``JObject``.  This serves to cast to a
-specific object type.  
+JPype has a type for each of the Java primitives.  Calling one casts a Python
+value to that primitive, for example to pick an overload (``JInt(1)``), and
+``JInt[:]`` is the Java ``int[]`` array type.  See :ref:`userguide:primitive
+types` in the user guide for the conversion rules.
+
+.. py:class:: jpype.JBoolean(value)
+
+   The Java ``boolean`` type.  ``True`` and ``False`` match exactly; returned as Python ``bool``.
+   See :ref:`jpype_types_primitive_types_jboolean`.
+
+.. py:class:: jpype.JByte(value)
+
+   The Java ``byte`` type.  8-bit signed integer; returned as Python ``int``.
+   See :ref:`jpype_types_primitive_types_jbyte,_jshort,_jint,_jlong`.
+
+.. py:class:: jpype.JChar(value)
+
+   The Java ``char`` type.  16-bit UTF-16 code unit; matched by a Python string of length 1.
+   See :ref:`jpype_types_primitive_types_jchar`.
+
+.. py:class:: jpype.JShort(value)
+
+   The Java ``short`` type.  16-bit signed integer; returned as Python ``int``.
+   See :ref:`jpype_types_primitive_types_jbyte,_jshort,_jint,_jlong`.
+
+.. py:class:: jpype.JInt(value)
+
+   The Java ``int`` type.  32-bit signed integer; returned as Python ``int``.
+   See :ref:`jpype_types_primitive_types_jbyte,_jshort,_jint,_jlong`.
+
+.. py:class:: jpype.JLong(value)
+
+   The Java ``long`` type.  64-bit signed integer; returned as Python ``int``.
+   See :ref:`jpype_types_primitive_types_jbyte,_jshort,_jint,_jlong`.
+
+.. py:class:: jpype.JFloat(value)
+
+   The Java ``float`` type.  32-bit floating point; returned as Python ``float``.
+   See :ref:`jpype_types_jfloat_jdouble`.
+
+.. py:class:: jpype.JDouble(value)
+
+   The Java ``double`` type.  64-bit floating point; returned as Python ``float``.
+   See :ref:`jpype_types_jfloat_jdouble`.
+
+There is one class for working with Java objects, ``JObject``.  This serves
+to cast to a specific object type.
 
 .. autoclass:: jpype.JObject
 
 .. _threading:
+
+Warnings
+~~~~~~~~
+
+.. autoclass:: jpype.JPypeDeprecationWarning
 
 Threading
 ~~~~~~~~~

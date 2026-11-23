@@ -1,0 +1,2 @@
+Fixed a thread that detached from the JVM being attached again when a
+proxy was freed on it.

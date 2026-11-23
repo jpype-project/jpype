@@ -1,0 +1,12 @@
+:obj:`jpype.dbapi2` closes out several long-standing TODO items:
+added :obj:`Connection.isolation_level <jpype.dbapi2.Connection.isolation_level>` (an extension property wrapping
+:jobj:`java.sql.Connection.get/setTransactionIsolation() <java.sql.Connection>`, with new
+``TRANSACTION_NONE``/``TRANSACTION_READ_UNCOMMITTED``/
+``TRANSACTION_READ_COMMITTED``/``TRANSACTION_REPEATABLE_READ``/
+``TRANSACTION_SERIALIZABLE`` constants) and a default adapter for
+:obj:`decimal.Decimal` parameters (adapted into :jobj:`java.math.BigDecimal`,
+matching the existing read-side ``getBigDecimal`` -> :obj:`decimal.Decimal`
+converter -- previously passing a plain :obj:`decimal.Decimal` as a query
+parameter raised ``InterfaceError: no setter found for 'Decimal'``).
+Also removed dead/unreachable code in the non-batch ``executemany()``
+fallback path.

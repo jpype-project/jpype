@@ -1,0 +1,5 @@
+Fixed :obj:`hash() <hash>` raising :obj:`SystemError` for Java objects whose
+``hashCode()`` is -1 (CPython's hash error sentinel); it is now mapped
+to -2.  ``_JProxy.hashCode()`` also no longer ignores an error from
+hashing an unhashable target, so it raises the original :obj:`TypeError`
+instead of a :obj:`SystemError`. #1534

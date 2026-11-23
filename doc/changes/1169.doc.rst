@@ -1,0 +1,6 @@
+Documented that the thread that calls :obj:`startJVM() <jpype.startJVM>` is attached as a
+non-daemon thread by JVM/JNI design, regardless of JPype's usual
+automatic daemon attachment for threads calling into Java - and that
+starting the JVM from a disposable thread (a pool worker, a one-shot
+setup thread) will hang the process on exit unless that thread is
+explicitly detached.
