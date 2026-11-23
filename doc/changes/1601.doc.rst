@@ -1,0 +1,1 @@
+:obj:`jpype.addClassPath`, the :obj:`jpype.dbapi2` module and the primitive types (:obj:`jpype.JInt` and the others) are now in the API reference, and the changelog links the JPype, Python and Java names it mentions.

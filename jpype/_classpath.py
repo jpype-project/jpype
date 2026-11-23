@@ -29,15 +29,25 @@ _SEP = _os.path.pathsep
 __all__ = ['addClassPath', 'getClassPath']
 
 def addClassPath(path1: Union[str, _os.PathLike]) -> None:
-    """ Add a path to the Java class path
+    """ Add a path to the Java class path.
 
-    Classpath items can be a java, a directory, or a
-    glob pattern.  Relative paths are relative to the 
-    caller location.
+    Called before :func:`startJVM`, the path becomes part of the class path
+    the JVM is started with.  Called after the JVM has started, it is added
+    to JPype's class loader right away, so the classes can be loaded with
+    :class:`JClass` or imported, and JDBC drivers in it are found by
+    ``java.sql.DriverManager``.
 
-    Arguments:
-      path(str):
+    Example::
 
+        jpype.addClassPath("lib/*")
+        jpype.addClassPath("/opt/app/app.jar")
+        jpype.startJVM()
+
+    Args:
+      path1 (str or os.PathLike): A jar file, a directory of class files, or
+        a directory followed by ``*`` for all jar files in it.  A relative
+        path is relative to the file of the caller, not to the current
+        working directory.
     """
     # We are deferring these imports until here as we only need them
     # if this function is used.

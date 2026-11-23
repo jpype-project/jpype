@@ -1,0 +1,5 @@
+Fixed importing a class whose static initializer fails directly from a
+top level domain (``from org import Broken``) raising the raw
+:jobj:`java.lang.ExceptionInInitializerError` instead of :obj:`ImportError`.
+A later attempt to import the same class now reports the earlier
+initializer failure instead of a missing dependency.

@@ -1,0 +1,6 @@
+Fixed :obj:`jpype.dbapi2` calling :jobj:`PreparedStatement.getParameterMetaData() <java.sql.PreparedStatement.getParameterMetaData()>`
+even for statements executed with no parameters, which some strict JDBC
+drivers reject for statements containing no parameter markers.
+Parameterless ``execute()``/``executemany()`` calls, as well as
+parameterless ``callproc()`` calls, no longer inspect parameter
+metadata at all.

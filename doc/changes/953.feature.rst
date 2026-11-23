@@ -1,0 +1,1 @@
+Added fallback conversion path for JArray.of() to support non-primitive types like JString, enabling conversion of numpy string arrays.
