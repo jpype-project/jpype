@@ -239,7 +239,7 @@ class CoverageCase(common.JPypeTestCase):
         with self.assertRaises(AttributeError):
             jpype.JObject._hints = object()
 
-    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+    @pytest.mark.filterwarnings("ignore::jpype.JPypeDeprecationWarning")
     def testDeprecated(self):
         @jpype._core.deprecated
         def foo():

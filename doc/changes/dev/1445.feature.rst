@@ -1,0 +1,9 @@
+Reworked the internal object layout for Java-backed Python objects to use
+fixed, type-baked offsets instead of a runtime allocator that re-derived
+each object's layout from version-sensitive CPython internals on every
+access. For the boxed `Long`/`Boolean`/`Character` wrapper types this
+also removes their per-instance Java-value storage entirely (reconstructed
+on demand instead), shrinking those instances and eliminating a
+version-gated digit-layout workaround. No user-visible API change; boxed
+wrapper instances no longer retain Java-side reference identity across
+repeated round-trips through Python.

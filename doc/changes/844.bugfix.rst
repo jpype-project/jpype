@@ -1,0 +1,1 @@
+Fixed overloaded methods from multiple interfaces not being detected.

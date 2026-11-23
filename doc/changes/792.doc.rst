@@ -1,0 +1,3 @@
+Added a customizer example to the quickstart guide and fixed the
+"Extending classes" entry, which had been carrying a leftover
+"lambda is WIP" note since before lambdas were documented.

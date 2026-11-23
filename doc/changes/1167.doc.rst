@@ -1,0 +1,3 @@
+Documented the Windows ``ImportError: DLL load failed while importing
+_jpype`` error and its fix (installing the Microsoft Visual C++
+Redistributable).

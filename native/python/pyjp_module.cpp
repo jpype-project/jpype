@@ -74,6 +74,7 @@ PyObject* _JChar = nullptr;
 PyObject* _JObject = nullptr;
 PyObject* _JInterface = nullptr;
 PyObject* _JException = nullptr;
+PyObject* _JDeprecationWarning = nullptr;
 PyObject* _JClassPre = nullptr;
 PyObject* _JClassPost = nullptr;
 PyObject* _JClassDoc = nullptr;
@@ -112,6 +113,9 @@ void PyJPModule_loadResources(PyObject* module)
 		_JException = PyObject_GetAttrString(module, "JException");
 		JP_PY_CHECK();
 		Py_INCREF(_JException);
+		_JDeprecationWarning = PyObject_GetAttrString(module, "JPypeDeprecationWarning");
+		JP_PY_CHECK();
+		Py_INCREF(_JDeprecationWarning);
 		_JClassPre = PyObject_GetAttrString(module, "_jclassPre");
 		JP_PY_CHECK();
 		Py_INCREF(_JClassPre);
@@ -985,6 +989,14 @@ static PyObject *PyJPModule_convertBuffer(JPPyBuffer& buffer, PyObject *dtype, P
 	// Now we have a valid format code, so next lets get a converter for
 	// the type.
 	auto *pcls = dynamic_cast<JPPrimitiveType *>( cls);
+
+	// A scalar buffer has no axis to index; the conversion below takes the
+	// last dimension as the row length.
+	if (view.ndim < 1)
+	{
+		PyErr_SetString(PyExc_TypeError, "0-dimensional buffers cannot be converted to a Java array");
+		return nullptr;
+	}
 
 	// Convert the shape
 	Py_ssize_t subs = 1;

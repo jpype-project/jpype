@@ -39,6 +39,7 @@ dependencies = [
 docs = [
     'sphinx',
     'sphinx-rtd-theme',
+    'towncrier',
 ]
 tests = [
     "pytest",
@@ -77,6 +78,11 @@ ignore_missing_imports = true
 addopts = ["--verbose", "-p", "no:faulthandler"]
 testpaths = ["test", "jpype/_pyinstaller"]
 
+[tool.coverage.run]
+# Also measure Python subprocesses, such as the subrun.TestCase children that
+# run tests in their own JVM.  Needs coverage 7.10+.
+patch = ["subprocess"]
+
 
 [tool.scikit-build]
 build-dir = "build/{wheel_tag}"
@@ -113,3 +119,53 @@ install.strip = false
 [tool.scikit-build.cmake.define]
 ENABLE_BUILD_JAR = "OFF"
 BUILD_TEST_HARNESS = "OFF"
+
+# towncrier assembles doc/CHANGELOG.rst from the news fragments in
+# doc/changes/.  See CONTRIBUTING.rst for usage.
+[tool.towncrier]
+directory = "doc/changes"
+filename = "doc/CHANGELOG.rst"
+template = "doc/changes/template.rst"
+start_string = ".. towncrier release notes start\n"
+issue_format = "`#{issue} <https://github.com/jpype-project/jpype/issues/{issue}>`__"
+wrap = false
+all_bullets = true
+# The developer section's subdirectory, not a fragment (`towncrier check` is strict).
+ignore = ["dev"]
+# Fragments are named after a PR or issue number (or "+" for orphans).
+issue_pattern = "\\d+"
+
+# Sections: user-facing fragments go directly in doc/changes/, notes for people
+# working on JPype itself (build, internals, CI) go in doc/changes/dev/.
+[[tool.towncrier.section]]
+name = ""
+path = ""
+
+[[tool.towncrier.section]]
+name = "For developers"
+path = "dev"
+
+[[tool.towncrier.type]]
+directory = "feature"
+name = "Features"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bug fixes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "removal"
+name = "Deprecations and removals"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "doc"
+name = "Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Miscellaneous"
+showcontent = false

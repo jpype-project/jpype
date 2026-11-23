@@ -143,6 +143,34 @@ class ImportsTestCase(common.JPypeTestCase):
         self.assertTrue(t.field == 5)
         self.assertTrue(t.method() == "Yes")
 
+    def testAddClassPathInnerClassDotted(self):
+        # A dotted inner-class name must resolve through the JPype class
+        # loader, so it works for a class path added after startup too.
+        import pathlib
+        import tempfile
+        compiler = jpype.JClass("javax.tools.ToolProvider").getSystemJavaCompiler()
+        if compiler is None:
+            self.skipTest("no system Java compiler")
+        with tempfile.TemporaryDirectory() as d:
+            src = pathlib.Path(d) / "lateinner" / "Outer.java"
+            src.parent.mkdir()
+            src.write_text("package lateinner;\n"
+                           "public class Outer {\n"
+                           "  public static class Inner {\n"
+                           "    public static int value() { return 7; }\n"
+                           "    public static class Deep { public static int value() { return 9; } }\n"
+                           "  }\n"
+                           "}\n")
+            out = pathlib.Path(d) / "classes"
+            out.mkdir()
+            rc = compiler.run(None, None, None, jpype.JArray(jpype.JString)(
+                [str(src), "-d", str(out)]))
+            self.assertEqual(rc, 0)
+            jpype.addClassPath(out.absolute())
+            self.assertEqual(jpype.JClass("lateinner.Outer$Inner").value(), 7)
+            self.assertEqual(jpype.JClass("lateinner.Outer.Inner").value(), 7)
+            self.assertEqual(jpype.JClass("lateinner.Outer.Inner.Deep").value(), 9)
+
     def testAddClassPathLateJdbcDriver(self):
         # A JDBC driver added to the classpath after the JVM has started
         # must still be discoverable by java.sql.DriverManager, even

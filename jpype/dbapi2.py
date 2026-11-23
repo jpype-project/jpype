@@ -1026,6 +1026,9 @@ class Cursor(object):
 
         The procedure may also provide a result set as output. This must then
         be made available through the standard .fetch*() methods. 
+
+        The procedure name is placed directly into the ``CALL`` statement, so
+        it must never come from untrusted input.
         """
         try:
             self._validate()
@@ -1077,15 +1080,19 @@ class Cursor(object):
                     raise _UnsupportedTypeError(
                         "no setter found for '%s'" % type(p).__name__)
 
+                # OUT and INOUT are registered on the statement.  The JDBC type
+                # code comes from the driver's parameter metadata because the
+                # PEP 249 aliases (STRING, NUMBER, ...) have no code of their own.
                 mode = meta.getParameterMode(i + 1)
-                if mode == 1:
+                if mode in (2, 4):
+                    if mode == 2:
+                        jdbcType.set(self._statement, i + 1, p)
+                    self._statement.registerOutParameter(
+                        i + 1, meta.getParameterType(i + 1))
+                else:
+                    # IN (or a driver that does not report the mode)
                     jdbcType.set(self._statement, i + 1, p)
                     types[i] = None
-                if mode == 2:
-                    jdbcType.set(self._statement, i + 1, p)
-                    self.registerOutParameter(i + 1, jdbcType._code)
-                if mode == 4:
-                    self.registerOutParameter(i + 1, jdbcType._code)
 
             if self._statement.execute():
                 self._onResultSet(self._statement.getResultSet())
@@ -1095,11 +1102,13 @@ class Cursor(object):
                 if t is None:
                     continue
 
-                # Find the converter to apply to the column
+                # Fetch the output value and apply the connection converter
+                converters = cx._converters
                 value = t.get(self._statement, i + 1, True)
-                # FIXME how do we get a converv
-                converter = cx._converters[type(value)]
-                out[i] = converter(value)
+                if value is None or converters is None:
+                    out[i] = value
+                else:
+                    out[i] = converters.get(type(value), _nop)(value)
 
             return out
 

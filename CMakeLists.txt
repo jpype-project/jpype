@@ -55,6 +55,8 @@ endif()
 if(ENABLE_COVERAGE)
     message(WARNING "ENABLE_COVERAGE set — forcing Debug build for coverage correctness")
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+    # JaCoCo can only report line coverage for classes with line number tables.
+    set(ANT_ARGS "-Djavac.debug=true")
 endif()
 
 
@@ -88,7 +90,7 @@ if(ENABLE_BUILD_JAR)
     # we also need to copy the JAR_OUTPUT to CMAKE_CURRENT_BINARY_DIR
     add_custom_command(
             OUTPUT "${JAR_OUTPUT}"
-            COMMAND "${ANT_EXECUTABLE}" -f "${CMAKE_SOURCE_DIR}/native/build.xml"
+            COMMAND "${ANT_EXECUTABLE}" -f "${CMAKE_SOURCE_DIR}/native/build.xml" ${ANT_ARGS}
             WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
             COMMENT "Building ${JAR_OUTPUT} with Apache Ant"
     )

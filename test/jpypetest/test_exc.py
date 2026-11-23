@@ -192,3 +192,33 @@ class ExceptionTestCase(common.JPypeTestCase):
     def testException(self):
         Th = jpype.JClass('java.lang.Throwable')('abc')
         self.assertEqual(str(Th), 'java.lang.Throwable: abc')
+
+
+class StackTraceTestCase(common.JPypeTestCase):
+
+    def _thrown(self):
+        # An exception thrown from Java code, so it has Java frames.
+        with self.assertRaises(JException) as cm:
+            JClass("java.lang.Integer").parseInt("not a number")
+        inner = cm.exception
+        self.assertGreater(len(inner.getStackTrace()), 0)
+        return inner
+
+    def testEmptyEnclosingTrace(self):
+        # An enclosing exception whose trace was cleared (or never filled in)
+        # must not break extracting the cause's frames.
+        ctx = JClass("org.jpype.JPypeContext").getInstance()
+        inner = self._thrown()
+        outer = JClass("java.lang.RuntimeException")("outer", inner)
+        outer.setStackTrace(JArray(JClass("java.lang.StackTraceElement"))(0))
+        frames = ctx.getStackTrace(inner, outer)
+        self.assertEqual(len(frames), 4 * len(inner.getStackTrace()))
+
+    def testEnclosingTraceTrimsCommonFrames(self):
+        ctx = JClass("org.jpype.JPypeContext").getInstance()
+        inner = self._thrown()
+        self.assertEqual(len(ctx.getStackTrace(inner, None)),
+                         4 * len(inner.getStackTrace()))
+        # An enclosing trace starting at the cause's first frame leaves
+        # nothing unique.
+        self.assertEqual(len(ctx.getStackTrace(inner, inner)), 0)
