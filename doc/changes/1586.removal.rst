@@ -1,0 +1,5 @@
+Passing :obj:`bytes` where a Java method takes a ``char[]`` now emits a
+:obj:`jpype.JPypeDeprecationWarning`, which is shown by default.  The bytes are
+decoded as UTF-8 implicitly, which differs from ``JArray(JChar)(b)`` (one char
+per byte); decode explicitly with ``b.decode(<encoding>)`` and pass the
+:obj:`str`.  A later release will stop matching :obj:`bytes` to ``char[]``.

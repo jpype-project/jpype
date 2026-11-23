@@ -129,7 +129,7 @@ JPMatch::Type JPMethod::matches(JPJavaFrame &frame, JPMethodMatch& methodMatch, 
 		if (len == tlen)
 		{
 			// Try direct
-			size_t last = tlen - 1 - methodMatch.m_Offset;
+			size_t last = tlen - 1 + methodMatch.m_Offset;
 			methodMatch.m_Type = type->findJavaConversion(methodMatch.m_Arguments[last]);
 			JP_TRACE("Direct vargs", methodMatch.m_Type);
 		}
@@ -188,12 +188,14 @@ void JPMethod::packArgs(JPJavaFrame &frame, JPMethodMatch &match,
 	if (match.m_IsVarIndirect)
 	{
 		JP_TRACE("Pack indirect varargs");
-		len = tlen - 1;
+		// Python arguments before the varargs: the fixed parameters plus
+		// the instance when a static method is called through one.
+		len = tlen - 1 + match.m_Offset;
 		auto* type = dynamic_cast<JPArrayClass*>( m_ParameterTypes[tlen - 1]);
-		v[tlen - 1 - match.m_Skip] = type->convertToJavaVector(frame, arg, (jsize) tlen - 1, (jsize) arg.size());
+		v[len - match.m_Skip] = type->convertToJavaVector(frame, arg, (jsize) len, (jsize) arg.size());
 	}
 
-	JP_TRACE("Pack fixed total=", len - match.m_Offset);
+	JP_TRACE("Pack fixed total=", len - match.m_Skip);
 	for (size_t i = match.m_Skip; i < len; i++)
 	{
 		v[i - match.m_Skip] = match.m_Arguments[i].convert();

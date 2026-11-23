@@ -1,0 +1,14 @@
+Fixed a JVM thread-attachment leak: any native thread that calls into
+Java without first calling ``jpype.attachThreadToJVM()`` gets
+implicitly attached on its first call (so it doesn't have to be
+explicit for simple cases), but nothing previously detached that
+thread from the JVM when it later exited -- ``detachCurrentThread()``
+only ran on an explicit ``jpype.detachThreadFromJVM()`` call. Any
+short-lived native thread that touched Java at all (e.g. a Python
+:obj:`threading.Thread` worker calling :obj:`jpype.synchronized() <jpype.synchronized>` once and
+exiting) permanently leaked its JVM-side thread attachment. Fixed
+with a per-thread destructor (POSIX TLS / Windows FLS) that
+auto-detaches on thread exit regardless of whether the thread called
+JPype again beforehand. Found via a new leak-detection sweep harness
+(``test/jpypetest/leaksweep.py``, run via ``make -f project/dev.mk
+leak-sweep``).

@@ -97,6 +97,23 @@ class ProxyTestCase(common.JPypeTestCase):
         al.add(runner)
         self.assertIs(al.get(0), runner)
 
+    def testJImplementsPreservesMetadata(self):
+        @JImplements(java.lang.Runnable)
+        class MyRun(object):
+            """My documented runnable."""
+            @JOverride
+            def run(self):
+                """Run docs."""
+                pass
+
+        self.assertEqual(MyRun.__doc__, "My documented runnable.")
+        self.assertEqual(MyRun.__name__, "MyRun")
+        self.assertEqual(MyRun.__qualname__.split(".")[-1], "MyRun")
+        self.assertEqual(MyRun.__module__, __name__)
+        self.assertEqual(MyRun.run.__name__, "run")
+        self.assertEqual(MyRun.run.__doc__, "Run docs.")
+        self.assertEqual(MyRun.run.__qualname__.split(".")[-1], "run")
+
     def testProxyLeak(self):
 
         @JImplements(java.lang.Runnable)
@@ -545,6 +562,20 @@ class ProxyTestCase(common.JPypeTestCase):
         self.assertIsInstance(s.toString(), java.lang.String)
         self.assertIsInstance(s.hashCode(), int)
 
+    def testToStringUsesStr(self):
+        # Without a toString method, Java's toString() calls the
+        # instance's __str__.
+        @JImplements("java.util.function.DoubleUnaryOperator")
+        class R(object):
+            @JOverride
+            def applyAsDouble(self, d):
+                return d
+
+            def __str__(self):
+                return "R-str"
+        s = JObject(R(), "java.util.function.DoubleUnaryOperator")
+        self.assertEqual(s.toString(), "R-str")
+
     def testDeferredCheckingFailure(self):
         @JImplements("java.lang.Runnable", deferred=True)
         class MyImpl(object):
@@ -644,6 +675,22 @@ class ProxyTestCase(common.JPypeTestCase):
                 def run(self):
                     pass
 
+    def testInitCalledOnce(self):
+        for deferred in (False, True):
+            calls = []
+
+            @JImplements("java.lang.Runnable", deferred=deferred)
+            class R:
+                def __init__(self, x, y=None):
+                    calls.append((x, y))
+
+                @JOverride
+                def run(self):
+                    pass
+
+            R(1, y=2)
+            self.assertEqual(calls, [(1, 2)], "deferred=%s" % deferred)
+
     def testInternal(self):
         with self.assertRaises(TypeError):
             _jpype._JProxy(None, None, None)
@@ -651,6 +698,37 @@ class ProxyTestCase(common.JPypeTestCase):
             _jpype._JProxy(None, None, [])
         with self.assertRaises(TypeError):
             _jpype._JProxy(None, None, [type])
+
+    def testInternalHashCodeOfUnhashableTarget(self):
+        # The hash error must surface as the original TypeError, not a
+        # SystemError from returning a result with an exception set.
+        proxy = _jpype._JProxy([], None, [JClass("java.lang.Runnable")])
+        with self.assertRaises(TypeError):
+            proxy.hashCode()
+
+    # Free-threaded runs (pytest-run-parallel): this counts process-wide gc
+    # objects, so once common.threadUnsafe is available on master, decorate
+    # this test with it.
+    def testInternalArgumentErrorsDoNotLeak(self):
+        import gc
+        gc.collect()
+        # Hold strong references to proxies left over from earlier tests.
+        # Their lifetime is otherwise tied to the Java side, which may
+        # release them while the loop runs and make the count drop; pinned
+        # here, the count can only change by what the loop itself leaks.
+        before = [o for o in gc.get_objects() if type(o) is _jpype._JProxy]
+        try:
+            for _ in range(100):
+                for bad in [(None, None, 5), (None, None, []),
+                            (None, None, [1]), ()]:
+                    with self.assertRaises(TypeError):
+                        _jpype._JProxy(*bad)
+            gc.collect()
+            after = sum(1 for o in gc.get_objects()
+                        if type(o) is _jpype._JProxy)
+            self.assertEqual(len(before), after)
+        finally:
+            del before
 
 
 @subrun.TestCase(individual=True)
@@ -704,4 +782,19 @@ class TestProxyDefinitionWithoutJVM(common.JPypeTestCase):
 
         startJVM()
         assert isinstance(MyImpl(), MyImpl)
-    
+
+    def testDeferredPreservesMetadata(self):
+        @JImplements("java.lang.Runnable", deferred=True)
+        class MyImpl(object):
+            """My deferred runnable."""
+            @JOverride
+            def run(self):
+                """Run docs."""
+                pass
+
+        self.assertEqual(MyImpl.__doc__, "My deferred runnable.")
+        self.assertEqual(MyImpl.__name__, "MyImpl")
+        self.assertEqual(MyImpl.__module__, __name__)
+        self.assertEqual(MyImpl.run.__name__, "run")
+        self.assertEqual(MyImpl.run.__doc__, "Run docs.")
+        self.assertEqual(MyImpl.run.__qualname__.split(".")[-1], "run")

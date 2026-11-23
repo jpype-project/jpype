@@ -1,0 +1,4 @@
+Fixed heap corruption when boxing large `JLong`/`JInt`/`JShort`/`JByte`/`JBoolean`
+values on Python 3.8-3.11, caused by a fixed-offset allocator layout
+assumption colliding with CPython's own implicit `__dict__` slot for
+variable-length int subclasses.

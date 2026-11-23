@@ -1,0 +1,7 @@
+Fixed a class/interface customizer (:obj:`@JImplementationFor <jpype.JImplementationFor>`) registered
+*after* its target already has instances silently dropping every
+earlier customizer's sticky methods and explicit ``__jclass_init__``
+hooks for any subclass created afterward - the retroactive-registration
+path overwrote the target's merged ``__jclass_init__`` outright
+instead of chaining onto it. Classes created before the later
+registration were unaffected, which is what made this easy to miss.

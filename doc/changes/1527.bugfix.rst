@@ -1,0 +1,8 @@
+Fixed a static varargs method called through an instance (for example
+``JString("x").format("%s|%s", "a", "b")``) packing its arguments into the
+wrong slots, and corrupting memory (usually crashing the interpreter) when
+the method's only parameter is the varargs array (for example
+``stream.of(x)``).  Such calls now resolve exactly as when made through the
+class; in particular ``x.join("-", ["a", "b"])`` is now reported as an
+ambiguous overload, like ``String.join("-", ["a", "b"])``, instead of
+silently picking ``join(CharSequence, Iterable)``.

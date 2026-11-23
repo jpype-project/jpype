@@ -32,10 +32,22 @@ Full process:
           Check the manylinux image for Linux
     - [ ] Update jpype/pyproject.toml `required-python` line to match the current builds.
     - [ ] Check patterns in .azure/scripts/build-wheels.sh
-    - [ ] Edit doc/CHANGELOG.rst
+    - [ ] Review the pending news fragments in doc/changes
+          ``towncrier build --draft --version next``
 - [ ] Create a release candidate
-    - [ ] Bump the version to release
-        ``bumpversion release``
+    - [ ] Assemble the changelog and bump the version to release, in one commit.
+        bumpversion reports the version it will bump to; towncrier writes
+        the changelog section for it and removes the fragments; bumpversion
+        then commits that together with the version bump::
+
+            V=$(bumpversion --dry-run --list release | sed -n 's/^new_version=//p')
+            towncrier build --yes --version "$V"
+            bumpversion --allow-dirty release
+
+        A pull request carrying this commit (e.g. merging the release back
+        into master) edits doc/CHANGELOG.rst, so it needs the
+        ``skip-changelog`` label to pass CI.  Other bumps do not touch the
+        changelog.
     - [ ] Send the release to be evaluated
         ``git push``
     - [ ] Verify CI on Azure  ([Azure](https://dev.azure.com/jpype-project/jpype/_build?definitionId=1))

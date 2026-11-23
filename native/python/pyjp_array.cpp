@@ -273,7 +273,11 @@ static void PyJPArray_releaseBuffer(PyJPArray *self, Py_buffer *view)
 	}
 	delete self->m_View;
 	self->m_View = nullptr;
-	JP_PY_CATCH(); // GCOVR_EXCL_LINE
+	// bf_releasebuffer returns void, so an error here cannot be reported.
+	// Leaving it set would make the next unrelated C call fail with
+	// "returned a result with an exception set".  Swallow it, as the
+	// deallocators do.
+	JP_PY_CATCH_NONE(); // GCOVR_EXCL_LINE
 }
 
 int PyJPArray_getBuffer(PyJPArray *self, Py_buffer *view, int flags)

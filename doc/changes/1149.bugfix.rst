@@ -1,0 +1,1 @@
+Fixed type mismatch in JavadocExtractor causing help() to fail on Java classes.

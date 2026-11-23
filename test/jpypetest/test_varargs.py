@@ -122,3 +122,61 @@ class VarArgsTestCase(common.JPypeTestCase):
         self.assertEqual(var.callString1("a"), 0)
         self.assertEqual(var.callString1("a", "b"), 1)
         self.assertEqual(var.callString1("a", "b", "c"), 2)
+
+    def testStaticVarArgsCalledOnInstance(self):
+        # A static varargs method called through an instance (#1527)
+        x = self.String("x")
+        self.assertEqual(self.String.format("%s|%s", "a", "b"), "a|b")
+        self.assertEqual(x.format("%s|%s", "a", "b"), "a|b")
+        self.assertEqual(x.format("%s", "a"), "a")
+        self.assertEqual(x.format("none"), "none")
+        self.assertEqual(x.join("-", "a", "b"), "a-b")
+        self.assertEqual(x.join("-", "a"), "a")
+
+    def testStaticVarArgsArrayCalledOnInstance(self):
+        # Passing the varargs array directly also has to work through an
+        # instance; the direct match looked at the wrong argument (#1527).
+        x = self.String("x")
+        CharSequence = jpype.JClass("java.lang.CharSequence")
+        self.assertEqual(x.format("%s|%s", self.ObjectA(["a", "b"])), "a|b")
+        self.assertEqual(x.join("-", jpype.JArray(CharSequence)(["a", "b"])),
+                         "a-b")
+
+    def testStaticVarArgsOnlyCalledOnInstance(self):
+        # A static method whose only parameter is varargs, called through an
+        # instance, wrote the varargs array before the start of the packed
+        # argument vector in packArgs and corrupted the heap, with any
+        # number of arguments (#1527).
+        Stream = jpype.JClass("java.util.stream.Stream")
+        self.assertEqual(list(Stream.empty().of(1).toArray()), [1])
+        result = self.VarArgs().call(self.Object())
+        self.assertEqual(len(result), 1)
+        self.assertEqual(list(self.VarArgs().callString("a")), ["a"])
+        self.assertEqual(len(self.VarArgs().call()), 0)
+
+    def testStaticVarArgsCalledOnInstanceMatchesClass(self):
+        # Overload resolution through an instance has to give the same
+        # result as through the class (#1527).
+        x = self.String("x")
+        with self.assertRaisesRegex(TypeError, "Ambiguous"):
+            self.String.join("-", ["a", "b"])
+        with self.assertRaisesRegex(TypeError, "Ambiguous"):
+            x.join("-", ["a", "b"])
+        List = jpype.JClass("java.util.List")
+        self.assertEqual(x.join("-", List.of("a", "b")), "a-b")
+
+    def testStaticVarArgsTwoFixedCalledOnInstance(self):
+        # Two fixed parameters before the varargs (#1527).
+        Locale = jpype.JClass("java.util.Locale")
+        x = self.String("x")
+        self.assertEqual(x.format(Locale.US, "%s|%s", "a", "b"), "a|b")
+        self.assertEqual(x.format(Locale.US, "%.1f", 1.25), "1.3")
+
+    def testStaticPrimitiveVarArgsCalledOnInstance(self):
+        # Primitive varargs through an instance (#1527).
+        IntStream = jpype.JClass("java.util.stream.IntStream")
+        s = IntStream.empty()
+        self.assertEqual(list(s.of(1, 2, 3).toArray()), [1, 2, 3])
+        self.assertEqual(list(s.of(7).toArray()), [7])
+        self.assertEqual(list(s.of(jpype.JArray(jpype.JInt)([4, 5])).toArray()),
+                         [4, 5])

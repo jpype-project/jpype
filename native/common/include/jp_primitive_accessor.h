@@ -102,6 +102,24 @@ template <class type_t> PyObject *convertMultiArray(
 		return nullptr;
 	}
 
+	// An empty buffer has nothing to copy, and the copy loop below always
+	// reads the first row.  Array.newInstance builds the right shape, for
+	// example int[0][3] or int[2][0][3].
+	if (view.shape != nullptr)
+	{
+		for (int i = 0; i < view.ndim; ++i)
+		{
+			if (view.shape[i] == 0)
+			{
+				jobject empty = frame.newArrayInstance(cls->getJavaClass(), (jintArray) dims);
+				JPClass *emptyType = frame.findClassForObject(empty);
+				jvalue ev;
+				ev.l = empty;
+				return emptyType->convertToPythonObject(frame, ev, false).keep();
+			}
+		}
+	}
+
 	// Reserve space for array.
 	auto contents = (jobjectArray) context->_java_lang_Object->newArrayOf(frame, subs);
 	std::vector<Py_ssize_t> indices(view.ndim);
@@ -136,10 +154,15 @@ template <class type_t> PyObject *convertMultiArray(
 					break;
 				indices[u - j - 1] = 0;
 			}
-			// Commit the current section
+			// Commit the current section.  Mode 0, not JNI_COMMIT: JNI_COMMIT
+			// copies back but does not release, so the critical region is
+			// never left.  ART only re-enables its moving GC on release
+			// (mode != JNI_COMMIT), so each call blocked the next GC forever
+			// and deadlocked the thread; on JVMs that return a copy it leaked
+			// the copy.  HotSpot ignores the mode here.
 			indices[u] = 0;
 			JP_TRACE_JAVA("ReleasePrimitiveArrayCritical", mem);
-			frame.getEnv()->ReleasePrimitiveArrayCritical(a0, mem, JNI_COMMIT);
+			frame.getEnv()->ReleasePrimitiveArrayCritical(a0, mem, 0);
 			frame.DeleteLocalRef(a0);
 
 			// If we hit the shape of the uppermost we are done

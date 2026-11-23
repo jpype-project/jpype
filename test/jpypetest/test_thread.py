@@ -24,7 +24,7 @@ from jpype.imports import *
 
 class ThreadTestCase(common.JPypeTestCase):
 
-    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+    @pytest.mark.filterwarnings("ignore::jpype.JPypeDeprecationWarning")
     def testAttach(self):
         # Make sure we are attached to start the test
         jpype.attachThreadToJVM()
@@ -69,7 +69,7 @@ class ThreadTestCase(common.JPypeTestCase):
         finally:
             java.lang.Thread.attachAsDaemon()
 
-    @pytest.mark.filterwarnings("ignore::DeprecationWarning")
+    @pytest.mark.filterwarnings("ignore::jpype.JPypeDeprecationWarning")
     def testAttachTwiceRegistersAutoDetachOnce(self):
         # Attaching an already-attached thread a second time without an
         # intervening detach must not re-register the auto-detach TLS
@@ -151,3 +151,43 @@ class ThreadTestCase(common.JPypeTestCase):
         # auto-attached, explicitly detached, and exited (each exit
         # running the now-inert auto-detach destructor).
         self.assertEqual(str(jpype.JString("still alive")), "still alive")
+
+    def testJavaThreadCallbackDoesNotLeakTypes(self):
+        # Each callback from a Java thread runs on a fresh Python thread
+        # state.  Allocating Java-backed objects there must not leave a heap
+        # type behind per callback (#1576).
+        import gc
+        from java.lang import Object
+        from java.util import ArrayList
+        from java.util.concurrent import Executors
+
+        @jpype.JImplements("java.util.concurrent.Callable")
+        class Task:
+            @jpype.JOverride
+            def call(self):
+                Object()
+                jpype.JString("a")
+                jpype.JArray(jpype.JInt)(1)
+                return None
+
+        def run(n):
+            tasks = ArrayList()
+            task = Task()
+            for _ in range(n):
+                tasks.add(task)
+            for future in executor.invokeAll(tasks):
+                future.get()
+
+        def countTypes():
+            gc.collect()
+            return sum(1 for o in gc.get_objects() if isinstance(o, type))
+
+        executor = Executors.newSingleThreadExecutor()
+        try:
+            run(10)  # warm up caches and lazily created classes
+            before = countTypes()
+            n = 500
+            run(n)
+            self.assertLess(countTypes() - before, n // 10)
+        finally:
+            executor.shutdown()

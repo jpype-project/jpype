@@ -1,0 +1,6 @@
+Refactored internal exception handling: replaced the single
+``JPypeException`` tag-plus-union class with distinct C++ types per
+exception origin (``JPJavaError``, ``JPPythonError``,
+``JPInternalError``), so each type only carries the payload valid for
+it instead of relying on convention. No user-facing behavior change;
+done to prevent future bugs of the class fixed by #1415.

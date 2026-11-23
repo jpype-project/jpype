@@ -1,0 +1,1 @@
+Improved implicit conversion from Python primitives to Java boxed types (Integer, Long, Short, Double, Float).
