@@ -38,13 +38,9 @@ extensions = ['sphinx.ext.napoleon',
 ]
 
 # Lets :obj:`TypeError` and the like (used in the changelog) link to the
-# Python documentation.  The inventory is read from a copy in the repository
-# so the build needs no network access and cannot fail on a download (the
-# remote one is only a fallback).  Refresh it now and then with
-#   curl -o doc/intersphinx/python3.inv https://docs.python.org/3/objects.inv
-intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', ('intersphinx/python3.inv', None)),
-}
+# Python documentation.  Sphinx keeps the downloaded inventory in the build
+# environment and reuses it for intersphinx_cache_limit days (default 5).
+intersphinx_mapping = {'python': ('https://docs.python.org/3', None)}
 
 autosectionlabel_prefix_document = True
 
@@ -388,7 +384,10 @@ napoleon_custom_sections = ["Static Methods", "Virtual Methods", "Constructors"]
 # are a package (``java.lang.management``), a method without arguments
 # (``java.sql.PreparedStatement.getParameterMetaData()``, linked to its
 # anchor) and the explicit-title form :jobj:`DriverManager <java.sql.DriverManager>`.
-JAVADOC = 'https://docs.oracle.com/en/java/javase/21/docs/api/'
+# The Javadoc linked is that of the latest Java LTS release.  Raise it when a
+# new LTS is out (every two years, in September: 25 in 2025, 29 in 2027).
+JAVADOC_VERSION = 25
+JAVADOC = f'https://docs.oracle.com/en/java/javase/{JAVADOC_VERSION}/docs/api/'
 # Module of a package, by longest matching prefix; everything else is java.base.
 JAVA_MODULES = {
     'java.sql': 'java.sql',
