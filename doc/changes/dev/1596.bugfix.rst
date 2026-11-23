@@ -1,0 +1,2 @@
+The subprocess test runner now reports the child's real exception, a crash
+(with exit code) or a hang, instead of a generic timeout after 20 seconds.

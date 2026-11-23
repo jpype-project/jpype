@@ -1,0 +1,8 @@
+:obj:`JBoolean <jpype.JBoolean>`/:obj:`JByte <jpype.JByte>`/:obj:`JChar <jpype.JChar>`/:obj:`JInt <jpype.JInt>`/:obj:`JShort <jpype.JShort>`/:obj:`JLong <jpype.JLong>`/:obj:`JFloat <jpype.JFloat>`/
+:obj:`JDouble <jpype.JDouble>` are no longer tracked by the cyclic garbage collector. They
+were previously declared as ordinary Python ``class`` statements, which
+unconditionally pick up GC tracking from CPython even when none of these
+types can ever hold an arbitrary Python reference or participate in a
+reference cycle; every boxed array element pulled into Python paid for
+that bookkeeping on allocation and deallocation for no benefit. No
+user-visible API change.

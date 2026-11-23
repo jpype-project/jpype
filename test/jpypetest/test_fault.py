@@ -63,17 +63,15 @@ class FaultTestCase(common.JPypeTestCase):
         with self.assertRaisesRegex(SystemError, "fault"):
             JArray(JInt)(5)
 
-    # FIXME investigate why the release is not happening
-    # may indicate a leak. Disabling for now
-    @common.unittest.SkipTest  # type: ignore
+    @common.requireInstrumentation
     def testJPArray_releaseBuffer(self):
-        _jpype.fault("PyJPArray_releaseBuffer")
-
-        def f():
-            ja = JArray(JInt)(5)
-            m = memoryview(ja)
-        with self.assertRaises(SystemError):
-            f()
+        # Releasing a buffer cannot report an error, so the fault must be
+        # swallowed rather than left pending for the next C call.
+        ja = JArray(JInt)(5)
+        m = memoryview(ja)
+        _jpype.fault("PyJPArrayPrimitive_releaseBuffer")
+        m.release()
+        self.assertEqual(len(JArray(JInt)(1)), 1)
 
     @common.requireInstrumentation
     def testJPObject_null(self):
@@ -339,30 +337,12 @@ class FaultTestCase(common.JPypeTestCase):
         _jpype.fault("PyJPProxy_new")
         with self.assertRaisesRegex(SystemError, "fault"):
             JProxy("java.io.Serializable", dict={})
-# Disable for now.   Need to work through the proxy changes
-#        with self.assertRaises(TypeError):
-#            _jpype._JProxy(None, None)
-#        with self.assertRaises(TypeError):
-#            _jpype._JProxy(None, [])
-#        with self.assertRaises(TypeError):
-#            _jpype._JProxy(None, [type])
-#        _jpype.fault("JPProxy::JPProxy")
-#        with self.assertRaises(SystemError):
-#            _jpype._JProxy(None, [JClass("java.io.Serializable")])
-#        _jpype._JProxy(None, [JClass("java.io.Serializable")])
-
-    # FIXME this needs special treatment. It should call __str__()
-    # if toString is not defined.  Disable for now.
-    @common.unittest.SkipTest  # type: ignore[arg-type]
-    def testJPProxy_str(self):
-        # Java has a hidden requirement that toString be available
-        @JImplements("java.util.function.DoubleUnaryOperator")
-        class f(object):
-            @JOverride
-            def applyAsDouble(self, d):
-                return d
-        jo = JObject(f(), "java.util.function.DoubleUnaryOperator")
-        raise RuntimeError(jo.toString())
+        # Argument errors are covered by test_proxy.testInternal.
+        serializable = JClass("java.io.Serializable")
+        _jpype.fault("JPProxy::JPProxy")
+        with self.assertRaisesRegex(SystemError, "fault"):
+            _jpype._JProxy(None, None, [serializable])
+        _jpype._JProxy(None, None, [serializable])
 
     @common.requireInstrumentation
     def testJPProxy_dealloc(self):
@@ -537,16 +517,13 @@ class FaultTestCase(common.JPypeTestCase):
             i = jfi.object_field
         self.assertEqual(i, None)
 
-    # FIXME this test triggers the wrong fault which normally
-    # indicates a problem in the exception handling path.
-    # AssertionError: "fault" does not match "NULL context in JPRef()
-    # Disabling for now.
-    @common.unittest.SkipTest  # type: ignore[arg-type]
     @common.requireInstrumentation
     def testJPTypeManagerFindClass(self):
         ja = JArray(JInt, 2)([[1, 1], [1, 1]])
         _jpype.fault("JPTypeManager::findClass")
-        with self.assertRaisesRegex(SystemError, "fault"):
+        # A buffer export may only raise BufferError, so the fault is
+        # reported as one.
+        with self.assertRaises(BufferError):
             memoryview(ja)
         _jpype.fault("JPTypeManager::findClassByName")
         with self.assertRaisesRegex(SystemError, "fault"):

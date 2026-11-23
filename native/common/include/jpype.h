@@ -91,7 +91,9 @@ extern int PyJPModuleFault_check(uint32_t code);
 #define JP_BLOCK(X)  if (PyJPModuleFault_check(compile_hash(X))==0)
 #else
 #define JP_FAULT_RETURN(X, Y)  if (false) while (false)
-#define JP_BLOCK(X)  if (false) while (false)
+// Without instrumentation there is no fault to skip the block, so it always
+// runs.  (It must not be dead code: it guards real checks.)
+#define JP_BLOCK(X)  if (true)
 #endif
 
 /** Definition of commonly used template types */

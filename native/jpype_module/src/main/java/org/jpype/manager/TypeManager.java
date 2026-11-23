@@ -128,7 +128,10 @@ public class TypeManager
       return 0;
 
     long out;
-    if (cls.isSynthetic() && cls.getSimpleName().contains("$Lambda$"))
+    // Lambda classes are named Outer$$Lambda$N/0x... up to JDK 20 and
+    // Outer$$Lambda/0x... from JDK 21, so only match the common "$$Lambda".
+    if (cls.isSynthetic() && cls.getName().contains("$$Lambda")
+            && cls.getInterfaces().length > 0)
     {
       // If is it lambda, we need a special wrapper
       // we don't want to create a class each time in that case.
@@ -237,22 +240,18 @@ public class TypeManager
       {
         sb.append(".");
         sb.append(parts[i]);
-        // The 1-arg Class.forName forces a full class load (runs static
-        // initializers) as a needed side effect before the nested-class
-        // scan below can proceed correctly - the returned Class<?> itself
-        // is not what's needed here, and neither is the exception path
-        // alone. Do not "simplify" this to a bare Class.forName(...) call:
-        // this exact line has been caught between two static checkers
-        // before - one flags the unused variable, the other flags a call
-        // whose result isn't captured. Suppressed, not fixed, deliberately.
-        // codeql[java/local-variable-is-never-read]
-        Class<?> cls = Class.forName(sb.toString());
+        // Probe whether the prefix names a class; a ClassNotFoundException
+        // moves on to the next, longer prefix. The JPype class loader must
+        // be named explicitly: the one-argument form only searches the
+        // system loader, so classes added with addClassPath() after startup
+        // would not be found.
+        Class.forName(sb.toString(), true, classLoader);
         for (int j = i + 1; j < parts.length; ++j)
         {
           sb.append("$");
           sb.append(parts[j]);
         }
-        return Class.forName(sb.toString());
+        return Class.forName(sb.toString(), true, classLoader);
       } catch (ClassNotFoundException ex)
       {
       }

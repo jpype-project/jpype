@@ -1,0 +1,8 @@
+Fixed a reference leak when implicitly converting a plain Python
+callable (a function, lambda, or bound method) to a Java functional
+interface -- e.g. ``JObject(lambda x: x, "java.util.function.
+Function")``, or passing a plain callable where Java code expects a
+functional interface. If the underlying Java-side proxy construction
+failed for any reason, the Python callable's refcount was left
+permanently incremented with no way to release it. Same underlying
+cause and fix technique as the proxy-creation leak below.

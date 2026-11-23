@@ -42,12 +42,29 @@ __all__ = [
     'isJVMStarted', 'startJVM', 'shutdownJVM',
     'getDefaultJVMPath', 'getJVMVersion', 'isThreadAttachedToJVM', 'attachThreadToJVM',
     'detachThreadFromJVM', 'synchronized',
-    'JVMNotFoundException', 'JVMNotSupportedException', 'JVMNotRunning'
+    'JVMNotFoundException', 'JVMNotSupportedException', 'JVMNotRunning',
+    'JPypeDeprecationWarning'
 ]
 
 
 class JVMNotRunning(RuntimeError):
     pass
+
+
+class JPypeDeprecationWarning(FutureWarning):
+    """ Warns about a JPype feature that will be removed or will change.
+
+    It derives from ``FutureWarning`` rather than ``DeprecationWarning``, so
+    Python shows it by default, also when JPype is called from inside a
+    library.  The default filter ``ignore::DeprecationWarning`` would hide a
+    ``DeprecationWarning`` subclass.
+
+    It is caught by ``pytest.deprecated_call()`` and by filters on
+    ``FutureWarning``.  To silence only JPype's deprecations::
+
+        import warnings
+        warnings.filterwarnings("ignore", category=jpype.JPypeDeprecationWarning)
+    """
 
 def _register_jedi():
     # Activate jedi tab completion
@@ -83,13 +100,13 @@ if typing.TYPE_CHECKING:
 def deprecated(*args):
     """ Marks a function a deprecated when used as decorator.
 
-    Be sure to start python with -Wd to see warnings.
+    The first call warns with :class:`JPypeDeprecationWarning`.
     """
     def func2(*args, **kwargs):
         import warnings
         if not func2._warned:
             warnings.warn(func2._warning % (func2._real.__module__, func2._real.__name__),
-                          category=DeprecationWarning, stacklevel=2)
+                          category=JPypeDeprecationWarning, stacklevel=2)
         func2._warned = True
         return func2._real(*args, **kwargs)
 
@@ -633,3 +650,4 @@ class _JRuntime(object):
 
 
 _jpype.JVMNotRunning = JVMNotRunning
+_jpype.JPypeDeprecationWarning = JPypeDeprecationWarning

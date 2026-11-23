@@ -1,0 +1,5 @@
+:obj:`jpype.dbapi2`'s :obj:`Cursor.description <jpype.dbapi2.Cursor.description>` now returns each column's
+``AS`` alias when the query specified one, instead of always the
+underlying table column name -- matching PEP 249 ("the name or alias
+of the column") by using :jobj:`ResultSetMetaData.getColumnLabel() <java.sql.ResultSetMetaData>`
+instead of :jobj:`getColumnName() <java.sql.ResultSetMetaData>`.

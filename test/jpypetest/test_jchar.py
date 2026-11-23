@@ -499,3 +499,55 @@ class JCharTestCase_2(common.JPypeTestCase):
         self.assertEqual(1 & JChar("x"), 0)
         self.assertEqual(JChar("x") | 1, 121)
         self.assertEqual(1 | JChar("x"), 121)
+
+    def testArithmeticWithNonCharJavaOperand(self):
+        Integer = jpype.JClass("java.lang.Integer")
+        # The other operand must not be read as a char just because it is a
+        # Java value.
+        c = JChar('a')
+        self.assertEqual(c + Integer(7), 104)
+        self.assertEqual(Integer(7) + c, 104)
+        self.assertEqual(c * JDouble(2.0), 194.0)
+        self.assertEqual(c - JInt(7), 90)
+        self.assertEqual(c & JInt(0x0f), 1)
+        for op in (lambda a, b: a + b, lambda a, b: b + a,
+                   lambda a, b: a - b, lambda a, b: a * b):
+            with self.assertRaises(TypeError):
+                op(c, JString('xyz'))
+        self.assertEqual(c + JChar('b'), 97 + 98)
+
+    def testReflectedArithmeticWithNonCharJavaOperand(self):
+        # A non-char Java value on the left takes apply()'s reflected branch.
+        Integer = jpype.JClass("java.lang.Integer")
+        c = JChar('a')
+        self.assertEqual(JInt(100) - c, 3)
+        self.assertEqual(JDouble(2.0) * c, 194.0)
+        self.assertEqual(Integer(7) & c, 1)
+        self.assertEqual(Integer(7) | c, 103)
+
+    def testBoxedCharWithNonCharJavaOperand(self):
+        Character = jpype.JClass("java.lang.Character")
+        Integer = jpype.JClass("java.lang.Integer")
+        bc = Character('a')
+        self.assertEqual(bc + Integer(7), 104)
+        self.assertEqual(Integer(7) + bc, 104)
+        self.assertEqual(bc - JInt(7), 90)
+        self.assertEqual(JInt(100) - bc, 3)
+
+    def testNullNonCharJavaOperand(self):
+        # A null Java number must raise, not be treated as 0.
+        c = JChar('a')
+        nulls = [jpype.JObject(None, jpype.JClass(name)) for name in (
+            "java.lang.Integer", "java.lang.Long", "java.lang.Double",
+            "java.lang.Boolean")]
+        ops = (lambda a, b: a + b, lambda a, b: a - b, lambda a, b: a * b,
+               lambda a, b: a // b, divmod, lambda a, b: a & b,
+               lambda a, b: a | b, lambda a, b: a ^ b,
+               lambda a, b: a << b, lambda a, b: a >> b)
+        for null in nulls:
+            for op in ops:
+                with self.subTest(null=type(null).__name__, op=op):
+                    with self.assertRaises(TypeError):
+                        op(c, null)
+                    with self.assertRaises(TypeError):
+                        op(null, c)

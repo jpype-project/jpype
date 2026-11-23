@@ -1,0 +1,9 @@
+Fixed a native reference-count leak in ``PyJPProxy_dealloc``: every
+:obj:`@JImplements <jpype.JImplements>`-decorated class is a CPython heap type, and instance
+creation implicitly holds a reference on it that must be released on
+deallocation. That release was missing, so any code defining an
+:obj:`@JImplements <jpype.JImplements>` class inside a loop (a fresh callback class per
+iteration, or a factory function) permanently leaked one class object
+per call. Found via a new leak-detection sweep harness
+(``test/jpypetest/leaksweep.py``, run via ``make -f project/dev.mk
+leak-sweep``).

@@ -1,0 +1,9 @@
+Fixed a leaked and broken synthetic traceback chain when converting a
+Java exception's stack trace to Python: ``tb_create()`` built one
+traceback frame per Java stack-trace element but always linked
+``tb_next`` to :obj:`None` instead of the previous frame, so only the
+innermost frame was ever visible on ``.__traceback__.tb_next`` and
+every earlier frame's traceback+frame object pair leaked outright.
+Java exceptions raised into Python now expose their full stack trace
+via the normal traceback chain, and no longer leak. Found via the
+same leak-detection sweep harness.

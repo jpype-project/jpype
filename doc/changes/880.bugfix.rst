@@ -1,0 +1,1 @@
+Fixed annotation and interface methods using incorrect JNI call type.

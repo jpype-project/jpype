@@ -26,7 +26,7 @@ Source Install
 Installing from source requires:
 
 Python
-  JPype works CPython 3.5 or later. Both the runtime and the development
+  JPype works with CPython 3.8 or later. Both the runtime and the development
   package are required.
 
 Java
@@ -149,19 +149,19 @@ Windows
 :::::::
 
 CPython modules must be built with the same C++ compiler used to build Python.
-The tools listed below work for Python 3.5 to 3.8.  Check with `Python dev guide
+The tools listed below work for Python 3.8 and later.  Check with `Python dev guide
 <https://devguide.python.org/setup/>`_ for the latest instructions.
 
-1. Install your desired version of Python (3.5 or higher), e.g., `Miniconda
+1. Install your desired version of Python (3.8 or higher), e.g., `Miniconda
    <https://docs.conda.io/en/latest/miniconda.html#windows-installers>`_ is a good choice for users not yet
    familiar with the language
-2. For Python 3 series, Install either 2017 or 2019 Visual Studio.
-   `Microsoft Visual Studio 2019 Community Edition
-   <https://visualstudio.microsoft.com/downloads/>`_ is known to work.
+2. Install Visual Studio 2017 or later.  `Microsoft Visual Studio Community
+   Edition <https://visualstudio.microsoft.com/downloads/>`_ is known to work;
+   the JPype CI builds with Visual Studio 2022.
 
 From the Python developer page: 
 
-   When installing Visual Studio 2019, select the Python development workload and
+   When installing Visual Studio, select the Python development workload and
    the optional Python native development tools component to obtain all of the
    necessary build tools. If you do not already have git installed, you can find
    git for Windows on the Individual components tab of the installer.

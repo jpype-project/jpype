@@ -1,0 +1,7 @@
+:obj:`jpype.dbapi2` now converts ``TIME_WITH_TIMEZONE``/
+``TIMESTAMP_WITH_TIMEZONE`` columns to timezone-aware
+:obj:`datetime.time`/:obj:`datetime.datetime` by default when the driver
+returns the JDK-standard :jobj:`java.time.OffsetTime`/:jobj:`OffsetDateTime <java.time.OffsetDateTime>`
+representation; previously these always leaked the raw,
+driver-specific Java object through unconverted, even with default
+converters active.
