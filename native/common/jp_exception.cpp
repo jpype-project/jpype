@@ -156,6 +156,13 @@ void convertPythonToJava(const char* mesg)
 		if (PyJPValue_getJPClass(eframe.m_ExceptionValue.get()) != nullptr)
 		{
 			th = (jthrowable) PyJPValue_getJValue(frame, eframe.m_ExceptionValue.get()).l;
+			if (th == nullptr)
+			{
+				// "throw null" is a NullPointerException in Java too.
+				frame.ThrowNew(frame.FindClass("java/lang/NullPointerException"),
+						"Cannot throw a null exception");
+				return;
+			}
 			JP_TRACE("Throwing Java", frame.toString(th));
 			frame.Throw(th);
 			return;
