@@ -34,6 +34,51 @@ class HtmlTestCase(common.JPypeTestCase):
             self.assertEqual(len(u), 1)
             self.assertEqual(ord(u[0][0]), v)
 
+    def testEntitiesAdjacent(self):
+        html = JClass("org.jpype.html.Html")
+        for text, expected in [("&lt;&gt;", "<>"),
+                               ("{@code a &amp;&amp; b}", "{@code a && b}"),
+                               ("Map&lt;String, List&lt;String&gt;&gt;",
+                                "Map<String, List<String>>"),
+                               ("x &lt;&lt; 2", "x << 2"),
+                               ("&#65;&#66;&#x43;", "ABC")]:
+            self.assertEqual(str(html.decode(text)), expected)
+
+    def testEntitiesMalformed(self):
+        # Documentation text must never lose its docstring to a decode error;
+        # anything that is not a well formed entity is left as written.
+        html = JClass("org.jpype.html.Html")
+        for text in ["AT&T", "a & b", "trailing &", "&unknown;", "&;",
+                     "&#;", "&#xZZ;", "R&D; &", "&amp"]:
+            self.assertEqual(str(html.decode(text)), text)
+
+    def testEntitiesNumeric(self):
+        html = JClass("org.jpype.html.Html")
+        # Above the BMP: one code point (a surrogate pair in Java)
+        self.assertEqual(str(html.decode("&#128512;")), "\U0001F600")
+        self.assertEqual(str(html.decode("&#x1F600;")), "\U0001F600")
+        # NUL, lone surrogates and out-of-range become U+FFFD
+        for ref in ["&#0;", "&#xD800;", "&#1114112;", "&#99999999999999;"]:
+            self.assertEqual(str(html.decode("x" + ref + "y")), "x\ufffdy")
+        # Missing semicolon on a numeric reference is tolerated
+        self.assertEqual(str(html.decode("&#65 b")), "A b")
+
+    def testRendererLongFirstWord(self):
+        # A first word longer than the line width must not lose its first
+        # character to a line break.
+        R = JClass("org.jpype.javadoc.JavadocRenderer")
+        m = R.class_.getDeclaredMethod(
+            "formatWidth", java.lang.StringBuilder, java.lang.String,
+            java.lang.Integer.TYPE, java.lang.Integer.TYPE, java.lang.Boolean.TYPE)
+        m.setAccessible(True)
+        word = "A" * 130
+        sb = java.lang.StringBuilder()
+        m.invoke(None, sb, word + " tail", java.lang.Integer(120),
+                 java.lang.Integer(0), java.lang.Boolean(False))
+        out = str(sb.toString())
+        self.assertTrue(out.startswith(word), out[:20])
+        self.assertIn("tail", out)
+
     def testClass(self):
         JC = jpype.JClass("jpype.doc.Test")
         jd = JC.__doc__

@@ -398,7 +398,9 @@ public class JavadocRenderer
       for (next = prev + 1; next < l; ++next)
         if (b[next] == ' ')
           break;
-      if (next - start > width)
+      // prev == start means no earlier break point in this line: let a word
+      // longer than the width overflow rather than overwrite its first byte.
+      if (next - start > width && prev > start)
       {
         b[prev] = '\n';
         if (flag)
