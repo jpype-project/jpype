@@ -1,3 +1,0 @@
-Fixed a rare crash where Python's cyclic garbage collector firing
-while a Python exception was mid-unwind through the reverse-bridge
-C++ layer could corrupt the in-flight exception.

@@ -1,3 +1,0 @@
-Fixed classpath directories/jars containing a "+" character having it
-silently converted to a space on import, corrupting the resolved
-resource path.

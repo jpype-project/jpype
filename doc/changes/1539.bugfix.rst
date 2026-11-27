@@ -1,3 +1,0 @@
-Fixed ``_jpype._JProxy.__new__`` leaking the proxy object on every
-argument error.  The object is now allocated only after the arguments
-have been validated.

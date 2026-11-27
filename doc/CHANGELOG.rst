@@ -7,6 +7,510 @@ Latest Changes:
 
 .. towncrier release notes start
 
+- **1.7.2 - 2026-11-27**
+
+  - Features
+
+    - Added fallback conversion path for JArray.of() to support non-primitive types like JString, enabling conversion of numpy string arrays. (`#953 <https://github.com/jpype-project/jpype/issues/953>`__)
+
+    - Improved implicit conversion from Python primitives to Java boxed types (Integer, Long, Short, Double, Float). (`#1098 <https://github.com/jpype-project/jpype/issues/1098>`__)
+
+    - JPype now runs end-to-end on Android for the first time, verified via a
+      new project-local build/test harness (``project/android/``, see
+      ``doc/android_build.rst``) that cross-compiles ``_jpype`` for Android,
+      packages it into a minimal app, and runs it on an emulator. Getting
+      there required fixing seven real bugs, all in shared ``native/``,
+      ``native/jpype_module/``, or ``jpype/`` sources (not worked around in
+      the harness):
+
+      - ``PyJPModule_bootstrap()`` (the Android entry point) was missing the
+        exception-handling wrapper (``JP_PY_TRY``/``JP_PY_CATCH``) present on
+        every other module entry point, so a failure inside it threw a C++
+        exception straight across the C-linkage boundary into CPython
+        instead of becoming a catchable Python exception - an
+        uncaught-exception abort (``SIGABRT``) instead of a normal error.
+        This is #1257 itself.
+      - ``AttachCurrentThread``/``AttachCurrentThreadAsDaemon`` used a cast
+        correct for desktop JNI headers but incompatible with Android's NDK
+        ``jni.h``, which declares the same functions with a different
+        parameter type - native/ didn't even compile against the NDK
+        without this.
+      - Two ``native/jpype_module`` Java sources
+        (``JPypeContext.getHeapMemory()``, ``JPypeUtilities``'s sealed-class
+        detection) used :jobj:`java.lang.management`/:jobj:`MethodHandleProxies <java.lang.invoke.MethodHandleProxies>`,
+        neither available on Android's platform API - replaced with portable
+        equivalents that work identically on desktop and Android.
+      - A required Java source file (``Reflector0``, used to get a
+        correctly-shaped Java stack frame for invoking caller-sensitive
+        methods) was missing from the Android build entirely, since it lives
+        outside the source tree JPype's own build normally compiles from.
+      - :jobj:`ClassLoader.getSystemClassLoader() <java.lang.ClassLoader.getSystemClassLoader()>` - used to work around JPMS
+        module-boundary restrictions during JPype's late class-loading on a
+        desktop JVM launch - returns a stub on Android that can't see the
+        app's own classes at all, unlike desktop where JPype's own JVM launch
+        flags make it work. Fixed Android-only; an earlier unconditional
+        attempt at this same fix regressed two desktop tests.
+      - The Android bootstrap path never marked the native context as
+        running, so every Java call immediately after a successful bootstrap
+        failed with a spurious "JVM is not running" error.
+      - An :obj:`atexit` shutdown hook assumed a function Android never
+        registers, producing a harmless but noisy ignored exception on every
+        process exit. (`#1257 <https://github.com/jpype-project/jpype/issues/1257>`__)
+
+    - :obj:`jpype.dbapi2` closes out several long-standing TODO items:
+      added :obj:`Connection.isolation_level <jpype.dbapi2.Connection.isolation_level>` (an extension property wrapping
+      :jobj:`java.sql.Connection.get/setTransactionIsolation() <java.sql.Connection>`, with new
+      ``TRANSACTION_NONE``/``TRANSACTION_READ_UNCOMMITTED``/
+      ``TRANSACTION_READ_COMMITTED``/``TRANSACTION_REPEATABLE_READ``/
+      ``TRANSACTION_SERIALIZABLE`` constants) and a default adapter for
+      :obj:`decimal.Decimal` parameters (adapted into :jobj:`java.math.BigDecimal`,
+      matching the existing read-side ``getBigDecimal`` -> :obj:`decimal.Decimal`
+      converter -- previously passing a plain :obj:`decimal.Decimal` as a query
+      parameter raised ``InterfaceError: no setter found for 'Decimal'``).
+      Also removed dead/unreachable code in the non-batch ``executemany()``
+      fallback path. (`#1491 <https://github.com/jpype-project/jpype/issues/1491>`__)
+
+    - Added Python 3.15 to the test and release matrix. (`#1492 <https://github.com/jpype-project/jpype/issues/1492>`__)
+
+    - Added :obj:`jpype.JPypeDeprecationWarning`, the category for JPype deprecations.  It derives from :obj:`FutureWarning` so that it is shown by default, also when JPype is called from inside a library; :obj:`DeprecationWarning` is hidden there.  The existing deprecations (``attachThreadToJVM``, ``detachThreadFromJVM``, ``isThreadAttachedToJVM``, and :obj:`JObject <jpype.JObject>` with a Python type) now use it and are therefore visible.  Silence only JPype's deprecations with ``warnings.filterwarnings("ignore", category=jpype.JPypeDeprecationWarning)``. (`#1599 <https://github.com/jpype-project/jpype/issues/1599>`__)
+
+  - Bug fixes
+
+    - Fixed ambiguous overload resolution for bytearray between byte[] and char[]. (`#598 <https://github.com/jpype-project/jpype/issues/598>`__)
+
+    - Fixed overloaded methods from multiple interfaces not being detected. (`#844 <https://github.com/jpype-project/jpype/issues/844>`__)
+
+    - Fixed JArray constructor ignoring slice bounds when creating from sliced array. (`#845 <https://github.com/jpype-project/jpype/issues/845>`__)
+
+    - Fixed annotation and interface methods using incorrect JNI call type. (`#880 <https://github.com/jpype-project/jpype/issues/880>`__)
+
+    - Added jdk.zipfs module dependency to module-info for proper jlink/jdeps detection. (`#908 <https://github.com/jpype-project/jpype/issues/908>`__)
+
+    - Fixed :obj:`jpype.addClassPath() <jpype.addClassPath>` called after :obj:`startJVM() <jpype.startJVM>` not being
+      picked up by :jobj:`java.sql.DriverManager`: unlike an ordinary
+      :jobj:`ServiceLoader <java.util.ServiceLoader>` consumer, :jobj:`DriverManager <java.sql.DriverManager>` scans
+      ``META-INF/services/java.sql.Driver`` providers exactly once, the first
+      time it is touched, and never rescans, so a JDBC driver jar added to the
+      classpath afterward was otherwise invisible even though the class
+      itself loaded fine. JPype's classloader now force-initializes any
+      driver listed in a newly added jar's ``META-INF/services/java.sql.Driver``
+      so its self-registering static initializer runs, matching what
+      :jobj:`DriverManager <java.sql.DriverManager>` would have seen had the jar been present from the
+      start. (`#914 <https://github.com/jpype-project/jpype/issues/914>`__)
+
+    - Fixed Javadoc extraction (:obj:`help() <help>`/``__doc__`` on Java classes) being
+      silently broken on JDK 17+: an unhandled ``<wbr>`` tag (used by JDK 21+'s
+      javadoc output to hint line-wraps in long signatures) crashed extraction
+      outright, and a ``https:`` typo in the external-link check caused every
+      reference to a JDK platform class to render as a mangled path instead of
+      a clean link, since JDK 12+ auto-links platform classes to
+      https://docs.oracle.com even without an explicit ``-link`` argument.
+      Also fixed a related double-rendering bug for ``<a><code>...</code></a>``
+      links exposed by the above fix. (`#963 <https://github.com/jpype-project/jpype/issues/963>`__, `#1116 <https://github.com/jpype-project/jpype/issues/1116>`__)
+
+    - Fixed type mismatch in JavadocExtractor causing help() to fail on Java classes. (`#1149 <https://github.com/jpype-project/jpype/issues/1149>`__)
+
+    - Fixed ``_jpype._JClass.__doc__``/``_jpype._JMethod.__doc__`` (i.e.
+      accessed on those metaclasses directly, not on one of their instances)
+      returning the raw internal getset descriptor object instead of a string
+      or :obj:`None`. This tripped up full-module introspection tools such as
+      ``mypy``'s ``stubgen --inspect-mode``, which expect ``__doc__`` to
+      always be :obj:`str`-or-:obj:`None`. Root cause: CPython's own
+      :obj:`type.__doc__` getter has a heap-type fallback that looks ``__doc__``
+      up directly in the type's own ``__dict__`` and invokes its descriptor
+      protocol unbound (``obj=NULL``), which for a plain getset descriptor
+      just returns the descriptor itself rather than calling the getter. (`#1213 <https://github.com/jpype-project/jpype/issues/1213>`__)
+
+    - Fixed :obj:`@JImplements <jpype.JImplements>` proxies throwing :jobj:`UndeclaredThrowableException <java.lang.reflect.UndeclaredThrowableException>`
+      when falling back to an unoverridden Java ``default`` interface method
+      that takes any arguments (e.g. a default method with a
+      ``Collection<T>`` parameter). ``JPypeProxy.invoke()`` built the
+      :jobj:`MethodType <java.lang.invoke.MethodType>` used to look up the default implementation from only
+      the method's return type, silently dropping its parameter types, so
+      ``findSpecial()`` looked for a nonexistent zero-argument overload.
+      Every existing default-method test happened to use a zero-argument
+      method, which is why this went unnoticed. (`#1256 <https://github.com/jpype-project/jpype/issues/1256>`__)
+
+    - Fixed :obj:`startJVM() <jpype.startJVM>` printing a "restricted method" / native access
+      warning on JDK 22+ (``java.lang.System::load has been called ... in an
+      unnamed module``). JPype now probes the JVM's supported JNI version
+      before launch and, on JDK 21+, defaults to passing
+      ``--enable-native-access=ALL-UNNAMED`` unless the caller already
+      specified their own ``--enable-native-access`` option; on older JDKs
+      any user-supplied ``--enable-native-access`` option is dropped rather
+      than causing a hard failure. (`#1310 <https://github.com/jpype-project/jpype/issues/1310>`__)
+
+    - Fixed :obj:`startJVM() <jpype.startJVM>` raising an uninformative ``"Can't find org.jpype.jar
+      support library"`` error when ``org.jpype.jar`` fails to load because the
+      running JVM is too old to support it (e.g. Java 8, since JPype 1.6.0's
+      classfile target requires Java 11+). The underlying
+      :jobj:`UnsupportedClassVersionError <java.lang.UnsupportedClassVersionError>` was being discarded, which also silently
+      disabled the existing friendlier "JVM is older than required Java
+      version" diagnostic in ``jpype._core``, since that diagnostic depends on
+      seeing the real exception text. (`#1312 <https://github.com/jpype-project/jpype/issues/1312>`__)
+
+    - Fixed crash when calling isinstance(obj, JException) before JVM starts or after JVM shutdown. (`#1329 <https://github.com/jpype-project/jpype/issues/1329>`__)
+
+    - Fixed caching issue with method overloading for functors. (`#1366 <https://github.com/jpype-project/jpype/issues/1366>`__)
+
+    - Fixed instability in threading for method dispatch. (`#1366 <https://github.com/jpype-project/jpype/issues/1366>`__)
+
+    - Fixed overloading ambiguity issue. (`#1371 <https://github.com/jpype-project/jpype/issues/1371>`__)
+
+    - Fixed memory leak with int and float conversions. (`#1379 <https://github.com/jpype-project/jpype/issues/1379>`__)
+
+    - Fixed issue with library loading on Chinese systems. (`#1380 <https://github.com/jpype-project/jpype/issues/1380>`__)
+
+    - Fixed classpath directories/jars containing a "+" character having it
+      silently converted to a space on import, corrupting the resolved
+      resource path. (`#1413 <https://github.com/jpype-project/jpype/issues/1413>`__)
+
+    - Fixed a rare crash where Python's cyclic garbage collector firing
+      while a Python exception was mid-unwind through the reverse-bridge
+      C++ layer could corrupt the in-flight exception. (`#1415 <https://github.com/jpype-project/jpype/issues/1415>`__)
+
+    - Fixed a GC refcount-accounting bug in the internal Java-class metaclass
+      where `tp_traverse`/`tp_clear` did not chain to `type`'s own
+      implementation. (`#1445 <https://github.com/jpype-project/jpype/issues/1445>`__)
+
+    - Fixed heap corruption when boxing large `JLong`/`JInt`/`JShort`/`JByte`/`JBoolean`
+      values on Python 3.8-3.11, caused by a fixed-offset allocator layout
+      assumption colliding with CPython's own implicit `__dict__` slot for
+      variable-length int subclasses. (`#1445 <https://github.com/jpype-project/jpype/issues/1445>`__)
+
+    - Fixed a random segmentation fault at JVM shutdown when Python tooling
+      (such as pytest's built-in faulthandler plugin) restored pre-JVM signal
+      handlers over HotSpot's, leaving safepoint polls in compiled code
+      unserviced.  JPype now snapshots the JVM's fault handlers at startup,
+      reinstates them before shutdown if they were replaced, and restores the
+      pre-JVM handlers once the JVM is destroyed, making the JVM's lifetime
+      signal-handler transparent on POSIX systems. (`#1448 <https://github.com/jpype-project/jpype/issues/1448>`__)
+
+    - Fixed a segmentation fault when a Python proxy (e.g. implementing
+      :jobj:`Runnable <java.lang.Runnable>`) was invoked from a *daemon* Java thread and was still
+      blocked inside its Python callback when :obj:`shutdownJVM() <jpype.shutdownJVM>` ran.
+      ``DestroyJavaVM()`` only waits for non-daemon Java threads, so shutdown
+      would complete - freeing every internal class/context resource - while
+      that thread was still parked underneath it; releasing the callback
+      afterwards resumed execution on top of a destroyed JVM. JPype now
+      detects this in the native proxy dispatcher as soon as the callback
+      returns, warns to stderr, and gets the thread off the JVM permanently
+      (hard-terminated where safe, parked forever otherwise) instead of
+      letting it touch freed state. (`#1458 <https://github.com/jpype-project/jpype/issues/1458>`__)
+
+    - Fixed infinite recursion in ``@JOverride(sticky=True, rename=...)``
+      customizers (used internally by e.g. ``JList.remove``) when a second
+      sticky customizer targets a class/interface jpype has already
+      customized this way. The rename step captured whatever was currently
+      in the class's own attribute slot as "the original method" without
+      checking it was still a real (unwrapped) Java method; on a second
+      pass that slot already held the first customizer's wrapper, so the
+      wrapper ended up calling itself once installed. (`#1473 <https://github.com/jpype-project/jpype/issues/1473>`__)
+
+    - Fixed a class/interface customizer (:obj:`@JImplementationFor <jpype.JImplementationFor>`) registered
+      *after* its target already has instances silently dropping every
+      earlier customizer's sticky methods and explicit ``__jclass_init__``
+      hooks for any subclass created afterward - the retroactive-registration
+      path overwrote the target's merged ``__jclass_init__`` outright
+      instead of chaining onto it. Classes created before the later
+      registration were unaffected, which is what made this easy to miss. (`#1476 <https://github.com/jpype-project/jpype/issues/1476>`__)
+
+    - Fixed a reference leak in Java-implementing-Python proxies
+      (:obj:`@JImplements <jpype.JImplements>`/:obj:`JProxy <jpype.JProxy>`): the first time a proxy instance was
+      passed to Java, if :jobj:`java.lang.reflect.Proxy.newInstance() <java.lang.reflect.Proxy>` (or the
+      weak-reference bookkeeping right after it) failed for any reason, the
+      Python instance's refcount was left permanently incremented with no
+      way to release it. Found via a new leak-detection sweep harness
+      (``test/jpypetest/leaksweep.py``, run via ``make -f project/dev.mk
+      leak-sweep``) combined with fault injection. (`#1486 <https://github.com/jpype-project/jpype/issues/1486>`__)
+
+    - Fixed a JVM thread-attachment leak: any native thread that calls into
+      Java without first calling ``jpype.attachThreadToJVM()`` gets
+      implicitly attached on its first call (so it doesn't have to be
+      explicit for simple cases), but nothing previously detached that
+      thread from the JVM when it later exited -- ``detachCurrentThread()``
+      only ran on an explicit ``jpype.detachThreadFromJVM()`` call. Any
+      short-lived native thread that touched Java at all (e.g. a Python
+      :obj:`threading.Thread` worker calling :obj:`jpype.synchronized() <jpype.synchronized>` once and
+      exiting) permanently leaked its JVM-side thread attachment. Fixed
+      with a per-thread destructor (POSIX TLS / Windows FLS) that
+      auto-detaches on thread exit regardless of whether the thread called
+      JPype again beforehand. Found via a new leak-detection sweep harness
+      (``test/jpypetest/leaksweep.py``, run via ``make -f project/dev.mk
+      leak-sweep``). (`#1486 <https://github.com/jpype-project/jpype/issues/1486>`__)
+
+    - Fixed a native reference-count leak in ``PyJPProxy_dealloc``: every
+      :obj:`@JImplements <jpype.JImplements>`-decorated class is a CPython heap type, and instance
+      creation implicitly holds a reference on it that must be released on
+      deallocation. That release was missing, so any code defining an
+      :obj:`@JImplements <jpype.JImplements>` class inside a loop (a fresh callback class per
+      iteration, or a factory function) permanently leaked one class object
+      per call. Found via a new leak-detection sweep harness
+      (``test/jpypetest/leaksweep.py``, run via ``make -f project/dev.mk
+      leak-sweep``). (`#1486 <https://github.com/jpype-project/jpype/issues/1486>`__)
+
+    - Fixed a leaked and broken synthetic traceback chain when converting a
+      Java exception's stack trace to Python: ``tb_create()`` built one
+      traceback frame per Java stack-trace element but always linked
+      ``tb_next`` to :obj:`None` instead of the previous frame, so only the
+      innermost frame was ever visible on ``.__traceback__.tb_next`` and
+      every earlier frame's traceback+frame object pair leaked outright.
+      Java exceptions raised into Python now expose their full stack trace
+      via the normal traceback chain, and no longer leak. Found via the
+      same leak-detection sweep harness. (`#1486 <https://github.com/jpype-project/jpype/issues/1486>`__)
+
+    - Fixed a reference leak when implicitly converting a plain Python
+      callable (a function, lambda, or bound method) to a Java functional
+      interface -- e.g. ``JObject(lambda x: x, "java.util.function.
+      Function")``, or passing a plain callable where Java code expects a
+      functional interface. If the underlying Java-side proxy construction
+      failed for any reason, the Python callable's refcount was left
+      permanently incremented with no way to release it. Same underlying
+      cause and fix technique as the proxy-creation leak below. (`#1486 <https://github.com/jpype-project/jpype/issues/1486>`__)
+
+    - Fixed :obj:`jpype.dbapi2` calling :jobj:`PreparedStatement.getParameterMetaData() <java.sql.PreparedStatement.getParameterMetaData()>`
+      even for statements executed with no parameters, which some strict JDBC
+      drivers reject for statements containing no parameter markers.
+      Parameterless ``execute()``/``executemany()`` calls, as well as
+      parameterless ``callproc()`` calls, no longer inspect parameter
+      metadata at all. (`#1489 <https://github.com/jpype-project/jpype/issues/1489>`__)
+
+    - :obj:`jpype.dbapi2`'s default parameter-setter lookup
+      (:obj:`SETTERS_BY_TYPE <jpype.dbapi2.SETTERS_BY_TYPE>`) now falls back to matching against the
+      :jobj:`java.sql.Array`/:jobj:`Blob <java.sql.Blob>`/:jobj:`Clob <java.sql.Clob>`/:jobj:`NClob <java.sql.NClob>`/:jobj:`SQLXML <java.sql.SQLXML>`/:jobj:`Ref <java.sql.Ref>`/
+      :jobj:`RowId <java.sql.RowId>` interfaces when a value's exact class isn't registered
+      directly.  Previously, passing a value fetched from one of these
+      column types back in as a parameter (e.g. copying a ``BLOB`` from one
+      table to another) always failed with ``InterfaceError: no setter
+      found for '...'``, because such values come back from the driver as
+      a vendor-specific concrete class implementing the interface, never
+      the interface itself. (`#1491 <https://github.com/jpype-project/jpype/issues/1491>`__)
+
+    - :obj:`jpype.dbapi2` now converts ``TIME_WITH_TIMEZONE``/
+      ``TIMESTAMP_WITH_TIMEZONE`` columns to timezone-aware
+      :obj:`datetime.time`/:obj:`datetime.datetime` by default when the driver
+      returns the JDK-standard :jobj:`java.time.OffsetTime`/:jobj:`OffsetDateTime <java.time.OffsetDateTime>`
+      representation; previously these always leaked the raw,
+      driver-specific Java object through unconverted, even with default
+      converters active. (`#1491 <https://github.com/jpype-project/jpype/issues/1491>`__)
+
+    - :obj:`jpype.dbapi2`'s :obj:`Cursor.description <jpype.dbapi2.Cursor.description>` now returns each column's
+      ``AS`` alias when the query specified one, instead of always the
+      underlying table column name -- matching PEP 249 ("the name or alias
+      of the column") by using :jobj:`ResultSetMetaData.getColumnLabel() <java.sql.ResultSetMetaData>`
+      instead of :jobj:`getColumnName() <java.sql.ResultSetMetaData>`. (`#1491 <https://github.com/jpype-project/jpype/issues/1491>`__)
+
+    - Fixed a crash in :obj:`startJVM() <jpype.startJVM>` under Python 3.15 global lazy imports
+      (``python -X lazy_imports=all``): jpype's internal setup imports were
+      deferred and never ran.  :obj:`startJVM() <jpype.startJVM>` now also loads a pending
+      ``import jpype.imports`` so the Java import hook is installed.  Java
+      packages work with the ``lazy import`` statement, including lazy imports
+      written before the JVM is started. (`#1495 <https://github.com/jpype-project/jpype/issues/1495>`__)
+
+    - Fixed importing a class whose static initializer fails directly from a
+      top level domain (``from org import Broken``) raising the raw
+      :jobj:`java.lang.ExceptionInInitializerError` instead of :obj:`ImportError`.
+      A later attempt to import the same class now reports the earlier
+      initializer failure instead of a missing dependency. (`#1500 <https://github.com/jpype-project/jpype/issues/1500>`__)
+
+    - Fixed a thread that detached from the JVM being attached again when a
+      proxy was freed on it. (`#1502 <https://github.com/jpype-project/jpype/issues/1502>`__)
+
+    - Python collections forced by Java collections are now serialized and
+      throttled by their own cost, so allocation-heavy Java code no longer
+      leaves Python threads in the garbage collector most of the time.  The
+      shared collection state is atomic, the collection callback is registered
+      once, and the collector is stopped at context shutdown. (`#1506 <https://github.com/jpype-project/jpype/issues/1506>`__)
+
+    - Fixed a static varargs method called through an instance (for example
+      ``JString("x").format("%s|%s", "a", "b")``) packing its arguments into the
+      wrong slots, and corrupting memory (usually crashing the interpreter) when
+      the method's only parameter is the varargs array (for example
+      ``stream.of(x)``).  Such calls now resolve exactly as when made through the
+      class; in particular ``x.join("-", ["a", "b"])`` is now reported as an
+      ambiguous overload, like ``String.join("-", ["a", "b"])``, instead of
+      silently picking ``join(CharSequence, Iterable)``. (`#1527 <https://github.com/jpype-project/jpype/issues/1527>`__)
+
+    - Fixed ``_jpype._JProxy.__new__`` leaking the proxy object on every
+      argument error.  The object is now allocated only after the arguments
+      have been validated. (`#1539 <https://github.com/jpype-project/jpype/issues/1539>`__)
+
+    - Fixed a lone high surrogate in a Java string swallowing the next
+      3-byte character when converting to Python.  A high surrogate now
+      pairs only with a following low surrogate.  Every unpaired surrogate
+      now raises :obj:`UnicodeDecodeError`, including a high surrogate followed
+      by a character in U+0800-U+FFFF, which used to convert silently to
+      the wrong text. #1538 (`#1543 <https://github.com/jpype-project/jpype/issues/1543>`__)
+
+    - Fixed :obj:`JChar <jpype.JChar>` arithmetic (``+``, ``-``, ``*``, ``&``, ...) reading the
+      other operand as a char whenever it was any Java value, which produced
+      nonsense results (``JChar('a') + java.lang.Integer(7)``) and could read
+      past the end of the other object.  Only real Java chars are now read as
+      chars; other operands take the normal Python path. #1536 (`#1545 <https://github.com/jpype-project/jpype/issues/1545>`__)
+
+    - Fixed :obj:`hash() <hash>` raising :obj:`SystemError` for Java objects whose
+      ``hashCode()`` is -1 (CPython's hash error sentinel); it is now mapped
+      to -2.  ``_JProxy.hashCode()`` also no longer ignores an error from
+      hashing an unhashable target, so it raises the original :obj:`TypeError`
+      instead of a :obj:`SystemError`. #1534 (`#1546 <https://github.com/jpype-project/jpype/issues/1546>`__)
+
+    - Fixed the :obj:`datetime` to :jobj:`java.time.Instant` conversion discarding
+      the UTC offset of an aware datetime and corrupting microseconds through a
+      float round trip.  Aware datetimes are now converted to UTC (naive ones
+      are still taken as UTC) and the sub-second part is computed exactly. #1522 (`#1547 <https://github.com/jpype-project/jpype/issues/1547>`__)
+
+    - Fixed ``with`` on a Java :obj:`AutoCloseable <java.lang.AutoCloseable>` silently swallowing an
+      exception from ``close()`` when the statement ran inside an unrelated
+      ``except`` block.  ``__exit__`` now looks at its own exception argument
+      rather than :obj:`sys.exc_info() <sys.exc_info>`. #1521 (`#1548 <https://github.com/jpype-project/jpype/issues/1548>`__)
+
+    - Fixed :obj:`dbapi2 <jpype.dbapi2>` :obj:`Cursor.callproc() <jpype.dbapi2.Cursor.callproc>` failing on OUT and INOUT
+      parameters: they are now registered on the underlying
+      :jobj:`CallableStatement <java.sql.CallableStatement>` using the driver's reported parameter type, so
+      PEP 249 aliases without a JDBC code (such as ``STRING``) work, and output
+      values without a registered converter (such as :obj:`int`) are returned
+      unchanged instead of raising :obj:`KeyError`. #1519 (`#1551 <https://github.com/jpype-project/jpype/issues/1551>`__)
+
+    - Fixed ``JClass("pkg.Outer.Inner")`` failing with :obj:`TypeError` for classes
+      added with :obj:`addClassPath() <jpype.addClassPath>` after the JVM started.  The dotted
+      inner-class fallback used the one-argument :jobj:`Class.forName <java.lang.Class>`, which only
+      searches the system class loader, instead of the JPype class loader. #1525 (`#1553 <https://github.com/jpype-project/jpype/issues/1553>`__)
+
+    - Fixed non-deferred :obj:`@JImplements <jpype.JImplements>` classes running ``__init__`` twice per
+      instantiation; ``__new__`` called it and ``type.__call__`` called it
+      again.  It now runs once, as for ``deferred=True``. #1528 (`#1554 <https://github.com/jpype-project/jpype/issues/1554>`__)
+
+    - Fixed public classes with a large constant pool (over 32767 entries) or a
+      string constant of 32 KB or more disappearing from ``dir(JPackage(...))``
+      and package contents.  The class-file scanner read the constant-pool
+      count and UTF8 lengths as signed values; they are now unsigned. #1531 (`#1556 <https://github.com/jpype-project/jpype/issues/1556>`__)
+
+    - Fixed ``JPypeContext.getStackTrace`` throwing
+      :jobj:`ArrayIndexOutOfBoundsException <java.lang.ArrayIndexOutOfBoundsException>` when the enclosing exception's stack
+      trace is empty (cleared or never filled in), which dropped the cause's
+      Java frames from the Python traceback. #1532 (`#1557 <https://github.com/jpype-project/jpype/issues/1557>`__)
+
+    - Fixed a Java class genuinely named like a mangled Python keyword (such
+      as ``pass_``) being listed by :obj:`dir() <dir>` but impossible to reach through
+      the package or ``from pkg import pass_``.  The lookup stripped the
+      underscore unconditionally; it now tries the name as written as well.
+      If both ``pass`` and ``pass_`` exist, ``pass_`` still means ``pass``. #1533 (`#1558 <https://github.com/jpype-project/jpype/issues/1558>`__)
+
+    - Fixed ``JArray.of()`` crashing on a 0-dimensional buffer (now a
+      :obj:`TypeError`), and raising :jobj:`ArrayIndexOutOfBoundsException <java.lang.ArrayIndexOutOfBoundsException>` for a buffer
+      with a zero-length axis such as ``(0, 3)`` or ``(2, 0, 3)``; it now returns
+      an empty array of that shape. Part of #1526 (`#1561 <https://github.com/jpype-project/jpype/issues/1561>`__)
+
+    - Fixed subclassing a final Java class being silently accepted: creating a
+      subclass of a final class such as :jobj:`java.lang.String` now raises
+      :obj:`TypeError`.  The check never ran in builds without instrumentation
+      (the ``JP_BLOCK`` macro compiled its body away) and, where it did run,
+      did not stop the subclass from being created. #1535 (`#1562 <https://github.com/jpype-project/jpype/issues/1562>`__)
+
+    - Fixed Java lambdas not being recognized on JDK 21 and later, where each
+      lambda got its own wrapper type (``Outer$$Lambda/0x...``) instead of being
+      treated as its functional interface.  The detection looked for
+      ``$Lambda$``, which only matches the naming used up to JDK 20. #1530 (`#1564 <https://github.com/jpype-project/jpype/issues/1564>`__)
+
+    - Fixed a memory leak when Java threads call into Python.  In 1.7.0 and 1.7.1
+      every callback from a Java-created thread (executors, listeners, event
+      handlers) that created a Java-backed Python object leaked one
+      ``_jpype._JAlloc`` heap type of about 1.5 KB, so long running processes grew
+      without bound.  The per-thread allocator type was removed by the object layout
+      rework (#1445); a regression test now covers the callback path. (`#1576 <https://github.com/jpype-project/jpype/issues/1576>`__)
+
+    - Converting a buffer to a multidimensional Java array (for example ``JArray.of`` with a NumPy array) no longer leaves the JVM unable to run a garbage collection on Android, which deadlocked the calling thread, and no longer leaks memory on JVMs that copy primitive arrays. (`#1580 <https://github.com/jpype-project/jpype/issues/1580>`__)
+
+    - Fixed :obj:`@JImplements <jpype.JImplements>` discarding the documentation of the decorated class. The
+      resulting class now keeps the original ``__doc__``, ``__name__``, ``__qualname__`` and
+      ``__module__``. Previously the decorated type was given a new name ``proxy.<name>``, now
+      it retains the original class name.
+
+  - Deprecations and removals
+
+    - Passing :obj:`bytes` where a Java method takes a ``char[]`` now emits a
+      :obj:`jpype.JPypeDeprecationWarning`, which is shown by default.  The bytes are
+      decoded as UTF-8 implicitly, which differs from ``JArray(JChar)(b)`` (one char
+      per byte); decode explicitly with ``b.decode(<encoding>)`` and pass the
+      :obj:`str`.  A later release will stop matching :obj:`bytes` to ``char[]``. (`#1586 <https://github.com/jpype-project/jpype/issues/1586>`__)
+
+  - Documentation
+
+    - Added a customizer example to the quickstart guide and fixed the
+      "Extending classes" entry, which had been carrying a leftover
+      "lambda is WIP" note since before lambdas were documented. (`#792 <https://github.com/jpype-project/jpype/issues/792>`__)
+
+    - Documented the "JVM DLL not found" error on Apple Silicon Macs and its
+      cause (a Python/JDK CPU architecture mismatch, e.g. arm64 vs x86_64). (`#994 <https://github.com/jpype-project/jpype/issues/994>`__)
+
+    - Documented a pattern for pickling plain Python objects that hold
+      Java-backed attributes, using ``__getstate__``/``__setstate__`` to
+      exclude and regenerate them. (`#1019 <https://github.com/jpype-project/jpype/issues/1019>`__)
+
+    - Documented the Windows ``ImportError: DLL load failed while importing
+      _jpype`` error and its fix (installing the Microsoft Visual C++
+      Redistributable). (`#1167 <https://github.com/jpype-project/jpype/issues/1167>`__)
+
+    - Documented that the thread that calls :obj:`startJVM() <jpype.startJVM>` is attached as a
+      non-daemon thread by JVM/JNI design, regardless of JPype's usual
+      automatic daemon attachment for threads calling into Java - and that
+      starting the JVM from a disposable thread (a pool worker, a one-shot
+      setup thread) will hang the process on exit unless that thread is
+      explicitly detached. (`#1169 <https://github.com/jpype-project/jpype/issues/1169>`__)
+
+    - The installation guide now states the supported Python versions (3.8 and later) and current Visual Studio versions for building on Windows. (`#1597 <https://github.com/jpype-project/jpype/issues/1597>`__)
+
+    - :obj:`jpype.addClassPath`, the :obj:`jpype.dbapi2` module and the primitive types (:obj:`jpype.JInt` and the others) are now in the API reference, and the changelog links the JPype, Python and Java names it mentions. (`#1601 <https://github.com/jpype-project/jpype/issues/1601>`__)
+
+  - For developers
+
+    - Features
+
+      - Refactored internal exception handling: replaced the single
+        ``JPypeException`` tag-plus-union class with distinct C++ types per
+        exception origin (``JPJavaError``, ``JPPythonError``,
+        ``JPInternalError``), so each type only carries the payload valid for
+        it instead of relying on convention. No user-facing behavior change;
+        done to prevent future bugs of the class fixed by #1415. (`#1415 <https://github.com/jpype-project/jpype/issues/1415>`__)
+
+      - Reworked the internal object layout for Java-backed Python objects to use
+        fixed, type-baked offsets instead of a runtime allocator that re-derived
+        each object's layout from version-sensitive CPython internals on every
+        access. For the boxed `Long`/`Boolean`/`Character` wrapper types this
+        also removes their per-instance Java-value storage entirely (reconstructed
+        on demand instead), shrinking those instances and eliminating a
+        version-gated digit-layout workaround. No user-visible API change; boxed
+        wrapper instances no longer retain Java-side reference identity across
+        repeated round-trips through Python. (`#1445 <https://github.com/jpype-project/jpype/issues/1445>`__)
+
+      - :obj:`JBoolean <jpype.JBoolean>`/:obj:`JByte <jpype.JByte>`/:obj:`JChar <jpype.JChar>`/:obj:`JInt <jpype.JInt>`/:obj:`JShort <jpype.JShort>`/:obj:`JLong <jpype.JLong>`/:obj:`JFloat <jpype.JFloat>`/
+        :obj:`JDouble <jpype.JDouble>` are no longer tracked by the cyclic garbage collector. They
+        were previously declared as ordinary Python ``class`` statements, which
+        unconditionally pick up GC tracking from CPython even when none of these
+        types can ever hold an arbitrary Python reference or participate in a
+        reference cycle; every boxed array element pulled into Python paid for
+        that bookkeeping on allocation and deallocation for no benefit. No
+        user-visible API change. (`#1471 <https://github.com/jpype-project/jpype/issues/1471>`__)
+
+      - Python coverage now includes code run by tests in ``subrun.TestCase`` child processes, using coverage.py's ``patch = subprocess`` option.  This needs coverage 7.10 or newer, which is now listed in ``test-requirements.txt``. (`#1570 <https://github.com/jpype-project/jpype/issues/1570>`__)
+
+      - CodeQL alerts with an in-source ``codeql[<query-id>]`` comment are now dismissed automatically on master ("won't fix", "Suppressed via SARIF") by the ``advanced-security/dismiss-alerts`` action, and reopened once the comment is removed.  Code scanning ignores the SARIF suppressions that ``AlertSuppression.ql`` (#1574) adds, so those alerts stayed open before. (`#1575 <https://github.com/jpype-project/jpype/issues/1575>`__)
+
+      - The macOS release wheels are now built on the ``macos-15`` Azure Pipelines image instead of ``macos-14``, which is retired on 2026-11-23.  The test leg that used ``macos-14`` moved to ``macos-15`` too.  The wheels still target macOS 11.0 and later. (`#1579 <https://github.com/jpype-project/jpype/issues/1579>`__)
+
+    - Bug fixes
+
+      - Fixed releasing a Java array buffer leaving a Python error set when the release failed, so the next unrelated call raised ``SystemError: ... returned a result with an exception set``.  Re-enabled the fault tests that were disabled with FIXME notes. (`#1571 <https://github.com/jpype-project/jpype/issues/1571>`__)
+
+      - The Azure Pipelines jobs for Python 3.8 and 3.9 now get a uv-managed interpreter of the requested architecture, because ``UsePythonVersion`` can no longer download these versions.  Without this, the test jobs silently ran on the agent's system Python and failed.  A new check fails any job whose interpreter is not the requested version.  Windows and macOS now also test the oldest and newest supported Python (3.8 and 3.15). (`#1591 <https://github.com/jpype-project/jpype/issues/1591>`__)
+
+      - The release pipeline can build Windows and macOS wheels again: ``wheels.yml`` called ``uv pip wheel``, which uv does not have, and ``release.yml`` did not set ``UV_SYSTEM_PYTHON``, so ``uv pip install`` found no environment to install into. (`#1593 <https://github.com/jpype-project/jpype/issues/1593>`__)
+
+      - ``testForcedCollectionsAreThrottled`` no longer fails at random on slow or busy agents: it now times only the Python collections that Java forces, which are the ones the throttle limits, instead of every collection during the test. #1592 (`#1595 <https://github.com/jpype-project/jpype/issues/1595>`__)
+
+      - The subprocess test runner now reports the child's real exception, a crash
+        (with exit code) or a hang, instead of a generic timeout after 20 seconds. (`#1596 <https://github.com/jpype-project/jpype/issues/1596>`__)
+
 - **1.7.1 - 2026-05-06**
 
   - Binaries for OSX ARM64.
