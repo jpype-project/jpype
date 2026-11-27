@@ -66,6 +66,19 @@ class SurrogateNamesTestCase(common.JPypeTestCase):
         self.assertEqual(self._frames(["a", "b", "c", _jstr("d\ud83dX")]),
                          ["Outer.d" + bad, "Outer.c", "Outer.b", "Outer.a"])
 
+    def testExceptionMessageWithSurrogate(self):
+        # Converting this exception used to abort the process with
+        # "Fatal error in exception handling".
+        NFE = JClass("java.lang.NumberFormatException")
+        with self.assertRaises(NFE) as cm:
+            JClass("java.lang.Integer").parseInt(_jstr("\ud83dX"))
+        self.assertIn("\ud83dX", str(cm.exception))
+        self.assertIn("\ud83dX", str(cm.exception.getMessage()))
+        # Formatting the traceback must not fail on the message either.
+        text = "".join(traceback.format_exception(
+            type(cm.exception), cm.exception, cm.exception.__traceback__))
+        self.assertIn("NumberFormatException", text)
+
     @unittest.skipUnless(shutil.which("javac"), "javac not available")
     def testClassWithSurrogateMethodName(self):
         tmp = pathlib.Path(tempfile.mkdtemp())
