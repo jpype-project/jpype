@@ -6,10 +6,11 @@ on:
     paths:
       - .github/workflows/test-aarch64.yml
       - .github/workflows/test-release-wheels.yml
-      - .github/scripts/fetch_azure_wheels.py
+      - .github/scripts/**
 
 jobs:
-  aarch64:
+  i686:
     uses: ./.github/workflows/test-release-wheels.yml
     with:
-      platform: manylinux_2_28_aarch64
+      platform: manylinux_2_28_i686
+      azure_build_id: "1862"

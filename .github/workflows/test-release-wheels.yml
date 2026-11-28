@@ -4,7 +4,9 @@
 # checks that the wheel imports.  This workflow downloads the exact wheels of
 # one platform from an Azure build and runs the full test suite on a native
 # GitHub-hosted runner, once per Python version found among the wheels and
-# per JDK.
+# per JDK.  i686 has no runner of its own: it runs in the manylinux_2_28_i686
+# container on an x86_64 runner, with that image's CPythons and its 32-bit
+# JDK 11 (the jdk_versions input does not apply).
 #
 # Run it from the Actions tab ("Test release wheels" -> Run workflow).  It is
 # also callable from other workflows (workflow_call).
@@ -20,6 +22,7 @@ on:
         options:
           - manylinux_2_28_aarch64
           - manylinux_2_28_x86_64
+          - manylinux_2_28_i686
         default: manylinux_2_28_aarch64
       azure_build_id:
         description: "Azure jpype.release build id (empty: newest build with wheels for the platform)"
@@ -59,6 +62,7 @@ jobs:
       build_id: ${{ steps.fetch.outputs.build_id }}
       python: ${{ steps.fetch.outputs.python }}
       runner: ${{ steps.runner.outputs.runner }}
+      container: ${{ steps.runner.outputs.container }}
     steps:
       - uses: actions/checkout@v6
 
@@ -75,6 +79,8 @@ jobs:
           case "${{ inputs.platform }}" in
             *_aarch64) echo "runner=ubuntu-24.04-arm" >> "$GITHUB_OUTPUT" ;;
             *_x86_64)  echo "runner=ubuntu-24.04" >> "$GITHUB_OUTPUT" ;;
+            *_i686)    echo "runner=ubuntu-24.04" >> "$GITHUB_OUTPUT"
+                       echo "container=quay.io/pypa/${{ inputs.platform }}" >> "$GITHUB_OUTPUT" ;;
             *) echo "::error::No runner for ${{ inputs.platform }}"; exit 1 ;;
           esac
 
@@ -85,6 +91,7 @@ jobs:
 
   test:
     needs: fetch
+    if: needs.fetch.outputs.container == ''
     runs-on: ${{ needs.fetch.outputs.runner }}
     strategy:
       fail-fast: false
@@ -159,4 +166,36 @@ jobs:
         if: always()
         with:
           name: test-results-py${{ matrix.python }}-jdk${{ matrix.jdk }}
+          path: test/test.xml
+
+  # Platforms without a native runner (i686): run in the manylinux container.
+  # GitHub's own actions cannot run inside a 32-bit container, so the job
+  # starts it with docker run instead of using "container:".
+  test-container:
+    needs: fetch
+    if: needs.fetch.outputs.container != ''
+    runs-on: ${{ needs.fetch.outputs.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ${{ fromJSON(needs.fetch.outputs.python) }}
+    name: Python ${{ matrix.python }} / JDK 11 (${{ inputs.platform }}, build ${{ needs.fetch.outputs.build_id }})
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: wheels
+          path: wheels
+
+      - name: Run test suite in ${{ needs.fetch.outputs.container }}
+        run: |
+          echo "core.%e.%p" | sudo tee /proc/sys/kernel/core_pattern
+          docker run --rm -v "$PWD:/io" "${{ needs.fetch.outputs.container }}" \
+            /io/.github/scripts/test-in-manylinux.sh "${{ matrix.python }}"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ inputs.platform }}-py${{ matrix.python }}
           path: test/test.xml
