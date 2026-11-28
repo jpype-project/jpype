@@ -145,6 +145,19 @@ Use:
 
     sudo apt-get install g++ python3-dev
 
+Alpine Linux and other musl based distributions
+:::::::::::::::::::::::::::::::::::::::::::::::
+
+JPype does not publish binary wheels for musl based distributions such as
+Alpine, so pip builds JPype from the source distribution.  Install a C++
+compiler, the Python headers and a JDK first.  The source distribution
+includes the prebuilt JAR, so Ant is not required. ::
+
+    apk add build-base python3-dev openjdk17-jdk
+    pip install JPype1
+
+The JDK is needed at runtime anyway, since JPype starts the JVM from it.
+
 Windows
 :::::::
 
