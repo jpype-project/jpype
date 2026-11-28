@@ -1,0 +1,1 @@
+A new GitHub Actions workflow, "Test release wheels", downloads the wheels of one platform (manylinux_2_28 aarch64 or x86_64) from an Azure ``jpype.release`` build and runs the full test suite on a native runner, for every Python version among the wheels.  The release pipeline builds aarch64 under emulation and only checks that the wheel imports.
