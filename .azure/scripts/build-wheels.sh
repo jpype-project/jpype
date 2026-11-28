@@ -43,7 +43,14 @@ if command -v apk >/dev/null 2>&1; then
     apk add --no-cache openjdk11-jdk apache-ant || apk add --no-cache openjdk17-jdk apache-ant
     export JAVA_HOME=$(ls -d /usr/lib/jvm/java-11-openjdk* /usr/lib/jvm/java-17-openjdk* 2>/dev/null | head -n 1)
 else
-    yum install -y java-11-openjdk-devel ant
+    # AlmaLinux 8 serves i686 packages only from vault.almalinux.org; retry
+    # and show name resolution if it is unreachable.
+    for attempt in 1 2 3 4 5; do
+        yum install -y java-11-openjdk-devel ant && break
+        getent hosts vault.almalinux.org || cat /etc/resolv.conf
+        [ "$attempt" = 5 ] && exit 1
+        echo "yum failed, retrying in 30s"; sleep 30
+    done
     export JAVA_HOME=$(ls -d /usr/lib/jvm/java-11-openjdk* | head -n 1)
 fi
 export JAVAC=$JAVA_HOME/bin/javac
