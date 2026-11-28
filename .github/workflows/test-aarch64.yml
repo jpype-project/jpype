@@ -1,109 +1,15 @@
-# Test the manylinux aarch64 wheels produced by the Azure release pipeline
-# (jpype.release) natively on a GitHub-hosted arm64 runner.
-#
-# The release pipeline builds aarch64 under QEMU emulation and only checks
-# that the wheel imports.  This workflow installs those exact wheels and runs
-# the full test suite on real arm64 hardware.
-
+# Temporary caller to exercise test-release-wheels.yml before it is on master.
 name: Test aarch64 wheels
 
 on:
-  workflow_dispatch:
-    inputs:
-      azure_build_id:
-        description: "Azure jpype.release build id to take the wheels from"
-        required: true
-        default: "2475"
   push:
     paths:
       - .github/workflows/test-aarch64.yml
-
-env:
-  AZURE_BUILD_ID: ${{ inputs.azure_build_id || '2475' }}
-  AZURE_ARTIFACT: "artifact_Build manylinux_2_28_aarch64_Linux_aarch64"
+      - .github/workflows/test-release-wheels.yml
+      - .github/scripts/fetch_azure_wheels.py
 
 jobs:
-  test:
-    runs-on: ubuntu-24.04-arm
-    strategy:
-      fail-fast: false
-      matrix:
-        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-        jdk: ["11"]
-        include:
-          - python: "3.13"
-            jdk: "21"
-          - python: "3.15"
-            jdk: "11"
-    name: Python ${{ matrix.python }} / JDK ${{ matrix.jdk }}
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python }}
-          allow-prereleases: true
-
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: ${{ matrix.jdk }}
-
-      - name: Download wheels from Azure build ${{ env.AZURE_BUILD_ID }}
-        run: |
-          set -euo pipefail
-          url=$(curl -fsS "https://dev.azure.com/jpype-project/jpype/_apis/build/builds/${AZURE_BUILD_ID}/artifacts?api-version=7.1" \
-            | python -c "import json,os,sys; print(next(a['resource']['downloadUrl'] for a in json.load(sys.stdin)['value'] if a['name']==os.environ['AZURE_ARTIFACT']))")
-          curl -fsSL -o artifact.zip "$url"
-          mkdir -p wheels
-          unzip -j artifact.zip '*.whl' -d wheels
-          ls -l wheels
-
-      - name: Install wheel
-        run: |
-          python -m pip install --upgrade pip
-          version=$(ls wheels/jpype1-*.whl | head -n1 | sed -E 's/.*jpype1-([^-]+)-.*/\1/')
-          # Pin the version and refuse the sdist, so pip fails instead of
-          # silently falling back to a source build or an older PyPI release.
-          python -m pip install --only-binary jpype1 --find-links wheels "jpype1==${version}"
-          cd /tmp && python -c "import jpype, _jpype; print(jpype.__version__, _jpype.__file__)"
-
-      - name: Install test requirements
-        run: |
-          # Skip requirements without arm64 wheels for prerelease Pythons.
-          if [[ "${{ matrix.python }}" == "3.15" ]]; then
-            grep -vE '^(pandas|polars|pyinstaller)$' test-requirements.txt > reqs.txt
-          else
-            cp test-requirements.txt reqs.txt
-          fi
-          python -m pip install -r reqs.txt
-
-      - name: Resolve Java test dependencies
-        run: |
-          wget -q --no-clobber "https://repo1.maven.org/maven2/org/apache/ivy/ivy/2.5.3/ivy-2.5.3.jar" -P lib
-          java -jar lib/ivy-2.5.3.jar -ivy ivy.xml -retrieve 'lib/[artifact]-[revision](-[classifier]).[ext]'
-
-      - name: Build test harness
-        run: |
-          sudo apt-get update && sudo apt-get install -y ant gdb
-          ant -f test/build.xml
-
-      - name: Run test suite
-        run: |
-          ulimit -c unlimited
-          echo "core.%e.%p" | sudo tee /proc/sys/kernel/core_pattern
-          # Run from test/ so the source tree's jpype/ does not shadow the wheel.
-          cd test
-          python -m pytest -v --junit-xml=test.xml jpypetest --checkjni -n2 --dist loadfile
-
-      - name: Backtrace on crash
-        if: failure()
-        run: |
-          core=$(ls test/core.* 2>/dev/null | head -n1 || true)
-          if [ -n "$core" ]; then gdb -batch -ex "thread apply all bt" "$(which python)" "$core"; fi
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results-py${{ matrix.python }}-jdk${{ matrix.jdk }}
-          path: test/test.xml
+  aarch64:
+    uses: ./.github/workflows/test-release-wheels.yml
+    with:
+      platform: manylinux_2_28_aarch64
