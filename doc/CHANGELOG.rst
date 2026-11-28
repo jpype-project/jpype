@@ -511,6 +511,13 @@ Latest Changes:
       - The subprocess test runner now reports the child's real exception, a crash
         (with exit code) or a hang, instead of a generic timeout after 20 seconds. (`#1596 <https://github.com/jpype-project/jpype/issues/1596>`__)
 
+      - The release pipeline jobs for musllinux, ppc64le and s390x failed before
+        compiling.  musllinux now uses the ``musllinux_1_2`` images and installs the
+        JDK with ``apk``; ppc64le and s390x now get QEMU emulation.  The Linux wheels
+        now carry the same build tag as the Windows and macOS ones.  musllinux wheels
+        remain a test build and are not published (`#1602
+        <https://github.com/jpype-project/jpype/issues/1602>`__).
+
 - **1.7.1 - 2026-05-06**
 
   - Binaries for OSX ARM64.
