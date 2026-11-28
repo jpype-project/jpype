@@ -38,8 +38,14 @@ done
 
 echo "Found Python bins for build: ${pys[@]}"
 
-yum install -y java-11-openjdk-devel ant
-export JAVA_HOME=$(ls -d /usr/lib/jvm/java-11-openjdk-* | head -n 1)
+if command -v apk >/dev/null 2>&1; then
+    # musllinux images are Alpine based
+    apk add --no-cache openjdk11-jdk apache-ant || apk add --no-cache openjdk17-jdk apache-ant
+    export JAVA_HOME=$(ls -d /usr/lib/jvm/java-11-openjdk* /usr/lib/jvm/java-17-openjdk* 2>/dev/null | head -n 1)
+else
+    yum install -y java-11-openjdk-devel ant
+    export JAVA_HOME=$(ls -d /usr/lib/jvm/java-11-openjdk* | head -n 1)
+fi
 export JAVAC=$JAVA_HOME/bin/javac
 export PATH=$JAVA_HOME/bin:$PATH
 
@@ -74,10 +80,18 @@ done
 echo "=============="
 echo "Repairing wheels with auditwheel"
 # Bundle external shared libraries into the wheels (standard ManyLinux procedure)
+repair_args=()
+if [[ "$PLAT" == musllinux* ]]; then
+    # The musllinux policy would graft a private libstdc++/libgcc_s into the wheel,
+    # while the JVM's libjvm.so loads the system ones: two C++ runtimes in one
+    # process. Link against the system runtime instead (always present wherever an
+    # Alpine JDK is installed), as manylinux does.
+    repair_args+=(--exclude libstdc++.so.6 --exclude libgcc_s.so.1)
+fi
 for whl in wheelhouse/${package_name}-*.whl; do
     echo "Audit $whl"
     # Repair and move to the final output directory /io/wheelhouse
-    auditwheel repair --plat "$PLAT" "$whl" -w /io/wheelhouse/
+    auditwheel repair --plat "$PLAT" "${repair_args[@]}" "$whl" -w /io/wheelhouse/
 done
 echo "=============="
 
@@ -87,4 +101,21 @@ for PYBIN in "${pys[@]}"; do
     "${PYBIN}/python" -m pip install ${package_name} --no-index -f /io/wheelhouse
     "${PYBIN}/python" -c "import jpype; print(\"JPype version {} installed successfully\".format(jpype.__version__))"
 done
+
+if [[ "$PLAT" == musllinux* ]]; then
+    # Smoke test: start the JVM and unwind a Java exception through _jpype.so.
+    for PYBIN in "${pys[@]}"; do
+        "${PYBIN}/python" - <<'PYEOF'
+import jpype
+jpype.startJVM()
+from java.lang import Integer, NumberFormatException
+try:
+    Integer.parseInt("not a number")
+except NumberFormatException:
+    print("JVM start and exception round trip OK")
+else:
+    raise SystemExit("expected NumberFormatException")
+PYEOF
+    done
+fi
 
