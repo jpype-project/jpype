@@ -21,6 +21,11 @@ ls -d /opt/python/cp*/bin
 
 for pybin in /opt/python/cp*/bin; do
     dir=$(basename $(dirname "$pybin"))
+    # Skip free-threaded interpreters (e.g. cp314-cp314t); not supported yet.
+    if [[ "$dir" == *t ]]; then
+        echo "Skipping:  $dir (free-threaded)"
+        continue
+    fi
     matched=false
     for v in "${include_versions[@]}"; do
         if [[ "$dir" =~ ^cp${v}- ]]; then
